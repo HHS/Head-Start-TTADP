@@ -21,7 +21,9 @@
   },
   "jest": {
     "coverageThreshold": {
-      "lines": 90
+      "global": {
+        "lines": 90
+      }
     }
   },
   "browserslist": {
