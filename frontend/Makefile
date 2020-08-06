@@ -3,10 +3,10 @@ PWD         := $(shell pwd)
 U_ID        := $(shell id -u)
 G_ID        := $(shell id -g)
 
-DOCKER      := docker run
-CMD         := /bin/bash -c
-DOCKER_TAG  := ttadp-frontend
-DOCKER_ARGS := -v $(PWD):/app \
+DOCKER       := docker run
+CMD          := /bin/bash -c
+DOCKER_IMAGE := ttadp-frontend
+DOCKER_ARGS  := -v $(PWD):/app \
 	--rm \
 	$(INTERACTIVE) \
 	-u $(U_ID):$(G_ID) \
@@ -23,14 +23,20 @@ DOCKER_CI_ARGS := $(DOCKER_ARGS) \
 	-e JEST_JUNIT_OUTPUT_NAME=unit.xml \
 	-e CI=true
 
-BASH       := $(DOCKER) $(DOCKER_ARGS) $(DOCKER_TAG) $(CMD)
-BASH_DEV   := $(DOCKER) $(DOCKER_DEV_ARGS) $(DOCKER_TAG) $(CMD)
-BASH_SERVE := $(DOCKER) $(DOCKER_SERVE_ARGS) $(DOCKER_TAG) $(CMD)
-BASH_CI    := $(DOCKER) $(DOCKER_CI_ARGS) $(DOCKER_TAG) $(CMD)
+BASH       := $(DOCKER) $(DOCKER_ARGS) $(DOCKER_IMAGE) $(CMD)
+BASH_DEV   := $(DOCKER) $(DOCKER_DEV_ARGS) $(DOCKER_IMAGE) $(CMD)
+BASH_SERVE := $(DOCKER) $(DOCKER_SERVE_ARGS) $(DOCKER_IMAGE) $(CMD)
+BASH_CI    := $(DOCKER) $(DOCKER_CI_ARGS) $(DOCKER_IMAGE) $(CMD)
 
 .PHONY: init
-init:
-	docker build -t $(DOCKER_TAG) .
+init: build-image deps
+
+.PHONY: build-image
+build-image:
+	docker build -t $(DOCKER_IMAGE) .
+
+.PHONY: deps
+deps:
 	$(BASH) "yarn install"
 
 .PHONY: start
@@ -82,13 +88,26 @@ lint-ci:
 audit:
 	$(BASH) "yarn audit --level moderate"
 
-# Environment variables are directly used in the `zap.sh` script
+.PHONY: up-integration
+up-integration: export DOCKER_IMAGE := $(DOCKER_IMAGE)
+up-integration: build
+	docker-compose up -d
+
+.PHONY: down-integration
+down-integration:
+	docker-compose down
+
 .PHONY: zap
-zap: export ZAP_NETWORK        := test-zap
-zap: export ZAP_CONTAINER_NAME := ttadp-server
-zap: export DOCKER_TAG         := $(DOCKER_TAG)
-zap: export PWD                := $(PWD)
-zap: export U_ID               := $(U_ID)
-zap: export G_ID               := $(G_ID)
+zap: export PWD  := $(PWD)
+zap: export U_ID := $(U_ID)
+zap: export G_ID := $(G_ID)
 zap:
 	./scripts/zap.sh
+
+.PHONY: accessibility
+accessibility: export DOCKER_IMAGE := $(DOCKER_IMAGE)
+accessibility: export PWD          := $(PWD)
+accessibility: export U_ID         := $(U_ID)
+accessibility: export G_ID         := $(G_ID)
+accessibility:
+	./scripts/accessibility.sh

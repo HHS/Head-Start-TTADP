@@ -1,0 +1,14 @@
+version: '3.5'
+services:
+  frontend-ttadp:
+    image: ${DOCKER_IMAGE}
+    command: /bin/bash -c "serve -s build"
+    networks:
+      - ttadp
+    ports:
+      - '5000:5000'
+    volumes:
+      - ${PWD}:/app
+networks:
+  ttadp:
+    name: frontend-ttadp
