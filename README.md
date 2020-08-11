@@ -9,6 +9,9 @@ Getting Started
 
 Instructions for running the service in a local environment, including dependencies.
 
+Make sure Docker is installed. To check run `docker ps`
+
+Run `npm run docker:start`
 
 Running Tests
 -------------

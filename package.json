@@ -1,0 +1,31 @@
+{
+  "name": "head-start-ttadp",
+  "version": "1.0.0",
+  "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.js --exec babel-node",
+    "docker:start": "docker-compose up --build -d"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adhocteam/Head-Start-TTADP/issues"
+  },
+  "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
+  "devDependencies": {
+    "@babel/core": "^7.11.0",
+    "@babel/node": "^7.10.5",
+    "@babel/preset-env": "^7.11.0",
+    "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
