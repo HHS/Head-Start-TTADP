@@ -1,16 +1,32 @@
 version: "3.5"
 services:
-  app:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: npm run dev
+    command: yarn server
+    user: ${CURRENT_USER:-root}
     env_file:
       - .env
     ports:
+      - "3001:3001"
+    volumes:
+      - ".:/app:rw"
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: yarn start
+    user: ${CURRENT_USER:-root}
+    env_file:
+      - .env
+    stdin_open: true
+    ports:
       - "3000:3000"
     volumes:
-      - ".:/app"
-      - node_modules:/app/node_modules/
-volumes:
-  node_modules:
+      - "./src/frontend:/app:rw"
+      - "./scripts:/app/scripts"
+    environment:
+      - JEST_JUNIT_OUTPUT_DIR=reports
+      - JEST_JUNIT_OUTPUT_NAME=unit.xml
+      - BACKEND_PROXY=http://backend:3001
