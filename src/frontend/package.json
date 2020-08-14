@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "http-proxy-middleware": "^1.0.5"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -64,7 +66,6 @@
   },
   "devDependencies": {
     "@testing-library/dom": "^7.21.7",
-    "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "eslint": "^6.8.0",
@@ -74,7 +75,6 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.5",
     "eslint-plugin-react-hooks": "^4.0.8",
-    "http-proxy-middleware": "^1.0.5",
     "jest-junit": "^11.1.0"
   }
 }
