@@ -1,1 +1,6 @@
+yarn-error.log
+reports
+node_modules
+coverage
 .DS_Store
+.env.dev

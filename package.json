@@ -4,13 +4,42 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js --exec babel-node",
-    "docker:start": "docker-compose up --build -d"
+    "deps": "yarn install && yarn --cwd frontend install",
+    "start": "concurrently \"yarn server\" \"yarn client\"",
+    "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
+    "client": "yarn --cwd frontend start",
+    "test": "jest src && yarn --cwd frontend test --watchAll=false",
+    "eslint": "eslint src",
+    "lint:ci": "eslint src -f junit -o reports/lint.xml src",
+    "test:ci": "jest src --coverage --reporters=default --reporters=jest-junit",
+    "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
+
+    "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
+    "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
+    "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
+    "docker:start": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:test": "docker-compose run --rm backend yarn test:ci && docker-compose run --rm frontend yarn test:ci",
+    "docker:lint": "docker-compose run --rm backend yarn lint:ci",
+    "docker:audit": "docker-compose run --rm backend ./scripts/audit.sh && docker-compose run --rm frontend ./scripts/audit.sh"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
+  },
+  "eslintConfig": {
+    "extends": [
+      "airbnb-base",
+      "plugin:jest/recommended"
+    ],
+    "ignorePatterns": [
+      "node_modules/*"
+    ]
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "<rootDir>/frontend/"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -22,8 +51,19 @@
   "devDependencies": {
     "@babel/core": "^7.11.0",
     "@babel/node": "^7.10.5",
+    "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.0",
-    "nodemon": "^2.0.4"
+    "concurrently": "^5.3.0",
+    "eslint": "^6.6.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^23.20.0",
+    "eslint-plugin-jsx-a11y": "^6.3.1",
+    "eslint-plugin-react": "^7.20.6",
+    "jest": "^24.9.0",
+    "jest-junit": "^11.1.0",
+    "nodemon": "^2.0.4",
+    "supertest": "^4.0.2"
   },
   "dependencies": {
     "express": "^4.17.1"
