@@ -4,16 +4,18 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "scripts": {
-    "deps": "yarn install && yarn --cwd src/frontend install",
+    "deps": "yarn install && yarn --cwd frontend install",
     "start": "concurrently \"yarn server\" \"yarn client\"",
-    "server": "nodemon src/index.js --ignore './src/frontend/' --exec babel-node",
-    "client": "yarn --cwd src/frontend start",
-    "test": "jest src && yarn --cwd src/frontend test -- --watchAll=false",
+    "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
+    "client": "yarn --cwd frontend start",
+    "test": "jest src && yarn --cwd frontend test --watchAll=false",
     "eslint": "eslint src",
     "lint:ci": "eslint src -f junit -o reports/lint.xml src",
     "test:ci": "jest src --coverage --reporters=default --reporters=jest-junit",
-    "clean": "rm -rf coverage reports src/frontend/coverage src/frontend/reports src/frontend/build",
+    "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
 
+    "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
+    "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:start": "docker-compose up -d",
     "docker:stop": "docker-compose down",
@@ -36,7 +38,7 @@
   },
   "jest": {
     "testPathIgnorePatterns": [
-      "<rootDir>/src/frontend/"
+      "<rootDir>/frontend/"
     ]
   },
   "keywords": [],
