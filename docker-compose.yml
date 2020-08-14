@@ -24,7 +24,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - "./src/frontend:/app:rw"
+      - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
     environment:
       - JEST_JUNIT_OUTPUT_DIR=reports
