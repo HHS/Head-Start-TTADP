@@ -9,7 +9,7 @@ Getting Started
 
 Make sure Docker is installed. To check run `docker ps`
 
-Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. Running `yarn docker:start` starts the backend and frontend, browse to `http://localhost:3000` to hit the frontend and `http://localhost:3000/api` to hit the backend. Copying `.env` to `.env.dev`, substituting in your user id and group id will cause any files created in docker containers to be owned by your user on your host.
+Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed. Running `yarn docker:start` starts the backend and frontend, browse to `http://localhost:3000` to hit the frontend and `http://localhost:3000/api` to hit the backend. Copying `.env` to `.env.dev`, substituting in your user id and group id will cause any files created in docker containers to be owned by your user on your host.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
