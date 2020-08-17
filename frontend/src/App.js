@@ -1,24 +1,17 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import 'uswds/dist/css/uswds.min.css';
+import 'uswds/dist/js/uswds';
+
+import Alert from './components/Alert';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit
-          {' '}
-          <code>src/App.js</code>
-          {' '}
-          and save to reload.
-        </p>
-        <p>
-          Hello World!
-        </p>
-      </header>
-    </div>
+    <>
+      <Alert
+        heading="Hello"
+        body="World!"
+      />
+    </>
   );
 }
 
