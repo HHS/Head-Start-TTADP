@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     ports:
-      - "3001:3001"
+      - "8080:8080"
     volumes:
       - ".:/app:rw"
   frontend:
@@ -29,4 +29,4 @@ services:
     environment:
       - JEST_JUNIT_OUTPUT_DIR=reports
       - JEST_JUNIT_OUTPUT_NAME=unit.xml
-      - BACKEND_PROXY=http://backend:3001
+      - BACKEND_PROXY=http://backend:8080

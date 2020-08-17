@@ -13,7 +13,6 @@
     "lint:ci": "eslint src -f junit -o reports/lint.xml src",
     "test:ci": "jest src --coverage --reporters=default --reporters=jest-junit",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
-
     "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
     "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
@@ -66,6 +65,10 @@
     "supertest": "^4.0.2"
   },
   "dependencies": {
-    "express": "^4.17.1"
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "helmet": "^4.1.0",
+    "passport": "^0.4.1",
+    "passport-oauth2": "^1.5.0"
   }
 }
