@@ -8,6 +8,4 @@ jobs:
     steps:
       - checkout
       - run: yarn deps
-      - run:
-          command: yarn run test
-          name: Run YARN tests
+      - run: yarn run test
