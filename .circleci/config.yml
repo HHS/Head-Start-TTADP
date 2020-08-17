@@ -1,15 +1,19 @@
 version: 2.1
-
 orbs:
   node: circleci/node@4.0.0
-
 jobs:
   test:
-    docker:
-      - image: cimg/node:<node-version>
+    executor:
+      name: node/default
+      tag: '13'
     steps:
       - checkout
-      - node/install:
-          install-yarn: true
-      - run: node --version
-      - node/install-packages # Utilize commands in steps
+      - node/install-packages:
+          pkg-manager: yarn
+      - run:
+          command: yarn run test
+          name: Run YARN tests
+workflows:
+  test_my_app:
+    jobs:
+      - test
