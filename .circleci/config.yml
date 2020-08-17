@@ -7,8 +7,7 @@ jobs:
       - image: circleci/node:latest
     steps:
       - checkout
-      - node/install-packages:
-          pkg-manager: yarn
+      - run: yarn deps
       - run:
           command: yarn run test
           name: Run YARN tests
