@@ -1,16 +1,15 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@4.0.0
+
 jobs:
-  install-node-example:
+  test:
     docker:
-      - image: 'cimg/base:stable'
+      - image: cimg/node:<node-version>
     steps:
       - checkout
       - node/install:
           install-yarn: true
       - run: node --version
-orbs:
-  node: circleci/node@4.0.0
-version: 2.1
-workflows:
-  test_my_app:
-    jobs:
-      - install-node-example
+      - node/install-packages # Utilize commands in steps
