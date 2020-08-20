@@ -14,9 +14,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "test:ci": "CI=true yarn test --coverage --reporters=default --reporters=jest-junit"
+    "test": "react-scripts test",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true yarn test --coverage --reporters=default --reporters=jest-junit",
+    "lint": "eslint src",
+    "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "eslintConfig": {
     "root": true,
@@ -37,12 +39,26 @@
             ".jsx"
           ]
         }
-      ]
+      ],
+      "linebreak-style": 0
     },
     "env": {
       "jest/globals": true,
       "browser": true
     }
+  },
+  "eslint-formatter-multiple": {
+    "formatters": [
+      {
+        "name": "stylish",
+        "output": "console"
+      },
+      {
+        "name": "junit",
+        "output": "file",
+        "path": "reports/lint.xml"
+      }
+    ]
   },
   "babel": {
     "presets": [
@@ -65,8 +81,10 @@
     "@testing-library/dom": "^7.21.7",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "cross-env": "^7.0.2",
     "eslint": "^6.8.0",
     "eslint-config-airbnb": "^18.2.0",
+    "eslint-formatter-multiple": "^1.0.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jest": "^23.20.0",
     "eslint-plugin-jsx-a11y": "^6.3.1",
