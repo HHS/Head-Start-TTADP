@@ -3,4 +3,6 @@ reports
 node_modules
 coverage
 .DS_Store
-.env.dev
+.env
+junit.xml
+frontend/build

@@ -8,20 +8,20 @@
     "start": "concurrently \"yarn server\" \"yarn client\"",
     "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
     "client": "yarn --cwd frontend start",
-    "test": "jest src && yarn --cwd frontend test --watchAll=false",
-    "eslint": "eslint src",
-    "lint:ci": "eslint src -f junit -o reports/lint.xml src",
-    "test:ci": "jest src --coverage --reporters=default --reporters=jest-junit",
+    "test": "jest src",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true jest src --coverage --reporters=default --reporters=jest-junit",
+    "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
+    "lint": "eslint src",
+    "lint:ci": "eslint -f eslint-formatter-multiple src",
+    "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
-
-    "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
-    "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:start": "docker-compose up -d",
     "docker:stop": "docker-compose down",
     "docker:test": "docker-compose run --rm backend yarn test:ci && docker-compose run --rm frontend yarn test:ci",
-    "docker:lint": "docker-compose run --rm backend yarn lint:ci",
-    "docker:audit": "docker-compose run --rm backend ./scripts/audit.sh && docker-compose run --rm frontend ./scripts/audit.sh"
+    "docker:lint": "docker-compose run --rm backend yarn lint:ci && docker-compose run --rm frontend yarn lint:ci",
+    "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
+    "docker:shell:backend": "docker-compose run --rm backend /bin/bash"
   },
   "repository": {
     "type": "git",
@@ -34,6 +34,22 @@
     ],
     "ignorePatterns": [
       "node_modules/*"
+    ],
+    "rules": {
+      "linebreak-style": 0
+    }
+  },
+  "eslint-formatter-multiple": {
+    "formatters": [
+      {
+        "name": "stylish",
+        "output": "console"
+      },
+      {
+        "name": "junit",
+        "output": "file",
+        "path": "reports/lint.xml"
+      }
     ]
   },
   "jest": {
@@ -54,8 +70,10 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.0",
     "concurrently": "^5.3.0",
+    "cross-env": "^7.0.2",
     "eslint": "^6.6.0",
     "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-formatter-multiple": "^1.0.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jest": "^23.20.0",
     "eslint-plugin-jsx-a11y": "^6.3.1",

@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile.dev
     command: yarn server
     user: ${CURRENT_USER:-root}
-    env_file:
-      - .env
     ports:
       - "3001:3001"
     volumes:
@@ -18,8 +16,6 @@ services:
       dockerfile: Dockerfile.dev
     command: yarn start
     user: ${CURRENT_USER:-root}
-    env_file:
-      - .env
     stdin_open: true
     ports:
       - "3000:3000"
@@ -27,6 +23,4 @@ services:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
     environment:
-      - JEST_JUNIT_OUTPUT_DIR=reports
-      - JEST_JUNIT_OUTPUT_NAME=unit.xml
       - BACKEND_PROXY=http://backend:3001
