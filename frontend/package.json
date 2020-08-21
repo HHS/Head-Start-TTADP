@@ -1,0 +1,95 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
+    "http-proxy-middleware": "^1.0.5",
+    "prop-types": "^15.7.2",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.1",
+    "uswds": "^2.8.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "test": "react-scripts test",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true yarn test --coverage --reporters=default --reporters=jest-junit",
+    "lint": "eslint src",
+    "lint:ci": "eslint -f eslint-formatter-multiple src"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "airbnb",
+      "plugin:jest/recommended"
+    ],
+    "ignorePatterns": [
+      "build/*",
+      "node_modules/*"
+    ],
+    "rules": {
+      "react/jsx-filename-extension": [
+        1,
+        {
+          "extensions": [
+            ".js",
+            ".jsx"
+          ]
+        }
+      ],
+      "linebreak-style": 0
+    },
+    "env": {
+      "jest/globals": true,
+      "browser": true
+    }
+  },
+  "eslint-formatter-multiple": {
+    "formatters": [
+      {
+        "name": "stylish",
+        "output": "console"
+      },
+      {
+        "name": "junit",
+        "output": "file",
+        "path": "reports/lint.xml"
+      }
+    ]
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-react"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^7.21.7",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "cross-env": "^7.0.2",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.2.0",
+    "eslint-formatter-multiple": "^1.0.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^23.20.0",
+    "eslint-plugin-jsx-a11y": "^6.3.1",
+    "eslint-plugin-react": "^7.20.5",
+    "eslint-plugin-react-hooks": "^4.0.8",
+    "jest-junit": "^11.1.0"
+  }
+}

@@ -1,1 +1,8 @@
+yarn-error.log
+reports
+node_modules
+coverage
 .DS_Store
+.env
+junit.xml
+frontend/build
