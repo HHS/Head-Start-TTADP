@@ -1,10 +1,10 @@
-# ADR 1: Deployment of static frontend
+# 2. Deployment of static frontend
 
 Date: 2020-08-17
 
 ## Status
 
-Pending
+Accepted
 
 ## Context
 
