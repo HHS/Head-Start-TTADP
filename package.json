@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
+  "engines": {
+    "node": "^12.18"
+  },
   "scripts": {
     "deps": "yarn install && yarn --cwd frontend install",
     "start": "concurrently \"yarn server\" \"yarn client\"",

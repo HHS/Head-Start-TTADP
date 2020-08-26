@@ -5,7 +5,7 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:12.18.3
+      - image: circleci/node:12.18
 jobs:
   build:
     # Each job must declare an executor
