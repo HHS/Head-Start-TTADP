@@ -6,7 +6,7 @@ services:
     command: yarn server
     user: ${CURRENT_USER:-root}
     ports:
-      - "3001:3001"
+      - "8080:8080"
     volumes:
       - ".:/app:rw"
   frontend:
@@ -21,4 +21,4 @@ services:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
     environment:
-      - BACKEND_PROXY=http://backend:3001
+      - BACKEND_PROXY=http://backend:8080
