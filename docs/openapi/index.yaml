@@ -1,0 +1,15 @@
+openapi: 3.0.2
+tags:
+  - name: status
+info:
+  version: 0.0.1
+  title: TTADP
+  contact:
+    email: josh@adhocteam.us
+servers:
+  - url: http://localhost:8080
+  - url: http://backend:8080
+paths:
+  $ref: "./paths/index.yaml"
+components:
+  schemas: {}

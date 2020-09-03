@@ -1,0 +1,2 @@
+'/hello':
+  $ref: './hello.yaml'

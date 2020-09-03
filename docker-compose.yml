@@ -1,5 +1,12 @@
 version: "3.5"
 services:
+  api-docs:
+    image: wework/speccy
+    ports:
+      - "5000:5000"
+    volumes:
+      - "./docs/openapi/:/project/"
+    command: serve index.yaml
   backend:
     build:
       context: .
