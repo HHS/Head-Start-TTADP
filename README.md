@@ -3,6 +3,11 @@ Office of Head Start Training & Technical Assistance Data Platform
 
 Welcome to the home of the OHS TTADP.
 
+What We're Building and Why
+---------------
+
+For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).  
+
 
 Getting Started
 ---------------
