@@ -19,6 +19,11 @@ app.get('/hello', (req, res) => {
   res.send('Hello from ttadp');
 });
 
+app.post('/hello', (req, res) => {
+  logger.info('Hello from ttadp');
+  res.send('Hello from ttadp');
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
@@ -34,11 +39,6 @@ app.use(session({
 authMiddleware.unless = unless;
 app.use(authMiddleware.unless({ path: oauth2CallbackPath }));
 app.use(requestLogger);
-
-app.get('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
 
 router.get(oauth2CallbackPath, async (req, res) => {
   try {
