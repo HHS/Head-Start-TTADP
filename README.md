@@ -18,7 +18,7 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 Running Tests
 -------------
 
-Run `yarn docker:deps` to install dependencies. Run `yarn docker:test` to run all tests for the frontend and backend.
+Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate` and `yarn docker:test` to run all tests for the frontend and backend.
 
 Docker on Windows
 -----------------
@@ -38,6 +38,8 @@ Other Commands
 | `yarn docker:stop` | Stops the backend and frontend docker containers |
 | `yarn docker:test` | Runs tests for the frontend and backend in docker containers |
 | `yarn docker:lint` | Runs the linter for the frontend and backend in docker containers |
+| `yarn docker:db:migrate` | Run migrations in docker containers |
+| `yarn docker:db:migrate:undo` | Undo migrations in docker containers |
 | `yarn deps` | Install dependencies for the frontend and backend |
 | `yarn start` | Starts the backend and frontend |
 | `yarn server` | Starts the backend |
@@ -48,6 +50,8 @@ Other Commands
 | `yarn lint` | Run the linter only for the backend |
 | `yarn lint:ci` | Run the linter for the the backend with results output to xml files |
 | `yarn lint:all` | Run `yarn lint:ci` for both the frontend and backend |
+| `yarn db:migrate` | Run migrations |
+| `yarn db:migrate:undo` | Undo migrations |
 
 Deployment
 ----------
