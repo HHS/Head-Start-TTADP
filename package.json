@@ -19,7 +19,7 @@
     "lint:ci": "eslint -f eslint-formatter-multiple src",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
-    "api:test": "yarn docs:build && npx dredd --server 'yarn server'",
+    "api:test": "yarn docs:build && npx dredd",
     "docs:build": "npx speccy resolve docs/openapi/index.yaml -o docs/openapi/openapi3.yaml",
     "docs:lint": "yarn docs:build && npx speccy lint docs/openapi/openapi3.yaml",
     "docs:serve": "yarn docs:build && npx speccy serve docs/openapi/openapi3.yaml",
@@ -28,7 +28,7 @@
     "docker:stop": "docker-compose down",
     "docker:test": "docker-compose run --rm backend yarn test:ci && docker-compose run --rm frontend yarn test:ci",
     "docker:lint": "docker-compose run --rm backend yarn lint:ci && docker-compose run --rm frontend yarn lint:ci",
-    "docker:api:test": "yarn docs:build && concurrently \"yarn docker:start\" \"sleep 5 && dredd\" && yarn docker:stop",
+    "docker:api:test": "yarn docs:build && concurrently \"yarn docker:start\" \"sleep 5 && npx dredd --config ./dredd.docker.yml\" && yarn docker:stop",
     "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
     "docker:shell:backend": "docker-compose run --rm backend /bin/bash"
   },

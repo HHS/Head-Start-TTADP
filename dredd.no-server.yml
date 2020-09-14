@@ -3,7 +3,6 @@ dry-run: null
 hookfiles: null
 language: nodejs
 require: null
-server: yarn server
 server-wait: 5
 init: false
 custom: {}
