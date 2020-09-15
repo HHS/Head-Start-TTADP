@@ -15,14 +15,14 @@ export default (sequelize, DataTypes) => {
   }
   User.init({
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: null,
       comment: null,
       primaryKey: true,
       autoIncrement: true,
     },
-    hsesUserId: DataTypes.BIGINT,
+    hsesUserId: DataTypes.STRING,
     name: DataTypes.STRING,
     phoneNumber: DataTypes.STRING,
     email: DataTypes.STRING,
