@@ -13,13 +13,35 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+commands:
+  create_combined_yarnlock:
+    description: "Concatenate all yarn.json files into single file.
+      File is used as checksum source for part of caching key."
+    parameters:
+      filename:
+        type: string
+        default: "combined-yarnlock.txt"
+    steps:
+      - run:
+          name: Combine package-lock.json files to single file
+          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
 jobs:
   build:
-    # Each job must declare an executor
     executor: docker-executor
     steps:
       - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version numbers e.g. v2-yarn...
+            - v1-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v1-yarn-deps-
       - run: yarn deps
+      - save_cache:
+          paths:
+            - combined-yarnlock.txt
+          key: v1-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - persist_to_workspace:
           root: .
           paths:
