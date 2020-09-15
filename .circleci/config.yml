@@ -33,15 +33,16 @@ jobs:
       - create_combined_yarnlock
       - restore_cache:
           keys:
-            # To manually bust the cache, increment the version numbers e.g. v2-yarn...
-            - v1-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # To manually bust the cache, increment the version e.g. v3-yarn...
+            - v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v1-yarn-deps-
+            - v2-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
-            - combined-yarnlock.txt
-          key: v1-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - node_modules
+            - frontend/node_modules
+          key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - persist_to_workspace:
           root: .
           paths:
