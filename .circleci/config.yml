@@ -53,8 +53,11 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend and frontend
-          command: yarn run lint:ci && cd frontend && yarn run lint:ci
+          name: Lint backend
+          command: yarn run lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend run lint:ci
       - store_artifacts:
           path: reports
       - store_artifacts:
