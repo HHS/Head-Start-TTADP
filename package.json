@@ -11,7 +11,7 @@
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start": "concurrently \"yarn server\" \"yarn client\"",
     "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
-    "server:debug": "nodemon src/index.js --ignore './frontend/' --exec babel-node --inspect=0.0.0.0:9229",
+    "server:debug": "nodemon src/index.js --ignore './frontend/' --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit",

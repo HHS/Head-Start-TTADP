@@ -1,3 +1,4 @@
+import {} from 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
 import axios from 'axios';
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(session({
-  secret: 'top secrect',
+  secret: process.env.SESSION_SECRET,
   store: new MemoryStore({ // Potentially change this to a different store
     checkPeriod: 86400000, // prune expired entries every 24h
   }),
