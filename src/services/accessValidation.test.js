@@ -11,7 +11,7 @@ describe('findOrCreateUser', () => {
   });
   test('Finds an existing user when a matching user exists', async () => {
     const user = {
-      hsesUserId: 33,
+      hsesUserId: '33',
       email: 'test@test.com',
     };
     // Verify that there are no users
@@ -34,7 +34,7 @@ describe('findOrCreateUser', () => {
 
   test('Creates a new user when a matching user does not exist', async () => {
     const user = {
-      hsesUserId: 33,
+      hsesUserId: '33',
       email: 'test@test.com',
     };
     // Check that the above `user` doesn't exist in the DB yet.

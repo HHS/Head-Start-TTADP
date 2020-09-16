@@ -7,7 +7,7 @@ module.exports = {
       autoIncrement: true,
     },
     hsesUserId: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.STRING,
     },
     name: {
       type: Sequelize.STRING,
