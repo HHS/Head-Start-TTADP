@@ -6,7 +6,7 @@ Welcome to the home of the OHS TTADP.
 What We're Building and Why
 ---------------
 
-For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).  
+For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
 
 
 Getting Started
@@ -23,7 +23,7 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 Running Tests
 -------------
 
-Run `yarn docker:deps` to install dependencies. Run `yarn docker:test` to run all tests for the frontend and backend.
+Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate` and `yarn docker:test` to run all tests for the frontend and backend.
 
 Docker on Windows
 -----------------
@@ -36,23 +36,24 @@ You may run into some issues running the docker commands on Windows:
 Other Commands
 --------------
 
-| Yarn Command | Description |
-|-|-|
-| `yarn docker:deps` | Install dependencies for the frontend and backend |
-| `yarn docker:start` | Starts the backend and frontend docker containers |
-| `yarn docker:stop` | Stops the backend and frontend docker containers |
-| `yarn docker:test` | Runs tests for the frontend and backend in docker containers |
-| `yarn docker:lint` | Runs the linter for the frontend and backend in docker containers |
-| `yarn deps` | Install dependencies for the frontend and backend |
-| `yarn start` | Starts the backend and frontend |
-| `yarn server` | Starts the backend |
-| `yarn client` | Start the frontend |
-| `yarn test` | Run tests for only the backend |
-| `yarn test:ci` | Run tests for the backend with coverage and output results to xml files|
-| `yarn test:all` | Run `yarn test:ci` for both the frontend and backend |
-| `yarn lint` | Run the linter only for the backend |
-| `yarn lint:ci` | Run the linter for the the backend with results output to xml files |
-| `yarn lint:all` | Run `yarn lint:ci` for both the frontend and backend |
+| Docker Command | Description| Host Command |
+|-|-|-|
+| `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` |
+| `yarn docker:start` | Starts the backend and frontend | `yarn start` |
+| `yarn docker:stop` | Stops the backend and frontend |
+| `yarn docker:test` | Runs tests for the frontend and backend |
+| `yarn docker:lint` | Runs the linter for the frontend and backend |
+| `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` |
+| `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` |
+| | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` |
+| | Starts the backend | `yarn server` |
+| | Start the frontend | `yarn client`
+| | Run tests for only the backend | `yarn test`|
+| | Run tests for the backend with coverage and output results to xml files|  `yarn test:ci`|
+| | Run `yarn test:ci` for both the frontend and backend | `yarn test:all`|
+| | Run the linter only for the backend | `yarn lint` |
+| | Run the linter for the the backend with results output to xml files | `yarn lint:ci`|
+| | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`|
 
 Deployment
 ----------

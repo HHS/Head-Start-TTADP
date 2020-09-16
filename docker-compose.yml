@@ -3,17 +3,19 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.dev
     command: yarn server
     user: ${CURRENT_USER:-root}
     ports:
-      - "3001:3001"
+      - "8080:8080"
+    depends_on:
+      - db
+    environment: 
+      - POSTGRES_HOST=postgres_docker
     volumes:
       - ".:/app:rw"
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.dev
     command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true
@@ -23,4 +25,10 @@ services:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
     environment:
-      - BACKEND_PROXY=http://backend:3001
+      - BACKEND_PROXY=http://backend:8080
+  db:
+    image: postgres:12.4
+    container_name: postgres_docker
+    env_file: .env
+    ports:
+      - "6543:5432"
