@@ -47,16 +47,24 @@ jobs:
           root: .
           paths:
             - .
-  lint_backend_and_frontend:
+  lint_backend:
     executor: docker-executor
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend and frontend
-          command: yarn run lint:ci && cd frontend && yarn run lint:ci
+          name: Lint backend
+          command: yarn run lint:ci
       - store_artifacts:
           path: reports
+  lint_frontend:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Lint frontend
+          command: cd frontend && yarn run lint:ci
       - store_artifacts:
           path: frontend/reports
   test_backend:
