@@ -12,7 +12,7 @@ Data storage and management is a key component of the tta smarthub platform. At 
 
 ## Decision
 
-While both databases provide adequate storage and management, especially with updates provided by version 8 of MySQL, in the end Postgres was chosen. The main advantages of Postgres are implemenations leading to better concurrency, specifically the MVCC (Multiversion Concurrency Control) without the need to use read locks, transactional ACID (Atomicity, Consistency, Isolation, Durability) support making the systemless vulnerable to data corruption. Postgres also supports partial indexes, can create indexes in a non-blocking way, multiple cores, GIN/GIST indexing accellerating full-text searches.
+While both databases provide adequate storage and management, especially with updates provided by version 8 of MySQL, in the end Postgres was chosen. The main advantages of Postgres are implementations leading to better concurrency, specifically the MVCC (Multiversion Concurrency Control) without the need to use read locks, transactional ACID (Atomicity, Consistency, Isolation, Durability) support making the system less vulnerable to data corruption. Postgres also supports partial indexes, can create indexes in a non-blocking way, multiple cores, GIN/GIST indexing accelerating full-text searches.
 
 ## Consequences
 
