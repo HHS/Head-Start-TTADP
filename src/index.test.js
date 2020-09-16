@@ -1,9 +1,12 @@
 import request from 'supertest';
-import app from './app';
+import server from './index';
 
 describe('Root', () => {
-  test('Successfully returns the page', async () => {
-    const response = await request(app).get('/');
-    expect(response.status).toBe(200);
+  test('Redirects to login if user is not logged in', async () => {
+    const response = await request(server).get('/');
+    expect(response.status).toBe(302);
+  });
+  afterAll(async () => {
+    await server.close();
   });
 });
