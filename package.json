@@ -7,7 +7,8 @@
     "node": "^12.18"
   },
   "scripts": {
-    "deps": "yarn install && yarn --cwd frontend install",
+    "deps:local": "yarn install && yarn --cwd frontend install",
+    "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start": "concurrently \"yarn server\" \"yarn client\"",
     "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
     "server:debug": "nodemon src/index.js --ignore './frontend/' --exec babel-node --inspect=0.0.0.0:9229",
