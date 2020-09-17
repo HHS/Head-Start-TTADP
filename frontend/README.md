@@ -11,7 +11,8 @@ There are yarn commands for starting/testing/linting the frontend defined a dire
 | Yarn Command | Description |
 |-|-|
 | `yarn start` | Start the frontend development server |
-| `yarn build` | Build a production bundle |
+| `yarn build:local` | Build a production bundle for local development |
+| `yarn build` | Build a production bundle for deployed env|
 | `yarn test` | Start the test watcher |
 | `yarn test:ci` | Run unit tests a single time outputting results to xml files |
 | `yarn lint` | Run the linter |

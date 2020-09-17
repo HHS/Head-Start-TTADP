@@ -6,6 +6,7 @@ import session from 'express-session';
 import memorystore from 'memorystore';
 import unless from 'express-unless';
 import _ from 'lodash';
+import path from 'path';
 
 import authMiddleware, { hsesAuth } from './middleware/authMiddleware';
 
@@ -62,7 +63,7 @@ router.get(oauth2CallbackPath, async (req, res) => {
 app.use('/', router);
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('frontend/build'));
+  app.use(express.static(path.join(__dirname, 'client')));
 }
 
 const server = app.listen(process.env.PORT || 8080, () => {
