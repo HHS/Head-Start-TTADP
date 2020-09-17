@@ -20,7 +20,7 @@ You can also run build commands directly on your host (without docker). Make sur
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
-Api documentation uses [Speccy](https://github.com/wework/speccy) to validate, combine and serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files. Run `yarn api:test` or `yarn docker:api:test` to validate api documentation against the running backend server. Note I've ran into issues with [dredd](https://dredd.org/en/latest/) not properly killing the server running directly on my host and have to use `yarn docker:api:test` but you might have better luck on OSX or Windows.
+Api documentation uses [Speccy](https://github.com/wework/speccy) to validate, combine and serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
 Running Tests
 -------------
@@ -47,7 +47,6 @@ Yarn Commands
 | `yarn docker:lint` | Runs the linter for the frontend and backend |
 | `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` |
 | `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` |
-| `yarn docker:api:test` | Runs API tests using the open api spec in `docs/openapi` against the server | `yarn api:test` |
 | | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` |
 | | Starts the backend | `yarn server` |
 | | Start the frontend | `yarn client`
