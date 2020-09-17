@@ -7,9 +7,11 @@
     "node": "^12.18"
   },
   "scripts": {
+    "build": "./node_modules/.bin/babel src -d ./build/server",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
-    "start": "concurrently \"yarn server\" \"yarn client\"",
+    "start:local": "concurrently \"yarn server\" \"yarn client\"",
+    "start": "node ./build/server/index.js",
     "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
     "server:debug": "nodemon src/index.js --ignore './frontend/' --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
@@ -76,10 +78,11 @@
   },
   "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
   "devDependencies": {
-    "@babel/core": "^7.11.0",
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
     "@babel/node": "^7.10.5",
     "@babel/plugin-transform-runtime": "^7.11.0",
-    "@babel/preset-env": "^7.11.0",
+    "@babel/preset-env": "^7.11.5",
     "concurrently": "^5.3.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
@@ -98,12 +101,15 @@
     "supertest": "^4.0.2"
   },
   "dependencies": {
+    "@babel/runtime": "^7.11.2",
     "axios": "^0.20.0",
     "client-oauth2": "^4.3.3",
     "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "express-unless": "^0.5.0",
+    "express-winston": "^4.0.5",
     "helmet": "^4.1.0",
     "lodash": "^4.17.20",
     "memorystore": "^1.6.2",
