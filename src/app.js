@@ -1,3 +1,4 @@
+import {} from 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
 import axios from 'axios';
@@ -14,21 +15,11 @@ const router = express.Router();
 const MemoryStore = memorystore(session);
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
-app.get('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
-
-app.post('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(session({
-  secret: 'top secrect',
+  secret: process.env.SESSION_SECRET,
   store: new MemoryStore({ // Potentially change this to a different store
     checkPeriod: 86400000, // prune expired entries every 24h
   }),
@@ -40,6 +31,16 @@ authMiddleware.unless = unless;
 app.use(authMiddleware.unless({ path: oauth2CallbackPath }));
 app.use(requestLogger);
 
+app.get('/hello', (req, res) => {
+  logger.info('Hello from ttadp');
+  res.send('Hello from ttadp');
+});
+
+app.post('/hello', (req, res) => {
+  logger.info('Hello from ttadp');
+  res.send('Hello from ttadp');
+});
+
 router.get(oauth2CallbackPath, async (req, res) => {
   try {
     const user = await hsesAuth.code.getToken(req.originalUrl);
@@ -50,13 +51,12 @@ router.get(oauth2CallbackPath, async (req, res) => {
     });
 
     const { url } = requestObj;
+
     const response = await axios.get(url, requestObj);
     const { data } = response;
     const { authorities } = data;
-
     req.session.userId = 1; // temporary
     req.session.role = _.get(authorities[0], 'authority');
-
     logger.info(`role: ${req.session.role}`);
     res.redirect(req.session.originalUrl);
   } catch (error) {
@@ -67,7 +67,7 @@ router.get(oauth2CallbackPath, async (req, res) => {
 app.use('/', router);
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('src/frontend/build'));
+  app.use(express.static('frontend/build'));
 }
 
 module.exports = app;

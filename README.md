@@ -3,6 +3,11 @@ Office of Head Start Training & Technical Assistance Data Platform
 
 Welcome to the home of the OHS TTADP.
 
+What We're Building and Why
+---------------
+
+For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
+
 
 Getting Started
 ---------------
@@ -20,7 +25,7 @@ Api documentation uses [Speccy](https://github.com/wework/speccy) to validate, c
 Running Tests
 -------------
 
-Run `yarn docker:deps` to install dependencies. Run `yarn docker:test` to run all tests for the frontend and backend.
+Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate` and `yarn docker:test` to run all tests for the frontend and backend.
 
 Docker on Windows
 -----------------
@@ -33,28 +38,28 @@ You may run into some issues running the docker commands on Windows:
 Yarn Commands
 --------------
 
-| Yarn Command | Description |
-|-|-|
-| `yarn docker:deps` | Install dependencies for the frontend and backend |
-| `yarn docker:start` | Starts the backend (`localhost:8080`) and frontend (`localhost:3000`) docker containers. An API documentation server can be hit at `localhost:5000` |
-| `yarn docker:stop` | Stops the backend and frontend docker containers |
-| `yarn docker:test` | Runs tests for the frontend and backend in docker containers |
-| `yarn docker:lint` | Runs the linter for the frontend and backend in docker containers |
-| `yarn docker:api:test` | Runs API tests using the open api spec in `docs/openapi` against a server docker container |
-| `yarn deps` | Install dependencies for the frontend and backend |
-| `yarn start` | Starts the backend and frontend |
-| `yarn server` | Starts the backend |
-| `yarn client` | Start the frontend |
-| `yarn test` | Run tests for only the backend |
-| `yarn test:ci` | Run tests for the backend with coverage and output results to xml files|
-| `yarn test:all` | Run `yarn test:ci` for both the frontend and backend |
-| `yarn lint` | Run the linter only for the backend |
-| `yarn lint:ci` | Run the linter for the the backend with results output to xml files |
-| `yarn lint:all` | Run `yarn lint:ci` for both the frontend and backend |
-| `yarn docs:build` | Combine open api spec files into a single yaml file. Some tools do not like splitting the API definition into multiple files and the combined file, `docs/openapi/openapi3.yaml`, should be used if possible over the main `docs/openapi/index.yaml` file
-| `yarn docs:lint` | Run the [speccy](https://github.com/wework/speccy) linter on the open api 3 spec |
-| `yarn docs:serve` | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` |
-| `yarn api:test` | Runs API tests using the open api spec in `docs/openapi` against the server |
+| Docker Command | Description| Host Command |
+|-|-|-|
+| `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` |
+| `yarn docker:start` | Starts the backend and frontend | `yarn start` |
+| `yarn docker:stop` | Stops the backend and frontend |
+| `yarn docker:test` | Runs tests for the frontend and backend |
+| `yarn docker:lint` | Runs the linter for the frontend and backend |
+| `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` |
+| `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` |
+| `yarn docker:api:test` | Runs API tests using the open api spec in `docs/openapi` against the server | `yarn api:test` |
+| | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` |
+| | Starts the backend | `yarn server` |
+| | Start the frontend | `yarn client`
+| | Run tests for only the backend | `yarn test`|
+| | Run tests for the backend with coverage and output results to xml files|  `yarn test:ci`|
+| | Run `yarn test:ci` for both the frontend and backend | `yarn test:all`|
+| | Run the linter only for the backend | `yarn lint` |
+| | Run the linter for the the backend with results output to xml files | `yarn lint:ci`|
+| | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`|
+| | Combine open api spec files into a single yaml file. Some tools do not like splitting the API definition into multiple files and the combined file, `docs/openapi/openapi3.yaml`, should be used if possible over the main `docs/openapi/index.yaml` file | `yarn docs:build` |
+| | Run the [speccy](https://github.com/wework/speccy) linter on the open api 3 spec | `yarn docs:lint` |
+| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` |
 
 Deployment
 ----------

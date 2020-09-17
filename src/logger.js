@@ -1,3 +1,4 @@
+import {} from 'dotenv/config';
 import winston from 'winston';
 import expressWinston from 'express-winston';
 import env from './env';
@@ -21,7 +22,7 @@ const jsonFormatter = winston.format.combine(
 const formatter = env.bool('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter;
 
 const logger = winston.createLogger({
-  level: 'info',
+  level: process.env.LOG_LEVEL,
   format: formatter,
   transports: [
     new winston.transports.Console(),
