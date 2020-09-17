@@ -6,13 +6,43 @@ executors:
     # for docker you must specify an image to use for the primary container
     docker:
       - image: circleci/node:12.18
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+      - image: circleci/postgres:12.4-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
+commands:
+  create_combined_yarnlock:
+    description: "Concatenate all yarn.json files into single file.
+      File is used as checksum source for part of caching key."
+    parameters:
+      filename:
+        type: string
+        default: "combined-yarnlock.txt"
+    steps:
+      - run:
+          name: Combine package-lock.json files to single file
+          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
 jobs:
   build:
-    # Each job must declare an executor
     executor: docker-executor
     steps:
       - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version e.g. v3-yarn...
+            - v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v2-yarn-deps-
       - run: yarn deps
+      - save_cache:
+          paths:
+            - node_modules
+            - frontend/node_modules
+          key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - persist_to_workspace:
           root: .
           paths:
@@ -23,8 +53,11 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend and frontend
-          command: yarn run lint:ci && cd frontend && yarn run lint:ci
+          name: Lint backend
+          command: yarn run lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend run lint:ci
       - store_artifacts:
           path: reports
       - store_artifacts:
@@ -34,6 +67,9 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Run migrations ci
+          command: yarn run db:migrate:ci
       - run:
           name: Test backend
           command: yarn run test:ci

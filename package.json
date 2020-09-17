@@ -7,13 +7,14 @@
     "node": "^12.18"
   },
   "scripts": {
-    "deps": "yarn install && yarn --cwd frontend install",
+    "deps:local": "yarn install && yarn --cwd frontend install",
+    "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start": "concurrently \"yarn server\" \"yarn client\"",
     "server": "nodemon src/index.js --ignore './frontend/' --exec babel-node",
-    "server:debug": "nodemon src/index.js --ignore './frontend/' --exec babel-node --inspect=0.0.0.0:9229",
+    "server:debug": "nodemon src/index.js --ignore './frontend/' --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true jest src --coverage --reporters=default --reporters=jest-junit",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -23,6 +24,9 @@
     "docs:build": "npx speccy resolve docs/openapi/index.yaml -o docs/openapi/openapi3.yaml",
     "docs:lint": "yarn docs:build && npx speccy lint docs/openapi/openapi3.yaml",
     "docs:serve": "yarn docs:build && npx speccy serve docs/openapi/openapi3.yaml",
+    "db:migrate": "node_modules/.bin/sequelize db:migrate",
+    "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
+    "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:start": "docker-compose up -d",
     "docker:stop": "docker-compose down",
@@ -30,7 +34,10 @@
     "docker:lint": "docker-compose run --rm backend yarn lint:ci && docker-compose run --rm frontend yarn lint:ci",
     "docker:api:test": "yarn docs:build && concurrently \"yarn docker:start\" \"sleep 5 && npx dredd --config ./dredd.docker.yml\" && yarn docker:stop",
     "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
-    "docker:shell:backend": "docker-compose run --rm backend /bin/bash"
+    "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
+    "docker:db:migrate": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate",
+    "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo"
+
   },
   "repository": {
     "type": "git",
@@ -94,6 +101,7 @@
     "jest-junit": "^11.1.0",
     "nodemon": "^2.0.4",
     "speccy": "^0.11.0",
+    "sequelize-cli": "^6.2.0",
     "supertest": "^4.0.2"
   },
   "dependencies": {
@@ -108,6 +116,8 @@
     "helmet": "^4.1.0",
     "lodash": "^4.17.20",
     "memorystore": "^1.6.2",
+    "pg": "^8.3.3",
+    "sequelize": "^5.22.3",
     "winston": "^3.3.3"
   }
 }
