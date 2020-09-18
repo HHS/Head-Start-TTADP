@@ -35,30 +35,60 @@ You may run into some issues running the docker commands on Windows:
 
 Other Commands
 --------------
+| Docker Command | Description| Host Command | Local only Command |
+|-|-|-|-|
+| `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` | `yarn deps:local` |
+| `yarn docker:start` | Starts the backend and frontend | | `yarn start:local` |
+| `yarn docker:stop` | Stops the backend and frontend | |
+| `yarn docker:test` | Runs tests for the frontend and backend | |
+| `yarn docker:lint` | Runs the linter for the frontend and backend | |
+| `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` | |
+| `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` | |
+| | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` | |
+| | Starts the backend | `yarn start` |`yarn server` | |
+| | Start the frontend | `yarn client` | |
+| | Run tests for only the backend | `yarn test`| |
+| | Run tests for the backend with coverage and output results to xml files|  `yarn test:ci`| |
+| | Run `yarn test:ci` for both the frontend and backend | `yarn test:all`| |
+| | Run the linter only for the backend | `yarn lint` | |
+| | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
+| | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
 
-| Docker Command | Description| Host Command |
-|-|-|-|
-| `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` |
-| `yarn docker:start` | Starts the backend and frontend | `yarn start` |
-| `yarn docker:stop` | Stops the backend and frontend |
-| `yarn docker:test` | Runs tests for the frontend and backend |
-| `yarn docker:lint` | Runs the linter for the frontend and backend |
-| `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` |
-| `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` |
-| | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` |
-| | Starts the backend | `yarn server` |
-| | Start the frontend | `yarn client`
-| | Run tests for only the backend | `yarn test`|
-| | Run tests for the backend with coverage and output results to xml files|  `yarn test:ci`|
-| | Run `yarn test:ci` for both the frontend and backend | `yarn test:all`|
-| | Run the linter only for the backend | `yarn lint` |
-| | Run the linter for the the backend with results output to xml files | `yarn lint:ci`|
-| | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`|
+Integration
+-----------
+
+Linting, unit tests and test coverage analysis are all run automatically on each push
+to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In
+the Ad Hoc repository, merges to the main branch are blocked if the continuous
+integration (CI) tests do not pass. The continuous integration pipeline is configured via CircleCi.
+The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file.
 
 Deployment
 ----------
 
-Deployment to `Staging` and `Production` environments is automated through the CI/CD pipeline.
+This application consists of three deployment environments: development/dev, staging, and
+production/prod. The continuous deployment (CD) pipeline is configured via CircleCi.
+The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file,
+the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/)
+variable files.
 
-* The `main` branch deploys to `Staging`.
-* The `production` branch deploys to `Production`
+Commits to specific branches in github repositories start automatic deployments as follows:
+
+* **Dev** deployed by commit to [main branch][adhoc-main] of Ad Hoc fork of HHS/Head-Start-TTADP repo
+* **Staging** deployed by commit to [main branch][hhs-main] of HHS/Head-Start-TTADP repo
+* **Prod** deployed by commit to [production branch][hhs-prod] of HHS/Head-Start-TTADP repo
+
+The application is deployed to the following URLs:
+
+| Environment | URL |
+|:------------|:----|
+| dev     | https://tta-smarthub.app.cloud.gov/ |
+| staging | |
+| prod    | |
+
+
+<!-- Links -->
+
+[adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
+[hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
+[hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
