@@ -82,13 +82,24 @@ The application is deployed to the following URLs:
 
 | Environment | URL |
 |:------------|:----|
-| dev     | https://tta-smarthub.app.cloud.gov/ |
-| staging | |
+| sandbox | https://tta-smarthub-sandbox.app.cloud.gov/ |
+| dev     | https://tta-smarthub-dev.app.cloud.gov/ |
+| staging | https://tta-smarthub-staging.app.cloud.gov/ |
 | prod    | |
 
+**Sandbox**
+
+An additional deployment environment called "sandbox" is available to developers for testing and
+development on feature branches prior to making a commit to Ad Hoc's main branch and deploying to "dev".
+The current [.circleci/config.yml](.circleci/config.yml) assumes deployments to this space are being made from
+the Ad Hoc repository. Deployments are pushed to the ohstta-sandbox cloud.gov space. To conserve
+resources, running application instances pushed to this space should be deleted as soon as they are no longer needed.
+Running application instances can be deleted by logging into [cloud.gov][cloud.gov], and then selecting and
+deleting the application.
 
 <!-- Links -->
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
+[cloud.gov]: https://dashboard.fr.cloud.gov/home
 [hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
 [hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
