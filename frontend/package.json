@@ -19,7 +19,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build:local": "react-scripts build",
+    "build": "react-scripts build && mv build/ ../build/server/client",
     "eject": "react-scripts eject",
     "test": "react-scripts test",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true yarn test --coverage --reporters=default --reporters=jest-junit",
