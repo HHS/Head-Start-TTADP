@@ -1,0 +1,10 @@
+---
+applications:
+- name: tta-smarthub-((env))
+  instances: ((instances))
+  command: yarn start
+  env:
+    AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
+    AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+    SESSION_SECRET: ((SESSION_SECRET))
+    NODE_ENV: ((NODE_ENV))

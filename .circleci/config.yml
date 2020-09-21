@@ -25,6 +25,73 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+  cf_deploy:
+    description: "Login to cloud foundry space with service account credentials
+      and push application using deployment configuration file."
+    parameters:
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+      deploy_config_file:
+        description: "Path to deployment configuration file"
+        type: string
+    steps:
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Push application with deployment vars
+          command: cf push --vars-file << parameters.deploy_config_file >>
+parameters:
+  cg_org:
+    description: "Cloud Foundry cloud.gov organization name"
+    default: "hhs-acf-prototyping"
+    type: string
+  cg_api:
+    description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
+    default: "https://api.fr.cloud.gov"
+    type: string
+  prod_git_url:
+    description: "URL of github repo that will deploy to prod"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  staging_git_url:
+    description: "URL of github repo that will deploy to staging"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  dev_git_url:
+    description: "URL of github repo that will deploy to dev"
+    default: "https://github.com/adhocteam/Head-Start-TTADP"
+    type: string
+  prod_git_branch:
+    description: "Name of github branch that will deploy to prod"
+    default: "production"
+    type: string
+  staging_git_branch:
+    description: "Name of github branch that will deploy to staging"
+    default: "main"
+    type: string
+  dev_git_branch:
+    description: "Name of github branch that will deploy to dev"
+    default: "main"
+    type: string
+  sandbox_git_branch:  # change to feature branch to test deployment
+    default: "sj-cd-env-var"
+    type: string
 jobs:
   build:
     executor: docker-executor
@@ -47,7 +114,7 @@ jobs:
           root: .
           paths:
             - .
-  lint_backend_and_frontend:
+  lint:
     executor: docker-executor
     steps:
       - attach_workspace:
@@ -84,16 +151,76 @@ jobs:
           at: .
       - run:
           name: Test frontend
-          command: cd frontend && yarn run test:ci
+          command: yarn --cwd frontend run test:ci
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+  deploy:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run:
+          name: Build frontend assets
+          command: yarn --cwd frontend run build
+      - run:
+          name: Install Cloud Foundry
+          command: |
+            curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github'
+            sudo dpkg -i cf-cli_amd64.deb
+      - when:  # sandbox: for short-term feature development, see README.md
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
+          steps:
+            - cf_deploy:
+                cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
+                cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
+                cloudgov_space: CLOUDGOV_SANDBOX_SPACE
+                deploy_config_file: deployment_config/sandbox_vars.yml
+      - when:  # dev
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
+          steps:
+            - cf_deploy:
+                cloudgov_username: CLOUDGOV_DEV_USERNAME
+                cloudgov_password: CLOUDGOV_DEV_PASSWORD
+                cloudgov_space: CLOUDGOV_DEV_SPACE
+                deploy_config_file: deployment_config/dev_vars.yml
+      - when:  # staging
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+          steps:
+            - cf_deploy:
+                cloudgov_username: CLOUDGOV_STAGING_USERNAME
+                cloudgov_password: CLOUDGOV_STAGING_PASSWORD
+                cloudgov_space: CLOUDGOV_STAGING_SPACE
+                deploy_config_file: deployment_config/staging_vars.yml
+      - when:  # prod
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+          steps:
+            - cf_deploy:
+                cloudgov_username: CLOUDGOV_PROD_USERNAME
+                cloudgov_password: CLOUDGOV_PROD_PASSWORD
+                cloudgov_space: CLOUDGOV_PROD_SPACE
+                deploy_config_file: deployment_config/prod_vars.yml
 workflows:
-  build_and_test:
+  build_test_deploy:
     jobs:
       - build
-      - lint_backend_and_frontend:
+      - lint:
           requires:
             - build
       - test_backend:
@@ -102,3 +229,15 @@ workflows:
       - test_frontend:
           requires:
             - build
+      - deploy:
+          requires:
+            - lint
+            - test_backend
+            - test_frontend
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.sandbox_git_branch >>
+                - << pipeline.parameters.dev_git_branch >>
+                - << pipeline.parameters.staging_git_branch >>
+                - << pipeline.parameters.prod_git_branch >>
