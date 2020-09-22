@@ -9,6 +9,7 @@ info:
 servers:
   - url: http://localhost:8080
   - url: http://backend:8080
+  - url: https://tta-smarthub-sandbox.app.cloud.gov
 paths:
   $ref: "./paths/index.yaml"
 components:
