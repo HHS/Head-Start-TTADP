@@ -4,3 +4,5 @@ env: prod
 instances: 2
 NODE_ENV: production
 SESSION_SECRET: ${PROD_SESSION_SECRET}
+AUTH_BASE: https://uat.hsesinfo.org
+REDIRECT_URI_HOST: https://tta-smarthub.app.cloud.gov
