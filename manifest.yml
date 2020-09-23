@@ -4,7 +4,9 @@ applications:
   instances: ((instances))
   command: yarn start
   env:
+    AUTH_BASE: ((AUTH_BASE))
     AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
     AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
-    SESSION_SECRET: ((SESSION_SECRET))
     NODE_ENV: ((NODE_ENV))
+    REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
+    SESSION_SECRET: ((SESSION_SECRET))
