@@ -106,7 +106,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "sj-fix-env-var"
+    default: "sj-add-callback-to-manifest"
     type: string
 jobs:
   build:
