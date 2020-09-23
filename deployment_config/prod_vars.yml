@@ -1,8 +1,8 @@
-AUTH_CLIENT_ID: ${PROD_AUTH_CLIENT_ID}
-AUTH_CLIENT_SECRET: ${PROD_AUTH_CLIENT_SECRET}
+AUTH_BASE: https://uat.hsesinfo.org
+AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
+AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
 env: prod
 instances: 2
 NODE_ENV: production
-SESSION_SECRET: ${PROD_SESSION_SECRET}
-AUTH_BASE: https://uat.hsesinfo.org
-REDIRECT_URI_HOST: https://tta-smarthub.app.cloud.gov
+REDIRECT_URI_HOST: https://tta-smarthub-prod.app.cloud.gov
+SESSION_SECRET: ((SESSION_SECRET))

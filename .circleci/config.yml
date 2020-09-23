@@ -29,6 +29,14 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
     parameters:
+      auth_client_id:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client id, a required application variable"
+        type: env_var_name
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client secret, a required application variable"
+        type: env_var_name
       cloudgov_username:
         description: "Name of CircleCi project environment variable that
           holds deployer username for cloudgov space"
@@ -44,6 +52,10 @@ commands:
       deploy_config_file:
         description: "Path to deployment configuration file"
         type: string
+      session_secret:
+        description: "Name of CircleCi project environment variable that
+          holds session secret, a required application variable"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -55,7 +67,11 @@ commands:
               -s ${<< parameters.cloudgov_space >>}
       - run:
           name: Push application with deployment vars
-          command: cf push --vars-file << parameters.deploy_config_file >>
+          command: |
+            cf push --vars-file << parameters.deploy_config_file >> \
+              --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
+              --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
+              --var SESSION_SECRET=${<< parameters.session_secret >>}
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -90,7 +106,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "sj-cd-env-var"
+    default: "sj-fix-env-var"
     type: string
 jobs:
   build:
@@ -179,10 +195,13 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
             - cf_deploy:
+                auth_client_id: SANDBOX_AUTH_CLIENT_ID
+                auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
                 cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
                 cloudgov_space: CLOUDGOV_SANDBOX_SPACE
                 deploy_config_file: deployment_config/sandbox_vars.yml
+                session_secret: SANDBOX_SESSION_SECRET
       - when:  # dev
           condition:
             and:
@@ -190,10 +209,13 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
             - cf_deploy:
+                auth_client_id: DEV_AUTH_CLIENT_ID
+                auth_client_secret: DEV_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_DEV_USERNAME
                 cloudgov_password: CLOUDGOV_DEV_PASSWORD
                 cloudgov_space: CLOUDGOV_DEV_SPACE
                 deploy_config_file: deployment_config/dev_vars.yml
+                session_secret: DEV_SESSION_SECRET
       - when:  # staging
           condition:
             and:
@@ -201,10 +223,13 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
             - cf_deploy:
+                auth_client_id: STAGING_AUTH_CLIENT_ID
+                auth_client_secret: STAGING_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_STAGING_USERNAME
                 cloudgov_password: CLOUDGOV_STAGING_PASSWORD
                 cloudgov_space: CLOUDGOV_STAGING_SPACE
                 deploy_config_file: deployment_config/staging_vars.yml
+                session_secret: STAGING_SESSION_SECRET
       - when:  # prod
           condition:
             and:
@@ -212,10 +237,13 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
             - cf_deploy:
+                auth_client_id: PROD_AUTH_CLIENT_ID
+                auth_client_secret: PROD_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_PROD_USERNAME
                 cloudgov_password: CLOUDGOV_PROD_PASSWORD
                 cloudgov_space: CLOUDGOV_PROD_SPACE
                 deploy_config_file: deployment_config/prod_vars.yml
+                session_secret: PROD_SESSION_SECRET
 workflows:
   build_test_deploy:
     jobs:
