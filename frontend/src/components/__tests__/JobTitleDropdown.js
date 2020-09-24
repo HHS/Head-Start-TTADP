@@ -5,7 +5,7 @@ import { render, screen } from '@testing-library/react';
 import JobTitleDropdown from '../JobTitleDropdown';
 
 describe('JobTitleDropdown', () => {
-  test('defaults to the correct option', () => {
+  test('shows "select a job title" (the default) when no value is selected', () => {
     render(<JobTitleDropdown id="id" name="name" onChange={() => {}} />);
     expect(screen.getByLabelText('Job Title').value).toBe('default');
   });

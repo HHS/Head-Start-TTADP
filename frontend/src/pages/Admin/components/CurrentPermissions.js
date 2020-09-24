@@ -5,7 +5,7 @@ function CurrentPermissions({ regions, scope }) {
   const regionsStr = regions.length === 1 ? 'Region' : 'Regions';
   const regionMsg = `${regionsStr} ${regions.join(', ')}`;
   return (
-    <li key={scope}>
+    <li>
       <strong>{scope}</strong>
       {': '}
       {regionMsg}
