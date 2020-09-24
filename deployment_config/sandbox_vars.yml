@@ -1,8 +1,8 @@
 AUTH_BASE: https://uat.hsesinfo.org
 AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
 AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
-env: dev
+env: sandbox
 instances: 1
 NODE_ENV: production
-REDIRECT_URI_HOST: https://tta-smarthub-dev.app.cloud.gov
+REDIRECT_URI_HOST: https://tta-smarthub-sandbox.app.cloud.gov
 SESSION_SECRET: ((SESSION_SECRET))

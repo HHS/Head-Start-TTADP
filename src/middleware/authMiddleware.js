@@ -4,9 +4,9 @@ import ClientOAuth2 from 'client-oauth2';
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
   clientSecret: process.env.AUTH_CLIENT_SECRET,
-  accessTokenUri: 'https://uat.hsesinfo.org/auth/oauth/token',
-  authorizationUri: 'https://uat.hsesinfo.org/auth/oauth/authorize',
-  redirectUri: 'http://localhost:8080/oauth2-client/login/oauth2/code/',
+  accessTokenUri: `${process.env.AUTH_BASE}/auth/oauth/token`,
+  authorizationUri: `${process.env.AUTH_BASE}/auth/oauth/authorize`,
+  redirectUri: `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`,
   scopes: ['user_info'],
 });
 
@@ -24,7 +24,6 @@ export const hsesAuth = new ClientOAuth2({
 
 export default async function authMiddleware(req, res, next) {
   req.session.originalUrl = req.originalUrl;
-  // console.log(`session: ${JSON.stringify(req.session)}`);
   if (!req.session.userId) {
     const uri = hsesAuth.code.getUri();
 
