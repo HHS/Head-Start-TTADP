@@ -7,6 +7,7 @@ import {
 import { Alert } from '@trussworks/react-uswds';
 
 import Header from './components/Header';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -21,11 +22,7 @@ function App() {
             World!
           </Alert>
         </Route>
-        <Route path="/second">
-          <div>
-            Hello second Page!
-          </div>
-        </Route>
+        <Route path="/admin/:userId?" component={Admin} />
       </Switch>
     </BrowserRouter>
   );
