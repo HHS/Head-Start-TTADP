@@ -26,7 +26,7 @@ function UserInfo({ user, onUserChange }) {
       </Grid>
       <Grid row gap>
         <Grid col={6}>
-          <RegionDropdown id="user-region" name="region" value={user.region} onChange={onUserChange} />
+          <RegionDropdown id="user-region" name="region" value={user.region} onChange={onUserChange} includeCentralOffice />
         </Grid>
         <Grid col={6}>
           <JobTitleDropdown id="job-title" name="jobTitle" value={user.jobTitle} onChange={onUserChange} />

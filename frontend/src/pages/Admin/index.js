@@ -37,7 +37,7 @@ const fetchedUsers = [
         scope: 'READ_WRITE_REPORTS',
       },
     ],
-    region: '1',
+    region: 'co',
   },
   {
     id: 3,
