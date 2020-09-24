@@ -42,7 +42,7 @@ router.get(oauth2CallbackPath, async (req, res) => {
     // user will have accessToken and refreshToken
     const requestObj = user.sign({
       method: 'get',
-      url: 'https://uat.hsesinfo.org/auth/user/me',
+      url: `${process.env.AUTH_BASE}/auth/user/me`,
     });
 
     const { url } = requestObj;
