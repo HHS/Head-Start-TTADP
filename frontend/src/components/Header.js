@@ -13,8 +13,8 @@ function Header() {
     <NavLink exact to="/">
       Home
     </NavLink>,
-    <NavLink to="/second">
-      Second Page
+    <NavLink to="/admin">
+      Admin
     </NavLink>,
   ];
 

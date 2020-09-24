@@ -7,6 +7,7 @@ import memorystore from 'memorystore';
 import unless from 'express-unless';
 import _ from 'lodash';
 import path from 'path';
+import logger from './logger';
 
 import authMiddleware, { hsesAuth } from './middleware/authMiddleware';
 
@@ -52,8 +53,7 @@ router.get(oauth2CallbackPath, async (req, res) => {
     const { authorities } = data;
     req.session.userId = 1; // temporary
     req.session.role = _.get(authorities[0], 'authority');
-    // TODO: replace with logging message
-    console.log(`role: ${req.session.role}`);
+    logger.info(`role: ${req.session.role}`);
     res.redirect(req.session.originalUrl);
   } catch (error) {
     // console.log(error);
