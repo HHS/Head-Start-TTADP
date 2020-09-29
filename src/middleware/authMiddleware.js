@@ -6,9 +6,23 @@ export const hsesAuth = new ClientOAuth2({
   clientSecret: process.env.AUTH_CLIENT_SECRET,
   accessTokenUri: `${process.env.AUTH_BASE}/auth/oauth/token`,
   authorizationUri: `${process.env.AUTH_BASE}/auth/oauth/authorize`,
+  // TODO: Once our oauth callback has been updated change this to:
+  // redirectUri: `${process.env.TTA_SMART_HUB_URI}/api/oauth2-client/login/oauth2/code/`,
   redirectUri: `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`,
   scopes: ['user_info'],
 });
+
+/**
+ * Login handler
+ *
+ * This function redirects the caller to the configured HSES endpoint
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export function login(req, res) {
+  const uri = hsesAuth.code.getUri();
+  res.redirect(uri);
+}
 
 /**
  * Authentication Middleware
@@ -16,18 +30,15 @@ export const hsesAuth = new ClientOAuth2({
  * This middleware handles user authentication using the request session
  * uid that gets set after successful login via HSES. Non-authenticated
  * users who attempt to access a page that requires authentication will be
- * redirected to the HSES login page.
+ * served a 401
  * @param {*} req - request
  * @param {*} res - response
  * @param {*} next - next middleware
  */
 
 export default async function authMiddleware(req, res, next) {
-  req.session.originalUrl = req.originalUrl;
   if (!req.session.userId) {
-    const uri = hsesAuth.code.getUri();
-
-    res.redirect(uri);
+    res.sendStatus(401);
   } else {
     next();
   }

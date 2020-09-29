@@ -4,5 +4,7 @@ AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
 env: staging
 instances: 1
 NODE_ENV: production
+# This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-staging.app.cloud.gov
+TTA_SMART_HUB_URI: https://tta-smarthub-staging.app.cloud.gov
 SESSION_SECRET: ((SESSION_SECRET))
