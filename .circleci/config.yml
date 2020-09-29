@@ -130,7 +130,7 @@ jobs:
           root: .
           paths:
             - .
-  lint:
+  lint_audit:
     executor: docker-executor
     steps:
       - attach_workspace:
@@ -141,6 +141,16 @@ jobs:
       - run:
           name: Lint frontend
           command: yarn --cwd frontend run lint:ci
+      - run:  # Fail audit only for moderate and higher vulnerabilities
+          name: Audit vulnerability of backend node_modules
+          command: |
+            yarn audit --level low; EXIT_CODE=$?; \
+              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
+      - run:  # Fail audit only for moderate and higher vulnerabilities
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            yarn --cwd frontend audit --level low; EXIT_CODE=$?; \
+              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
       - store_artifacts:
           path: reports
       - store_artifacts:
@@ -248,7 +258,7 @@ workflows:
   build_test_deploy:
     jobs:
       - build
-      - lint:
+      - lint_audit:
           requires:
             - build
       - test_backend:
@@ -259,7 +269,7 @@ workflows:
             - build
       - deploy:
           requires:
-            - lint
+            - lint_audit
             - test_backend
             - test_frontend
           filters:
