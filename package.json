@@ -68,7 +68,12 @@
   "jest": {
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 60
+      }
+    }
   },
   "keywords": [],
   "author": "",
