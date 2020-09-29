@@ -13,6 +13,7 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-router-prop-types": "^1.0.5",
+    "url-join": "^4.0.1",
     "react-scripts": "^3.4.3",
     "uswds": "^2.8.1"
   },
@@ -100,8 +101,12 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.5",
     "eslint-plugin-react-hooks": "^4.0.8",
+    "fetch-mock": "^9.10.7",
     "history": "^5.0.0",
-    "jest-junit": "^11.1.0"
+    "jest-fetch-mock": "^3.0.3",
+    "jest-junit": "^11.1.0",
+    "mutationobserver-shim": "^0.3.7",
+    "node-fetch": "^2.6.1"
   },
   "jest": {
     "coverageThreshold": {
