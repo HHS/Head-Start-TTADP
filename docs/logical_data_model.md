@@ -23,4 +23,14 @@ class User {
 @enduml
 ```
 
-[Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/RSmnQZGn30NWtgTGzyCFUu6mB9ioJReSm3j-6OjOif4qMPQGkyUJQeeqXlSzwrqziiKcBVsZoWKK5UIZH_fD2zlICBlysRdGi7vh4ASxHwMiQqEXnVhTwHs8v1-i8riMQgo8nm1rYzfJWWR7WzuSHb-9w3_DkITY3QoJpkSL2ik1ShdC-dIQJtNuVl2o__GmrdMgPi4nZzeLhvlSO4U6P6v7M0px_7DC31PuP1dJjr7-yEzqXPPDsWy0)
+Instructions
+------------
+
+1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/ROynJWGn34NxdC8TqXu1hLPBIKF70RoRpoGYTYBRmmWXxaw6Qeej_TxNb__LWorMQUc9-AlNJCFwhK6SjXg5M9U6J7VhczC74Ca_gmus5cfL4Ty3r2rAJ-dUs9tU7KO_YUX4i-sPgWQMYSxd1GhZGBvSfYuEtxElUyZ3gYwJAWkEzoXTyRRA3NR44Axj24xpHUpTBp5nL847o_WtwyWFp6-wGlDS_WS0)
+1. Copy and paste the final UML into the UML Source section
+1. Update the img src and edit link target to the current values
+
+### Notes
+
+* See the help docs for [Entity Relationship Diagram](https://plantuml.com/ie-diagram) and [Class Diagram](https://plantuml.com/class-diagram) for syntax help.
+* We're using the `*` visibility modifier to denote fields that cannot be `null`.
