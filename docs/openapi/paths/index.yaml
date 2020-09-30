@@ -1,2 +1,8 @@
 '/hello':
   $ref: './hello.yaml'
+'/user':
+  $ref: './user.yaml'
+'/logout':
+  $ref: './logout.yaml'
+'/login':
+  $ref: './login.yaml'
