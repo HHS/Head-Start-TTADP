@@ -106,7 +106,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "sj-add-callback-to-manifest"
+    default: "js-fix-deployed-ui-login"
     type: string
 jobs:
   build:
