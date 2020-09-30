@@ -11,6 +11,7 @@ describe('authMiddleware', () => {
     };
     const mockResponse = {
       redirect: jest.fn(),
+      sendStatus: jest.fn(),
     };
     await authMiddleware(mockRequest, mockResponse, mockNext);
     expect(mockResponse.redirect).not.toHaveBeenCalled();
@@ -27,9 +28,11 @@ describe('authMiddleware', () => {
     };
     const mockResponse = {
       redirect: jest.fn(),
+      sendStatus: jest.fn(),
     };
     await authMiddleware(mockRequest, mockResponse, mockNext);
-    expect(mockResponse.redirect).toHaveBeenCalled();
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockResponse.sendStatus).toHaveBeenCalled();
     expect(mockNext).not.toHaveBeenCalled();
   });
 });

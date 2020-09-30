@@ -9,3 +9,10 @@ overwritten in the manifest by a deployment command flag, `--var`, in the deploy
 job (configured in .circleci/config.yml). See the treatment of `AUTH_CLIENT_SECRET`,
 as an example of this variable substitution. For more information on secret
 management see the Secret Management section of the main README.md.
+
+## REDIRECT_URI_HOST
+
+Once our localhost OAuth application has it's redirect callback updated this environment
+variable can be removed in favor of TTA_SMART_HUB_URI. The values of these two variables
+currently match. They are both required for now to ensure the application operates
+properly on local development machines.
