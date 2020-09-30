@@ -37,7 +37,7 @@ describe('App', () => {
       render(<App />);
     });
 
-    it('displays the logout button', async () => {
+    it('displays the login button', async () => {
       expect(await waitFor(() => screen.getByText('HSES Login'))).toBeVisible();
     });
   });
