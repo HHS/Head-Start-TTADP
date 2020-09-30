@@ -29,7 +29,7 @@
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
-    "docker:start": "docker-compose up -d",
+    "docker:start": "docker-compose up",
     "docker:stop": "docker-compose down",
     "docker:test": "docker-compose run --rm backend yarn test:ci && docker-compose run --rm frontend yarn test:ci",
     "docker:lint": "docker-compose run --rm backend yarn lint:ci && docker-compose run --rm frontend yarn lint:ci",
@@ -37,7 +37,6 @@
     "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
     "docker:db:migrate": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate",
     "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo"
-
   },
   "repository": {
     "type": "git",
@@ -71,7 +70,12 @@
   "jest": {
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 60
+      }
+    }
   },
   "keywords": [],
   "author": "",
@@ -108,7 +112,6 @@
     "@babel/runtime": "^7.11.2",
     "axios": "^0.20.0",
     "client-oauth2": "^4.3.3",
-    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
@@ -119,6 +122,7 @@
     "memorystore": "^1.6.2",
     "pg": "^8.3.3",
     "sequelize": "^5.22.3",
+    "url-join": "^4.0.1",
     "winston": "^3.3.3"
   }
 }
