@@ -20,7 +20,7 @@ You can also run build commands directly on your host (without docker). Make sur
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
-Api documentation uses [Speccy](https://github.com/wework/speccy) to validate, combine and serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
 Running Tests
 -------------
@@ -55,8 +55,6 @@ Yarn Commands
 | | Run the linter only for the backend | `yarn lint` | |
 | | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
-| | Combine open api spec files into a single yaml file. Some tools do not like splitting the API definition into multiple files and the combined file, `docs/openapi/openapi3.yaml`, should be used if possible over the main `docs/openapi/index.yaml` file | `yarn docs:build` | |
-| | Run the [speccy](https://github.com/wework/speccy) linter on the open api 3 spec | `yarn docs:lint` | |
 | | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` | |
 
 Integration
