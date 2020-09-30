@@ -22,9 +22,7 @@
     "lint:ci": "eslint -f eslint-formatter-multiple src",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
-    "docs:build": "npx speccy resolve docs/openapi/index.yaml -o docs/openapi/openapi3.yaml",
-    "docs:lint": "yarn docs:build && npx speccy lint docs/openapi/openapi3.yaml",
-    "docs:serve": "yarn docs:build && npx speccy serve docs/openapi/openapi3.yaml",
+    "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
@@ -104,7 +102,6 @@
     "jest-cli": "^26.4.2",
     "jest-junit": "^11.1.0",
     "nodemon": "^2.0.4",
-    "speccy": "^0.11.0",
     "sequelize-cli": "^6.2.0",
     "supertest": "^4.0.2"
   },
