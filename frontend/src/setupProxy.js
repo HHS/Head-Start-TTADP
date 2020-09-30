@@ -7,6 +7,5 @@ module.exports = (app) => {
     createProxyMiddleware({
       target: process.env.BACKEND_PROXY,
       changeOrigin: true,
-      pathRewrite: { '^/api': '' },
     }));
 };

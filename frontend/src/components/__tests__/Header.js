@@ -6,15 +6,27 @@ import { MemoryRouter } from 'react-router';
 import Header from '../Header';
 
 describe('Header', () => {
-  beforeEach(() => {
-    render(<MemoryRouter><Header /></MemoryRouter>);
+  describe('when authenticated', () => {
+    beforeEach(() => {
+      render(<MemoryRouter><Header authenticated /></MemoryRouter>);
+    });
+
+    test('nav items are visible', () => {
+      expect(screen.queryAllByRole('link').length).not.toBe(0);
+    });
+
+    test('search is present', async () => {
+      expect(screen.getByLabelText('Search')).toBeVisible();
+    });
   });
 
-  test('nav items are visible', () => {
-    expect(screen.getByText('Home')).toBeVisible();
-  });
+  describe('when unauthenticated', () => {
+    beforeEach(() => {
+      render(<MemoryRouter><Header authenticated={false} /></MemoryRouter>);
+    });
 
-  test('search is present', async () => {
-    expect(screen.getByLabelText('Search')).toBeVisible();
+    test('nav items are not visible', () => {
+      expect(screen.queryAllByRole('link').length).toBe(0);
+    });
   });
 });

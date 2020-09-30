@@ -1,0 +1,8 @@
+.usa-checkbox__input:indeterminate+.usa-checkbox__label::before {
+  background-image: url(../images/minus.svg);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: .75rem auto;
+  background-color: #949494;
+    box-shadow: 0 0 0 2px #949494;
+}

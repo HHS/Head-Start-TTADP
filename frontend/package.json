@@ -6,12 +6,15 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@trussworks/react-uswds": "^1.9.1",
     "http-proxy-middleware": "^1.0.5",
+    "lodash": "^4.17.20",
     "prop-types": "^15.7.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1",
+    "react-router-prop-types": "^1.0.5",
+    "url-join": "^4.0.1",
+    "react-scripts": "^3.4.3",
     "uswds": "^2.8.1"
   },
   "engines": {
@@ -19,8 +22,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build:local": "react-scripts build",
-    "build": "react-scripts build && mv build/ ../build/server/client",
+    "build:local": "INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client",
     "eject": "react-scripts eject",
     "test": "react-scripts test",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true yarn test --coverage --reporters=default --reporters=jest-junit",
@@ -85,9 +88,10 @@
     ]
   },
   "devDependencies": {
-    "@testing-library/dom": "^7.21.7",
+    "@sheerun/mutationobserver-shim": "^0.3.3",
+    "@testing-library/dom": "^7.24.2",
     "@testing-library/react": "^10.4.9",
-    "@testing-library/user-event": "^7.1.2",
+    "@testing-library/user-event": "^12.1.5",
     "cross-env": "^7.0.2",
     "eslint": "^6.8.0",
     "eslint-config-airbnb": "^18.2.0",
@@ -97,6 +101,18 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.5",
     "eslint-plugin-react-hooks": "^4.0.8",
-    "jest-junit": "^11.1.0"
+    "fetch-mock": "^9.10.7",
+    "history": "^5.0.0",
+    "jest-fetch-mock": "^3.0.3",
+    "jest-junit": "^11.1.0",
+    "mutationobserver-shim": "^0.3.7",
+    "node-fetch": "^2.6.1"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 90
+      }
+    }
   }
 }

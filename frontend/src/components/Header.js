@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   Header as UswdsHeader, PrimaryNav, Search, Title, NavMenuButton,
 } from '@trussworks/react-uswds';
 
 import NavLink from './NavLink';
 
-function Header() {
+function Header({ authenticated }) {
   const [expanded, setExpanded] = useState(false);
   const onClick = () => setExpanded((prvExpanded) => !prvExpanded);
 
@@ -13,8 +14,8 @@ function Header() {
     <NavLink exact to="/">
       Home
     </NavLink>,
-    <NavLink to="/second">
-      Second Page
+    <NavLink to="/admin">
+      Admin
     </NavLink>,
   ];
 
@@ -24,9 +25,12 @@ function Header() {
       <UswdsHeader basic>
         <div className="usa-nav-container">
           <div className="usa-navbar">
-            <Title>TTADP</Title>
-            <NavMenuButton onClick={onClick} label="Menu" />
+            <Title>TTA Smart Hub</Title>
+            {authenticated
+            && <NavMenuButton onClick={onClick} label="Menu" />}
           </div>
+          {authenticated
+          && (
           <PrimaryNav
             items={navItems}
             mobileExpanded={expanded}
@@ -34,12 +38,19 @@ function Header() {
           >
             <Search small />
           </PrimaryNav>
+          )}
         </div>
       </UswdsHeader>
     </>
   );
 }
 
-Header.propTypes = {};
+Header.propTypes = {
+  authenticated: PropTypes.bool,
+};
+
+Header.defaultProps = {
+  authenticated: false,
+};
 
 export default Header;
