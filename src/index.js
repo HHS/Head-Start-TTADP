@@ -38,6 +38,10 @@ app.use(session({
   resave: false,
 }));
 
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client')));
+}
+
 authMiddleware.unless = unless;
 // TODO: update unless to replace `oauth1CallbackPath with `join('/api', oauth2CallbackPath)`
 // once our oauth callback has been updated
@@ -85,10 +89,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
 });
 
 app.use('/api', router);
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client')));
-}
 
 const server = app.listen(process.env.PORT || 8080, () => {
   logger.info('listening on 8080');
