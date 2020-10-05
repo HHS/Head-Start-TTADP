@@ -102,6 +102,7 @@
     "jest-cli": "^26.4.2",
     "jest-junit": "^11.1.0",
     "nodemon": "^2.0.4",
+    "redoc-cli": "^0.9.12",
     "sequelize-cli": "^6.2.0",
     "supertest": "^4.0.2"
   },
