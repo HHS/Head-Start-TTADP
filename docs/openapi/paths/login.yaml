@@ -1,0 +1,8 @@
+get:
+  tags:
+    - authentication
+  operationId: login
+  description: Login via HSES
+  responses:
+    304:
+      description: Redirects to HSES login page

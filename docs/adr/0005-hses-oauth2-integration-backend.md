@@ -1,4 +1,4 @@
-# ADR 5: Package used to integrate with HSES oauth2
+# 5. Package used to integrate with HSES oauth2
 
 Date: 2020-08-25
 
