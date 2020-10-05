@@ -1,0 +1,8 @@
+get:
+  tags:
+    - authentication
+  operationId: logout
+  description: Logout of the TTA Smart Hub
+  responses:
+    204:
+      description: User session successfully deleted

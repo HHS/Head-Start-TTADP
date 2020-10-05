@@ -1,5 +1,13 @@
 version: "3.5"
 services:
+  api-docs:
+    image: redocly/redoc
+    ports:
+      - "5000:80"
+    volumes:
+      - "./docs/openapi/:/usr/share/nginx/html/swagger/"
+    environment:
+      - SPEC_URL=swagger/index.yaml
   backend:
     build:
       context: .

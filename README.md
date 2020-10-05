@@ -20,6 +20,8 @@ You can also run build commands directly on your host (without docker). Make sur
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
+Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+
 Running Tests
 -------------
 
@@ -33,7 +35,7 @@ You may run into some issues running the docker commands on Windows:
  * If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
  * You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
 
-Other Commands
+Yarn Commands
 --------------
 | Docker Command | Description| Host Command | Local only Command |
 |-|-|-|-|
@@ -53,6 +55,7 @@ Other Commands
 | | Run the linter only for the backend | `yarn lint` | |
 | | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
+| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` | |
 
 Integration
 -----------
