@@ -6,4 +6,5 @@ coverage
 .env
 junit.xml
 frontend/build
+openapi3.yaml
 build/

@@ -11,6 +11,7 @@ Approved
 There are a few different options for application logging.
 
  1. Logging to file(s) used to be the norm. Logging to a file has several issues, however. You must be on the host to view the log file, or setup a system to ship the log file off the host. You must rotate log files or your host will eventually run out of disk space.
+
  2. Logging to stdout and letting a different system handle the logging is a more modern approach to logging. In our case cloud.gov takes care of gathering logs sent to stdout/stderr. Logs can be viewed with a cloud.gov cli tool.
 
 ## Decision
