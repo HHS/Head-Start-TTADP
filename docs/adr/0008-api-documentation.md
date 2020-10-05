@@ -1,4 +1,4 @@
-# 7. API Documentation
+# 8. API Documentation
 
 Date: 2020-09-17
 
@@ -12,7 +12,7 @@ There are a lot of tools available for documenting APIs. These tools generate ea
 
 ## Decision
 
-We will document our API with [OpenAPI specification 3](https://swagger.io/specification/) (formally known as swagger).
+We will document our API with [OpenAPI specification 3](https://swagger.io/specification/) (formerly known as swagger).
 
 ## Consequences
 
