@@ -8,7 +8,7 @@ const COMPLETE_CLASS = 'usa-step-indicator__segment--complete';
 const CURRENT_CLASS = 'usa-step-indicator__segment--current';
 
 describe('StepperIndicator', () => {
-  const steps = [
+  const segments = [
     {
       label: 'complete',
       complete: true,
@@ -27,7 +27,7 @@ describe('StepperIndicator', () => {
   ];
 
   beforeEach(() => {
-    render(<StepperIndicator steps={steps} />);
+    render(<StepperIndicator segments={segments} />);
   });
 
   it('properly sets the complete class on complete items', () => {
