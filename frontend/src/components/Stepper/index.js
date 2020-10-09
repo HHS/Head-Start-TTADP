@@ -17,7 +17,7 @@
   will be used. If not the pages function will be used without the pager.
 */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Grid } from '@trussworks/react-uswds';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
@@ -55,14 +55,10 @@ export const getUpdatedSegments = (segments, previousStep, nextStep, complete) =
 function Stepper({ steps, onSubmit }) {
   const [currentStep, updateCurrentStep] = useState(0);
   const [formData, updateFormData] = useState({});
-  const [segments, updateSegments] = useState([]);
 
-  useEffect(() => {
-    const stepperSegments = steps.map((step) => defaultSegment(step.label));
-    stepperSegments[currentStep] = { ...stepperSegments[currentStep], current: true };
-
-    updateSegments(stepperSegments);
-  }, [steps]);
+  const stepperSegments = steps.map((step) => defaultSegment(step.label));
+  stepperSegments[currentStep] = { ...stepperSegments[currentStep], current: true };
+  const [segments, updateSegments] = useState(stepperSegments);
 
   const totalSteps = steps.length;
   const firstStep = currentStep === 0;
