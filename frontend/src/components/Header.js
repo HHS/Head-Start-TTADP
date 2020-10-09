@@ -14,6 +14,9 @@ function Header({ authenticated }) {
     <NavLink exact to="/">
       Home
     </NavLink>,
+    <NavLink to="/activity-reports">
+      Activity Reports
+    </NavLink>,
     <NavLink to="/admin">
       Admin
     </NavLink>,
