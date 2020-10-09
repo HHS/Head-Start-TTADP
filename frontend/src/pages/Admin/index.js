@@ -7,6 +7,7 @@ import {
 } from '@trussworks/react-uswds';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
+import Container from '../../components/Container';
 
 // Fake return from an API
 const fetchedUsers = [
@@ -181,7 +182,7 @@ function Admin(props) {
   });
 
   return (
-    <>
+    <Container>
       <h1 className="text-center">User Administration</h1>
       <Grid row gap>
         <Grid col={4}>
@@ -205,7 +206,7 @@ function Admin(props) {
           )}
         </Grid>
       </Grid>
-    </>
+    </Container>
   );
 }
 

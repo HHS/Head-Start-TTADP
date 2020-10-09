@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
+import 'uswds/dist/css/uswds.css';
+
 import { BrowserRouter, Route } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
 
@@ -11,6 +12,9 @@ import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
 import UserContext from './UserContext';
+
+import ActivityReport from './pages/ActivityReport';
+import './App.css';
 
 function App() {
   const [user, updateUser] = useState();
@@ -50,6 +54,7 @@ function App() {
     <>
       <Route Home path="/" component={Home} />
       <Route path="/admin/:userId?" component={Admin} />
+      <Route path="/activity-reports" component={ActivityReport} />
     </>
   );
 
@@ -57,6 +62,7 @@ function App() {
     <BrowserRouter>
       <UserContext.Provider value={{ user, authenticated, logout }}>
         <Header authenticated={authenticated} />
+        <div className="background-stripe" />
         <section className="usa-section">
           <GridContainer>
             {!authenticated
