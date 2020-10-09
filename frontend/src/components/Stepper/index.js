@@ -59,7 +59,7 @@ function Stepper({ steps, onSubmit }) {
 
   useEffect(() => {
     const stepperSegments = steps.map((step) => defaultSegment(step.label));
-    stepperSegments[currentStep] = { ...segments[currentStep], current: true };
+    stepperSegments[currentStep] = { ...stepperSegments[currentStep], current: true };
 
     updateSegments(stepperSegments);
   }, [steps]);

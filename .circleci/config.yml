@@ -106,7 +106,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-fix-deployed-ui-login"
+    default: "js-53-add-stepper"
     type: string
 jobs:
   build:
