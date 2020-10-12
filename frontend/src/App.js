@@ -7,12 +7,12 @@ import { GridContainer } from '@trussworks/react-uswds';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 
+import UserContext from './UserContext';
 import Header from './components/Header';
+import Page from './pages';
 import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
-import UserContext from './UserContext';
-
 import ActivityReport from './pages/ActivityReport';
 import './App.css';
 
@@ -52,9 +52,30 @@ function App() {
 
   const renderAuthenticatedRoutes = () => (
     <>
-      <Route Home path="/" component={Home} />
-      <Route path="/admin/:userId?" component={Admin} />
-      <Route path="/activity-reports" component={ActivityReport} />
+      <Route
+        path="/"
+        render={() => (
+          <Page title="TTA Smart Hub">
+            <Home />
+          </Page>
+        )}
+      />
+      <Route
+        path="/admin/:userId?"
+        render={({ match }) => (
+          <Page title="User Administration">
+            <Admin match={match} />
+          </Page>
+        )}
+      />
+      <Route
+        path="/activity-reports"
+        render={() => (
+          <Page title="Activity Reports">
+            <ActivityReport />
+          </Page>
+        )}
+      />
     </>
   );
 
