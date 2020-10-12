@@ -70,16 +70,9 @@ function Stepper({ steps, onSubmit }) {
       return;
     }
 
-    const updatedSegments = getUpdatedSegments(
-      segments,
-      currentStep,
-      currentStep + 1,
-      true,
-    );
-
-    updateSegments(updatedSegments);
+    updateSegments(() => getUpdatedSegments(segments, currentStep, currentStep + 1, true));
     updateFormData({ ...formData, ...data });
-    updateCurrentStep(currentStep + 1);
+    updateCurrentStep((current) => current + 1);
   };
 
   const onPreviousStep = () => {
@@ -87,15 +80,8 @@ function Stepper({ steps, onSubmit }) {
       return;
     }
 
-    const updatedStepperSegments = getUpdatedSegments(
-      segments,
-      currentStep,
-      currentStep - 1,
-      false,
-    );
-
-    updateSegments(updatedStepperSegments);
-    updateCurrentStep(currentStep - 1);
+    updateSegments(() => getUpdatedSegments(segments, currentStep, currentStep - 1, false));
+    updateCurrentStep((current) => current - 1);
   };
 
   const previousStep = usePrevious(currentStep);
