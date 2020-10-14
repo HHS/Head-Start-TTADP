@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import {
   Link, Alert,
 } from '@trussworks/react-uswds';
+import Container from '../../components/Container';
 
 function Unauthenticated({ loggedOut }) {
   return (
-    <>
+    <Container>
       {loggedOut
       && (
       <Alert type="success" heading="Logout Successful">
@@ -22,7 +23,7 @@ function Unauthenticated({ loggedOut }) {
       <Link className="usa-button" variant="unstyled" href="api/login">
         HSES Login
       </Link>
-    </>
+    </Container>
   );
 }
 
