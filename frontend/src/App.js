@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '@trussworks/react-uswds/lib/index.css';
 import 'uswds/dist/css/uswds.css';
+import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
@@ -53,6 +53,7 @@ function App() {
   const renderAuthenticatedRoutes = () => (
     <>
       <Route
+        exact
         path="/"
         render={() => (
           <Page title="TTA Smart Hub">
