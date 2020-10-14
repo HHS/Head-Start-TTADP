@@ -3,6 +3,7 @@ import { Switch, Route } from 'react-router-dom';
 import { Button } from '@trussworks/react-uswds';
 
 import UserContext from '../../UserContext';
+import Container from '../../components/Container';
 
 function Home() {
   return (
@@ -10,7 +11,7 @@ function Home() {
       <Route exact path="/">
         <UserContext.Consumer>
           {({ user, logout }) => (
-            <>
+            <Container>
               <h1>
                 Welcome to the TTA Smart Hub
                 {' '}
@@ -19,7 +20,7 @@ function Home() {
               <Button onClick={logout}>
                 Logout
               </Button>
-            </>
+            </Container>
           )}
         </UserContext.Consumer>
       </Route>
