@@ -13,6 +13,9 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  machine-executor:
+    machine:
+      image: circleci/classic:latest
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -182,6 +185,34 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+  dynamic_security_scan:
+    executor: machine-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start up local server
+          command: |
+            docker-compose -f docker-compose-test.yml run --rm server yarn install --production=false
+            docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend install --production=false
+            docker-compose -f docker-compose-test.yml run --rm server yarn build
+            docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend run build
+            docker-compose -f docker-compose-test.yml up -d
+            docker-compose -f docker-compose-test.yml exec server yarn db:migrate
+      - run:
+          name: Pull OWASP ZAP docker image
+          command: docker pull owasp/zap2docker-weekly
+      - run:
+          name: Run OWASP ZAP
+          command: |
+            docker run \
+              -v $(pwd)/zap.conf:/zap/wrk/zap.conf:rw \
+              -v $(pwd)/reports:/zap/wrk:rw \
+              --rm \
+              --network="project_smarthub" \
+              -t owasp/zap2docker-stable zap-baseline.py \
+              -t http://server:8080 \
+              -c zap.conf -I -i
   deploy:
     executor: docker-executor
     steps:
@@ -267,11 +298,15 @@ workflows:
       - test_frontend:
           requires:
             - build
+      - dynamic_security_scan:
+          requires:
+            - build
       - deploy:
           requires:
             - lint_audit
             - test_backend
             - test_frontend
+            - dynamic_security_scan
           filters:
             branches:
               only:
