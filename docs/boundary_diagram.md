@@ -22,13 +22,13 @@ Boundary(aws, "AWS GovCloud") {
     System_Ext(cloudgov_api, "cloud.gov API")
     System_Ext(cloudgov_router, "<&layers> cloud.gov routers", "Cloud Foundry traffic service")
     Boundary(atob, "Accreditation Boundary") {
-      Container(www_app, "<&layers> TTA Smart Hub Web Application", "NodeJS, Express, React", "Displays and collects TTA data")
+      Container(www_app, "<&layers> TTA Smart Hub Web Application", "NodeJS, Express, React", "Displays and collects TTA data. Multiple instances running")
       ContainerDb(www_db, "PostgreSQL Database", "AWS RDS", "Contains content and configuration for TTA Smart Hub")
       ContainerDb(www_s3, "AWS S3 bucket", "AWS S3", "Stores static file assets")
       }
   }
 }
-System(HSES, "HSES", "Authentication As a Service")
+System(HSES, "HSES", "Authentication As a Service\n\nMFA via Time-Based App or PIV card")
 Boundary(gsa_saas, "Possible SaaS") {
   System_Ext(newrelic, "New Relic", "Monitoring SaaS")
 }
