@@ -173,6 +173,37 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
+  cucumber_test:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start server
+          command: |
+            yarn deps
+            yarn build
+            yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn run db:migrate:ci
+      - run:
+          name: Install Headless Chrome dependencies
+          command: |
+            sudo apt-get install -yq \
+            gconf-service libasound2 libatk1.0-0 libatk-bridge2.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
+            libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 \
+            libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 \
+            libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 ca-certificates \
+            fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
+      - run:
+          name: Run cucumber
+          command: |
+            mkdir reports
+            yarn cucumber
+      - store_artifacts:
+          path: reports/
   test_frontend:
     executor: docker-executor
     steps:
@@ -295,6 +326,9 @@ workflows:
       - test_backend:
           requires:
             - build
+      - cucumber_test:
+          requires:
+            - build
       - test_frontend:
           requires:
             - build
@@ -305,6 +339,7 @@ workflows:
           requires:
             - lint_audit
             - test_backend
+            - cucumber_test
             - test_frontend
             - dynamic_security_scan
           filters:
