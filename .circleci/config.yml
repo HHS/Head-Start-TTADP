@@ -147,7 +147,6 @@ jobs:
       - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of backend node_modules
           command: |
-            cd frontend
             chmod 744 ./run-yarn-audit.sh
             ./run-yarn-audit.sh; \
             EXIT_CODE=$?; \
@@ -155,7 +154,10 @@ jobs:
       - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of frontend node_modules
           command: |
-            yarn --cwd frontend audit --level low; EXIT_CODE=$?; \
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh; \
+            EXIT_CODE=$?; \
               (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
       - store_artifacts:
           path: reports
