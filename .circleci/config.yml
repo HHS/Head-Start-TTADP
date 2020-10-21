@@ -5,7 +5,7 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:12.18
+      - image: circleci/node:12.18-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -147,12 +147,17 @@ jobs:
       - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of backend node_modules
           command: |
-            yarn audit --level low; EXIT_CODE=$?; \
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh; \
+            EXIT_CODE=$?; \
               (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
       - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of frontend node_modules
           command: |
-            yarn --cwd frontend audit --level low; EXIT_CODE=$?; \
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh; \
+            EXIT_CODE=$?; \
               (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
       - store_artifacts:
           path: reports
@@ -173,6 +178,28 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
+  cucumber_test:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn run db:migrate:ci
+      - run:
+          name: Run cucumber
+          command: |
+            mkdir reports
+            sleep 5
+            yarn cucumber
+      - store_artifacts:
+          path: reports/
   test_frontend:
     executor: docker-executor
     steps:
@@ -295,6 +322,9 @@ workflows:
       - test_backend:
           requires:
             - build
+      - cucumber_test:
+          requires:
+            - build
       - test_frontend:
           requires:
             - build
@@ -305,6 +335,7 @@ workflows:
           requires:
             - lint_audit
             - test_backend
+            - cucumber_test
             - test_frontend
             - dynamic_security_scan
           filters:

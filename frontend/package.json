@@ -14,7 +14,7 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-router-prop-types": "^1.0.5",
-    "react-scripts": "^3.4.3",
+    "react-scripts": "^3.4.4",
     "url-join": "^4.0.1",
     "uswds": "^2.9.0"
   },
