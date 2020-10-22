@@ -78,7 +78,7 @@ commands:
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
-    default: "hhs-acf-ohs-tta"
+    default: "hhs-acf-prototyping"
     type: string
   cg_api:
     description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
