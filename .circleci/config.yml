@@ -78,7 +78,7 @@ commands:
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
-    default: "hhs-acf-prototyping"
+    default: "hhs-acf-ohs-tta"
     type: string
   cg_api:
     description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
@@ -109,7 +109,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-53-add-stepper"
+    default: "sj-update-cf-org"
     type: string
 jobs:
   build:
