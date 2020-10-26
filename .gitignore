@@ -1,9 +1,18 @@
-yarn-error.log
-reports
-node_modules
+# Test related
 coverage
+junit.xml
+reports
+yarn-error.log
+
+# Build related
+build/
+frontend/build
+node_modules
+
+# Terraform
+**/.terraform/*
+
+# Secrets
 .DS_Store
 .env
-junit.xml
-frontend/build
-build/
+**/*secrets.auto.tfvars
