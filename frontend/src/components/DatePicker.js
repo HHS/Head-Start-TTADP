@@ -31,6 +31,7 @@ const DateInput = ({
   const CustomInput = forwardRef(({ value, onChange, onFocus }, ref) => (
     <div className="display-flex" onFocus={onFocus}>
       <TextInput
+        id={name}
         disabled={disabled}
         inputRef={ref}
         onChange={onChange}
