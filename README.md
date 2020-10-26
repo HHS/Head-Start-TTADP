@@ -1,42 +1,38 @@
-Office of Head Start Training & Technical Assistance Data Platform
-=============================================
+# Office of Head Start Training & Technical Assistance Data Platform
 
 Welcome to the home of the OHS TTADP.
 
-What We're Building and Why
----------------
+## What We're Building and Why
 
 For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
 
+## Getting Started
 
-Getting Started
----------------
+### Set up
 
 Make sure Docker is installed. To check run `docker ps`
 
 Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed. Running `yarn docker:start` starts the backend and frontend, browse to `http://localhost:3000` to hit the frontend and `http://localhost:3000/api` to hit the backend. Copying `.env.example` to `.env`, substituting in your user id and group id will cause any files created in docker containers to be owned by your user on your host.
 
-You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
+You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
-Running Tests
--------------
+### Running Tests
 
 Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate` and `yarn docker:test` to run all tests for the frontend and backend.
 
-Docker on Windows
------------------
+### Docker on Windows
 
 You may run into some issues running the docker commands on Windows:
 
  * If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
  * You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
 
-Yarn Commands
---------------
+## Yarn Commands
+
 | Docker Command | Description| Host Command | Local only Command |
 |-|-|-|-|
 | `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` | `yarn deps:local` |
@@ -57,20 +53,24 @@ Yarn Commands
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
 | | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` | |
 
-Integration
------------
+## Infrastructure
 
-Linting, unit tests and test coverage analysis are all run automatically on each push
-to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In
-the Ad Hoc repository, merges to the main branch are blocked if the continuous
-integration (CI) tests do not pass. The continuous integration pipeline is configured via CircleCi.
-The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+### Persistent vs Ephemeral Infrastructure
 
-Deployment
-----------
+The infrastructure used to run this application can be categorized into two distinct types: ephemeral and persistent.
+- **Ephemeral infrastructure** is all the infrastructure that is recreated each time the application is deployed. Ephemeral infrastructure includes the "application" (as defined in Cloud.gov), the EC2 instances that application runs on, and the routes that application utilizes. This infrastructure is defined and deployed to Cloud.gov by the CircleCI configuration.
+- **Persistent infrastructure** is all the infrastructure that remains constant and unchanged despite application deployments. Persistent infrastructure includes the database used in each development environment. This infrastructure is defined and instantiated on Cloud.gov by the Terraform configuration files. For more about Terraform see [terraform/README.md](terraform/README.md).
+
+### CI/CD with CircleCI
+
+#### Continuous Integration (CI)
+
+Linting, unit tests and test coverage analysis are all run automatically on each push to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In the Ad Hoc repository, merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+
+#### Continuous Deployment (CD)
 
 This application consists of three deployment environments: development/dev, staging, and
-production/prod. The continuous deployment (CD) pipeline is configured via CircleCi.
+production/prod. The CD pipeline is configured via CircleCi.
 The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file,
 the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/)
 variable files.
