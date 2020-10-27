@@ -1,4 +1,5 @@
-import authMiddleware from './authMiddleware';
+import {} from 'dotenv/config';
+import authMiddleware, { login } from './authMiddleware';
 
 describe('authMiddleware', () => {
   it('should allow access if user data is present', async () => {
@@ -34,5 +35,37 @@ describe('authMiddleware', () => {
     expect(mockResponse.redirect).not.toHaveBeenCalled();
     expect(mockResponse.sendStatus).toHaveBeenCalled();
     expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('login should redirect to HSES', async () => {
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/login',
+      session: mockSession,
+      headers: {},
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    login(mockRequest, mockResponse);
+    expect(mockResponse.redirect).not.toHaveBeenCalledWith(process.env.TTA_SMART_HUB_URI);
+  });
+
+  it('login should bypass HSES for cucumber tests', async () => {
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/login',
+      session: mockSession,
+      headers: { cookie: `CUCUMBER_USER=${process.env.CUCUMBER_USER}` },
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    login(mockRequest, mockResponse);
+    expect(mockResponse.redirect).toHaveBeenCalledWith(process.env.TTA_SMART_HUB_URI);
   });
 });
