@@ -197,7 +197,7 @@ jobs:
           command: |
             mkdir reports
             sleep 5
-            yarn cucumber
+            yarn cucumber:ci
       - store_artifacts:
           path: reports/
   test_frontend:

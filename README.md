@@ -52,6 +52,7 @@ You may run into some issues running the docker commands on Windows:
 | | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
 | | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` | |
+| | Run cucumber tests | `yarn cucumber` | |
 
 ## Infrastructure
 
