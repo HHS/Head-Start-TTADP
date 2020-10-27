@@ -51,7 +51,7 @@ function App() {
   }
 
   const renderAuthenticatedRoutes = () => (
-    <>
+    <div role="main" id="main-content">
       <Route
         exact
         path="/"
@@ -77,11 +77,12 @@ function App() {
           </Page>
         )}
       />
-    </>
+    </div>
   );
 
   return (
     <BrowserRouter>
+      {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
       <UserContext.Provider value={{ user, authenticated, logout }}>
         <Header authenticated={authenticated} />
         <div className="background-stripe" />
