@@ -9,7 +9,7 @@ describe('findOrCreateUser', () => {
     await User.destroy({ where: {} });
     db.sequelize.close();
   });
-  test('Finds an existing user when a matching user exists', async () => {
+  it('Finds an existing user when a matching user exists', async () => {
     const user = {
       hsesUserId: '33',
       email: 'test@test.com',
@@ -32,7 +32,7 @@ describe('findOrCreateUser', () => {
     expect(allUsers.length).toBe(1);
   });
 
-  test('Creates a new user when a matching user does not exist', async () => {
+  it('Creates a new user when a matching user does not exist', async () => {
     const user = {
       hsesUserId: '33',
       email: 'test@test.com',
@@ -59,5 +59,9 @@ describe('findOrCreateUser', () => {
       },
     });
     expect(existingUserAfter).toBeInstanceOf(User);
+  });
+
+  it('Throws when there is something wrong', async () => {
+    await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
   });
 });
