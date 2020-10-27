@@ -35,6 +35,7 @@ function Header({ authenticated }) {
           {authenticated
           && (
           <PrimaryNav
+            role="navigation"
             items={navItems}
             mobileExpanded={expanded}
             onToggleMobileNav={onClick}
