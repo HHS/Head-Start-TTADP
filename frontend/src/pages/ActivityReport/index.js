@@ -42,7 +42,7 @@ function ActivityReport({ initialData }) {
 
   return (
     <>
-      <div className="new-activity-report">New activity report for Region 14</div>
+      <h1 className="new-activity-report">New activity report for Region 14</h1>
       {data && (
         <Container>
           <h1>
