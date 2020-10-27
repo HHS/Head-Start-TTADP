@@ -25,7 +25,7 @@ describe('DatePicker', () => {
     );
   };
 
-  it('disabled flag works', () => {
+  it('disabled flag disables text input', () => {
     render(<RenderDatePicker disabled />);
     expect(screen.getByRole('textbox')).toBeDisabled();
   });
