@@ -1,86 +1,48 @@
 /*
-  This component is showing how to use the stepper. It will be
-  updated in the future with actual activity report form
-  components
+  Activity report. Form sections are split up to make them easier to digest
+  (instead of having a huge 400 line react component).
 */
 import React, { useState } from 'react';
-import { Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import { Form, Button } from '@trussworks/react-uswds';
+import { useForm } from 'react-hook-form';
 
 import Container from '../../components/Container';
-import Stepper from '../../components/Stepper';
-import Step from './step';
+
+import SectionOne from './SectionOne';
+import SectionTwo from './SectionTwo';
+import SectionThree from './SectionThree';
+
 import './index.css';
 
-// Note how we receive most props from the caller of this
-// method (the stepper or pager).
-function renderStep(props, label) {
-  const {
-    first, last, onNextStep, onPreviousStep, data,
-  } = props;
-  return (
-    <Step
-      first={first}
-      last={last}
-      onNextStep={onNextStep}
-      onPreviousStep={onPreviousStep}
-      data={data}
-      label={label}
-    />
-  );
-}
-
-const steps = [
-  {
-    label: 'Activity Summary',
-    // This is the 'render-prop' used by the stepper/pager. The pager
-    // doesn't know how to pass the 'label' prop, but we know what the
-    // label should be at this point.
-    pages: (props) => (
-      renderStep(props, 'Activity Summary')
-    ),
-  },
-  {
-    // Show how the stepper supports multiple pages in a single
-    // step
-    label: 'Participants',
-    pages: [
-      (props) => (
-        renderStep(props, 'Participants - Page 1')
-      ),
-      (props) => (
-        renderStep(props, 'Participants - Page 2')
-      ),
-    ],
-  },
-  {
-    label: 'Goals & Objectives',
-    pages: (props) => (
-      renderStep(props, 'Goals & Objectives')
-    ),
-  },
-  {
-    label: 'Next Steps',
-    pages: (props) => (
-      renderStep(props, 'Next Steps')
-    ),
-  },
-  {
-    label: 'Review & Submit',
-    pages: (props) => (
-      renderStep(props, 'Review & Submit')
-    ),
-  },
-];
-
-function ActivityReport() {
+function ActivityReport({ initialData }) {
   const [data, updateData] = useState();
+  const hookForm = useForm({
+    mode: 'all',
+    defaultValues: initialData,
+  });
+
   const onSubmit = (formData) => {
+    // Console logging form data on submit until we can send the data to
+    // the api
+    // eslint-disable-next-line no-console
+    console.log(formData);
     updateData(formData);
   };
 
+  const {
+    register,
+    watch,
+    setValue,
+    control,
+    formState,
+    handleSubmit,
+    getValues,
+  } = hookForm;
+
   return (
     <>
-      <div className="new-activity-report">New activity report for Region 14</div>
+      <h1 className="new-activity-report">New activity report for Region 14</h1>
       {data && (
         <Container>
           <h1>
@@ -92,12 +54,37 @@ function ActivityReport() {
         </Container>
       )}
       {!data && (
-        <>
-          <Stepper steps={steps} onSubmit={onSubmit} />
-        </>
+        <Container>
+          <Form onSubmit={handleSubmit(onSubmit)} large>
+            <SectionOne
+              register={register}
+              watch={watch}
+              setValue={setValue}
+            />
+            <SectionTwo
+              register={register}
+              control={control}
+            />
+            <SectionThree
+              register={register}
+              watch={watch}
+              getValues={getValues}
+              control={control}
+            />
+            <Button className="stepper-button" type="submit" disabled={!formState.isValid}>Submit</Button>
+          </Form>
+        </Container>
       )}
     </>
   );
 }
+
+ActivityReport.propTypes = {
+  initialData: PropTypes.shape({}),
+};
+
+ActivityReport.defaultProps = {
+  initialData: {},
+};
 
 export default ActivityReport;
