@@ -11,3 +11,19 @@
   margin-top: 40px;
 }
 
+.smart-hub--form-section {
+  margin-top: 2rem;
+}
+
+.smart-hub--report-checkbox {
+  margin-top: 1.25rem;
+}
+
+.smart-hub--report-legend .usa-legend {
+  font-family: Merriweather;
+  font-size: 17px;
+  color: #21272d;
+  line-height: 22px;
+  height: 16px;
+  font-weight: 700;
+}
