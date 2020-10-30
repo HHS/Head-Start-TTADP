@@ -349,7 +349,7 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "0 5 * * *"
+          cron: "0 13 * * *"
           filters:
             branches:
               only:
@@ -359,15 +359,6 @@ workflows:
     jobs:
       - build
       - lint_audit:
-          requires:
-            - build
-      - test_backend:
-          requires:
-            - build
-      - cucumber_test:
-          requires:
-            - build
-      - test_frontend:
           requires:
             - build
       - dynamic_security_scan:
