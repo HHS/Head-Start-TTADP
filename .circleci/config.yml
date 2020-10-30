@@ -345,3 +345,22 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 13 * * *"
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.dev_git_branch >>
+                - << pipeline.parameters.staging_git_branch >>
+                - << pipeline.parameters.prod_git_branch >>
+    jobs:
+      - build
+      - lint_audit:
+          requires:
+            - build
+      - dynamic_security_scan:
+          requires:
+            - build
