@@ -54,23 +54,25 @@ const PageOne = ({
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="General Information">
         <div className="smart-hub--form-section">
-          <legend>Was this activity for a grantee or a non-grantee?</legend>
-          <Radio
-            id="category-grantee"
-            name="participant-category"
-            label="Grantee"
-            value="grantee"
-            className="smart-hub--report-checkbox"
-            inputRef={register({ required: true })}
-          />
-          <Radio
-            id="category-non-grantee"
-            name="participant-category"
-            label="Non-Grantee"
-            value="non-grantee"
-            className="smart-hub--report-checkbox"
-            inputRef={register({ required: true })}
-          />
+          <fieldset>
+            <legend>Was this activity for a grantee or a non-grantee?</legend>
+            <Radio
+              id="category-grantee"
+              name="participant-category"
+              label="Grantee"
+              value="grantee"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: true })}
+            />
+            <Radio
+              id="category-non-grantee"
+              name="participant-category"
+              label="Non-Grantee"
+              value="non-grantee"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: true })}
+            />
+          </fieldset>
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="grantees">Who was this activity for?</Label>
@@ -104,23 +106,25 @@ const PageOne = ({
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Reason for Activity">
         <div className="smart-hub--form-section">
-          <legend>Who requested this activity?</legend>
-          <Radio
-            id="grantee-request"
-            name="requester"
-            label="Grantee"
-            value="grantee"
-            className="smart-hub--report-checkbox"
-            inputRef={register({ required: true })}
-          />
-          <Radio
-            id="regional-office-request"
-            name="requester"
-            label="Regional Office"
-            value="regional-office"
-            className="smart-hub--report-checkbox"
-            inputRef={register({ required: true })}
-          />
+          <fieldset>
+            <legend>Who requested this activity?</legend>
+            <Radio
+              id="grantee-request"
+              name="requester"
+              label="Grantee"
+              value="grantee"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: true })}
+            />
+            <Radio
+              id="regional-office-request"
+              name="requester"
+              label="Regional Office"
+              value="regional-office"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: true })}
+            />
+          </fieldset>
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="reason">What was the reason for this activity?</Label>

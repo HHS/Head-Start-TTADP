@@ -50,27 +50,31 @@ const PageThree = ({
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Methods and Logistics">
         <div className="smart-hub--form-section">
-          <legend>How was this activity conducted? (select at least one)</legend>
-          <Grid row gap>
-            <Grid col={4}>
-              {renderCheckbox('activity-method', 'virtual', 'Virtual')}
-              {renderCheckbox('activity-method', 'in-person', 'In Person')}
-              {renderCheckbox('activity-method', 'telephone', 'Telephone')}
+          <fieldset>
+            <legend>How was this activity conducted? (select at least one)</legend>
+            <Grid row gap>
+              <Grid col={4}>
+                {renderCheckbox('activity-method', 'virtual', 'Virtual')}
+                {renderCheckbox('activity-method', 'in-person', 'In Person')}
+                {renderCheckbox('activity-method', 'telephone', 'Telephone')}
+              </Grid>
+              <Grid col={8}>
+                {renderCheckbox('activity-method', 'email', 'Email')}
+                {renderCheckbox('activity-method', 'multi-recurring', 'Multi-grantee: Recurring Event (Community Practice)')}
+                {renderCheckbox('activity-method', 'multi-single', 'Multi-grantee: Single Event (Cluster)')}
+              </Grid>
             </Grid>
-            <Grid col={8}>
-              {renderCheckbox('activity-method', 'email', 'Email')}
-              {renderCheckbox('activity-method', 'multi-recurring', 'Multi-grantee: Recurring Event (Community Practice)')}
-              {renderCheckbox('activity-method', 'multi-single', 'Multi-grantee: Single Event (Cluster)')}
-            </Grid>
-          </Grid>
+          </fieldset>
         </div>
         <div className="smart-hub--form-section">
-          <legend>
-            Was this activity Training or Technical Assistance?
-            Select both options if both Training and Technical Assistance took place.
-          </legend>
-          {renderCheckbox('activity-type', 'training', 'Training')}
-          {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
+          <fieldset>
+            <legend>
+              Was this activity Training or Technical Assistance?
+              Select both options if both Training and Technical Assistance took place.
+            </legend>
+            {renderCheckbox('activity-type', 'training', 'Training')}
+            {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
+          </fieldset>
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="participants">Grantee participant(s) involved</Label>
