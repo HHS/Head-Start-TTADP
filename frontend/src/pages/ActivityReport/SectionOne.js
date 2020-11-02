@@ -54,7 +54,7 @@ const PageOne = ({
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="General Information">
         <div className="smart-hub--form-section">
-          <fieldset>
+          <Fieldset unstyled>
             <legend>Was this activity for a grantee or a non-grantee?</legend>
             <Radio
               id="category-grantee"
@@ -72,7 +72,7 @@ const PageOne = ({
               className="smart-hub--report-checkbox"
               inputRef={register({ required: true })}
             />
-          </fieldset>
+          </Fieldset>
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="grantees">Who was this activity for?</Label>
@@ -106,7 +106,7 @@ const PageOne = ({
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Reason for Activity">
         <div className="smart-hub--form-section">
-          <fieldset>
+          <Fieldset unstyled>
             <legend>Who requested this activity?</legend>
             <Radio
               id="grantee-request"
@@ -124,7 +124,7 @@ const PageOne = ({
               className="smart-hub--report-checkbox"
               inputRef={register({ required: true })}
             />
-          </fieldset>
+          </Fieldset>
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="reason">What was the reason for this activity?</Label>

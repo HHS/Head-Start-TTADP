@@ -50,7 +50,7 @@ const PageThree = ({
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Methods and Logistics">
         <div className="smart-hub--form-section">
-          <fieldset>
+          <Fieldset unstyled>
             <legend>How was this activity conducted? (select at least one)</legend>
             <Grid row gap>
               <Grid col={4}>
@@ -64,17 +64,17 @@ const PageThree = ({
                 {renderCheckbox('activity-method', 'multi-single', 'Multi-grantee: Single Event (Cluster)')}
               </Grid>
             </Grid>
-          </fieldset>
+          </Fieldset>
         </div>
         <div className="smart-hub--form-section">
-          <fieldset>
+          <Fieldset unstyled>
             <legend>
               Was this activity Training or Technical Assistance?
               Select both options if both Training and Technical Assistance took place.
             </legend>
             {renderCheckbox('activity-type', 'training', 'Training')}
             {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
-          </fieldset>
+          </Fieldset>
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="participants">Grantee participant(s) involved</Label>
