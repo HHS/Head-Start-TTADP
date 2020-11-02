@@ -27,6 +27,6 @@ Then('I see {string} as an option in the {string} dropdown', async (expectedOpti
   const el = await page.$x(selector);
   const selected = await el[0].$x(`//option[text()='${expectedOption}']`);
 
-  assert(selected.length === 1);
   assert(selected !== null || selected !== undefined);
+  assert(selected.length === 1);
 });
