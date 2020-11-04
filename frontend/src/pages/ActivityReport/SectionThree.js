@@ -97,24 +97,22 @@ const PageThree = ({
             <Grid col={6}>
               <DatePicker
                 control={control}
-                watch={watch}
-                value={startDate}
                 maxDate={endDate}
                 name="start-date"
                 label="Start Date"
                 register={register}
+                openUp
               />
             </Grid>
             <Grid col={6}>
               <DatePicker
                 control={control}
-                watch={watch}
-                value={endDate}
                 minDate={startDate}
                 disabled={!startDate}
                 name="end-date"
                 label="End Date"
                 register={register}
+                openUp
               />
             </Grid>
             <Grid col={5}>
