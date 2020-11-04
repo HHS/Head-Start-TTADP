@@ -1,15 +1,34 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, fireEvent, waitFor, act,
 } from '@testing-library/react';
 
 import { useForm } from 'react-hook-form';
 import DatePicker from '../DatePicker';
 
+// react-dates when opening the calendar in these tests. For details see
+// https://github.com/airbnb/react-dates/issues/1426#issuecomment-593420014
+Object.defineProperty(window, 'getComputedStyle', {
+  value: () => ({
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginLeft: 0,
+    marginRight: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    borderBottomWidth: 0,
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
+  }),
+});
+
 describe('DatePicker', () => {
   // eslint-disable-next-line react/prop-types
-  const RenderDatePicker = ({ minDate, maxDate, disabled }) => {
+  const RenderDatePicker = ({ disabled }) => {
     const { control } = useForm();
     return (
       <form>
@@ -17,16 +36,14 @@ describe('DatePicker', () => {
           control={control}
           label="label"
           name="picker"
-          minDate={minDate}
-          maxDate={maxDate}
           disabled={disabled}
         />
       </form>
     );
   };
 
-  it('disabled flag disables text input', () => {
-    render(<RenderDatePicker disabled />);
+  it('disabled flag disables text input', async () => {
+    await act(async () => render(<RenderDatePicker disabled />));
     expect(screen.getByRole('textbox')).toBeDisabled();
   });
 
@@ -34,26 +51,16 @@ describe('DatePicker', () => {
     render(<RenderDatePicker />);
     const textbox = screen.getByRole('textbox');
     fireEvent.change(textbox, { target: { value: '01/01/2000' } });
-    waitFor(() => expect(screen.getByRole('textbox')).toHaveTextContent('01/01/2000'));
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('01/01/2000'));
   });
 
-  describe('maxDate', () => {
-    it('causes input after minDate to be discarded', async () => {
-      const date = new Date(2000, 1, 2);
-      render(<RenderDatePicker maxDate={date} />);
-      const textbox = screen.getByRole('textbox');
-      fireEvent.change(textbox, { target: { value: '01/03/1000' } });
-      waitFor(() => expect(screen.getByRole('textbox')).toHaveTextContent(''));
+  it('clicking the open button will open the calendar', async () => {
+    await act(async () => {
+      render(<RenderDatePicker />);
+      const openCalendar = screen.getByRole('button');
+      fireEvent.click(openCalendar);
     });
-  });
-
-  describe('minDate', () => {
-    it('causes input before minDate to be discarded', async () => {
-      const date = new Date(2000, 1, 2);
-      render(<RenderDatePicker minDate={date} />);
-      const textbox = screen.getByRole('textbox');
-      fireEvent.change(textbox, { target: { value: '01/01/1000' } });
-      waitFor(() => expect(screen.getByRole('textbox')).toHaveTextContent(''));
-    });
+    const button = await waitFor(() => screen.getByLabelText('Move backward to switch to the previous month.'));
+    await waitFor(() => expect(button).toBeVisible());
   });
 });
