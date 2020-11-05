@@ -346,10 +346,10 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
 
-  nightly:
+  daily_scan:
     triggers:
       - schedule:
-          cron: "0 13 * * *"
+          cron: "0 13 * * 1-5"
           filters:
             branches:
               only:
