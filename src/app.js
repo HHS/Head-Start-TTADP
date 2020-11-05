@@ -28,7 +28,9 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: 'strict',
+    maxAge: Number(process.env.SESSION_TIMEOUT),
   },
+  rolling: true,
   store: new MemoryStore({ // Potentially change this to a different store
     checkPeriod: 86400000, // prune expired entries every 24h
   }),
