@@ -19,6 +19,7 @@
     "react-dom": "^16.14.0",
     "react-dropzone": "^11.2.0",
     "react-hook-form": "^6.9.0",
+    "react-idle-timer": "^4.4.2",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-router-prop-types": "^1.0.5",
