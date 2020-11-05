@@ -129,6 +129,7 @@
     "express-unless": "^0.5.0",
     "express-winston": "^4.0.5",
     "helmet": "^4.1.0",
+    "http-codes": "^1.0.0",
     "lodash": "^4.17.20",
     "memorystore": "^1.6.2",
     "pg": "^8.3.3",

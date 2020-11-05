@@ -43,29 +43,29 @@ if (process.env.NODE_ENV === 'production') {
 authMiddleware.unless = unless;
 // TODO: update unless to replace `oauth1CallbackPath with `join('/api', oauth2CallbackPath)`
 // once our oauth callback has been updated
-app.use(authMiddleware.unless({ path: [oauth2CallbackPath, join('/api', loginPath)] }));
+app.use(authMiddleware.unless({ path: [oauth2CallbackPath, join('/api', loginPath), '/api/user'] }));
 
-router.get('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
+// router.get('/hello', (req, res) => {
+//   logger.info('Hello from ttadp');
+//   res.send('Hello from ttadp');
+// });
 
-router.post('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
+// router.post('/hello', (req, res) => {
+//   logger.info('Hello from ttadp');
+//   res.send('Hello from ttadp');
+// });
 
-router.get('/user', (req, res) => {
-  const { userId, role, name } = req.session;
-  res.send({ userId, role, name });
-});
+// router.get('/user', (req, res) => {
+//   const { userId, role, name } = req.session;
+//   res.send({ userId, role, name });
+// });
 
 router.get('/logout', (req, res) => {
   req.session.destroy();
   res.sendStatus(204);
 });
 
-router.get(loginPath, login);
+// router.get(loginPath, login);
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, async (req, res) => {
@@ -91,6 +91,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
   }
 });
 
-app.use('/api', router);
+app.use('/api', require('./routes/apiDirectory').default);
+// app.use('/api', router);
 
 module.exports = app;
