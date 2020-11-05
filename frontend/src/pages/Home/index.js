@@ -17,7 +17,7 @@ function Home() {
                 {' '}
                 {user.name}
               </h1>
-              <Button onClick={logout}>
+              <Button onClick={() => logout(false)}>
                 Logout
               </Button>
             </Container>
