@@ -69,6 +69,11 @@ router.get('/logout', (req, res) => {
 
 router.get(loginPath, login);
 
+// Server 404s need to be explicitly handled by express
+router.get('*', (req, res) => {
+  res.sendStatus(404);
+});
+
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, async (req, res) => {
   try {
@@ -94,5 +99,12 @@ app.get(oauth2CallbackPath, async (req, res) => {
 });
 
 app.use('/api', router);
+
+// Client 404s are handled by client side routing
+if (process.env.NODE_ENV === 'production') {
+  app.use('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  });
+}
 
 module.exports = app;
