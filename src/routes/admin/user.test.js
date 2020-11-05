@@ -10,7 +10,7 @@ const mockUser = {
   id: 47,
   name: 'Joe Green',
   title: null,
-  phoneNumber: '555-555-555',
+  phoneNumber: '555-555-554',
   hsesUserId: '33',
   email: 'test@test.com',
   homeRegionId: 1,
