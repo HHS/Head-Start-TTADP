@@ -51,7 +51,7 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
       )}
     >
       <Alert role="alert" type="warning">
-        You will automatically be logged out due to inactivity in
+        You will be automatically logged out due to inactivity in
         {' '}
         { timeToLogoutMsg }
         {' '}
