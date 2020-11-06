@@ -9,12 +9,12 @@ const namespace = 'SERVICE:USER';
 const logContext = {
   namespace,
 };
+
 /**
- * Gets a user from the database.
+ * Gets one user from the database.
  *
- * //potentially use also or instead of the user id provided by HSES
- * @param {Object} userData - user information containing email address, hses user id
- * @returns {Promise<any>} - returns a promise
+ * @param {*} req - request
+ * @param {*} res - response
  */
 export async function getUser(req, res) {
   const { userId } = req.params;
@@ -36,6 +36,12 @@ export async function getUser(req, res) {
   }
 }
 
+/**
+ * Gets all users from the database.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export default async function getUsers(req, res) {
   try {
     const users = await User.findAll({
@@ -50,41 +56,63 @@ export default async function getUsers(req, res) {
   }
 }
 
+/**
+ * Creates one user in the database.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export async function createUser(req, res) {
   const newUser = req.body;
+  let user;
   try {
-    const user = await User.create(newUser,
-      {
-        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-      });
+    await sequelize.transaction(async (transaction) => {
+      user = await User.create(newUser,
+        {
+          include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
+        }, transaction);
+    });
     res.json(user);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
 
+/**
+ * Updates one user in the database.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export async function updateUser(req, res) {
   const requestUser = req.body;
   const { userId } = req.params;
+  let result;
   try {
-    const result = await User.update(requestUser,
-      {
-        where: { id: userId },
-        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-      });
     await sequelize.transaction(async (t) => {
+      result = await User.update(requestUser,
+        {
+          include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
+          where: { id: userId },
+        }, { transaction: t });
+
       await Permission.destroy({ where: { userId } },
         { transaction: t });
       await Permission.bulkCreate(requestUser.permissions,
         { transaction: t });
     });
-    // res.json(await User.findOne({ where: { id: userId }, include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }] }));
     res.json(result);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
 
+/**
+ * Deletes one user from the database.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export async function deleteUser(req, res) {
   const { userId } = req.params;
   try {

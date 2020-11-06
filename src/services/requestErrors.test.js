@@ -1,0 +1,68 @@
+import { Op } from 'sequelize';
+import db, {
+  RequestErrors,
+} from '../models';
+import createRequestError from './requestErrors';
+
+describe('createRequestError', () => {
+  beforeEach(async () => {
+    await RequestErrors.destroy({ where: {} });
+  });
+  afterAll(async () => {
+    await RequestErrors.destroy({ where: {} });
+    db.sequelize.close();
+  });
+
+  it('creates request error', async () => {
+    const operation = 'TEST OPERATION';
+    const uri = 'http://smarthub';
+    const method = 'POST';
+    const requestBody = { foo: 'bar' };
+    const responseBody = { error: { foo: 'bar' } };
+    const responseCode = '500';
+    const requestErrorId = await createRequestError({
+      operation,
+      uri,
+      method,
+      requestBody,
+      responseBody,
+      responseCode,
+    });
+    const retrievedRequestError = await RequestErrors.findOne({
+      where: {
+        id: {
+          [Op.eq]: requestErrorId,
+        },
+      },
+    });
+    expect(retrievedRequestError).toBeDefined();
+    expect(retrievedRequestError.id).toEqual(String(requestErrorId));
+    expect(retrievedRequestError.operation).toEqual(operation);
+    expect(retrievedRequestError.uri).toEqual(uri);
+    expect(retrievedRequestError.method).toEqual(method);
+    expect(retrievedRequestError.requestBody).toEqual(requestBody);
+    expect(retrievedRequestError.responseBody).toEqual(responseBody);
+    expect(retrievedRequestError.responseCode).toEqual(responseCode);
+    expect(retrievedRequestError.createdAt).toBeDefined();
+    expect(retrievedRequestError.updatedAt).toBeDefined();
+  });
+
+  it('Throws on error', async () => {
+    const operation = 'TEST OPERATION';
+    const uri = 'http://smarthub';
+    const method = 'POST';
+    const requestBody = 1;
+    const responseBody = { error: { foo: 'bar' } };
+    const responseCode = '500';
+    const values = {
+      operation,
+      uri,
+      method,
+      requestBody,
+      responseBody,
+      responseCode,
+    };
+    // const requestErrorId = await createRequestError();
+    await expect(createRequestError(undefined)).rejects.toThrow();
+  });
+});
