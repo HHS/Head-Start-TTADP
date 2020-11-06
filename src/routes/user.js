@@ -5,6 +5,10 @@ import getUsers, {
 
 const router = new express.Router();
 
+/**
+ * API for frontend to manage user updates.
+ */
+
 router.get('/:userId', getUser);
 
 router.get('/', getUsers);

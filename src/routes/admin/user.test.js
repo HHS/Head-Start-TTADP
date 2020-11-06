@@ -1,10 +1,12 @@
 import db, {
   User, Permission, sequelize,
 } from '../../models';
-import findOrCreateUser from '../../services/accessValidation';
-import {
+import getUsers, {
   getUser, deleteUser, createUser, updateUser,
 } from './user';
+import handleErrors from '../../lib/apiErrorHandler';
+
+jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
 
 const mockUser = {
   id: 47,
@@ -30,7 +32,6 @@ const mockUser = {
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
 const mockRequest = {
-  path: '/api/user/47',
   params: { userId: mockUser.id },
   session: mockSession,
   connection: {
@@ -57,6 +58,7 @@ describe('User route handler', () => {
     await User.destroy({ where: {} });
     db.sequelize.close();
   });
+
   it('Returns a user by id', async () => {
     await sequelize.transaction((transaction) => User.create(mockUser,
       {
@@ -67,32 +69,60 @@ describe('User route handler', () => {
     // Verify that once the user exists, it will be retrieved
     await getUser(mockRequest, mockResponse);
 
-    expect(mockResponse.json).toHaveBeenCalledWith(mockUser);
+    expect(mockResponse.json).toHaveBeenCalled();
+  });
+
+  it('Returns users', async () => {
+    mockRequest.path = '/api/user';
+    await sequelize.transaction((transaction) => User.create(mockUser,
+      {
+        include: [{ model: Permission, as: 'permissions' }],
+        transaction,
+      }));
+
+    // Verify that once the user exists, it will be retrieved
+    await getUsers(mockRequest, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalled();
   });
 
   it('Creates a new user', async () => {
     mockRequest.body = mockUser;
 
+    // Verify that there are no users
+    const beginningUsers = await User.findAll();
+    const beginningPermissions = await Permission.findAll();
+
+    expect(beginningUsers.length).toBe(0);
+    expect(beginningPermissions.length).toBe(0);
+
     await createUser(mockRequest, mockResponse);
 
-    expect(mockResponse.json).toHaveBeenCalledWith(mockUser);
+    expect(mockResponse.json).toHaveBeenCalled();
+    // Verify that one user was created
+    const endingUsers = await User.findAll();
+    const endingPermissions = await Permission.findAll();
+
+    expect(endingUsers.length).toBe(1);
+    expect(endingPermissions.length).toBe(2);
   });
 
-  it.only('Updates a user', async () => {
+  it('Updates a user', async () => {
     mockRequest.body = mockUser;
 
     const user = await User.create(mockUser,
       {
         include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
       });
+
     expect(user).toBeInstanceOf(User);
-    // update the user and a permission
+    // Update the user and a permission
     mockUser.email = 'updated@mail.com';
     mockUser.permissions[0].scopeId = 4;
 
     await updateUser(mockRequest, mockResponse);
 
-    expect(mockResponse.json).toHaveBeenCalledWith([1]);
+    expect(mockResponse.json).toHaveBeenCalled();
 
     const updatedUser = await User.findOne({
       where: { id: mockUser.id },
@@ -104,13 +134,14 @@ describe('User route handler', () => {
         },
       ],
     });
-
+    // Check that the updates were persisted to the db
     expect(updatedUser.email).toEqual(mockUser.email);
-    expect(updatedUser.getPermissions()).not.toBe(null);
+    expect(await updatedUser.getPermissions()).not.toBe(null);
 
-    const perm = (await updatedUser.getPermissions())[0].dataValues;
+    const permissions = await updatedUser.getPermissions();
+    const perm = permissions.find((p) => p.regionId === 1);
 
-    expect(perm).toEqual(mockUser.permissions[0]);
+    expect(perm.dataValues).toEqual(mockUser.permissions[0]);
   });
 
   it('Deletes a user', async () => {
@@ -135,7 +166,16 @@ describe('User route handler', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(0);
   });
 
-  it('Throws when there is something wrong', async () => {
-    await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
+  it('Calls an error handler on error', async () => {
+    mockUser.email = 'invalid';
+    mockRequest.body = mockUser;
+
+    await updateUser(mockRequest, mockResponse);
+
+    expect(handleErrors).toHaveBeenCalled();
+
+    await createUser(mockRequest, mockResponse);
+
+    expect(handleErrors).toHaveBeenCalledTimes(2);
   });
 });
