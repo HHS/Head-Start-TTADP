@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render, screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
+import moment from 'moment';
 
 import ActivityReport from '../index';
 
@@ -10,7 +11,7 @@ const formData = () => ({
   'activity-method': ['in-person'],
   'activity-type': ['training'],
   duration: '1',
-  'end-date': new Date(),
+  'end-date': moment(),
   grantees: 'Grantee Name 1',
   'number-of-participants': '1',
   'participant-category': 'grantee',
@@ -18,7 +19,7 @@ const formData = () => ({
   reason: 'reason 1',
   requester: 'grantee',
   'resources-used': 'eclkcurl',
-  'start-date': new Date(),
+  'start-date': moment(),
   topics: 'first',
 });
 
