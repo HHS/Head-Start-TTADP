@@ -26,6 +26,9 @@ describe('authMiddleware', () => {
     const mockRequest = {
       path: '/api/endpoint',
       session: mockSession,
+      headers: {
+        referer: 'http://localhost:3000',
+      },
     };
     const mockResponse = {
       redirect: jest.fn(),
@@ -43,7 +46,9 @@ describe('authMiddleware', () => {
     const mockRequest = {
       path: '/api/login',
       session: mockSession,
-      headers: {},
+      headers: {
+        referer: 'http://localhost:3000',
+      },
     };
     const mockResponse = {
       redirect: jest.fn(),
@@ -59,7 +64,10 @@ describe('authMiddleware', () => {
     const mockRequest = {
       path: '/api/login',
       session: mockSession,
-      headers: { cookie: `CUCUMBER_USER=${process.env.CUCUMBER_USER}` },
+      headers: {
+        cookie: `CUCUMBER_USER=${process.env.CUCUMBER_USER}`,
+        referer: 'http://localhost:3000',
+      },
     };
     const mockResponse = {
       redirect: jest.fn(),
