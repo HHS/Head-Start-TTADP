@@ -345,7 +345,6 @@ workflows:
             - test_frontend
             - cucumber_test
             - dynamic_security_scan
-            - accessibility_scan
           filters:
             branches:
               only:
