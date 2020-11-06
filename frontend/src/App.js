@@ -9,11 +9,14 @@ import { fetchUser, fetchLogout } from './fetchers/Auth';
 
 import UserContext from './UserContext';
 import Header from './components/Header';
+import IdleModal from './components/IdleModal';
 import Page from './pages';
 import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
 import ActivityReport from './pages/ActivityReport';
+import 'react-dates/initialize';
+import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
 
 function App() {
@@ -21,6 +24,7 @@ function App() {
   const [loading, updateLoading] = useState(true);
   const [loggedOut, updateLoggedOut] = useState(false);
   const authenticated = user !== undefined;
+  const [timedOut, updateTimedOut] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,10 +40,11 @@ function App() {
     fetchData();
   }, []);
 
-  const logout = async () => {
+  const logout = async (timeout = false) => {
     await fetchLogout();
     updateUser();
     updateLoggedOut(true);
+    updateTimedOut(timeout);
   };
 
   if (loading) {
@@ -52,6 +57,11 @@ function App() {
 
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
+      <IdleModal
+        modalTimeout={Number(process.env.REACT_APP_INACTIVE_MODAL_TIMEOUT)}
+        logoutTimeout={Number(process.env.REACT_APP_SESSION_TIMEOUT)}
+        logoutUser={logout}
+      />
       <Route
         exact
         path="/"
@@ -89,7 +99,7 @@ function App() {
         <section className="usa-section">
           <GridContainer>
             {!authenticated
-        && <Unauthenticated loggedOut={loggedOut} />}
+        && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
             {authenticated
         && renderAuthenticatedRoutes()}
           </GridContainer>
