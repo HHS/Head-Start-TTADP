@@ -5,13 +5,23 @@ import {
 } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 
-function Unauthenticated({ loggedOut }) {
+function Unauthenticated({ loggedOut, timedOut }) {
+  let msg = 'You have successfully logged out of the TTA Smart Hub';
+  let type = 'success';
+  let heading = 'Logout Successful';
+
+  if (timedOut) {
+    msg = 'You have been logged out due to inactivity';
+    type = 'info';
+    heading = 'Logout due to inactivity';
+  }
+
   return (
     <Container>
       {loggedOut
       && (
-      <Alert type="success" heading="Logout Successful">
-        You have successfully logged out of the TTA Smart Hub
+      <Alert type={type} heading={heading}>
+        {msg}
       </Alert>
       )}
       <h1>
@@ -29,10 +39,12 @@ function Unauthenticated({ loggedOut }) {
 
 Unauthenticated.propTypes = {
   loggedOut: PropTypes.bool,
+  timedOut: PropTypes.bool,
 };
 
 Unauthenticated.defaultProps = {
   loggedOut: false,
+  timedOut: false,
 };
 
 export default Unauthenticated;
