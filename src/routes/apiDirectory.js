@@ -6,7 +6,6 @@ export const loginPath = '/login';
 
 const router = express.Router();
 
-// router.use('/admin/user', require('./user').default);
 router.use('/admin/user', adminRouter);
 
 router.use('/hello', (req, res) => {
