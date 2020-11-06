@@ -45,7 +45,7 @@ if (process.env.NODE_ENV === 'production') {
 authMiddleware.unless = unless;
 // TODO: update unless to replace `oauth1CallbackPath with `join('/api', oauth2CallbackPath)`
 // once our oauth callback has been updated
-app.use(authMiddleware.unless({ path: [oauth2CallbackPath, join('/api', loginPath)] }));
+router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.get('/hello', (req, res) => {
   logger.info('Hello from ttadp');
@@ -74,6 +74,8 @@ router.get('*', (req, res) => {
   res.sendStatus(404);
 });
 
+app.use('/api', router);
+
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, async (req, res) => {
   try {
@@ -92,13 +94,11 @@ app.get(oauth2CallbackPath, async (req, res) => {
     req.session.userId = 1; // temporary
     req.session.role = _.get(authorities[0], 'authority');
     logger.info(`role: ${req.session.role}`);
-    res.redirect(process.env.TTA_SMART_HUB_URI);
+    res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.refererPath));
   } catch (error) {
     // console.log(error);
   }
 });
-
-app.use('/api', router);
 
 // Client 404s are handled by client side routing
 if (process.env.NODE_ENV === 'production') {
