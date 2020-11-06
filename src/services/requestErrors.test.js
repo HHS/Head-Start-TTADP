@@ -48,21 +48,6 @@ describe('createRequestError', () => {
   });
 
   it('Throws on error', async () => {
-    const operation = 'TEST OPERATION';
-    const uri = 'http://smarthub';
-    const method = 'POST';
-    const requestBody = 1;
-    const responseBody = { error: { foo: 'bar' } };
-    const responseCode = '500';
-    const values = {
-      operation,
-      uri,
-      method,
-      requestBody,
-      responseBody,
-      responseCode,
-    };
-    // const requestErrorId = await createRequestError();
     await expect(createRequestError(undefined)).rejects.toThrow();
   });
 });
