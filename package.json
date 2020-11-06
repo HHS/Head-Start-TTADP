@@ -29,7 +29,7 @@
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate && yarn db:seed:all",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
-    "db:seed:all": "node_modules/.bin/sequelize db:seed:all",
+    "db:seed:all": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:seed:all",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:start": "docker-compose up",
     "docker:stop": "docker-compose down",
