@@ -4,7 +4,7 @@ const {
 
 module.exports = (sequelize, DataTypes) => {
   class Permission extends Model {
-    static associate(models) {
+    static associate() {
     }
   }
   Permission.init({
