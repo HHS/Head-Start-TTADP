@@ -18,6 +18,13 @@ There are yarn commands for starting/testing/linting the frontend defined a dire
 | `yarn lint` | Run the linter |
 | `yarn lint:ci` | Run the linter outputting results to xml files |
 
+## Build Environment Variables
+
+| Variable | Description |
+|-|-|
+| `REACT_APP_INACTIVE_MODAL_TIMEOUT` | Amount of time before the "Idle Logout" modal is shown to a user, in milliseconds |
+| `REACT_APP_SESSION_TIMEOUT` | Amount of time before an inactive user is automatically logged out |
+
 ## Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
