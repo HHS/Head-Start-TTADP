@@ -56,6 +56,9 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
         { timeToLogoutMsg }
         {' '}
         unless you become active again.
+        <span className="usa-sr-only">
+          Press any key to continue your session
+        </span>
       </Alert>
     </Modal>
   ));
