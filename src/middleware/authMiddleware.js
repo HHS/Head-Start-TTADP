@@ -20,6 +20,7 @@ export const hsesAuth = new ClientOAuth2({
  * @param {*} res - response
  */
 export function login(req, res) {
+  req.session.refererPath = new URL(req.headers.referer).pathname;
   if (process.env.NODE_ENV !== 'production'
     && req.headers.cookie && req.headers.cookie === `CUCUMBER_USER=${process.env.CUCUMBER_USER}`) {
     req.session.userId = process.env.CUCUMBER_USER_ID;
