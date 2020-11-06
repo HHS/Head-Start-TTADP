@@ -28,4 +28,14 @@ describe('Unauthenticated Page', () => {
       expect(screen.getByText('You have successfully logged out of the TTA Smart Hub')).toBeVisible();
     });
   });
+
+  describe('when logged out and timed out', () => {
+    beforeEach(() => {
+      render(<Unauthenticated loggedOut timedOut />);
+    });
+
+    it('displays the logout due to inactivity message', () => {
+      expect(screen.getByText('You have been logged out due to inactivity')).toBeVisible();
+    });
+  });
 });
