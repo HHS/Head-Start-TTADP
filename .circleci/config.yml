@@ -187,7 +187,7 @@ jobs:
           name: Start server
           command: |
             yarn build
-            yarn start:local
+            yarn start:ci
           background: true
       - run:
           name: Run migrations ci
