@@ -10,13 +10,12 @@ import path from 'path';
 import join from 'url-join';
 
 import logger, { requestLogger } from './logger';
-import authMiddleware, { hsesAuth, login } from './middleware/authMiddleware';
+import authMiddleware, { hsesAuth } from './middleware/authMiddleware';
+import { loginPath } from './routes/apiDirectory';
 
 const app = express();
-const router = express.Router();
 const MemoryStore = memorystore(session);
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
-const loginPath = '/login';
 
 app.use(requestLogger);
 app.use(express.json());
@@ -47,28 +46,6 @@ authMiddleware.unless = unless;
 // once our oauth callback has been updated
 app.use(authMiddleware.unless({ path: [oauth2CallbackPath, join('/api', loginPath)] }));
 
-router.get('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
-
-router.post('/hello', (req, res) => {
-  logger.info('Hello from ttadp');
-  res.send('Hello from ttadp');
-});
-
-router.get('/user', (req, res) => {
-  const { userId, role, name } = req.session;
-  res.send({ userId, role, name });
-});
-
-router.get('/logout', (req, res) => {
-  req.session.destroy();
-  res.sendStatus(204);
-});
-
-router.get(loginPath, login);
-
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, async (req, res) => {
   try {
@@ -93,6 +70,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
   }
 });
 
-app.use('/api', router);
+app.use('/api', require('./routes/apiDirectory').default);
 
 module.exports = app;
