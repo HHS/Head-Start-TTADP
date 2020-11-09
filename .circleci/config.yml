@@ -253,7 +253,7 @@ jobs:
           command: yarn --cwd frontend run build
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate
+          command: yarn run db:migrate:ci
       - run:
           name: Start server
           command: yarn start:ci
