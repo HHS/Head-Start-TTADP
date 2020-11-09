@@ -262,7 +262,7 @@ jobs:
           name: Run axe
           command: |
             mkdir reports
-            yarn axe:ci
+            yarn axe:example
       - store_artifacts:
           path: reports/
   deploy:
