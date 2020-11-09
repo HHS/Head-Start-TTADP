@@ -69,7 +69,7 @@ describe('User route handler', () => {
     // Verify that once the user exists, it will be retrieved
     await getUser(mockRequest, mockResponse);
 
-    expect(mockResponse.json).toHaveBeenCalled();
+    expect(mockResponse.json).toHaveBeenCalledWith(mockUser);
   });
 
   it('Returns users', async () => {
@@ -136,12 +136,14 @@ describe('User route handler', () => {
     });
     // Check that the updates were persisted to the db
     expect(updatedUser.email).toEqual(mockUser.email);
-    expect(await updatedUser.getPermissions()).not.toBe(null);
 
-    const permissions = await updatedUser.getPermissions();
+    const permissions = await updatedUser.permissions;
+
+    expect(permissions).not.toBe(null);
+
     const perm = permissions.find((p) => p.regionId === 1);
 
-    expect(perm.dataValues).toEqual(mockUser.permissions[0]);
+    expect(perm.toJSON()).toEqual(mockUser.permissions[0]);
   });
 
   it('Deletes a user', async () => {
@@ -160,6 +162,15 @@ describe('User route handler', () => {
     await deleteUser(mockRequest, mockResponse);
 
     expect(mockResponse.json).toHaveBeenCalledWith(1);
+
+    // Check that the `user` was deleted
+    const result = await User.findOne({
+      where: {
+        hsesUserId: mockUser.hsesUserId,
+      },
+    });
+
+    expect(result).toBeNull();
 
     await deleteUser(mockRequest, mockResponse);
 

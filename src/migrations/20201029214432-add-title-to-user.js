@@ -33,36 +33,33 @@ module.exports = {
         },
         { transaction: t },
       ),
+      queryInterface.changeColumn(
+        'Users',
+        'email', {
+          type: Sequelize.STRING,
+          unique: true,
+        },
+        { transaction: t },
+      ),
     ]));
-    // await queryInterface.addColumn('Users', 'title', {
-    //   type: Sequelize.DataTypes.ENUM(...titles),
-    // });
-
-    // await queryInterface.addColumn('Users', 'homeRegionId', {
-    //   type: Sequelize.INTEGER,
-    //   references: {
-    //     model: 'Regions',
-    //     key: 'id',
-    //   },
-    //   onUpdate: 'SET NULL',
-    //   onDelete: 'SET NULL',
-    //   defaultValue: null,
-    // });
   },
 
-  down: (queryInterface) => queryInterface.sequelize.transaction((t) => {
+  down: (queryInterface, Sequelize) => queryInterface.sequelize.transaction((t) => {
     const query = 'DROP TYPE public."enum_Users_title";';
     return Promise.all([
       queryInterface.removeColumn('Users', 'title', { transaction: t }),
       queryInterface.removeColumn('Users', 'homeRegionId', {
         transaction: t,
       }),
+      queryInterface.changeColumn(
+        'Users',
+        'email', {
+          type: Sequelize.STRING,
+          unique: false,
+        },
+        { transaction: t },
+      ),
       queryInterface.sequelize.query(query, { transaction: t }),
     ]);
   }),
-  //   await queryInterface.removeColumn('Users', 'title');
-  //   await queryInterface.removeColumn('Users', 'homeRegionId');
-  //   const query = 'DROP TYPE public."enum_Users_title";';
-  //   return queryInterface.sequelize.query(query);
-  // },
 };
