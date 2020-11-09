@@ -7,7 +7,7 @@
     "node": "^12.18"
   },
   "scripts": {
-    "build": "./node_modules/.bin/babel src -d ./build/server",
+    "build": "./node_modules/.bin/babel src -d ./build/server  && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\"",
