@@ -30,7 +30,7 @@ export async function getUser(req, res) {
         { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
       ],
     });
-    res.json(user);
+    res.json(user.toJSON());
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
