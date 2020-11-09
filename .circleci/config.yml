@@ -257,6 +257,7 @@ jobs:
       - run:
           name: Start server
           command: yarn start:ci
+          background: true
       - run:
           name: Run axe
           command: |
