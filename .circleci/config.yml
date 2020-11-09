@@ -246,11 +246,11 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Build
-          command:
-            yarn build
-            yarn --cwd frontend run build
-          background: true
+          name: Build backend assets
+          command: yarn build
+      - run:
+          name: Build frontend assets
+          command: yarn --cwd frontend run build
       - run:
           name: Run migrations ci
           command: yarn run db:migrate
@@ -340,21 +340,6 @@ workflows:
   build_test_deploy:
     jobs:
       - build
-      - lint_audit:
-          requires:
-            - build
-      - test_backend:
-          requires:
-            - build
-      - test_frontend:
-          requires:
-            - build
-      - cucumber_test:
-          requires:
-            - build
-      - dynamic_security_scan:
-          requires:
-            - build
       - accessibility_scan:
           requires:
             - build
