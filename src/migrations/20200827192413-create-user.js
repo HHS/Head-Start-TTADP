@@ -8,7 +8,6 @@ module.exports = {
     },
     hsesUserId: {
       type: Sequelize.STRING,
-      unique: true,
     },
     name: {
       type: Sequelize.STRING,
