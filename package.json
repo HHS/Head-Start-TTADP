@@ -11,7 +11,7 @@
     "axe:aa": "axe https://www.deque.com --tags wcag21aa --exit; EXIT_CODE=$?; echo $EXIT_CODE",
     "axe:best": "axe https://www.deque.com --tags best-practice --exit; EXIT_CODE=$?; echo $EXIT_CODE",
     "axe": "rm -r ./reports/ && mkdir ./reports && axe https://www.deque.com --dir ./reports/  --verbose",
-    "axe:ci": "axe http://localhost:3000 --exit",
+    "axe:ci": "axe http://localhost:3000",
     "axe:sand": "axe https://tta-smarthub-sandbox.app.cloud.gov --load-delay=2000 --verbose",
     "build": "./node_modules/.bin/babel src -d ./build/server",
     "deps:local": "yarn install && yarn --cwd frontend install",
