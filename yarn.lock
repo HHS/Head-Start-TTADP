@@ -4780,11 +4780,6 @@ http-cache-semantics@^4.0.0:
   resolved "https://registry.yarnpkg.com/http-cache-semantics/-/http-cache-semantics-4.1.0.tgz#49e91c5cbf36c9b94bcfcd71c23d5249ec74e390"
   integrity sha512-carPklcUh7ROWRK7Cv27RPtdhYhUsela/ue5/jKzjegVvXDqM2ILE9Q2BGn9JZJh1g87cp56su/FgQSzcWS8cQ==
 
-http-codes@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/http-codes/-/http-codes-1.0.0.tgz#59dd46f3ccb3037dd1e254aa644ab0f8be15f278"
-  integrity sha1-Wd1G88yzA33R4lSqZEqw+L4V8ng=
-
 http-errors@1.7.2:
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/http-errors/-/http-errors-1.7.2.tgz#4f5029cf13239f31036e5b2e55292bcfbcc85c8f"

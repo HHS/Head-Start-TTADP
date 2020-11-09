@@ -225,7 +225,7 @@ jobs:
             docker-compose -f docker-compose-test.yml run --rm server yarn build
             docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend run build
             docker-compose -f docker-compose-test.yml up -d
-            docker-compose -f docker-compose-test.yml exec server yarn db:migrate:ci
+            docker-compose -f docker-compose-test.yml exec server yarn db:migrate
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-weekly
