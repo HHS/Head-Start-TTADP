@@ -240,10 +240,30 @@ jobs:
               -t owasp/zap2docker-weekly zap-baseline.py \
               -t http://server:8080 \
               -c zap.conf -I -i
-  six:
+  accessibility_scan:
     executor: docker-executor
     steps:
-      - run: echo "hello world"
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build
+          command:
+            yarn build
+            yarn --cwd frontend run build
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn run db:migrate
+      - run:
+          name: Start server
+          command: yarn start:ci
+      - run:
+          name: Run axe
+          command: |
+            mkdir reports
+            yarn axe:ci
+      - store_artifacts:
+          path: reports/
   deploy:
     executor: docker-executor
     steps:
@@ -335,7 +355,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build
-      - six:
+      - accessibility_scan:
           requires:
             - build
       - deploy:
@@ -345,6 +365,7 @@ workflows:
             - test_frontend
             - cucumber_test
             - dynamic_security_scan
+            - accessibility_scan
           filters:
             branches:
               only:

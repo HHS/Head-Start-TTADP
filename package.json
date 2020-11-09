@@ -7,6 +7,12 @@
     "node": "^12.18"
   },
   "scripts": {
+    "axe:fail": "axe https://www.deque.com --exit; EXIT_CODE=$?; echo $EXIT_CODE",
+    "axe:aa": "axe https://www.deque.com --tags wcag21aa --exit; EXIT_CODE=$?; echo $EXIT_CODE",
+    "axe:best": "axe https://www.deque.com --tags best-practice --exit; EXIT_CODE=$?; echo $EXIT_CODE",
+    "axe": "rm -r ./reports/ && mkdir ./reports && axe https://www.deque.com --dir ./reports/  --verbose",
+    "axe:ci": "axe http://localhost:3000 --exit",
+    "axe:sand": "axe https://tta-smarthub-sandbox.app.cloud.gov --load-delay=2000 --verbose",
     "build": "./node_modules/.bin/babel src -d ./build/server",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
@@ -93,6 +99,7 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/cli": "^4.0.0",
     "@babel/cli": "^7.11.6",
     "@babel/core": "^7.11.6",
     "@babel/node": "^7.10.5",
@@ -113,6 +120,7 @@
     "jest-junit": "^11.1.0",
     "nodemon": "^2.0.4",
     "redoc-cli": "^0.9.12",
+    "selenium-webdriver": "^4.0.0-alpha.7",
     "sequelize-cli": "^6.2.0",
     "supertest": "^4.0.2"
   },
