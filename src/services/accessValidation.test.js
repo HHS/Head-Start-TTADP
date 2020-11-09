@@ -1,11 +1,5 @@
 import db, { User } from '../models';
 import findOrCreateUser from './accessValidation';
-import logger from '../logger';
-
-jest.mock('../logger', () => (
-  {
-    error: jest.fn(),
-  }));
 
 describe('findOrCreateUser', () => {
   beforeEach(async () => {
@@ -19,7 +13,6 @@ describe('findOrCreateUser', () => {
     const user = {
       hsesUserId: '33',
       email: 'test@test.com',
-      homeRegionId: 3,
     };
     // Verify that there are no users
     const originalUsers = await User.findAll();
@@ -43,7 +36,6 @@ describe('findOrCreateUser', () => {
     const user = {
       hsesUserId: '33',
       email: 'test@test.com',
-      homeRegionId: 3,
     };
     // Check that the above `user` doesn't exist in the DB yet.
     const existingUser = await User.findOne({
@@ -71,15 +63,5 @@ describe('findOrCreateUser', () => {
 
   it('Throws when there is something wrong', async () => {
     await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
-  });
-
-  it('Logs an error message on error', async () => {
-    const user = {
-      hsesUserId: '33',
-      email: 'invalid',
-      homeRegionId: 3,
-    };
-    await expect(findOrCreateUser(user)).rejects.toThrow();
-    expect(logger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating User in database.');
   });
 });
