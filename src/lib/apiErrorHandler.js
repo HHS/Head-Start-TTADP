@@ -29,7 +29,7 @@ async function handleSequelizeError(req, res, error, logContext) {
 }
 
 export const handleError = async (req, res, error, logContext) => {
-  if (process.env.APP3_ENV_NAME === 'development') {
+  if (process.env.NODE_ENV === 'development') {
     logger.error(error);
   }
   if (error instanceof Sequelize.Error) {
