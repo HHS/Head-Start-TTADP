@@ -246,12 +246,6 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Build backend assets
-          command: yarn build
-      - run:
-          name: Build frontend assets
-          command: yarn --cwd frontend run build
-      - run:
           name: Run migrations ci
           command: yarn run db:migrate:ci
       - run:
@@ -262,7 +256,7 @@ jobs:
           name: Run axe
           command: |
             mkdir reports
-            yarn axe:example
+            yarn axe:ci
       - store_artifacts:
           path: reports/
   deploy:
