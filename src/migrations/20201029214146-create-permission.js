@@ -8,6 +8,7 @@ module.exports = {
     },
     userId: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
         model: {
           tableName: 'Users',
@@ -19,6 +20,7 @@ module.exports = {
     },
     regionId: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
         model: {
           tableName: 'Regions',
@@ -28,6 +30,7 @@ module.exports = {
     },
     scopeId: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
         model: {
           tableName: 'Scopes',

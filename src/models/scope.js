@@ -12,14 +12,6 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Scope.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: null,
-      comment: null,
-      primaryKey: true,
-      autoIncrement: true,
-    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,

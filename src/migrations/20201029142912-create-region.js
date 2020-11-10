@@ -8,6 +8,7 @@ module.exports = {
     },
     name: {
       type: Sequelize.STRING,
+      allowNull: false,
     },
   }),
   down: (queryInterface) => queryInterface.dropTable('Regions'),

@@ -8,13 +8,39 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Permission.init({
-    userId: DataTypes.INTEGER,
-    regionId: DataTypes.INTEGER,
-    scopeId: DataTypes.INTEGER,
+    regionId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Regions',
+        },
+        key: 'id',
+      },
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Users',
+        },
+        key: 'id',
+      },
+    },
+    scopeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Scopes',
+        },
+        key: 'id',
+      },
+    },
   }, {
     sequelize,
     modelName: 'Permission',
-    // timestamps: false,
   });
   return Permission;
 };
