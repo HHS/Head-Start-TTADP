@@ -1,0 +1,15 @@
+{
+  "name": "circleci-export",
+  "version": "0.0.1",
+  "description": "Export build results out of CircleCI to package for documentation",
+  "main": "index.js",
+  "license": "MIT",
+  "bin": {
+    "export-ci": "bin/export-ci.js"
+  },
+  "dependencies": {
+    "circleci": "^0.3.3",
+    "esm": "^3.2.25",
+    "lodash": "^4.17.20"
+  }
+}
