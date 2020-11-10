@@ -16,10 +16,51 @@ class User {
   hsesUserId : string
   name : string
   phoneNumber : string
-  email : string
+  * email : string
+  title: enum
+  homeRegionId : integer(32) REFERENCES public.Regions.id
   * createdAt : timestamp
   * updatedAt : timestamp
 }
+
+class Region {
+  * id : integer <<generated>>
+  * name : string
+}
+
+class Scope {
+  * id : integer <<generated>>
+  * name : string
+  description: string
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class Permission {
+  * id : integer <<generated>>
+  * userId : integer(32) REFERENCES public.Users.id
+  * regionId : integer(32) REFERENCES public.Regions.id
+  * scopeId : integer(32) REFERENCES public.Scopes.id
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class RequestErrors {
+  * id : integer <<generated>>
+  operation : string
+  uri : string
+  method : string
+  requestBody : string
+  responseBody : string
+  responseCode : string
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+User ||-o{ Region
+User }o--|{ Permission
+Scope }o--|{ Permission
+Region }o--|{ Permission
 @enduml
 ```
 

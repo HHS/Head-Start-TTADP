@@ -52,6 +52,10 @@ module.exports = {
       id: 13,
       name: '13',
     },
+    {
+      id: 14,
+      name: 'No Region',
+    },
   ]),
   down: (queryInterface) => queryInterface.bulkDelete('Regions', null, {}),
 };
