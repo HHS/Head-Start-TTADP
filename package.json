@@ -7,7 +7,7 @@
     "node": "^12.18"
   },
   "scripts": {
-    "build": "./node_modules/.bin/babel src -d ./build/server",
+    "build": "./node_modules/.bin/babel src -d ./build/server  && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\"",
@@ -17,7 +17,7 @@
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit --maxWorkers=2",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -129,6 +129,7 @@
     "express-unless": "^0.5.0",
     "express-winston": "^4.0.5",
     "helmet": "^4.1.0",
+    "http-codes": "^1.0.0",
     "lodash": "^4.17.20",
     "memorystore": "^1.6.2",
     "pg": "^8.3.3",
