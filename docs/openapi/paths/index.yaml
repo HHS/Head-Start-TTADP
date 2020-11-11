@@ -6,3 +6,7 @@
   $ref: './logout.yaml'
 '/login':
   $ref: './login.yaml'
+'/admin/user':
+  $ref: './admin.yaml'
+'/admin/users':
+  $ref: './adminAllUsers.yaml'

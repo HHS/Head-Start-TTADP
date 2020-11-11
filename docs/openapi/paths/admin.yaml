@@ -1,0 +1,125 @@
+get:
+  tags:
+    - admin
+  operationId: getUser
+  description: Gets one user from the database.
+  parameters:
+    - in: path
+      name: userId
+      schema:
+        type: integer
+      required: true
+      description: Numeric ID of the user to get
+  responses:
+    200:
+      description: One user by an id
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '#/definitions/user'
+    500:
+      description: Internal Server Error
+post:
+  tags:
+    - admin
+  operationId: createUser
+  description: Creates a user in the database.
+  requestBody:
+    description: User to create
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '#/definitions/user'
+  responses:
+    200:
+      description: User successfully created
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '#/definitions/user'
+    500:
+      description: Internal Server Error
+put:
+  tags:
+    - admin
+  operationId: updateUser
+  description: Updates a user in the database.
+  parameters:
+  - in: path
+    name: userId
+    schema:
+      type: integer
+    required: true
+    description: Numeric ID of the user to update
+  requestBody:
+    description: User to update
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '#/definitions/user'
+  responses:
+    200:
+      description: User successfully updated
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '#/definitions/user'
+    500:
+      description: Internal Server Error
+delete:
+  tags:
+    - admin
+  operationId: deleteUser
+  description: Deletes a user from the database.
+  parameters:
+  - in: path
+    name: userId
+    schema:
+      type: integer
+    required: true
+    description: Numeric ID of the user to delete
+  responses:
+    200:
+      description: User successfully deleted
+      content:
+        application/json:
+          schema:
+            type: number
+    500:
+      description: Internal Server Error
+definitions:
+  user:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      hsesUserId:
+        type: integer
+      email:
+        type: string
+      phoneNumber:
+        type: string
+      homeRegionId:
+        type: integer
+      title:
+        type: string
+      permissions:
+        type: array
+        items:
+          $ref: '#/definitions/permission'
+  permission:
+    type: object
+    properties:
+      userId:
+        type: integer
+      scopeId:
+        type: integer
+      regionId:
+        type: integer
