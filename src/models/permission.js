@@ -8,6 +8,12 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Permission.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
