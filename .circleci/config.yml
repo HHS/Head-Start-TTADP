@@ -250,7 +250,9 @@ jobs:
           command: yarn run db:migrate:ci
       - run:
           name: Start server
-          command: yarn start:ci
+          command: |
+            yarn build
+            yarn start:ci
           background: true
       - run:
           name: Run axe
