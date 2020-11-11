@@ -259,6 +259,7 @@ jobs:
           name: Run axe
           command: |
             mkdir reports
+            sleep 5
             yarn axe:ci
       - store_artifacts:
           path: reports/
