@@ -197,7 +197,7 @@ jobs:
           at: .
       - run:
           name: Start server
-          command: | # local development style build (both BE and FE servers)
+          command: |
             yarn build
             yarn start:ci
           background: true
@@ -209,7 +209,7 @@ jobs:
           command: |
             mkdir reports
             sleep 5
-            yarn cucumber:ci
+            BYPASS_AUTH=true yarn cucumber:ci
       - store_artifacts:
           path: reports/
   dynamic_security_scan:
@@ -260,7 +260,7 @@ jobs:
           command: |
             mkdir reports
             sleep 5
-            yarn axe:ci
+            BYPASS_AUTH=true yarn axe:ci
       - store_artifacts:
           path: reports/
   deploy:
