@@ -1,5 +1,6 @@
 import {} from 'dotenv/config';
 import ClientOAuth2 from 'client-oauth2';
+import logger from './logger';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
@@ -20,11 +21,13 @@ export const hsesAuth = new ClientOAuth2({
  * @param {*} res - response
  */
 export function login(req, res) {
+  logger.info(`\n entering login function \n`);
   if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    console.log('\nbypassing auth\n')
+    logger.info(`\n bypassing auth \n`);
     req.session.userId = process.env.CUCUMBER_USER_ID;
     res.redirect(process.env.TTA_SMART_HUB_URI);
   } else {
+    logger.info(`\n NOT bypassing auth \n`)
     const uri = hsesAuth.code.getUri();
     res.redirect(uri);
   }
