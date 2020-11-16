@@ -1,7 +1,11 @@
-import { User, sequelize } from '../models';
+import { User, Permission, sequelize } from '../models';
 import logger from '../logger';
 
 const namespace = 'SERVICE:ACCESS_VALIDATION';
+
+const logContext = {
+  namespace,
+};
 
 /**
  * Finds or creates a user in the database.
@@ -23,4 +27,26 @@ export default function findOrCreateUser(data) {
       logger.error(`${namespace} - Error finding or creating User in database.`);
       throw new Error('Error finding or creating user in database');
     }));
+}
+
+export async function validateUserAuthForAdmin(req) {
+  let result = false;
+  const { userId } = req.session;
+  const { role } = req.session;
+  let userPermissions;
+  try {
+    if (role && role === 'admin') {
+      result = true;
+    } else {
+      userPermissions = await Permission.findAll({
+        attributes: ['scopeId'],
+        where: { userId },
+      });
+      result = userPermissions.some((permission) => (permission.scopeId === 2)); // 2 is Admin
+    }
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
+    throw error;
+  }
+  return result;
 }
