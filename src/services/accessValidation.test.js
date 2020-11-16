@@ -121,19 +121,18 @@ describe('accessValidation', () => {
     });
   });
   describe('validateUserAuthForAdmin', () => {
-    it('Returns true if an user has admin priviledges', async () => {
+    it('returns true if a user has admin priviledges', async () => {
       await sequelize.transaction((transaction) => User.create(mockUser,
         {
           include: [{ model: Permission, as: 'permissions' }],
           transaction,
         }));
       const valid = await validateUserAuthForAdmin(mockRequest);
-      // const test = '[{"scopeId": 2}, {"scopeId": 1}]';
 
       expect(valid).toBe(true);
     });
 
-    it('Returns false if an user does not have admin priviledges', async () => {
+    it('returns false if a user does not have admin priviledges', async () => {
       mockUser.permissions[0].scopeId = 3; // non-admin
       await sequelize.transaction((transaction) => User.create(mockUser,
         {
@@ -145,7 +144,7 @@ describe('accessValidation', () => {
       expect(valid).toBe(false);
     });
 
-    it('Returns false if an user does not exist in database', async () => {
+    it('returns false if a user does not exist in database', async () => {
       // beforeEach() makes sure there are no users in the db
       const valid = await validateUserAuthForAdmin(mockRequest);
 
