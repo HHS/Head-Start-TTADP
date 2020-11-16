@@ -199,7 +199,7 @@ jobs:
           name: Start server
           command: |
             yarn build
-            yarn start:ci
+            BYPASS_AUTH=true yarn start:ci
           background: true
       - run:
           name: Run migrations ci
@@ -209,7 +209,7 @@ jobs:
           command: |
             mkdir reports
             sleep 5
-            BYPASS_AUTH=true yarn cucumber:ci
+            yarn cucumber:ci
       - store_artifacts:
           path: reports/
   dynamic_security_scan:
