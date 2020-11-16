@@ -21,16 +21,8 @@ export const hsesAuth = new ClientOAuth2({
  * @param {*} res - response
  */
 export function login(req, res) {
-  logger.info(`\n entering login function \n`);
-  if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    logger.info(`\n bypassing auth \n`);
-    req.session.userId = process.env.CUCUMBER_USER_ID;
-    res.redirect(process.env.TTA_SMART_HUB_URI);
-  } else {
-    logger.info(`\n NOT bypassing auth \n`)
-    const uri = hsesAuth.code.getUri();
-    res.redirect(uri);
-  }
+  const uri = hsesAuth.code.getUri();
+  res.redirect(uri);
 }
 
 /**
@@ -46,6 +38,10 @@ export function login(req, res) {
  */
 
 export default async function authMiddleware(req, res, next) {
+  if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
+    logger.info(`\n bypassing auth \n`);
+    req.session.userId = process.env.CUCUMBER_USER_ID;
+  }
   if (!req.session.userId) {
     res.sendStatus(401);
   } else {
