@@ -47,6 +47,9 @@ describe('accessValidation', () => {
   beforeEach(async () => {
     await User.destroy({ where: {} });
   });
+  afterEach(async () => {
+    await User.destroy({ where: {} });
+  });
   afterAll(async () => {
     await User.destroy({ where: {} });
     db.sequelize.close();
