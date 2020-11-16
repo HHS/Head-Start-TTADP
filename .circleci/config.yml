@@ -253,14 +253,14 @@ jobs:
           command: yarn build
       - run:
           name: Start server
-          command: yarn start:ci
+          command: BYPASS_AUTH=true yarn start:ci
           background: true
       - run:
           name: Run axe
           command: |
             mkdir reports
             sleep 5
-            BYPASS_AUTH=true yarn axe:ci
+            yarn axe:ci
       - store_artifacts:
           path: reports/
   deploy:
