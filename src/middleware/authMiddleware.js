@@ -1,6 +1,5 @@
 import {} from 'dotenv/config';
 import ClientOAuth2 from 'client-oauth2';
-import logger from '../logger';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
