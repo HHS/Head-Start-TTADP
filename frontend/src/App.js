@@ -16,6 +16,8 @@ import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import ActivityReport from './pages/ActivityReport';
+import 'react-dates/initialize';
+import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
 
 function App() {
