@@ -2,9 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Fieldset, Checkbox, Label, Grid, TextInput, Dropdown,
+  Fieldset, Checkbox, Label, Grid, TextInput,
 } from '@trussworks/react-uswds';
 
+import MultiSelect from '../../components/MultiSelect';
 import DatePicker from '../../components/DatePicker';
 
 const participants = [
@@ -50,36 +51,42 @@ const PageThree = ({
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Methods and Logistics">
         <div className="smart-hub--form-section">
-          <legend>How was this activity conducted? (select at least one)</legend>
-          <Grid row gap>
-            <Grid col={4}>
-              {renderCheckbox('activity-method', 'virtual', 'Virtual')}
-              {renderCheckbox('activity-method', 'in-person', 'In Person')}
-              {renderCheckbox('activity-method', 'telephone', 'Telephone')}
+          <Fieldset unstyled>
+            <legend>How was this activity conducted? (select at least one)</legend>
+            <Grid row gap>
+              <Grid col={4}>
+                {renderCheckbox('activity-method', 'virtual', 'Virtual')}
+                {renderCheckbox('activity-method', 'in-person', 'In Person')}
+                {renderCheckbox('activity-method', 'telephone', 'Telephone')}
+              </Grid>
+              <Grid col={8}>
+                {renderCheckbox('activity-method', 'email', 'Email')}
+                {renderCheckbox('activity-method', 'multi-recurring', 'Multi-grantee: Recurring Event (Community Practice)')}
+                {renderCheckbox('activity-method', 'multi-single', 'Multi-grantee: Single Event (Cluster)')}
+              </Grid>
             </Grid>
-            <Grid col={8}>
-              {renderCheckbox('activity-method', 'email', 'Email')}
-              {renderCheckbox('activity-method', 'multi-recurring', 'Multi-grantee: Recurring Event (Community Practice)')}
-              {renderCheckbox('activity-method', 'multi-single', 'Multi-grantee: Single Event (Cluster)')}
-            </Grid>
-          </Grid>
+          </Fieldset>
         </div>
         <div className="smart-hub--form-section">
-          <legend>
-            Was this activity Training or Technical Assistance?
-            Select both options if both Training and Technical Assistance took place.
-          </legend>
-          {renderCheckbox('activity-type', 'training', 'Training')}
-          {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
+          <Fieldset unstyled>
+            <legend>
+              Was this activity Training or Technical Assistance?
+              Select both options if both Training and Technical Assistance took place.
+            </legend>
+            {renderCheckbox('activity-type', 'training', 'Training')}
+            {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
+          </Fieldset>
         </div>
         <div className="smart-hub--form-section">
-          <Label htmlFor="participants">Grantee participant(s) involved</Label>
-          <Dropdown inputRef={register({ required: true })} id="participants" name="participants" defaultValue="">
-            <option name="default" disabled hidden value="">Select a participant...</option>
-            {participants.map((participant) => (
-              <option key={participant} value={participant}>{participant}</option>
-            ))}
-          </Dropdown>
+          <MultiSelect
+            name="participants"
+            label="Grantee participant(s) involved"
+            control={control}
+            placeholder="Select a participant..."
+            options={
+              participants.map((participant) => ({ value: participant, label: participant }))
+            }
+          />
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="number-of-participants">Number of grantee participants involved</Label>
@@ -97,24 +104,22 @@ const PageThree = ({
             <Grid col={6}>
               <DatePicker
                 control={control}
-                watch={watch}
-                value={startDate}
                 maxDate={endDate}
                 name="start-date"
                 label="Start Date"
                 register={register}
+                openUp
               />
             </Grid>
             <Grid col={6}>
               <DatePicker
                 control={control}
-                watch={watch}
-                value={endDate}
                 minDate={startDate}
                 disabled={!startDate}
                 name="end-date"
                 label="End Date"
                 register={register}
+                openUp
               />
             </Grid>
             <Grid col={5}>

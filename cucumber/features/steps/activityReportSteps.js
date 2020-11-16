@@ -2,7 +2,7 @@ require('dotenv').config();
 const {
   Given, Then, When,
 } = require('@cucumber/cucumber');
-const assert = require('assert');
+const assertTrue = require('assert');
 const scope = require('../support/scope');
 
 Given('I am on the activity reports page', async () => {
@@ -21,12 +21,21 @@ When('I select {string}', async (inputLabel) => {
   await element[0].click();
 });
 
-Then('I see {string} as an option in the {string} dropdown', async (expectedOption, dropdownLabel) => {
+Then('I see {string} as an option in the {string} multiselect', async (expectedOption, dropdownLabel) => {
   const page = scope.context.currentPage;
-  const selector = `//label[text()='${dropdownLabel}']/../select`;
-  const el = await page.$x(selector);
-  const selected = await el[0].$x(`//option[text()='${expectedOption}']`);
+  const selector = `//label[text()='${dropdownLabel}']//div`;
+  const multiselect = await page.$x(selector);
+  await multiselect[0].click();
+  const elements = await page.$x(`//label[text()='${dropdownLabel}']//div//div[2]//div//div`)
+  let found = false;
 
-  assert(selected.length === 1);
-  assert(selected !== null || selected !== undefined);
+  for (let i = 0; i < elements.length; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const text = await (await elements[i].getProperty('textContent')).jsonValue();
+    if (text.trim() === expectedOption) {
+      found = true;
+    }
+  }
+
+  assertTrue(found === true, `Did not find option "${expectedOption}" in multiselect component labeled "${dropdownLabel}"`);
 });

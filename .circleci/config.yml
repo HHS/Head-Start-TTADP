@@ -109,7 +109,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-81-first-activity-report-fields"
+    default: "js-128-add-multiselect-component"
     type: string
 jobs:
   build:
@@ -225,7 +225,7 @@ jobs:
             docker-compose -f docker-compose-test.yml run --rm server yarn build
             docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend run build
             docker-compose -f docker-compose-test.yml up -d
-            docker-compose -f docker-compose-test.yml exec server yarn db:migrate
+            docker-compose -f docker-compose-test.yml exec server yarn db:migrate:ci
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-weekly
@@ -372,3 +372,22 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
+
+  daily_scan:
+    triggers:
+      - schedule:
+          cron: "0 13 * * 1-5"
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.dev_git_branch >>
+                - << pipeline.parameters.staging_git_branch >>
+                - << pipeline.parameters.prod_git_branch >>
+    jobs:
+      - build
+      - lint_audit:
+          requires:
+            - build
+      - dynamic_security_scan:
+          requires:
+            - build

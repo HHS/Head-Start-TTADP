@@ -1,59 +1,39 @@
 /*
   This component requires being embedded into a `react-hook-form` form
 
-  Uses ReactDatePicker styled as the USWDS date picker. The react USWDS library does
+  Uses react-dates styled as the USWDS date picker. The react USWDS library does
   not have a date picker component. We could have used USWDS component directly here
-  instead of ReactDatePicker but I decided against for a couple reasons:
+  instead of react-dates but I decided against for a couple reasons:
    1. I was having a hard time getting input back into react hook form using the USWDS
       code directly. Issue centered around the USWDS code not sending `onChange` events
       when an invalid date was input
-   2. Related to #1, ReactDatePicker handles invalid dates by removing the invalid input
-      on blur, which is nicer then how the USWDS component handled invalid dates.
-   3. ReactDatePicker had easily readable documentation and conveniences such as `maxDate`
+   2. react-dates had easily readable documentation and conveniences such as `maxDate`
       and `minDate`. I couldn't find great docs using the USWDS datepicker javascript
 */
 
-import React, { forwardRef } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { TextInput, Label } from '@trussworks/react-uswds';
-import ReactDatePicker from 'react-datepicker';
+import { Label } from '@trussworks/react-uswds';
+import { SingleDatePicker } from 'react-dates';
+import { OPEN_UP, OPEN_DOWN } from 'react-dates/constants';
 import { Controller } from 'react-hook-form';
+import moment from 'moment';
 
-import 'react-datepicker/dist/react-datepicker.css';
 import './DatePicker.css';
 
 const DateInput = ({
-  control, label, minDate, name, disabled, maxDate,
+  control, label, minDate, name, disabled, maxDate, openUp, required,
 }) => {
   const labelId = `${name}-id`;
   const hintId = `${name}-hint`;
+  const [isFocused, updateFocus] = useState(false);
+  const openDirection = openUp ? OPEN_UP : OPEN_DOWN;
 
-  const CustomInput = forwardRef(({ value, onChange, onFocus }, ref) => (
-    <div className="display-flex" onFocus={onFocus}>
-      <TextInput
-        id={name}
-        disabled={disabled}
-        inputRef={ref}
-        onChange={onChange}
-        className="usa-date-picker__external-input"
-        aria-describedby={`${labelId} ${hintId}`}
-        value={value}
-        autoComplete="off"
-      />
-      <button disabled={disabled} aria-hidden tabIndex={-1} aria-label="open calendar" type="button" className="usa-date-picker__button" />
-    </div>
-  ));
+  const isOutsideRange = (date) => {
+    const isBefore = minDate && date.isBefore(minDate);
+    const isAfter = maxDate && date.isAfter(maxDate);
 
-  CustomInput.propTypes = {
-    value: PropTypes.string,
-    onChange: PropTypes.func,
-    onFocus: PropTypes.func,
-  };
-
-  CustomInput.defaultProps = {
-    value: undefined,
-    onChange: undefined,
-    onFocus: undefined,
+    return isBefore || isAfter;
   };
 
   return (
@@ -61,28 +41,29 @@ const DateInput = ({
       <Label id={labelId} htmlFor={name}>{label}</Label>
       <div className="usa-hint" id={hintId}>mm/dd/yyyy</div>
       <Controller
-        render={({ onChange, value }) => (
-          <ReactDatePicker
-            dateFormat="MM/dd/yyyy"
-            showTimeSelect={false}
-            todayButton="Today"
-            minDate={minDate}
-            maxDate={maxDate}
-            strictParsing
-            selected={value}
-            onChange={onChange}
-            customInput={<CustomInput />}
-            dropdownMode="select"
-            placeholderText="Click to select time"
-            shouldCloseOnSelect
-          />
+        render={({ onChange, value, ref }) => (
+          <div className="display-flex smart-hub--date-picker-input">
+            <button onClick={() => { updateFocus(true); }} disabled={disabled} tabIndex={-1} aria-label="open calendar" type="button" className="usa-date-picker__button margin-top-0" />
+            <SingleDatePicker
+              id={name}
+              focused={isFocused}
+              date={value}
+              ref={ref}
+              isOutsideRange={isOutsideRange}
+              numberOfMonths={1}
+              openDirection={openDirection}
+              disabled={disabled}
+              onDateChange={onChange}
+              onFocusChange={({ focused }) => updateFocus(focused)}
+            />
+          </div>
         )}
         control={control}
         name={name}
         disabled={disabled}
         defaultValue={null}
         rules={{
-          required: true,
+          required,
         }}
       />
     </>
@@ -95,15 +76,19 @@ DateInput.propTypes = {
   control: PropTypes.object.isRequired,
   name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  minDate: PropTypes.instanceOf(Date),
-  maxDate: PropTypes.instanceOf(Date),
+  minDate: PropTypes.instanceOf(moment),
+  maxDate: PropTypes.instanceOf(moment),
+  openUp: PropTypes.bool,
   disabled: PropTypes.bool,
+  required: PropTypes.bool,
 };
 
 DateInput.defaultProps = {
   minDate: undefined,
   maxDate: undefined,
   disabled: false,
+  openUp: false,
+  required: true,
 };
 
 export default DateInput;
