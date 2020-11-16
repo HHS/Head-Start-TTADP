@@ -1,0 +1,47 @@
+get:
+  tags:
+    - admin
+  operationId: getUsers
+  description: Gets users from the database.
+  responses:
+    200:
+      description: Successfully retrieve all users
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/user'
+    500:
+      description: Internal Server Error
+definitions:
+  user:
+    type: object
+    properties:
+      id:
+        type: number
+      name:
+        type: string
+      hsesUserId:
+        type: number
+      email:
+        type: string
+      phoneNumber:
+        type: string
+      homeRegionId:
+        type: number
+      title:
+        type: string
+      permissions:
+        type: array
+        items:
+          $ref: '#/definitions/permission'
+  permission:
+    type: object
+    properties:
+      userId:
+        type: number
+      scopeId:
+        type: number
+      regionId:
+        type: number

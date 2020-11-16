@@ -2,9 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Fieldset, Checkbox, Label, Grid, TextInput, Dropdown,
+  Fieldset, Checkbox, Label, Grid, TextInput,
 } from '@trussworks/react-uswds';
 
+import MultiSelect from '../../components/MultiSelect';
 import DatePicker from '../../components/DatePicker';
 
 const participants = [
@@ -77,13 +78,15 @@ const PageThree = ({
           </Fieldset>
         </div>
         <div className="smart-hub--form-section">
-          <Label htmlFor="participants">Grantee participant(s) involved</Label>
-          <Dropdown inputRef={register({ required: true })} id="participants" name="participants" defaultValue="">
-            <option name="default" disabled hidden value="">Select a participant...</option>
-            {participants.map((participant) => (
-              <option key={participant} value={participant}>{participant}</option>
-            ))}
-          </Dropdown>
+          <MultiSelect
+            name="participants"
+            label="Grantee participant(s) involved"
+            control={control}
+            placeholder="Select a participant..."
+            options={
+              participants.map((participant) => ({ value: participant, label: participant }))
+            }
+          />
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="number-of-participants">Number of grantee participants involved</Label>
@@ -101,24 +104,22 @@ const PageThree = ({
             <Grid col={6}>
               <DatePicker
                 control={control}
-                watch={watch}
-                value={startDate}
                 maxDate={endDate}
                 name="start-date"
                 label="Start Date"
                 register={register}
+                openUp
               />
             </Grid>
             <Grid col={6}>
               <DatePicker
                 control={control}
-                watch={watch}
-                value={endDate}
                 minDate={startDate}
                 disabled={!startDate}
                 name="end-date"
                 label="End Date"
                 register={register}
+                openUp
               />
             </Grid>
             <Grid col={5}>

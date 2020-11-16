@@ -60,6 +60,7 @@ function ActivityReport({ initialData }) {
               register={register}
               watch={watch}
               setValue={setValue}
+              control={control}
             />
             <SectionTwo
               register={register}
