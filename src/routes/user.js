@@ -2,21 +2,22 @@ import express from 'express';
 import getUsers, {
   getUser, createUser, updateUser, deleteUser,
 } from './admin/user';
+import userAdminAccessMiddleware from '../middleware/userAdminAccessMiddleware';
 
-const router = new express.Router();
+const router = express.Router();
 
 /**
  * API for frontend to manage user updates.
  */
 
-router.get('/:userId', getUser);
+router.get('/:userId', userAdminAccessMiddleware, getUser);
 
-router.get('/', getUsers);
+router.get('/', userAdminAccessMiddleware, getUsers);
 
-router.post('/', createUser);
+router.post('/', userAdminAccessMiddleware, createUser);
 
-router.put('/:userId', updateUser);
+router.put('/:userId', userAdminAccessMiddleware, updateUser);
 
-router.delete('/:userId', deleteUser);
+router.delete('/:userId', userAdminAccessMiddleware, deleteUser);
 
 export default router;

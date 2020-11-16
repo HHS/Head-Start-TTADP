@@ -23,7 +23,7 @@ async function handleSequelizeError(req, res, error, logContext) {
     });
     logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error`);
   } catch (err) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to save to db - ${err}`);
+    logger.error(`${logContext.namespace} - Sequelize error - unable to save to db - ${error}`);
   }
   res.status(INTERNAL_SERVER_ERROR).end();
 }
