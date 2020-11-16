@@ -6,7 +6,6 @@ import {
 } from '@testing-library/react';
 import moment from 'moment';
 
-import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 
 const formData = () => ({
