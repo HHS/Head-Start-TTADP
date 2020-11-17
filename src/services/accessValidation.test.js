@@ -54,7 +54,6 @@ describe('accessValidation', () => {
     await User.destroy({ where: {} });
   });
   afterAll(async () => {
-    await User.destroy({ where: {} });
     db.sequelize.close();
   });
   describe('findOrCreateUser', () => {
@@ -123,7 +122,7 @@ describe('accessValidation', () => {
         homeRegionId: 3,
       };
       await expect(findOrCreateUser(user)).rejects.toThrow();
-      expect(logger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating User in database.');
+      expect(logger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
     });
   });
   describe('validateUserAuthForAdmin', () => {
