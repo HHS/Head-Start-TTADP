@@ -7,6 +7,7 @@ import memorystore from 'memorystore';
 import _ from 'lodash';
 import path from 'path';
 import join from 'url-join';
+import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { hsesAuth } from './middleware/authMiddleware';
 
 import logger, { requestLogger } from './logger';
@@ -24,7 +25,7 @@ app.use(session({
   key: 'session',
   cookie: {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: Number(process.env.SESSION_TIMEOUT),
   },
   rolling: true,
@@ -61,7 +62,8 @@ app.get(oauth2CallbackPath, async (req, res) => {
     logger.info(`role: ${req.session.role} ${req.session.referrerPath}`);
     res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
   } catch (error) {
-    // console.log(error);
+    logger.error(`Error logging in: ${error}`);
+    res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
 
