@@ -1,6 +1,9 @@
 import db, { User, Permission, sequelize } from '../models';
 import findOrCreateUser, { validateUserAuthForAdmin } from './accessValidation';
 import logger from '../logger';
+import SCOPES from '../middleware/scopeConstants';
+
+const { ADMIN } = SCOPES;
 
 jest.mock('../logger', () => (
   {
@@ -130,6 +133,9 @@ describe('accessValidation', () => {
           include: [{ model: Permission, as: 'permissions' }],
           transaction,
         }));
+
+      expect(ADMIN).toBe(2);
+
       const valid = await validateUserAuthForAdmin(mockRequest);
 
       expect(valid).toBe(true);

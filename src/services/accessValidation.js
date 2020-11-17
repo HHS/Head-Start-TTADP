@@ -1,5 +1,8 @@
 import { User, Permission, sequelize } from '../models';
 import logger from '../logger';
+import SCOPES from '../middleware/scopeConstants';
+
+const { ADMIN } = SCOPES;
 
 const namespace = 'SERVICE:ACCESS_VALIDATION';
 
@@ -42,7 +45,7 @@ export async function validateUserAuthForAdmin(req) {
         attributes: ['scopeId'],
         where: { userId },
       });
-      result = userPermissions.some((permission) => (permission.scopeId === 2)); // 2 is Admin
+      result = userPermissions.some((permission) => (permission.scopeId === ADMIN));
     }
   } catch (error) {
     logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);

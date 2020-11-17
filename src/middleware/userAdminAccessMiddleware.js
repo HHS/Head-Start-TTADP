@@ -15,8 +15,8 @@ import handleErrors from '../lib/apiErrorHandler';
 export default async function userAdminAccessMiddleware(req, res, next) {
   try {
     if (!(await validateUserAuthForAdmin(req))) {
-      // send a 404 rather than a 403 (Forbidden) to avoid confirming route
-      return res.sendStatus(httpCodes.NOT_FOUND);
+      // consider sending a 404 rather than a 403 (Forbidden) to avoid confirming route
+      return res.sendStatus(httpCodes.FORBIDDEN);
     }
   } catch (e) {
     return handleErrors(req, res, e);
