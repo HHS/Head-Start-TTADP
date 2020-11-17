@@ -26,9 +26,10 @@ export default function findOrCreateUser(data) {
     transaction,
   }) // findOrCreate API returns 2 values (instance, created). We only need to return the first.
     .then((result) => result[0])
-    .catch(() => {
-      logger.error(`${namespace} - Error finding or creating User in database.`);
-      throw new Error('Error finding or creating user in database');
+    .catch((error) => {
+      const msg = `Error finding or creating user in database - ${error}`;
+      logger.error(`${namespace} - ${msg}`);
+      throw new Error(msg);
     }));
 }
 
