@@ -37,12 +37,12 @@ describe('userAdminAccessMiddleware', () => {
     expect(mockNext).toHaveBeenCalled();
   });
 
-  it('should return 404 if an user does not have an admin permission', async () => {
+  it('should return 403 if an user does not have an admin permission', async () => {
     mockSession.role = undefined;
 
     await userAdminAccessMiddleware(mockRequest, mockResponse, mockNext);
 
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     expect(mockNext).not.toHaveBeenCalled();
   });
 
