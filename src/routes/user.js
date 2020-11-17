@@ -10,14 +10,16 @@ const router = express.Router();
  * API for frontend to manage user updates.
  */
 
-router.get('/:userId', userAdminAccessMiddleware, getUser);
+router.use(userAdminAccessMiddleware);
 
-router.get('/', userAdminAccessMiddleware, getUsers);
+router.get('/:userId', getUser);
 
-router.post('/', userAdminAccessMiddleware, createUser);
+router.get('/', getUsers);
 
-router.put('/:userId', userAdminAccessMiddleware, updateUser);
+router.post('/', createUser);
 
-router.delete('/:userId', userAdminAccessMiddleware, deleteUser);
+router.put('/:userId', updateUser);
+
+router.delete('/:userId', deleteUser);
 
 export default router;
