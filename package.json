@@ -7,7 +7,7 @@
     "node": "^12.18"
   },
   "scripts": {
-    "axe:ci": "axe http://localhost:3000, http://localhost:3000/activity-reports, http://localhost:3000/admin --dir ./reports/ --verbose --exit",
+    "axe:ci": "axe http://localhost:3000, http://localhost:3000/activity-reports, http://localhost:3000/admin --dir ./reports/",
     "build": "./node_modules/.bin/babel src -d ./build/server  && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
