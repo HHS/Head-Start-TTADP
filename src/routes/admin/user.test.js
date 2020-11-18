@@ -9,21 +9,21 @@ import handleErrors from '../../lib/apiErrorHandler';
 jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
 
 const mockUser = {
-  id: 47,
+  id: 49,
   name: 'Joe Green',
   title: null,
   phoneNumber: '555-555-554',
-  hsesUserId: '33',
-  email: 'test@test.com',
+  hsesUserId: '49',
+  email: 'test49@test.com',
   homeRegionId: 1,
   permissions: [
     {
-      userId: 47,
+      userId: 49,
       regionId: 1,
       scopeId: 1,
     },
     {
-      userId: 47,
+      userId: 49,
       regionId: 2,
       scopeId: 1,
     },
@@ -51,11 +51,14 @@ const mockResponse = {
 };
 
 describe('User route handler', () => {
-  beforeEach(async () => {
-    await User.destroy({ where: {} });
-  });
-  afterEach(async () => {
-    await User.destroy({ where: {} });
+  // beforeEach(async () => {
+  //   await User.destroy({ where: {} });
+  // });
+  // afterEach(async () => {
+  //   await User.destroy({ where: {} });
+  // });
+  afterEach(() => {
+    jest.clearAllMocks();
   });
   afterAll(async () => {
     await User.destroy({ where: {} });
@@ -68,6 +71,10 @@ describe('User route handler', () => {
         include: [{ model: Permission, as: 'permissions' }],
         transaction,
       }));
+    const user = await User.findOne({ where: { id: mockUser.id } });
+
+    expect(user).not.toBeNull();
+    expect(user.id).toBe(mockUser.id);
 
     // Verify that once the user exists, it will be retrieved
     await getUser(mockRequest, mockResponse);
@@ -77,6 +84,12 @@ describe('User route handler', () => {
 
   it('Returns users', async () => {
     mockRequest.path = '/api/user';
+    mockUser.id = 50;
+    mockUser.hsesUserId = '50';
+    mockUser.email = 'test50@test.com';
+    mockUser.permissions[0].userId = mockUser.id;
+    mockUser.permissions[1].userId = mockUser.id;
+
     await sequelize.transaction((transaction) => User.create(mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],
@@ -90,45 +103,77 @@ describe('User route handler', () => {
   });
 
   it('Creates a new user', async () => {
+    mockUser.id = 52;
+    mockUser.hsesUserId = '52';
+    mockUser.email = 'test52@test.com';
+    mockUser.permissions[0].userId = mockUser.id;
+    mockUser.permissions[1].userId = mockUser.id;
     mockRequest.body = mockUser;
 
     // Verify that there are no users
-    const beginningUsers = await User.findAll();
-    const beginningPermissions = await Permission.findAll();
+    // await User.destroy({ where: { id: mockUser.id } });
+    const beginningUser = await User.findOne({ where: { id: mockUser.id } });
+    const beginningPermissions = await Permission.findAll({ where: { userId: mockUser.id } });
 
-    expect(beginningUsers.length).toBe(0);
+    expect(beginningUser).toBeNull();
     expect(beginningPermissions.length).toBe(0);
 
     await createUser(mockRequest, mockResponse);
 
     expect(mockResponse.json).toHaveBeenCalled();
-    // Verify that one user was created
-    const endingUsers = await User.findAll();
-    const endingPermissions = await Permission.findAll();
+    // Verify that the user was created
+    const endingUser = await User.findOne({ where: { id: mockUser.id } });
+    const endingPermissions = await Permission.findAll({ where: { userId: mockUser.id } });
 
-    expect(endingUsers.length).toBe(1);
+    expect(endingUser).toBeInstanceOf(User);
+    expect(endingUser.id).toBe(mockUser.id);
     expect(endingPermissions.length).toBe(2);
   });
 
   it('Updates a user', async () => {
-    mockRequest.body = mockUser;
+    const testUpdateUser = {
+      id: 53,
+      name: 'Joe Green',
+      title: 'Health Specialist',
+      phoneNumber: '555-555-554',
+      hsesUserId: '53',
+      email: 'test53@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          userId: 53,
+          regionId: 1,
+          scopeId: 1,
+        },
+        {
+          userId: 53,
+          regionId: 2,
+          scopeId: 1,
+        },
+      ],
+    };
 
-    const user = await User.create(mockUser,
+    mockRequest.body = testUpdateUser;
+    mockRequest.params.userId = 53;
+
+    await User.destroy({ where: { id: 53 } });
+    const user = await User.create(testUpdateUser,
       {
         include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
       });
 
     expect(user).toBeInstanceOf(User);
+    expect(user.email).toBe(testUpdateUser.email);
     // Update the user and a permission
-    mockUser.email = 'updated@mail.com';
-    mockUser.permissions[0].scopeId = 4;
+    testUpdateUser.email = 'updated@mail.com';
+    testUpdateUser.permissions[0].scopeId = 4;
 
     await updateUser(mockRequest, mockResponse);
 
     expect(mockResponse.json).toHaveBeenCalled();
 
     const updatedUser = await User.findOne({
-      where: { id: mockUser.id },
+      where: { id: testUpdateUser.id },
       include: [
         {
           model: Permission,
@@ -138,7 +183,7 @@ describe('User route handler', () => {
       ],
     });
     // Check that the updates were persisted to the db
-    expect(updatedUser.email).toEqual(mockUser.email);
+    expect(updatedUser.email).toEqual(testUpdateUser.email);
 
     const permissions = await updatedUser.permissions;
 
@@ -146,10 +191,17 @@ describe('User route handler', () => {
 
     const perm = permissions.find((p) => p.regionId === 1);
 
-    expect(perm.toJSON()).toEqual(mockUser.permissions[0]);
+    expect(perm.toJSON()).toEqual(testUpdateUser.permissions[0]);
   });
 
   it('Deletes a user', async () => {
+    mockUser.id = 54;
+    mockUser.hsesUserId = '54';
+    mockUser.email = 'test54@test.com';
+    mockUser.permissions[0].userId = mockUser.id;
+    mockUser.permissions[1].userId = mockUser.id;
+    mockRequest.params.userId = mockUser.id;
+
     await User.create(mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],

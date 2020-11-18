@@ -15,8 +15,8 @@ const mockUser = {
   name: 'Joe Green',
   title: null,
   phoneNumber: '555-555-554',
-  hsesUserId: '33',
-  email: 'test@test.com',
+  hsesUserId: '47',
+  email: 'test47@test.com',
   homeRegionId: 1,
   permissions: [
     {
@@ -47,47 +47,53 @@ const mockRequest = {
 };
 
 describe('accessValidation', () => {
-  beforeEach(async () => {
-    await User.destroy({ where: {} });
-  });
-  afterEach(async () => {
-    await User.destroy({ where: {} });
-  });
+  // beforeEach(async () => {
+  //   await User.destroy({ where: {} });
+  // });
+  // afterEach(async () => {
+  //   await User.destroy({ where: {} });
+  // });
   afterAll(async () => {
     db.sequelize.close();
   });
   describe('findOrCreateUser', () => {
     it('Finds an existing user when a matching user exists', async () => {
       const user = {
+        id: 33,
         hsesUserId: '33',
         email: 'test@test.com',
         homeRegionId: 3,
       };
-      // Verify that there are no users
-      const originalUsers = await User.findAll();
+      // Verify that the user with id 33 doesn't exist
+      await User.destroy({ where: { id: 33 } });
+      const noUser = await User.findOne({
+        where: {
+          id: user.id,
+        },
+      });
 
-      expect(originalUsers.length).toBe(0);
+      expect(noUser).toBeNull();
 
       const createdUser = await findOrCreateUser(user);
 
       expect(createdUser).toBeInstanceOf(User);
 
-      // Verify that once the user exists, it will be retrieved
       const retrievedUser = await findOrCreateUser(user);
-      const allUsers = await User.findAll();
 
       expect(retrievedUser.hsesUserId).toEqual(user.hsesUserId);
       expect(retrievedUser.email).toEqual(user.email);
-      expect(allUsers.length).toBe(1);
+      expect(retrievedUser.id).toEqual(user.id);
     });
 
     it('Creates a new user when a matching user does not exist', async () => {
       const user = {
-        hsesUserId: '33',
-        email: 'test@test.com',
+        id: 34,
+        hsesUserId: '34',
+        email: 'test34@test.com',
         homeRegionId: 3,
       };
       // Check that the above `user` doesn't exist in the DB yet.
+      await User.destroy({ where: { id: 34 } });
       const existingUser = await User.findOne({
         where: {
           hsesUserId: user.hsesUserId,
@@ -127,6 +133,7 @@ describe('accessValidation', () => {
   });
   describe('validateUserAuthForAdmin', () => {
     it('returns true if a user has admin priviledges', async () => {
+      await User.destroy({ where: { id: mockUser.id } });
       await sequelize.transaction((transaction) => User.create(mockUser,
         {
           include: [{ model: Permission, as: 'permissions' }],
@@ -141,7 +148,15 @@ describe('accessValidation', () => {
     });
 
     it('returns false if a user does not have admin priviledges', async () => {
-      mockUser.permissions[0].scopeId = 3; // non-admin
+      mockUser.permissions[0].scopeId = 3; // change to non-admin
+      mockUser.id = 48;
+      mockUser.hsesUserId = '48';
+      mockUser.email = 'test48@test.com';
+      mockUser.permissions[0].userId = mockUser.id;
+      mockUser.permissions[1].userId = mockUser.id;
+      mockSession.userId = 48;
+
+      await User.destroy({ where: { id: 48 } });
       await sequelize.transaction((transaction) => User.create(mockUser,
         {
           include: [{ model: Permission, as: 'permissions' }],
@@ -153,7 +168,13 @@ describe('accessValidation', () => {
     });
 
     it('returns false if a user does not exist in database', async () => {
-      // beforeEach() makes sure there are no users in the db
+      mockUser.id = 49;
+      mockUser.hsesUserId = '49';
+      mockUser.email = 'test49@test.com';
+      mockUser.permissions[0].userId = mockUser.id;
+      mockUser.permissions[1].userId = mockUser.id;
+      mockSession.userId = 49;
+
       const valid = await validateUserAuthForAdmin(mockRequest);
 
       expect(valid).toBe(false);
