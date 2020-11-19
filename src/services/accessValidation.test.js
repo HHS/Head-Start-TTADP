@@ -47,12 +47,6 @@ const mockRequest = {
 };
 
 describe('accessValidation', () => {
-  // beforeEach(async () => {
-  //   await User.destroy({ where: {} });
-  // });
-  // afterEach(async () => {
-  //   await User.destroy({ where: {} });
-  // });
   afterAll(async () => {
     db.sequelize.close();
   });

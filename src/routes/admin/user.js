@@ -74,7 +74,6 @@ export async function createUser(req, res) {
     });
     res.json(user);
   } catch (error) {
-    console.log(error);
     await handleErrors(req, res, error, logContext);
   }
 }

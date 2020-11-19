@@ -51,12 +51,6 @@ const mockResponse = {
 };
 
 describe('User route handler', () => {
-  // beforeEach(async () => {
-  //   await User.destroy({ where: {} });
-  // });
-  // afterEach(async () => {
-  //   await User.destroy({ where: {} });
-  // });
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -111,7 +105,6 @@ describe('User route handler', () => {
     mockRequest.body = mockUser;
 
     // Verify that there are no users
-    // await User.destroy({ where: { id: mockUser.id } });
     const beginningUser = await User.findOne({ where: { id: mockUser.id } });
     const beginningPermissions = await Permission.findAll({ where: { userId: mockUser.id } });
 
