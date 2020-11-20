@@ -43,7 +43,7 @@ describe('DatePicker', () => {
   };
 
   it('disabled flag disables text input', async () => {
-    await act(async () => render(<RenderDatePicker disabled />));
+    render(<RenderDatePicker disabled />);
     expect(screen.getByRole('textbox')).toBeDisabled();
   });
 
@@ -55,11 +55,9 @@ describe('DatePicker', () => {
   });
 
   it('clicking the open button will open the calendar', async () => {
-    await act(async () => {
-      render(<RenderDatePicker />);
-      const openCalendar = screen.getByRole('button');
-      fireEvent.click(openCalendar);
-    });
+    render(<RenderDatePicker />);
+    const openCalendar = screen.getByRole('button');
+    fireEvent.click(openCalendar);
     const button = await waitFor(() => screen.getByLabelText('Move backward to switch to the previous month.'));
     await waitFor(() => expect(button).toBeVisible());
   });
