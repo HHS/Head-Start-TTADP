@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Route } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
