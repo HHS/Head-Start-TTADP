@@ -104,9 +104,9 @@
   },
   "devDependencies": {
     "@sheerun/mutationobserver-shim": "^0.3.3",
-    "@testing-library/dom": "^7.24.2",
+    "@testing-library/dom": "^7.28.0",
     "@testing-library/react": "^10.4.9",
-    "@testing-library/user-event": "^12.1.5",
+    "@testing-library/user-event": "^12.2.2",
     "cross-env": "^7.0.2",
     "eslint": "^6.8.0",
     "eslint-config-airbnb": "^18.2.0",
