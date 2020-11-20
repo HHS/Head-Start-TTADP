@@ -6,7 +6,6 @@ import {
 } from '@testing-library/react';
 import moment from 'moment';
 
-import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 
 const formData = () => ({
@@ -25,38 +24,31 @@ const formData = () => ({
   topics: 'first',
 });
 
-describe('ActivityReport', () => {
-  describe('grantee select', () => {
-    describe('changes the participant selection to', () => {
-      it('Grantee', async () => {
-        render(<ActivityReport />);
-        const information = await waitFor(() => screen.getByRole('group', { name: 'General Information' }));
-        const grantee = within(information).getByLabelText('Grantee');
-        fireEvent.click(grantee);
-        expect(await waitFor(() => screen.getByText(withText('Select a Grantee...')))).toBeVisible();
-      });
+const enableParticipantSelect = async (target) => {
+  render(<ActivityReport />);
 
-      it('Non-grantee', async () => {
-        render(<ActivityReport />);
-        const information = await waitFor(() => screen.getByRole('group', { name: 'General Information' }));
-        const nonGrantee = within(information).getByLabelText('Non-Grantee');
-        fireEvent.click(nonGrantee);
-        expect(await waitFor(() => screen.getByText(withText('Select a Non-grantee...')))).toBeVisible();
+  const enabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
+  expect(enabled).toBeDisabled();
+
+  const information = await waitFor(() => screen.getByRole('group', { name: 'General Information' }));
+  const grantee = within(information).getByLabelText(target);
+  fireEvent.click(grantee);
+};
+
+describe('ActivityReport', () => {
+  describe('participant selection is enabled', () => {
+    it('when grantee is selected', async () => {
+      await act(async () => {
+        await enableParticipantSelect('Grantee');
+        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
+        expect(disabled).not.toBeDisabled();
       });
     });
 
-    it('enables the participant selection', async () => {
+    it('when non-grantee is selected', async () => {
       await act(async () => {
-        render(<ActivityReport />);
-
-        const enabled = await screen.getByRole('textbox', { name: 'Who was this activity for? Select a Grantee...' });
-        expect(enabled).toBeDisabled();
-
-        const information = await waitFor(() => screen.getByRole('group', { name: 'General Information' }));
-        const grantee = within(information).getByLabelText('Grantee');
-        fireEvent.click(grantee);
-
-        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for? Select a Grantee...' });
+        await enableParticipantSelect('Non-Grantee');
+        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
         expect(disabled).not.toBeDisabled();
       });
     });
