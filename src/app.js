@@ -4,14 +4,13 @@ import helmet from 'helmet';
 import axios from 'axios';
 import session from 'express-session';
 import memorystore from 'memorystore';
-import unless from 'express-unless';
 import _ from 'lodash';
 import path from 'path';
 import join from 'url-join';
+import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { hsesAuth } from './middleware/authMiddleware';
 
 import logger, { requestLogger } from './logger';
-import authMiddleware, { hsesAuth } from './middleware/authMiddleware';
-import { loginPath } from './routes/apiDirectory';
 
 const app = express();
 const MemoryStore = memorystore(session);
@@ -26,7 +25,7 @@ app.use(session({
   key: 'session',
   cookie: {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: Number(process.env.SESSION_TIMEOUT),
   },
   rolling: true,
@@ -41,10 +40,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')));
 }
 
-authMiddleware.unless = unless;
-// TODO: update unless to replace `oauth1CallbackPath with `join('/api', oauth2CallbackPath)`
-// once our oauth callback has been updated
-app.use(authMiddleware.unless({ path: [oauth2CallbackPath, join('/api', loginPath)] }));
+app.use('/api', require('./routes/apiDirectory').default);
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, async (req, res) => {
@@ -63,13 +59,18 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const { authorities } = data;
     req.session.userId = 1; // temporary
     req.session.role = _.get(authorities[0], 'authority');
-    logger.info(`role: ${req.session.role}`);
-    res.redirect(process.env.TTA_SMART_HUB_URI);
+    logger.info(`role: ${req.session.role} ${req.session.referrerPath}`);
+    res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
   } catch (error) {
-    // console.log(error);
+    logger.error(`Error logging in: ${error}`);
+    res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
 
-app.use('/api', require('./routes/apiDirectory').default);
+if (process.env.NODE_ENV === 'production') {
+  app.use('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  });
+}
 
 module.exports = app;
