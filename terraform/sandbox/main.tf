@@ -12,7 +12,7 @@ terraform {
 
   backend "s3" {
     bucket  = "cg-77510827-41f7-4b13-aa6b-c292afe85b25"
-    key     = "terraform.tfstate.prod"
+    key     = "terraform.tfstate.sandbox"
     encrypt = true
     region  = "us-gov-west-1"
   }
@@ -50,7 +50,7 @@ data "cloudfoundry_service" "rds" {
 resource "cloudfoundry_service_instance" "database" {
   name         = "ttahub-${var.env}"
   space        = data.cloudfoundry_space.space.id
-  service_plan = data.cloudfoundry_service.rds.service_plans["small-psql"]
+  service_plan = data.cloudfoundry_service.rds.service_plans["micro-psql"]
 }
 
 ###
