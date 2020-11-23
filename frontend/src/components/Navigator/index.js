@@ -55,7 +55,7 @@ function Navigator({
 
   const saveForm = useCallback((newData) => {
     updateData((oldData) => ({ ...oldData, ...newData }));
-  }, [updateData, navigatorState, currentPage]);
+  }, [updateData]);
 
   const onSubmit = (formData) => {
     const newNavigatorState = [...navigatorState];
