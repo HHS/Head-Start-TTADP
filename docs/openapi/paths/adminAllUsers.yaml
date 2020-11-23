@@ -12,8 +12,6 @@ get:
             type: array
             items:
               $ref: '#/definitions/user'
-    500:
-      description: Internal Server Error
 definitions:
   user:
     type: object

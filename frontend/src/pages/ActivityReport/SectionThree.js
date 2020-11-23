@@ -82,7 +82,6 @@ const PageThree = ({
             name="participants"
             label="Grantee participant(s) involved"
             control={control}
-            placeholder="Select a participant..."
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
