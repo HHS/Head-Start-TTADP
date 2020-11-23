@@ -6,5 +6,6 @@ instances: 1
 NODE_ENV: production
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-dev.app.cloud.gov
-TTA_SMART_HUB_URI: https://tta-smarthub-dev.app.cloud.gov
+rds_instance: ttahub-dev
 SESSION_SECRET: ((SESSION_SECRET))
+TTA_SMART_HUB_URI: https://tta-smarthub-dev.app.cloud.gov
