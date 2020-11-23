@@ -3,6 +3,7 @@ coverage
 junit.xml
 reports
 yarn-error.log
+docs/circleci/test_report.md
 
 # Build related
 build/
