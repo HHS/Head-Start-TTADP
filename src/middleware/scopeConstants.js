@@ -1,0 +1,8 @@
+const SCOPES = {
+  SITE_ACCESS: 1,
+  ADMIN: 2,
+  READ_WRITE_REPORTS: 3,
+  READ_REPORTS: 4,
+  APPROVE_REPORTS: 5,
+};
+export default SCOPES;
