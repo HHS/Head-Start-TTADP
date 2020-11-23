@@ -52,3 +52,17 @@ resource "cloudfoundry_service_instance" "database" {
   space        = data.cloudfoundry_space.space.id
   service_plan = data.cloudfoundry_service.rds.service_plans["small-psql"]
 }
+
+###
+# S3 bucket
+###
+
+data "cloudfoundry_service" "s3" {
+  name = "s3"
+}
+
+resource "cloudfoundry_service_instance" "document_upload_bucket" {
+  name         = "ttahub-document-upload-${var.env}"
+  space        = data.cloudfoundry_space.space.id
+  service_plan = data.cloudfoundry_service.s3.service_plans["basic"]
+}
