@@ -3,9 +3,10 @@ import PropTypes from 'prop-types';
 import { Controller } from 'react-hook-form';
 
 import {
-  Fieldset, TextInput, Label, Dropdown,
+  Fieldset, TextInput, Label,
 } from '@trussworks/react-uswds';
 
+import MultiSelect from '../../components/MultiSelect';
 import FileUploader from '../../components/FileUploader';
 
 const topics = [
@@ -24,13 +25,14 @@ const PageTwo = ({
           Select all topics covered during this activity.
           Topics are aligned with SOW’s and ECLKC topics used by National Centers.
         </legend>
-        <Label htmlFor="topics">Choose all topics covered</Label>
-        <Dropdown id="topics" name="topics" defaultValue="" inputRef={register({ required: true })}>
-          <option name="default" disabled hidden value="">Select a topic...</option>
-          {topics.map((topic) => (
-            <option key={topic} value={topic}>{topic}</option>
-          ))}
-        </Dropdown>
+        <MultiSelect
+          name="topics"
+          label="Choose all topics covered"
+          control={control}
+          options={
+            topics.map((topic) => ({ value: topic, label: topic }))
+          }
+        />
       </div>
     </Fieldset>
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources Provided">
