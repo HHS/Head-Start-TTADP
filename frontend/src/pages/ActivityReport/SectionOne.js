@@ -83,7 +83,6 @@ const PageOne = ({
             label="Who was this activity for?"
             disabled={disableParticipant}
             control={control}
-            placeholder={`Select a ${nonGranteeSelected ? 'Non-grantee...' : 'Grantee...'}`}
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
@@ -94,7 +93,6 @@ const PageOne = ({
             name="other-users"
             label="Other Specialist(s) involved in this activity (optional)"
             control={control}
-            placeholder="Select another Specialist..."
             required={false}
             options={
               otherUsers.map((user) => ({ value: user, label: user }))
@@ -129,7 +127,6 @@ const PageOne = ({
             name="reason"
             label="What was the reason for this activity?"
             control={control}
-            placeholder="Select a reason..."
             options={
               reasons.map((reason) => ({ value: reason, label: reason }))
             }
