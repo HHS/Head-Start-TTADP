@@ -2,16 +2,13 @@ import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    // We might or might not need this association depending on the design.
-    // Commenting out right now to satisfy the linter.
-    // static associate(models) {
-    //   // define association here
-    // }
+    static associate(models) {
+      User.belongsTo(models.Region, { foreignKey: 'homeRegionId', as: 'homeRegion' });
+      User.belongsToMany(models.Scope, {
+        through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
+      });
+      User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+    }
   }
   User.init({
     id: {
@@ -22,10 +19,20 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    hsesUserId: DataTypes.STRING,
+    hsesUserId: {
+      type: DataTypes.STRING,
+      unique: true,
+    },
     name: DataTypes.STRING,
     phoneNumber: DataTypes.STRING,
-    email: DataTypes.STRING,
+    email: {
+      type: DataTypes.STRING,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    title: DataTypes.ENUM('Program Specialist', 'Early Childchood Specialist', 'Grantee Specialist', 'Family Engagement Specialist', 'Health Specialist', 'Systems Specialist'),
   }, {
     sequelize,
     modelName: 'User',
