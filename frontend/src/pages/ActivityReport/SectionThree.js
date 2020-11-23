@@ -2,9 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Fieldset, Checkbox, Label, Grid, TextInput, Dropdown,
+  Fieldset, Checkbox, Label, Grid, TextInput,
 } from '@trussworks/react-uswds';
 
+import MultiSelect from '../../components/MultiSelect';
 import DatePicker from '../../components/DatePicker';
 
 const participants = [
@@ -77,13 +78,14 @@ const PageThree = ({
           </Fieldset>
         </div>
         <div className="smart-hub--form-section">
-          <Label htmlFor="participants">Grantee participant(s) involved</Label>
-          <Dropdown inputRef={register({ required: true })} id="participants" name="participants" defaultValue="">
-            <option name="default" disabled hidden value="">Select a participant...</option>
-            {participants.map((participant) => (
-              <option key={participant} value={participant}>{participant}</option>
-            ))}
-          </Dropdown>
+          <MultiSelect
+            name="participants"
+            label="Grantee participant(s) involved"
+            control={control}
+            options={
+              participants.map((participant) => ({ value: participant, label: participant }))
+            }
+          />
         </div>
         <div className="smart-hub--form-section">
           <Label htmlFor="number-of-participants">Number of grantee participants involved</Label>

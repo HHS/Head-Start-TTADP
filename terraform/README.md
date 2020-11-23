@@ -143,13 +143,18 @@ _Tip: You run terraform files from the directory in which they are stored. For e
     ```bash
     terraform apply
     ```
+1. **Bind the infrastructure to the application**
+
+    CloudFoundry/cloud.gov requires that some "services" (e.g. AWS infrastructure) be "bound" to the application instance. S3, Redis, and Elasticsearch are all services that require this "binding" step. See the [cloud.gov documentation][cloudgov-bind] for more direction on this. Also, check out [PR#71][PR#71] for an example of how this was done for the RDS instances.
 
 <!-- Links -->
 
 [aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config
 [aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
+[cloudgov-bind]: https://cloud.gov/docs/deployment/managed-services/#bind-the-service-instance
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
 [cloudgov-service-keys]: https://cloud.gov/docs/services/s3/#interacting-with-your-s3-bucket-from-outside-cloudgov
 [cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
+[PR#71]: https://github.com/adhocteam/Head-Start-TTADP/pull/71
 [tf]: https://www.terraform.io/downloads.html
 [tf-vars]: https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files
