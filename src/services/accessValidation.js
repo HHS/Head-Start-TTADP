@@ -1,7 +1,14 @@
-import { User, sequelize } from '../models';
+import { User, Permission, sequelize } from '../models';
 import logger from '../logger';
+import SCOPES from '../middleware/scopeConstants';
+
+const { ADMIN } = SCOPES;
 
 const namespace = 'SERVICE:ACCESS_VALIDATION';
+
+const logContext = {
+  namespace,
+};
 
 /**
  * Finds or creates a user in the database.
@@ -19,8 +26,31 @@ export default function findOrCreateUser(data) {
     transaction,
   }) // findOrCreate API returns 2 values (instance, created). We only need to return the first.
     .then((result) => result[0])
-    .catch(() => {
-      logger.error(`${namespace} - Error finding or creating User in database.`);
-      throw new Error('Error finding or creating user in database');
+    .catch((error) => {
+      const msg = `Error finding or creating user in database - ${error}`;
+      logger.error(`${namespace} - ${msg}`);
+      throw new Error(msg);
     }));
+}
+
+export async function validateUserAuthForAdmin(req) {
+  let result = false;
+  const { userId } = req.session;
+  const { role } = req.session;
+  let userPermissions;
+  try {
+    if (role && role === 'admin') {
+      result = true;
+    } else {
+      userPermissions = await Permission.findAll({
+        attributes: ['scopeId'],
+        where: { userId },
+      });
+      result = userPermissions.some((permission) => (permission.scopeId === ADMIN));
+    }
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
+    throw error;
+  }
+  return result;
 }
