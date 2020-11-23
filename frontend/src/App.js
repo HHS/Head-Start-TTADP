@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
-import { BrowserRouter, Route } from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
@@ -13,6 +13,7 @@ import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
+import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import ActivityReport from './pages/ActivityReport';
 import 'react-dates/initialize';
@@ -62,26 +63,32 @@ function App() {
         logoutTimeout={Number(process.env.REACT_APP_SESSION_TIMEOUT)}
         logoutUser={logout}
       />
-      <Route
-        exact
-        path="/"
-        render={() => (
-          <Home />
-        )}
-      />
-      <Route
-        path="/admin/:userId?"
-        render={({ match }) => (
-          <Admin match={match} />
-        )}
-      />
-      <Route
-        path="/activity-reports"
-        exact={false}
-        render={({ location }) => (
-          <ActivityReport location={location} />
-        )}
-      />
+      <Switch>
+        <Route
+          exact
+          path="/"
+          render={() => (
+            <Home />
+          )}
+        />
+        <Route
+          path="/admin/:userId?"
+          render={({ match }) => (
+            <Admin match={match} />
+          )}
+        />
+        <Route
+          path="/activity-reports"
+          render={() => (
+            <ActivityReport />
+          )}
+        />
+        <Route
+          render={() => (
+            <NotFound />
+          )}
+        />
+      </Switch>
     </div>
   );
 

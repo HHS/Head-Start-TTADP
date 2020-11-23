@@ -1,5 +1,4 @@
 import React from 'react';
-import { Route } from 'react-router-dom';
 import { Button } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
@@ -8,7 +7,7 @@ import Container from '../../components/Container';
 
 function Home() {
   return (
-    <Route exact path="/">
+    <>
       <Helmet>
         <title>Home</title>
       </Helmet>
@@ -26,7 +25,7 @@ function Home() {
           </Container>
         )}
       </UserContext.Consumer>
-    </Route>
+    </>
   );
 }
 
