@@ -132,6 +132,7 @@
     "http-codes": "^1.0.0",
     "lodash": "^4.17.20",
     "memorystore": "^1.6.2",
+    "newrelic": "^7.0.1",
     "pg": "^8.3.3",
     "puppeteer": "^5.3.1",
     "puppeteer-select": "^1.0.3",
