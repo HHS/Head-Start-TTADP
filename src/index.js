@@ -1,3 +1,4 @@
+require('newrelic');
 import app from './app';
 import logger from './logger';
 
