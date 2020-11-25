@@ -3,6 +3,8 @@ applications:
   - name: tta-smarthub-((env))
     instances: ((instances))
     command: yarn start
+    buildpacks:
+      - nodejs_buildpack
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
