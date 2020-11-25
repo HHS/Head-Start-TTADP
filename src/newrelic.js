@@ -1,4 +1,3 @@
-'use strict'
 /**
  * New Relic agent configuration.
  *
@@ -24,7 +23,7 @@ exports.config = {
      *
      * @env NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
      */
-    enabled: true
+    enabled: true,
   },
   logging: {
     /**
@@ -33,7 +32,7 @@ exports.config = {
      * production applications.
      */
     level: 'info',
-    filepath: 'stdout'
+    filepath: 'stdout',
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
@@ -60,7 +59,7 @@ exports.config = {
       'response.headers.authorization',
       'response.headers.proxyAuthorization',
       'response.headers.setCookie*',
-      'response.headers.x*'
-    ]
-  }
-}
+      'response.headers.x*',
+    ],
+  },
+};
