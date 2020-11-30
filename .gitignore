@@ -5,6 +5,9 @@ reports
 yarn-error.log
 docs/circleci/test_report.md
 
+# Ignore /doc => /docs symbolic link created for adr-tools
+/doc
+
 # Build related
 build/
 frontend/build
