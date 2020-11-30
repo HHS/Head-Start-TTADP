@@ -6,7 +6,10 @@
  */
 exports.config = {
   /**
-   * Array of application names.
+   * Array of application names. Only applicable for local development because deployed
+   * environments use the env variable.
+   *
+   * @env NEW_RELIC_APP_NAME
    */
   app_name: ['tta-smart-hub-development'],
   /**
@@ -39,11 +42,26 @@ exports.config = {
    * will be captured for all traces, unless otherwise specified in a destination's
    * attributes include/exclude lists.
    */
-  allow_all_headers: true,
+  allow_all_headers: false,
   attributes: {
     /**
+     * Attributes to include from all destinations. Allows * as wildcard at end.
+     *
+     * NOTE: If including headers, they must be in camelCase form to be included.
+     *
+     * @env NEW_RELIC_ATTRIBUTES_INCLUDE
+     */
+    include: [
+      'request.headers.accept',
+      'request.headers.host',
+      'request.headers.referer',
+      'request.headers.userAgent',
+      'response.headers.contentType',
+      'response.headers.date',
+    ],
+    /**
      * Prefix of attributes to exclude from all destinations. Allows * as wildcard
-     * at end.
+     * at end. Will only have effect if `allow_all_headers` is true
      *
      * NOTE: If excluding headers, they must be in camelCase form to be filtered.
      *
