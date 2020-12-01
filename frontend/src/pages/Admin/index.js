@@ -99,6 +99,7 @@ function Admin(props) {
     newUsers.splice(index, 1, updatedUser);
     updateUsers(newUsers);
     updateSelectedUser(updatedUser);
+    updateError();
   };
 
   return (

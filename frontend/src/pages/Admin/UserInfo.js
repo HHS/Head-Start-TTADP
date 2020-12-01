@@ -17,7 +17,7 @@ function UserInfo({ user, onUserChange }) {
       <Grid row gap>
         <Grid col={12}>
           <Label htmlFor="input-email-name">Email</Label>
-          <TextInput id="input-email-name" type="text" name="email" value={user.email || ''} onChange={onUserChange} />
+          <TextInput disabled id="input-email-name" type="text" name="email" value={user.email || ''} onChange={onUserChange} />
         </Grid>
         <Grid col={12}>
           <Label htmlFor="input-full-name">Full Name</Label>
