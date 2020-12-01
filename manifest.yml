@@ -1,14 +1,21 @@
 ---
 applications:
-- name: tta-smarthub-((env))
-  instances: ((instances))
-  command: yarn start
-  env:
-    AUTH_BASE: ((AUTH_BASE))
-    AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
-    AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
-    NODE_ENV: ((NODE_ENV))
-    # Soon to be removed in favor of TTA_SMART_HUB_URI
-    REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
-    TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
-    SESSION_SECRET: ((SESSION_SECRET))
+  - name: tta-smarthub-((env))
+    instances: ((instances))
+    command: yarn start
+    buildpacks:
+      - nodejs_buildpack
+    env:
+      AUTH_BASE: ((AUTH_BASE))
+      AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
+      AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+      NEW_RELIC_APP_NAME: tta-smarthub-((env))
+      NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
+      NODE_ENV: ((NODE_ENV))
+      # Soon to be removed in favor of TTA_SMART_HUB_URI
+      REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
+      SESSION_SECRET: ((SESSION_SECRET))
+      TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
+    services:
+      - ((rds_instance))
+      - ((s3_doc_upload_bucket))

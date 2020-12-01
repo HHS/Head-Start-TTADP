@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
-import { BrowserRouter, Route } from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
@@ -13,6 +13,7 @@ import IdleModal from './components/IdleModal';
 import Page from './pages';
 import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
+import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import ActivityReport from './pages/ActivityReport';
 import 'react-dates/initialize';
@@ -62,31 +63,40 @@ function App() {
         logoutTimeout={Number(process.env.REACT_APP_SESSION_TIMEOUT)}
         logoutUser={logout}
       />
-      <Route
-        exact
-        path="/"
-        render={() => (
-          <Page title="TTA Smart Hub">
-            <Home />
-          </Page>
-        )}
-      />
-      <Route
-        path="/admin/:userId?"
-        render={({ match }) => (
-          <Page title="User Administration">
-            <Admin match={match} />
-          </Page>
-        )}
-      />
-      <Route
-        path="/activity-reports"
-        render={() => (
-          <Page title="Activity Reports">
-            <ActivityReport />
-          </Page>
-        )}
-      />
+      <Switch>
+        <Route
+          exact
+          path="/"
+          render={() => (
+            <Page title="TTA Smart Hub">
+              <Home />
+            </Page>
+          )}
+        />
+        <Route
+          path="/admin/:userId?"
+          render={({ match }) => (
+            <Page title="User Administration">
+              <Admin match={match} />
+            </Page>
+          )}
+        />
+        <Route
+          path="/activity-reports"
+          render={() => (
+            <Page title="Activity Reports">
+              <ActivityReport />
+            </Page>
+          )}
+        />
+        <Route
+          render={() => (
+            <Page title="Not Found">
+              <NotFound />
+            </Page>
+          )}
+        />
+      </Switch>
     </div>
   );
 
