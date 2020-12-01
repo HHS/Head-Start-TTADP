@@ -4,7 +4,6 @@ import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
-
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 
 import UserContext from './UserContext';
@@ -16,6 +15,7 @@ import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import ActivityReport from './pages/ActivityReport';
+import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
@@ -56,6 +56,7 @@ function App() {
     );
   }
 
+  const admin = isAdmin(user);
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
       <IdleModal
@@ -74,14 +75,6 @@ function App() {
           )}
         />
         <Route
-          path="/admin/:userId?"
-          render={({ match }) => (
-            <Page title="User Administration">
-              <Admin match={match} />
-            </Page>
-          )}
-        />
-        <Route
           path="/activity-reports"
           render={() => (
             <Page title="Activity Reports">
@@ -89,6 +82,17 @@ function App() {
             </Page>
           )}
         />
+        {admin
+        && (
+        <Route
+          path="/admin/:userId?"
+          render={({ match }) => (
+            <Page title="User Administration">
+              <Admin match={match} />
+            </Page>
+          )}
+        />
+        )}
         <Route
           render={() => (
             <Page title="Not Found">
@@ -104,7 +108,7 @@ function App() {
     <BrowserRouter>
       {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
       <UserContext.Provider value={{ user, authenticated, logout }}>
-        <Header authenticated={authenticated} />
+        <Header authenticated={authenticated} admin={admin} />
         <div className="background-stripe" />
         <section className="usa-section">
           <GridContainer>

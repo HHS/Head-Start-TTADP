@@ -4,17 +4,17 @@ import {
   Label, Dropdown,
 } from '@trussworks/react-uswds';
 
-import { JOB_TITLES } from '../Constants';
+import { ROLES } from '../Constants';
 
 function JobTitleDropdown({
   id, name, value, onChange,
 }) {
   return (
     <>
-      <Label htmlFor={id}>Job Title</Label>
+      <Label htmlFor={id}>Role</Label>
       <Dropdown id={id} name={name} value={value} onChange={onChange}>
         <option name="default" disabled hidden value="default">Select a Job Title...</option>
-        {JOB_TITLES.map((jobTitle) => (
+        {ROLES.map((jobTitle) => (
           <option key={jobTitle} value={jobTitle}>{jobTitle}</option>
         ))}
       </Dropdown>

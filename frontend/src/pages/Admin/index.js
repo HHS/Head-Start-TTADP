@@ -1,120 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
 import {
-  Label, TextInput, Grid, SideNav, Button,
+  Label, TextInput, Grid, SideNav, Alert,
 } from '@trussworks/react-uswds';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
-
-// Fake return from an API
-const fetchedUsers = [
-  {
-    id: 1,
-    email: 'dumbledore@hogwarts.com',
-    jobTitle: undefined,
-    fullName: undefined,
-    permissions: undefined,
-    region: undefined,
-  },
-  {
-    id: 2,
-    email: 'hermionegranger@hogwarts.com',
-    jobTitle: 'Systems Specialist',
-    fullName: 'Hermione Granger',
-    permissions: [
-      {
-        // Region 0 is used to flag permissions as being "global" (or not associated to a region)
-        // and will hopefully be changed in the future to something a little less magical. Future
-        // work will solidify the schema of both global and regional permissions which will require
-        // updates to any code that uses "region 0".
-        region: 0,
-        scope: 'SITE_ACCESS',
-      },
-      {
-        region: 1,
-        scope: 'READ_WRITE_REPORTS',
-      },
-    ],
-    region: 'co',
-  },
-  {
-    id: 3,
-    email: 'harrypotter@hogwarts.com',
-    jobTitle: 'Grantee Specialist',
-    fullName: 'Harry Potter',
-    permissions: [
-      {
-        region: 0,
-        scope: 'ADMIN',
-      },
-      {
-        region: 0,
-        scope: 'SITE_ACCESS',
-      },
-      {
-        region: 1,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 1,
-        scope: 'READ_WRITE_REPORTS',
-      },
-      {
-        region: 2,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 3,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 4,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 5,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 6,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 7,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 8,
-        scope: 'READ_REPORTS',
-      },
-      {
-        region: 9,
-        scope: 'READ_REPORTS',
-      },
-    ],
-    region: '1',
-  },
-  {
-    id: 4,
-    email: 'ronweasley@hogwarts.com',
-    jobTitle: 'Program Specialist',
-    fullName: 'Ron Weasley',
-    permissions: [
-      {
-        region: 0,
-        scope: 'SITE_ACCESS',
-      },
-      {
-        region: 5,
-        scope: 'READ_WRITE_REPORTS',
-      },
-    ],
-    region: '5',
-  },
-];
+import { updateUser, getUsers } from '../../fetchers/Admin';
 
 /**
  * Render the left hand user navigation in the Admin UI. Use the user's full name
@@ -123,11 +16,11 @@ const fetchedUsers = [
 function renderUserNav(users) {
   return users.map((user) => {
     const {
-      fullName, email, id,
+      name, email, id,
     } = user;
     let display = email;
-    if (fullName) {
-      display = fullName;
+    if (name) {
+      display = name;
     }
     return <NavLink to={`/admin/${id}`}>{display}</NavLink>;
   });
@@ -143,21 +36,37 @@ function renderUserNav(users) {
 function Admin(props) {
   const { match: { params: { userId } } } = props;
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, updateError] = useState();
   const [users, updateUsers] = useState([]);
+  const [selectedUser, updateSelectedUser] = useState();
   const [userSearch, updateUserSearch] = useState('');
-  const history = useHistory();
 
   useEffect(() => {
-    // Mock the API call. The setTimeout will be removed once we hit a real API
-    setTimeout(() => {
+    async function fetchUsers() {
+      setIsLoaded(false);
+      try {
+        updateUsers(await getUsers());
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch users');
+      }
       setIsLoaded(true);
-      updateUsers(fetchedUsers);
-    }, 400);
+    }
+    fetchUsers();
   }, []);
 
   const onUserSearchChange = (e) => {
     updateUserSearch(e.target.value);
   };
+
+  useEffect(() => {
+    if (userId) {
+      updateSelectedUser(users.find((u) => (
+        u.id === parseInt(userId, 10)
+      )));
+    }
+  }, [userId, users]);
 
   if (!isLoaded) {
     return (
@@ -167,26 +76,36 @@ function Admin(props) {
     );
   }
 
-  let user;
-  if (userId === 'new') {
-    user = {};
-  } else if (userId) {
-    user = users.find((u) => (
-      u.id === parseInt(userId, 10)
-    ));
-  }
-
   const filteredUsers = _.filter(users, (u) => {
-    const { email, fullName } = u;
-    return `${email}${fullName}`.includes(userSearch);
+    const { email, name } = u;
+    return `${email}${name}`.includes(userSearch);
   });
+
+  const onSave = async (newUser) => {
+    let updatedUser;
+    try {
+      updatedUser = await updateUser(selectedUser.id, newUser);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(e);
+      updateError('Unable to save user');
+      return;
+    }
+    // update the FE view of all users with the updated user
+    const newUsers = [...users];
+    const index = newUsers.findIndex((u) => (
+      u.id === newUser.id
+    ));
+    newUsers.splice(index, 1, updatedUser);
+    updateUsers(newUsers);
+    updateSelectedUser(updatedUser);
+  };
 
   return (
     <Container>
       <h1 className="text-center">User Administration</h1>
       <Grid row gap>
         <Grid col={4}>
-          <Button className="width-full" onClick={() => { history.push('/admin/new'); }}>Create New User</Button>
           <Label htmlFor="input-filter-users">Filter Users</Label>
           <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
           <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
@@ -194,15 +113,21 @@ function Admin(props) {
           </div>
         </Grid>
         <Grid col={8}>
-          {!user
+          {error
+          && (
+          <Alert type="error" role="alert">
+            {error}
+          </Alert>
+          )}
+          {!selectedUser
           && (
             <p className="margin-top-3 text-bold">
               Select a user...
             </p>
           )}
-          {user
+          {selectedUser
           && (
-            <UserSection user={user} />
+            <UserSection onSave={onSave} user={selectedUser} />
           )}
         </Grid>
       </Grid>
