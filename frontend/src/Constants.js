@@ -1,89 +1,61 @@
-export const REGIONAL_SCOPES = [
-  {
-    name: 'READ_WRITE_REPORTS',
-    description: 'Can view and create/edit reports in the region',
-  },
-  {
-    name: 'READ_REPORTS',
-    description: 'Can view reports in the region',
-  },
-  {
-    name: 'THIRD_SCOPE',
-    description: 'A third scope used as an example',
-  },
-  {
-    name: 'FORTH_SCOPE',
-    description: 'Another testing scope that will soon be deleted',
-  },
-];
+export const SCOPE_IDS = {
+  ADMIN: 2,
+  READ_WRITE_ACTIVITY_REPORTS: 3,
+  READ_ACTIVITY_REPORTS: 4,
+  APPROVE_ACTIVITY_REPORTS: 5,
+};
 
-export const GLOBAL_SCOPES = [
-  {
-    name: 'SITE_ACCESS',
-    description: 'User can login and view the TTAHUB site',
+export const REGIONAL_SCOPES = {
+  [SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS]: {
+    name: 'READ_WRITE_ACTIVITY_REPORTS',
+    description: 'Can view and create/edit activity reports in the region',
   },
-  {
+  [SCOPE_IDS.READ_ACTIVITY_REPORTS]: {
+    name: 'READ_ACTIVITY_REPORTS',
+    description: 'Can view reports activity in the region',
+  },
+  [SCOPE_IDS.APPROVE_ACTIVITY_REPORTS]: {
+    name: 'APPROVE_ACTIVITY_REPORTS',
+    description: 'Can approve activity reports in the region',
+  },
+};
+
+export const GLOBAL_SCOPES = {
+  [SCOPE_IDS.ADMIN]: {
     name: 'ADMIN',
     description: 'User can view the admin panel and change user permissions (including their own)',
   },
-];
+};
 
-export const JOB_TITLES = [
+export const ROLES = [
+  'Regional Program Manager',
+  'COR',
+  'Supervisory Program Specialist',
   'Program Specialist',
+  'Grants Specialist',
+  'Central Office',
+  'TTAC',
+  'Admin. Assistant',
+  'Early Childhood Manager',
   'Early Childhood Specialist',
-  'Grantee Specialist',
   'Family Engagement Specialist',
+  'Grantee Specialist Manager',
+  'Grantee Specialist',
   'Health Specialist',
-  'Systems Specialist',
+  'System Specialist',
 ];
 
 export const REGIONS = [
-  {
-    number: 1,
-    name: 'Boston',
-  },
-  {
-    number: 2,
-    name: 'New York City',
-  },
-  {
-    number: 3,
-    name: 'Philadelphia',
-  },
-  {
-    number: 4,
-    name: 'Atlanta',
-  },
-  {
-    number: 5,
-    name: 'Chicago',
-  },
-  {
-    number: 6,
-    name: 'Dallas',
-  },
-  {
-    number: 7,
-    name: 'Kansas City',
-  },
-  {
-    number: 8,
-    name: 'Denver',
-  },
-  {
-    number: 9,
-    name: 'San Francisco',
-  },
-  {
-    number: 10,
-    name: 'Seattle',
-  },
-  {
-    number: 11,
-    name: 'AIAN',
-  },
-  {
-    number: 12,
-    name: 'MSHS',
-  },
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
 ];

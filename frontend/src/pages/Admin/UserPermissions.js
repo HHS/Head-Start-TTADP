@@ -5,32 +5,31 @@ import {
   Checkbox, Grid, Fieldset,
 } from '@trussworks/react-uswds';
 
-import { GLOBAL_SCOPES, REGIONAL_SCOPES } from '../../Constants';
+import { REGIONAL_SCOPES } from '../../Constants';
 import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
 import CurrentPermissions from './components/CurrentPermissions';
 import RegionDropdown from '../../components/RegionDropdown';
-import { createScopeObject } from './PermissionHelpers';
+import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
 
 /**
  * Display the current permissions for the selected user
  *
  * The permission object coming into this method is keyed off the region. We want to key
  * the user's current permissions off the scope when displaying. This method creates a
- * new permission object map with the schema <Scope, ArrayOf(regions)>. So a user with
- * "READ_REPORTS" on region 1, 2 and 3 this object will be {"READ_REPORTS": ["1","2","3"]}
+ * new permission object map with the schema <ScopeId, ArrayOf(regions)>. So a user with
+ * "READ_ACTIVITY_REPORTS" on region 1, 2 and 3 this object will be {"4": ["1","2","3"]}
  * @param {Object<string, {Object<string, bool>>}} permissions
  */
 function renderUserPermissions(permissions) {
-  const currentPermissions = REGIONAL_SCOPES.reduce((acc, cur) => {
-    acc[cur.name] = [];
-    return acc;
-  }, {});
+  const currentPermissions = _.mapValues(REGIONAL_SCOPES, () => (
+    []
+  ));
 
   _.forEach(permissions, (scopes, region) => {
-    // Grab the scopes that are true. I.E. from {"READ_REPORTS": true, "READ_WRITE_REPORTS": true,
-    // "SCOPE": false} to {"READ_REPORTS": true, "READ_WRITE_REPORTS": true}
+    // Grab the scopes that are true. I.E. from {"3": true, "4": true, "5": false} to
+    // {"3": true, "4": true}
     const trueScopes = _.pickBy(scopes);
-    // _.keys gives us an array of keys of the object, so ["READ_REPORTS", "READ_WRITE_REPORTS"]
+    // _.keys gives us an array of keys of the object, so ["3", "4"]
     _.keys(trueScopes).forEach((scope) => {
       currentPermissions[scope].push(region);
     });
@@ -61,52 +60,50 @@ function UserPermissions({
 }) {
   // State of the region select dropdown
   const [selectedRegion, updateSelectedRegion] = useState();
-  // State of the regional permissions checkboxes, I.E. {"READ_REPORTS": true, ...}
-  const [permissionsForRegion, updatePermissionsForRegion] = useState(createScopeObject());
+  // State of the regional permissions checkboxes, I.E. {"3": true, ...}
+  const [permissionsForRegion, updatePermissionsForRegion] = useState(createRegionalScopeObject());
   const enablePermissions = selectedRegion !== undefined;
 
+  // We need to reset the selected region and the state of regional checkboxes when
+  // another user is selected
   useEffect(() => {
     updateSelectedRegion();
-    updatePermissionsForRegion(createScopeObject());
+    updatePermissionsForRegion(createRegionalScopeObject());
   }, [userId]);
 
+  // The user has selected a new region in the regional dropdown so we need to update
+  // what regional permissions are shown
   useEffect(() => {
     updatePermissionsForRegion({
-      ...createScopeObject(),
+      ...createRegionalScopeObject(),
       ...regionalPermissions[selectedRegion],
     });
   }, [regionalPermissions, selectedRegion]);
 
   const onSelectedRegionChange = (e) => {
     const { value } = e.target;
-    updatePermissionsForRegion({ ...permissionsForRegion, ...regionalPermissions[value] });
-    updateSelectedRegion(value);
-  };
-
-  const onPermissionsForRegionChange = (e) => {
-    const newRegionPermissions = { ...permissionsForRegion, [e.target.name]: e.target.checked };
-    onRegionalPermissionChange({
-      ...regionalPermissions,
-      [selectedRegion]: { ...newRegionPermissions },
-    });
+    updateSelectedRegion(parseInt(value, 10));
   };
 
   return (
     <>
       <Fieldset legend="Global Permissions">
         <Grid row gap className="margin-top-3">
-          {GLOBAL_SCOPES.map(({ name, description }) => (
-            <Grid key={name} col={12}>
-              <Checkbox
-                checked={globalPermissions[name]}
-                onChange={onGlobalPermissionChange}
-                id={name}
-                label={(<PermissionCheckboxLabel name={name} description={description} />)}
-                name={name}
-                disabled={false}
-              />
-            </Grid>
-          ))}
+          {_.map(globalPermissions, (checked, scopeId) => {
+            const { name, description } = scopeFromId(scopeId);
+            return (
+              <Grid key={name} col={12}>
+                <Checkbox
+                  checked={checked}
+                  onChange={onGlobalPermissionChange}
+                  id={name}
+                  label={(<PermissionCheckboxLabel name={name} description={description} />)}
+                  name={scopeId}
+                  disabled={false}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
       </Fieldset>
       <Fieldset legend="Regional Permissions">
@@ -116,19 +113,22 @@ function UserPermissions({
         </ul>
         <RegionDropdown id="permission-region" name="permission-region" value={selectedRegion} onChange={onSelectedRegionChange} />
         <Grid row gap className="margin-top-3">
-          {REGIONAL_SCOPES.map(({ name, description }) => (
-            <Grid key={name} col={12}>
-              <Checkbox
-                id={name}
-                name={name}
-                checked={permissionsForRegion[name]}
-                onChange={onPermissionsForRegionChange}
-                description={description}
-                disabled={!enablePermissions}
-                label={(<PermissionCheckboxLabel name={name} description={description} />)}
-              />
-            </Grid>
-          ))}
+          {_.map(permissionsForRegion, (checked, scopeId) => {
+            const { name, description } = scopeFromId(scopeId);
+            return (
+              <Grid key={name} col={12}>
+                <Checkbox
+                  id={name}
+                  name={scopeId}
+                  checked={checked}
+                  onChange={(e) => { onRegionalPermissionChange(e, selectedRegion); }}
+                  description={description}
+                  disabled={!enablePermissions}
+                  label={(<PermissionCheckboxLabel name={name} description={description} />)}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
       </Fieldset>
     </>
