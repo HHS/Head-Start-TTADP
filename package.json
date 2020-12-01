@@ -29,6 +29,8 @@
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
+    "db:seed": "node_modules/.bin/sequelize db:seed:all",
+    "db:seed:undo": "node_modules/.bin/sequelize db:seed:undo:all",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:start": "docker-compose up",
     "docker:stop": "docker-compose down",
@@ -37,7 +39,9 @@
     "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
     "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
     "docker:db:migrate": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate",
-    "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo"
+    "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
+    "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
+    "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo"
   },
   "repository": {
     "type": "git",
