@@ -1,6 +1,4 @@
 AUTH_BASE: https://uat.hsesinfo.org
-AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
-AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
 env: prod
 instances: 2
 NODE_ENV: production
@@ -8,5 +6,4 @@ NODE_ENV: production
 REDIRECT_URI_HOST: https://tta-smarthub-prod.app.cloud.gov
 rds_instance: ttahub-prod
 s3_doc_upload_bucket: ttahub-document-upload-prod
-SESSION_SECRET: ((SESSION_SECRET))
 TTA_SMART_HUB_URI: https://tta-smarthub-prod.app.cloud.gov
