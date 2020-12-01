@@ -198,6 +198,9 @@ jobs:
           name: Run migrations ci
           command: yarn run db:migrate:ci
       - run:
+          name: Seed database
+          command: yarn db:seed
+      - run:
           name: Run cucumber
           command: |
             mkdir reports
