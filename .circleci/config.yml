@@ -200,6 +200,9 @@ jobs:
       - run:
           name: Seed database
           command: yarn db:seed
+          environment:
+            POSTGRES_USERNAME: postgres
+            POSTGRES_DB: ttasmarthub
       - run:
           name: Run cucumber
           command: |
