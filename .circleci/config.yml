@@ -194,6 +194,9 @@ jobs:
             yarn build
             yarn start:ci
           background: true
+          environment:
+            POSTGRES_USERNAME: postgres
+            POSTGRES_DB: ttasmarthub
       - run:
           name: Run migrations ci
           command: yarn run db:migrate:ci
