@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "^12.18"
+    "node": "12.19.0"
   },
   "scripts": {
     "build": "./node_modules/.bin/babel src -d ./build/server  && ./node_modules/.bin/babel config -d build/config",
@@ -17,7 +17,7 @@
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit --maxWorkers=2",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -75,7 +75,7 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 60
+        "branches": 70
       }
     }
   },
@@ -134,6 +134,7 @@
     "http-codes": "^1.0.0",
     "lodash": "^4.17.20",
     "memorystore": "^1.6.2",
+    "newrelic": "^7.0.1",
     "pg": "^8.3.3",
     "puppeteer": "^5.3.1",
     "puppeteer-select": "^1.0.3",

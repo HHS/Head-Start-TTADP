@@ -1,10 +1,9 @@
 AUTH_BASE: https://uat.hsesinfo.org
-AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
-AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
 env: sandbox
 instances: 1
 NODE_ENV: production
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-sandbox.app.cloud.gov
+rds_instance: ttahub-sandbox
+s3_doc_upload_bucket: ttahub-document-upload-sandbox
 TTA_SMART_HUB_URI: https://tta-smarthub-sandbox.app.cloud.gov
-SESSION_SECRET: ((SESSION_SECRET))

@@ -29,7 +29,6 @@ const PageTwo = ({
           name="topics"
           label="Choose all topics covered"
           control={control}
-          placeholder="Select a topic..."
           options={
             topics.map((topic) => ({ value: topic, label: topic }))
           }

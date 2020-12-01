@@ -42,35 +42,33 @@ const styles = {
 };
 
 function MultiSelect({
-  label, name, options, disabled, control, placeholder, required,
+  label, name, options, disabled, control, required,
 }) {
   return (
-    <>
-      <Label>
-        {label}
-        <Controller
-          render={({ onChange, value }) => (
-            <Select
-              id={name}
-              value={value}
-              onChange={onChange}
-              styles={styles}
-              components={{ DropdownIndicator }}
-              options={options}
-              isDisabled={disabled}
-              placeholder={placeholder}
-              isMulti
-            />
-          )}
-          control={control}
-          defaultValue=""
-          rules={{
-            required,
-          }}
-          name={name}
-        />
-      </Label>
-    </>
+    <Label>
+      {label}
+      <Controller
+        render={({ onChange, value }) => (
+          <Select
+            id={name}
+            value={value}
+            onChange={onChange}
+            styles={styles}
+            components={{ DropdownIndicator }}
+            options={options}
+            isDisabled={disabled}
+            placeholder=""
+            isMulti
+          />
+        )}
+        control={control}
+        defaultValue=""
+        rules={{
+          required,
+        }}
+        name={name}
+      />
+    </Label>
   );
 }
 
@@ -83,7 +81,6 @@ MultiSelect.propTypes = {
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  placeholder: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   disabled: PropTypes.bool,
