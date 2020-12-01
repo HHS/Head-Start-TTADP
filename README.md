@@ -42,6 +42,8 @@ You may run into some issues running the docker commands on Windows:
 | `yarn docker:lint` | Runs the linter for the frontend and backend | |
 | `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` | |
 | `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` | |
+| `yarn docker:db:seed` | Run all seeders located in `src/seeders` | `yarn db:seed` | |
+| `yarn docker:db:seed:undo` | Undo all seeders located in `src/seeders` | `yarn db:seed:undo` | |
 | | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` | |
 | | Starts the backend | `yarn start` |`yarn server` | |
 | | Start the frontend | `yarn client` | |

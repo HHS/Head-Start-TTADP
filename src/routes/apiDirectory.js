@@ -4,6 +4,7 @@ import join from 'url-join';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
 import adminRouter from './user';
+import { userById } from './admin/user';
 
 export const loginPath = '/login';
 
@@ -13,15 +14,16 @@ const router = express.Router();
 
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
-router.use('/admin/user', adminRouter);
+router.use('/admin/users', adminRouter);
 
 router.use('/hello', (req, res) => {
   res.send('Hello from ttadp');
 });
 
-router.get('/user', (req, res) => {
-  const { userId, role, name } = req.session;
-  res.send({ userId, role, name });
+router.get('/user', async (req, res) => {
+  const { userId } = req.session;
+  const user = await userById(userId);
+  res.json(user.toJSON());
 });
 
 router.get('/logout', (req, res) => {
