@@ -1,7 +1,7 @@
 Logical Data Model
 ==================
 
-<img src="http://www.plantuml.com/plantuml/png/hPBFQXH14CRlynHrKnSs1xs54A9XX5o2RF01UgVBcSBkhhQgsX1sy-xE7zGEh31aFTQl_an_tpStQawinD2y0VUJoKCMtWUC2eza0xZK1_JG2JygV4EqHhzJoavSX409xIaZiDZ0JTC5fmfV5GKE3S06oCCbK3BiHtHrrMD2SOR--dfi3uewpTvDGsf2gHzfSX7hEW-SyBx4FKgDDu3HKQYHaGMy14mbJjSvuWvxudHNFUBjX_VlODT-RdVj_Mtx0Bdi0tKNow1Ua9zFTuBJAp_Qk6WKKSt5F7TAzYSwpx-bBtVMYD-y5Fhtn4F76Lzp0S2ZTaBPY5D5pv3p1IMIwcf9HL5Mk3s5_iThUML6ElcqOctsytya-wECh1LXqJLkS9uAubGdL8JgCg8Dx6iYosS-iNzwYJLpKlmNlsMFS6xcKonmF6xv08lN2tdcxVPugFw5PhRq15-sJZHkCFaImoy0" alt="logical data model diagram">
+<img src="http://www.plantuml.com/plantuml/png/rLN1RXCn4BtlLymDg9GUu1PLLQ4AA9SAfV01pdgwQs5xpDXBLINvT-mrMRab5AlBXQFVpBoTUM_Mll91S1YCRbw1-45AWcFQQZGUxbNeGTXEeuIMwTx37M9e_3TbdM1XG2kBuS4X48UUcgRLmdluwf5Xrm2SGMHRWh81kmXTN7HeaKL0UNaPmxr7dtBNASa7LhQBg1K6oxFhoUBDOBR89Nm6Q8JI9HHKqBW4j8D9x6HmWvqYkowQUFtkxHlOh3wkDgkRwzKjk66hLNkU4_svaYDrovYwV1zW6LaDHecC6oE3aoSYX-FecQTc-BCdWquKjoqvV0a3W4JVid8XjZ2XiyRvZ6oKzzKZ3HwvGkra-gGrlz0ZdtIgA1lr_1VEVXyYjc8czZLga4k795tXnS2gF1eCFSaIuVoP3oGV7iFUnTdnJ_WrIPpmcOEIFhL-pwti5tAghQ-PFfFhgZQBITUOdLWdhqEYNyk_rOnTp5-GJoHqdGO0iJGClaGIuHqBCzl5qfBdMleF16LX0rRkuZonWd1QLDvnNMwhGhiym2HVhdpSSaT2rp35j3c2ZY_oVh-WtQyNAYC7MYpsk-AMR_BZypkUgqu5I1_pyyur-QS-x4SeDTva7OvfHxMR57kANQ6LWz4_0G00" alt="logical data model diagram">
 
 UML Source
 ----------
@@ -57,17 +57,72 @@ class RequestErrors {
   * updatedAt : timestamp
 }
 
+class Role {
+  * id : integer
+  * name : string
+}
+
+class Topic {
+  * id : integer
+  * name : string
+}
+
+class RoleTopic {
+  * id : integer <<generated>>
+  * roleId : integer(32) REFERENCES public.Roles.id
+  * topicId: integer(32) REFERENCES public.Topics.id
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class Goal {
+  * id : integer
+  * name : string
+  status : string
+  timeframe : string
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class TopicGoal {
+  * id : integer
+  * roleId : integer(32) REFERENCES public.Roles.id
+  * topicId: integer(32) REFERENCES public.Topics.id
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class Grantee {
+  * id : integer
+  * name : string
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class Ttaplan {
+  * id : integer <<generated>>
+  * granteeId : integer(32) REFERENCES public.Grantees.id
+  * grant : string
+  * goalId : integer(32) REFERENCES public.Goals.id
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
 User ||-o{ Region
 User }o--|{ Permission
 Scope }o--|{ Permission
 Region }o--|{ Permission
+Role }o--|{ Topic
+Topic }|--|{ Goal
+Grantee }o--|{ Ttaplan
+Goal }o--|{ Ttaplan
 @enduml
 ```
 
 Instructions
 ------------
 
-1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/hPBFQXH14CRlynHrKnSs1xs54A9XX5o2RF01UgVBcSBkhhQgsX1sy-xE7zGEh31aFTQl_an_tpStQawinD2y0VUJoKCMtWUC2eza0xZK1_JG2JygV4EqHhzJoavSX409xIaZiDZ0JTC5fmfV5GKE3S06oCCbK3BiHtHrrMD2SOR--dfi3uewpTvDGsf2gHzfSX7hEW-SyBx4FKgDDu3HKQYHaGMy14mbJjSvuWvxudHNFUBjX_VlODT-RdVj_Mtx0Bdi0tKNow1Ua9zFTuBJAp_Qk6WKKSt5F7TAzYSwpx-bBtVMYD-y5Fhtn4F76Lzp0S2ZTaBPY5D5pv3p1IMIwcf9HL5Mk3s5_iThUML6ElcqOctsytya-wECh1LXqJLkS9uAubGdL8JgCg8Dx6iYosS-iNzwYJLpKlmNlsMFS6xcKonmF6xv08lN2tdcxVPugFw5PhRq15-sJZHkCFaImoy0)
+1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/rLN1RXCn4BtlLymDg9GUu1PLLQ4AA9SAfV01pdgwQs5xpDXBLINvT-mrMRab5AlBXQFVpBoTUM_Mll91S1YCRbw1-45AWcFQQZGUxbNeGTXEeuIMwTx37M9e_3TbdM1XG2kBuS4X48UUcgRLmdluwf5Xrm2SGMHRWh81kmXTN7HeaKL0UNaPmxr7dtBNASa7LhQBg1K6oxFhoUBDOBR89Nm6Q8JI9HHKqBW4j8D9x6HmWvqYkowQUFtkxHlOh3wkDgkRwzKjk66hLNkU4_svaYDrovYwV1zW6LaDHecC6oE3aoSYX-FecQTc-BCdWquKjoqvV0a3W4JVid8XjZ2XiyRvZ6oKzzKZ3HwvGkra-gGrlz0ZdtIgA1lr_1VEVXyYjc8czZLga4k795tXnS2gF1eCFSaIuVoP3oGV7iFUnTdnJ_WrIPpmcOEIFhL-pwti5tAghQ-PFfFhgZQBITUOdLWdhqEYNyk_rOnTp5-GJoHqdGO0iJGClaGIuHqBCzl5qfBdMleF16LX0rRkuZonWd1QLDvnNMwhGhiym2HVhdpSSaT2rp35j3c2ZY_oVh-WtQyNAYC7MYpsk-AMR_BZypkUgqu5I1_pyyur-QS-x4SeDTva7OvfHxMR57kANQ6LWz4_0G00)
 1. Copy and paste the final UML into the UML Source section
 1. Update the img src and edit link target to the current values
 
