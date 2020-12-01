@@ -35,7 +35,7 @@ export function userRegionalPermissions(user) {
     return regionalPermissions;
   }
 
-  user.permissions.filter((e) => regionalScopeIds.includes(e.scopeId))
+  user.permissions.filter((permission) => regionalScopeIds.includes(permission.scopeId))
     .forEach(({ regionId, scopeId }) => {
       regionalPermissions[regionId][scopeId] = true;
     });
@@ -58,7 +58,7 @@ export function userGlobalPermissions(user) {
     return globals;
   }
 
-  user.permissions.filter((e) => globalScopeIds.includes(e.scopeId))
+  user.permissions.filter((permission) => globalScopeIds.includes(permission.scopeId))
     .forEach(({ scopeId }) => {
       globals[scopeId] = true;
     });
