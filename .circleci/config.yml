@@ -183,6 +183,18 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
+  test_frontend:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test frontend
+          command: yarn --cwd frontend run test:ci
+      - store_test_results:
+          path: frontend/reports/
+      - store_artifacts:
+          path: frontend/coverage/
   cucumber_test:
     executor: docker-executor
     steps:
@@ -192,7 +204,7 @@ jobs:
           name: Start server
           command: |
             yarn build
-            yarn start:ci
+            BYPASS_AUTH=true yarn start:ci
           background: true
           environment:
             POSTGRES_USERNAME: postgres
@@ -214,18 +226,6 @@ jobs:
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
-  test_frontend:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Test frontend
-          command: yarn --cwd frontend run test:ci
-      - store_test_results:
-          path: frontend/reports/
-      - store_artifacts:
-          path: frontend/coverage/
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -233,7 +233,7 @@ jobs:
           at: .
       - run:
           name: Start up local server
-          command: |
+          command: | # production style build (single BE server with static FE)
             docker-compose -f docker-compose-test.yml run --rm server yarn install --production=false
             docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend install --production=false
             docker-compose -f docker-compose-test.yml run --rm server yarn build
@@ -254,6 +254,29 @@ jobs:
               -t owasp/zap2docker-weekly zap-baseline.py \
               -t http://server:8080 \
               -c zap.conf -I -i
+  accessibility_scan:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run migrations ci
+          command: yarn run db:migrate:ci
+      - run:
+          name: Build
+          command: yarn build
+      - run:
+          name: Start server
+          command: BYPASS_AUTH=true yarn start:ci
+          background: true
+      - run:
+          name: Run axe
+          command: |
+            mkdir reports
+            sleep 5
+            yarn axe:ci
+      - store_artifacts:
+          path: reports/
   deploy:
     executor: docker-executor
     steps:
@@ -340,13 +363,16 @@ workflows:
       - test_backend:
           requires:
             - build
-      - cucumber_test:
-          requires:
-            - build
       - test_frontend:
           requires:
             - build
+      - cucumber_test:
+          requires:
+            - build
       - dynamic_security_scan:
+          requires:
+            - build
+      - accessibility_scan:
           requires:
             - build
       - deploy:
@@ -356,6 +382,7 @@ workflows:
             - cucumber_test
             - test_frontend
             - dynamic_security_scan
+            - accessibility_scan
           filters:
             branches:
               only:
