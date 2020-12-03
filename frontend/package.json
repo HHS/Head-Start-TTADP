@@ -15,6 +15,7 @@
     "moment": "^2.29.1",
     "prop-types": "^15.7.2",
     "react": "^16.14.0",
+    "react-app-polyfill": "^2.0.0",
     "react-dates": "^21.8.0",
     "react-dom": "^16.14.0",
     "react-dropzone": "^11.2.0",
@@ -33,7 +34,7 @@
     "uswds": "^2.9.0"
   },
   "engines": {
-    "node": "^12.18"
+    "node": "12.19.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -97,9 +98,9 @@
       "not op_mini all"
     ],
     "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
     ]
   },
   "devDependencies": {
