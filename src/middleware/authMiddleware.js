@@ -22,14 +22,8 @@ export const hsesAuth = new ClientOAuth2({
 export function login(req, res) {
   const referrer = req.headers.referer;
   req.session.referrerPath = referrer ? new URL(referrer).pathname : '';
-  if (process.env.NODE_ENV !== 'production'
-    && req.headers.cookie && req.headers.cookie === `CUCUMBER_USER=${process.env.CUCUMBER_USER}`) {
-    req.session.userId = process.env.CUCUMBER_USER_ID;
-    res.redirect(process.env.TTA_SMART_HUB_URI);
-  } else {
-    const uri = hsesAuth.code.getUri();
-    res.redirect(uri);
-  }
+  const uri = hsesAuth.code.getUri();
+  res.redirect(uri);
 }
 
 /**
@@ -45,6 +39,10 @@ export function login(req, res) {
  */
 
 export default async function authMiddleware(req, res, next) {
+  // bypass authorization, used for cucumber UAT and axe accessibility testing
+  if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
+    req.session.userId = process.env.CUCUMBER_USER_ID;
+  }
   if (!req.session.userId) {
     res.sendStatus(401);
   } else {
