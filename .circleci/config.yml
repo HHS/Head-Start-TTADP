@@ -197,6 +197,9 @@ jobs:
           path: frontend/coverage/
   cucumber_test:
     executor: docker-executor
+    environment:
+      POSTGRES_USERNAME: postgres
+      POSTGRES_DB: ttasmarthub
     steps:
       - attach_workspace:
           at: .
@@ -206,18 +209,12 @@ jobs:
             yarn build
             BYPASS_AUTH=true yarn start:ci
           background: true
-          environment:
-            POSTGRES_USERNAME: postgres
-            POSTGRES_DB: ttasmarthub
       - run:
           name: Run migrations ci
           command: yarn run db:migrate:ci
       - run:
           name: Seed database
           command: yarn db:seed
-          environment:
-            POSTGRES_USERNAME: postgres
-            POSTGRES_DB: ttasmarthub
       - run:
           name: Run cucumber
           command: |
