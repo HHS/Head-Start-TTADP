@@ -13,24 +13,24 @@ const formData = () => ({
   'activity-type': ['training'],
   duration: '1',
   'end-date': moment(),
-  grantees: 'Grantee Name 1',
+  grantees: ['Grantee Name 1'],
   'number-of-participants': '1',
   'participant-category': 'grantee',
-  participants: 'CEO / CFO / Executive',
-  reason: 'reason 1',
+  participants: ['CEO / CFO / Executive'],
+  reason: ['reason 1'],
   requester: 'grantee',
   'resources-used': 'eclkcurl',
   'start-date': moment(),
-  topics: 'first',
+  topics: ['first'],
 });
 
 const enableParticipantSelect = async (target) => {
   render(<ActivityReport />);
 
-  const enabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
+  const enabled = await screen.findByRole('textbox', { name: 'Who was this activity for?' });
   expect(enabled).toBeDisabled();
 
-  const information = await waitFor(() => screen.getByRole('group', { name: 'General Information' }));
+  const information = await screen.findByRole('group', { name: 'General Information' });
   const grantee = within(information).getByLabelText(target);
   fireEvent.click(grantee);
 };
@@ -40,7 +40,7 @@ describe('ActivityReport', () => {
     it('when grantee is selected', async () => {
       await act(async () => {
         await enableParticipantSelect('Grantee');
-        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
+        const disabled = await screen.findByRole('textbox', { name: 'Who was this activity for?' });
         expect(disabled).not.toBeDisabled();
       });
     });
@@ -48,7 +48,7 @@ describe('ActivityReport', () => {
     it('when non-grantee is selected', async () => {
       await act(async () => {
         await enableParticipantSelect('Non-Grantee');
-        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
+        const disabled = await screen.findByRole('textbox', { name: 'Who was this activity for?' });
         expect(disabled).not.toBeDisabled();
       });
     });
@@ -60,8 +60,8 @@ describe('ActivityReport', () => {
       delete data['activity-method'];
 
       render(<ActivityReport initialData={data} />);
-      expect(await waitFor(() => screen.getByText('Submit'))).toBeDisabled();
-      const box = await waitFor(() => screen.getByLabelText('Virtual'));
+      expect(await screen.findByText('Submit')).toBeDisabled();
+      const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
       await waitFor(() => expect(screen.getByText('Submit')).not.toBeDisabled());
     });
@@ -73,8 +73,8 @@ describe('ActivityReport', () => {
       delete data['activity-type'];
 
       render(<ActivityReport initialData={data} />);
-      expect(await waitFor(() => screen.getByText('Submit'))).toBeDisabled();
-      const box = await waitFor(() => screen.getByLabelText('Training'));
+      expect(await screen.findByText('Submit')).toBeDisabled();
+      const box = await screen.findByLabelText('Training');
       fireEvent.click(box);
       await waitFor(() => expect(screen.getByText('Submit')).not.toBeDisabled());
     });
