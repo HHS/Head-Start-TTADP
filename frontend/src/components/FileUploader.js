@@ -1,9 +1,6 @@
 /*
   Uses `react-dropzone` to allow file uploads. Must be placed inside a `react-hook-form`
-  form
-
-  This component will likely see style updates, specifically around the list of already
-  selected files.
+  form. Selected files display below the main input in a 2 by 2 grid.
 */
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
@@ -13,9 +10,10 @@ import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { Tag, Button, Grid } from '@trussworks/react-uswds';
 
-import { Button } from '@trussworks/react-uswds';
+import './FileUploader.css';
 
 function Dropzone(props) {
   const { onChange } = props;
@@ -28,7 +26,7 @@ function Dropzone(props) {
   // and span. The styles were not being applied, it seems like the Dropzone library
   // is messing with the styles somewhere
   const containerStyle = {
-    width: '31rem',
+    maxWidth: '21rem',
     height: '8rem',
     display: 'flex',
     justifyContent: 'center',
@@ -36,6 +34,11 @@ function Dropzone(props) {
     borderStyle: 'dashed',
     borderWidth: '0.125rem',
     borderColor: '#979797',
+  };
+
+  const textStyle = {
+    textAlign: 'center',
+    fontSize: '16px',
   };
 
   const linkStyle = {
@@ -50,10 +53,13 @@ function Dropzone(props) {
       style={containerStyle}
     >
       <input {...getInputProps()} />
-      <p>
-        Drag file here or
+      <p style={textStyle}>
+        <b>Drag and drop your files here</b>
         {' '}
-        <span style={linkStyle}>choose from folder</span>
+        <br />
+        or
+        <br />
+        <span style={linkStyle}>Browse files</span>
       </p>
     </div>
   );
@@ -75,15 +81,29 @@ const FileUploader = ({ onChange, files }) => {
   return (
     <>
       <Dropzone onChange={onFilesAdded} />
-      <ul>
+      <Grid row gap className="margin-top-2">
         {files.map((file, index) => (
-          <li key={file.name}>
-            {file.name}
-            {' '}
-            <Button unstyled onClick={() => { onFileRemoved(index); }}><FontAwesomeIcon color="black" icon={faTimes} /></Button>
-          </li>
+          <Grid key={file.name} col={6} className="margin-top-1">
+            <Tag className="smart-hub--file-tag">
+              <div className="smart-hub--file-tag-text">
+                {file.name}
+              </div>
+              <Button
+                role="button"
+                className="smart-hub--file-tag-button"
+                unstyled
+                aria-label="remove file"
+                onClick={() => { onFileRemoved(index); }}
+              >
+                <span className="fa-stack fa-sm">
+                  <FontAwesomeIcon className="fa-stack-1x" color="white" icon={faCircle} />
+                  <FontAwesomeIcon className="fa-stack-1x" color="black" icon={faTimes} />
+                </span>
+              </Button>
+            </Tag>
+          </Grid>
         ))}
-      </ul>
+      </Grid>
     </>
   );
 };
