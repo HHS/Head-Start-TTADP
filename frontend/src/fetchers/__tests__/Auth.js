@@ -26,9 +26,9 @@ describe('Auth', () => {
       await expect(fetchLogout()).resolves.not.toThrow();
     });
 
-    it('throws on an error', async () => {
+    it('does not throw if not successful', async () => {
       fetchMock.get(join('api', 'logout'), 401);
-      await expect(fetchLogout()).rejects.toThrow(Error);
+      await expect(fetchLogout()).resolves.not.toThrow(Error);
     });
   });
 });
