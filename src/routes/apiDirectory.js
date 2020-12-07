@@ -3,6 +3,7 @@ import unless from 'express-unless';
 import join from 'url-join';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
+import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
 import { userById } from './admin/user';
 
@@ -22,8 +23,12 @@ router.use('/hello', (req, res) => {
 
 router.get('/user', async (req, res) => {
   const { userId } = req.session;
-  const user = await userById(userId);
-  res.json(user.toJSON());
+  try {
+    const user = await userById(userId);
+    res.json(user.toJSON());
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:SELF' });
+  }
 });
 
 router.get('/logout', (req, res) => {

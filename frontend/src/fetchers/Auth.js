@@ -2,7 +2,12 @@ import join from 'url-join';
 import { get } from './index';
 
 export const fetchLogout = async () => {
-  await get(join('/', 'api', 'logout'));
+  try {
+    await get(join('/', 'api', 'logout'));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log('error logging out, ignoring');
+  }
 };
 
 export const fetchUser = async () => {
