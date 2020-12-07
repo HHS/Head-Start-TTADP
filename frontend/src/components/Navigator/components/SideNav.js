@@ -1,7 +1,7 @@
 /*
   Stickied left nav for the navigator. Should not have any state, just displays
   the nav items passed in as props. This component has lots of custom styles
-  defined. Note the nav is no longer sticked once we hit mobile widths (640px)
+  defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
 import React from 'react';
 import PropTypes from 'prop-types';
