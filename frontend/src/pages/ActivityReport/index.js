@@ -8,7 +8,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Button } from '@trussworks/react-uswds';
 
 import ActivitySummary from './Pages/ActivitySummary';
 import TopicsResources from './Pages/TopicsResources';
@@ -16,9 +15,9 @@ import NextSteps from './Pages/NextSteps';
 import ReviewSubmit from './Pages/ReviewSubmit';
 import GoalsObjectives from './Pages/GoalsObjectives';
 import Navigator from '../../components/Navigator';
-import Container from '../../components/Container';
 
 import './index.css';
+import { NOT_STARTED } from '../../components/Navigator/constants';
 
 const pages = [
   {
@@ -62,12 +61,6 @@ const pages = [
       <NextSteps />
     ),
   },
-  {
-    label: 'Review and submit',
-    renderForm: () => (
-      <ReviewSubmit />
-    ),
-  },
 ];
 
 const defaultValues = {
@@ -91,6 +84,8 @@ const defaultValues = {
   topics: [],
 };
 
+const initialPageState = pages.map(() => NOT_STARTED);
+
 function ActivityReport({ initialData }) {
   const [submitted, updateSubmitted] = useState(false);
 
@@ -100,31 +95,23 @@ function ActivityReport({ initialData }) {
     updateSubmitted(true);
   };
 
-  const resetForm = () => {
-    updateSubmitted(false);
-  };
-
   return (
     <>
       <Helmet titleTemplate="TTA Smart Hub - Activity Report - %s" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
-      {submitted
-        && (
-        <Container>
-          Thank you for submitted the form!
-          <Button onClick={() => { resetForm(); }}>
-            Reset Form
-          </Button>
-        </Container>
-        )}
-      {!submitted
-      && (
       <Navigator
+        renderReview={(allComplete, onSubmit) => (
+          <ReviewSubmit
+            allComplete={allComplete}
+            onSubmit={onSubmit}
+          />
+        )}
+        submitted={submitted}
+        initialPageState={initialPageState}
         defaultValues={{ ...defaultValues, ...initialData }}
         pages={pages}
         onFormSubmit={onFormSubmit}
       />
-      )}
     </>
   );
 }
