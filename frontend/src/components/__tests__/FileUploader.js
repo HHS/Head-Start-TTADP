@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, fireEvent, waitFor, act, screen, within,
+  render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
 
 import FileUploader from '../FileUploader';
@@ -54,8 +54,7 @@ describe('FileUploader', () => {
     const mockOnChange = jest.fn();
     render(<FileUploader onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
     const fileOne = screen.getByText('fileOne');
-    const removeOne = within(fileOne).getByRole('button');
-    fireEvent.click(removeOne);
+    fireEvent.click(fileOne.nextSibling);
 
     expect(mockOnChange).toHaveBeenCalledWith([file('fileTwo')]);
   });
