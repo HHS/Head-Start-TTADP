@@ -11,10 +11,15 @@ const callApi = async (url) => {
 };
 
 export const fetchLogout = async () => {
-  await callApi(join('api', 'logout'));
+  try {
+    await callApi(join('api', 'logout'));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log('error logging out, ignoring');
+  }
 };
 
 export const fetchUser = async () => {
-  const res = await callApi(join('api', 'user'));
+  const res = await callApi(join('/', 'api', 'user'));
   return res.json();
 };
