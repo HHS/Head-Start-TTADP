@@ -1,30 +1,46 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('RoleTopics', {
+    await queryInterface.createTable('Ttaplans', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      roleId: {
+      granteeId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Roles',
+            tableName: 'Grantees',
           },
           key: 'id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
-      topicId: {
+      // grant: {
+      //   type: Sequelize.STRING,
+      //   allowNull: false,
+      // },
+      grantId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
-            tableName: 'Topics',
+            tableName: 'Grants',
+          },
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
+      },
+      goalId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Goals',
           },
           key: 'id',
         },
@@ -42,6 +58,6 @@ module.exports = {
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('RoleTopics');
+    await queryInterface.dropTable('Ttaplans');
   },
 };

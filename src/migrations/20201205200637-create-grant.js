@@ -1,11 +1,24 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Ttaplans', {
+    await queryInterface.createTable('Grants', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
+      },
+      number: {
+        type: Sequelize.STRING,
+      },
+      regionId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: {
+            tableName: 'Regions',
+          },
+          key: 'id',
+        },
       },
       granteeId: {
         type: Sequelize.INTEGER,
@@ -17,19 +30,8 @@ module.exports = {
           key: 'id',
         },
       },
-      grant: {
+      status: {
         type: Sequelize.STRING,
-        allowNull: false,
-      },
-      goalId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Goals',
-          },
-          key: 'id',
-        },
       },
       createdAt: {
         allowNull: false,
@@ -42,6 +44,6 @@ module.exports = {
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Ttaplans');
+    await queryInterface.dropTable('Grants');
   },
 };

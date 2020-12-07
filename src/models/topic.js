@@ -4,14 +4,9 @@ const {
 
 module.exports = (sequelize, DataTypes) => {
   class Topic extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
       Topic.belongsToMany(models.Role, {
-        through: models.RoleTopic, foreignKey: 'roleId', as: 'roles',
+        through: models.RoleTopic, foreignKey: 'topicId', as: 'roles',
       });
       Topic.belongsToMany(models.Goal, {
         through: models.TopicGoal, foreignKey: 'topicId', as: 'goals',

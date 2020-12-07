@@ -14,10 +14,6 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    grant: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   }, {
     sequelize,
     modelName: 'Ttaplan',
