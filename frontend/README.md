@@ -23,7 +23,6 @@ There are yarn commands for starting/testing/linting the frontend defined a dire
 | Variable | Description |
 |-|-|
 | `REACT_APP_INACTIVE_MODAL_TIMEOUT` | Amount of time before the "Idle Logout" modal is shown to a user, in milliseconds |
-| `REACT_APP_SESSION_TIMEOUT` | Amount of time before an inactive user is automatically logged out |
 
 ## Create React App
 
