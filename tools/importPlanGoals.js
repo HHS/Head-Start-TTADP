@@ -1,11 +1,8 @@
 import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
-import { option } from 'yargs';
 import {
-  Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Ttaplan,
+  Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, Ttaplan,
 } from '../src/models';
-
-let grantees;
 
 function getItemId(array, item) {
   if (!array.includes(item)) {
@@ -15,10 +12,35 @@ function getItemId(array, item) {
   return itemId;
 }
 
+function parseCsv(file) {
+  let grantees = {};
+  const csv = readFileSync(file);
+  [...grantees] = parse(csv, {
+    skipEmptyLines: true,
+    columns: true,
+  });
+  return grantees;
+}
+
 /**
  * Processes data from .csv creating data arrays and then inserting it to the database
+ *
+ * The incomeing .csv data is a series of rows with relevant data in the following format
+ *
+ * Grantee (distinct by row number): 'Grantee Name | Grant1 [, Grant2]'
+ * Goal 1: 'Name of the goal, e.g. Identify strategies...'
+ * Goal 1 Status: 'Status, e.g. Not Started'
+ * Goal 1 Topics: 'Behavioral /Mental Health | HS, FES'
+ * Goal 1 Timeframe: '6 months'
+ * Goal 2: 'Enhance reflective practice'
+ * Goal 2 Status: 'Not Started'
+ * Goal 2: Topics: 'Other'
+ * Goal 2: Timeframe: '6 months'
+ * ...
+ * (Total 5 goals. Some of them could be empty)
  */
-async function importGoals() {
+export default async function importGoals(file) {
+  const grantees = parseCsv(file);
   try {
     const cleanRoles = [];
     const cleanTopics = [];
@@ -27,6 +49,7 @@ async function importGoals() {
     const cleanGrantees = [];
     const cleanTtaPlans = [];
     const cleanTopicGoals = [];
+    const cleanGrants = [];
 
     await grantees.forEach((el, inx) => {
       let currentGrantee;
@@ -39,7 +62,7 @@ async function importGoals() {
       const currentGoals = [];
 
       Object.keys(el).forEach((key) => {
-        if (key && key.startsWith('Grantee (distinct')) {
+        if (key && key.trim().startsWith('Grantee (distinct')) {
           currentGrantee = el[key] ? el[key].split('|')[0] : `Unknown Grantee ${inx}`;
           currentGranteeId = getItemId(cleanGrantees, currentGrantee.trim());
           grants = el[key] ? el[key].split('|')[1] : `Unknown Grant ${inx}, Unknown Grant ${inx + 10000}`;
@@ -47,7 +70,16 @@ async function importGoals() {
         } else if (key && key.startsWith('Goal')) {
           const goalColumn = key.split(' ');
           let column;
-          if (goalColumn.length > 2) {
+          if (goalColumn.length === 2) { // Column name is "Goal X" representing goal's name
+            currentGoalName = el[key].trim();
+            currentGoal = { name: currentGoalName };
+            currentGoalId = undefined;
+            if (currentGoalName !== '') {
+              const goalNum = goalColumn[1];
+              currentGoals[goalNum] = { ...currentGoals[goalNum], ...currentGoal };
+            }
+          } else {
+            // column will be either "topics", "timeframe" or "status"
             column = goalColumn[2].toLowerCase();
             if (column === 'topics') {
               const allTopics = el[key].split('\n');
@@ -74,18 +106,11 @@ async function importGoals() {
                   cleanTopicGoals.push({ topicId, goalId: currentGoalId });
                 }
               });
-            } else // it's either timeframe or status}
+            } else // it's either "timeframe" or "status"
+            // both "timeframe" and "status" column names will be reused as goal's object keys
             if (currentGoalName !== '') {
               currentGoal[column] = el[key].trim();
-              const goalNum = goalColumn[1].slice(0, 1);
-              currentGoals[goalNum] = { ...currentGoals[goalNum], ...currentGoal };
-            }
-          } else { // we have a goal name
-            currentGoalName = el[key].trim();
-            currentGoal = { name: currentGoalName };
-            currentGoalId = undefined;
-            if (currentGoalName !== '') {
-              const goalNum = goalColumn[1];
+              const goalNum = goalColumn[1].slice(0, 1); // represents a goal number from 1 to 5
               currentGoals[goalNum] = { ...currentGoals[goalNum], ...currentGoal };
             }
           }
@@ -94,14 +119,22 @@ async function importGoals() {
 
       // after each row
       let goalId;
+      let grantId;
+
       currentGoals.forEach((goal) => {
         cleanGoals.push(goal);
         goalId = cleanGoals.length;
         currentGranteeId = getItemId(cleanGrantees, currentGrantee.trim());
         currentGrants.forEach((grant) => {
-          const plan = { granteeId: currentGranteeId, grant, goalId };
+          const fullGrant = { number: grant.trim(), granteeId: currentGranteeId };
+          if (!cleanGrants.some((e) => e.granteeId === fullGrant.granteeId
+                            && e.number === fullGrant.number)) {
+            cleanGrants.push(fullGrant);
+          }
+          grantId = cleanGrants.findIndex((g) => g.number === fullGrant.number) + 1;
+          const plan = { granteeId: currentGranteeId, grantId, goalId };
           if (!cleanTtaPlans.some((e) => e.granteeId === currentGranteeId
-                            && e.grant === grant
+                            && e.grantId === grantId
                             && e.goalId === goalId)) {
             cleanTtaPlans.push(plan);
           }
@@ -137,6 +170,11 @@ async function importGoals() {
     {
       updateOnDuplicate: ['name', 'updatedAt'],
     });
+    await Grant.bulkCreate(cleanGrants.map((grant, index) => (
+      { id: index + 1, number: grant.number, granteeId: grant.granteeId })),
+    {
+      updateOnDuplicate: ['number', 'granteeId', 'updatedAt'],
+    });
     await Ttaplan.bulkCreate(cleanTtaPlans,
       {
         ignoreDuplicates: true,
@@ -145,27 +183,3 @@ async function importGoals() {
     console.log(err);
   }
 }
-
-const { argv } = option('file', {
-  alias: 'f',
-  description: 'Input .csv file',
-  type: 'string',
-})
-  .help()
-  .alias('help', 'h');
-
-const defaultInputFile = './GranteeTTAPlan.csv';
-
-let file;
-if (argv.file) {
-  // console.log('The current file is: ', argv.file);
-  file = argv.file;
-}
-
-const csv = readFileSync(file || defaultInputFile);
-[, ...grantees] = parse(csv, {
-  relax_column_count: true,
-  columns: true,
-});
-
-importGoals();

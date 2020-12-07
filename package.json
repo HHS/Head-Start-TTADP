@@ -38,7 +38,7 @@
     "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
     "docker:db:migrate": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate",
     "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
-    "import:goals": "./node_modules/.bin/babel-node ./tools/importPlanGoals.js"
+    "import:goals": "./node_modules/.bin/babel-node ./tools/importTTAPlanGoals.js"
   },
   "repository": {
     "type": "git",

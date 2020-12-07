@@ -86,8 +86,8 @@ class Goal {
 
 class TopicGoal {
   * id : integer
-  * roleId : integer(32) REFERENCES public.Roles.id
   * topicId: integer(32) REFERENCES public.Topics.id
+  * goalId : integer(32) REFERENCES public.Goals.id
   * createdAt : timestamp
   * updatedAt : timestamp
 }
