@@ -114,7 +114,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-121-fix-url-routing"
+    default: "js-140-add-navigator"
     type: string
 jobs:
   build:

@@ -27,3 +27,15 @@
   height: 16px;
   font-weight: 700;
 }
+
+.usa-label {
+  font-size: 1rem;
+}
+
+.smart-hub--form-large {
+  max-width: 500px;
+}
+
+.usa-label {
+  max-width: 500px;
+}
