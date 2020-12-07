@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
+import { Helmet } from 'react-helmet';
 import {
   Label, TextInput, Grid, SideNav, Alert,
 } from '@trussworks/react-uswds';
@@ -103,36 +104,41 @@ function Admin(props) {
   };
 
   return (
-    <Container>
-      <h1 className="text-center">User Administration</h1>
-      <Grid row gap>
-        <Grid col={4}>
-          <Label htmlFor="input-filter-users">Filter Users</Label>
-          <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
-          <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
-            <SideNav items={renderUserNav(filteredUsers)} />
-          </div>
-        </Grid>
-        <Grid col={8}>
-          {error
+    <>
+      <Helmet>
+        <title>User Administration</title>
+      </Helmet>
+      <Container>
+        <h1 className="text-center">User Administration</h1>
+        <Grid row gap>
+          <Grid col={4}>
+            <Label htmlFor="input-filter-users">Filter Users</Label>
+            <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
+            <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
+              <SideNav items={renderUserNav(filteredUsers)} />
+            </div>
+          </Grid>
+          <Grid col={8}>
+            {error
           && (
           <Alert type="error" role="alert">
             {error}
           </Alert>
           )}
-          {!selectedUser
+            {!selectedUser
           && (
             <p className="margin-top-3 text-bold">
               Select a user...
             </p>
           )}
-          {selectedUser
+            {selectedUser
           && (
             <UserSection onSave={onSave} user={selectedUser} />
           )}
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </>
   );
 }
 

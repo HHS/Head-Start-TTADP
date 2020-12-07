@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom';
 import { act } from 'react-dom/test-utils';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render, screen, fireEvent, waitFor,
+} from '@testing-library/react';
 
 import IdleModal from '../IdleModal';
 
@@ -44,7 +46,7 @@ describe('IdleModal', () => {
     expect(logout).toHaveBeenCalled();
   });
 
-  it('modal is not shown after modalTimeout if there is activity', () => {
+  it('modal is not shown after modalTimeout if there is activity', async () => {
     const logout = jest.fn();
     renderIdleModal(20, 10, logout);
     act(() => {
@@ -54,7 +56,7 @@ describe('IdleModal', () => {
       jest.advanceTimersByTime(7);
     });
     expect(logout).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('modal')).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId('modal')).toBeNull());
   });
 
   it('a shown modal is removed after action is taken', () => {
