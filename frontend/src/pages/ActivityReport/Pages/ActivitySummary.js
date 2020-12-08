@@ -71,6 +71,7 @@ const ActivitySummary = ({
   const nonGranteeSelected = participantSelection === 'non-grantee';
   const participants = nonGranteeSelected ? nonGrantees : grantees;
   const previousParticipantSelection = useRef(participantSelection);
+  const participantLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
 
   useEffect(() => {
     if (previousParticipantSelection.current !== participantSelection) {
@@ -121,7 +122,7 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <MultiSelect
             name="grantees"
-            label="Grantee name(s)"
+            label={participantLabel}
             disabled={disableParticipant}
             control={control}
             options={
