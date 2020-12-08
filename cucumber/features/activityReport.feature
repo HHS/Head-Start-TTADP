@@ -4,4 +4,4 @@ Feature: TTA Smarthub Activity Report
         And I am on the activity reports page
         Then I see "New activity report for Region 14" message
         When I select "Non-Grantee"
-        Then I see "QRIS System" as an option in the "Grantee name(s)" multiselect
+        Then I see "QRIS System" as an option in the "Non-grantee name(s)" multiselect
