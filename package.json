@@ -7,6 +7,7 @@
     "node": "12.19.0"
   },
   "scripts": {
+    "axe:ci": "axe http://localhost:3000, http://localhost:3000/activity-reports, http://localhost:3000/admin --dir ./reports/ --chromedriver-path=\"node_modules/chromedriver/bin/chromedriver\"",
     "build": "./node_modules/.bin/babel src -d ./build/server  && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
@@ -25,7 +26,7 @@
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
     "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
-    "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 CUCUMBER_USER=$CUCUMBER_USER CUCUMBER_USER_ID=999999 yarn cucumber",
+    "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 CUCUMBER_USER_ID=999999 yarn cucumber",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
@@ -33,6 +34,7 @@
     "docker:start": "docker-compose up",
     "docker:stop": "docker-compose down",
     "docker:test": "docker-compose run --rm backend yarn test:ci && docker-compose run --rm frontend yarn test:ci",
+    "docker:test:be": "docker-compose run --rm backend yarn test",
     "docker:lint": "docker-compose run --rm backend yarn lint:ci && docker-compose run --rm frontend yarn lint:ci",
     "docker:shell:frontend": "docker-compose run --rm frontend /bin/bash",
     "docker:shell:backend": "docker-compose run --rm backend /bin/bash",
@@ -94,6 +96,7 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/cli": "^4.0.0",
     "@babel/cli": "^7.11.6",
     "@babel/core": "^7.11.6",
     "@babel/node": "^7.10.5",
@@ -114,6 +117,7 @@
     "jest-junit": "^11.1.0",
     "nodemon": "^2.0.4",
     "redoc-cli": "^0.9.12",
+    "selenium-webdriver": "^4.0.0-alpha.7",
     "sequelize-cli": "^6.2.0",
     "supertest": "^4.0.2"
   },
@@ -121,7 +125,7 @@
     "@babel/runtime": "^7.12.1",
     "@cucumber/cucumber": "^7.0.0-rc.0",
     "axios": "^0.20.0",
-    "chromedriver": "^85.0.1",
+    "chromedriver": "^86.0.0",
     "client-oauth2": "^4.3.3",
     "csv-parse": "^4.14.1",
     "cucumber-html-reporter": "^5.2.0",
