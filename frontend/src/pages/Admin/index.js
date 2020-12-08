@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
+import { Helmet } from 'react-helmet';
 import {
   Label, TextInput, Grid, SideNav, Button,
 } from '@trussworks/react-uswds';
@@ -182,31 +183,36 @@ function Admin(props) {
   });
 
   return (
-    <Container>
-      <h1 className="text-center">User Administration</h1>
-      <Grid row gap>
-        <Grid col={4}>
-          <Button className="width-full" onClick={() => { history.push('/admin/new'); }}>Create New User</Button>
-          <Label htmlFor="input-filter-users">Filter Users</Label>
-          <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
-          <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
-            <SideNav items={renderUserNav(filteredUsers)} />
-          </div>
-        </Grid>
-        <Grid col={8}>
-          {!user
+    <>
+      <Helmet>
+        <title>User Administration</title>
+      </Helmet>
+      <Container>
+        <h1 className="text-center">User Administration</h1>
+        <Grid row gap>
+          <Grid col={4}>
+            <Button className="width-full" onClick={() => { history.push('/admin/new'); }}>Create New User</Button>
+            <Label htmlFor="input-filter-users">Filter Users</Label>
+            <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
+            <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
+              <SideNav items={renderUserNav(filteredUsers)} />
+            </div>
+          </Grid>
+          <Grid col={8}>
+            {!user
           && (
             <p className="margin-top-3 text-bold">
               Select a user...
             </p>
           )}
-          {user
+            {user
           && (
             <UserSection user={user} />
           )}
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </>
   );
 }
 
