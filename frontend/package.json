@@ -48,9 +48,13 @@
   },
   "eslintConfig": {
     "root": true,
+    "plugins": [
+      "testing-library"
+    ],
     "extends": [
       "airbnb",
-      "plugin:jest/recommended"
+      "plugin:jest/recommended",
+      "plugin:testing-library/react"
     ],
     "ignorePatterns": [
       "build/*",
@@ -117,6 +121,7 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.5",
     "eslint-plugin-react-hooks": "^4.0.8",
+    "eslint-plugin-testing-library": "^3.10.1",
     "fetch-mock": "^9.10.7",
     "history": "^5.0.0",
     "jest-fetch-mock": "^3.0.3",
