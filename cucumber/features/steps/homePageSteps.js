@@ -20,21 +20,6 @@ Given('I am logged in', async () => {
   scope.context.currentPage = await scope.browser.newPage();
   const page = scope.context.currentPage;
 
-  const domain = process.env.TTA_SMART_HUB_URI.split('//')[1];
-
-  const cookies = [{
-    name: 'CUCUMBER_USER',
-    value: `${process.env.CUCUMBER_USER}`,
-    domain,
-    path: '/',
-    httpOnly: true,
-    secure: false,
-    session: true,
-    sameSite: 'Strict',
-  }];
-
-  await page.setCookie(...cookies);
-
   const loginLinkSelector = 'a[href$="api/login"]';
   // const homeLinkSelector = 'a[href$="/"]';
   const activityReportsSelector = 'a[href$="activity-reports"]';
