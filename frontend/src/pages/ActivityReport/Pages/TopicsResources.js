@@ -1,0 +1,86 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+
+import { Controller } from 'react-hook-form';
+import { Helmet } from 'react-helmet';
+
+import {
+  Fieldset, Label, TextInput,
+} from '@trussworks/react-uswds';
+
+import MultiSelect from '../../../components/MultiSelect';
+import FileUploader from '../../../components/FileUploader';
+
+const topics = [
+  'first',
+  'second',
+];
+
+const TopicsResources = ({
+  register,
+  control,
+}) => (
+  <>
+    <Helmet>
+      <title>Topics and resources</title>
+    </Helmet>
+    <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
+      <div className="smart-hub--form-section">
+        <MultiSelect
+          name="topics"
+          label="Topic(s) covered. You may choose more than one."
+          control={control}
+          placeholder="Select a topic..."
+          options={
+              topics.map((topic) => ({ value: topic, label: topic }))
+            }
+        />
+      </div>
+    </Fieldset>
+    <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
+      <div className="smart-hub--form-section">
+        <Label htmlFor="resources-used">
+          Resources from OHS / ECLKC
+          <br />
+          Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
+        </Label>
+        <TextInput
+          id="resources-used"
+          name="resources-used"
+          type="text"
+          inputRef={register({ required: true })}
+        />
+      </div>
+      <div className="smart-hub--form-section">
+        <Label htmlFor="other-resources">Upload any resources used that are not available through ECLKC</Label>
+        <Controller
+          name="other-resources"
+          defaultValue={[]}
+          control={control}
+          render={({ onChange, value }) => (
+            <FileUploader files={value} onChange={onChange} id="other-resources" />
+          )}
+        />
+      </div>
+    </Fieldset>
+    <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
+      <Label htmlFor="attachments">Upload any resources used that are not available through ECLKC</Label>
+      <Controller
+        name="attachments"
+        defaultValue={[]}
+        control={control}
+        render={({ onChange, value }) => (
+          <FileUploader files={value} onChange={onChange} id="attachments" />
+        )}
+      />
+    </Fieldset>
+  </>
+);
+
+TopicsResources.propTypes = {
+  register: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  control: PropTypes.object.isRequired,
+};
+
+export default TopicsResources;
