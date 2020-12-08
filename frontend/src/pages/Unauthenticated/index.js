@@ -30,7 +30,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
       <p>
         Login via HSES to continue
       </p>
-      <Link referrerPolicy="same-origin" className="usa-button" variant="unstyled" href="api/login">
+      <Link referrerPolicy="same-origin" className="usa-button" variant="unstyled" href="/api/login">
         HSES Login
       </Link>
     </Container>
