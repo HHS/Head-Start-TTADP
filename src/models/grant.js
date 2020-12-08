@@ -13,6 +13,8 @@ module.exports = (sequelize, DataTypes) => {
   Grant.init({
     number: DataTypes.STRING,
     status: DataTypes.STRING,
+    startDate: DataTypes.DATE,
+    endDate: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'Grant',
