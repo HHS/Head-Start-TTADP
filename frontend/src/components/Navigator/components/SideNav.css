@@ -1,0 +1,82 @@
+.smart-hub--navigator-link-active {
+  background-color: #f8f8f8;
+  color: #0166ab;
+  font-weight: bold;
+  border-left: 2px solid #0166ab;
+  text-decoration-line: none;
+}
+
+.smart-hub--navigator-link {
+  display: flex;
+  margin: auto;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 16px;
+  color: #12549d;
+  line-height: 24px;
+}
+
+.smart-hub--navigator-list {
+  list-style-type: none;
+  padding-inline-start: 0;
+  margin: 0;
+}
+
+.smart-hub--navigator-item {
+  width: 100%;
+  height: 40px;
+  color: #0166ab;
+}
+
+.smart-hub--tag-not-started {
+  background-color: #eceef1;
+  color: #21272dc1;
+}
+
+.smart-hub--tag-in-progress {
+  background-color: #e2eff7;
+  color: #0166ab;
+}
+
+.smart-hub--tag-complete {
+  background-color: #e6faedb0;
+  color: #467e5a;
+}
+
+.smart-hub--tag-submitted {
+  background-color: #0166ab;
+  color: #f8f8f8;
+}
+
+.smart-hub--tag {
+  width: 84px;
+  text-align: center;
+  font-weight: normal;
+  display: inline-block;
+  text-transform: none;
+  font-size: 14px;
+}
+
+.smart-hub--navigator-skip-link {
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  font-size: 1.06rem;
+  line-height: 1.5;
+  color: #005ea2;
+  text-decoration: underline;
+  background: transparent;
+  left: 0;
+  top: -25rem;
+  padding: 0.5rem 1rem;
+  position: absolute;
+  transition: 0.2s ease-in-out;
+  z-index: 100;
+}
+
+.smart-hub--navigator-skip-link:focus {
+  background: white;
+  left: 0;
+  position: absolute;
+  top: -2.5rem;
+  transition: 0.2s ease-in-out;
+}
