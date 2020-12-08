@@ -31,7 +31,7 @@
 
 .smart-hub--tag-not-started {
   background-color: #eceef1;
-  color: #21272d99;
+  color: #21272dc1;
 }
 
 .smart-hub--tag-in-progress {
@@ -40,7 +40,7 @@
 }
 
 .smart-hub--tag-complete {
-  background-color: #dcf0e3;
+  background-color: #e6faedb0;
   color: #467e5a;
 }
 

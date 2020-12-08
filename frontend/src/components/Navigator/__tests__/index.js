@@ -61,4 +61,12 @@ describe('Navigator', () => {
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
+
+  it('changes navigator state to complete when "continuing"', async () => {
+    renderNavigator();
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByTestId('second');
+    const navItem = await screen.findByText('first page');
+    await waitFor(() => expect(within(navItem.nextSibling).getByText('Complete')).toBeVisible());
+  });
 });
