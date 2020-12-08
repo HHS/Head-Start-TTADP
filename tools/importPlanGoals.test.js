@@ -91,7 +91,7 @@ describe('Import TTA plan goals', () => {
     const goalsBefore = await Goal.findAll();
 
     expect(goalsBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTestNew.csv');
+    await importGoals('GranteeTTAPlanTest.csv');
 
     const allGoals = await Goal.findAll();
     expect(allGoals).toBeDefined();
