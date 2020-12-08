@@ -11,7 +11,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Grant.init({
-    number: DataTypes.STRING,
+    number: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,

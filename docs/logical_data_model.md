@@ -1,7 +1,7 @@
 Logical Data Model
 ==================
 
-<img src="http://www.plantuml.com/plantuml/png/pLN1RXCn4BtlLymDg9GSu5PLLQ4AA9SAfV01pdgwiR0zPkobgfByExOth1oq5AlBWKiYlvbvE_FUoBxnGN3eZMvUWVX1Ie9Zsceq7XvLs86mdKO9BTEZXmV4qFXloZh1me1M5iEJGo0EEsgQLWlluQj7Xdq3S06HxHAK3TX5wEggGuii0ihhwnZUUVGfTvsIV61bkuXQOR0yknrPlElD5hc4Bm2DKBg4WWeQBm5jRn8x6TnWfyYkYoPUltlx1ZQhZwlDwkvsTG-ktshLBeT4lrGoKxUCgSlt8HO6PT07OLoEz4vEH8w_HXzuQeQ_-6tGaUA-9OSlOG2Gw5jMBiGMHdJME9-HZVA-UgJU8rUedKmVjUONUkIJJXLbMSz_uUptFc8hPc9VemQvT8WTbmxrhCgZmR0ZMI8yVEO3oQTpsBiuE_u9loM98pvpKD9Jw_VSoduXfzhwcl4pkQvkivXqZTc9TVGw9Fgr_5jDxcB-WdmYeUiq08YbeVSbaWWVM9YPBfvRybnBNOpzvuAoi04hTt6UM44uBIhlk6vegqAxOO1Hlg6oQBdUXMJa747pYtmuB6X_Ug46v4YBnM5VtF9DlYmdyA5gAa1wpC--D_aNZeSCfSQRamvZsg1sasBds8bkkOJqNz9DG-EIPwvpv0Qjx8t-2G00">
+<img src="http://www.plantuml.com/plantuml/png/nLN1Rjim3BtxAtZRLg0vRBUYABfrsP1BCQJR1oWMwmYJH8sILnH9_dsMXHYAaNQ2FM2dG8_a4zyZOztw83YqHbTlGFmc9S4nRJGQ3qygR47OHgE4ckd9moDYgFnFPPrWOK0hY-7P8H27BLLLhONtyCCZmwu2k82ExGgK3TXqqFLrWnPP19GtDrruwz77t5LCye6LRJhK2eFvsMt9udrhDiWvV05eXD8v55JGU0LeMnFPoU0Q6qLsbJNnziFxTx1UVbckb_TtomTmxKQhUf4I_KB9dhfcZ5r-35rXK0Pz4CRraTR9Cv73KNhYAH5_CH8wK3pKv70A0u14NxDoGP4Tq5bolY4RvNsnfDOZ5xWTXpvupHDdvADF1MMzd_zYih_Q3bio4_iIDyZ5WoARJwXbbHyDXYt97E5qpIUIpwUmTsGzleJVaSG1docKzBdrUsrblvDJTNdDS4sgAzei9bqoxCWwp3f4-fNyMqtVnVm5-Kf2bta0q9M6rkT897naOMPFCH_9QoqrNQp0q4ZnlmnbOGCMxkBycrwyP_pqJFvYDKbGYUifCnMEbYKX73wBW2EXQEKOdRb5GJWj2Zx-a-IT6ZC8dBAUKsN6bmZs-qlQGHfMGWvqURdVPSzVrRyYP_1KTIv0-fYV_enL-jeTzZqK6w-I3yUqezjLZ8smHBTOGFpDwSv3mxy_SGr8Vka-DT8VZp9Ei5kqiZNw3m00">
 
 UML Source
 ----------
@@ -86,8 +86,8 @@ class Goal {
 
 class TopicGoal {
   * id : integer
-  * topicId: integer(32) REFERENCES public.Topics.id
   * goalId : integer(32) REFERENCES public.Goals.id
+  * topicId: integer(32) REFERENCES public.Topics.id
   * createdAt : timestamp
   * updatedAt : timestamp
 }
@@ -95,6 +95,18 @@ class TopicGoal {
 class Grantee {
   * id : integer
   * name : string
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class Grant {
+  * id : integer
+  * number : string
+  regionId : integer(32) REFERENCES public.Regions.id
+  * granteeId : integer(32) REFERENCES public.Grantee.id
+  status : string
+  startDate : timestamp
+  endDate : timestamp
   * createdAt : timestamp
   * updatedAt : timestamp
 }
@@ -120,13 +132,15 @@ Role .. RoleTopic
 Topic .. RoleTopic
 Topic .. TopicGoal
 Goal .. TopicGoal
+Grantee ||--|{ Grant
+Region ||--|{ Grant
 @enduml
 ```
 
 Instructions
 ------------
 
-1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/pLN1RXCn4BtlLymDg9GSu5PLLQ4AA9SAfV01pdgwiR0zPkobgfByExOth1oq5AlBWKiYlvbvE_FUoBxnGN3eZMvUWVX1Ie9Zsceq7XvLs86mdKO9BTEZXmV4qFXloZh1me1M5iEJGo0EEsgQLWlluQj7Xdq3S06HxHAK3TX5wEggGuii0ihhwnZUUVGfTvsIV61bkuXQOR0yknrPlElD5hc4Bm2DKBg4WWeQBm5jRn8x6TnWfyYkYoPUltlx1ZQhZwlDwkvsTG-ktshLBeT4lrGoKxUCgSlt8HO6PT07OLoEz4vEH8w_HXzuQeQ_-6tGaUA-9OSlOG2Gw5jMBiGMHdJME9-HZVA-UgJU8rUedKmVjUONUkIJJXLbMSz_uUptFc8hPc9VemQvT8WTbmxrhCgZmR0ZMI8yVEO3oQTpsBiuE_u9loM98pvpKD9Jw_VSoduXfzhwcl4pkQvkivXqZTc9TVGw9Fgr_5jDxcB-WdmYeUiq08YbeVSbaWWVM9YPBfvRybnBNOpzvuAoi04hTt6UM44uBIhlk6vegqAxOO1Hlg6oQBdUXMJa747pYtmuB6X_Ug46v4YBnM5VtF9DlYmdyA5gAa1wpC--D_aNZeSCfSQRamvZsg1sasBds8bkkOJqNz9DG-EIPwvpv0Qjx8t-2G00)
+1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/nLN1Rjim3BtxAtZRLg0vRBUYABfrsP1BCQJR1oWMwmYJH8sILnH9_dsMXHYAaNQ2FM2dG8_a4zyZOztw83YqHbTlGFmc9S4nRJGQ3qygR47OHgE4ckd9moDYgFnFPPrWOK0hY-7P8H27BLLLhONtyCCZmwu2k82ExGgK3TXqqFLrWnPP19GtDrruwz77t5LCye6LRJhK2eFvsMt9udrhDiWvV05eXD8v55JGU0LeMnFPoU0Q6qLsbJNnziFxTx1UVbckb_TtomTmxKQhUf4I_KB9dhfcZ5r-35rXK0Pz4CRraTR9Cv73KNhYAH5_CH8wK3pKv70A0u14NxDoGP4Tq5bolY4RvNsnfDOZ5xWTXpvupHDdvADF1MMzd_zYih_Q3bio4_iIDyZ5WoARJwXbbHyDXYt97E5qpIUIpwUmTsGzleJVaSG1docKzBdrUsrblvDJTNdDS4sgAzei9bqoxCWwp3f4-fNyMqtVnVm5-Kf2bta0q9M6rkT897naOMPFCH_9QoqrNQp0q4ZnlmnbOGCMxkBycrwyP_pqJFvYDKbGYUifCnMEbYKX73wBW2EXQEKOdRb5GJWj2Zx-a-IT6ZC8dBAUKsN6bmZs-qlQGHfMGWvqURdVPSzVrRyYP_1KTIv0-fYV_enL-jeTzZqK6w-I3yUqezjLZ8smHBTOGFpDwSv3mxy_SGr8Vka-DT8VZp9Ei5kqiZNw3m00)
 2. Copy and paste the final UML into the UML Source section
 3. Update the img src and edit link target to the current values
 
