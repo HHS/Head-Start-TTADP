@@ -58,7 +58,7 @@ describe('DatePicker', () => {
     render(<RenderDatePicker />);
     const openCalendar = screen.getByRole('button');
     fireEvent.click(openCalendar);
-    const button = await waitFor(() => screen.getByLabelText('Move backward to switch to the previous month.'));
+    const button = await screen.findByLabelText('Move backward to switch to the previous month.');
     await waitFor(() => expect(button).toBeVisible());
   });
 });
