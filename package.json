@@ -121,7 +121,6 @@
     "nodemon": "^2.0.4",
     "redoc-cli": "^0.9.12",
     "selenium-webdriver": "^4.0.0-alpha.7",
-    "sequelize-cli": "^6.2.0",
     "supertest": "^4.0.2"
   },
   "dependencies": {
@@ -145,6 +144,7 @@
     "puppeteer": "^5.3.1",
     "puppeteer-select": "^1.0.3",
     "sequelize": "^5.22.3",
+    "sequelize-cli": "^6.2.0",
     "url-join": "^4.0.1",
     "winston": "^3.3.3"
   }
