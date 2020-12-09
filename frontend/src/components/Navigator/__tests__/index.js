@@ -57,7 +57,7 @@ describe('Navigator', () => {
     renderNavigator();
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
-    const second = await waitFor(() => screen.getByText('second page'));
+    const second = await screen.findByText('second page');
     userEvent.click(second);
     const first = screen.getByText('first page');
     await waitFor(() => expect(within(first.nextSibling).getByText('In progress')).toBeVisible());
@@ -80,5 +80,13 @@ describe('Navigator', () => {
     await waitFor(() => screen.getByTestId('review'));
     userEvent.click(screen.getByTestId('review'));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+  });
+
+  it('changes navigator state to complete when "continuing"', async () => {
+    renderNavigator();
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByTestId('second');
+    const navItem = await screen.findByText('first page');
+    await waitFor(() => expect(within(navItem.nextSibling).getByText('Complete')).toBeVisible());
   });
 });

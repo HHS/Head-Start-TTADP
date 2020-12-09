@@ -14,7 +14,7 @@ const formData = () => ({
   'activity-type': ['training'],
   duration: '1',
   'end-date': moment(),
-  grantees: 'Grantee Name 1',
+  grantees: ['Grantee Name 1'],
   'number-of-participants': '1',
   'participant-category': 'grantee',
   participants: ['CEO / CFO / Executive'],
@@ -31,22 +31,22 @@ describe('ActivityReport', () => {
     describe('changes the participant selection to', () => {
       it('Grantee', async () => {
         render(<ActivityReport />);
-        const information = await waitFor(() => screen.getByRole('group', { name: 'Who was the activity for?' }));
+        const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const grantee = within(information).getByLabelText('Grantee');
         fireEvent.click(grantee);
-        const granteeSelectbox = await waitFor(() => screen.getByRole('textbox', { name: 'Grantee name(s)' }));
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
         reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await waitFor(() => screen.getByText(withText('Grantee Name 1')))).toBeVisible();
+        expect(await screen.findByText(withText('Grantee Name 1'))).toBeVisible();
       });
 
       it('Non-grantee', async () => {
         render(<ActivityReport />);
-        const information = await waitFor(() => screen.getByRole('group', { name: 'Who was the activity for?' }));
+        const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await waitFor(() => screen.getByRole('textbox', { name: 'Grantee name(s)' }));
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
         reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await waitFor(() => screen.getByText(withText('QRIS System')))).toBeVisible();
+        expect(await screen.findByText(withText('QRIS System'))).toBeVisible();
       });
     });
 
@@ -54,10 +54,10 @@ describe('ActivityReport', () => {
       render(<ActivityReport />);
       const enabled = screen.getByRole('textbox', { name: 'Grantee name(s)' });
       expect(enabled).toBeDisabled();
-      const information = await waitFor(() => screen.getByRole('group', { name: 'Who was the activity for?' }));
+      const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const grantee = within(information).getByLabelText('Grantee');
       fireEvent.click(grantee);
-      const disabled = await waitFor(() => screen.getByRole('textbox', { name: 'Grantee name(s)' }));
+      const disabled = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
       expect(disabled).not.toBeDisabled();
     });
   });
@@ -68,8 +68,8 @@ describe('ActivityReport', () => {
       delete data['activity-method'];
 
       render(<ActivityReport initialData={data} />);
-      expect(await waitFor(() => screen.getByText('Continue'))).toBeDisabled();
-      const box = await waitFor(() => screen.getByLabelText('Virtual'));
+      expect(await screen.findByText('Continue')).toBeDisabled();
+      const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
       await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
     });
@@ -81,8 +81,8 @@ describe('ActivityReport', () => {
       delete data['activity-type'];
 
       render(<ActivityReport initialData={data} />);
-      expect(await waitFor(() => screen.getByText('Continue'))).toBeDisabled();
-      const box = await waitFor(() => screen.getByLabelText('Training'));
+      expect(await screen.findByText('Continue')).toBeDisabled();
+      const box = await screen.findByLabelText('Training');
       fireEvent.click(box);
       await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
     });
