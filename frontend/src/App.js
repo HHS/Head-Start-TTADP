@@ -99,7 +99,7 @@ function App() {
 
   return (
     <>
-      <Helmet titleTemplate="TTA Smart Hub - %s" defaultTitle="TTA Smart Hub">
+      <Helmet titleTemplate="%s - TTA Smart Hub" defaultTitle="TTA Smart Hub">
         <meta charSet="utf-8" />
       </Helmet>
       <BrowserRouter>

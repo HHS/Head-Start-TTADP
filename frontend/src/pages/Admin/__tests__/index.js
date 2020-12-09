@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { Router } from 'react-router';
 import {
-  render, screen, waitFor, within,
+  render, screen, within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
@@ -21,7 +21,7 @@ describe('Admin Page', () => {
   it('displays an error if users are not "fetch-able"', async () => {
     fetchMock.get(usersUrl, 500);
     render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
-    const alert = await waitFor(() => screen.getByRole('alert'));
+    const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Unable to fetch users');
   });
 
@@ -55,7 +55,7 @@ describe('Admin Page', () => {
       });
 
       it('user list is filterable', async () => {
-        const filter = await waitFor(() => screen.getByLabelText('Filter Users'));
+        const filter = await screen.findByLabelText('Filter Users');
         userEvent.type(filter, 'Harry');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
@@ -64,7 +64,7 @@ describe('Admin Page', () => {
       });
 
       it('allows a user to be selected', async () => {
-        const button = await waitFor(() => screen.getByText('Harry Potter'));
+        const button = await screen.findByText('Harry Potter');
         userEvent.click(button);
         expect(history.location.pathname).toBe('/admin/3');
       });
@@ -72,7 +72,7 @@ describe('Admin Page', () => {
 
     it('displays an existing user', async () => {
       render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
-      const userInfo = await waitFor(() => screen.getByRole('group', { name: 'User Info' }));
+      const userInfo = await screen.findByRole('group', { name: 'User Info' });
       expect(userInfo).toBeVisible();
     });
 
@@ -80,9 +80,9 @@ describe('Admin Page', () => {
       it('handles errors by displaying an error message', async () => {
         fetchMock.put(userPatchUrl, 500);
         render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
-        const save = await waitFor(() => screen.getByRole('button', { name: 'Save' }));
+        const save = await screen.findByRole('button', { name: 'Save' });
         userEvent.click(save);
-        const alert = await waitFor(() => screen.getByRole('alert'));
+        const alert = await screen.findByRole('alert');
         expect(alert).toHaveTextContent('Unable to save user');
       });
 
@@ -96,9 +96,9 @@ describe('Admin Page', () => {
           permissions: [],
         });
         render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
-        const save = await waitFor(() => screen.getByRole('button', { name: 'Save' }));
+        const save = await screen.findByRole('button', { name: 'Save' });
         userEvent.click(save);
-        const alert = await waitFor(() => screen.getByRole('link', { name: 'Potter Harry' }));
+        const alert = await screen.findByRole('link', { name: 'Potter Harry' });
         expect(alert).toBeVisible();
       });
     });
