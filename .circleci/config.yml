@@ -63,6 +63,22 @@ commands:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
         type: env_var_name
+      postgres_db:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres database name"
+        type: env_var_name
+      postgres_host:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres host"
+        type: env_var_name
+      postgres_password:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres password"
+        type: env_var_name
+      postgres_username:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres username"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -79,6 +95,10 @@ commands:
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
+              --var POSTGRES_DB=${<< parameters.postgres_db >>} \
+              --var POSTGRES_HOST=${<< parameters.postgres_host >>} \
+              --var POSTGRES_PASSWORD=${<< parameters.postgres_password >>} \
+              --var POSTGRES_USERNAME=${<< parameters.postgres_username >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
 parameters:
   cg_org:
@@ -298,6 +318,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_SANDBOX_SPACE
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
+                postgres_db: SANDBOX_POSTGRES_DB
+                postgres_host: SANDBOX_POSTGRES_HOST
+                postgres_password: SANDBOX_POSTGRES_PASSWORD
+                postgres_username: SANDBOX_POSTGRES_USERNAME
                 session_secret: SANDBOX_SESSION_SECRET
       - when:  # dev
           condition:
@@ -313,6 +337,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_DEV_SPACE
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
+                postgres_db: DEV_POSTGRES_DB
+                postgres_host: DEV_POSTGRES_HOST
+                postgres_password: DEV_POSTGRES_PASSWORD
+                postgres_username: DEV_POSTGRES_USERNAME
                 session_secret: DEV_SESSION_SECRET
       - when:  # staging
           condition:
