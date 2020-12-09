@@ -66,7 +66,7 @@ describe('Navigator', () => {
   it('shows the review page after showing the last form page', async () => {
     renderNavigator();
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => screen.getByTestId('second'));
+    await screen.findByTestId('second');
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await waitFor(() => expect(screen.getByTestId('review')).toBeVisible());
   });
@@ -75,9 +75,9 @@ describe('Navigator', () => {
     const onSubmit = jest.fn();
     renderNavigator(onSubmit);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => screen.getByTestId('second'));
+    await screen.findByTestId('second');
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => screen.getByTestId('review'));
+    await screen.findByTestId('review');
     userEvent.click(screen.getByTestId('review'));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
