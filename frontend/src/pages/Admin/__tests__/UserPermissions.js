@@ -5,6 +5,12 @@ import { render, screen, within } from '@testing-library/react';
 
 import UserPermissions from '../UserPermissions';
 import { withText } from '../../../testHelpers';
+import { SCOPE_IDS } from '../../../Constants';
+
+const {
+  READ_ACTIVITY_REPORTS,
+  ADMIN,
+} = SCOPE_IDS;
 
 describe('UserPermissions', () => {
   describe('with no permissions', () => {
@@ -28,10 +34,10 @@ describe('UserPermissions', () => {
     beforeEach(() => {
       render(<UserPermissions
         regionalPermissions={{
-          1: { READ_REPORTS: true },
+          1: { [READ_ACTIVITY_REPORTS]: true },
         }}
         globalPermissions={{
-          SITE_ACCESS: true,
+          [ADMIN]: true,
         }}
         onRegionalPermissionChange={() => {}}
         onGlobalPermissionChange={() => {}}
@@ -40,18 +46,18 @@ describe('UserPermissions', () => {
 
     it('has correct global permissions checked', () => {
       const checkbox = screen.getByRole('checkbox', { checked: true });
-      expect(checkbox.name).toBe('SITE_ACCESS');
+      expect(checkbox.name).toBe(ADMIN.toString(10));
     });
 
     it('displays the current regional permissions', () => {
-      expect(screen.getByText(withText('READ_REPORTS: Region 1'))).toBeVisible();
+      expect(screen.getByText(withText('READ_ACTIVITY_REPORTS: Region 1'))).toBeVisible();
     });
 
     describe('when a region is selected', () => {
       it('the correct regional scopes are shown as checked', () => {
         userEvent.selectOptions(screen.getByLabelText('Region'), '1');
         const fieldset = screen.getByRole('group', { name: 'Regional Permissions' });
-        const checkbox = within(fieldset).getByRole('checkbox', { checked: true });
+        const checkbox = within(fieldset).getByRole('checkbox', { name: 'READ_ACTIVITY_REPORTS : Can view reports activity in the region' });
         expect(checkbox).toBeChecked();
       });
     });
