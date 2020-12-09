@@ -2,7 +2,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import join from 'url-join';
 import {
-  screen, render, waitFor, fireEvent,
+  screen, render, fireEvent,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
@@ -21,13 +21,13 @@ describe('App', () => {
     });
 
     it('displays the logout button', async () => {
-      expect(await waitFor(() => screen.getByText('Logout'))).toBeVisible();
+      expect(await screen.findByText('Logout')).toBeVisible();
     });
 
     it('can log the user out when "logout" is pressed', async () => {
-      const logout = await waitFor(() => screen.getByText('Logout'));
+      const logout = await screen.findByText('Logout');
       fireEvent.click(logout);
-      expect(await waitFor(() => screen.getByText('HSES Login'))).toBeVisible();
+      expect(await screen.findByText('HSES Login')).toBeVisible();
     });
   });
 
@@ -38,7 +38,7 @@ describe('App', () => {
     });
 
     it('displays the login button', async () => {
-      expect(await waitFor(() => screen.getByText('HSES Login'))).toBeVisible();
+      expect(await screen.findByText('HSES Login')).toBeVisible();
     });
   });
 });
