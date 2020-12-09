@@ -2,6 +2,10 @@ AUTH_BASE: https://uat.hsesinfo.org
 env: sandbox
 instances: 1
 NODE_ENV: production
+POSTGRES_DB: ((SANDBOX_POSTGRES_DB))
+POSTGRES_HOST: ((SANDBOX_POSTGRES_HOST))
+POSTGRES_PASSWORD: ((SANDBOX_POSTGRES_PASSWORD))
+POSTGRES_USERNAME: ((SANDBOX_POSTGRES_USERNAME))
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-sandbox.app.cloud.gov
 rds_instance: ttahub-sandbox

@@ -4,6 +4,10 @@ AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
 env: dev
 instances: 1
 NODE_ENV: production
+POSTGRES_DB: ((DEV_POSTGRES_DB))
+POSTGRES_HOST: ((DEV_POSTGRES_HOST))
+POSTGRES_PASSWORD: ((DEV_POSTGRES_PASSWORD))
+POSTGRES_USERNAME: ((DEV_POSTGRES_USERNAME))
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-dev.app.cloud.gov
 rds_instance: ttahub-dev
