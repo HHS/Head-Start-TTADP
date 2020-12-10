@@ -108,8 +108,9 @@ commands:
           name: Run database migrations
           command: |
             cf run-task << parameters.app_name >> "yarn db:migrate"
-            sleep 60
-            cf restart << parameters.app_name >>
+      - run:
+          name: Restart application
+          command: cf restart << parameters.app_name >>
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
