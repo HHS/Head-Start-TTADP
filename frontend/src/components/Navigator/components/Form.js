@@ -22,10 +22,13 @@ function Form({
   */
   const getValuesRef = React.useRef(null);
 
-  useEffect(() => () => {
-    if (getValuesRef.current) {
-      saveForm(getValuesRef.current());
-    }
+  useEffect(() => {
+    const onUnmount = () => {
+      if (getValuesRef.current) {
+        saveForm(getValuesRef.current());
+      }
+    };
+    return onUnmount;
   }, [saveForm]);
 
   const hookForm = useForm({

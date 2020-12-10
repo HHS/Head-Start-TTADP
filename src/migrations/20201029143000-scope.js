@@ -25,6 +25,9 @@ module.exports = {
       name: 'APPROVE_REPORTS',
       description: 'Can approve reports',
     },
-  ]),
+  ],
+  {
+    ignoreDuplicates: true,
+  }),
   down: (queryInterface) => queryInterface.bulkDelete('Scopes', null, {}),
 };
