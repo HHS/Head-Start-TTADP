@@ -1,7 +1,7 @@
 Logical Data Model
 ==================
 
-<img src="http://www.plantuml.com/plantuml/png/nLN1Rjim3BtxAtZRLg0vRBUYABfrsP1BCQJR1oWMwmYJH8sILnH9_dsMXHYAaNQ2FM2dG8_a4zyZOztw83YqHbTlGFmc9S4nRJGQ3qygR47OHgE4ckd9moDYgFnFPPrWOK0hY-7P8H27BLLLhONtyCCZmwu2k82ExGgK3TXqqFLrWnPP19GtDrruwz77t5LCye6LRJhK2eFvsMt9udrhDiWvV05eXD8v55JGU0LeMnFPoU0Q6qLsbJNnziFxTx1UVbckb_TtomTmxKQhUf4I_KB9dhfcZ5r-35rXK0Pz4CRraTR9Cv73KNhYAH5_CH8wK3pKv70A0u14NxDoGP4Tq5bolY4RvNsnfDOZ5xWTXpvupHDdvADF1MMzd_zYih_Q3bio4_iIDyZ5WoARJwXbbHyDXYt97E5qpIUIpwUmTsGzleJVaSG1docKzBdrUsrblvDJTNdDS4sgAzei9bqoxCWwp3f4-fNyMqtVnVm5-Kf2bta0q9M6rkT897naOMPFCH_9QoqrNQp0q4ZnlmnbOGCMxkBycrwyP_pqJFvYDKbGYUifCnMEbYKX73wBW2EXQEKOdRb5GJWj2Zx-a-IT6ZC8dBAUKsN6bmZs-qlQGHfMGWvqURdVPSzVrRyYP_1KTIv0-fYV_enL-jeTzZqK6w-I3yUqezjLZ8smHBTOGFpDwSv3mxy_SGr8Vka-DT8VZp9Ei5kqiZNw3m00">
+<img src="http://www.plantuml.com/plantuml/png/nLL1Jzmy4BtdLypj-uh47jeRGeYMBXKNX83-06yyPAtQ7dSyAK8i_xrnBAp0BjJQLEebgppFl9dtPh8-ZQ9OUcUR_q3z8gCXCAqikWZtHjQWV6THGyjq7-4EKPhum_YWM3cmngCy10HYMLFJj5R52DyZCZms00Smi1s1yOBT01qVT-YHbQ0-EHcErn5ZYhr8GL7O-6v0lN8uVGzhydZPknNo53u0TChOAIH6B1u1-jubTd9uZPqXVp5fulzF7p_0zV9yURsyF5lUGEXNrhIB71WNHe_KBMFgyhCCYM8SHb4kZ2Tzq3jEdfwbPvuQyGUlX1QAcvO2xiC0e36sR88OyWMT9USAsPaOgoNr4Rd2xJJquZNlEQEOVAf86_ty6vFzsG_OafaurhX18RqawoQpwDbCNntAclGKuLpc2-c7bt0CWtPy2pyZZGMVAPJihlLxRsLlAPYsFgUKoNbLcyLaQuQTMCki9T5Vw3_bZ5tCNv1lf6oT1m13glHnYYJ2EtuLPk8vaxjnYYMk4ULMr9LLQQ5MH1QLdzVnAFozjhlXhCBqHF6lJ6Vb1IltTNwbD-jiNK_x_gjrML2Dwpao9sujL49OlYh1LqBHwsrqjZ5f1Ie-v7q4lhIcDYzbxRF3-tgHhZJOR0xf4V94C_94XuURnyazskJhVHlFMRiEo9RuyQjfnYSyRKOeDTvagqfO6KcJ7bjefbmi8FrEANT2kMXXAyYqS59UIZnBUO6TejUzixy1">
 
 UML Source
 ----------
@@ -80,6 +80,7 @@ class Goal {
   * name : string
   status : string
   timeframe : string
+  isFromSmartsheetTtaPlan : boolean
   * createdAt : timestamp
   * updatedAt : timestamp
 }
@@ -111,10 +112,10 @@ class Grant {
   * updatedAt : timestamp
 }
 
-class Ttaplan {
+class GrantGoal {
   * id : integer <<generated>>
   * granteeId : integer(32) REFERENCES public.Grantees.id
-  * grant : string
+  * grantId : integer(32) REFERENCES public.Grants.id
   * goalId : integer(32) REFERENCES public.Goals.id
   * createdAt : timestamp
   * updatedAt : timestamp
@@ -126,8 +127,8 @@ Scope }o--|{ Permission
 Region }o--|{ Permission
 Role }o--|{ Topic
 Topic }|--|{ Goal
-Grantee }o--|{ Ttaplan
-Goal }o--|{ Ttaplan
+Grantee }o--|{ GrantGoal
+Goal }o--|{ GrantGoal
 Role .. RoleTopic
 Topic .. RoleTopic
 Topic .. TopicGoal
@@ -140,7 +141,7 @@ Region ||--|{ Grant
 Instructions
 ------------
 
-1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/nLN1Rjim3BtxAtZRLg0vRBUYABfrsP1BCQJR1oWMwmYJH8sILnH9_dsMXHYAaNQ2FM2dG8_a4zyZOztw83YqHbTlGFmc9S4nRJGQ3qygR47OHgE4ckd9moDYgFnFPPrWOK0hY-7P8H27BLLLhONtyCCZmwu2k82ExGgK3TXqqFLrWnPP19GtDrruwz77t5LCye6LRJhK2eFvsMt9udrhDiWvV05eXD8v55JGU0LeMnFPoU0Q6qLsbJNnziFxTx1UVbckb_TtomTmxKQhUf4I_KB9dhfcZ5r-35rXK0Pz4CRraTR9Cv73KNhYAH5_CH8wK3pKv70A0u14NxDoGP4Tq5bolY4RvNsnfDOZ5xWTXpvupHDdvADF1MMzd_zYih_Q3bio4_iIDyZ5WoARJwXbbHyDXYt97E5qpIUIpwUmTsGzleJVaSG1docKzBdrUsrblvDJTNdDS4sgAzei9bqoxCWwp3f4-fNyMqtVnVm5-Kf2bta0q9M6rkT897naOMPFCH_9QoqrNQp0q4ZnlmnbOGCMxkBycrwyP_pqJFvYDKbGYUifCnMEbYKX73wBW2EXQEKOdRb5GJWj2Zx-a-IT6ZC8dBAUKsN6bmZs-qlQGHfMGWvqURdVPSzVrRyYP_1KTIv0-fYV_enL-jeTzZqK6w-I3yUqezjLZ8smHBTOGFpDwSv3mxy_SGr8Vka-DT8VZp9Ei5kqiZNw3m00)
+1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/nLL1Jzmy4BtdLypj-uh47jeRGeYMBXKNX83-06yyPAtQ7dSyAK8i_xrnBAp0BjJQLEebgppFl9dtPh8-ZQ9OUcUR_q3z8gCXCAqikWZtHjQWV6THGyjq7-4EKPhum_YWM3cmngCy10HYMLFJj5R52DyZCZms00Smi1s1yOBT01qVT-YHbQ0-EHcErn5ZYhr8GL7O-6v0lN8uVGzhydZPknNo53u0TChOAIH6B1u1-jubTd9uZPqXVp5fulzF7p_0zV9yURsyF5lUGEXNrhIB71WNHe_KBMFgyhCCYM8SHb4kZ2Tzq3jEdfwbPvuQyGUlX1QAcvO2xiC0e36sR88OyWMT9USAsPaOgoNr4Rd2xJJquZNlEQEOVAf86_ty6vFzsG_OafaurhX18RqawoQpwDbCNntAclGKuLpc2-c7bt0CWtPy2pyZZGMVAPJihlLxRsLlAPYsFgUKoNbLcyLaQuQTMCki9T5Vw3_bZ5tCNv1lf6oT1m13glHnYYJ2EtuLPk8vaxjnYYMk4ULMr9LLQQ5MH1QLdzVnAFozjhlXhCBqHF6lJ6Vb1IltTNwbD-jiNK_x_gjrML2Dwpao9sujL49OlYh1LqBHwsrqjZ5f1Ie-v7q4lhIcDYzbxRF3-tgHhZJOR0xf4V94C_94XuURnyazskJhVHlFMRiEo9RuyQjfnYSyRKOeDTvagqfO6KcJ7bjefbmi8FrEANT2kMXXAyYqS59UIZnBUO6TejUzixy1)
 2. Copy and paste the final UML into the UML Source section
 3. Update the img src and edit link target to the current values
 
