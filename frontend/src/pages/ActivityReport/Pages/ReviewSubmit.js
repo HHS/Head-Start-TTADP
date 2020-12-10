@@ -10,6 +10,7 @@ const ReviewSubmit = ({ allComplete, onSubmit }) => (
     </Helmet>
     <div>
       Review and submit
+      <br />
       <Button disabled={!allComplete} onClick={onSubmit}>Submit</Button>
     </div>
   </>
