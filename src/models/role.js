@@ -2,6 +2,13 @@ const {
   Model,
 } = require('sequelize');
 
+/**
+ * Roles table. Stores user roles, e.g. 'HS' ('Health Specialist')
+ *
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
+
 module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {

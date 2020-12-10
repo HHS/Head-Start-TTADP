@@ -2,6 +2,12 @@ const {
   Model,
 } = require('sequelize');
 
+/**
+ * Topics table. Stores topics used in activity reports and tta plans.
+ *
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
 module.exports = (sequelize, DataTypes) => {
   class Topic extends Model {
     static associate(models) {

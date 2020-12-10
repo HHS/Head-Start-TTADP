@@ -2,12 +2,18 @@ const {
   Model,
 } = require('sequelize');
 
+/**
+ * GrantGoal table. Junction table between Grants and Goals to support many to many relationship.
+ *
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
 module.exports = (sequelize, DataTypes) => {
-  class Ttaplan extends Model {
+  class GrantGoal extends Model {
     static associate() {
     }
   }
-  Ttaplan.init({
+  GrantGoal.init({
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -16,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'Ttaplan',
+    modelName: 'GrantGoal',
   });
-  return Ttaplan;
+  return GrantGoal;
 };

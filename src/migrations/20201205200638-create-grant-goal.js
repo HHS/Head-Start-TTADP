@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Ttaplans', {
+    await queryInterface.createTable('GrantGoals', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -19,10 +19,6 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
-      // grant: {
-      //   type: Sequelize.STRING,
-      //   allowNull: false,
-      // },
       grantId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -58,6 +54,6 @@ module.exports = {
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Ttaplans');
+    await queryInterface.dropTable('GrantGoals');
   },
 };

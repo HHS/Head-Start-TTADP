@@ -16,6 +16,9 @@ module.exports = {
       timeframe: {
         type: Sequelize.STRING,
       },
+      isFromSmartsheetTtaPlan: {
+        type: Sequelize.BOOLEAN,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

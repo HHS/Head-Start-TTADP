@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
 import {
-  Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, Ttaplan,
+  Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, GrantGoal,
 } from '../src/models';
 
 function getItemId(array, item) {
@@ -47,7 +47,7 @@ export default async function importGoals(file) {
     const cleanRoleTopics = [];
     const cleanGoals = [];
     const cleanGrantees = [];
-    const cleanTtaPlans = [];
+    const cleanGrantGoals = [];
     const cleanTopicGoals = [];
     const cleanGrants = [];
 
@@ -133,10 +133,10 @@ export default async function importGoals(file) {
           }
           grantId = cleanGrants.findIndex((g) => g.number === fullGrant.number) + 1;
           const plan = { granteeId: currentGranteeId, grantId, goalId };
-          if (!cleanTtaPlans.some((e) => e.granteeId === currentGranteeId
+          if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
                             && e.grantId === grantId
                             && e.goalId === goalId)) {
-            cleanTtaPlans.push(plan);
+            cleanGrantGoals.push(plan);
           }
         });
       });
@@ -158,7 +158,7 @@ export default async function importGoals(file) {
         ignoreDuplicates: true,
       });
     await Goal.bulkCreate(cleanGoals.map((goal, index) => (
-      { id: index + 1, ...goal })),
+      { id: index + 1, ...goal, isFromSmartsheetTtaPlan: true })),
     {
       updateOnDuplicate: ['name', 'updatedAt'],
     });
@@ -175,7 +175,7 @@ export default async function importGoals(file) {
     {
       updateOnDuplicate: ['number', 'granteeId', 'updatedAt'],
     });
-    await Ttaplan.bulkCreate(cleanTtaPlans,
+    await GrantGoal.bulkCreate(cleanGrantGoals,
       {
         ignoreDuplicates: true,
       });
