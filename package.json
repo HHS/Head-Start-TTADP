@@ -18,7 +18,7 @@
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src --coverage --reporters=default --reporters=jest-junit",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CI=true jest src tools --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -43,7 +43,8 @@
     "docker:db:migrate": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate",
     "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
-    "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo"
+    "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
+    "import:goals": "./node_modules/.bin/babel-node ./tools/importTTAPlanGoals.js"
   },
   "repository": {
     "type": "git",
@@ -129,6 +130,7 @@
     "axios": "^0.20.0",
     "chromedriver": "^86.0.0",
     "client-oauth2": "^4.3.3",
+    "csv-parse": "^4.14.1",
     "cucumber-html-reporter": "^5.2.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -146,6 +148,7 @@
     "sequelize": "^5.22.3",
     "sequelize-cli": "^6.2.0",
     "url-join": "^4.0.1",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "yargs": "^16.1.1"
   }
 }
