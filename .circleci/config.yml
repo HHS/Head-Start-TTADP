@@ -421,7 +421,6 @@ workflows:
             - lint_audit
             - test_backend
             - cucumber_test
-            - test_frontend
             - dynamic_security_scan
             - accessibility_scan
           filters:
