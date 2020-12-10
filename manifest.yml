@@ -16,10 +16,6 @@ applications:
       REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
       SESSION_SECRET: ((SESSION_SECRET))
       TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
-      POSTGRES_USERNAME: ((POSTGRES_USERNAME))
-      POSTGRES_PASSWORD: ((POSTGRES_PASSWORD))
-      POSTGRES_DB: ((POSTGRES_DB))
-      POSTGRES_HOST: ((POSTGRES_HOST))
     services:
       - ((rds_instance))
       - ((s3_doc_upload_bucket))
