@@ -44,25 +44,44 @@ const styles = {
 function MultiSelect({
   label, name, options, disabled, control, required,
 }) {
+  const findLabel = (value) => {
+    const opt = options.find((o) => o.value === value);
+    if (!opt) {
+      return value;
+    }
+    return opt.label;
+  };
+
   return (
     <Label>
       {label}
       <Controller
-        render={({ onChange, value }) => (
-          <Select
-            id={name}
-            value={value}
-            onChange={onChange}
-            styles={styles}
-            components={{ DropdownIndicator }}
-            options={options}
-            isDisabled={disabled}
-            placeholder=""
-            isMulti
-          />
-        )}
+        render={({ onChange, value }) => {
+          let values = value;
+          if (value) {
+            values = value.map((v) => ({
+              value: v, label: findLabel(v),
+            }));
+          }
+          return (
+            <Select
+              id={name}
+              value={values}
+              onChange={(e) => {
+                const newValue = e ? e.map((v) => v.value) : null;
+                onChange(newValue);
+              }}
+              styles={styles}
+              components={{ DropdownIndicator }}
+              options={options}
+              isDisabled={disabled}
+              placeholder=""
+              isMulti
+            />
+          );
+        }}
         control={control}
-        defaultValue=""
+        defaultValue={[]}
         rules={{
           required,
         }}
