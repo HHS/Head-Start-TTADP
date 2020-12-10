@@ -356,6 +356,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_STAGING_SPACE
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
+                postgres_db: STAGING_POSTGRES_DB
+                postgres_host: STAGING_POSTGRES_HOST
+                postgres_password: STAGING_POSTGRES_PASSWORD
+                postgres_username: STAGING_POSTGRES_USERNAME
                 session_secret: STAGING_SESSION_SECRET
       - when:  # prod
           condition:
@@ -371,6 +375,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_PROD_SPACE
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
+                postgres_db: PROD_POSTGRES_DB
+                postgres_host: PROD_POSTGRES_HOST
+                postgres_password: PROD_POSTGRES_PASSWORD
+                postgres_username: PROD_POSTGRES_USERNAME
                 session_secret: PROD_SESSION_SECRET
 workflows:
   build_test_deploy:
