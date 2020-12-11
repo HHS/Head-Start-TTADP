@@ -253,6 +253,9 @@ jobs:
               -c zap.conf -I -i
   accessibility_scan:
     executor: docker-executor
+    environment:
+      POSTGRES_USERNAME: postgres
+      POSTGRES_DB: ttasmarthub
     steps:
       - attach_workspace:
           at: .
