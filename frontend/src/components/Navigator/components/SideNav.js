@@ -31,22 +31,25 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, onNavigation, skipTo, skipToMessage,
+  pages, skipTo, skipToMessage,
 }) {
   const isMobile = useMediaQuery({ maxWidth: 640 });
-  const navItems = () => pages.map((page, index) => (
+  const navItems = () => pages.map((page) => (
     <li key={page.label} className="smart-hub--navigator-item">
       <Button
-        onClick={() => onNavigation(index)}
+        onClick={page.onClick}
         unstyled
         role="button"
         className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
       >
         <span className="margin-left-2">{page.label}</span>
         <span className="margin-left-auto margin-right-2">
-          <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
-            {page.state}
-          </Tag>
+          {page.state
+            && (
+            <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
+              {page.state}
+            </Tag>
+            )}
         </span>
       </Button>
     </li>
@@ -69,10 +72,9 @@ SideNav.propTypes = {
     PropTypes.shape({
       label: PropTypes.string.isRequired,
       current: PropTypes.bool.isRequired,
-      state: PropTypes.string.isRequired,
+      state: PropTypes.string,
     }),
   ).isRequired,
-  onNavigation: PropTypes.func.isRequired,
   skipTo: PropTypes.string.isRequired,
   skipToMessage: PropTypes.string.isRequired,
 };

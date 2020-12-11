@@ -9,7 +9,7 @@ import { Form as UswdsForm, Button } from '@trussworks/react-uswds';
 import { useForm } from 'react-hook-form';
 
 function Form({
-  initialData, onSubmit, onDirty, saveForm, renderForm,
+  initialData, onContinue, onDirty, saveForm, renderForm,
 }) {
   /*
     When the form unmounts we want to send any data in the form
@@ -49,7 +49,7 @@ function Form({
   getValuesRef.current = getValues;
 
   return (
-    <UswdsForm onSubmit={handleSubmit(onSubmit)} className="smart-hub--form-large">
+    <UswdsForm onSubmit={handleSubmit(onContinue)} className="smart-hub--form-large">
       {renderForm(hookForm)}
       <Button className="stepper-button" type="submit" disabled={!formState.isValid}>Continue</Button>
     </UswdsForm>
@@ -58,7 +58,7 @@ function Form({
 
 Form.propTypes = {
   initialData: PropTypes.shape({}),
-  onSubmit: PropTypes.func.isRequired,
+  onContinue: PropTypes.func.isRequired,
   onDirty: PropTypes.func.isRequired,
   saveForm: PropTypes.func.isRequired,
   renderForm: PropTypes.func.isRequired,

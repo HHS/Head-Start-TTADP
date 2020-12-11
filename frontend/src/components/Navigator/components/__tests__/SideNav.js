@@ -17,17 +17,18 @@ describe('SideNav', () => {
         label: 'test',
         current,
         state,
+        onClick: () => onNavigation(0),
       },
       {
         label: 'second',
         current: false,
         state: '',
+        onClick: () => onNavigation(1),
       },
     ];
     render(
       <SideNav
         pages={pages}
-        onNavigation={onNavigation}
         skipTo="skip"
         skipToMessage="message"
       />,
