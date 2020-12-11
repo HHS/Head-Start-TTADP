@@ -263,8 +263,11 @@ jobs:
           name: Build
           command: yarn build
       - run:
+          name: Seed database
+          command: yarn run db:seed
+      - run:
           name: Start server
-          command: BYPASS_AUTH=true yarn start:ci
+          command: BYPASS_AUTH=true CUCUMBER_USER_ID=1 yarn start:ci
           background: true
       - run:
           name: Run axe
