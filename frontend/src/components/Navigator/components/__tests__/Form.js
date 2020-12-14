@@ -5,10 +5,10 @@ import { render, screen, act } from '@testing-library/react';
 
 import Form from '../Form';
 
-const renderForm = (saveForm, onSubmit, onDirty) => render(
+const renderForm = (saveForm, onContinue, onDirty) => render(
   <Form
     initialData={{ test: '' }}
-    onSubmit={onSubmit}
+    onContinue={onContinue}
     saveForm={saveForm}
     onDirty={onDirty}
     renderForm={(hookForm) => (
@@ -25,33 +25,33 @@ const renderForm = (saveForm, onSubmit, onDirty) => render(
 describe('Form', () => {
   it('calls saveForm when unmounted', () => {
     const saveForm = jest.fn();
-    const onSubmit = jest.fn();
+    const onContinue = jest.fn();
     const dirty = jest.fn();
-    const { unmount } = renderForm(saveForm, onSubmit, dirty);
+    const { unmount } = renderForm(saveForm, onContinue, dirty);
     unmount();
     expect(saveForm).toHaveBeenCalled();
   });
 
-  it('calls onSubmit when submitting', async () => {
+  it('calls onContinue when submitting', async () => {
     const saveForm = jest.fn();
-    const onSubmit = jest.fn();
+    const onContinue = jest.fn();
     const dirty = jest.fn();
 
-    renderForm(saveForm, onSubmit, dirty);
+    renderForm(saveForm, onContinue, dirty);
     const submit = screen.getByRole('button');
     await act(async () => {
       userEvent.click(submit);
     });
 
-    expect(onSubmit).toHaveBeenCalled();
+    expect(onContinue).toHaveBeenCalled();
   });
 
   it('calls onDirty when the form is dirty', async () => {
     const saveForm = jest.fn();
-    const onSubmit = jest.fn();
+    const onContinue = jest.fn();
     const dirty = jest.fn();
 
-    renderForm(saveForm, onSubmit, dirty);
+    renderForm(saveForm, onContinue, dirty);
     const submit = screen.getByTestId('input');
     userEvent.click(submit);
 
