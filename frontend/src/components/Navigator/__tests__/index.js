@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 
 import Navigator from '../index';
+import { NOT_STARTED } from '../constants';
 
 const pages = [
   {
@@ -32,13 +33,22 @@ const pages = [
   },
 ];
 
+const renderReview = (allComplete, onSubmit) => (
+  <div>
+    <button type="button" data-testid="review" onClick={onSubmit}>button</button>
+  </div>
+);
+
 describe('Navigator', () => {
   const renderNavigator = (onSubmit = () => {}) => {
     render(
       <Navigator
+        submitted={false}
+        initialPageState={[NOT_STARTED, NOT_STARTED]}
         defaultValues={{ first: '', second: '' }}
         pages={pages}
         onFormSubmit={onSubmit}
+        renderReview={renderReview}
       />,
     );
   };
@@ -53,12 +63,22 @@ describe('Navigator', () => {
     await waitFor(() => expect(within(first.nextSibling).getByText('In progress')).toBeVisible());
   });
 
-  it('submits data when "continuing" from the last page', async () => {
+  it('shows the review page after showing the last form page', async () => {
+    renderNavigator();
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByTestId('second');
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await waitFor(() => expect(screen.getByTestId('review')).toBeVisible());
+  });
+
+  it('submits data when "continuing" from the review page', async () => {
     const onSubmit = jest.fn();
     renderNavigator(onSubmit);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => expect(screen.getByTestId('second')));
+    await screen.findByTestId('second');
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByTestId('review');
+    userEvent.click(screen.getByTestId('review'));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
