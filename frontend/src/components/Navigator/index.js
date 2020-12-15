@@ -24,74 +24,51 @@ import IndicatorHeader from './components/IndicatorHeader';
   sets a "current" flag which the side nav uses to style the selected component as selected.
 */
 function Navigator({
-  defaultValues, pages, onFormSubmit, initialPageState, renderReview, submitted,
+  defaultValues,
+  pages,
+  onFormSubmit,
+  initialPageState,
+  submitted,
+  currentPage,
+  updatePage,
 }) {
   const [formData, updateFormData] = useState(defaultValues);
-  const [viewReview, updateViewReview] = useState(false);
-  const [currentPage, updateCurrentPage] = useState(0);
   const [pageState, updatePageState] = useState(initialPageState);
-  const lastPage = pages.length - 1;
+  const page = pages.find((p) => p.path === currentPage);
+  const submittedNavState = submitted ? SUBMITTED : null;
+  const allComplete = _.every(pageState, (state) => state === COMPLETE);
 
-  const onNavigation = (index) => {
-    updateViewReview(false);
-    updateCurrentPage(index);
-  };
+  const navigatorPages = pages.map((p) => {
+    const state = p.review ? submittedNavState : pageState[p.position];
+    return {
+      label: p.label,
+      path: p.path,
+      state,
+    };
+  });
 
   const onDirty = useCallback((isDirty) => {
     updatePageState((oldNavigatorState) => {
-      const newNavigatorState = [...oldNavigatorState];
-      newNavigatorState[currentPage] = isDirty ? IN_PROGRESS : oldNavigatorState[currentPage];
+      const newNavigatorState = { ...oldNavigatorState };
+      newNavigatorState[page.position] = isDirty ? IN_PROGRESS : oldNavigatorState[page.position];
       return newNavigatorState;
     });
-  }, [updatePageState, currentPage]);
+  }, [updatePageState, page.position]);
 
   const onSaveForm = useCallback((newData) => {
     updateFormData((oldData) => ({ ...oldData, ...newData }));
   }, [updateFormData]);
 
   const onContinue = () => {
-    const newNavigatorState = [...pageState];
-    newNavigatorState[currentPage] = COMPLETE;
+    const newNavigatorState = { ...pageState };
+    newNavigatorState[page.position] = COMPLETE;
     updatePageState(newNavigatorState);
-
-    if (currentPage >= lastPage) {
-      updateViewReview(true);
-    } else {
-      updateCurrentPage((prevPage) => prevPage + 1);
-    }
+    updatePage(page.position + 1);
   };
 
-  const navigatorPages = pages.map((page, index) => {
-    const current = !viewReview && currentPage === index;
-    const state = pageState[index];
-    return {
-      label: page.label,
-      onClick: () => onNavigation(index),
-      state,
-      current,
-    };
-  });
-
-  const onViewReview = () => {
-    updateViewReview(true);
+  const onSubmit = (data) => {
+    onFormSubmit(formData, data);
   };
-
-  const onSubmit = () => {
-    onFormSubmit(formData);
-  };
-
-  const allComplete = _.every(pageState, (state) => state === COMPLETE);
-
-  const reviewPage = {
-    label: 'Review and submit',
-    onClick: onViewReview,
-    state: submitted ? SUBMITTED : undefined,
-    current: viewReview,
-    renderForm: renderReview,
-  };
-
-  navigatorPages.push(reviewPage);
-  const page = viewReview ? reviewPage : pages[currentPage];
 
   return (
     <Grid row gap>
@@ -99,30 +76,31 @@ function Navigator({
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
-          onNavigation={onNavigation}
           pages={navigatorPages}
         />
       </Grid>
       <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
         <Container skipTopPadding>
-          <IndicatorHeader
-            currentStep={viewReview ? navigatorPages.length : currentPage + 1}
-            totalSteps={navigatorPages.length}
-            label={page.label}
-          />
           <div id="navigator-form">
-            {viewReview
-              && renderReview(allComplete, onSubmit)}
-            {!viewReview
+            {page.review
+              && page.render(allComplete, onSubmit)}
+            {!page.review
             && (
-            <Form
-              key={page.label}
-              initialData={formData}
-              onContinue={onContinue}
-              onDirty={onDirty}
-              saveForm={onSaveForm}
-              renderForm={page.renderForm}
-            />
+              <>
+                <IndicatorHeader
+                  currentStep={page.position}
+                  totalSteps={pages.filter((p) => !p.review).length}
+                  label={page.label}
+                />
+                <Form
+                  key={page.label}
+                  initialData={formData}
+                  onContinue={onContinue}
+                  onDirty={onDirty}
+                  saveForm={onSaveForm}
+                  renderForm={page.render}
+                />
+              </>
             )}
           </div>
         </Container>
@@ -134,15 +112,16 @@ function Navigator({
 Navigator.propTypes = {
   defaultValues: PropTypes.shape({}),
   onFormSubmit: PropTypes.func.isRequired,
-  initialPageState: PropTypes.arrayOf(PropTypes.string).isRequired,
-  renderReview: PropTypes.func.isRequired,
+  initialPageState: PropTypes.shape({}).isRequired,
   submitted: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(
     PropTypes.shape({
-      renderForm: PropTypes.func.isRequired,
+      render: PropTypes.func.isRequired,
       label: PropTypes.isRequired,
     }),
   ).isRequired,
+  currentPage: PropTypes.string.isRequired,
+  updatePage: PropTypes.func.isRequired,
 };
 
 Navigator.defaultProps = {
