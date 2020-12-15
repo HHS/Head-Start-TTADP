@@ -4,5 +4,5 @@ module.exports = {
   'config': path.resolve('config', 'config.js'),
   'models-path': path.resolve('src', 'models'),
   'seeders-path': path.resolve('src', 'seeders'),
-  'migrations-path': path.resolve('build', 'server', 'migrations')
+  'migrations-path': path.resolve('src', migrations')
 }
