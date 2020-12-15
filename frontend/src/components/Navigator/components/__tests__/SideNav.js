@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -11,71 +13,73 @@ import {
 } from '../../constants';
 
 describe('SideNav', () => {
-  const renderNav = (state, current, onNavigation = () => {}) => {
+  const renderNav = (state, path = '/path') => {
+    const history = createMemoryHistory();
     const pages = [
       {
         label: 'test',
-        current,
         state,
-        onClick: () => onNavigation(0),
+        path: 'test',
       },
       {
         label: 'second',
-        current: false,
         state: '',
-        onClick: () => onNavigation(1),
+        path: 'second',
       },
     ];
+    history.push(path);
     render(
-      <SideNav
-        pages={pages}
-        skipTo="skip"
-        skipToMessage="message"
-      />,
+      <Router history={history} initialEntries={path}>
+        <SideNav
+          pages={pages}
+          skipTo="skip"
+          skipToMessage="message"
+        />
+      </Router>,
     );
+    return history;
   };
 
   describe('displays the correct status', () => {
     it('not started', () => {
-      renderNav(NOT_STARTED, false);
+      renderNav(NOT_STARTED);
       const notStarted = screen.getByText('Not started');
       expect(notStarted).toHaveClass('smart-hub--tag-not-started');
       expect(notStarted).toBeVisible();
     });
 
     it('in progress', () => {
-      renderNav(IN_PROGRESS, false);
+      renderNav(IN_PROGRESS);
       const inProgress = screen.getByText('In progress');
       expect(inProgress).toHaveClass('smart-hub--tag-in-progress');
       expect(inProgress).toBeVisible();
     });
 
     it('complete', () => {
-      renderNav(COMPLETE, false);
+      renderNav(COMPLETE);
       const complete = screen.getByText('Complete');
       expect(complete).toHaveClass('smart-hub--tag-complete');
       expect(complete).toBeVisible();
     });
 
     it('submitted', () => {
-      renderNav(SUBMITTED, false);
+      renderNav(SUBMITTED);
       const submitted = screen.getByText('Submitted');
       expect(submitted).toHaveClass('smart-hub--tag-submitted');
       expect(submitted).toBeVisible();
     });
   });
 
-  it('clicking a nav item calls "onNavigation" with the selected index', () => {
-    const onNavigation = jest.fn();
-    renderNav(NOT_STARTED, false, onNavigation);
+  it('clicking a nav item navigates to that item', () => {
+    const history = renderNav(NOT_STARTED);
     const notStarted = screen.getByText('Not started');
     userEvent.click(notStarted);
-    expect(onNavigation).toHaveBeenCalledWith(0);
+    expect(history.location.pathname).toBe('/test');
   });
 
   it('the currently selected page has the current class', () => {
-    renderNav(SUBMITTED, true);
-    const submitted = screen.getByRole('button', { name: 'test Submitted' });
+    renderNav(SUBMITTED, '/test');
+    const submitted = screen.getByRole('link', { name: 'test' });
     expect(submitted).toHaveClass('smart-hub--navigator-link-active');
   });
 });
