@@ -32,6 +32,10 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
     parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -63,6 +67,22 @@ commands:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
         type: env_var_name
+      postgres_db:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres database name"
+        type: env_var_name
+      postgres_host:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres host"
+        type: env_var_name
+      postgres_password:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres password"
+        type: env_var_name
+      postgres_username:
+        description: "Name of CircleCI project environment variable that
+          holds the postgres username"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -79,7 +99,15 @@ commands:
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
+              --var POSTGRES_DB=${<< parameters.postgres_db >>} \
+              --var POSTGRES_HOST=${<< parameters.postgres_host >>} \
+              --var POSTGRES_PASSWORD=${<< parameters.postgres_password >>} \
+              --var POSTGRES_USERNAME=${<< parameters.postgres_username >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
+      - run:
+          name: Run database migrations
+          command: |
+            cf run-task << parameters.app_name >> "yarn db:migrate:prod"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -114,7 +142,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-140-add-navigator"
+    default: "sj-db-migrations"
     type: string
 jobs:
   build:
@@ -291,6 +319,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
                 auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
@@ -298,6 +327,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_SANDBOX_SPACE
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
+                postgres_db: SANDBOX_POSTGRES_DB
+                postgres_host: SANDBOX_POSTGRES_HOST
+                postgres_password: SANDBOX_POSTGRES_PASSWORD
+                postgres_username: SANDBOX_POSTGRES_USERNAME
                 session_secret: SANDBOX_SESSION_SECRET
       - when:  # dev
           condition:
@@ -306,6 +339,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
                 auth_client_secret: DEV_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_DEV_USERNAME
@@ -313,6 +347,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_DEV_SPACE
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
+                postgres_db: DEV_POSTGRES_DB
+                postgres_host: DEV_POSTGRES_HOST
+                postgres_password: DEV_POSTGRES_PASSWORD
+                postgres_username: DEV_POSTGRES_USERNAME
                 session_secret: DEV_SESSION_SECRET
       - when:  # staging
           condition:
@@ -321,6 +359,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
                 auth_client_secret: STAGING_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_STAGING_USERNAME
@@ -328,6 +367,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_STAGING_SPACE
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
+                postgres_db: STAGING_POSTGRES_DB
+                postgres_host: STAGING_POSTGRES_HOST
+                postgres_password: STAGING_POSTGRES_PASSWORD
+                postgres_username: STAGING_POSTGRES_USERNAME
                 session_secret: STAGING_SESSION_SECRET
       - when:  # prod
           condition:
@@ -336,6 +379,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
                 auth_client_secret: PROD_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_PROD_USERNAME
@@ -343,6 +387,10 @@ jobs:
                 cloudgov_space: CLOUDGOV_PROD_SPACE
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
+                postgres_db: PROD_POSTGRES_DB
+                postgres_host: PROD_POSTGRES_HOST
+                postgres_password: PROD_POSTGRES_PASSWORD
+                postgres_username: PROD_POSTGRES_USERNAME
                 session_secret: PROD_SESSION_SECRET
 workflows:
   build_test_deploy:
@@ -368,6 +416,7 @@ workflows:
             - build
       - deploy:
           requires:
+            - build
             - lint_audit
             - test_backend
             - cucumber_test

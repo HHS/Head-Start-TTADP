@@ -111,10 +111,43 @@ who have proper cloud.gov permissions at any time.
 - The application `SESSION_SECRET`.
 - NewRelic license key, passed to the application as `NEW_RELIC_LICENSE_KEY`
 
+**Interacting with a deployed database**
+
+Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod). For instructions on how to create and modify databases instances within the cloud.gov ecosystem see the [terraform/README.md](terraform/README.md).
+
+You can run psql commands directly against a deployed database by following these directions.
+
+1. Install the cloud foundry plugin [cf-service-connect][cf-service-connect]
+	
+	```bash
+	# Example install for macOS
+	cf install-plugin https://github.com/18F/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
+	```
+
+1. Target the desired organization and space
+	
+	```bash
+	cf target -o <org> -s <space>
+	# Example for sandbox
+	cf target -o hhs-acf-ohs-tta -s ttahub-sandbox
+	```
+
+1. Connect to the desired database
+
+	```bash
+	cf connect-to-service <app_name> <service_instance_name>
+	# Example for sandbox
+	cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
+	```
+
+	On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
+	This indicates you are in an open psql session, the command-line interface to PostgreSQL.
+
 <!-- Links -->
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
 [cloudgov]: https://dashboard.fr.cloud.gov/home
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
+[cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 [hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
 [hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
