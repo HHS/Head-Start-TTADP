@@ -1,16 +1,10 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-loop-func */
 import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
 import {
   Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, GrantGoal,
 } from '../src/models';
-
-function getItemId(array, item) {
-  if (!array.includes(item)) {
-    array.push(item);
-  }
-  const itemId = array.indexOf(item) + 1;
-  return itemId;
-}
 
 function parseCsv(file) {
   let grantees = {};
@@ -23,7 +17,8 @@ function parseCsv(file) {
 }
 
 /**
- * Processes data from .csv creating data arrays and then inserting it to the database
+ * Processes data from .csv inserting the data during the processing as well as
+ * creating data arrays for associations and then inserting them to the database
  *
  * The incomeing .csv data is a series of rows with relevant data in the following format
  *
@@ -42,39 +37,36 @@ function parseCsv(file) {
 export default async function importGoals(file) {
   const grantees = parseCsv(file);
   try {
-    const cleanRoles = [];
-    const cleanTopics = [];
     const cleanRoleTopics = [];
-    const cleanGoals = [];
     const cleanGrantees = [];
     const cleanGrantGoals = [];
     const cleanTopicGoals = [];
     const cleanGrants = [];
+    const currentGoals = [];
 
-    await grantees.forEach((el, inx) => {
+    for await (const el of grantees) {
       let currentGrantee;
       let currentGranteeId;
       let grants;
       let currentGrants = [];
       let currentGoalName;
       let currentGoal = {};
-      let currentGoalId;
-      const currentGoals = [];
 
-      Object.keys(el).forEach((key) => {
-        if (key && key.trim().startsWith('Grantee (distinct')) {
-          currentGrantee = el[key] ? el[key].split('|')[0] : `Unknown Grantee ${inx}`;
-          currentGranteeId = getItemId(cleanGrantees, currentGrantee.trim());
-          grants = el[key] ? el[key].split('|')[1] : `Unknown Grant ${inx}, Unknown Grant ${inx + 10000}`;
+      for await (const key of Object.keys(el)) {
+        if (key && (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))) {
+          currentGrantee = el[key] ? el[key].split('|')[0].trim() : 'Unknown Grantee';
+          const [dbGrantee] = await Grantee.findOrCreate({ where: { name: currentGrantee } });
+          currentGranteeId = dbGrantee.id;
+          cleanGrantees.push({ id: currentGranteeId, name: currentGrantee });
+          grants = el[key] ? el[key].split('|')[1].trim() : 'Unknown Grant';
           currentGrants = grants.split(',');
         } else if (key && key.startsWith('Goal')) {
           const goalColumn = key.split(' ');
           let column;
           if (goalColumn.length === 2) { // Column name is "Goal X" representing goal's name
             currentGoalName = el[key].trim();
-            currentGoal = { name: currentGoalName };
-            currentGoalId = undefined;
-            if (currentGoalName !== '') {
+            if (currentGoalName !== '') { // Ignore empty goals
+              currentGoal = { name: currentGoalName }; // change to dbGoal
               const goalNum = goalColumn[1];
               currentGoals[goalNum] = { ...currentGoals[goalNum], ...currentGoal };
             }
@@ -83,29 +75,32 @@ export default async function importGoals(file) {
             column = goalColumn[2].toLowerCase();
             if (column === 'topics') {
               const allTopics = el[key].split('\n');
-              allTopics.forEach((topicPipeRoles) => {
+              for await (const topicPipeRoles of allTopics) {
                 const topic = topicPipeRoles.split('|')[0];
                 const roles = topicPipeRoles.split('|')[1];
                 const trimmedTopic = topic.trim();
                 if (trimmedTopic !== '') {
-                  const topicId = getItemId(cleanTopics, trimmedTopic);
+                  const [dbTopic] = await Topic.findOrCreate({ where: { name: trimmedTopic } });
+                  const topicId = dbTopic.id;
                   if (roles) {
                     const rolesArr = roles.split(',');
-                    rolesArr.forEach((role) => {
+                    for await (const role of rolesArr) {
                       const trimmedRole = role.trim();
-                      const roleId = getItemId(cleanRoles, trimmedRole);
+                      const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole } });
+                      const roleId = dbRole.id;
                       // associate topic with roles
                       if (!cleanRoleTopics.some((e) => e.roleId === roleId
                                                       && e.topicId === topicId)) {
                         cleanRoleTopics.push({ roleId, topicId });
                       }
-                    });
+                    }
                   }
                   // Add topic to junction with goal
-                  currentGoalId = cleanGoals.length + currentGoals.length - 1; // -1 because there is a dummy element at index 0
-                  cleanTopicGoals.push({ topicId, goalId: currentGoalId });
+                  cleanTopicGoals.push(
+                    { topicId, goalName: currentGoal.name },
+                  ); // we don't have goal's id at this point yet
                 }
-              });
+              }
             } else // it's either "timeframe" or "status"
             // both "timeframe" and "status" column names will be reused as goal's object keys
             if (currentGoalName !== '') {
@@ -115,65 +110,52 @@ export default async function importGoals(file) {
             }
           }
         }
-      });
+      }
 
       // after each row
       let goalId;
       let grantId;
 
-      currentGoals.forEach((goal) => {
-        cleanGoals.push(goal);
-        goalId = cleanGoals.length;
-        currentGranteeId = getItemId(cleanGrantees, currentGrantee.trim());
-        currentGrants.forEach((grant) => {
-          const fullGrant = { number: grant.trim(), granteeId: currentGranteeId };
-          if (!cleanGrants.some((e) => e.granteeId === fullGrant.granteeId
+      for await (const goal of currentGoals) {
+        if (goal) { // ignore the dummy element at index 0
+          const [dbGoal] = await Goal.findOrCreate(
+            { where: { ...goal, isFromSmartsheetTtaPlan: true } }
+          );
+          goalId = dbGoal.id;
+          // add goal id to cleanTopicGoals
+          cleanTopicGoals.forEach((tp) => {
+            if (tp.goalName === dbGoal.name) {
+              // eslint-disable-next-line no-param-reassign
+              tp.goalId = goalId;
+            }
+          });
+          currentGranteeId = cleanGrantees.find((g) => g.name === currentGrantee).id;
+          for await (const grant of currentGrants) {
+            const fullGrant = { number: grant.trim(), granteeId: currentGranteeId };
+            if (!cleanGrants.some((e) => e.granteeId === fullGrant.granteeId
                             && e.number === fullGrant.number)) {
-            cleanGrants.push(fullGrant);
-          }
-          grantId = cleanGrants.findIndex((g) => g.number === fullGrant.number) + 1;
-          const plan = { granteeId: currentGranteeId, grantId, goalId };
-          if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
+              cleanGrants.push(fullGrant);
+            }
+            const [dbGrant] = await Grant.findOrCreate({ where: { ...fullGrant } });
+            grantId = dbGrant.id;
+            const plan = { granteeId: currentGranteeId, grantId, goalId };
+            if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
                             && e.grantId === grantId
                             && e.goalId === goalId)) {
-            cleanGrantGoals.push(plan);
+              cleanGrantGoals.push(plan);
+            }
           }
-        });
-      });
-    });
+        }
+      }
+    }
 
-    // The data has been prepared. Insert it into the database
-    await Role.bulkCreate(cleanRoles.map((role, index) => (
-      { id: index + 1, name: role })),
-    {
-      updateOnDuplicate: ['name', 'updatedAt'],
-    });
-    await Topic.bulkCreate(cleanTopics.map((topic, index) => (
-      { id: index + 1, name: topic })),
-    {
-      updateOnDuplicate: ['name', 'updatedAt'],
-    });
+    // The associations data has been prepared. Insert it into the database
     await RoleTopic.bulkCreate(cleanRoleTopics,
       {
         ignoreDuplicates: true,
       });
-    await Goal.bulkCreate(cleanGoals.map((goal, index) => (
-      { id: index + 1, ...goal, isFromSmartsheetTtaPlan: true })),
-    {
-      updateOnDuplicate: ['name', 'updatedAt'],
-    });
     await TopicGoal.bulkCreate(cleanTopicGoals, {
       ignoreDuplicates: true,
-    });
-    await Grantee.bulkCreate(cleanGrantees.map((grantee, index) => (
-      { id: index + 1, name: grantee })),
-    {
-      updateOnDuplicate: ['name', 'updatedAt'],
-    });
-    await Grant.bulkCreate(cleanGrants.map((grant, index) => (
-      { id: index + 1, number: grant.number, granteeId: grant.granteeId })),
-    {
-      updateOnDuplicate: ['number', 'granteeId', 'updatedAt'],
     });
     await GrantGoal.bulkCreate(cleanGrantGoals,
       {
