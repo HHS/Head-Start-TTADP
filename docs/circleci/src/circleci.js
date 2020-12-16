@@ -2,7 +2,7 @@ import CircleCI from 'circleci';
 import { filter, take, partition } from 'lodash';
 
 const artifactFileNames = /(?:(?:lcov-report\/index|cucumber_report)\.html)|(?:^reports\/.*\.png)$/;
-const buildJobsInWorkflow = 7;
+const buildJobsInWorkflow = 8;
 const workflowName = "build_test_deploy";
 
 const ci = new CircleCI({
