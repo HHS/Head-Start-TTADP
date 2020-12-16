@@ -120,7 +120,7 @@ describe('Import TTA plan goals', () => {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['id', 'number'],
+        attributes: ['id', 'number', 'regionId'],
         through: {
           attributes: [],
         },
@@ -141,10 +141,10 @@ describe('Import TTA plan goals', () => {
     expect(goal.grantees[0].name).toEqual('Johnston-Romaguera');
     expect(goal.grants.length).toBe(2);
     expect(goal.grants).toContainEqual(
-      expect.objectContaining({ id: expect.anything(), number: '14CH00002' }),
+      expect.objectContaining({ id: expect.anything(), number: '14CH00002', regionId: 14 }),
     );
     expect(goal.grants).toContainEqual(
-      expect.objectContaining({ id: expect.anything(), number: '14CH00003' }),
+      expect.objectContaining({ id: expect.anything(), number: '14CH00003', regionId: 14 }),
     );
   });
 
@@ -190,6 +190,7 @@ describe('Import TTA plan goals', () => {
     expect(grants).toBeDefined();
     expect(grants.length).toBe(5);
     expect(grants[1].number).toBe('14CH10000');
+    expect(grants[1].regionId).toBe(14);
   });
 
   it('should import RoleTopics table', async () => {
@@ -198,7 +199,7 @@ describe('Import TTA plan goals', () => {
     const roleTopicsBefore = await RoleTopic.findAll();
 
     expect(roleTopicsBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTest.csv');
+    await importGoals('GranteeTTAPlanTest.csv', 14);
 
     const roleTopics = await RoleTopic.findAll();
     expect(roleTopics).toBeDefined();
@@ -209,7 +210,7 @@ describe('Import TTA plan goals', () => {
     const goalsBefore = await Goal.findAll();
 
     expect(goalsBefore.length).toBe(12);
-    await importGoals('R9GranteeTTAPlanTest.csv');
+    await importGoals('R9GranteeTTAPlanTest.csv', 9);
 
     const allGoals = await Goal.findAll();
     expect(allGoals).toBeDefined();
@@ -238,7 +239,7 @@ describe('Import TTA plan goals', () => {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['id', 'number'],
+        attributes: ['id', 'number', 'regionId'],
         through: {
           attributes: [],
         },
@@ -255,5 +256,6 @@ describe('Import TTA plan goals', () => {
     expect(goal.grantees[0].name).toEqual('Agency 4, Inc.');
     expect(goal.grants.length).toBe(1);
     expect(goal.grants[0].number).toBe('09HP044444');
+    expect(goal.grants[0].regionId).toBe(9);
   });
 });
