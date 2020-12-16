@@ -6,6 +6,25 @@ import {
   Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, GrantGoal,
 } from '../src/models';
 
+const hubRoles = [
+  { name: 'RPM', fullName: 'Regional Program Manager' },
+  { name: 'COR', fullName: 'Contracting Officer\'s Representative' },
+  { name: 'SPS', fullName: 'Supervisory Program Specialist' },
+  { name: 'PS', fullName: 'Program Specialist' },
+  { name: 'GS', fullName: 'Grants Specialist' },
+  { name: 'CO', fullName: 'Central Office: TTA and Comprehensive Services Division' },
+  { name: 'CO', fullName: 'Central Office: Other Divisions' },
+  { name: 'TTAC', fullName: 'TTAC' },
+  { name: 'AA', fullName: 'Admin. Assistant' },
+  { name: 'ECM', fullName: 'Early Childhood Manager' },
+  { name: 'ECS', fullName: 'Early Childhood Specialist' },
+  { name: 'FES', fullName: 'Family Engagement Specialist' },
+  { name: 'GSM', fullName: 'Grantee Specialist Manager' },
+  { name: 'GS', fullName: 'Grantee Specialist' },
+  { name: 'HS', fullName: 'Health Specialist' },
+  { name: 'SS', fullName: 'System Specialist' },
+];
+
 function parseCsv(file) {
   let grantees = {};
   const csv = readFileSync(file);
@@ -16,6 +35,12 @@ function parseCsv(file) {
   return grantees;
 }
 
+async function prePopulateRoles() {
+  await Role.bulkCreate(hubRoles,
+    {
+      updateOnDuplicate: ['updatedAt'],
+    });
+}
 /**
  * Processes data from .csv inserting the data during the processing as well as
  * creating data arrays for associations and then inserting them to the database
@@ -44,6 +69,8 @@ export default async function importGoals(file, region) {
     const cleanTopicGoals = [];
     const cleanGrants = [];
     const currentGoals = [];
+
+    await prePopulateRoles();
 
     for await (const el of grantees) {
       let currentGrantee;
@@ -87,8 +114,14 @@ export default async function importGoals(file, region) {
                     const rolesArr = roles.split(',');
                     for await (const role of rolesArr) {
                       const trimmedRole = role.trim();
-                      const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole } });
-                      const roleId = dbRole.id;
+                      let roleId;
+                      if (trimmedRole === 'GS') { // Special case for 'GS' since it's non-unique
+                        const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole, fullName: 'Grantee Specialist' } });
+                        roleId = dbRole.id;
+                      } else {
+                        const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole } });
+                        roleId = dbRole.id;
+                      }
                       // associate topic with roles
                       if (!cleanRoleTopics.some((e) => e.roleId === roleId
                                                       && e.topicId === topicId)) {
@@ -120,7 +153,7 @@ export default async function importGoals(file, region) {
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
           const [dbGoal] = await Goal.findOrCreate(
-            { where: { ...goal, isFromSmartsheetTtaPlan: true } }
+            { where: { ...goal, isFromSmartsheetTtaPlan: true } },
           );
           goalId = dbGoal.id;
           // add goal id to cleanTopicGoals

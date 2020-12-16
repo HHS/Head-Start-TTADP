@@ -14,13 +14,20 @@ describe('Import TTA plan goals', () => {
     expect(rolesBefore.length).toBe(0);
     await importGoals('GranteeTTAPlanTest.csv');
 
-    const roles = await Role.findAll();
-    expect(roles).toBeDefined();
-    expect(roles.length).toBe(4);
+    const roles = await Role.findAll({
+      attributes: ['id', 'name', 'fullName'],
+    });
 
-    const roleNames = [];
-    roles.forEach((role) => roleNames.push(role.name));
-    expect(roleNames).toStrictEqual(['HS', 'FES', 'ECS', 'GS']);
+    expect(roles).toBeDefined();
+    expect(roles.length).toBe(16);
+
+    expect(roles).toContainEqual(
+      expect.objectContaining({ id: expect.anything(), name: 'HS', fullName: 'Health Specialist' }),
+    );
+
+    expect(roles).toContainEqual(
+      expect.objectContaining({ id: expect.anything(), name: 'FES', fullName: 'Family Engagement Specialist' }),
+    );
 
     // test eager loading
     const role = await Role.findOne({
@@ -76,14 +83,24 @@ describe('Import TTA plan goals', () => {
     });
     expect(topic.name).toEqual('Behavioral / Mental Health');
     expect(topic.roles.length).toBe(2);
-    expect(topic.roles[0].name).toBe('HS');
-    expect(topic.roles[1].name).toBe('FES');
+    expect(topic.roles).toContainEqual(
+      expect.objectContaining({ name: 'HS' }),
+    );
+
+    expect(topic.roles).toContainEqual(
+      expect.objectContaining({ name: 'FES' }),
+    );
 
     // test lazy loading
     const topicRoles = await topic.getRoles();
     expect(topicRoles.length).toBe(2);
-    expect(topicRoles[0].name).toBe('HS');
-    expect(topicRoles[1].name).toBe('FES');
+    expect(topicRoles).toContainEqual(
+      expect.objectContaining({ name: 'HS' }),
+    );
+
+    expect(topicRoles).toContainEqual(
+      expect.objectContaining({ name: 'FES' }),
+    );
   });
 
   it('should import Goals table', async () => {
@@ -257,5 +274,42 @@ describe('Import TTA plan goals', () => {
     expect(goal.grants.length).toBe(1);
     expect(goal.grants[0].number).toBe('09HP044444');
     expect(goal.grants[0].regionId).toBe(9);
+
+    const goalWithTopic = await Goal.findOne({
+      where: { name: 'Demonstrate an understanding of Fiscal requirements for non-federal share.' },
+      attributes: ['name', 'status', 'timeframe', 'isFromSmartsheetTtaPlan'],
+      include: [{
+        model: Topic,
+        as: 'topics',
+        attributes: ['id', 'name'],
+        through: {
+          attributes: [],
+        },
+        include: [{
+          model: Role,
+          as: 'roles',
+          through: {
+            attributes: [],
+          },
+        }],
+      }],
+      // {
+      //   model: Grantee,
+      //   as: 'grantees',
+      //   attributes: ['id', 'name'],
+      //   through: {
+      //     attributes: [],
+      //   },
+      // },
+      // {
+      //   model: Grant,
+      //   as: 'grants',
+      //   attributes: ['id', 'number', 'regionId'],
+      //   through: {
+      //     attributes: [],
+      //   },
+      // }],
+    });
+    expect(goalWithTopic.topics[0].roles[0].fullName).toBe('Grantee Specialist');
   });
 });
