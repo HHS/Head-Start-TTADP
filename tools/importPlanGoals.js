@@ -34,8 +34,9 @@ function parseCsv(file) {
  * ...
  * (Total 5 goals. Some of them could be empty)
  */
-export default async function importGoals(file) {
+export default async function importGoals(file, region) {
   const grantees = parseCsv(file);
+  const regionId = region || 14; // default to region 14
   try {
     const cleanRoleTopics = [];
     const cleanGrantees = [];
@@ -136,7 +137,7 @@ export default async function importGoals(file) {
                             && e.number === fullGrant.number)) {
               cleanGrants.push(fullGrant);
             }
-            const [dbGrant] = await Grant.findOrCreate({ where: { ...fullGrant } });
+            const [dbGrant] = await Grant.findOrCreate({ where: { ...fullGrant, regionId } });
             grantId = dbGrant.id;
             const plan = { granteeId: currentGranteeId, grantId, goalId };
             if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
