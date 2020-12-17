@@ -1,7 +1,5 @@
-AUTH_BASE: https://uat.hsesinfo.org
 env: prod
 instances: 2
-NODE_ENV: production
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-prod.app.cloud.gov
 rds_instance: ttahub-prod
