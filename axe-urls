@@ -1,0 +1,7 @@
+http://localhost:3000,
+http://localhost:3000/activity-reports/activity-summary,
+http://localhost:3000/activity-reports/topics-resources,
+http://localhost:3000/activity-reports/goals-objectives,
+http://localhost:3000/activity-reports/next-steps,
+http://localhost:3000/activity-reports/review,
+http://localhost:3000/admin
