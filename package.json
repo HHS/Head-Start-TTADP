@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "12.19.0"
+    "node": "12.20.0"
   },
   "scripts": {
     "axe:ci": "axe --exit --load-delay 1000 http://localhost:3000, http://localhost:3000/activity-reports, http://localhost:3000/admin --dir ./reports/ --chromedriver-path=\"node_modules/chromedriver/bin/chromedriver\"",
