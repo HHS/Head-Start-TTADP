@@ -108,6 +108,18 @@ commands:
           name: Run database migrations
           command: |
             cf run-task << parameters.app_name >> "yarn db:migrate:prod"
+      - when:
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
+              - equal: [DROP_DATABASE_ON_DEPLOY , "true"]
+          steps:
+            - run:
+                name: Reseed database
+                command: |
+                  cf run-task << parameters.app_name >> "yarn db:seed:undo"
+                  cf run-task << parameters.app_name >> "yarn db:seed:all"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
