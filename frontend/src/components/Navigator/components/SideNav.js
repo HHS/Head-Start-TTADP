@@ -6,8 +6,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Sticky from 'react-stickynode';
-import { Button, Tag } from '@trussworks/react-uswds';
+import { Tag } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
+import { NavLink } from 'react-router-dom';
 
 import Container from '../../Container';
 import './SideNav.css';
@@ -36,11 +37,11 @@ function SideNav({
   const isMobile = useMediaQuery({ maxWidth: 640 });
   const navItems = () => pages.map((page) => (
     <li key={page.label} className="smart-hub--navigator-item">
-      <Button
-        onClick={page.onClick}
-        unstyled
-        role="button"
-        className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
+      <NavLink
+        to={`${page.path}`}
+        activeClassName="smart-hub--navigator-link-active"
+        className="smart-hub--navigator-link"
+        aria-label={page.label}
       >
         <span className="margin-left-2">{page.label}</span>
         <span className="margin-left-auto margin-right-2">
@@ -51,7 +52,7 @@ function SideNav({
             </Tag>
             )}
         </span>
-      </Button>
+      </NavLink>
     </li>
   ));
 
@@ -71,8 +72,8 @@ SideNav.propTypes = {
   pages: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
-      current: PropTypes.bool.isRequired,
       state: PropTypes.string,
+      path: PropTypes.string.isRequired,
     }),
   ).isRequired,
   skipTo: PropTypes.string.isRequired,

@@ -1,9 +1,8 @@
 import '@testing-library/jest-dom';
 import { act } from 'react-dom/test-utils';
 import React from 'react';
-import {
-  render, screen, fireEvent, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import IdleModal from '../IdleModal';
 
@@ -52,7 +51,7 @@ describe('IdleModal', () => {
     act(() => {
       jest.advanceTimersByTime(7);
       const testDiv = screen.getByTestId('test');
-      fireEvent.keyDown(testDiv, { key: 'Enter', code: 'Enter' });
+      userEvent.type(testDiv, 'test');
       jest.advanceTimersByTime(7);
     });
     expect(logout).not.toHaveBeenCalled();
@@ -66,7 +65,7 @@ describe('IdleModal', () => {
       jest.advanceTimersByTime(12);
       expect(screen.getByTestId('modal')).toBeVisible();
       const testDiv = screen.getByTestId('test');
-      fireEvent.keyDown(testDiv, { key: 'Enter', code: 'Enter' });
+      userEvent.type(testDiv, 'test');
     });
     expect(logout).not.toHaveBeenCalled();
     expect(screen.queryByTestId('modal')).toBeNull();
