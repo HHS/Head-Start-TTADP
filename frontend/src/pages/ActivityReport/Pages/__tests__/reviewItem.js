@@ -53,10 +53,10 @@ describe('AccordionItem', () => {
   });
 
   it('properly sets the "Edit" links target', async () => {
-    const linkOne = await screen.findByRole('link', { name: 'Edit form section "one"' });
-    expect(linkOne).toHaveAttribute('href', '/id#one');
-    const linkTwo = await screen.findByRole('link', { name: 'Edit form section "two"' });
-    expect(linkTwo).toHaveAttribute('href', '/id#two');
+    const linkOne = await screen.findByRole('link', { name: 'Edit form section "first"' });
+    expect(linkOne).toHaveAttribute('href', '/id#first');
+    const linkTwo = await screen.findByRole('link', { name: 'Edit form section "second"' });
+    expect(linkTwo).toHaveAttribute('href', '/id#second');
   });
 
   it('displays arrays of values', async () => {
