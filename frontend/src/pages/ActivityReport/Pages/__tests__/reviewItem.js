@@ -6,8 +6,8 @@ import accordionItem from '../reviewItem';
 
 const sections = [
   {
-    title: 'one',
-    anchor: 'one',
+    title: 'first',
+    anchor: 'first',
     items: [
       {
         label: 'array',
@@ -25,8 +25,8 @@ const sections = [
     ],
   },
   {
-    title: 'two',
-    anchor: 'two',
+    title: 'second',
+    anchor: 'second',
     items: [],
   },
 ];
@@ -48,8 +48,8 @@ describe('AccordionItem', () => {
   });
 
   it('separates sections as distinct UI elements', async () => {
-    expect(await screen.findByRole('heading', { name: 'one' })).toBeVisible();
-    expect(await screen.findByRole('heading', { name: 'two' })).toBeVisible();
+    expect(await screen.findByText('first')).toBeVisible();
+    expect(await screen.findByText('second')).toBeVisible();
   });
 
   it('properly sets the "Edit" links target', async () => {
