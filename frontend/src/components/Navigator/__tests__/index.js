@@ -41,7 +41,7 @@ const pages = [
     path: 'review',
     label: 'review page',
     review: true,
-    render: (allComplete, onSubmit) => (
+    render: (allComplete, formData, submitted, onSubmit) => (
       <div>
         <button type="button" data-testid="review" onClick={onSubmit}>Continue</button>
       </div>
