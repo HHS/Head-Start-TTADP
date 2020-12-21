@@ -1,9 +1,6 @@
 /*
   Activity report. Makes use of the navigator to split the long form into
-  multiple pages. Each "page" is defined in the `./Pages` directory. To add
-  a new page define a new "pages" array item with a label and renderForm function
-  that accepts a react-hook-form useForm object as an argument (see
-  https://react-hook-form.com/api/)
+  multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, { useState } from 'react';
 import _ from 'lodash';
@@ -12,79 +9,12 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 
-import ActivitySummary from './Pages/ActivitySummary';
-import TopicsResources from './Pages/TopicsResources';
-import NextSteps from './Pages/NextSteps';
-import ReviewSubmit from './Pages/ReviewSubmit';
-import GoalsObjectives from './Pages/GoalsObjectives';
+import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-
-const pages = [
-  {
-    position: 1,
-    label: 'Activity summary',
-    path: 'activity-summary',
-    render: (hookForm) => {
-      const {
-        register, watch, setValue, getValues, control,
-      } = hookForm;
-      return (
-        <ActivitySummary
-          register={register}
-          watch={watch}
-          setValue={setValue}
-          getValues={getValues}
-          control={control}
-        />
-      );
-    },
-  },
-  {
-    position: 2,
-    label: 'Topics and resources',
-    path: 'topics-resources',
-    render: (hookForm) => {
-      const { control, register } = hookForm;
-      return (
-        <TopicsResources
-          register={register}
-          control={control}
-        />
-      );
-    },
-  },
-  {
-    position: 3,
-    label: 'Goals and objectives',
-    path: 'goals-objectives',
-    render: () => (
-      <GoalsObjectives />
-    ),
-  },
-  {
-    position: 4,
-    label: 'Next steps',
-    path: 'next-steps',
-    render: () => (
-      <NextSteps />
-    ),
-  },
-  {
-    position: 5,
-    review: true,
-    label: 'Review and submit',
-    path: 'review',
-    render: (allComplete, onSubmit) => (
-      <ReviewSubmit
-        allComplete={allComplete}
-        onSubmit={onSubmit}
-      />
-    ),
-  },
-];
+import { submitReport } from '../../fetchers/activityReports';
 
 const defaultValues = {
   'activity-method': [],
@@ -107,6 +37,9 @@ const defaultValues = {
   topics: [],
 };
 
+const additionalNotes = 'this is an additional note';
+const approvingManagers = [2];
+
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
@@ -115,9 +48,10 @@ function ActivityReport({ initialData, match }) {
   const history = useHistory();
   const { params: { currentPage } } = match;
 
-  const onFormSubmit = (data) => {
+  const onFormSubmit = async (data, extraData) => {
     // eslint-disable-next-line no-console
-    console.log('Submit form data', data);
+    console.log('Submit form data', data, extraData);
+    await submitReport(data, extraData);
     updateSubmitted(true);
   };
 
@@ -143,6 +77,7 @@ function ActivityReport({ initialData, match }) {
         initialPageState={initialPageState}
         defaultValues={{ ...defaultValues, ...initialData }}
         pages={pages}
+        additionalData={{ additionalNotes, approvingManagers }}
         onFormSubmit={onFormSubmit}
       />
     </>

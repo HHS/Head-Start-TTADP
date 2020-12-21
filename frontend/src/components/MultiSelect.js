@@ -96,7 +96,10 @@ MultiSelect.propTypes = {
   name: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(
     PropTypes.shape({
-      value: PropTypes.string.isRequired,
+      value: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+      ]).isRequired,
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,
