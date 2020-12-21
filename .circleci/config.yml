@@ -104,10 +104,21 @@ commands:
               --var POSTGRES_PASSWORD=${<< parameters.postgres_password >>} \
               --var POSTGRES_USERNAME=${<< parameters.postgres_username >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
+  migrate_and_seed_db:
+    description: "Migrate and seed database. Should only be used with
+      sandbox and dev environments. Staging and prod should not contain
+      seed data."
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
+    steps:
       - run:
-          name: Run database migrations
+          name: Migrate and seed database
           command: |
             cf run-task << parameters.app_name >> "yarn db:migrate:prod"
+            cf run-task << parameters.app_name >> "yarn db:seed:prod"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -344,6 +355,13 @@ jobs:
                 postgres_password: SANDBOX_POSTGRES_PASSWORD
                 postgres_username: SANDBOX_POSTGRES_USERNAME
                 session_secret: SANDBOX_SESSION_SECRET
+            - run:
+                name: Return database to neutral
+                command: |
+                  cf run-task tta-smarthub-sandbox "yarn db:seed:undo:prod"
+                  cf run-task tta-smarthub-sandbox "yarn db:migrate:undo:prod"
+            - migrate_and_seed_db:
+                app_name: tta-smarthub-sandbox
       - when:  # dev
           condition:
             and:
@@ -364,6 +382,12 @@ jobs:
                 postgres_password: DEV_POSTGRES_PASSWORD
                 postgres_username: DEV_POSTGRES_USERNAME
                 session_secret: DEV_SESSION_SECRET
+            - run:
+                name: Undo database seeding
+                command: |
+                  cf run-task tta-smarthub-sandbox "yarn db:seed:undo:prod"
+            - migrate_and_seed_db:
+                app_name: tta-smarthub-sandbox
       - when:  # staging
           condition:
             and:
@@ -384,6 +408,10 @@ jobs:
                 postgres_password: STAGING_POSTGRES_PASSWORD
                 postgres_username: STAGING_POSTGRES_USERNAME
                 session_secret: STAGING_SESSION_SECRET
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-staging "yarn db:migrate:prod"
       - when:  # prod
           condition:
             and:
@@ -404,6 +432,10 @@ jobs:
                 postgres_password: PROD_POSTGRES_PASSWORD
                 postgres_username: PROD_POSTGRES_USERNAME
                 session_secret: PROD_SESSION_SECRET
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-prod "yarn db:migrate:prod"
 workflows:
   build_test_deploy:
     jobs:
@@ -428,11 +460,10 @@ workflows:
             - build
       - deploy:
           requires:
-            - build
             - lint_audit
             - test_backend
-            - cucumber_test
             - test_frontend
+            - cucumber_test
             - dynamic_security_scan
             - accessibility_scan
           filters:
@@ -442,7 +473,6 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-
   daily_scan:
     triggers:
       - schedule:
