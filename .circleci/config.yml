@@ -167,10 +167,10 @@ jobs:
           key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
-          command: yarn run lint:ci
+          command: yarn lint:ci
       - run:
           name: Lint frontend
-          command: yarn --cwd frontend run lint:ci
+          command: yarn --cwd frontend lint:ci
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
@@ -184,42 +184,38 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:  # Fail audit only for moderate and higher vulnerabilities
+      - run:
           name: Audit vulnerability of backend node_modules
           command: |
             chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
+            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Test backend
-          command: yarn run test:ci
+          command: yarn test:ci
       - store_test_results:
           path: reports/
-      - store_artifacts:  # store test coverage
+      - store_artifacts:
           path: coverage/
   test_frontend:
     executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
-      - run:  # Fail audit only for moderate and higher vulnerabilities
+      - run:
           name: Audit vulnerability of frontend node_modules
           command: |
             cd frontend
             chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
+            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci
       - store_test_results:
           path: frontend/reports/
-      - store_artifacts:  # store test coverage
+      - store_artifacts:
           path: frontend/coverage/
   cucumber_test:
     executor: docker-postgres-executor
@@ -234,7 +230,7 @@ jobs:
           background: true
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Run cucumber
           command: |
@@ -277,7 +273,7 @@ jobs:
           at: .
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Build
           command: yarn build
