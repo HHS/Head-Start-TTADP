@@ -41,6 +41,7 @@ function Admin(props) {
   const [users, updateUsers] = useState([]);
   const [selectedUser, updateSelectedUser] = useState();
   const [userSearch, updateUserSearch] = useState('');
+  const [saved, updateSaved] = useState(false);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -66,6 +67,7 @@ function Admin(props) {
       updateSelectedUser(users.find((u) => (
         u.id === parseInt(userId, 10)
       )));
+      updateSaved(false);
     }
   }, [userId, users]);
 
@@ -101,6 +103,7 @@ function Admin(props) {
     updateUsers(newUsers);
     updateSelectedUser(updatedUser);
     updateError();
+    updateSaved(true);
   };
 
   return (
@@ -123,6 +126,12 @@ function Admin(props) {
           && (
           <Alert type="error" role="alert">
             {error}
+          </Alert>
+          )}
+            {saved
+          && (
+          <Alert type="success" role="alert">
+            Successfully saved user
           </Alert>
           )}
             {!selectedUser
