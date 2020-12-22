@@ -8,6 +8,10 @@ terraform {
       source  = "cloudfoundry-community/cloudfoundry"
       version = "0.12.6"
     }
+
+    aws = {
+      version = "~> 3.11.0"
+    }
   }
 
   backend "s3" {
@@ -26,8 +30,7 @@ provider "cloudfoundry" {
 }
 
 provider "aws" {
-  region  = var.aws_region
-  version = "~> 3.11.0"
+  region = var.aws_region
 }
 
 ###
@@ -65,4 +68,36 @@ resource "cloudfoundry_service_instance" "document_upload_bucket" {
   name         = "ttahub-document-upload-${var.env}"
   space        = data.cloudfoundry_space.space.id
   service_plan = data.cloudfoundry_service.s3.service_plans["basic"]
+}
+
+###
+# ClamAV networking
+###
+
+data "cloudfoundry_app" "clamav_server" {
+  name_or_id = var.clamav_server_app_name
+  space      = data.cloudfoundry_space.space.id
+}
+
+data "cloudfoundry_app" "clamav_rest" {
+  name_or_id = var.clamav_rest_app_name
+  space      = data.cloudfoundry_space.space.id
+}
+
+data "cloudfoundry_app" "ttahub" {
+  name_or_id = "tta-smarthub-${var.env}"
+  space      = data.cloudfoundry_space.space.id
+}
+
+resource "cloudfoundry_network_policy" "clamav_routing" {
+  policy {
+    source_app      = data.cloudfoundry_app.clamav_rest.id
+    destination_app = data.cloudfoundry_app.clamav_server.id
+    port            = "3310"
+  }
+  policy {
+    source_app      = data.cloudfoundry_app.ttahub.id
+    destination_app = data.cloudfoundry_app.clamav_rest.id
+    port            = "8080"
+  }
 }
