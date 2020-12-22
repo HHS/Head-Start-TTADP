@@ -171,6 +171,10 @@ jobs:
       - run:
           name: Lint frontend
           command: yarn --cwd frontend run lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
@@ -193,8 +197,6 @@ jobs:
       - run:
           name: Test backend
           command: yarn run test:ci
-      - store_artifacts:  # store lint reports
-          path: reports
       - store_test_results:
           path: reports/
       - store_artifacts:  # store test coverage
@@ -215,8 +217,6 @@ jobs:
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci
-      - store_artifacts:  # store lint reports
-          path: frontend/reports
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:  # store test coverage
@@ -238,7 +238,6 @@ jobs:
       - run:
           name: Run cucumber
           command: |
-            mkdir reports
             sleep 5
             yarn cucumber:ci
       - store_artifacts:
@@ -289,7 +288,6 @@ jobs:
       - run:
           name: Run axe
           command: |
-            mkdir reports
             sleep 5
             yarn axe:ci
       - store_artifacts:
