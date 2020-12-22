@@ -411,7 +411,6 @@ workflows:
             - build_and_lint
       - deploy:
           requires:
-            - lint_audit
             - test_backend
             - test_frontend
             - cucumber_test
