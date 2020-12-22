@@ -122,7 +122,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "sj-cd-use-db-url"
+    default: ""
     type: string
 jobs:
   build:

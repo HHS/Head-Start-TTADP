@@ -110,7 +110,9 @@ who have proper cloud.gov permissions at any time.
 - HSES authentication middleware secrets passed to the application as `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET`.
 - The application `SESSION_SECRET`.
 - NewRelic license key, passed to the application as `NEW_RELIC_LICENSE_KEY`
-- Environment specific postgres database name, host, password, and username. These are passed to the application as: `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PASSWORD`, `POSTGRES_USERNAME`. These values are created by cloud.gov and are viewable as "Environment variables" on the cloud.gov UI after selecting the desired application and database service.
+
+Exception:
+- The environment specific postgres database URI is automatically available in the relevant cloud.gov application environment (because they share a cloud.gov "space"). The URI is accessible to the application as POSTGRES_URL. Consequently, this secret does not need to be managed by developers.
 
 **Adding environment variables to an application**
 
@@ -122,7 +124,7 @@ If your env variable is secret or the value is dependent on the deployment envir
 
 	If the variable value you want to add needs to remain secret, you will need to add it as a project-based "environment variable" in CircleCI. Ad Hoc engineers can use [this link][circleci-envvar] to navigate to the Environment Variables page for our forked repository. Add your environment variables here. If you need different values for sandbox and dev make sure to make two variables, one for each environment. 
 
-	For example, if you needed to add an environment specific secret `SECRET_FRUIT` variable to your application, you could add `SANDBOX_SECRET_FRUIT` with value `stawberry` and `DEV_SECRET_FRUIT` with value `dewberry`.
+	For example, if you needed to add an environment specific secret `SECRET_FRUIT` variable to your application, you could add `SANDBOX_SECRET_FRUIT` with value `strawberry` and `DEV_SECRET_FRUIT` with value `dewberry`.
 
 1. Add both secret and public variables to manifest.yml
 
@@ -202,7 +204,7 @@ If your env variable is secret or the value is dependent on the deployment envir
                 secret_fruit: DEV_SECRET_FRUIT
 	```
 
-	You're all done! In sandbox, `process.env.SECRET_FRUIT` will be `"stawberry"`. In dev, `process.env.SECRET_FRUIT` will be `"dewberry"`.  🎉
+	You're all done! In sandbox, `process.env.SECRET_FRUIT` will be `"strawberry"`. In dev, `process.env.SECRET_FRUIT` will be `"dewberry"`.  🎉
 
 
 **Interacting with a deployed database**
