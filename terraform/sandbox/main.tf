@@ -8,6 +8,10 @@ terraform {
       source  = "cloudfoundry-community/cloudfoundry"
       version = "0.12.6"
     }
+
+    aws = {
+      version = "~> 3.11.0"
+    }
   }
 
   backend "s3" {
@@ -26,8 +30,7 @@ provider "cloudfoundry" {
 }
 
 provider "aws" {
-  region  = var.aws_region
-  version = "~> 3.11.0"
+  region = var.aws_region
 }
 
 ###
