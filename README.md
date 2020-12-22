@@ -122,16 +122,16 @@ If your env variable is secret or the value is dependent on the deployment envir
 
 1. If secret, add your variable to CircleCI
 
-	If the variable value you want to add needs to remain secret, you will need to add it as a project-based "environment variable" in CircleCI. Ad Hoc engineers can use [this link][circleci-envvar] to navigate to the Environment Variables page for our forked repository. Add your environment variables here. If you need different values for sandbox and dev make sure to make two variables, one for each environment. 
+	If the variable value you want to add needs to remain secret, you will need to add it as a project-based "environment variable" in CircleCI. Ad Hoc engineers can use [this link][circleci-envvar] to navigate to the Environment Variables page for our forked repository. Add your environment variables here. If you need different values for sandbox and dev make sure to make two variables, one for each environment.
 
 	For example, if you needed to add an environment specific secret `SECRET_FRUIT` variable to your application, you could add `SANDBOX_SECRET_FRUIT` with value `strawberry` and `DEV_SECRET_FRUIT` with value `dewberry`.
 
 1. Add both secret and public variables to manifest.yml
 
-	In the application manifest, add your `SECRET_FRUIT` variable to the `env:` object. If you need another non-secret but environment specific variable, like `PUBLIC_VEGGIE`, in your application, add that here. 
+	In the application manifest, add your `SECRET_FRUIT` variable to the `env:` object. If you need another non-secret but environment specific variable, like `PUBLIC_VEGGIE`, in your application, add that here.
 
 	**manifest.yml**
-	
+
 	```
 	---
 	applications:
@@ -144,13 +144,13 @@ If your env variable is secret or the value is dependent on the deployment envir
 1. If public, add the variable values to your deployment_config files
 
 	**deployment_config/sandbox_vars.yml**
-	
+
 	```
 	public_veggie: spinach
 	```
 
 	**deployment_config/dev_vars.yml**
-	
+
 	```
 	public_veggie: dill
 	```
@@ -214,14 +214,14 @@ Our project includes four deployed Postgres databases, one to interact with each
 You can run psql commands directly against a deployed database by following these directions.
 
 1. Install the cloud foundry plugin [cf-service-connect][cf-service-connect]
-	
+
 	```bash
 	# Example install for macOS
 	cf install-plugin https://github.com/18F/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
 	```
 
 1. Target the desired organization and space
-	
+
 	```bash
 	cf target -o <org> -s <space>
 	# Example for sandbox
