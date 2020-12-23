@@ -6,6 +6,9 @@ executors:
     # for docker you must specify an image to use for the primary container
     docker:
       - image: circleci/node:12.20.0-browsers
+  docker-postgres-executor:
+    docker:
+      - image: circleci/node:12.20.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -121,7 +124,7 @@ parameters:
     default: "js-52-assign-permissions-backend"
     type: string
 jobs:
-  build:
+  build_and_lint:
     executor: docker-executor
     steps:
       - checkout
@@ -138,60 +141,51 @@ jobs:
             - node_modules
             - frontend/node_modules
           key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
             - .
-  lint_audit:
-    executor: docker-executor
+  test_backend:
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend
-          command: yarn run lint:ci
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend run lint:ci
-      - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of backend node_modules
           command: |
             chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - run:  # Fail audit only for moderate and higher vulnerabilities
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - store_artifacts:
-          path: reports
-      - store_artifacts:
-          path: frontend/reports
-  test_backend:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
+            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Test backend
-          command: yarn run test:ci
+          command: yarn test:ci
       - store_test_results:
           path: reports/
       - store_artifacts:
           path: coverage/
   test_frontend:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci
@@ -200,10 +194,7 @@ jobs:
       - store_artifacts:
           path: frontend/coverage/
   cucumber_test:
-    executor: docker-executor
-    environment:
-      POSTGRES_USERNAME: postgres
-      POSTGRES_DB: ttasmarthub
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
@@ -215,14 +206,13 @@ jobs:
           background: true
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Seed database
           command: yarn db:seed
       - run:
           name: Run cucumber
           command: |
-            mkdir reports
             sleep 5
             yarn cucumber:ci
       - store_artifacts:
@@ -256,16 +246,13 @@ jobs:
               -t http://server:8080 \
               -c zap.conf -I -i
   accessibility_scan:
-    executor: docker-executor
-    environment:
-      POSTGRES_USERNAME: postgres
-      POSTGRES_DB: ttasmarthub
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Build
           command: yarn build
@@ -279,7 +266,6 @@ jobs:
       - run:
           name: Run axe
           command: |
-            mkdir reports
             sleep 5
             yarn axe:ci
       - store_artifacts:
@@ -384,28 +370,24 @@ jobs:
 workflows:
   build_test_deploy:
     jobs:
-      - build
-      - lint_audit:
-          requires:
-            - build
+      - build_and_lint
       - test_backend:
           requires:
-            - build
+            - build_and_lint
       - test_frontend:
           requires:
-            - build
+            - build_and_lint
       - cucumber_test:
           requires:
-            - build
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
       - accessibility_scan:
           requires:
-            - build
+            - build_and_lint
       - deploy:
           requires:
-            - lint_audit
             - test_backend
             - test_frontend
             - cucumber_test
@@ -429,10 +411,13 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build
-      - lint_audit:
+      - build_and_lint
+      - test_backend:
           requires:
-            - build
+            - build_and_lint
+      - test_frontend:
+          requires:
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
