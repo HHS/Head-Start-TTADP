@@ -1,17 +1,25 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 
-const GoalsObjectives = () => (
+import {
+  Fieldset, Label, Textarea,
+} from '@trussworks/react-uswds';
+
+const GoalsObjectives = ({ register }) => (
   <>
     <Helmet>
       <title>Goals and objectives</title>
     </Helmet>
-    <div>
-      Goals and objectives
-    </div>
+    <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
+      <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
+      <Textarea id="context" name="context" inputRef={register()} />
+    </Fieldset>
   </>
 );
 
-GoalsObjectives.propTypes = {};
+GoalsObjectives.propTypes = {
+  register: PropTypes.func.isRequired,
+};
 
 export default GoalsObjectives;

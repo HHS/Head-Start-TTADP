@@ -8,6 +8,9 @@ import {
 
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
+import {
+  reasons, granteeParticipants, nonGranteeParticipants, targetPopulations,
+} from '../constants';
 
 const grantees = [
   'Grantee Name 1',
@@ -29,11 +32,6 @@ const nonGrantees = [
   'State Professional Development / Continuing Education',
 ];
 
-const reasons = [
-  'reason 1',
-  'reason 2',
-];
-
 const otherUsers = [
   'User 1',
   'User 2',
@@ -48,14 +46,6 @@ const programTypes = [
   'program type 5',
 ];
 
-const targetPopulations = [
-  'target pop 1',
-  'target pop 2',
-  'target pop 3',
-  'target pop 4',
-  'target pop 5',
-];
-
 const ActivitySummary = ({
   register,
   watch,
@@ -66,12 +56,16 @@ const ActivitySummary = ({
   const participantSelection = watch('participant-category');
   const startDate = watch('start-date');
   const endDate = watch('end-date');
+  const previousParticipantSelection = useRef(participantSelection);
 
   const disableParticipant = participantSelection === '';
   const nonGranteeSelected = participantSelection === 'non-grantee';
-  const participants = nonGranteeSelected ? nonGrantees : grantees;
-  const previousParticipantSelection = useRef(participantSelection);
-  const participantLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+
+  const subjects = nonGranteeSelected ? nonGrantees : grantees;
+  const subjectsLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+
+  const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
+  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
 
   useEffect(() => {
     if (previousParticipantSelection.current !== participantSelection) {
@@ -122,11 +116,11 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <MultiSelect
             name="grantees"
-            label={participantLabel}
+            label={subjectsLabel}
             disabled={disableParticipant}
             control={control}
             options={
-              participants.map((participant) => ({ value: participant, label: participant }))
+              subjects.map((participant) => ({ value: participant, label: participant }))
             }
           />
         </div>
@@ -276,9 +270,8 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <MultiSelect
             name="participants"
-            label="Grantee participant(s) involved"
+            label={participantsLabel}
             control={control}
-            placeholder="Select a particgetValuesipant..."
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }

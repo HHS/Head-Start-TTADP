@@ -60,9 +60,10 @@ const pages = [
     position: 3,
     label: 'Goals and objectives',
     path: 'goals-objectives',
-    render: () => (
-      <GoalsObjectives />
-    ),
+    render: (hookForm) => {
+      const { register } = hookForm;
+      return <GoalsObjectives register={register} />;
+    },
   },
   {
     position: 4,
