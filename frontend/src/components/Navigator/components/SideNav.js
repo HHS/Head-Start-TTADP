@@ -5,8 +5,9 @@
 */
 import React from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import Sticky from 'react-stickynode';
-import { Tag } from '@trussworks/react-uswds';
+import { Tag, Alert } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import { NavLink } from 'react-router-dom';
 
@@ -32,7 +33,7 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage,
+  pages, skipTo, skipToMessage, lastSaveTime,
 }) {
   const isMobile = useMediaQuery({ maxWidth: 640 });
   const navItems = () => pages.map((page) => (
@@ -64,6 +65,14 @@ function SideNav({
           {navItems()}
         </ul>
       </Container>
+      {lastSaveTime
+        && (
+        <Alert aria-live="polite" type="success" slim noIcon className="smart-hub--save-alert">
+          This report was automatically saved on
+          {' '}
+          {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
+        </Alert>
+        )}
     </Sticky>
   );
 }
@@ -78,6 +87,11 @@ SideNav.propTypes = {
   ).isRequired,
   skipTo: PropTypes.string.isRequired,
   skipToMessage: PropTypes.string.isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
+};
+
+SideNav.defaultProps = {
+  lastSaveTime: undefined,
 };
 
 export default SideNav;

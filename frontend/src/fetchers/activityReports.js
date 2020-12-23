@@ -17,8 +17,8 @@ export const fetchApprovers = async () => {
   return res.json();
 };
 
-export const submitReport = async (data, extraData) => {
-  const url = join(activityReportUrl, 'submit');
+export const submitReport = async (reportId, data, extraData) => {
+  const url = join(activityReportUrl, reportId, 'submit');
   await fetch(url, {
     method: 'POST',
     credentials: 'same-origin',
@@ -27,4 +27,17 @@ export const submitReport = async (data, extraData) => {
       metaData: extraData,
     }),
   });
+};
+
+export const saveReport = async (reportId, data) => {
+  await fetch(join(activityReportUrl, reportId), {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+};
+
+export const getReport = async (reportId) => {
+  const report = await fetch(join(activityReportUrl, reportId));
+  return report.json();
 };
