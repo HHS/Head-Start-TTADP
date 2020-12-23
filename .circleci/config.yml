@@ -209,7 +209,7 @@ jobs:
           command: yarn db:migrate:ci
       - run:
           name: Seed database
-          command: yarn db:seed
+          command: yarn db:seed:ci
       - run:
           name: Run cucumber
           command: |
@@ -258,7 +258,7 @@ jobs:
           command: yarn build
       - run:
           name: Seed database
-          command: yarn run db:seed
+          command: yarn db:seed:ci
       - run:
           name: Start server
           command: BYPASS_AUTH=true CUCUMBER_USER_ID=1 yarn start:ci
