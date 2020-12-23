@@ -65,6 +65,7 @@ function MultiSelect({
           }
           return (
             <Select
+              className="margin-top-1"
               id={name}
               value={values}
               onChange={(e) => {
