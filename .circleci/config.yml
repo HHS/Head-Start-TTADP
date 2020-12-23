@@ -5,7 +5,7 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:12.19.0-browsers
+      - image: circleci/node:12.20.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -32,6 +32,10 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
     parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -80,6 +84,10 @@ commands:
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
+      - run:
+          name: Run database migrations
+          command: |
+            cf run-task << parameters.app_name >> "yarn db:migrate:prod"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -114,7 +122,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-140-add-navigator"
+    default: "sj-cd-use-db-url"
     type: string
 jobs:
   build:
@@ -291,6 +299,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
                 auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
@@ -306,6 +315,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
                 auth_client_secret: DEV_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_DEV_USERNAME
@@ -321,6 +331,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
                 auth_client_secret: STAGING_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_STAGING_USERNAME
@@ -336,6 +347,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
                 auth_client_secret: PROD_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_PROD_USERNAME
