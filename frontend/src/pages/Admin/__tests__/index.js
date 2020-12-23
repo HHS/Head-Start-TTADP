@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { Router } from 'react-router';
 import {
-  render, screen, waitFor, within,
+  render, screen, within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
@@ -17,7 +17,7 @@ describe('UserInfo', () => {
     });
 
     it('user list is filterable', async () => {
-      const filter = await waitFor(() => screen.getByLabelText('Filter Users'));
+      const filter = await screen.findByLabelText('Filter Users');
       userEvent.type(filter, 'Harry');
       const sideNav = screen.getByTestId('sidenav');
       const links = within(sideNav).getAllByRole('link');
@@ -26,13 +26,13 @@ describe('UserInfo', () => {
     });
 
     it('new user button properly sets url', async () => {
-      const newUser = await waitFor(() => screen.getByText('Create New User'));
+      const newUser = await screen.findByText('Create New User');
       userEvent.click(newUser);
       expect(history.location.pathname).toBe('/admin/new');
     });
 
     it('allows a user to be selected', async () => {
-      const button = await waitFor(() => screen.getByText('Harry Potter'));
+      const button = await screen.findByText('Harry Potter');
       userEvent.click(button);
       expect(history.location.pathname).toBe('/admin/3');
     });
@@ -40,13 +40,13 @@ describe('UserInfo', () => {
 
   it('displays a new user', async () => {
     render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: 'new' } }} /></Router>);
-    const userInfo = await waitFor(() => screen.getByRole('group', { name: 'User Info' }));
+    const userInfo = await screen.findByRole('group', { name: 'User Info' });
     expect(userInfo).toBeVisible();
   });
 
   it('displays an existing user', async () => {
     render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
-    const userInfo = await waitFor(() => screen.getByRole('group', { name: 'User Info' }));
+    const userInfo = await screen.findByRole('group', { name: 'User Info' });
     expect(userInfo).toBeVisible();
   });
 });

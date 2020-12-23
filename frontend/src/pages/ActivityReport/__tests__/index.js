@@ -1,56 +1,83 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
+import reactSelectEvent from 'react-select-event';
 import {
   render, screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
 import moment from 'moment';
 
+import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 
 const formData = () => ({
-  'activity-method': ['in-person'],
+  'activity-method': 'in-person',
   'activity-type': ['training'],
   duration: '1',
   'end-date': moment(),
-  grantees: 'Grantee Name 1',
+  grantees: ['Grantee Name 1'],
   'number-of-participants': '1',
   'participant-category': 'grantee',
-  participants: 'CEO / CFO / Executive',
-  reason: 'reason 1',
+  participants: ['CEO / CFO / Executive'],
+  'program-types': ['type 1'],
   requester: 'grantee',
   'resources-used': 'eclkcurl',
   'start-date': moment(),
+  'target-populations': ['target 1'],
   topics: 'first',
 });
+const history = createMemoryHistory();
 
-const enableParticipantSelect = async (target) => {
-  render(<ActivityReport />);
-
-  const enabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
-  expect(enabled).toBeDisabled();
-
-  const information = await waitFor(() => screen.getByRole('group', { name: 'General Information' }));
-  const grantee = within(information).getByLabelText(target);
-  fireEvent.click(grantee);
+const renderActivityReport = (data = {}, location = 'activity-summary') => {
+  render(
+    <Router history={history}>
+      <ActivityReport
+        initialData={data}
+        match={{ params: { currentPage: location }, path: '', url: '' }}
+      />
+    </Router>,
+  );
 };
 
 describe('ActivityReport', () => {
-  describe('participant selection is enabled', () => {
-    it('when grantee is selected', async () => {
-      await act(async () => {
-        await enableParticipantSelect('Grantee');
-        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
-        expect(disabled).not.toBeDisabled();
+  it('defaults to activity summary if no page is in the url', () => {
+    renderActivityReport({}, null);
+    expect(history.location.pathname).toEqual('/activity-reports/activity-summary');
+  });
+
+  describe('grantee select', () => {
+    describe('changes the participant selection to', () => {
+      it('Grantee', async () => {
+        renderActivityReport();
+        const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+        const grantee = within(information).getByLabelText('Grantee');
+        fireEvent.click(grantee);
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+        reactSelectEvent.openMenu(granteeSelectbox);
+        expect(await screen.findByText(withText('Grantee Name 1'))).toBeVisible();
+      });
+
+      it('Non-grantee', async () => {
+        renderActivityReport();
+        const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+        const nonGrantee = within(information).getByLabelText('Non-Grantee');
+        fireEvent.click(nonGrantee);
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+        reactSelectEvent.openMenu(granteeSelectbox);
+        expect(await screen.findByText(withText('QRIS System'))).toBeVisible();
       });
     });
 
     it('when non-grantee is selected', async () => {
-      await act(async () => {
-        await enableParticipantSelect('Non-Grantee');
-        const disabled = await screen.getByRole('textbox', { name: 'Who was this activity for?' });
-        expect(disabled).not.toBeDisabled();
-      });
+      renderActivityReport();
+      const enabled = screen.getByRole('textbox', { name: 'Grantee name(s)' });
+      expect(enabled).toBeDisabled();
+      const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+      const grantee = within(information).getByLabelText('Grantee');
+      fireEvent.click(grantee);
+      const disabled = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+      expect(disabled).not.toBeDisabled();
     });
   });
 
@@ -59,11 +86,11 @@ describe('ActivityReport', () => {
       const data = formData();
       delete data['activity-method'];
 
-      render(<ActivityReport initialData={data} />);
-      expect(await waitFor(() => screen.getByText('Submit'))).toBeDisabled();
-      const box = await waitFor(() => screen.getByLabelText('Virtual'));
+      renderActivityReport(data);
+      expect(await screen.findByText('Continue')).toBeDisabled();
+      const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Submit')).not.toBeDisabled());
+      await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
     });
   });
 
@@ -72,11 +99,11 @@ describe('ActivityReport', () => {
       const data = formData();
       delete data['activity-type'];
 
-      render(<ActivityReport initialData={data} />);
-      expect(await waitFor(() => screen.getByText('Submit'))).toBeDisabled();
-      const box = await waitFor(() => screen.getByLabelText('Training'));
+      renderActivityReport(data);
+      expect(await screen.findByText('Continue')).toBeDisabled();
+      const box = await screen.findByLabelText('Training');
       fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Submit')).not.toBeDisabled());
+      await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
     });
   });
 });

@@ -26,7 +26,6 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: Number(process.env.SESSION_TIMEOUT),
   },
   rolling: true,
   store: new MemoryStore({ // Potentially change this to a different store

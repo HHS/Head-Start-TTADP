@@ -10,3 +10,7 @@
   flex-direction: row-reverse;
   width: fit-content;
 }
+
+.DateInput {
+  width: fit-content;
+}

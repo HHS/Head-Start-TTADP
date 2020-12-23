@@ -6,12 +6,12 @@ applications:
     buildpacks:
       - nodejs_buildpack
     env:
-      AUTH_BASE: ((AUTH_BASE))
+      AUTH_BASE: https://uat.hsesinfo.org
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
       AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
-      NODE_ENV: ((NODE_ENV))
+      NODE_ENV: production
       # Soon to be removed in favor of TTA_SMART_HUB_URI
       REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
       SESSION_SECRET: ((SESSION_SECRET))

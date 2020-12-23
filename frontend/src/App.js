@@ -4,13 +4,13 @@ import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { GridContainer } from '@trussworks/react-uswds';
+import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 
 import UserContext from './UserContext';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
-import Page from './pages';
 import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
@@ -68,32 +68,24 @@ function App() {
           exact
           path="/"
           render={() => (
-            <Page title="TTA Smart Hub">
-              <Home />
-            </Page>
+            <Home />
           )}
         />
         <Route
           path="/admin/:userId?"
           render={({ match }) => (
-            <Page title="User Administration">
-              <Admin match={match} />
-            </Page>
+            <Admin match={match} />
           )}
         />
         <Route
-          path="/activity-reports"
-          render={() => (
-            <Page title="Activity Reports">
-              <ActivityReport />
-            </Page>
+          path="/activity-reports/:currentPage?"
+          render={({ match }) => (
+            <ActivityReport match={match} />
           )}
         />
         <Route
           render={() => (
-            <Page title="Not Found">
-              <NotFound />
-            </Page>
+            <NotFound />
           )}
         />
       </Switch>
@@ -101,21 +93,26 @@ function App() {
   );
 
   return (
-    <BrowserRouter>
-      {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
-      <UserContext.Provider value={{ user, authenticated, logout }}>
-        <Header authenticated={authenticated} />
-        <div className="background-stripe" />
-        <section className="usa-section">
-          <GridContainer>
-            {!authenticated
+    <>
+      <Helmet titleTemplate="%s - TTA Smart Hub" defaultTitle="TTA Smart Hub">
+        <meta charSet="utf-8" />
+      </Helmet>
+      <BrowserRouter>
+        {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
+        <UserContext.Provider value={{ user, authenticated, logout }}>
+          <Header authenticated={authenticated} />
+          <div className="background-stripe" />
+          <section className="usa-section">
+            <GridContainer>
+              {!authenticated
         && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
-            {authenticated
+              {authenticated
         && renderAuthenticatedRoutes()}
-          </GridContainer>
-        </section>
-      </UserContext.Provider>
-    </BrowserRouter>
+            </GridContainer>
+          </section>
+        </UserContext.Provider>
+      </BrowserRouter>
+    </>
   );
 }
 
