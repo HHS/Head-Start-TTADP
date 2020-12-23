@@ -33,6 +33,7 @@
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
     "db:migrate:undo:prod": "node_modules/.bin/sequelize db:migrate:undo:all --options-path .production.sequelizerc",
     "db:seed": "node_modules/.bin/sequelize db:seed:all",
+    "db:seed:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:seed:all",
     "db:seed:prod": "node_modules/.bin/sequelize db:seed:all --options-path .production.sequelizerc",
     "db:seed:undo": "node_modules/.bin/sequelize db:seed:undo:all",
     "db:seed:undo:prod": "node_modules/.bin/sequelize db:seed:undo:all --options-path .production.sequelizerc",
