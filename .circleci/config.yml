@@ -5,7 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:12.19.0-browsers
+      - image: circleci/node:12.20.0-browsers
+  docker-postgres-executor:
+    docker:
+      - image: circleci/node:12.20.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -32,6 +35,10 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
     parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -80,6 +87,10 @@ commands:
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
+      - run:
+          name: Run database migrations
+          command: |
+            cf run-task << parameters.app_name >> "yarn db:migrate:prod"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -114,10 +125,10 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-121-fix-url-routing"
+    default: "sj-reduce-ci-jobs"
     type: string
 jobs:
-  build:
+  build_and_lint:
     executor: docker-executor
     steps:
       - checkout
@@ -134,82 +145,51 @@ jobs:
             - node_modules
             - frontend/node_modules
           key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
             - .
-  lint_audit:
-    executor: docker-executor
+  test_backend:
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend
-          command: yarn run lint:ci
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend run lint:ci
-      - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of backend node_modules
           command: |
             chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - run:  # Fail audit only for moderate and higher vulnerabilities
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - store_artifacts:
-          path: reports
-      - store_artifacts:
-          path: frontend/reports
-  test_backend:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
+            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Test backend
-          command: yarn run test:ci
+          command: yarn test:ci
       - store_test_results:
           path: reports/
       - store_artifacts:
           path: coverage/
-  cucumber_test:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn run db:migrate:ci
-      - run:
-          name: Run cucumber
-          command: |
-            mkdir reports
-            sleep 5
-            yarn cucumber:ci
-      - store_artifacts:
-          path: reports/
   test_frontend:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci
@@ -217,6 +197,27 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+  cucumber_test:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Run cucumber
+          command: |
+            sleep 5
+            yarn cucumber:ci
+      - store_artifacts:
+          path: reports/
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -224,7 +225,7 @@ jobs:
           at: .
       - run:
           name: Start up local server
-          command: |
+          command: | # production style build (single BE server with static FE)
             docker-compose -f docker-compose-test.yml run --rm server yarn install --production=false
             docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend install --production=false
             docker-compose -f docker-compose-test.yml run --rm server yarn build
@@ -245,6 +246,28 @@ jobs:
               -t owasp/zap2docker-weekly zap-baseline.py \
               -t http://server:8080 \
               -c zap.conf -I -i
+  accessibility_scan:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Build
+          command: yarn build
+      - run:
+          name: Start server
+          command: BYPASS_AUTH=true yarn start:ci
+          background: true
+      - run:
+          name: Run axe
+          command: |
+            sleep 5
+            yarn axe:ci
+      - store_artifacts:
+          path: reports/
   deploy:
     executor: docker-executor
     steps:
@@ -268,6 +291,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
                 auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
@@ -283,6 +307,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
                 auth_client_secret: DEV_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_DEV_USERNAME
@@ -298,6 +323,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
                 auth_client_secret: STAGING_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_STAGING_USERNAME
@@ -313,6 +339,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
                 auth_client_secret: PROD_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_PROD_USERNAME
@@ -324,29 +351,29 @@ jobs:
 workflows:
   build_test_deploy:
     jobs:
-      - build
-      - lint_audit:
-          requires:
-            - build
+      - build_and_lint
       - test_backend:
           requires:
-            - build
-      - cucumber_test:
-          requires:
-            - build
+            - build_and_lint
       - test_frontend:
           requires:
-            - build
+            - build_and_lint
+      - cucumber_test:
+          requires:
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
+      - accessibility_scan:
+          requires:
+            - build_and_lint
       - deploy:
           requires:
-            - lint_audit
             - test_backend
-            - cucumber_test
             - test_frontend
+            - cucumber_test
             - dynamic_security_scan
+            - accessibility_scan
           filters:
             branches:
               only:
@@ -366,10 +393,13 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build
-      - lint_audit:
+      - build_and_lint
+      - test_backend:
           requires:
-            - build
+            - build_and_lint
+      - test_frontend:
+          requires:
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
