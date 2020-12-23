@@ -257,6 +257,7 @@ You can run psql commands directly against a deployed database by following thes
 [circleci-envvar]: https://app.circleci.com/settings/project/github/adhocteam/Head-Start-TTADP/environment-variables?return-to=https%3A%2F%2Fcircleci.com%2Fdashboard
 [cloudgov]: https://dashboard.fr.cloud.gov/home
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
+[cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
 [cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 [hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
 [hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
