@@ -213,6 +213,18 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 You can run psql commands directly against a deployed database by following these directions.
 
+1. Install Cloud Foundry CLI tool
+
+    - On MacOS: `brew install cloudfoundry/tap/cf-cli`
+    - On other platforms: [Download and install cf][cf-install]
+
+1. Login to cloud.gov account
+
+    ```bash
+    cf login -a api.fr.cloud.gov --sso
+    # follow temporary authorization code prompts
+    ```
+
 1. Install the cloud foundry plugin [cf-service-connect][cf-service-connect]
 
 	```bash
