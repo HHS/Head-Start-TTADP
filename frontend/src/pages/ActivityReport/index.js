@@ -6,8 +6,11 @@
   https://react-hook-form.com/api/)
 */
 import React, { useState } from 'react';
+import _ from 'lodash';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import { useHistory, Redirect } from 'react-router-dom';
 
 import ActivitySummary from './Pages/ActivitySummary';
 import TopicsResources from './Pages/TopicsResources';
@@ -21,8 +24,10 @@ import { NOT_STARTED } from '../../components/Navigator/constants';
 
 const pages = [
   {
+    position: 1,
     label: 'Activity summary',
-    renderForm: (hookForm) => {
+    path: 'activity-summary',
+    render: (hookForm) => {
       const {
         register, watch, setValue, getValues, control,
       } = hookForm;
@@ -38,8 +43,10 @@ const pages = [
     },
   },
   {
+    position: 2,
     label: 'Topics and resources',
-    renderForm: (hookForm) => {
+    path: 'topics-resources',
+    render: (hookForm) => {
       const { control, register } = hookForm;
       return (
         <TopicsResources
@@ -50,15 +57,31 @@ const pages = [
     },
   },
   {
+    position: 3,
     label: 'Goals and objectives',
-    renderForm: () => (
+    path: 'goals-objectives',
+    render: () => (
       <GoalsObjectives />
     ),
   },
   {
+    position: 4,
     label: 'Next steps',
-    renderForm: () => (
+    path: 'next-steps',
+    render: () => (
       <NextSteps />
+    ),
+  },
+  {
+    position: 5,
+    review: true,
+    label: 'Review and submit',
+    path: 'review',
+    render: (allComplete, onSubmit) => (
+      <ReviewSubmit
+        allComplete={allComplete}
+        onSubmit={onSubmit}
+      />
     ),
   },
 ];
@@ -84,10 +107,13 @@ const defaultValues = {
   topics: [],
 };
 
-const initialPageState = pages.map(() => NOT_STARTED);
+const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
+const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ initialData }) {
+function ActivityReport({ initialData, match }) {
   const [submitted, updateSubmitted] = useState(false);
+  const history = useHistory();
+  const { params: { currentPage } } = match;
 
   const onFormSubmit = (data) => {
     // eslint-disable-next-line no-console
@@ -95,17 +121,24 @@ function ActivityReport({ initialData }) {
     updateSubmitted(true);
   };
 
+  const updatePage = (position) => {
+    const page = pages.find((p) => p.position === position);
+    history.push(`/activity-reports/${page.path}`);
+  };
+
+  if (!currentPage) {
+    return (
+      <Redirect to="/activity-reports/activity-summary" />
+    );
+  }
+
   return (
     <>
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
-        renderReview={(allComplete, onSubmit) => (
-          <ReviewSubmit
-            allComplete={allComplete}
-            onSubmit={onSubmit}
-          />
-        )}
+        updatePage={updatePage}
+        currentPage={currentPage}
         submitted={submitted}
         initialPageState={initialPageState}
         defaultValues={{ ...defaultValues, ...initialData }}
@@ -118,6 +151,7 @@ function ActivityReport({ initialData }) {
 
 ActivityReport.propTypes = {
   initialData: PropTypes.shape({}),
+  match: ReactRouterPropTypes.match.isRequired,
 };
 
 ActivityReport.defaultProps = {

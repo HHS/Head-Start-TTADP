@@ -17,6 +17,7 @@ module.exports = {
     logging: false,
   },
   production: {
+    use_env_variable: 'DATABASE_URL',
     username: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,

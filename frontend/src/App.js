@@ -78,9 +78,9 @@ function App() {
           )}
         />
         <Route
-          path="/activity-reports"
-          render={() => (
-            <ActivityReport />
+          path="/activity-reports/:currentPage?"
+          render={({ match }) => (
+            <ActivityReport match={match} />
           )}
         />
         <Route
