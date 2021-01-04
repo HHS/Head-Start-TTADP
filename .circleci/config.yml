@@ -87,10 +87,6 @@ commands:
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
-      - run:
-          name: Run database migrations
-          command: |
-            cf run-task << parameters.app_name >> "yarn db:migrate:prod"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -124,8 +120,8 @@ parameters:
     description: "Name of github branch that will deploy to dev"
     default: "main"
     type: string
-  sandbox_git_branch:  # change to feature branch to test deployment
-    default: "sj-reduce-ci-jobs"
+  sandbox_git_branch:  # change to feature branch to deploy to sandbox
+    default: "js-52-assign-permissions-backend"
     type: string
 jobs:
   build_and_lint:
@@ -212,6 +208,9 @@ jobs:
           name: Run migrations ci
           command: yarn db:migrate:ci
       - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
           name: Run cucumber
           command: |
             sleep 5
@@ -258,8 +257,11 @@ jobs:
           name: Build
           command: yarn build
       - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
           name: Start server
-          command: BYPASS_AUTH=true yarn start:ci
+          command: BYPASS_AUTH=true CUCUMBER_USER_ID=1 yarn start:ci
           background: true
       - run:
           name: Run axe
@@ -300,6 +302,11 @@ jobs:
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: SANDBOX_SESSION_SECRET
+            - run:
+                name: Return database to neutral, then migrate and seed
+                command: |
+                  cf run-task tta-smarthub-sandbox \
+                  "yarn db:seed:undo:prod && yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # dev
           condition:
             and:
@@ -316,6 +323,10 @@ jobs:
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: DEV_SESSION_SECRET
+            - run:
+                name: Undo database seeding, then migrate and seed
+                command: |
+                  cf run-task tta-smarthub-dev "yarn db:seed:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # staging
           condition:
             and:
@@ -332,6 +343,10 @@ jobs:
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: STAGING_SESSION_SECRET
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-staging "yarn db:migrate:prod"
       - when:  # prod
           condition:
             and:
@@ -348,6 +363,10 @@ jobs:
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-prod "yarn db:migrate:prod"
 workflows:
   build_test_deploy:
     jobs:
@@ -381,7 +400,6 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-
   daily_scan:
     triggers:
       - schedule:

@@ -19,11 +19,11 @@ describe('UserInfo', () => {
     });
 
     test('has the default region', () => {
-      expect(screen.getByLabelText('Region')).toHaveValue('default');
+      expect(screen.getByLabelText('Region')).toHaveValue('0');
     });
 
     test('has the default jobTitle', () => {
-      expect(screen.getByLabelText('Job Title')).toHaveValue('default');
+      expect(screen.getByLabelText('Role')).toHaveValue('default');
     });
   });
 
@@ -31,9 +31,9 @@ describe('UserInfo', () => {
     beforeEach(() => {
       const user = {
         email: 'email',
-        fullName: 'first last',
-        region: '1',
-        jobTitle: 'Grantee Specialist',
+        name: 'first last',
+        homeRegionId: 1,
+        role: 'Grantee Specialist',
       };
 
       render(<UserInfo user={user} onUserChange={() => {}} />);
@@ -52,7 +52,7 @@ describe('UserInfo', () => {
     });
 
     test('has correct jobTitle', () => {
-      expect(screen.getByLabelText('Job Title')).toHaveValue('Grantee Specialist');
+      expect(screen.getByLabelText('Role')).toHaveValue('Grantee Specialist');
     });
   });
 });
