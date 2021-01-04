@@ -16,6 +16,7 @@ import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import ActivityReport from './pages/ActivityReport';
+import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
@@ -56,6 +57,7 @@ function App() {
     );
   }
 
+  const admin = isAdmin(user);
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
       <IdleModal
@@ -72,17 +74,20 @@ function App() {
           )}
         />
         <Route
-          path="/admin/:userId?"
-          render={({ match }) => (
-            <Admin match={match} />
-          )}
-        />
-        <Route
           path="/activity-reports/:currentPage?"
           render={({ match }) => (
             <ActivityReport match={match} />
           )}
         />
+        {admin
+        && (
+        <Route
+          path="/admin/:userId?"
+          render={({ match }) => (
+            <Admin match={match} />
+          )}
+        />
+        )}
         <Route
           render={() => (
             <NotFound />
@@ -100,7 +105,7 @@ function App() {
       <BrowserRouter>
         {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
         <UserContext.Provider value={{ user, authenticated, logout }}>
-          <Header authenticated={authenticated} />
+          <Header authenticated={authenticated} admin={admin} />
           <div className="background-stripe" />
           <section className="usa-section">
             <GridContainer>
