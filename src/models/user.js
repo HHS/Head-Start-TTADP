@@ -1,5 +1,23 @@
 import { Model } from 'sequelize';
 
+const roles = [
+  'Regional Program Manager',
+  'COR',
+  'Supervisory Program Specialist',
+  'Program Specialist',
+  'Grants Specialist',
+  'Central Office',
+  'TTAC',
+  'Admin. Assistant',
+  'Early Childhood Manager',
+  'Early Childhood Specialist',
+  'Family Engagement Specialist',
+  'Grantee Specialist Manager',
+  'Grantee Specialist',
+  'Health Specialist',
+  'System Specialist',
+];
+
 export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
@@ -32,7 +50,7 @@ export default (sequelize, DataTypes) => {
         isEmail: true,
       },
     },
-    title: DataTypes.ENUM('Program Specialist', 'Early Childchood Specialist', 'Grantee Specialist', 'Family Engagement Specialist', 'Health Specialist', 'Systems Specialist'),
+    role: DataTypes.ENUM(roles),
   }, {
     sequelize,
     modelName: 'User',

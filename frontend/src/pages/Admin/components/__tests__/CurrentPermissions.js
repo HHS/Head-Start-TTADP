@@ -7,14 +7,14 @@ import { withText } from '../../../../testHelpers';
 
 describe('CurrentPermissions', () => {
   test('renders single region', () => {
-    render(<CurrentPermissions regions={['1']} scope="TEST_SCOPE" />);
-    expect(screen.getByText(withText('TEST_SCOPE: Region 1'))).toBeVisible();
+    render(<CurrentPermissions regions={['1']} scope="3" />);
+    expect(screen.getByText(withText('READ_WRITE_ACTIVITY_REPORTS: Region 1'))).toBeVisible();
   });
 
   test('renders multiple regions', () => {
-    render(<CurrentPermissions regions={['1', '2']} scope="TEST_SCOPE" />);
+    render(<CurrentPermissions regions={['1', '2']} scope="3" />);
     expect(
-      screen.getByText(withText('TEST_SCOPE: Regions 1, 2')),
+      screen.getByText(withText('READ_WRITE_ACTIVITY_REPORTS: Regions 1, 2')),
     ).toBeVisible();
   });
 });
