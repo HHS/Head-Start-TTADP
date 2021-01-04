@@ -155,5 +155,8 @@
     "url-join": "^4.0.1",
     "winston": "^3.3.3",
     "yargs": "^16.1.1"
+  },
+  "resolutions": {
+    "**/axios": "^0.21.1"
   }
 }
