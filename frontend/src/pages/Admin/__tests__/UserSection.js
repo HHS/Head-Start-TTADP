@@ -4,28 +4,36 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import UserSection from '../UserSection';
+import { SCOPE_IDS } from '../../../Constants';
+
+const {
+  ADMIN,
+  READ_ACTIVITY_REPORTS,
+} = SCOPE_IDS;
 
 describe('UserSection', () => {
+  const onSave = jest.fn();
+
   beforeEach(() => {
     const user = {
       id: 1,
       email: 'email',
-      fullName: 'first last',
-      jobTitle: 'Grantee Specialist',
-      region: '1',
+      name: 'first last',
+      role: 'Grantee Specialist',
+      homeRegionId: 1,
       permissions: [
         {
-          region: 0,
-          scope: 'SITE_ACCESS',
+          regionId: 14,
+          scopeId: ADMIN,
         },
         {
-          region: 1,
-          scope: 'READ_REPORTS',
+          regionId: 1,
+          scopeId: READ_ACTIVITY_REPORTS,
         },
       ],
     };
 
-    render(<UserSection user={user} />);
+    render(<UserSection user={user} onSave={onSave} />);
   });
 
   it('properly controls user info', () => {
@@ -49,5 +57,29 @@ describe('UserSection', () => {
     expect(checkbox).toBeChecked();
     userEvent.click(checkbox);
     expect(checkbox).not.toBeChecked();
+  });
+
+  it('checking a scope selects that scope for the current region', () => {
+    const fieldName = 'APPROVE_ACTIVITY_REPORTS : Can approve activity reports in the region';
+    const permissions = screen.getByRole('group', { name: 'Regional Permissions' });
+    userEvent.selectOptions(within(permissions).getByLabelText('Region'), '1');
+    const checkbox = within(permissions).getByRole('checkbox', { name: fieldName });
+
+    expect(checkbox).not.toBeChecked();
+    userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+  });
+
+  it('the region field is cast to a number when changed', () => {
+    const userInfo = screen.getByRole('group', { name: 'User Info' });
+    const region = within(userInfo).getByLabelText('Region');
+    userEvent.selectOptions(region, '1');
+    expect(within(userInfo).getByLabelText('Region')).toHaveValue('1');
+  });
+
+  it('submitting the form calls the onSave prop', () => {
+    const save = screen.getByRole('button', { name: 'Save' });
+    userEvent.click(save);
+    expect(onSave).toHaveBeenCalled();
   });
 });

@@ -13,12 +13,12 @@ function RegionDropdown({
     <>
       <Label htmlFor={id}>Region</Label>
       <Dropdown id={id} name={name} value={value} onChange={onChange}>
-        <option name="default" disabled hidden value="default">Select a region...</option>
-        {REGIONS.map(({ number, name: description }) => (
-          <option key={number} value={number}>{`${number} - ${description}`}</option>
+        <option name="default" disabled hidden value={0}>Select a region...</option>
+        {REGIONS.map((number) => (
+          <option key={number} value={number}>{number}</option>
         ))}
         {includeCentralOffice
-        && <option name="central-office" value="co">Central Office</option>}
+        && <option name="central-office" value={14}>Central Office</option>}
       </Dropdown>
     </>
   );
@@ -27,13 +27,13 @@ function RegionDropdown({
 RegionDropdown.propTypes = {
   id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.number,
   onChange: PropTypes.func.isRequired,
   includeCentralOffice: PropTypes.bool,
 };
 
 RegionDropdown.defaultProps = {
-  value: 'default',
+  value: 0,
   includeCentralOffice: false,
 };
 
