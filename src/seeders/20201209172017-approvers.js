@@ -46,7 +46,7 @@ const users = [
     id: 1,
     email: 'test@gmail.com',
     hsesUserId: 1,
-    title: 'Program Specialist',
+    role: 'Program Specialist',
     name: 'Hermione Granger',
     phoneNumber: '555-555-5550',
     homeRegionId: 1,
@@ -56,7 +56,7 @@ const users = [
   {
     id: 2,
     email: 'harrypotter@hogwarts.com',
-    title: 'Program Specialist',
+    role: 'Program Specialist',
     name: 'Harry Potter',
     phoneNumber: '555-555-5551',
     homeRegionId: 2,
@@ -66,7 +66,7 @@ const users = [
   {
     id: 3,
     email: 'ronweasley@hogwarts.com',
-    title: 'Program Specialist',
+    role: 'Program Specialist',
     name: 'Ron Weasley',
     phoneNumber: '555-555-5552',
     homeRegionId: 3,
@@ -76,7 +76,7 @@ const users = [
   {
     id: 4,
     email: 'cucumber@hogwarts.com',
-    title: 'Program Specialist',
+    role: 'Program Specialist',
     name: 'Cucumber User',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
