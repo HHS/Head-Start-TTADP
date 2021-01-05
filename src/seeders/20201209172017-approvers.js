@@ -17,7 +17,7 @@ const permissions = [
     regionId: 1,
   },
   {
-    userId: 2,
+    userId: 1,
     regionId: 1,
     scopeId: APPROVE_REPORTS,
   },

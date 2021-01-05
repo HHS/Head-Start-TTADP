@@ -17,7 +17,7 @@ get:
         application/json:
           schema:
             type: object
-            $ref: '#/definitions/user'
+            $ref: '../index.yaml#/components/schemas/user'
 post:
   tags:
     - admin
@@ -29,7 +29,7 @@ post:
     content:
       application/json:
         schema:
-          $ref: '#/definitions/user'
+          $ref: '../index.yaml#/components/schemas/user'
   responses:
     200:
       description: User successfully created
@@ -37,7 +37,7 @@ post:
         application/json:
           schema:
             type: object
-            $ref: '#/definitions/user'
+            $ref: '../index.yaml#/components/schemas/user'
 put:
   tags:
     - admin
@@ -56,7 +56,7 @@ put:
     content:
       application/json:
         schema:
-          $ref: '#/definitions/user'
+          $ref: '../index.yaml#/components/schemas/user'
   responses:
     200:
       description: User successfully updated
@@ -64,7 +64,7 @@ put:
         application/json:
           schema:
             type: object
-            $ref: '#/definitions/user'
+            $ref: '../index.yaml#/components/schemas/user'
 delete:
   tags:
     - admin
@@ -105,7 +105,7 @@ definitions:
       permissions:
         type: array
         items:
-          $ref: '#/definitions/permission'
+          $ref: '../index.yaml#/components/schemas/permission'
   permission:
     type: object
     properties:

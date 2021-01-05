@@ -91,14 +91,14 @@ const sections = [
     title: 'Topics covered',
     anchor: 'topics-resources',
     items: [
-      { label: 'topics', name: 'topics' },
+      { label: 'Topics', name: 'topics' },
     ],
   },
   {
     title: 'Resources',
     anchor: 'resources',
     items: [
-      { label: 'Resources used', name: 'resources used', path: 'name' },
+      { label: 'Resources used', name: 'resources-used' },
       { label: 'Other resources', name: 'other-resources', path: 'name' },
     ],
   },
