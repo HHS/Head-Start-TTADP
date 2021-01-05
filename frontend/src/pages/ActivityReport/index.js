@@ -37,8 +37,8 @@ const defaultValues = {
   topics: [],
 };
 
-const additionalNotes = 'this is an additional note';
-const approvingManagers = [2];
+const additionalNotes = '';
+const approvingManagers = [];
 
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
