@@ -15,7 +15,7 @@ const formData = () => ({
   'activity-method': 'in-person',
   'activity-type': ['training'],
   duration: '1',
-  'end-date': moment(),
+  'end-date': moment().format('MM/DD/YYYY'),
   grantees: ['Grantee Name 1'],
   'number-of-participants': '1',
   'participant-category': 'grantee',
@@ -23,7 +23,7 @@ const formData = () => ({
   'program-types': ['type 1'],
   requester: 'grantee',
   'resources-used': 'eclkcurl',
-  'start-date': moment(),
+  'start-date': moment().format('MM/DD/YYYY'),
   'target-populations': ['target 1'],
   topics: 'first',
 });
