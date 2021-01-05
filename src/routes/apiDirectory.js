@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
-router.use('/admin/user', adminRouter);
+router.use('/admin/users', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
 
 router.use('/hello', (req, res) => {
