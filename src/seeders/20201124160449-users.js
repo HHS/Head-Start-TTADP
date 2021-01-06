@@ -89,7 +89,7 @@ const users = [
     homeRegionId: 3,
   },
   {
-    id: 999999,
+    id: 5,
     email: 'cucumber@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Cucumber User',
@@ -101,6 +101,7 @@ const users = [
 module.exports = {
   up: async (queryInterface) => {
     await queryInterface.bulkInsert('Users', users, {});
+    await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 10;');
     await queryInterface.bulkInsert('Permissions', permissions, {});
   },
 
