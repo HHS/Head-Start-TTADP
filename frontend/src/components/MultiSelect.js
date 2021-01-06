@@ -65,6 +65,7 @@ function MultiSelect({
           }
           return (
             <Select
+              className="margin-top-1"
               id={name}
               value={values}
               onChange={(e) => {
@@ -96,7 +97,10 @@ MultiSelect.propTypes = {
   name: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(
     PropTypes.shape({
-      value: PropTypes.string.isRequired,
+      value: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+      ]).isRequired,
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,

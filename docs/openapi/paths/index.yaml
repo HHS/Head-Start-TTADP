@@ -10,3 +10,5 @@
   $ref: './admin.yaml'
 '/admin/users':
   $ref: './adminAllUsers.yaml'
+'/activity-reports/approvers':
+  $ref: './activity-reports/approvers.yaml'
