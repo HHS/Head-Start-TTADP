@@ -25,6 +25,7 @@ const TopicsResources = ({
       <title>Topics and resources</title>
     </Helmet>
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
+      <div id="topics-covered" />
       <div className="smart-hub--form-section">
         <MultiSelect
           name="topics"
@@ -38,6 +39,7 @@ const TopicsResources = ({
       </div>
     </Fieldset>
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
+      <div id="resources" />
       <div className="smart-hub--form-section">
         <Label htmlFor="resources-used">
           Resources from OHS / ECLKC
@@ -64,6 +66,7 @@ const TopicsResources = ({
       </div>
     </Fieldset>
     <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
+      <div id="attachments" />
       <Label htmlFor="attachments">Upload any resources used that are not available through ECLKC</Label>
       <Controller
         name="attachments"
@@ -83,4 +86,43 @@ TopicsResources.propTypes = {
   control: PropTypes.object.isRequired,
 };
 
-export default TopicsResources;
+const sections = [
+  {
+    title: 'Topics covered',
+    anchor: 'topics-resources',
+    items: [
+      { label: 'topics', name: 'topics' },
+    ],
+  },
+  {
+    title: 'Resources',
+    anchor: 'resources',
+    items: [
+      { label: 'Resources used', name: 'resources used', path: 'name' },
+      { label: 'Other resources', name: 'other-resources', path: 'name' },
+    ],
+  },
+  {
+    title: 'Attachments',
+    anchor: 'attachments',
+    items: [
+      { label: 'Attachments', name: 'attachments' },
+    ],
+  },
+];
+
+export default {
+  position: 2,
+  label: 'Topics and resources',
+  path: 'topics-resources',
+  sections,
+  render: (hookForm) => {
+    const { control, register } = hookForm;
+    return (
+      <TopicsResources
+        register={register}
+        control={control}
+      />
+    );
+  },
+};

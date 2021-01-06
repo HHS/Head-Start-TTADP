@@ -13,5 +13,14 @@ const GoalsObjectives = () => (
 );
 
 GoalsObjectives.propTypes = {};
+const sections = [];
 
-export default GoalsObjectives;
+export default {
+  position: 3,
+  label: 'Goals and objectives',
+  path: 'goals-objectives',
+  sections,
+  render: () => (
+    <GoalsObjectives />
+  ),
+};

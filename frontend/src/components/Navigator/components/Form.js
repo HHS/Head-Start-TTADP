@@ -51,7 +51,7 @@ function Form({
   return (
     <UswdsForm onSubmit={handleSubmit(onContinue)} className="smart-hub--form-large">
       {renderForm(hookForm)}
-      <Button className="stepper-button" type="submit" disabled={!formState.isValid}>Continue</Button>
+      <Button type="submit" disabled={!formState.isValid}>Continue</Button>
     </UswdsForm>
   );
 }
