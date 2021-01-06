@@ -39,3 +39,31 @@
 .usa-label {
   max-width: 500px;
 }
+
+.usa-accordion__button {
+  background-color: white;
+  height: 64px;
+  padding-right: 40px;
+  padding-left: 40px;
+  background-position-x: calc(100% - 40px), calc(100% - 40px);
+}
+
+.usa-accordion__button[aria-expanded=false] {
+  border-radius: 4px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.usa-accordion__button[aria-expanded=true] {
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  box-shadow: 0 -6px 8px 0px rgba(0, 0, 0, 0.1);
+}
+
+.usa-accordion__content {
+  padding-top: 0px;
+  padding-right: 40px;
+  padding-left: 40px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}

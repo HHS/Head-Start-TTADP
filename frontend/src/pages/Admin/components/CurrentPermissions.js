@@ -1,12 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { scopeFromId } from '../PermissionHelpers';
+
 function CurrentPermissions({ regions, scope }) {
   const regionsStr = regions.length === 1 ? 'Region' : 'Regions';
   const regionMsg = `${regionsStr} ${regions.join(', ')}`;
+  const { name } = scopeFromId(scope);
   return (
     <li>
-      <strong>{scope}</strong>
+      <strong>{name}</strong>
       {': '}
       {regionMsg}
     </li>
