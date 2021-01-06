@@ -71,10 +71,6 @@ async function processFiles() {
       endDate: g.grant_end_date,
     }));
 
-    // for (let i = 0; i < 5; i++) {
-    //   console.log(grantsForDb[i]);
-    //   // grantAgency.grant_agencies.grant_agency.forEach(ga => {if (ga.agency_id === grantees[i].agency_id ) console.log(ga)});
-    // }
     await Grant.bulkCreate(grantsForDb,
       {
         updateOnDuplicate: ['number', 'regionId', 'granteeId', 'status', 'startDate', 'endDate', 'updatedAt'],
