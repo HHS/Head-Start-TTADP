@@ -37,9 +37,6 @@ const defaultValues = {
   topics: [],
 };
 
-const additionalNotes = 'this is an additional note';
-const approvingManagers = [2];
-
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
@@ -77,7 +74,6 @@ function ActivityReport({ initialData, match }) {
         initialPageState={initialPageState}
         defaultValues={{ ...defaultValues, ...initialData }}
         pages={pages}
-        additionalData={{ additionalNotes, approvingManagers }}
         onFormSubmit={onFormSubmit}
       />
     </>

@@ -11,35 +11,4 @@ get:
           schema:
             type: array
             items:
-              $ref: '#/definitions/user'
-definitions:
-  user:
-    type: object
-    properties:
-      id:
-        type: number
-      name:
-        type: string
-      hsesUserId:
-        type: number
-      email:
-        type: string
-      phoneNumber:
-        type: string
-      homeRegionId:
-        type: number
-      title:
-        type: string
-      permissions:
-        type: array
-        items:
-          $ref: '#/definitions/permission'
-  permission:
-    type: object
-    properties:
-      userId:
-        type: number
-      scopeId:
-        type: number
-      regionId:
-        type: number
+              $ref: '../index.yaml#/components/schemas/user'
