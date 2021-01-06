@@ -12,7 +12,7 @@
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\"",
-    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 CUCUMBER_USER_ID=5 concurrently \"yarn start\" \"yarn client\"",
+    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start\" \"yarn client\"",
     "start": "node ./build/server/index.js",
     "server": "nodemon src/index.js --exec babel-node",
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
