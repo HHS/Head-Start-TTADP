@@ -202,7 +202,7 @@ jobs:
           name: Start server
           command: |
             yarn build
-            BYPASS_AUTH=true yarn start:ci
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
           background: true
       - run:
           name: Run migrations ci
@@ -261,7 +261,7 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Start server
-          command: BYPASS_AUTH=true CUCUMBER_USER_ID=1 yarn start:ci
+          command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
           background: true
       - run:
           name: Run axe
