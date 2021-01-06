@@ -25,6 +25,7 @@
     "react-responsive": "^8.1.1",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
+    "react-router-hash-link": "^2.3.1",
     "react-router-prop-types": "^1.0.5",
     "react-scripts": "^3.4.4",
     "react-select": "^3.1.0",

@@ -6,6 +6,9 @@ executors:
     # for docker you must specify an image to use for the primary container
     docker:
       - image: circleci/node:12.20.0-browsers
+  docker-postgres-executor:
+    docker:
+      - image: circleci/node:12.20.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -67,22 +70,6 @@ commands:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
         type: env_var_name
-      postgres_db:
-        description: "Name of CircleCI project environment variable that
-          holds the postgres database name"
-        type: env_var_name
-      postgres_host:
-        description: "Name of CircleCI project environment variable that
-          holds the postgres host"
-        type: env_var_name
-      postgres_password:
-        description: "Name of CircleCI project environment variable that
-          holds the postgres password"
-        type: env_var_name
-      postgres_username:
-        description: "Name of CircleCI project environment variable that
-          holds the postgres username"
-        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -99,15 +86,7 @@ commands:
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
-              --var POSTGRES_DB=${<< parameters.postgres_db >>} \
-              --var POSTGRES_HOST=${<< parameters.postgres_host >>} \
-              --var POSTGRES_PASSWORD=${<< parameters.postgres_password >>} \
-              --var POSTGRES_USERNAME=${<< parameters.postgres_username >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>}
-      - run:
-          name: Run database migrations
-          command: |
-            cf run-task << parameters.app_name >> "yarn db:migrate:prod"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -145,7 +124,7 @@ parameters:
     default: "kw-pull-hs-data"
     type: string
 jobs:
-  build:
+  build_and_lint:
     executor: docker-executor
     steps:
       - checkout
@@ -162,60 +141,51 @@ jobs:
             - node_modules
             - frontend/node_modules
           key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
             - .
-  lint_audit:
-    executor: docker-executor
+  test_backend:
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend
-          command: yarn run lint:ci
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend run lint:ci
-      - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of backend node_modules
           command: |
             chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - run:  # Fail audit only for moderate and higher vulnerabilities
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - store_artifacts:
-          path: reports
-      - store_artifacts:
-          path: frontend/reports
-  test_backend:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
+            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Test backend
-          command: yarn run test:ci
+          command: yarn test:ci
       - store_test_results:
           path: reports/
       - store_artifacts:
           path: coverage/
   test_frontend:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci
@@ -224,7 +194,7 @@ jobs:
       - store_artifacts:
           path: frontend/coverage/
   cucumber_test:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
@@ -232,15 +202,17 @@ jobs:
           name: Start server
           command: |
             yarn build
-            BYPASS_AUTH=true yarn start:ci
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
           background: true
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
       - run:
           name: Run cucumber
           command: |
-            mkdir reports
             sleep 5
             yarn cucumber:ci
       - store_artifacts:
@@ -274,24 +246,26 @@ jobs:
               -t http://server:8080 \
               -c zap.conf -I -i
   accessibility_scan:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Build
           command: yarn build
       - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
           name: Start server
-          command: BYPASS_AUTH=true yarn start:ci
+          command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
           background: true
       - run:
           name: Run axe
           command: |
-            mkdir reports
             sleep 5
             yarn axe:ci
       - store_artifacts:
@@ -327,11 +301,12 @@ jobs:
                 cloudgov_space: CLOUDGOV_SANDBOX_SPACE
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
-                postgres_db: SANDBOX_POSTGRES_DB
-                postgres_host: SANDBOX_POSTGRES_HOST
-                postgres_password: SANDBOX_POSTGRES_PASSWORD
-                postgres_username: SANDBOX_POSTGRES_USERNAME
                 session_secret: SANDBOX_SESSION_SECRET
+            - run:
+                name: Return database to neutral, then migrate and seed
+                command: |
+                  cf run-task tta-smarthub-sandbox \
+                  "yarn db:seed:undo:prod && yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # dev
           condition:
             and:
@@ -347,11 +322,11 @@ jobs:
                 cloudgov_space: CLOUDGOV_DEV_SPACE
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
-                postgres_db: DEV_POSTGRES_DB
-                postgres_host: DEV_POSTGRES_HOST
-                postgres_password: DEV_POSTGRES_PASSWORD
-                postgres_username: DEV_POSTGRES_USERNAME
                 session_secret: DEV_SESSION_SECRET
+            - run:
+                name: Undo database seeding, then migrate and seed
+                command: |
+                  cf run-task tta-smarthub-dev "yarn db:seed:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # staging
           condition:
             and:
@@ -367,11 +342,11 @@ jobs:
                 cloudgov_space: CLOUDGOV_STAGING_SPACE
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
-                postgres_db: STAGING_POSTGRES_DB
-                postgres_host: STAGING_POSTGRES_HOST
-                postgres_password: STAGING_POSTGRES_PASSWORD
-                postgres_username: STAGING_POSTGRES_USERNAME
                 session_secret: STAGING_SESSION_SECRET
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-staging "yarn db:migrate:prod"
       - when:  # prod
           condition:
             and:
@@ -387,40 +362,35 @@ jobs:
                 cloudgov_space: CLOUDGOV_PROD_SPACE
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
-                postgres_db: PROD_POSTGRES_DB
-                postgres_host: PROD_POSTGRES_HOST
-                postgres_password: PROD_POSTGRES_PASSWORD
-                postgres_username: PROD_POSTGRES_USERNAME
                 session_secret: PROD_SESSION_SECRET
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-prod "yarn db:migrate:prod"
 workflows:
   build_test_deploy:
     jobs:
-      - build
-      - lint_audit:
-          requires:
-            - build
+      - build_and_lint
       - test_backend:
           requires:
-            - build
+            - build_and_lint
       - test_frontend:
           requires:
-            - build
+            - build_and_lint
       - cucumber_test:
           requires:
-            - build
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
       - accessibility_scan:
           requires:
-            - build
+            - build_and_lint
       - deploy:
           requires:
-            - build
-            - lint_audit
             - test_backend
-            - cucumber_test
             - test_frontend
+            - cucumber_test
             - dynamic_security_scan
             - accessibility_scan
           filters:
@@ -430,7 +400,6 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-
   daily_scan:
     triggers:
       - schedule:
@@ -442,10 +411,13 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build
-      - lint_audit:
+      - build_and_lint
+      - test_backend:
           requires:
-            - build
+            - build_and_lint
+      - test_frontend:
+          requires:
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint

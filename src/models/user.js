@@ -1,9 +1,27 @@
 import { Model } from 'sequelize';
 
+const roles = [
+  'Regional Program Manager',
+  'COR',
+  'Supervisory Program Specialist',
+  'Program Specialist',
+  'Grants Specialist',
+  'Central Office',
+  'TTAC',
+  'Admin. Assistant',
+  'Early Childhood Manager',
+  'Early Childhood Specialist',
+  'Family Engagement Specialist',
+  'Grantee Specialist Manager',
+  'Grantee Specialist',
+  'Health Specialist',
+  'System Specialist',
+];
+
 export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      User.belongsTo(models.Region, { foreignKey: 'homeRegionId', as: 'homeRegion' });
+      User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
       User.belongsToMany(models.Scope, {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
@@ -19,6 +37,10 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
+    homeRegionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     hsesUserId: {
       type: DataTypes.STRING,
       unique: true,
@@ -32,7 +54,7 @@ export default (sequelize, DataTypes) => {
         isEmail: true,
       },
     },
-    title: DataTypes.ENUM('Program Specialist', 'Early Childchood Specialist', 'Grantee Specialist', 'Family Engagement Specialist', 'Health Specialist', 'Systems Specialist'),
+    role: DataTypes.ENUM(roles),
   }, {
     sequelize,
     modelName: 'User',
