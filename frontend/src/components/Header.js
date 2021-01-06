@@ -6,7 +6,7 @@ import {
 
 import NavLink from './NavLink';
 
-function Header({ authenticated }) {
+function Header({ authenticated, admin }) {
   const [expanded, setExpanded] = useState(false);
   const onClick = () => setExpanded((prvExpanded) => !prvExpanded);
 
@@ -17,10 +17,15 @@ function Header({ authenticated }) {
     <NavLink to="/activity-reports/new">
       Activity Reports
     </NavLink>,
+  ];
+
+  const adminNavItem = [
     <NavLink to="/admin">
       Admin
     </NavLink>,
   ];
+
+  const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
     <>
@@ -36,7 +41,7 @@ function Header({ authenticated }) {
           && (
           <PrimaryNav
             role="navigation"
-            items={navItems}
+            items={items}
             mobileExpanded={expanded}
             onToggleMobileNav={onClick}
           >
@@ -51,10 +56,12 @@ function Header({ authenticated }) {
 
 Header.propTypes = {
   authenticated: PropTypes.bool,
+  admin: PropTypes.bool,
 };
 
 Header.defaultProps = {
   authenticated: false,
+  admin: false,
 };
 
 export default Header;

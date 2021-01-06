@@ -3,8 +3,10 @@ import unless from 'express-unless';
 import join from 'url-join';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
+import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
 import activityReportsRouter from './activityReports';
+import { userById } from './admin/user';
 
 export const loginPath = '/login';
 
@@ -14,16 +16,21 @@ const router = express.Router();
 
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
-router.use('/admin/user', adminRouter);
+router.use('/admin/users', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
 
 router.use('/hello', (req, res) => {
   res.send('Hello from ttadp');
 });
 
-router.get('/user', (req, res) => {
-  const { userId, role, name } = req.session;
-  res.send({ userId, role, name });
+router.get('/user', async (req, res) => {
+  const { userId } = req.session;
+  try {
+    const user = await userById(userId);
+    res.json(user.toJSON());
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:SELF' });
+  }
 });
 
 router.get('/logout', (req, res) => {
