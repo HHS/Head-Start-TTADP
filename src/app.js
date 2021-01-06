@@ -8,7 +8,9 @@ import _ from 'lodash';
 import path from 'path';
 import join from 'url-join';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
+import updateGrantsGrantees from './lib/updateGrantsGrantees';
 
 import logger, { requestLogger } from './logger';
 
@@ -71,5 +73,21 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, 'client', 'index.html'));
   });
 }
+
+// Set timing parameters.
+// Run at midnight
+const schedule = '0 0 * * *';
+const timezone = 'America/New_York';
+
+const runJob = () => {
+  try {
+    updateGrantsGrantees();
+  } catch (error) {
+    logger.error(`Error processing HSES file: ${error}`);
+  }
+};
+
+const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+job.start();
 
 module.exports = app;
