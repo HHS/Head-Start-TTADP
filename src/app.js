@@ -75,8 +75,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Set timing parameters.
+const schedule = '*/25 * * * *';
 // Run at midnight
-const schedule = '0 0 * * *';
+// const schedule = '0 0 * * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
