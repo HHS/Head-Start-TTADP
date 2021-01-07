@@ -41,20 +41,20 @@ const TopicsResources = ({
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
       <div id="resources" />
       <div className="smart-hub--form-section">
-        <Label htmlFor="resources-used">
+        <Label htmlFor="resourcesUsed">
           Resources from OHS / ECLKC
           <br />
           Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
         </Label>
         <TextInput
           id="resources-used"
-          name="resources-used"
+          name="resourcesUsed"
           type="text"
           inputRef={register({ required: true })}
         />
       </div>
       <div className="smart-hub--form-section">
-        <Label htmlFor="other-resources">Upload any resources used that are not available through ECLKC</Label>
+        <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
         <Controller
           name="other-resources"
           defaultValue={[]}
@@ -98,15 +98,15 @@ const sections = [
     title: 'Resources',
     anchor: 'resources',
     items: [
-      { label: 'Resources used', name: 'resources-used' },
-      { label: 'Other resources', name: 'other-resources', path: 'name' },
+      { label: 'Resources used', name: 'resourcesUsed' },
+      { label: 'Other resources', name: 'otherResources', path: 'name' },
     ],
   },
   {
     title: 'Attachments',
     anchor: 'attachments',
     items: [
-      { label: 'Attachments', name: 'attachments' },
+      { label: 'Attachments', name: 'attachments', path: 'name' },
     ],
   },
 ];

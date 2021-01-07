@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import moment from 'moment';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -6,104 +7,116 @@ import reactSelectEvent from 'react-select-event';
 import {
   render, screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
-import moment from 'moment';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 
 const formData = () => ({
-  'activity-method': 'in-person',
-  'activity-type': ['training'],
+  activityMethod: 'in-person',
+  activityType: ['training'],
   duration: '1',
-  'end-date': moment().format('MM/DD/YYYY'),
+  endDate: moment().format('MM/DD/YYYY'),
   grantees: ['Grantee Name 1'],
-  'number-of-participants': '1',
-  'participant-category': 'grantee',
+  numberOfParticipants: '1',
+  participantCategory: 'grantee',
   participants: ['CEO / CFO / Executive'],
-  'program-types': ['type 1'],
+  programTypes: ['type 1'],
   requester: 'grantee',
-  'resources-used': 'eclkcurl',
-  'start-date': moment().format('MM/DD/YYYY'),
-  'target-populations': ['target 1'],
+  resourcesUsed: 'eclkcurl',
+  startDate: moment().format('MM/DD/YYYY'),
+  targetPopulations: ['target 1'],
   topics: 'first',
 });
 const history = createMemoryHistory();
 
-const renderActivityReport = (data = {}, location = 'activity-summary') => {
+const renderActivityReport = (data = {}, location = 'activity-summary', reportId = 'test') => {
+  fetch.mockResponse(JSON.stringify({
+    report: data,
+    additionalData: {},
+    pageState: {},
+  }));
+
   render(
     <Router history={history}>
       <ActivityReport
-        initialData={data}
-        match={{ params: { currentPage: location }, path: '', url: '' }}
+        match={{ params: { currentPage: location, activityReportId: reportId }, path: '', url: '' }}
       />
     </Router>,
   );
 };
 
 describe('ActivityReport', () => {
-  it('defaults to activity summary if no page is in the url', () => {
+  beforeEach(() => {
+    fetch.resetMocks();
+  });
+
+  it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport({}, null);
-    expect(history.location.pathname).toEqual('/activity-reports/activity-summary');
+    await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/test/activity-summary'));
   });
 
   describe('grantee select', () => {
     describe('changes the participant selection to', () => {
       it('Grantee', async () => {
         renderActivityReport();
+        await screen.findByText('New activity report for Region 14');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const grantee = within(information).getByLabelText('Grantee');
+        const grantee = await within(information).findByLabelText('Grantee');
         fireEvent.click(grantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+        const granteeSelectbox = await screen.findByLabelText('Grantee name(s)');
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('Grantee Name 1'))).toBeVisible();
       });
 
       it('Non-grantee', async () => {
         renderActivityReport();
+        await screen.findByText('New activity report for Region 14');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const nonGrantee = within(information).getByLabelText('Non-Grantee');
+        const nonGrantee = await within(information).findByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+        const granteeSelectbox = await screen.findByLabelText('Non-grantee name(s)');
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('QRIS System'))).toBeVisible();
       });
     });
 
-    it('when non-grantee is selected', async () => {
-      renderActivityReport();
-      const enabled = screen.getByRole('textbox', { name: 'Grantee name(s)' });
-      expect(enabled).toBeDisabled();
+    it('clears selection when non-grantee is selected', async () => {
+      const data = formData();
+      renderActivityReport(data);
+      await screen.findByText('New activity report for Region 14');
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const grantee = within(information).getByLabelText('Grantee');
-      fireEvent.click(grantee);
-      const disabled = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
-      expect(disabled).not.toBeDisabled();
+      const enabled = await within(information).findByText('Grantee Name 1');
+      expect(enabled).not.toBeDisabled();
+      const nonGrantee = await within(information).findByLabelText('Non-Grantee');
+
+      fireEvent.click(nonGrantee);
+      expect(await within(information).findByLabelText('Non-grantee name(s)')).toHaveValue('');
     });
   });
 
   describe('method checkboxes', () => {
     it('require a single selection for the form to be valid', async () => {
       const data = formData();
-      delete data['activity-method'];
+      delete data.activityMethod;
 
       renderActivityReport(data);
       expect(await screen.findByText('Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
+      expect(await screen.findByText('Continue')).not.toBeDisabled();
     });
   });
 
   describe('tta checkboxes', () => {
     it('requires a single selection for the form to be valid', async () => {
       const data = formData();
-      delete data['activity-type'];
+      delete data.activityType;
 
       renderActivityReport(data);
       expect(await screen.findByText('Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Training');
       fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
+      expect(await screen.findByText('Continue')).not.toBeDisabled();
     });
   });
 });
