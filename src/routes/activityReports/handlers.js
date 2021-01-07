@@ -69,3 +69,49 @@ export async function submitReport(req, res) {
   console.log('submit');
   res.sendStatus(204);
 }
+
+export async function saveReport(req, res) {
+  // Temporary until saving of report is implemented
+  // eslint-disable-next-line no-console
+  console.log('save');
+  res.sendStatus(204);
+}
+
+export async function getReport(req, res) {
+  const additionalData = {
+    additionalNotes: 'this is an additional note',
+    approvingManagers: [2],
+  };
+
+  const report = {
+    activityMethod: 'in-person',
+    activityType: ['training'],
+    duration: '1',
+    endDate: '11/11/2020',
+    grantees: ['Grantee Name 1'],
+    numberOfParticipants: '1',
+    participantCategory: 'grantee',
+    participants: ['other participant 1'],
+    reason: ['reason 1'],
+    otherUsers: ['user 1'],
+    programTypes: ['program type 1'],
+    requester: 'grantee',
+    resourcesUsed: 'eclkcurl',
+    startDate: '11/11/2020',
+    targetPopulations: ['target pop 1'],
+    topics: ['first'],
+  };
+
+  const pageState = {
+    1: 'Complete',
+    2: 'Complete',
+    3: 'Complete',
+    4: 'Complete',
+  };
+
+  res.json({
+    report,
+    pageState,
+    additionalData,
+  });
+}
