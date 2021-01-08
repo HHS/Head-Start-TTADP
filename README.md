@@ -215,6 +215,18 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 You can run psql commands directly against a deployed database by following these directions.
 
+1. Install Cloud Foundry CLI tool
+
+    - On MacOS: `brew install cloudfoundry/tap/cf-cli`
+    - On other platforms: [Download and install cf][cf-install]
+
+1. Login to cloud.gov account
+
+    ```bash
+    cf login -a api.fr.cloud.gov --sso
+    # follow temporary authorization code prompts
+    ```
+
 1. Install the cloud foundry plugin [cf-service-connect][cf-service-connect]
 
 	```bash
@@ -247,6 +259,7 @@ You can run psql commands directly against a deployed database by following thes
 [circleci-envvar]: https://app.circleci.com/settings/project/github/adhocteam/Head-Start-TTADP/environment-variables?return-to=https%3A%2F%2Fcircleci.com%2Fdashboard
 [cloudgov]: https://dashboard.fr.cloud.gov/home
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
+[cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
 [cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 [hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
 [hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
