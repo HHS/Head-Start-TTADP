@@ -1,0 +1,79 @@
+<grant_awards xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="gov.hhs.acf.ohs.hses">
+<grant_award>
+  <grant_award_id>7842</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01105</grant_number>
+  <grant_start_date>2014-03-01</grant_start_date>
+  <grant_end_date>2019-02-28</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Inactive</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>8110</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01106</grant_number>
+  <grant_start_date>2014-07-01</grant_start_date>
+  <grant_end_date>2020-04-30</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Inactive</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>2591</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01107</grant_number>
+  <grant_start_date>2013-07-01</grant_start_date>
+  <grant_end_date>2018-11-30</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Inactive</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>11835</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01108</grant_number>
+  <grant_start_date>2020-05-01</grant_start_date>
+  <grant_end_date>2025-04-30</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Active</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>10448</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01109</grant_number>
+  <grant_start_date>2018-12-01</grant_start_date>
+  <grant_end_date>2023-11-30</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Active</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>6223</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01110</grant_number>
+  <grant_start_date>1992-03-01</grant_start_date>
+  <grant_end_date>2025-06-30</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>BERGEN COUNTY COMMUNITY ACTION PROGRAM, INC</grantee_name>
+  <grant_status>Inactive</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>10567</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH01111</grant_number>
+  <grant_start_date>2019-03-01</grant_start_date>
+  <grant_end_date>2024-02-29</grant_end_date>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Active</grant_status>
+</grant_award>
+</grant_awards>
