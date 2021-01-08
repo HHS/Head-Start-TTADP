@@ -70,6 +70,15 @@ commands:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
         type: env_var_name
+      hses_data_file_url:
+        description: "Url to download HSES grants and grantee data from"
+        type: env_var_name
+      hses_data_username:
+        description: "Username used to access the HSES grants and grantee data"
+        type: env_var_name
+      hses_data_password:
+        description: "Password used to access the HSES grants and grantee data"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -86,7 +95,10 @@ commands:
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
-              --var SESSION_SECRET=${<< parameters.session_secret >>}
+              --var SESSION_SECRET=${<< parameters.session_secret >>} \
+              --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
+              --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
+              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>}
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -302,6 +314,9 @@ jobs:
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: SANDBOX_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
             - run:
                 name: Return database to neutral, then migrate and seed
                 command: |
@@ -323,6 +338,9 @@ jobs:
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: DEV_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
             - run:
                 name: Undo database seeding, then migrate and seed
                 command: |
@@ -343,6 +361,9 @@ jobs:
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: STAGING_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -363,6 +384,9 @@ jobs:
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
