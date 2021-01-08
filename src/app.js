@@ -7,7 +7,9 @@ import memorystore from 'memorystore';
 import path from 'path';
 import join from 'url-join';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
+import updateGrantsGrantees from './lib/updateGrantsGrantees';
 
 import findOrCreateUser from './services/accessValidation';
 
@@ -76,5 +78,24 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, 'client', 'index.html'));
   });
 }
+
+// Set timing parameters.
+// Run at midnight
+// const schedule = '0 0 * * *';
+const timezone = 'America/New_York';
+
+// tmp schedule for testing
+const schedule = '*/25 * * * *';
+
+const runJob = () => {
+  try {
+    updateGrantsGrantees();
+  } catch (error) {
+    logger.error(`Error processing HSES file: ${error}`);
+  }
+};
+
+const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+job.start();
 
 module.exports = app;

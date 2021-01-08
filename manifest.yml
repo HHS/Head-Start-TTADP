@@ -16,6 +16,9 @@ applications:
       REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
       SESSION_SECRET: ((SESSION_SECRET))
       TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
+      HSES_DATA_FILE_URL: ((HSES_DATA_FILE_URL))
+      HSES_DATA_USERNAME: ((HSES_DATA_USERNAME))
+      HSES_DATA_PASSWORD: ((HSES_DATA_PASSWORD))
     services:
       - ((rds_instance))
       - ((s3_doc_upload_bucket))
