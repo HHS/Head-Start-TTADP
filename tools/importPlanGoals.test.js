@@ -25,7 +25,7 @@ describe('Import TTA plan goals', () => {
 
       const grantee = await Grantee.findOne({ where: { id: 1335 } });
       expect(grantee).toBeDefined();
-      expect(grantee.name).toBe('Greater Bergen Community Action, Inc.');
+      expect(grantee.name).toBe('Agency 1, Inc.');
     });
 
     it('should import or update grants', async () => {
@@ -37,7 +37,7 @@ describe('Import TTA plan goals', () => {
       const grants = await Grant.findAll({ where: { granteeId: 1335 } });
       expect(grants).toBeDefined();
       expect(grants.length).toBe(3);
-      const containsNumber = grants.some((g) => g.number === '02CH010840');
+      const containsNumber = grants.some((g) => g.number === '02CH01111');
       expect(containsNumber).toBeTruthy();
     });
   });
