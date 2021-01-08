@@ -41,7 +41,7 @@ export function login(req, res) {
 export default async function authMiddleware(req, res, next) {
   // bypass authorization, used for cucumber UAT and axe accessibility testing
   if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    req.session.userId = process.env.CUCUMBER_USER_ID;
+    req.session.userId = process.env.CURRENT_USER_ID;
   }
   if (!req.session.userId) {
     res.sendStatus(401);

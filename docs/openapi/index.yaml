@@ -15,4 +15,41 @@ servers:
 paths:
   $ref: "./paths/index.yaml"
 components:
-  schemas: {}
+  schemas:
+    approvingUser:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+    user:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        hsesUserId:
+          type: number
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        homeRegionId:
+          type: number
+        title:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/permission'
+    permission:
+      type: object
+      properties:
+        userId:
+          type: number
+        scopeId:
+          type: number
+        regionId:
+          type: number
