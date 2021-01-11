@@ -1,5 +1,6 @@
 docs/
-frontend/
+cucumber/
 deployment_config/
+frontend/
 src/
 terraform/

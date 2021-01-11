@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import reactSelectEvent from 'react-select-event';
 import {
   render, screen, fireEvent, waitFor, within,
@@ -13,7 +15,7 @@ const formData = () => ({
   'activity-method': 'in-person',
   'activity-type': ['training'],
   duration: '1',
-  'end-date': moment(),
+  'end-date': moment().format('MM/DD/YYYY'),
   grantees: ['Grantee Name 1'],
   'number-of-participants': '1',
   'participant-category': 'grantee',
@@ -21,16 +23,33 @@ const formData = () => ({
   'program-types': ['type 1'],
   requester: 'grantee',
   'resources-used': 'eclkcurl',
-  'start-date': moment(),
+  'start-date': moment().format('MM/DD/YYYY'),
   'target-populations': ['target 1'],
   topics: 'first',
 });
+const history = createMemoryHistory();
+
+const renderActivityReport = (data = {}, location = 'activity-summary') => {
+  render(
+    <Router history={history}>
+      <ActivityReport
+        initialData={data}
+        match={{ params: { currentPage: location }, path: '', url: '' }}
+      />
+    </Router>,
+  );
+};
 
 describe('ActivityReport', () => {
+  it('defaults to activity summary if no page is in the url', () => {
+    renderActivityReport({}, null);
+    expect(history.location.pathname).toEqual('/activity-reports/activity-summary');
+  });
+
   describe('grantee select', () => {
     describe('changes the participant selection to', () => {
       it('Grantee', async () => {
-        render(<ActivityReport />);
+        renderActivityReport();
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const grantee = within(information).getByLabelText('Grantee');
         fireEvent.click(grantee);
@@ -40,7 +59,7 @@ describe('ActivityReport', () => {
       });
 
       it('Non-grantee', async () => {
-        render(<ActivityReport />);
+        renderActivityReport();
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
@@ -51,7 +70,7 @@ describe('ActivityReport', () => {
     });
 
     it('when non-grantee is selected', async () => {
-      render(<ActivityReport />);
+      renderActivityReport();
       const enabled = screen.getByRole('textbox', { name: 'Grantee name(s)' });
       expect(enabled).toBeDisabled();
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
@@ -67,7 +86,7 @@ describe('ActivityReport', () => {
       const data = formData();
       delete data['activity-method'];
 
-      render(<ActivityReport initialData={data} />);
+      renderActivityReport(data);
       expect(await screen.findByText('Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
@@ -80,7 +99,7 @@ describe('ActivityReport', () => {
       const data = formData();
       delete data['activity-type'];
 
-      render(<ActivityReport initialData={data} />);
+      renderActivityReport(data);
       expect(await screen.findByText('Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Training');
       fireEvent.click(box);

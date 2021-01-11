@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import {
   render, screen, waitFor, within,
@@ -10,8 +11,10 @@ import { NOT_STARTED } from '../constants';
 
 const pages = [
   {
+    position: 1,
+    path: 'first',
     label: 'first page',
-    renderForm: (hookForm) => (
+    render: (hookForm) => (
       <input
         type="radio"
         data-testid="first"
@@ -21,8 +24,10 @@ const pages = [
     ),
   },
   {
+    position: 2,
+    path: 'second',
     label: 'second page',
-    renderForm: (hookForm) => (
+    render: (hookForm) => (
       <input
         type="radio"
         data-testid="second"
@@ -31,25 +36,34 @@ const pages = [
       />
     ),
   },
+  {
+    position: 3,
+    path: 'review',
+    label: 'review page',
+    review: true,
+    render: (allComplete, formData, submitted, onSubmit) => (
+      <div>
+        <button type="button" data-testid="review" onClick={onSubmit}>Continue</button>
+      </div>
+    ),
+  },
 ];
 
-const renderReview = (allComplete, onSubmit) => (
-  <div>
-    <button type="button" data-testid="review" onClick={onSubmit}>button</button>
-  </div>
-);
-
 describe('Navigator', () => {
-  const renderNavigator = (onSubmit = () => {}) => {
+  // eslint-disable-next-line arrow-body-style
+  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, updatePage = () => {}) => {
     render(
-      <Navigator
-        submitted={false}
-        initialPageState={[NOT_STARTED, NOT_STARTED]}
-        defaultValues={{ first: '', second: '' }}
-        pages={pages}
-        onFormSubmit={onSubmit}
-        renderReview={renderReview}
-      />,
+      <MemoryRouter>
+        <Navigator
+          submitted={false}
+          initialPageState={{ 1: NOT_STARTED, 2: NOT_STARTED }}
+          defaultValues={{ first: '', second: '' }}
+          pages={pages}
+          updatePage={updatePage}
+          currentPage={currentPage}
+          onFormSubmit={onSubmit}
+        />
+      </MemoryRouter>,
     );
   };
 
@@ -57,36 +71,28 @@ describe('Navigator', () => {
     renderNavigator();
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
-    const second = await screen.findByText('second page');
-    userEvent.click(second);
-    const first = screen.getByText('first page');
-    await waitFor(() => expect(within(first.nextSibling).getByText('In progress')).toBeVisible());
+    const first = await screen.findByRole('link', { name: 'first page' });
+    await waitFor(() => expect(within(first).getByText('In progress')).toBeVisible());
   });
 
-  it('shows the review page after showing the last form page', async () => {
-    renderNavigator();
+  it('onContinue calls update page with correct page position', async () => {
+    const updatePage = jest.fn();
+    renderNavigator('second', () => {}, updatePage);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await screen.findByTestId('second');
-    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => expect(screen.getByTestId('review')).toBeVisible());
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(3));
   });
 
   it('submits data when "continuing" from the review page', async () => {
     const onSubmit = jest.fn();
-    renderNavigator(onSubmit);
+    renderNavigator('review', onSubmit);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await screen.findByTestId('second');
-    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await screen.findByTestId('review');
-    userEvent.click(screen.getByTestId('review'));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
   it('changes navigator state to complete when "continuing"', async () => {
     renderNavigator();
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await screen.findByTestId('second');
-    const navItem = await screen.findByText('first page');
-    await waitFor(() => expect(within(navItem.nextSibling).getByText('Complete')).toBeVisible());
+    const first = await screen.findByRole('link', { name: 'first page' });
+    await waitFor(() => expect(within(first).getByText('Complete')).toBeVisible());
   });
 });

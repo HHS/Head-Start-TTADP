@@ -11,7 +11,7 @@ jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Pro
 const mockUser = {
   id: 49,
   name: 'Joe Green',
-  title: null,
+  role: null,
   phoneNumber: '555-555-554',
   hsesUserId: '49',
   email: 'test49@test.com',
@@ -127,7 +127,7 @@ describe('User route handler', () => {
     const testUpdateUser = {
       id: 53,
       name: 'Joe Green',
-      title: 'Health Specialist',
+      role: 'Health Specialist',
       phoneNumber: '555-555-554',
       hsesUserId: '53',
       email: 'test53@test.com',

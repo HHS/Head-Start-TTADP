@@ -10,6 +10,18 @@ const logContext = {
   namespace,
 };
 
+export const userById = async (userId) => User.findOne({
+  attributes: ['id', 'name', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId', 'role'],
+  where: {
+    id: {
+      [Op.eq]: userId,
+    },
+  },
+  include: [
+    { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+  ],
+});
+
 /**
  * Gets one user from the database.
  *
@@ -19,17 +31,7 @@ const logContext = {
 export async function getUser(req, res) {
   const { userId } = req.params;
   try {
-    const user = await User.findOne({
-      attributes: ['id', 'name', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId', 'title'],
-      where: {
-        id: {
-          [Op.eq]: userId,
-        },
-      },
-      include: [
-        { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
-      ],
-    });
+    const user = await userById(userId);
     res.json(user.toJSON());
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -45,7 +47,7 @@ export async function getUser(req, res) {
 export default async function getUsers(req, res) {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'name', 'title', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId'],
+      attributes: ['id', 'name', 'role', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId'],
       include: [
         { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
       ],
@@ -87,10 +89,10 @@ export async function createUser(req, res) {
 export async function updateUser(req, res) {
   const requestUser = req.body;
   const { userId } = req.params;
-  let result;
+
   try {
     await sequelize.transaction(async (t) => {
-      result = await User.update(requestUser,
+      await User.update(requestUser,
         {
           include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
           where: { id: userId },
@@ -101,7 +103,8 @@ export async function updateUser(req, res) {
       await Permission.bulkCreate(requestUser.permissions,
         { transaction: t });
     });
-    res.json(result);
+    const user = await userById(userId);
+    res.json(user);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
