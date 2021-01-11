@@ -1,67 +1,20 @@
 /*
   Activity report. Makes use of the navigator to split the long form into
-  multiple pages. Each "page" is defined in the `./Pages` directory. To add
-  a new page define a new "pages" array item with a label and renderForm function
-  that accepts a react-hook-form useForm object as an argument (see
-  https://react-hook-form.com/api/)
+  multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, { useState } from 'react';
+import _ from 'lodash';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import { useHistory, Redirect } from 'react-router-dom';
 
-import ActivitySummary from './Pages/ActivitySummary';
-import TopicsResources from './Pages/TopicsResources';
-import NextSteps from './Pages/NextSteps';
-import ReviewSubmit from './Pages/ReviewSubmit';
-import GoalsObjectives from './Pages/GoalsObjectives';
+import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-
-const pages = [
-  {
-    label: 'Activity summary',
-    renderForm: (hookForm) => {
-      const {
-        register, watch, setValue, getValues, control,
-      } = hookForm;
-      return (
-        <ActivitySummary
-          register={register}
-          watch={watch}
-          setValue={setValue}
-          getValues={getValues}
-          control={control}
-        />
-      );
-    },
-  },
-  {
-    label: 'Topics and resources',
-    renderForm: (hookForm) => {
-      const { control, register } = hookForm;
-      return (
-        <TopicsResources
-          register={register}
-          control={control}
-        />
-      );
-    },
-  },
-  {
-    label: 'Goals and objectives',
-    renderForm: () => (
-      <GoalsObjectives />
-    ),
-  },
-  {
-    label: 'Next steps',
-    renderForm: () => (
-      <NextSteps />
-    ),
-  },
-];
+import { submitReport } from '../../fetchers/activityReports';
 
 const defaultValues = {
   'activity-method': [],
@@ -84,28 +37,39 @@ const defaultValues = {
   topics: [],
 };
 
-const initialPageState = pages.map(() => NOT_STARTED);
+const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
+const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ initialData }) {
+function ActivityReport({ initialData, match }) {
   const [submitted, updateSubmitted] = useState(false);
+  const history = useHistory();
+  const { params: { currentPage } } = match;
 
-  const onFormSubmit = (data) => {
+  const onFormSubmit = async (data, extraData) => {
     // eslint-disable-next-line no-console
-    console.log('Submit form data', data);
+    console.log('Submit form data', data, extraData);
+    await submitReport(data, extraData);
     updateSubmitted(true);
   };
+
+  const updatePage = (position) => {
+    const page = pages.find((p) => p.position === position);
+    history.push(`/activity-reports/${page.path}`);
+  };
+
+  if (!currentPage) {
+    return (
+      <Redirect to="/activity-reports/activity-summary" />
+    );
+  }
 
   return (
     <>
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
-        renderReview={(allComplete, onSubmit) => (
-          <ReviewSubmit
-            allComplete={allComplete}
-            onSubmit={onSubmit}
-          />
-        )}
+        updatePage={updatePage}
+        currentPage={currentPage}
         submitted={submitted}
         initialPageState={initialPageState}
         defaultValues={{ ...defaultValues, ...initialData }}
@@ -118,6 +82,7 @@ function ActivityReport({ initialData }) {
 
 ActivityReport.propTypes = {
   initialData: PropTypes.shape({}),
+  match: ReactRouterPropTypes.match.isRequired,
 };
 
 ActivityReport.defaultProps = {

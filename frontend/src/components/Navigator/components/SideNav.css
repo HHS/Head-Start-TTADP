@@ -41,7 +41,7 @@
 
 .smart-hub--tag-complete {
   background-color: #e6faedb0;
-  color: #467e5a;
+  color: #3a7e5a;
 }
 
 .smart-hub--tag-submitted {
@@ -79,4 +79,12 @@
   position: absolute;
   top: -2.5rem;
   transition: 0.2s ease-in-out;
+}
+
+.smart-hub--navigator-item:first-child .smart-hub--navigator-link-active {
+  border-top-right-radius: 4px;
+}
+
+.smart-hub--navigator-item:last-child .smart-hub--navigator-link-active {
+  border-bottom-right-radius: 4px;
 }

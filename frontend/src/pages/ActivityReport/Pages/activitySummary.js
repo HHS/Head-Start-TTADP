@@ -101,6 +101,7 @@ const ActivitySummary = ({
         <title>Activity summary</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Who was the activity for?">
+        <div id="activity-for" />
         <div className="smart-hub--form-section">
           <Radio
             id="category-grantee"
@@ -174,6 +175,7 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Reason for Activity">
+        <div id="reasons" />
         <div className="smart-hub--form-section">
           <Fieldset unstyled>
             <legend>
@@ -210,6 +212,7 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Date and Duration">
+        <div id="date" />
         <div className="smart-hub--form-section">
           <Grid row gap>
             <Grid col={6}>
@@ -241,6 +244,7 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Training or Technical Assistance">
+        <div id="tta" />
         <div className="smart-hub--form-section">
           <Fieldset unstyled>
             <legend>What TTA was provided?</legend>
@@ -273,12 +277,12 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Other participants">
+        <div id="other-participants" />
         <div className="smart-hub--form-section">
           <MultiSelect
             name="participants"
             label="Grantee participant(s) involved"
             control={control}
-            placeholder="Select a particgetValuesipant..."
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
@@ -307,4 +311,73 @@ ActivitySummary.propTypes = {
   control: PropTypes.object.isRequired,
 };
 
-export default ActivitySummary;
+const sections = [
+  {
+    title: 'Who was the activity for?',
+    anchor: 'activity-for',
+    items: [
+      { label: 'Grantee or Non-grantee', name: 'participant-category' },
+      { label: 'Grantee name(s)', name: 'grantees' },
+      { label: 'Grantee number(s)', name: '' },
+      { label: 'Collaborating specialist(s)', name: 'other-users' },
+      { label: 'CDI', name: 'cdi' },
+      { label: 'Program type(s)', name: 'program-types' },
+      { label: 'Target Populations addressed', name: 'target-populations' },
+    ],
+  },
+  {
+    title: 'Reason for activity',
+    anchor: 'reasons',
+    items: [
+
+      { label: 'Requested by', name: 'requester' },
+      { label: 'reason(s)', name: 'reason' },
+    ],
+  },
+  {
+    title: 'Activity date',
+    anchor: 'date',
+    items: [
+      { label: 'Start date', name: 'start-date' },
+      { label: 'End date', name: 'end-date' },
+      { label: 'Duration', name: 'duration' },
+    ],
+  },
+  {
+    title: 'Training or Technical Assistance',
+    anchor: 'tta',
+    items: [
+      { label: 'TTA Provided', name: 'activity-type' },
+      { label: 'Conducted', name: 'activity-method' },
+    ],
+  },
+  {
+    title: 'Other participants',
+    anchor: 'other-participants',
+    items: [
+      { label: 'Grantee participants', name: 'participants' },
+      { label: 'Number of participants', name: 'number-of-participants' },
+    ],
+  },
+];
+
+export default {
+  position: 1,
+  label: 'Activity summary',
+  path: 'activity-summary',
+  sections,
+  render: (hookForm) => {
+    const {
+      register, watch, setValue, getValues, control,
+    } = hookForm;
+    return (
+      <ActivitySummary
+        register={register}
+        watch={watch}
+        setValue={setValue}
+        getValues={getValues}
+        control={control}
+      />
+    );
+  },
+};

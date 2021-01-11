@@ -4,11 +4,14 @@ import helmet from 'helmet';
 import axios from 'axios';
 import session from 'express-session';
 import memorystore from 'memorystore';
-import _ from 'lodash';
 import path from 'path';
 import join from 'url-join';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
+import updateGrantsGrantees from './lib/updateGrantsGrantees';
+
+import findOrCreateUser from './services/accessValidation';
 
 import logger, { requestLogger } from './logger';
 
@@ -52,13 +55,17 @@ app.get(oauth2CallbackPath, async (req, res) => {
     });
 
     const { url } = requestObj;
-
     const response = await axios.get(url, requestObj);
     const { data } = response;
-    const { authorities } = data;
-    req.session.userId = 1; // temporary
-    req.session.role = _.get(authorities[0], 'authority');
-    logger.info(`role: ${req.session.role} ${req.session.referrerPath}`);
+    const { principal: { username, userId } } = data;
+
+    const dbUser = await findOrCreateUser({
+      email: username,
+      hsesUserId: userId.toString(),
+    });
+
+    req.session.userId = dbUser.id;
+    logger.info(`role: ${req.session.userId} ${req.session.referrerPath}`);
     res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
   } catch (error) {
     logger.error(`Error logging in: ${error}`);
@@ -71,5 +78,24 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, 'client', 'index.html'));
   });
 }
+
+// Set timing parameters.
+// Run at midnight
+// const schedule = '0 0 * * *';
+const timezone = 'America/New_York';
+
+// tmp schedule for testing
+const schedule = '*/25 * * * *';
+
+const runJob = () => {
+  try {
+    updateGrantsGrantees();
+  } catch (error) {
+    logger.error(`Error processing HSES file: ${error}`);
+  }
+};
+
+const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+job.start();
 
 module.exports = app;

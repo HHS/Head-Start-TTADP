@@ -5,7 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:12.19.0-browsers
+      - image: circleci/node:12.20.0-browsers
+  docker-postgres-executor:
+    docker:
+      - image: circleci/node:12.20.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -32,6 +35,10 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
     parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -63,6 +70,15 @@ commands:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
         type: env_var_name
+      hses_data_file_url:
+        description: "Url to download HSES grants and grantee data from"
+        type: env_var_name
+      hses_data_username:
+        description: "Username used to access the HSES grants and grantee data"
+        type: env_var_name
+      hses_data_password:
+        description: "Password used to access the HSES grants and grantee data"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -79,7 +95,10 @@ commands:
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
-              --var SESSION_SECRET=${<< parameters.session_secret >>}
+              --var SESSION_SECRET=${<< parameters.session_secret >>} \
+              --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
+              --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
+              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>}
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -114,10 +133,10 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-140-add-navigator"
+    default: "kw-pull-hs-data"
     type: string
 jobs:
-  build:
+  build_and_lint:
     executor: docker-executor
     steps:
       - checkout
@@ -134,60 +153,51 @@ jobs:
             - node_modules
             - frontend/node_modules
           key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
             - .
-  lint_audit:
-    executor: docker-executor
+  test_backend:
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
-          name: Lint backend
-          command: yarn run lint:ci
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend run lint:ci
-      - run:  # Fail audit only for moderate and higher vulnerabilities
           name: Audit vulnerability of backend node_modules
           command: |
             chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - run:  # Fail audit only for moderate and higher vulnerabilities
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh; \
-            EXIT_CODE=$?; \
-              (($EXIT_CODE >= 4)) && exit $EXIT_CODE || exit 0
-      - store_artifacts:
-          path: reports
-      - store_artifacts:
-          path: frontend/reports
-  test_backend:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
+            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Test backend
-          command: yarn run test:ci
+          command: yarn test:ci
       - store_test_results:
           path: reports/
       - store_artifacts:
           path: coverage/
   test_frontend:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci
@@ -196,7 +206,7 @@ jobs:
       - store_artifacts:
           path: frontend/coverage/
   cucumber_test:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
@@ -204,15 +214,17 @@ jobs:
           name: Start server
           command: |
             yarn build
-            BYPASS_AUTH=true yarn start:ci
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
           background: true
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
       - run:
           name: Run cucumber
           command: |
-            mkdir reports
             sleep 5
             yarn cucumber:ci
       - store_artifacts:
@@ -246,24 +258,26 @@ jobs:
               -t http://server:8080 \
               -c zap.conf -I -i
   accessibility_scan:
-    executor: docker-executor
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
       - run:
           name: Run migrations ci
-          command: yarn run db:migrate:ci
+          command: yarn db:migrate:ci
       - run:
           name: Build
           command: yarn build
       - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
           name: Start server
-          command: BYPASS_AUTH=true yarn start:ci
+          command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
           background: true
       - run:
           name: Run axe
           command: |
-            mkdir reports
             sleep 5
             yarn axe:ci
       - store_artifacts:
@@ -291,6 +305,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
                 auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
@@ -299,6 +314,14 @@ jobs:
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: SANDBOX_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Return database to neutral, then migrate and seed
+                command: |
+                  cf run-task tta-smarthub-sandbox \
+                  "yarn db:seed:undo:prod && yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # dev
           condition:
             and:
@@ -306,6 +329,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
                 auth_client_secret: DEV_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_DEV_USERNAME
@@ -314,6 +338,13 @@ jobs:
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: DEV_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Undo database seeding, then migrate and seed
+                command: |
+                  cf run-task tta-smarthub-dev "yarn db:seed:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # staging
           condition:
             and:
@@ -321,6 +352,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
                 auth_client_secret: STAGING_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_STAGING_USERNAME
@@ -329,6 +361,13 @@ jobs:
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: STAGING_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-staging "yarn db:migrate:prod"
       - when:  # prod
           condition:
             and:
@@ -336,6 +375,7 @@ jobs:
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
             - cf_deploy:
+                app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
                 auth_client_secret: PROD_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_PROD_USERNAME
@@ -344,34 +384,37 @@ jobs:
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-prod "yarn db:migrate:prod"
 workflows:
   build_test_deploy:
     jobs:
-      - build
-      - lint_audit:
-          requires:
-            - build
+      - build_and_lint
       - test_backend:
           requires:
-            - build
+            - build_and_lint
       - test_frontend:
           requires:
-            - build
+            - build_and_lint
       - cucumber_test:
           requires:
-            - build
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
       - accessibility_scan:
           requires:
-            - build
+            - build_and_lint
       - deploy:
           requires:
-            - lint_audit
             - test_backend
-            - cucumber_test
             - test_frontend
+            - cucumber_test
             - dynamic_security_scan
             - accessibility_scan
           filters:
@@ -381,7 +424,6 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-
   daily_scan:
     triggers:
       - schedule:
@@ -393,10 +435,13 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build
-      - lint_audit:
+      - build_and_lint
+      - test_backend:
           requires:
-            - build
+            - build_and_lint
+      - test_frontend:
+          requires:
+            - build_and_lint
       - dynamic_security_scan:
           requires:
-            - build
+            - build_and_lint
