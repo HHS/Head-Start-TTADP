@@ -69,3 +69,31 @@ resource "cloudfoundry_service_instance" "document_upload_bucket" {
   space        = data.cloudfoundry_space.space.id
   service_plan = data.cloudfoundry_service.s3.service_plans["basic"]
 }
+
+###
+# ClamAV networking
+# Connects sandbox app to dev clam rest api
+###
+
+data "cloudfoundry_space" "dev_space" {
+  org_name = var.cf_org_name
+  name     = var.cf_dev_space_name
+}
+
+data "cloudfoundry_app" "clamav_rest" {
+  name_or_id = var.clamav_rest_app_name
+  space      = data.cloudfoundry_space.dev_space.id
+}
+
+data "cloudfoundry_app" "ttahub" {
+  name_or_id = "tta-smarthub-${var.env}"
+  space      = data.cloudfoundry_space.space.id
+}
+
+resource "cloudfoundry_network_policy" "clamav_routing" {
+  policy {
+    source_app      = data.cloudfoundry_app.ttahub.id
+    destination_app = data.cloudfoundry_app.clamav_rest.id
+    port            = "8080"
+  }
+}
