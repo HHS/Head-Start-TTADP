@@ -5,6 +5,7 @@ import parse from 'csv-parse/lib/sync';
 import {
   Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, GrantGoal,
 } from '../src/models';
+import { exit } from 'process';
 
 const hubRoles = [
   { name: 'RPM', fullName: 'Regional Program Manager' },
@@ -159,6 +160,10 @@ export default async function importGoals(file, region) {
           for await (const grant of currentGrants) {
             const fullGrant = { number: grant.trim(), regionId };
             const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'granteeId'] });
+            if (!dbGrant) {
+              console.log(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
+              process.exit(1);
+            }
             grantId = dbGrant.id;
             currentGranteeId = dbGrant.granteeId;
             // }
