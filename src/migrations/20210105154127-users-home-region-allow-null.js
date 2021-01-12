@@ -1,15 +1,9 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.changeColumn('Users', 'homeRegionId', {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-    });
+  up: async () => {
+    // placeholder
   },
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.changeColumn('Users', 'homeRegionId', {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    });
+  down: async () => {
+
   },
 };
