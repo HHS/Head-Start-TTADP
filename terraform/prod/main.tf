@@ -72,6 +72,9 @@ resource "cloudfoundry_service_instance" "document_upload_bucket" {
 
 ###
 # ClamAV networking
+# The following lines should be commented out for the initial `terraform apply`
+# run to bootstrap the application.
+# Run them after the ttahub and ClamAV apps have all been deployed
 ###
 
 data "cloudfoundry_app" "clamav_server" {

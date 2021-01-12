@@ -44,3 +44,21 @@ variable "env" {
   description = "deployment environment in shortened form (dev, staging, prod)"
   default     = "staging"
 }
+
+variable "clamav_server_app_name" {
+  type        = string
+  description = "app name for clamd server"
+  default     = "clamav-server-ttahub-dev"
+}
+
+variable "clamav_rest_app_name" {
+  type        = string
+  description = "app name for clamav api server"
+  default     = "clamav-rest-ttahub-dev"
+}
+
+variable "cf_dev_space_name" {
+  type        = string
+  description = "cloud.gov dev space name"
+  default     = "ttahub-dev"
+}
