@@ -182,9 +182,7 @@ jobs:
           command: yarn db:migrate:ci
       - run:
           name: Run seeders
-          command: |
-            yarn db:seed:undo
-            yarn db:seed
+          command: yarn db:seed:ci
       - run:
           name: Test backend
           command: yarn test:ci
