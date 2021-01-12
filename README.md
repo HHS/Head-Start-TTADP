@@ -9,16 +9,26 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 ## Getting Started
 
 ### Set up
+#### Docker
 
-Make sure Docker is installed. To check run `docker ps`
-
-Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed. Running `yarn docker:start` starts the backend and frontend, browse to `http://localhost:3000` to hit the frontend and `http://localhost:3000/api` to hit the backend. Copying `.env.example` to `.env`, substituting in your user id and group id will cause any files created in docker containers to be owned by your user on your host.
-
-You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
+1. Make sure Docker is installed. To check run `docker ps`.
+2. Make sure you have Node 12.20.0 installed.
+3. Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed. 
+4. Copy `.env.example` to `.env`.  
+6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
+7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
+8. Run `yarn docker:db:migrate` to run DB migrations
+9. Run `yarn docker:db:seed` to seed the database with test data.
+10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`.
+11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+
+#### Local build
+
+You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
 ### Running Tests
 
