@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import importGoals from './importPlanGoals';
 import { processFiles } from '../src/lib/updateGrantsGrantees';
 import db, {
-  Role, Topic, RoleTopic, Goal, Grantee, Grant, sequelize,
+  Role, Topic, RoleTopic, Goal, Grantee, Grant,
 } from '../src/models';
 
 describe('Import TTA plan goals', () => {
@@ -234,11 +234,6 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should have Grantees Goals connection', async () => {
-    // await Grant.destroy({ where: [] });
-    // await Grantee.destroy({ where: {} });
-    // const granteesBefore = await Grantee.findAll();
-
-    // expect(granteesBefore.length).not.toBe(0);
     const grantees = await Grantee.findAll();
     expect(grantees).toBeDefined();
     expect(grantees.length).toBe(8);
@@ -263,20 +258,6 @@ describe('Import TTA plan goals', () => {
     expect(grantee.goals[0].name).toEqual('Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.');
     expect(grantee.goals[1].name).toEqual('Enhance reflective practice.');
   });
-
-  // it('should import Grants table', async () => {
-  //   await Grant.destroy({ where: {} });
-  //   const grantsBefore = await Grant.findAll();
-
-  //   expect(grantsBefore.length).toBe(0);
-  //   await importGoals('GranteeTTAPlanTest.csv');
-
-  //   const grants = await Grant.findAll();
-  //   expect(grants).toBeDefined();
-  //   expect(grants.length).toBe(5);
-  //   expect(grants[1].number).toBe('14CH10000');
-  //   expect(grants[1].regionId).toBe(14);
-  // });
 
   it('should import RoleTopics table', async () => {
     await Topic.destroy({ where: {} });
