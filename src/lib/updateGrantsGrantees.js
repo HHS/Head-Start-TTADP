@@ -21,7 +21,7 @@ const fs = require('mz/fs');
  * The grantee data is them filtered to exclude delegates
  *
  */
-async function processFiles() {
+export async function processFiles() {
   let grantGrantees;
   let grants;
   const granteesForDb = [];
@@ -42,7 +42,19 @@ async function processFiles() {
 
     // filter out delegates by matching to the non-delegates
     // eslint-disable-next-line max-len
-    const grantees = agency.agencies.agency.filter((a) => grantGrantees.some((gg) => gg.agency_id === a.agency_id));
+    const granteesNonDelegates = agency.agencies.agency.filter((a) => grantGrantees.some((gg) => gg.agency_id === a.agency_id));
+
+    const hubGranteeIds = await Grantee.findAll({ attributes: ['id'] }).map((hgi) => hgi.id);
+
+    // process grants
+    const grantData = await fs.readFile('./temp/grant_award.xml');
+    const grant = JSON.parse(toJson(grantData));
+
+    // Check if the grantee id already exists in the smarthub db OR if it belongs to
+    // at least one active grant. grant_award data structure includes agency_id
+    // eslint-disable-next-line max-len
+    const grantees = granteesNonDelegates.filter((gnd) => hubGranteeIds.some((id) => id.toString() === gnd.agency_id)
+    || grant.grant_awards.grant_award.some((ga) => ga.agency_id === gnd.agency_id && ga.grant_status === 'Active'));
 
     grantees.forEach((g) => granteesForDb.push({
       id: parseInt(g.agency_id, 10),
@@ -53,13 +65,10 @@ async function processFiles() {
       {
         updateOnDuplicate: ['name', 'updatedAt'],
       });
-    // process grants
-    const grantData = await fs.readFile('./temp/grant_award.xml');
-    const grant = JSON.parse(toJson(grantData));
 
     const hubGrantIds = await Grant.findAll({ attributes: ['id'] }).map((hgi) => hgi.id);
 
-    grants = grant.grant_awards.grant_award.filter((ga) => hubGrantIds.some((id) => id === ga.grant_id) || ga.grant_status === 'Active');
+    grants = grant.grant_awards.grant_award.filter((ga) => hubGrantIds.some((id) => id.toString() === ga.grant_award_id) || ga.grant_status === 'Active');
 
     grants.forEach((g) => grantsForDb.push({
       id: parseInt(g.grant_award_id, 10),
