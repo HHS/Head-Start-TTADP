@@ -64,16 +64,13 @@ export default async function importGoals(file, region) {
   const regionId = region || 14; // default to region 14
   try {
     const cleanRoleTopics = [];
-    const cleanGrantees = [];
     const cleanGrantGoals = [];
     const cleanTopicGoals = [];
-    const cleanGrants = [];
     const currentGoals = [];
 
     await prePopulateRoles();
 
     for await (const el of grantees) {
-      let currentGrantee;
       let currentGranteeId;
       let grants;
       let currentGrants = [];
@@ -82,10 +79,6 @@ export default async function importGoals(file, region) {
 
       for await (const key of Object.keys(el)) {
         if (key && (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))) {
-          currentGrantee = el[key] ? el[key].split('|')[0].trim() : 'Unknown Grantee';
-          const [dbGrantee] = await Grantee.findOrCreate({ where: { name: currentGrantee } });
-          currentGranteeId = dbGrantee.id;
-          cleanGrantees.push({ id: currentGranteeId, name: currentGrantee });
           grants = el[key] ? el[key].split('|')[1].trim() : 'Unknown Grant';
           currentGrants = grants.split(',');
         } else if (key && key.startsWith('Goal')) {
@@ -163,15 +156,12 @@ export default async function importGoals(file, region) {
               tp.goalId = goalId;
             }
           });
-          currentGranteeId = cleanGrantees.find((g) => g.name === currentGrantee).id;
           for await (const grant of currentGrants) {
-            const fullGrant = { number: grant.trim(), granteeId: currentGranteeId };
-            if (!cleanGrants.some((e) => e.granteeId === fullGrant.granteeId
-                            && e.number === fullGrant.number)) {
-              cleanGrants.push(fullGrant);
-            }
-            const [dbGrant] = await Grant.findOrCreate({ where: { ...fullGrant, regionId } });
+            const fullGrant = { number: grant.trim(), regionId };
+            const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'granteeId'] });
             grantId = dbGrant.id;
+            currentGranteeId = dbGrant.granteeId;
+            // }
             const plan = { granteeId: currentGranteeId, grantId, goalId };
             if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
                             && e.grantId === grantId
