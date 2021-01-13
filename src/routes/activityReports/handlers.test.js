@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityParticipant, User, Permission, Grant, Grantee, NonGrantee,
+  ActivityReport, ActivityParticipant, User, Permission,
 } from '../../models';
 import {
   getApprovers, saveReport, createReport, getReport, getParticipants,
@@ -13,12 +13,12 @@ const mockUser = {
   permissions: [
     {
       userId: 100,
-      regionId: 1,
+      regionId: 5,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
     {
       userId: 100,
-      regionId: 2,
+      regionId: 6,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
   ],
@@ -44,72 +44,70 @@ const reportObject = {
 };
 
 describe('Activity Report handlers', () => {
-  beforeEach(async () => {
-    await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
+  let user;
+
+  beforeAll(async () => {
+    user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await ActivityParticipant.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
-    await User.destroy({ where: {} });
+    await User.destroy({ where: { id: user.id } });
+    db.sequelize.close();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  afterAll(async () => {
-    db.sequelize.close();
-  });
-
   describe('getApprovers', () => {
     const approverOne = {
       id: 50,
-      name: 'region 1',
+      name: 'region 5',
       permissions: [
         {
           userId: 50,
-          regionId: 1,
+          regionId: 5,
           scopeId: SCOPES.APPROVE_REPORTS,
         },
       ],
     };
     const approverTwo = {
       id: 51,
-      name: 'region 2',
+      name: 'region 6',
       permissions: [
         {
           userId: 51,
-          regionId: 2,
+          regionId: 6,
           scopeId: SCOPES.APPROVE_REPORTS,
         },
       ],
     };
-    const approverThree = {
-      id: 53,
-      name: 'region 3',
-      permissions: [
-        {
-          userId: 51,
-          regionId: 3,
-          scopeId: SCOPES.APPROVE_REPORTS,
-        },
-      ],
-    };
+
+    const approvers = [
+      {
+        id: 50,
+        name: 'region 5',
+      },
+      {
+        id: 51,
+        name: 'region 6',
+      },
+    ];
 
     beforeEach(async () => {
       await User.create(approverOne, { include: [{ model: Permission, as: 'permissions' }] });
       await User.create(approverTwo, { include: [{ model: Permission, as: 'permissions' }] });
-      await User.create(approverThree, { include: [{ model: Permission, as: 'permissions' }] });
     });
 
     afterEach(async () => {
-      await User.destroy({ where: {} });
+      await User.destroy({ where: { id: [50, 51] } });
     });
 
     it("returns a list of users that have approving permissions on the user's regions", async () => {
       await getApprovers({ session: mockSession }, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith([{ id: 50, name: 'region 1' }, { id: 51, name: 'region 2' }]);
+      expect(mockResponse.json).toHaveBeenCalledWith(approvers);
     });
   });
 
@@ -154,18 +152,11 @@ describe('Activity Report handlers', () => {
   });
 
   describe('createReport', () => {
-    afterAll(async () => {
-      await Grant.destroy({ where: {} });
-      await Grantee.destroy({ where: {} });
-    });
-
     it('creates a new report', async () => {
-      const grantee = await Grantee.create({ name: 'test' });
-      const grant = await Grant.create({ number: 1, granteeId: grantee.id });
       const beginningARCount = await ActivityReport.count();
       const report = {
         participantType: 'grantee',
-        activityParticipants: [{ participantId: grant.id }],
+        activityParticipants: [{ participantId: 1 }],
       };
       const request = {
         body: report,
@@ -213,24 +204,100 @@ describe('Activity Report handlers', () => {
   });
 
   describe('getParticipants', () => {
-    afterEach(async () => {
-      Grantee.destroy({ where: {} });
-      Grant.destroy({ where: {} });
-      NonGrantee.destroy({ where: {} });
-    });
+    const expectedNonGrantees = [
+      {
+        name: 'CCDF / Child Care Administrator',
+        participantId: 1,
+      },
+      {
+        name: 'Head Start Collaboration Office',
+        participantId: 2,
+      },
+      {
+        name: 'QRIS System',
+        participantId: 3,
+      },
+      {
+        name: 'Regional Head Start Association',
+        participantId: 4,
+      },
+      {
+        name: 'Regional TTA/Other Specialists',
+        participantId: 5,
+      },
+      {
+        name: 'State CCR&R',
+        participantId: 6,
+      },
+      {
+        name: 'State Early Learning Standards',
+        participantId: 7,
+      },
+      {
+        name: 'State Education System',
+        participantId: 8,
+      },
+      {
+        name: 'State Health System',
+        participantId: 9,
+      },
+      {
+        name: 'State Head Start Association',
+        participantId: 10,
+      },
+      {
+        name: 'State Professional Development / Continuing Education',
+        participantId: 11,
+      },
+    ];
+
+    const expectedGrants = [
+      {
+        participantId: 1,
+        name: 'Grantee Name - 14CH1234',
+      },
+      {
+        participantId: 2,
+        name: 'Stroman, Cronin and Boehm - 14CH10000',
+      },
+      {
+        participantId: 3,
+        name: 'Jakubowski-Keebler - 14CH00001',
+      },
+      {
+        participantId: 4,
+        name: 'Johnston-Romaguera - 14CH00002',
+      },
+      {
+        participantId: 5,
+        name: 'Johnston-Romaguera - 14CH00003',
+      },
+      {
+        participantId: 6,
+        name: 'Agency 1, Inc. - 09CH011111',
+      },
+      {
+        participantId: 7,
+        name: 'Agency 2, Inc. - 09CH022222',
+      },
+      {
+        participantId: 8,
+        name: 'Agency 3, Inc. - 09CH033333',
+      },
+      {
+        participantId: 9,
+        name: 'Agency 4, Inc. - 09HP044444',
+      },
+    ];
 
     it('retrieves grantees as well as nonGrantees', async () => {
-      const grantee = await Grantee.create({ name: 'test' });
-      const grant = await Grant.create({ number: 1, granteeId: grantee.id });
-      const nonGrantee = await NonGrantee.create({ name: 'nonGrantee' });
-
       const expected = {
-        grants: [{ participantId: grant.id, name: 'test - 1' }],
-        nonGrantees: [{ participantId: nonGrantee.id, name: 'nonGrantee' }],
+        grants: expectedGrants,
+        nonGrantees: expectedNonGrantees,
       };
 
       await getParticipants({ session: mockSession }, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(expected);
+      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(expected));
     });
   });
 });
