@@ -19,6 +19,7 @@ services:
       - db
     environment:
       - POSTGRES_HOST=postgres_docker
+      - S3_ENDPOINT=http://minio:9000
     volumes:
       - ".:/app:rw"
   frontend:
@@ -42,5 +43,14 @@ services:
       - "6543:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
+  minio:
+    image: minio/minio
+    env_file: .env
+    ports:
+      - "9000:9000"
+    volumes:
+      - miniodata:/data
+    command: server /data
 volumes:
   dbdata: {}
+  miniodata: {}
