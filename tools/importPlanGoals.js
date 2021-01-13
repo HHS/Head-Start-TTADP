@@ -166,7 +166,6 @@ export default async function importGoals(file, region) {
             }
             grantId = dbGrant.id;
             currentGranteeId = dbGrant.granteeId;
-            // }
             const plan = { granteeId: currentGranteeId, grantId, goalId };
             if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
                             && e.grantId === grantId
