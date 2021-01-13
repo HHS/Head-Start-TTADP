@@ -1,19 +1,50 @@
 import { Model } from 'sequelize';
 
-export default (sequelize) => {
+export default (sequelize, DataTypes) => {
   class ActivityParticipant extends Model {
     static associate(models) {
-      ActivityParticipant.belongsTo(models.Activity, { foreignKey: 'activityId' });
-      ActivityParticipant.belongsTo(models.Grant, { foreignKey: 'grantId' });
-      ActivityParticipant.belongsTo(models.NonGrantee, { foreignKey: 'nonGranteeId' });
+      ActivityParticipant.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      ActivityParticipant.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      ActivityParticipant.belongsTo(models.NonGrantee, { foreignKey: 'nonGranteeId', as: 'nonGrantee' });
     }
   }
-  ActivityParticipant.init({}, {
+  ActivityParticipant.init({
+    activityReportId: {
+      allowNull: false,
+      type: DataTypes.INTEGER,
+    },
+    grantId: {
+      allowNull: true,
+      type: DataTypes.INTEGER,
+    },
+    nonGranteeId: {
+      allowNull: true,
+      type: DataTypes.INTEGER,
+    },
+    participantId: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.grant) {
+          return this.grant.id;
+        }
+        return this.nonGrantee.id;
+      },
+    },
+    name: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.grant) {
+          return this.grant.name;
+        }
+        return this.nonGrantee.name;
+      },
+    },
+  }, {
     sequelize,
     modelName: 'ActivityParticipant',
     validate: {
       oneNull() {
-        if (![this.grantId, this.nonGranteeId].includes(null)) {
+        if (this.grantId && this.nonGranteeId) {
           throw new Error('Can not specify both grantId and nonGranteeId');
         }
       },

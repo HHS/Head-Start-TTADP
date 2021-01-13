@@ -1,9 +1,9 @@
-import { Op } from 'sequelize';
-import {
-  User, Permission,
-} from '../../models';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
+import {
+  reportParticipants, activityReportById, createOrUpdate, reportExists,
+} from '../../lib/activityReports';
+import { userById, usersWithPermissions } from '../../lib/users';
 
 const { READ_WRITE_REPORTS, APPROVE_REPORTS } = SCOPES;
 
@@ -12,18 +12,6 @@ const namespace = 'SERVICE:ACTIVITY_REPORTS';
 const logContext = {
   namespace,
 };
-
-const userById = async (userId) => User.findOne({
-  attributes: ['id'],
-  where: {
-    id: {
-      [Op.eq]: userId,
-    },
-  },
-  include: [
-    { model: Permission, as: 'permissions', attributes: ['scopeId', 'regionId'] },
-  ],
-});
 
 /**
  * Gets all users that have approve permissions for the current user's
@@ -39,18 +27,7 @@ export async function getApprovers(req, res) {
     .map((p) => p.regionId);
 
   try {
-    const users = await User.findAll({
-      attributes: ['id', 'name'],
-      where: {
-        [Op.and]: [
-          { '$permissions.scopeId$': APPROVE_REPORTS },
-          { '$permissions.regionId$': reportRegions },
-        ],
-      },
-      include: [
-        { model: Permission, as: 'permissions', attributes: [] },
-      ],
-    });
+    const users = await usersWithPermissions(reportRegions, [APPROVE_REPORTS]);
     res.json(users);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -70,48 +47,79 @@ export async function submitReport(req, res) {
   res.sendStatus(204);
 }
 
-export async function saveReport(req, res) {
-  // Temporary until saving of report is implemented
-  // eslint-disable-next-line no-console
-  console.log('save');
-  res.sendStatus(204);
+export async function getParticipants(req, res) {
+  const participants = await reportParticipants();
+  res.json(participants);
 }
 
+/**
+ * Retrieve an activity report
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export async function getReport(req, res) {
-  const additionalData = {
-    additionalNotes: 'this is an additional note',
-    approvingManagers: [2],
-  };
+  const { activityReportId } = req.params;
+  const report = await activityReportById(activityReportId);
+  if (!report) {
+    res.sendStatus(404);
+  } else {
+    res.json(report);
+  }
+}
 
-  const report = {
-    activityMethod: 'in-person',
-    activityType: ['training'],
-    duration: '1',
-    endDate: '11/11/2020',
-    grantees: ['Grantee Name 1'],
-    numberOfParticipants: '1',
-    participantCategory: 'grantee',
-    participants: ['other participant 1'],
-    reason: ['reason 1'],
-    otherUsers: ['user 1'],
-    programTypes: ['program type 1'],
-    requester: 'grantee',
-    resourcesUsed: 'eclkcurl',
-    startDate: '11/11/2020',
-    targetPopulations: ['target pop 1'],
-    topics: ['first'],
-  };
+/**
+ * save an activity report
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function saveReport(req, res) {
+  try {
+    const newReport = req.body;
+    if (!newReport) {
+      res.sendStatus(400);
+      return;
+    }
+    const userId = parseInt(req.session.userId, 10);
+    const { activityReportId } = req.params;
 
-  const pageState = {
-    1: 'Complete',
-    2: 'Complete',
-    3: 'Complete',
-    4: 'Complete',
-  };
+    if (!await reportExists(activityReportId)) {
+      res.sendStatus(404);
+      return;
+    }
 
-  res.json({
-    report,
-    pageState,
-    additionalData,
-  });
+    newReport.userId = userId;
+    newReport.lastUpdatedById = userId;
+
+    const report = await createOrUpdate(newReport, activityReportId);
+    res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * create an activity report
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function createReport(req, res) {
+  try {
+    const newReport = req.body;
+    if (!newReport) {
+      res.sendStatus(400);
+      return;
+    }
+    const userId = parseInt(req.session.userId, 10);
+    newReport.status = 'draft';
+    newReport.userId = userId;
+    newReport.lastUpdatedById = userId;
+
+    const report = await createOrUpdate(newReport);
+    res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
 }
