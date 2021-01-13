@@ -14,7 +14,12 @@ frontend/build
 node_modules
 
 # Terraform
+**/.terraform.lock.hcl
 **/.terraform/*
+
+# transient deploy configs
+/terraform/transient
+/deployment_config/transient_vars.yml
 
 # Secrets
 .DS_Store
