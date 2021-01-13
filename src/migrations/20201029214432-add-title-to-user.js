@@ -23,6 +23,7 @@ module.exports = {
         'homeRegionId',
         {
           type: Sequelize.INTEGER,
+          allowNull: true,
           references: {
             model: 'Regions',
             key: 'id',
