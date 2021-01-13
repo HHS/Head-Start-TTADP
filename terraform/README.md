@@ -70,6 +70,14 @@ These docs are verbose because this is technology with which developers will rar
     cf_password = "some-dev-password"
     ```
 
+    Additionally, for environments other than dev and production, we need to grant the space deployer
+    credentials access to the dev space to enable setting up network policies to the dev ClamAV server.
+
+    ```
+    # Grant some-dev-user from previous step SpaceDeveloper access to ttahub-dev
+    cf set-space-role <some-dev-user from previous step> hhs-acf-ohs-tta ttahub-dev SpaceDeveloper
+    ```
+
 1. **Create S3 bucket credentials**
 
     We are using an S3 bucket created by Cloud Foundry in Cloud.gov as our remote backend for Terraform. The backend maintains the "state" of Terraform and makes it possible for multiple developers to implement changes in a linear fashion.
