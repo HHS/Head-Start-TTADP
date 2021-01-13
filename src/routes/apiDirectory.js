@@ -19,7 +19,7 @@ router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.use('/admin/users', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
-router.use('/files', filesRouter)
+router.use('/files', filesRouter);
 router.use('/hello', (req, res) => {
   res.send('Hello from ttadp');
 });
