@@ -81,11 +81,8 @@ if (process.env.NODE_ENV === 'production') {
 
 // Set timing parameters.
 // Run at midnight
-// const schedule = '0 0 * * *';
+const schedule = '0 0 * * *';
 const timezone = 'America/New_York';
-
-// tmp schedule for testing
-const schedule = '*/25 * * * *';
 
 const runJob = () => {
   try {
@@ -95,7 +92,10 @@ const runJob = () => {
   }
 };
 
-const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-job.start();
+// Run only on one instance
+if (process.env.CF_INSTANCE_INDEX === '0') {
+  const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+  job.start();
+}
 
 module.exports = app;
