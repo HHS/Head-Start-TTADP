@@ -1,15 +1,16 @@
-const { Model } = require('sequelize');
+const {
+  Model,
+} = require('sequelize');
 
 /**
- * NonGrantee table.
+ * NonGrantee table
  *
  * @param {} sequelize
  * @param {*} DataTypes
  */
 module.exports = (sequelize, DataTypes) => {
   class NonGrantee extends Model {
-    static associate() {
-    }
+    static associate() {}
   }
   NonGrantee.init({
     name: {

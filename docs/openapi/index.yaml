@@ -16,6 +16,70 @@ paths:
   $ref: "./paths/index.yaml"
 components:
   schemas:
+    activityReport:
+      type: object
+      properties:
+        id:
+          type: number
+        userId:
+          type: number
+        lastUpdatedById:
+          type: number
+        resourcesUsed:
+          type: string
+        additionalNotes:
+          type: string
+        numberOfParticipants:
+          type: number
+        deliveryMethod:
+          type: string
+        duration:
+          type: number
+        endDate:
+          type: string
+        startDate:
+          type: string
+        participantType:
+          type: string
+        requester:
+          type: string
+        programTypes:
+          type: array
+          items:
+            type: string
+        targetPopulations:
+          type: array
+          items:
+            type: string
+        reason:
+          type: array
+          items:
+            type: string
+        participants:
+          type: array
+          items:
+            type: string
+        topics:
+          type: array
+          items:
+            type: string
+        pageState:
+          type: object
+          properties:
+            1:
+              type: string
+            2:
+              type: string
+            3:
+              type: string
+            4:
+              type: string
+        status:
+          type: string
+        ttaType:
+          type: array
+          items:
+            type: string
     approvingUser:
       type: object
       properties:
@@ -23,6 +87,22 @@ components:
           type: number
         name:
           type: string
+    participant:
+      type: object
+      properties:
+        participantId:
+          type: number
+        name:
+          type: string
+    permission:
+      type: object
+      properties:
+        userId:
+          type: number
+        scopeId:
+          type: number
+        regionId:
+          type: number
     user:
       type: object
       properties:
@@ -44,12 +124,3 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/permission'
-    permission:
-      type: object
-      properties:
-        userId:
-          type: number
-        scopeId:
-          type: number
-        regionId:
-          type: number
