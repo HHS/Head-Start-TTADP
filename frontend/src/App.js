@@ -76,7 +76,7 @@ function App() {
         <Route
           path="/activity-reports/:currentPage?"
           render={({ match }) => (
-            <ActivityReport match={match} user={user} />
+            <ActivityReport match={match} />
           )}
         />
         {admin
