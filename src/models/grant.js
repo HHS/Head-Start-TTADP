@@ -22,6 +22,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true,
     },
+    status: DataTypes.STRING,
+    startDate: DataTypes.DATE,
+    endDate: DataTypes.DATE,
     granteeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
