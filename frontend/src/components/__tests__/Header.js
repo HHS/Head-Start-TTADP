@@ -14,10 +14,6 @@ describe('Header', () => {
     test('nav items are visible', () => {
       expect(screen.queryAllByRole('link').length).not.toBe(0);
     });
-
-    test('search is present', async () => {
-      expect(screen.getByLabelText('Search')).toBeVisible();
-    });
   });
 
   describe('when an admin', () => {
