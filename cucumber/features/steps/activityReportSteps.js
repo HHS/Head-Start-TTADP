@@ -7,7 +7,7 @@ const scope = require('../support/scope');
 
 Given('I am on the activity reports page', async () => {
   const page = scope.context.currentPage;
-  const selector = 'a[href$="activity-reports/new"]';
+  const selector = 'a[href$="activity-reports"]';
   await Promise.all([
     page.waitForNavigation(),
     page.click(selector),
