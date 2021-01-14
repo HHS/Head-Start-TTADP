@@ -47,7 +47,7 @@ const TopicsResources = ({
           Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
         </Label>
         <TextInput
-          id="resources-used"
+          id="resourcesUsed"
           name="resourcesUsed"
           type="text"
           inputRef={register({ required: true })}
