@@ -2,8 +2,7 @@ import {} from 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
 import axios from 'axios';
-import session from 'express-session';
-import memorystore from 'memorystore';
+import cookieSession from 'cookie-session';
 import path from 'path';
 import join from 'url-join';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
@@ -16,26 +15,21 @@ import findOrCreateUser from './services/accessValidation';
 import logger, { requestLogger } from './logger';
 
 const app = express();
-const MemoryStore = memorystore(session);
+
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
 app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  key: 'session',
-  cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-  },
-  rolling: true,
-  store: new MemoryStore({ // Potentially change this to a different store
-    checkPeriod: 86400000, // prune expired entries every 24h
-  }),
-  saveUninitialized: false,
-  resave: false,
+
+app.use(cookieSession({
+  name: 'session',
+  keys: [process.env.SESSION_SECRET],
+
+  // Cookie Options
+  httpOnly: false,
+  sameSite: 'lax',
 }));
 
 if (process.env.NODE_ENV === 'production') {
@@ -65,12 +59,17 @@ app.get(oauth2CallbackPath, async (req, res) => {
     });
 
     req.session.userId = dbUser.id;
+
     logger.info(`role: ${req.session.userId} ${req.session.referrerPath}`);
     res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
   } catch (error) {
     logger.error(`Error logging in: ${error}`);
     res.status(INTERNAL_SERVER_ERROR).end();
   }
+});
+app.use((req, res, next) => {
+  req.session.nowInMinutes = Math.floor(Date.now() / 60e3);
+  next();
 });
 
 if (process.env.NODE_ENV === 'production') {
