@@ -98,7 +98,7 @@ const sections = [
     title: 'Resources',
     anchor: 'resources',
     items: [
-      { label: 'Resources used', name: 'resources used', path: 'name' },
+      { label: 'Resources used', name: 'resources-used' },
       { label: 'Other resources', name: 'other-resources', path: 'name' },
     ],
   },
