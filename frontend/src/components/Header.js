@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Header as UswdsHeader, PrimaryNav, Search, Title, NavMenuButton,
+  Header as UswdsHeader, PrimaryNav, Title, NavMenuButton,
 } from '@trussworks/react-uswds';
 
 import NavLink from './NavLink';
@@ -44,9 +44,7 @@ function Header({ authenticated, admin }) {
             items={items}
             mobileExpanded={expanded}
             onToggleMobileNav={onClick}
-          >
-            <Search small />
-          </PrimaryNav>
+          />
           )}
         </div>
       </UswdsHeader>
