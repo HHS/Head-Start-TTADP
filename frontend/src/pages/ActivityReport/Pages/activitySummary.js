@@ -63,9 +63,9 @@ const ActivitySummary = ({
   control,
   getValues,
 }) => {
-  const participantSelection = watch('participantCategory');
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
+  const participantSelection = watch('participant-category');
+  const startDate = watch('start-date');
+  const endDate = watch('end-date');
 
   const disableParticipant = participantSelection === '';
   const nonGranteeSelected = participantSelection === 'non-grantee';
@@ -105,7 +105,7 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <Radio
             id="category-grantee"
-            name="participantCategory"
+            name="participant-category"
             label="Grantee"
             value="grantee"
             className="smart-hub--report-checkbox"
@@ -113,7 +113,7 @@ const ActivitySummary = ({
           />
           <Radio
             id="category-non-grantee"
-            name="participantCategory"
+            name="participant-category"
             label="Non-Grantee"
             value="non-grantee"
             className="smart-hub--report-checkbox"
@@ -133,7 +133,7 @@ const ActivitySummary = ({
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="otherUsers"
+            name="other-users"
             label="Collaborating Specialists"
             control={control}
             required={false}
@@ -144,7 +144,7 @@ const ActivitySummary = ({
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="programTypes"
+            name="program-types"
             label="Program type(s)"
             control={control}
             required
@@ -155,7 +155,7 @@ const ActivitySummary = ({
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="targetPopulations"
+            name="target-populations"
             label="Target Populations addressed. You may choose more than one."
             control={control}
             required
@@ -219,7 +219,7 @@ const ActivitySummary = ({
               <DatePicker
                 control={control}
                 maxDate={endDate}
-                name="startDate"
+                name="start-date"
                 label="Start Date"
                 register={register}
                 openUp
@@ -230,7 +230,7 @@ const ActivitySummary = ({
                 control={control}
                 minDate={startDate}
                 disabled={!startDate}
-                name="endDate"
+                name="end-date"
                 label="End Date"
                 register={register}
                 openUp
@@ -248,8 +248,8 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <Fieldset unstyled>
             <legend>What TTA was provided?</legend>
-            {renderCheckbox('activityType', 'training', 'Training')}
-            {renderCheckbox('activityType', 'technical-assistance', 'Technical Assistance')}
+            {renderCheckbox('activity-type', 'training', 'Training')}
+            {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
           </Fieldset>
         </div>
         <div className="smart-hub--form-section">
@@ -258,7 +258,7 @@ const ActivitySummary = ({
             <div className="smart-hub--form-section">
               <Radio
                 id="activity-virtual"
-                name="activityMethod"
+                name="activity-method"
                 label="Virtual"
                 value="virtual"
                 className="smart-hub--report-checkbox"
@@ -266,7 +266,7 @@ const ActivitySummary = ({
               />
               <Radio
                 id="activity-in-person"
-                name="activityMethod"
+                name="activity-method"
                 label="In Person"
                 value="in-person"
                 className="smart-hub--report-checkbox"
@@ -292,7 +292,7 @@ const ActivitySummary = ({
           <Label htmlFor="number-of-participants">Number of grantee participants involved</Label>
           <TextInput
             id="number-of-participants"
-            name="numberOfParticipants"
+            name="number-of-participants"
             type="number"
             inputRef={register({ required: true })}
           />
@@ -316,13 +316,13 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Grantee or Non-grantee', name: 'participantCategory' },
+      { label: 'Grantee or Non-grantee', name: 'participant-category' },
       { label: 'Grantee name(s)', name: 'grantees' },
       { label: 'Grantee number(s)', name: '' },
-      { label: 'Collaborating specialist(s)', name: 'otherUsers' },
+      { label: 'Collaborating specialist(s)', name: 'other-users' },
       { label: 'CDI', name: 'cdi' },
-      { label: 'Program type(s)', name: 'programTypes' },
-      { label: 'Target Populations addressed', name: 'targetPopulations' },
+      { label: 'Program type(s)', name: 'program-types' },
+      { label: 'Target Populations addressed', name: 'target-populations' },
     ],
   },
   {
@@ -338,8 +338,8 @@ const sections = [
     title: 'Activity date',
     anchor: 'date',
     items: [
-      { label: 'Start date', name: 'startDate' },
-      { label: 'End date', name: 'endDate' },
+      { label: 'Start date', name: 'start-date' },
+      { label: 'End date', name: 'end-date' },
       { label: 'Duration', name: 'duration' },
     ],
   },
@@ -347,8 +347,8 @@ const sections = [
     title: 'Training or Technical Assistance',
     anchor: 'tta',
     items: [
-      { label: 'TTA Provided', name: 'activityType' },
-      { label: 'Conducted', name: 'activityMethod' },
+      { label: 'TTA Provided', name: 'activity-type' },
+      { label: 'Conducted', name: 'activity-method' },
     ],
   },
   {
@@ -356,7 +356,7 @@ const sections = [
     anchor: 'other-participants',
     items: [
       { label: 'Grantee participants', name: 'participants' },
-      { label: 'Number of participants', name: 'numberOfParticipants' },
+      { label: 'Number of participants', name: 'number-of-participants' },
     ],
   },
 ];
