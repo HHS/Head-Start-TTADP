@@ -81,21 +81,6 @@
   transition: 0.2s ease-in-out;
 }
 
-.smart-hub--save-alert {
-  margin-top: 12px;
-}
-
-.smart-hub--save-alert p {
-  font-family: SourceSansPro;
-  font-size: 14px;
-  color: #21272d;
-  line-height: 24px;
-}
-
-.smart-hub--save-alert::before {
-  width: 4px;
-}
-
 .smart-hub--navigator-item:first-child .smart-hub--navigator-link-active {
   border-top-right-radius: 4px;
 }

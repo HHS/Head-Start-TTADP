@@ -62,7 +62,6 @@ describe('Navigator', () => {
           updatePage={updatePage}
           currentPage={currentPage}
           onFormSubmit={onSubmit}
-          onSave={() => {}}
         />
       </MemoryRouter>,
     );
@@ -87,8 +86,6 @@ describe('Navigator', () => {
     const onSubmit = jest.fn();
     renderNavigator('review', onSubmit);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => screen.findByTestId('review'));
-    userEvent.click(screen.getByTestId('review'));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 

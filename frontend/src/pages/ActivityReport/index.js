@@ -2,7 +2,7 @@
   Activity report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -14,89 +14,57 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { submitReport, saveReport, getReport } from '../../fetchers/activityReports';
+import { submitReport } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  activityMethod: [],
-  activityType: [],
+  'activity-method': [],
+  'activity-type': [],
   attachments: [],
   cdi: '',
   duration: '',
-  endDate: null,
+  'end-date': null,
   grantees: [],
-  numberOfParticipants: '',
-  otherUsers: [],
-  participantCategory: '',
+  'number-of-participants': '',
+  'other-users': [],
+  'participant-category': '',
   participants: [],
-  programTypes: [],
+  'program-types': [],
   reason: [],
   requester: '',
-  resourcesUsed: '',
-  startDate: null,
-  targetPopulations: [],
+  'resources-used': '',
+  'start-date': null,
+  'target-populations': [],
   topics: [],
 };
 
+const additionalNotes = 'this is an additional note';
+const approvingManagers = [2];
+
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
-const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
+const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ match }) {
-  const { params: { currentPage, activityReportId } } = match;
-  const history = useHistory();
-
+function ActivityReport({ initialData, match }) {
   const [submitted, updateSubmitted] = useState(false);
-  const [loading, updateLoading] = useState(true);
-  const [initialPageState, updateInitialPageSate] = useState(defaultPageState);
-  const [initialFormData, updateInitialFormData] = useState(defaultValues);
-  const [initialAdditionalData, updateAdditionalData] = useState({});
-
-  useEffect(() => {
-    const fetch = async () => {
-      if (activityReportId !== 'new') {
-        const { report, pageState, additionalData } = await getReport(activityReportId);
-        updateInitialFormData(report);
-        updateInitialPageSate(pageState);
-        updateAdditionalData(additionalData);
-        updateLoading(false);
-      } else {
-        updateInitialFormData(defaultValues);
-        updateInitialPageSate(defaultPageState);
-        updateAdditionalData({});
-        updateLoading(false);
-      }
-    };
-    fetch();
-  }, [activityReportId]);
-
-  if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
-  }
-
-  if (!currentPage) {
-    return (
-      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
-    );
-  }
-
-  const onSave = async (data) => {
-    await saveReport(activityReportId, data);
-  };
+  const history = useHistory();
+  const { params: { currentPage } } = match;
 
   const onFormSubmit = async (data, extraData) => {
     // eslint-disable-next-line no-console
     console.log('Submit form data', data, extraData);
-    await submitReport(activityReportId, data, extraData);
+    await submitReport(data, extraData);
     updateSubmitted(true);
   };
 
   const updatePage = (position) => {
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${activityReportId}/${page.path}`);
+    history.push(`/activity-reports/${page.path}`);
   };
+
+  if (!currentPage) {
+    return (
+      <Redirect to="/activity-reports/activity-summary" />
+    );
+  }
 
   return (
     <>
@@ -107,11 +75,10 @@ function ActivityReport({ match }) {
         currentPage={currentPage}
         submitted={submitted}
         initialPageState={initialPageState}
-        defaultValues={{ ...defaultValues, ...initialFormData }}
+        defaultValues={{ ...defaultValues, ...initialData }}
         pages={pages}
-        additionalData={initialAdditionalData}
+        additionalData={{ additionalNotes, approvingManagers }}
         onFormSubmit={onFormSubmit}
-        onSave={onSave}
       />
     </>
   );

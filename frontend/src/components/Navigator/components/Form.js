@@ -31,13 +31,6 @@ function Form({
     return onUnmount;
   }, [saveForm]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      saveForm(getValuesRef.current());
-    }, 1000 * 10);
-    return () => clearInterval(interval);
-  }, [saveForm]);
-
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: initialData,

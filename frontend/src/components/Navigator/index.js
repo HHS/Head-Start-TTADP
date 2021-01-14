@@ -5,7 +5,6 @@
 */
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import _ from 'lodash';
 import { Grid } from '@trussworks/react-uswds';
 
@@ -27,11 +26,9 @@ function Navigator({
   currentPage,
   updatePage,
   additionalData,
-  onSave,
 }) {
   const [formData, updateFormData] = useState(defaultValues);
   const [pageState, updatePageState] = useState(initialPageState);
-  const [lastSaveTime, updateLastSaveTime] = useState();
   const page = pages.find((p) => p.path === currentPage);
   const submittedNavState = submitted ? SUBMITTED : null;
   const allComplete = _.every(pageState, (state) => state === COMPLETE);
@@ -55,9 +52,7 @@ function Navigator({
 
   const onSaveForm = useCallback((newData) => {
     updateFormData((oldData) => ({ ...oldData, ...newData }));
-    updateLastSaveTime(moment());
-    onSave({ ...formData, ...newData });
-  }, [updateFormData, onSave]);
+  }, [updateFormData]);
 
   const onContinue = () => {
     const newNavigatorState = { ...pageState };
@@ -76,7 +71,6 @@ function Navigator({
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
-          lastSaveTime={lastSaveTime}
           pages={navigatorPages}
         />
       </Grid>
@@ -122,7 +116,6 @@ Navigator.propTypes = {
   currentPage: PropTypes.string.isRequired,
   updatePage: PropTypes.func.isRequired,
   additionalData: PropTypes.shape({}),
-  onSave: PropTypes.func.isRequired,
 };
 
 Navigator.defaultProps = {
