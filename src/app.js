@@ -28,7 +28,6 @@ app.use(cookieSession({
   keys: [process.env.SESSION_SECRET],
 
   // Cookie Options
-  httpOnly: false,
   sameSite: 'lax',
 }));
 
