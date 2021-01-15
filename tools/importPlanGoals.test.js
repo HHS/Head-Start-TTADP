@@ -1,7 +1,8 @@
+import { Op } from 'sequelize';
 import importGoals from './importPlanGoals';
-import updateGrantsGrantees from '../src/lib/updateGrantsGrantees';
+import { processFiles } from '../src/lib/updateGrantsGrantees';
 import db, {
-  Role, Topic, RoleTopic, Goal, Grantee, Grant, sequelize,
+  Role, Topic, RoleTopic, Goal, Grantee, Grant,
 } from '../src/models';
 
 describe('Import TTA plan goals', () => {
@@ -10,18 +11,17 @@ describe('Import TTA plan goals', () => {
   });
   describe('Update grants and grantees', () => {
     beforeAll(async () => {
-      await Grant.destroy({ where: {} });
-      await Grantee.destroy({ where: {} });
+      await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
+      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
     });
     afterEach(async () => {
-      await Grant.destroy({ where: {} });
-      await Grantee.destroy({ where: {} });
+      await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
+      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
     });
     it('should import or update grantees', async () => {
-
-      const granteesBefore = await Grantee.findAll();
+      const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: 20 } } });
       expect(granteesBefore.length).toBe(0);
-      await updateGrantsGrantees();
+      await processFiles();
 
       const grantee = await Grantee.findOne({ where: { id: 1335 } });
       expect(grantee).toBeDefined();
@@ -29,10 +29,10 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should import or update grants', async () => {
-      const grantsBefore = await Grantee.findAll();
+      const grantsBefore = await Grant.findAll({ where: { id: { [Op.gt]: 20 } } });
 
       expect(grantsBefore.length).toBe(0);
-      await updateGrantsGrantees();
+      await processFiles();
 
       const grants = await Grant.findAll({ where: { granteeId: 1335 } });
       expect(grants).toBeDefined();
@@ -40,7 +40,41 @@ describe('Import TTA plan goals', () => {
       const containsNumber = grants.some((g) => g.number === '02CH01111');
       expect(containsNumber).toBeTruthy();
     });
+
+    it('should exclude grantees with only inactive grants', async () => {
+      await processFiles();
+      let grantee = await Grantee.findOne({ where: { id: 119 } });
+      expect(grantee).toBeNull();
+      // Same grantee, but with a different id and having an active grant
+      grantee = await Grantee.findOne({ where: { id: 7709 } });
+      expect(grantee.name).toBe('Multi ID Agency');
+    });
+
+    it('should update an existing grantee if it exists in smarthub', async () => {
+      const [dbGrantee] = await Grantee.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
+      await processFiles();
+      const grantee = await Grantee.findOne({ where: { id: 119 } });
+      expect(grantee).not.toBeNull();
+      // Same grantee, but with a different id and having an active grant
+      expect(grantee.updatedAt).not.toEqual(dbGrantee.updatedAt);
+      expect(grantee.name).toBe('Multi ID Agency');
+    });
+
+    it('should update an existing grant if it exists in smarthub', async () => {
+      await processFiles();
+      let grant = await Grant.findOne({ where: { id: 5151 } });
+      expect(grant).toBeNull();
+
+      await Grantee.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
+      const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', granteeId: 119 } });
+      await processFiles();
+      grant = await Grant.findOne({ where: { id: 5151 } });
+      expect(grant).not.toBeNull();
+      expect(grant.updatedAt).not.toEqual(dbGrant.updatedAt);
+      expect(grant.number).toBe('90CI4444');
+    });
   });
+
   it('should import Roles table', async () => {
     await Role.destroy({ where: {} });
     const rolesBefore = await Role.findAll();
@@ -199,17 +233,12 @@ describe('Import TTA plan goals', () => {
     );
   });
 
-  it('should import Grantees table', async () => {
-    await Grant.destroy({ where: [] });
-    await Grantee.destroy({ where: {} });
-    const granteesBefore = await Grantee.findAll();
-
-    expect(granteesBefore.length).toBe(0);
-
-    await importGoals('GranteeTTAPlanTest.csv');
+  it('should have Grantees Goals connection', async () => {
     const grantees = await Grantee.findAll();
     expect(grantees).toBeDefined();
-    expect(grantees.length).toBe(4);
+    expect(grantees.length).toBe(8);
+
+    await importGoals('GranteeTTAPlanTest.csv');
 
     // test eager loading
     const grantee = await Grantee.findOne({
@@ -228,20 +257,6 @@ describe('Import TTA plan goals', () => {
     expect(grantee.goals.length).toBe(2);
     expect(grantee.goals[0].name).toEqual('Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.');
     expect(grantee.goals[1].name).toEqual('Enhance reflective practice.');
-  });
-
-  it('should import Grants table', async () => {
-    await Grant.destroy({ where: {} });
-    const grantsBefore = await Grant.findAll();
-
-    expect(grantsBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTest.csv');
-
-    const grants = await Grant.findAll();
-    expect(grants).toBeDefined();
-    expect(grants.length).toBe(5);
-    expect(grants[1].number).toBe('14CH10000');
-    expect(grants[1].regionId).toBe(14);
   });
 
   it('should import RoleTopics table', async () => {
@@ -327,22 +342,6 @@ describe('Import TTA plan goals', () => {
           },
         }],
       }],
-      // {
-      //   model: Grantee,
-      //   as: 'grantees',
-      //   attributes: ['id', 'name'],
-      //   through: {
-      //     attributes: [],
-      //   },
-      // },
-      // {
-      //   model: Grant,
-      //   as: 'grants',
-      //   attributes: ['id', 'number', 'regionId'],
-      //   through: {
-      //     attributes: [],
-      //   },
-      // }],
     });
     expect(goalWithTopic.topics[0].roles[0].fullName).toBe('Grantee Specialist');
   });

@@ -7,7 +7,7 @@ import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
-import { userById } from './admin/user';
+import { userById } from '../services/users';
 
 export const loginPath = '/login';
 

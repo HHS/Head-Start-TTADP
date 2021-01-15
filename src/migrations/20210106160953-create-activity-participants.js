@@ -1,45 +1,38 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Grants', {
+    queryInterface.createTable('ActivityParticipants', {
       id: {
         allowNull: false,
-        autoIncrement: false,
+        autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      number: {
-        type: Sequelize.STRING,
+      activityReportId: {
+        type: Sequelize.INTEGER,
         allowNull: false,
-        unique: true,
+        references: {
+          model: {
+            tableName: 'ActivityReports',
+          },
+        },
       },
-      regionId: {
+      grantId: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: {
-            tableName: 'Regions',
+            tableName: 'Grants',
           },
-          key: 'id',
         },
       },
-      granteeId: {
+      nonGranteeId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: {
-            tableName: 'Grantees',
+            tableName: 'NonGrantees',
           },
-          key: 'id',
         },
-      },
-      status: {
-        type: Sequelize.STRING,
-      },
-      startDate: {
-        type: Sequelize.DATE,
-      },
-      endDate: {
-        type: Sequelize.DATE,
       },
       createdAt: {
         allowNull: false,
@@ -53,7 +46,8 @@ module.exports = {
       },
     });
   },
+
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Grants');
+    queryInterface.dropTable('ActivityParticipants');
   },
 };
