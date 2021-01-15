@@ -66,10 +66,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
     res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
-app.use((req, res, next) => {
-  req.session.nowInMinutes = Math.floor(Date.now() / 60e3);
-  next();
-});
 
 if (process.env.NODE_ENV === 'production') {
   app.use('*', (req, res) => {
