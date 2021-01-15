@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
-      Grant.belongsTo(models.Grantee, { foreignKey: 'granteeId' });
+      Grant.belongsTo(models.Grantee, { foreignKey: 'granteeId', as: 'grantee' });
       Grant.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'grantId', as: 'goals' });
     }
   }
@@ -25,6 +25,16 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
+    granteeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    name: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.grantee.name} - ${this.number}`;
+      },
+    },
   }, {
     sequelize,
     modelName: 'Grant',
