@@ -21,7 +21,7 @@ async function handleSequelizeError(req, res, error, logContext) {
       responseBody: { ...error, errorStack: error.stack },
       responseCode: INTERNAL_SERVER_ERROR,
     });
-    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error`);
+    logger.error(`${logContext.namespace} id: ${requestErrorId} Sequelize error ${error.stack}`);
   } catch (err) {
     logger.error(`${logContext.namespace} - Sequelize error - unable to save to db - ${error}`);
   }
@@ -35,7 +35,7 @@ export const handleError = async (req, res, error, logContext) => {
   if (error instanceof Sequelize.Error) {
     await handleSequelizeError(req, res, error, logContext);
   } else {
-    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${error}`);
+    logger.error(`${logContext.namespace} - UNEXPECTED ERROR - ${error.stack}`);
     res.status(INTERNAL_SERVER_ERROR).end();
   }
 };
