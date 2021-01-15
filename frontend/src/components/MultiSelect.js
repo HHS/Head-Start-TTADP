@@ -1,3 +1,25 @@
+/*
+  This multiselect component uses react-select. React select expects options and selected
+  values to be in a specific format, arrays of `{ label: x, value: y }` items. Sometimes
+  we want to just push in and pull out simple arrays of strings instead of these objects.
+  Dealing with arrays of strings is easier then arrays of objects. The `simple` prop being
+  true makes this component look for values that are arrays of strings (other primitives may
+  work, haven't tried though). In simple mode we must convert the selected array of strings to
+  the object react-select expects before passing the value to react-select (Right below the
+  render). When an "onChange" event happens we have to convert from the react-select object back
+  to an array of strings (<Select>'s onChange). If you need this component display something other
+  then the value you must use `simple=false` in order to have items show up properly in the review
+  accordions.
+
+  If simple is false this component expects the selected value to be an array of objects (say
+  we want to multiselect database models, where the label will be human readable and value a
+  database id). In this case the `labelProperty` and `valueProperty` props are used to convert
+  the selected value to and from the react-select format.
+
+  Options are always passed in the way react-select expects, this component passes options straight
+  through to react-select. If the selected value is not in the options prop the multiselect box will
+  display an empty tag.
+*/
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
@@ -42,35 +64,56 @@ const styles = {
 };
 
 function MultiSelect({
-  label, name, options, disabled, control, required,
+  label, name, options, disabled, control, required, labelProperty, valueProperty, simple,
 }) {
-  const findLabel = (value) => {
-    const opt = options.find((o) => o.value === value);
-    if (!opt) {
-      return value;
+  /*
+   * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
+   * of objects
+   * @returns {Array<{ label: string, value: string }>} - values array in format required by
+   * react-select
+   */
+  const getValues = (value) => {
+    if (simple) {
+      return value.map((v) => ({
+        value: v, label: v,
+      }));
     }
-    return opt.label;
+    return value.map((item) => ({ label: item[labelProperty], value: item[valueProperty] }));
+  };
+
+  /*
+   * @param {*} - event. Contains values in the react-select format, an array of
+   * `{ label: x, value: y }` objects
+   * @param {func} - controllerOnChange. On change function from react-hook-form, to be called
+   * the values in the format to be used outside of this component (not the react-select format)
+   */
+  const onChange = (event, controllerOnChange) => {
+    if (simple) {
+      controllerOnChange(event.map((v) => v.value));
+    } else {
+      controllerOnChange(
+        event.map((item) => ({ [labelProperty]: item.label, [valueProperty]: item.value })),
+      );
+    }
   };
 
   return (
     <Label>
       {label}
       <Controller
-        render={({ onChange, value }) => {
-          let values = value;
-          if (value) {
-            values = value.map((v) => ({
-              value: v, label: findLabel(v),
-            }));
-          }
+        render={({ onChange: controllerOnChange, value }) => {
+          const values = value ? getValues(value) : value;
           return (
             <Select
               className="margin-top-1"
               id={name}
               value={values}
-              onChange={(e) => {
-                const newValue = e ? e.map((v) => v.value) : null;
-                onChange(newValue);
+              onChange={(event) => {
+                if (event) {
+                  onChange(event, controllerOnChange);
+                } else {
+                  controllerOnChange(event);
+                }
               }}
               styles={styles}
               components={{ DropdownIndicator }}
@@ -95,6 +138,9 @@ function MultiSelect({
 MultiSelect.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
+  labelProperty: PropTypes.string,
+  valueProperty: PropTypes.string,
+  simple: PropTypes.bool,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.oneOfType([
@@ -113,6 +159,9 @@ MultiSelect.propTypes = {
 MultiSelect.defaultProps = {
   disabled: false,
   required: true,
+  simple: true,
+  labelProperty: 'label',
+  valueProperty: 'value',
 };
 
 export default MultiSelect;

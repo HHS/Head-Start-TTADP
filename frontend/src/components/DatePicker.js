@@ -89,8 +89,8 @@ DateInput.propTypes = {
 };
 
 DateInput.defaultProps = {
-  minDate: undefined,
-  maxDate: undefined,
+  minDate: '',
+  maxDate: '',
   disabled: false,
   openUp: false,
   required: true,
