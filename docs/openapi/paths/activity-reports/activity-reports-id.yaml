@@ -1,0 +1,41 @@
+get:
+  tags:
+    - activity-reports
+  summary: Retrieve an activity report
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The activity report with an Id of {activityReportId}
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'
+put:
+  tags:
+    - activity-reports
+  summary: Update an activity report
+  requestBody:
+    description: A new activity report
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../index.yaml#/components/schemas/activityReport'
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The updated activity report
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'
