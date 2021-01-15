@@ -139,9 +139,10 @@ const ActivitySummary = ({
               inputRef={register({ required: true })}
             />
             <Radio
+              id="requestorRegionalOffice"
               name="requester"
               label="Regional Office"
-              value="regional-office"
+              value="regionalOffice"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: true })}
             />
