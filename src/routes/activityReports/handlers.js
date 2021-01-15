@@ -2,8 +2,8 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   reportParticipants, activityReportById, createOrUpdate, reportExists,
-} from '../../lib/activityReports';
-import { userById, usersWithPermissions } from '../../lib/users';
+} from '../../services/activityReports';
+import { userById, usersWithPermissions } from '../../services/users';
 
 const { READ_WRITE_REPORTS, APPROVE_REPORTS } = SCOPES;
 
