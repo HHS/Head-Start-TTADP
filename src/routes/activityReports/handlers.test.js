@@ -36,7 +36,7 @@ const mockResponse = {
 };
 
 const reportObject = {
-  participantType: 'gratnee',
+  participantType: 'grantee',
   status: 'draft',
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,

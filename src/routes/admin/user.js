@@ -1,7 +1,7 @@
 import {
   User, Permission, sequelize,
 } from '../../models';
-import { userById } from '../../lib/users';
+import { userById } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 
 const namespace = 'SERVICE:USER';
