@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import handleErrors from '../../lib/apiErrorHandler';
 import { sequelize, File } from '../../models';
+import s3Uploader from '../../lib/s3Uploader';
 
-const AWS = require('aws-sdk');
 const fs = require('fs');
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -11,24 +11,6 @@ const namespace = 'SERVICE:FILES';
 
 const logContext = {
   namespace,
-};
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  endpoint: process.env.S3_ENDPOINT,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  signatureVersion: 'v4',
-  s3ForcePathStyle: true,
-});
-
-const s3Uploader = (buffer, name, type) => {
-  const params = {
-    Body: buffer,
-    Bucket: process.env.bucket,
-    ContentType: type.mime,
-    Key: name,
-  };
-
-  return s3.upload(params).promise();
 };
 
 export async function createFileMetaData(originalFileName, s3FileName) {
@@ -42,7 +24,7 @@ export async function createFileMetaData(originalFileName, s3FileName) {
     await sequelize.transaction(async (transaction) => {
       file = await File.create(newFile, transaction);
     });
-    return file;
+    return file.dataValues;
   } catch (error) {
     return error;
   }
@@ -61,7 +43,7 @@ export default async function uploadHandler(req, res) {
       const fileName = `${uuidv4()}.${type.ext}`;
       await s3Uploader(buffer, fileName, type);
       const ret = createFileMetaData(originalFilename, fileName);
-      res.json(ret);
+      ret.then((val) => res.json(val));
     } catch (err) {
       await handleErrors(req, res, err, logContext);
     }
