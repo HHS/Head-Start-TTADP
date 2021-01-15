@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 
-const s3 = new AWS.S3({
+export const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   endpoint: process.env.S3_ENDPOINT,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -8,27 +8,29 @@ const s3 = new AWS.S3({
   s3ForcePathStyle: true,
 });
 
-const verifyVersioning = async (bucket = process.env.bucket, s3Client = s3) => {
-  const expectedData = {
+export const verifyVersioning = async (bucket = process.env.bucket, s3Client = s3) => {
+  const versioningConfiguration = {
     MFADelete: 'Disabled',
     Status: 'Enabled',
   };
   let params = {
     Bucket: bucket,
   };
-  s3Client.getBucketVersioning(params, (err, data) => {
+  const res = await s3Client.getBucketVersioning(params, (err, data) => {
     if (err) {
       return err;
     }
-    if (data !== expectedData) {
+    console.log(data)
+    if (!data || data.Status !== 'Enabled' || data.MFADelete === 'Disabled') {
       params = {
         Bucket: bucket,
-        VersioningConfiguration: expectedData,
+        VersioningConfiguration: versioningConfiguration,
       };
-      return s3Client.putBucketVersioning(params).promise();
+      return s3Client.putBucketVersioning(params);
     }
-    return data;
+    return new Promise((resolve) => resolve(data));
   });
+  return res;
 };
 
 const s3Uploader = async (buffer, name, type, s3Client = s3) => {
