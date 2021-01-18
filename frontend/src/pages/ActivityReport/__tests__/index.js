@@ -49,8 +49,8 @@ const renderActivityReport = (id, location = 'activity-summary') => {
 };
 
 const participants = {
-  grants: [{ participantId: 1, name: 'grant' }],
-  nonGrantees: [{ participantId: 1, name: 'nonGrantee' }],
+  grants: [{ label: 'grantee', options: [{ value: 1, label: 'grant' }] }],
+  nonGrantees: [{ value: 1, label: 'nonGrantee' }],
 };
 
 describe('ActivityReport', () => {

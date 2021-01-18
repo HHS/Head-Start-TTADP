@@ -14,9 +14,14 @@ get:
             type: object
             properties:
               grants:
-                type: array
-                items:
-                  $ref: '../../index.yaml#/components/schemas/participant'
+                type: object
+                properties:
+                  label:
+                    type: string
+                  options:
+                    type: array
+                    items:
+                      $ref: '../../index.yaml#/components/schemas/participant'
               nonGrantees:
                 type: array
                 items:
