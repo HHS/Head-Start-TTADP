@@ -1,4 +1,5 @@
-import { verifyVersioning, s3 } from './s3Uploader';
+import { v4 as uuidv4 } from 'uuid';
+import s3Uploader, { verifyVersioning, s3 } from './s3Uploader';
 
 const mockData = {
   MFADelete: 'Disabled',
@@ -6,7 +7,7 @@ const mockData = {
 };
 
 // make sure we save to original value so we can restore it
-// const oldEndpoint = process.env.S3_ENDPOINT;
+const oldEndpoint = process.env.S3_ENDPOINT;
 
 describe('s3Uploader.verifyVersioning', () => {
   let mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockData);
@@ -29,5 +30,43 @@ describe('s3Uploader.verifyVersioning', () => {
     expect(got.Bucket).toBe(process.env.S3_BUCKET);
     expect(got.VersioningConfiguration.MFADelete).toBe(mockData.MFADelete);
     expect(got.VersioningConfiguration.Status).toBe(mockData.Status);
+  });
+});
+
+describe('s3Uploader', () => {
+  const goodType = { ext: 'pdf', mime: 'application/pdf' };
+  const buf = Buffer.from('Testing, Testing', 'UTF-8');
+  const name = `${uuidv4()}.${goodType.ext}`;
+  const response = {
+    ETag: '"8b03d1d48774bfafdb26691256fc7b2b"',
+    Location: `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${name}`,
+    key: `${name}`,
+    Key: `${name}`,
+    Bucket: `${process.env.S3_BUCKET}`,
+  };
+  const promise = {
+    promise: () => new Promise((resolve) => resolve(response)),
+  };
+  const mockUpload = jest.spyOn(s3, 'upload').mockImplementation(async () => promise);
+  const mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockData);
+  beforeEach(() => {
+    mockUpload.mockClear();
+    mockGet.mockClear();
+  });
+  afterAll(() => {
+    process.env.S3_ENDPOINT = oldEndpoint;
+  });
+
+  it('Correctly Uploads the file', async () => {
+    process.env.S3_ENDPOINT = 'http://minio:9000';
+    const got = await s3Uploader(buf, name, goodType);
+    expect(mockGet.mock.calls.length).toBe(0);
+    await expect(got).toBe(response);
+  });
+  it('Correctly Uploads the file and checks versioning', async () => {
+    process.env.S3_ENDPOINT = 'http://localhost:9000';
+    const got = await s3Uploader(buf, name, goodType);
+    expect(mockGet.mock.calls.length).toBe(1);
+    await expect(got).toBe(response);
   });
 });

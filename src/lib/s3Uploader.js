@@ -39,6 +39,7 @@ const s3Uploader = async (buffer, name, type, s3Client = s3) => {
     await verifyVersioning();
   }
 
-  return s3Client.upload(params).promise();
+  const upload = await s3Client.upload(params);
+  return upload.promise();
 };
 export default s3Uploader;
