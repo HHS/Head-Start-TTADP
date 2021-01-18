@@ -1,6 +1,6 @@
-const AWS = require('aws-sdk');
+import { S3 } from 'aws-sdk';
 
-export const s3 = new AWS.S3({
+export const s3 = new S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   endpoint: process.env.S3_ENDPOINT,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -16,27 +16,21 @@ export const verifyVersioning = async (bucket = process.env.bucket, s3Client = s
   let params = {
     Bucket: bucket,
   };
-  const res = await s3Client.getBucketVersioning(params, (err, data) => {
-    if (err) {
-      return err;
-    }
-    console.log(data)
-    if (!data || data.Status !== 'Enabled' || data.MFADelete === 'Disabled') {
-      params = {
-        Bucket: bucket,
-        VersioningConfiguration: versioningConfiguration,
-      };
-      return s3Client.putBucketVersioning(params);
-    }
-    return new Promise((resolve) => resolve(data));
-  });
-  return res;
+  const data = await s3Client.getBucketVersioning(params);
+  if (!(data) || data.Status !== 'Enabled') {
+    params = {
+      Bucket: bucket,
+      VersioningConfiguration: versioningConfiguration,
+    };
+    return s3Client.putBucketVersioning(params);
+  }
+  return new Promise((resolve) => resolve(data));
 };
 
 const s3Uploader = async (buffer, name, type, s3Client = s3) => {
   const params = {
     Body: buffer,
-    Bucket: process.env.bucket,
+    Bucket: process.env.S3_BUCKET,
     ContentType: type.mime,
     Key: name,
   };
