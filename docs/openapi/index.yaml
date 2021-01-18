@@ -39,7 +39,7 @@ components:
           type: string
         startDate:
           type: string
-        participantType:
+        activityRecipientType:
           type: string
         requester:
           type: string
@@ -87,10 +87,10 @@ components:
           type: number
         name:
           type: string
-    participant:
+    activityRecipient:
       type: object
       properties:
-        participantId:
+        activityRecipientId:
           type: number
         name:
           type: string

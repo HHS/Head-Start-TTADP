@@ -4,19 +4,19 @@ import { Op } from 'sequelize';
 import {
   ActivityReport,
   sequelize,
-  ActivityParticipant,
+  ActivityRecipient,
   Grant,
   Grantee,
   NonGrantee,
 } from '../models';
 
-async function saveReportParticipants(
+async function saveReportRecipients(
   activityReportId,
-  participantIds,
-  participantType,
+  activityRecipientIds,
+  activityRecipientType,
   transaction,
 ) {
-  await ActivityParticipant.destroy({
+  await ActivityRecipient.destroy({
     where: {
       activityReportId: {
         [Op.eq]: activityReportId,
@@ -25,18 +25,18 @@ async function saveReportParticipants(
     transaction,
   });
 
-  await Promise.all(participantIds.map(async (participantId) => {
-    const activityParticipant = {
+  await Promise.all(activityRecipientIds.map(async (activityRecipientId) => {
+    const activityRecipient = {
       activityReportId,
     };
 
-    if (participantType === 'grantee') {
-      activityParticipant.grantId = participantId;
-    } else if (participantType === 'non-grantee') {
-      activityParticipant.nonGranteeId = participantId;
+    if (activityRecipientType === 'grantee') {
+      activityRecipient.grantId = activityRecipientId;
+    } else if (activityRecipientType === 'non-grantee') {
+      activityRecipient.nonGranteeId = activityRecipientId;
     }
 
-    return ActivityParticipant.create(activityParticipant, { transaction });
+    return ActivityRecipient.create(activityRecipient, { transaction });
   }));
 }
 
@@ -68,9 +68,9 @@ export function activityReportById(activityReportId) {
     },
     include: [
       {
-        model: ActivityParticipant,
-        attributes: ['id', 'name', 'participantId'],
-        as: 'activityParticipants',
+        model: ActivityRecipient,
+        attributes: ['id', 'name', 'activityRecipientId'],
+        as: 'activityRecipients',
         required: false,
         include: [
           {
@@ -104,16 +104,18 @@ export async function createOrUpdate(newActivityReport, activityReportId) {
       savedReport = await create(newActivityReport, transaction);
     }
 
-    if (newActivityReport.activityParticipants) {
-      const { participantType, id } = savedReport;
-      const participantIds = newActivityReport.activityParticipants.map((g) => g.participantId);
-      await saveReportParticipants(id, participantIds, participantType, transaction);
+    if (newActivityReport.activityRecipients) {
+      const { activityRecipientType, id } = savedReport;
+      const activityRecipientIds = newActivityReport.activityRecipients.map(
+        (g) => g.activityRecipientId,
+      );
+      await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
     }
   });
   return activityReportById(savedReport.id);
 }
 
-export async function reportParticipants() {
+export async function activityRecipients() {
   const rawGrants = await Grant.findAll({
     attributes: ['id', 'name', 'number'],
     include: [{
@@ -123,13 +125,13 @@ export async function reportParticipants() {
   });
 
   const grants = rawGrants.map((g) => ({
-    participantId: g.id,
+    activityRecipientId: g.id,
     name: g.name,
   }));
 
   const nonGrantees = await NonGrantee.findAll({
     raw: true,
-    attributes: [['id', 'participantId'], 'name'],
+    attributes: [['id', 'activityRecipientId'], 'name'],
   });
   return { grants, nonGrantees };
 }

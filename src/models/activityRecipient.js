@@ -1,14 +1,14 @@
 import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
-  class ActivityParticipant extends Model {
+  class ActivityRecipient extends Model {
     static associate(models) {
-      ActivityParticipant.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
-      ActivityParticipant.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
-      ActivityParticipant.belongsTo(models.NonGrantee, { foreignKey: 'nonGranteeId', as: 'nonGrantee' });
+      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      ActivityRecipient.belongsTo(models.NonGrantee, { foreignKey: 'nonGranteeId', as: 'nonGrantee' });
     }
   }
-  ActivityParticipant.init({
+  ActivityRecipient.init({
     activityReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
@@ -21,7 +21,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.INTEGER,
     },
-    participantId: {
+    activityRecipientId: {
       type: DataTypes.VIRTUAL,
       get() {
         if (this.grant) {
@@ -41,7 +41,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'ActivityParticipant',
+    modelName: 'ActivityRecipient',
     validate: {
       oneNull() {
         if (this.grantId && this.nonGranteeId) {
@@ -50,5 +50,5 @@ export default (sequelize, DataTypes) => {
       },
     },
   });
-  return ActivityParticipant;
+  return ActivityRecipient;
 };

@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  getApprovers, submitReport, saveReport, createReport, getReport, getParticipants,
+  getApprovers, submitReport, saveReport, createReport, getReport, getActivityRecipients,
 } from './handlers';
 
 const router = express.Router();
@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post('/', createReport);
 router.get('/approvers', getApprovers);
-router.get('/participants', getParticipants);
+router.get('/activity-recipients', getActivityRecipients);
 router.get('/:activityReportId', getReport);
 router.put('/:activityReportId', saveReport);
 router.post('/:activityReportId/submit', submitReport);
