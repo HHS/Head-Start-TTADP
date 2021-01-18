@@ -324,7 +324,7 @@ jobs:
                 name: Return database to neutral, then migrate and seed
                 command: |
                   cf run-task tta-smarthub-sandbox \
-                  "yarn db:seed:undo:prod && yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
+                  "yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
       - when:  # dev
           condition:
             and:
@@ -347,7 +347,7 @@ jobs:
             - run:
                 name: Undo database seeding, then migrate and seed
                 command: |
-                  cf run-task tta-smarthub-dev "yarn db:seed:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
+                  cf run-task tta-smarthub-dev "yarn db:migrate:prod && yarn db:seed:undo:prod && yarn db:seed:prod"
       - when:  # staging
           condition:
             and:
