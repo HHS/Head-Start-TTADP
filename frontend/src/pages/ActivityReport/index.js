@@ -7,6 +7,7 @@ import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
+import { Alert } from '@trussworks/react-uswds';
 
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
@@ -44,6 +45,7 @@ function ActivityReport({ match }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
   const [submitted, updateSubmitted] = useState(false);
+  const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
   const [initialFormData, updateInitialFormData] = useState(defaultValues);
   const [initialAdditionalData, updateAdditionalData] = useState({});
@@ -51,15 +53,21 @@ function ActivityReport({ match }) {
 
   useEffect(() => {
     const fetch = async () => {
-      const participants = await getParticipants();
-      updateAdditionalData({ participants });
-      if (activityReportId !== 'new') {
-        const report = await getReport(activityReportId);
-        updateInitialFormData(report);
-      } else {
-        updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
+      try {
+        const participants = await getParticipants();
+        updateAdditionalData({ participants });
+        if (activityReportId !== 'new') {
+          const report = await getReport(activityReportId);
+          updateInitialFormData(report);
+        } else {
+          updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
+        }
+        updateError();
+      } catch (e) {
+        updateError('Unable to load activity report');
+      } finally {
+        updateLoading(false);
       }
-      updateLoading(false);
     };
     fetch();
   }, [activityReportId]);
@@ -69,6 +77,14 @@ function ActivityReport({ match }) {
       <div>
         loading...
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert type="error">
+        {error}
+      </Alert>
     );
   }
 
