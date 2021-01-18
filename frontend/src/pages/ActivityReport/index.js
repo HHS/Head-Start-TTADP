@@ -97,7 +97,7 @@ function ActivityReport({ match }) {
   const onSave = async (data) => {
     const { participantType, activityParticipants } = data;
     if (reportId.current === 'new') {
-      if (participantType && activityParticipants.length > 0) {
+      if (participantType && activityParticipants && activityParticipants.length > 0) {
         const savedReport = await createReport(data, {});
         reportId.current = savedReport.id;
         return true;

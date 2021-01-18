@@ -2,13 +2,13 @@
   This multiselect component uses react-select. React select expects options and selected
   values to be in a specific format, arrays of `{ label: x, value: y }` items. Sometimes
   we want to just push in and pull out simple arrays of strings instead of these objects.
-  Dealing with arrays of strings is easier then arrays of objects. The `simple` prop being
+  Dealing with arrays of strings is easier than arrays of objects. The `simple` prop being
   true makes this component look for values that are arrays of strings (other primitives may
   work, haven't tried though). In simple mode we must convert the selected array of strings to
   the object react-select expects before passing the value to react-select (Right below the
   render). When an "onChange" event happens we have to convert from the react-select object back
   to an array of strings (<Select>'s onChange). If you need this component display something other
-  then the value you must use `simple=false` in order to have items show up properly in the review
+  than the value you must use `simple=false` in order to have items show up properly in the review
   accordions.
 
   If simple is false this component expects the selected value to be an array of objects (say
@@ -44,6 +44,15 @@ const styles = {
       outline,
     };
   },
+  groupHeading: (provided) => ({
+    ...provided,
+    fontWeight: 'bold',
+    fontFamily: 'SourceSansPro',
+    textTransform: 'capitalize',
+    fontSize: '14px',
+    color: '#21272d',
+    lineHeight: '22px',
+  }),
   control: (provided, state) => ({
     ...provided,
     borderColor: '#565c65',
@@ -135,6 +144,11 @@ function MultiSelect({
   );
 }
 
+const value = PropTypes.oneOfType([
+  PropTypes.string,
+  PropTypes.number,
+]);
+
 MultiSelect.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
@@ -143,10 +157,13 @@ MultiSelect.propTypes = {
   simple: PropTypes.bool,
   options: PropTypes.arrayOf(
     PropTypes.shape({
-      value: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.number,
-      ]).isRequired,
+      value,
+      options: PropTypes.arrayOf(
+        PropTypes.shape({
+          label: PropTypes.string.isRequired,
+          value: value.isRequired,
+        }),
+      ),
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,

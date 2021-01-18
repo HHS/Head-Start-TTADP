@@ -91,7 +91,7 @@ const ActivitySummary = ({
             valueProperty="participantId"
             labelProperty="name"
             simple={false}
-            options={selectedParticipants.map((p) => ({ value: p.participantId, label: p.name }))}
+            options={selectedParticipants}
           />
         </div>
         <div className="smart-hub--form-section">
@@ -256,14 +256,19 @@ ActivitySummary.propTypes = {
   participants: PropTypes.shape({
     grants: PropTypes.arrayOf(
       PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        participantId: PropTypes.number.isRequired,
+        label: PropTypes.string.isRequired,
+        options: PropTypes.arrayOf(
+          PropTypes.shape({
+            label: PropTypes.string.isRequired,
+            value: PropTypes.number.isRequired,
+          }),
+        ),
       }),
     ),
     nonGrantees: PropTypes.arrayOf(
       PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        participantId: PropTypes.number.isRequired,
+        label: PropTypes.string.isRequired,
+        value: PropTypes.number.isRequired,
       }),
     ),
   }).isRequired,
