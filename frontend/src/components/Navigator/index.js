@@ -52,6 +52,8 @@ function Navigator({
     reset,
   } = hookForm;
 
+  const { isDirty, isValid } = formState;
+
   const newNavigatorState = (completed) => {
     if (page.review) {
       return pageState;
@@ -61,7 +63,7 @@ function Navigator({
     if (completed) {
       newPageState[page.position] = COMPLETE;
     } else {
-      newPageState[page.position] = formState.isDirty ? IN_PROGRESS : pageState[page.position];
+      newPageState[page.position] = isDirty ? IN_PROGRESS : pageState[page.position];
     }
     return newPageState;
   };
@@ -142,7 +144,7 @@ function Navigator({
                   className="smart-hub--form-large"
                 >
                   {page.render(hookForm, additionalData)}
-                  <Button type="submit" disabled={!formState.isValid}>Continue</Button>
+                  <Button type="submit" disabled={!isValid}>Continue</Button>
                 </Form>
               </Container>
             )}
