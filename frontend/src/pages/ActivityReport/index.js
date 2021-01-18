@@ -102,7 +102,7 @@ function ActivityReport({ match }) {
 
   const updatePage = (position) => {
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${reportId.current}/${page.path}`);
+    history.push(`/activity-reports/${activityReportId}/${page.path}`);
   };
 
   return (
