@@ -37,7 +37,6 @@ export default async function uploadHandler(req, res) {
       res.status(500).send(error);
     }
     try {
-      console.log(fields)
       const { path, originalFilename } = files.File[0];
       const buffer = fs.readFileSync(path);
       const type = await fileType.fromFile(path);
