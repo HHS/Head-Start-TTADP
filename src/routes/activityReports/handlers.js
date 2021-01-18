@@ -1,7 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  reportParticipants, activityReportById, createOrUpdate, reportExists,
+  activityRecipients, activityReportById, createOrUpdate, reportExists,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 
@@ -47,9 +47,9 @@ export async function submitReport(req, res) {
   res.sendStatus(204);
 }
 
-export async function getParticipants(req, res) {
-  const participants = await reportParticipants();
-  res.json(participants);
+export async function getActivityRecipients(req, res) {
+  const recipients = await activityRecipients();
+  res.json(recipients);
 }
 
 /**
