@@ -5,11 +5,7 @@ import db, {
 import createRequestError from './requestErrors';
 
 describe('createRequestError', () => {
-  beforeEach(async () => {
-    await RequestErrors.destroy({ where: {} });
-  });
   afterAll(async () => {
-    await RequestErrors.destroy({ where: {} });
     db.sequelize.close();
   });
 
@@ -45,6 +41,7 @@ describe('createRequestError', () => {
     expect(retrievedRequestError.responseCode).toEqual(responseCode);
     expect(retrievedRequestError.createdAt).toBeDefined();
     expect(retrievedRequestError.updatedAt).toBeDefined();
+    await RequestErrors.destroy({ where: { id: requestErrorId } });
   });
 
   it('Throws on error', async () => {

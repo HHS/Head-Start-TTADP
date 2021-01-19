@@ -1,7 +1,8 @@
 get:
   tags:
     - activity-reports
-  operationId: getApproves
+  summary: Potential activity report approvers
+  operationId: getApprovers
   description: Gets all approvers for any region the current user has write permissions
   responses:
     200:

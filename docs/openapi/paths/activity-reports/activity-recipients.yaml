@@ -1,0 +1,23 @@
+get:
+  tags:
+  - activity-reports
+  summary: >
+    Potential activity report participants
+  description: >
+    An activity recipient is either a grant or nonGrantee.
+  responses:
+    200:
+      description: The possible activity recipients
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              grants:
+                type: array
+                items:
+                  $ref: '../../index.yaml#/components/schemas/activityRecipient'
+              nonGrantees:
+                type: array
+                items:
+                  $ref: '../../index.yaml#/components/schemas/activityRecipient'
