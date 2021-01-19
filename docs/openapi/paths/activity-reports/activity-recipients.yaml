@@ -2,12 +2,12 @@ get:
   tags:
   - activity-reports
   summary: >
-    Get possible participants for an activity report
+    Potential activity report participants
   description: >
-    A participant is either a grant or nonGrantee.
+    An activity recipient is either a grant or nonGrantee.
   responses:
     200:
-      description: The possible participants
+      description: The possible activity recipients
       content:
         application/json:
           schema:
@@ -16,8 +16,8 @@ get:
               grants:
                 type: array
                 items:
-                  $ref: '../../index.yaml#/components/schemas/participant'
+                  $ref: '../../index.yaml#/components/schemas/activityRecipient'
               nonGrantees:
                 type: array
                 items:
-                  $ref: '../../index.yaml#/components/schemas/participant'
+                  $ref: '../../index.yaml#/components/schemas/activityRecipient'
