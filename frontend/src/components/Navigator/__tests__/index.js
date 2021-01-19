@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import {
   render, screen, waitFor, within,
@@ -13,7 +14,6 @@ const pages = [
     position: 1,
     path: 'first',
     label: 'first page',
-    review: false,
     render: (hookForm) => (
       <input
         type="radio"
@@ -27,7 +27,6 @@ const pages = [
     position: 2,
     path: 'second',
     label: 'second page',
-    review: false,
     render: (hookForm) => (
       <input
         type="radio"
@@ -39,8 +38,8 @@ const pages = [
   },
   {
     position: 3,
-    label: 'review page',
     path: 'review',
+    label: 'review page',
     review: true,
     render: (allComplete, formData, submitted, onSubmit) => (
       <div>
@@ -54,16 +53,17 @@ describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (currentPage = 'first', onSubmit = () => {}, updatePage = () => {}) => {
     render(
-      <Navigator
-        submitted={false}
-        initialData={{ pageState: { 1: NOT_STARTED, 2: NOT_STARTED } }}
-        defaultValues={{ first: '', second: '' }}
-        pages={pages}
-        updatePage={updatePage}
-        currentPage={currentPage}
-        onFormSubmit={onSubmit}
-        onSave={() => {}}
-      />,
+      <MemoryRouter>
+        <Navigator
+          submitted={false}
+          initialPageState={{ 1: NOT_STARTED, 2: NOT_STARTED }}
+          defaultValues={{ first: '', second: '' }}
+          pages={pages}
+          updatePage={updatePage}
+          currentPage={currentPage}
+          onFormSubmit={onSubmit}
+        />
+      </MemoryRouter>,
     );
   };
 
@@ -71,7 +71,7 @@ describe('Navigator', () => {
     renderNavigator();
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
-    const first = await screen.findByRole('button', { name: 'first page' });
+    const first = await screen.findByRole('link', { name: 'first page' });
     await waitFor(() => expect(within(first).getByText('In progress')).toBeVisible());
   });
 
@@ -89,10 +89,10 @@ describe('Navigator', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
-  it('calls updatePage on navigation', async () => {
-    const updatePage = jest.fn();
-    renderNavigator('second', () => {}, updatePage);
-    userEvent.click(screen.getByRole('button', { name: 'first page' }));
-    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+  it('changes navigator state to complete when "continuing"', async () => {
+    renderNavigator();
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    const first = await screen.findByRole('link', { name: 'first page' });
+    await waitFor(() => expect(within(first).getByText('Complete')).toBeVisible());
   });
 });

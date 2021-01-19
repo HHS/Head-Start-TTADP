@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -11,29 +13,31 @@ import {
 } from '../../constants';
 
 describe('SideNav', () => {
-  const renderNav = (state, onNavigation = () => {}, current = false) => {
+  const renderNav = (state, path = '/path') => {
+    const history = createMemoryHistory();
     const pages = [
       {
         label: 'test',
         state,
-        current,
-        onNavigation,
+        path: 'test',
       },
       {
         label: 'second',
         state: '',
-        current,
-        onNavigation,
+        path: 'second',
       },
     ];
-
+    history.push(path);
     render(
-      <SideNav
-        pages={pages}
-        skipTo="skip"
-        skipToMessage="message"
-      />,
+      <Router history={history} initialEntries={path}>
+        <SideNav
+          pages={pages}
+          skipTo="skip"
+          skipToMessage="message"
+        />
+      </Router>,
     );
+    return history;
   };
 
   describe('displays the correct status', () => {
@@ -66,17 +70,16 @@ describe('SideNav', () => {
     });
   });
 
-  it('clicking a nav item calls onNavigation', () => {
-    const onNav = jest.fn();
-    renderNav(NOT_STARTED, onNav);
+  it('clicking a nav item navigates to that item', () => {
+    const history = renderNav(NOT_STARTED);
     const notStarted = screen.getByText('Not started');
     userEvent.click(notStarted);
-    expect(onNav).toHaveBeenCalled();
+    expect(history.location.pathname).toBe('/test');
   });
 
   it('the currently selected page has the current class', () => {
-    renderNav(SUBMITTED, () => {}, true);
-    const submitted = screen.getByRole('button', { name: 'test' });
+    renderNav(SUBMITTED, '/test');
+    const submitted = screen.getByRole('link', { name: 'test' });
     expect(submitted).toHaveClass('smart-hub--navigator-link-active');
   });
 });
