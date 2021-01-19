@@ -15,6 +15,7 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityParticipant, { foreignKey: 'activityReportId', as: 'activityParticipants' });
+      ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'activityFiles' });
     }
   }
   ActivityReport.init({
