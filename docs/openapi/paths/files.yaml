@@ -3,13 +3,13 @@ post:
     - files
   operationId: postFile
   description: Upload a file to s3
-  parameters:
-    - in: path
-      name: reportId
-      schema:
-        type: integer
-      required: true
-      description: Numeric ID of the Activity Report that the file is attached to.
+  requestBody:
+    description: upload a file for an Activity Report
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: '../index.yaml#/components/schemas/fileUpload'
   responses:
     200:
       description: One user by an id
@@ -17,4 +17,4 @@ post:
         application/json:
           schema:
             type: object
-            $ref: '../index.yaml#/components/schemas/file'
+            $ref: '../index.yaml#/components/schemas/fileResponse'
