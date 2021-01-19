@@ -35,7 +35,7 @@ router.get('/user', async (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  req.session.destroy();
+  req.session = null;
   res.sendStatus(204);
 });
 
