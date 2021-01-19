@@ -90,9 +90,9 @@ components:
     participant:
       type: object
       properties:
-        participantId:
+        value:
           type: number
-        name:
+        label:
           type: string
     permission:
       type: object
