@@ -120,7 +120,17 @@ components:
           type: number
         name:
           type: string
-    file:
+    fileUpload:
+      type: object
+      properties:
+        reportId: 
+          type: number
+          description: "id of the Activity report the file is associated with"
+        File:
+          type: string
+          format: binary
+          description: "File to be uploaded"
+    fileResponse:
       type: object
       description: ID of file created
       properties:
