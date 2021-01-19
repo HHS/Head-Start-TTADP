@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       get: formatDate,
     },
-    participantType: {
+    activityRecipientType: {
       allowNull: false,
       type: DataTypes.STRING,
     },

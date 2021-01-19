@@ -18,53 +18,74 @@ components:
   schemas:
     activityReport:
       type: object
+      description: >
+        This object represents a report on an activity that a specialist has completed
+        with 1 to many grants or non-grantees
       properties:
         id:
           type: number
         userId:
           type: number
+          description: The id of the author of the report
         lastUpdatedById:
           type: number
+          description: The id of the last user to update the report
         resourcesUsed:
           type: string
+          description: A list of URLs used in the activity
         additionalNotes:
           type: string
+          description: >
+            Any additional info user's wish to convey about the report that is not
+            captured elsewhere
         numberOfParticipants:
           type: number
+          description: The number of people present at the activity
         deliveryMethod:
           type: string
+          description: How the activity was connected, virtual vs in person
         duration:
           type: number
+          description: How long the activity took to complete, in hours
         endDate:
           type: string
         startDate:
           type: string
-        participantType:
+        activityRecipientType:
           type: string
+          description: The recipient type for the report, grant or non-grantee
         requester:
           type: string
+          description: Who requested the TTA, grantee or regional office
         programTypes:
           type: array
+          description: The type of grantee program, Head Start, Early Head Start, etc...
           items:
             type: string
         targetPopulations:
           type: array
+          description: The target of the activity report
           items:
             type: string
         reason:
           type: array
+          description: Why the activity was conducted
           items:
             type: string
         participants:
           type: array
+          description: The roles of the people attending the TTA
           items:
             type: string
         topics:
           type: array
+          description: Topics covered during the TTA
           items:
             type: string
         pageState:
           type: object
+          enum: ['Not Started', 'In progress', 'Completed']
+          description: The state of each page of the form
           properties:
             1:
               type: string
@@ -76,26 +97,33 @@ components:
               type: string
         status:
           type: string
+          enum: ['draft', 'submitted']
+          description: The current state of the report
         ttaType:
           type: array
+          description: The type of the activity, Training or Technical Assistance (or both)
           items:
             type: string
     approvingUser:
       type: object
+      description: Users with permission to approve reports
       properties:
         id:
           type: number
         name:
           type: string
-    participant:
+    activityRecipient:
       type: object
+      description: A grant or non-grantee that can be added to an activity report
       properties:
         value:
+        activityRecipientId:
           type: number
         label:
           type: string
     permission:
       type: object
+      description: A combination of region, scope and user allowing that user to perform an action in a region
       properties:
         userId:
           type: number
@@ -105,6 +133,7 @@ components:
           type: number
     user:
       type: object
+      description: A TTA Smart Hub user
       properties:
         id:
           type: number
