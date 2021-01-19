@@ -6,9 +6,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Sticky from 'react-stickynode';
-import { Button, Tag, Alert } from '@trussworks/react-uswds';
+import { Tag } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
-import moment from 'moment';
+import { NavLink } from 'react-router-dom';
 
 import Container from '../../Container';
 import './SideNav.css';
@@ -32,16 +32,15 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage, lastSaveTime, errorMessage,
+  pages, skipTo, skipToMessage,
 }) {
   const isMobile = useMediaQuery({ maxWidth: 640 });
   const navItems = () => pages.map((page) => (
     <li key={page.label} className="smart-hub--navigator-item">
-      <Button
-        onClick={page.onNavigation}
-        unstyled
-        className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
-        role="button"
+      <NavLink
+        to={`${page.path}`}
+        activeClassName="smart-hub--navigator-link-active"
+        className="smart-hub--navigator-link"
         aria-label={page.label}
       >
         <span className="margin-left-2">{page.label}</span>
@@ -53,7 +52,7 @@ function SideNav({
             </Tag>
             )}
         </span>
-      </Button>
+      </NavLink>
     </li>
   ));
 
@@ -65,20 +64,6 @@ function SideNav({
           {navItems()}
         </ul>
       </Container>
-      {errorMessage
-        && (
-          <Alert type="error" slim noIcon className="smart-hub--save-alert">
-            {errorMessage}
-          </Alert>
-        )}
-      {lastSaveTime && !errorMessage
-        && (
-        <Alert aria-live="polite" type="success" slim noIcon className="smart-hub--save-alert">
-          This report was automatically saved on
-          {' '}
-          {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
-        </Alert>
-        )}
     </Sticky>
   );
 }
@@ -88,19 +73,11 @@ SideNav.propTypes = {
     PropTypes.shape({
       label: PropTypes.string.isRequired,
       state: PropTypes.string,
-      current: PropTypes.bool.isRequired,
-      onNavigation: PropTypes.func.isRequired,
+      path: PropTypes.string.isRequired,
     }),
   ).isRequired,
   skipTo: PropTypes.string.isRequired,
   skipToMessage: PropTypes.string.isRequired,
-  errorMessage: PropTypes.string,
-  lastSaveTime: PropTypes.instanceOf(moment),
-};
-
-SideNav.defaultProps = {
-  lastSaveTime: undefined,
-  errorMessage: undefined,
 };
 
 export default SideNav;
