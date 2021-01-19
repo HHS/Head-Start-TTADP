@@ -55,7 +55,7 @@ export default async function uploadHandler(req, res) {
 
     try {
       const { path, originalFilename } = files.File[0];
-      const reportId = fields.reportID;
+      const { reportId } = fields;
       buffer = fs.readFileSync(path);
       type = await fileType.fromFile(path);
       fileName = `${uuidv4()}.${type.ext}`;
