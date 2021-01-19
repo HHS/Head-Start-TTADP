@@ -35,7 +35,7 @@ const s3Uploader = async (buffer, name, type, s3Client = s3) => {
     Key: name,
   };
   // Only check for versioning if not using Minio
-  if ( process.env.LOCAL_DEV !== 'true') {
+  if (process.env.LOCAL_DEV !== 'true') {
     await verifyVersioning();
   }
 
