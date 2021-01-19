@@ -10,7 +10,11 @@ import {
 
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
-import { topics } from './constants';
+
+const topics = [
+  'first',
+  'second',
+];
 
 const TopicsResources = ({
   register,
@@ -37,14 +41,14 @@ const TopicsResources = ({
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
       <div id="resources" />
       <div className="smart-hub--form-section">
-        <Label htmlFor="resourcesUsed">
+        <Label htmlFor="resources-used">
           Resources from OHS / ECLKC
           <br />
           Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
         </Label>
         <TextInput
-          id="resourcesUsed"
-          name="resourcesUsed"
+          id="resources-used"
+          name="resources-used"
           type="text"
           inputRef={register({ required: true })}
         />
@@ -94,7 +98,7 @@ const sections = [
     title: 'Resources',
     anchor: 'resources',
     items: [
-      { label: 'Resources used', name: 'resourcesUsed' },
+      { label: 'Resources used', name: 'resources-used' },
       { label: 'Other resources', name: 'other-resources', path: 'name' },
     ],
   },
@@ -112,7 +116,6 @@ export default {
   label: 'Topics and resources',
   path: 'topics-resources',
   sections,
-  review: false,
   render: (hookForm) => {
     const { control, register } = hookForm;
     return (

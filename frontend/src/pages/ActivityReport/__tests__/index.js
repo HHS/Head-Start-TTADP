@@ -7,125 +7,71 @@ import {
   render, screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
 import moment from 'moment';
-import fetchMock from 'fetch-mock';
-import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 
 const formData = () => ({
-  deliveryMethod: 'in-person',
-  ttaType: ['training'],
+  'activity-method': 'in-person',
+  'activity-type': ['training'],
   duration: '1',
-  pageState: {
-    1: 'in-progress',
-    2: 'in-progress',
-    3: 'in-progress',
-    4: 'in-progress',
-  },
-  endDate: moment().format('MM/DD/YYYY'),
-  activityParticipants: ['Grantee Name 1'],
-  numberOfParticipants: '1',
-  reason: ['reason 1'],
-  participantType: 'grantee',
+  'end-date': moment().format('MM/DD/YYYY'),
+  grantees: ['Grantee Name 1'],
+  'number-of-participants': '1',
+  'participant-category': 'grantee',
   participants: ['CEO / CFO / Executive'],
-  programTypes: ['type 1'],
+  'program-types': ['type 1'],
   requester: 'grantee',
-  resourcesUsed: 'eclkcurl',
-  startDate: moment().format('MM/DD/YYYY'),
-  targetPopulations: ['target 1'],
+  'resources-used': 'eclkcurl',
+  'start-date': moment().format('MM/DD/YYYY'),
+  'target-populations': ['target 1'],
   topics: 'first',
 });
 const history = createMemoryHistory();
 
-const renderActivityReport = (id, location = 'activity-summary') => {
+const renderActivityReport = (data = {}, location = 'activity-summary') => {
   render(
     <Router history={history}>
       <ActivityReport
-        match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+        initialData={data}
+        match={{ params: { currentPage: location }, path: '', url: '' }}
       />
     </Router>,
   );
 };
 
-const participants = {
-  grants: [{ label: 'grantee', options: [{ value: 1, label: 'grant' }] }],
-  nonGrantees: [{ value: 1, label: 'nonGrantee' }],
-};
-
 describe('ActivityReport', () => {
-  afterEach(() => fetchMock.restore());
-
-  beforeEach(() => {
-    fetchMock.get('/api/activity-reports/participants', participants);
-  });
-
-  it('defaults to activity summary if no page is in the url', async () => {
-    renderActivityReport('new', null);
-    await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
-  });
-
-  describe('updatePage', () => {
-    it('navigates to the correct page', async () => {
-      renderActivityReport('new');
-      const button = await screen.findByRole('button', { name: 'Topics and resources' });
-      userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/topics-resources'));
-    });
-  });
-
-  describe('onSave', () => {
-    it('calls "report create"', async () => {
-      renderActivityReport('new');
-      fetchMock.post('/api/activity-reports', { id: 1 });
-      const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const grantee = within(information).getByLabelText('Grantee');
-      fireEvent.click(grantee);
-      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
-      await reactSelectEvent.select(granteeSelectbox, ['grant']);
-
-      const button = await screen.findByRole('button', { name: 'Topics and resources' });
-      userEvent.click(button);
-
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
-    });
-
-    it('calls "report update"', async () => {
-      fetchMock.get('/api/activity-reports/1', formData());
-      fetchMock.put('/api/activity-reports/1', {});
-      renderActivityReport(1);
-      const button = await screen.findByRole('button', { name: 'Topics and resources' });
-      userEvent.click(button);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
-    });
+  it('defaults to activity summary if no page is in the url', () => {
+    renderActivityReport({}, null);
+    expect(history.location.pathname).toEqual('/activity-reports/activity-summary');
   });
 
   describe('grantee select', () => {
     describe('changes the participant selection to', () => {
       it('Grantee', async () => {
-        renderActivityReport('new');
+        renderActivityReport();
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const grantee = within(information).getByLabelText('Grantee');
         fireEvent.click(grantee);
         const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
         reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await screen.findByText(withText('grant'))).toBeVisible();
+        expect(await screen.findByText(withText('Grantee Name 1'))).toBeVisible();
       });
 
       it('Non-grantee', async () => {
-        renderActivityReport('new');
+        renderActivityReport();
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
         const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
         reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
+        expect(await screen.findByText(withText('QRIS System'))).toBeVisible();
       });
     });
 
-    it('clears selection when non-grantee is selected', async () => {
-      renderActivityReport('new');
-      const enabled = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+    it('when non-grantee is selected', async () => {
+      renderActivityReport();
+      const enabled = screen.getByRole('textbox', { name: 'Grantee name(s)' });
       expect(enabled).toBeDisabled();
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const grantee = within(information).getByLabelText('Grantee');
@@ -138,10 +84,9 @@ describe('ActivityReport', () => {
   describe('method checkboxes', () => {
     it('require a single selection for the form to be valid', async () => {
       const data = formData();
-      delete data.deliveryMethod;
-      fetchMock.get('/api/activity-reports/1', data);
+      delete data['activity-method'];
 
-      renderActivityReport(1);
+      renderActivityReport(data);
       expect(await screen.findByText('Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
@@ -152,10 +97,9 @@ describe('ActivityReport', () => {
   describe('tta checkboxes', () => {
     it('requires a single selection for the form to be valid', async () => {
       const data = formData();
-      delete data.ttaType;
-      fetchMock.get('/api/activity-reports/1', data);
+      delete data['activity-type'];
 
-      renderActivityReport(1);
+      renderActivityReport(data);
       expect(await screen.findByText('Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Training');
       fireEvent.click(box);

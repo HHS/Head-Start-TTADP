@@ -21,10 +21,8 @@ const itemType = {
   path: PropTypes.string,
   value: PropTypes.oneOfType([
     PropTypes.string,
-    PropTypes.number,
-    PropTypes.shape({}),
     PropTypes.arrayOf(PropTypes.string),
-    PropTypes.arrayOf(PropTypes.shape({})),
+    PropTypes.shape({}),
   ]),
 };
 

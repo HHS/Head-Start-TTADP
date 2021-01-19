@@ -20,7 +20,6 @@ export default {
   position: 4,
   label: 'Next steps',
   path: 'next-steps',
-  review: false,
   sections,
   render: () => (
     <NextSteps />
