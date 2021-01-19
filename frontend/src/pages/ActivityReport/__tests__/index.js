@@ -24,10 +24,10 @@ const formData = () => ({
     4: 'in-progress',
   },
   endDate: moment().format('MM/DD/YYYY'),
-  activityParticipants: ['Grantee Name 1'],
+  activityRecipients: ['Grantee Name 1'],
   numberOfParticipants: '1',
   reason: ['reason 1'],
-  participantType: 'grantee',
+  activityRecipientType: 'grantee',
   participants: ['CEO / CFO / Executive'],
   programTypes: ['type 1'],
   requester: 'grantee',
@@ -48,16 +48,16 @@ const renderActivityReport = (id, location = 'activity-summary') => {
   );
 };
 
-const participants = {
-  grants: [{ name: 'grantee', grants: [{ participantId: 1, name: 'grant' }] }],
-  nonGrantees: [{ participantId: 1, name: 'nonGrantee' }],
+const recipients = {
+  grants: [{ name: 'grantee', grants: [{ activityRecipientId: 1, name: 'grant' }] }],
+  nonGrantees: [{ activityRecipientId: 1, name: 'nonGrantee' }],
 };
 
 describe('ActivityReport', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/participants', participants);
+    fetchMock.get('/api/activity-reports/activity-recipients', recipients);
   });
 
   it('defaults to activity summary if no page is in the url', async () => {
@@ -101,7 +101,7 @@ describe('ActivityReport', () => {
   });
 
   describe('grantee select', () => {
-    describe('changes the participant selection to', () => {
+    describe('changes the recipient selection to', () => {
       it('Grantee', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });

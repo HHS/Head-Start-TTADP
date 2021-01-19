@@ -15,7 +15,7 @@ import Navigator from '../../components/Navigator';
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  submitReport, saveReport, getReport, getParticipants, createReport,
+  submitReport, saveReport, getReport, getRecipients, createReport,
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
@@ -54,8 +54,8 @@ function ActivityReport({ match }) {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const participants = await getParticipants();
-        updateAdditionalData({ participants });
+        const recipients = await getRecipients();
+        updateAdditionalData({ recipients });
         if (activityReportId !== 'new') {
           const report = await getReport(activityReportId);
           updateInitialFormData(report);
@@ -95,9 +95,9 @@ function ActivityReport({ match }) {
   }
 
   const onSave = async (data) => {
-    const { participantType, activityParticipants } = data;
+    const { activityRecipientType, activityRecipients } = data;
     if (reportId.current === 'new') {
-      if (participantType && activityParticipants && activityParticipants.length > 0) {
+      if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
         const savedReport = await createReport(data, {});
         reportId.current = savedReport.id;
         return true;
