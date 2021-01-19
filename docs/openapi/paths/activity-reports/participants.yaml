@@ -16,9 +16,9 @@ get:
               grants:
                 type: object
                 properties:
-                  label:
+                  name:
                     type: string
-                  options:
+                  grants:
                     type: array
                     items:
                       $ref: '../../index.yaml#/components/schemas/participant'

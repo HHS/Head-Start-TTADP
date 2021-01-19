@@ -27,7 +27,20 @@ const ActivitySummary = ({
   const participantSelection = watch('participantType');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
-  const { nonGrantees, grants } = participants;
+  const { nonGrantees: rawNonGrantees, grants: rawGrants } = participants;
+
+  const grants = rawGrants.map((grantee) => ({
+    label: grantee.name,
+    options: grantee.grants.map((grant) => ({
+      value: grant.participantId,
+      label: grant.name,
+    })),
+  }));
+
+  const nonGrantees = rawNonGrantees.map((nonGrantee) => ({
+    label: nonGrantee.name,
+    value: nonGrantee.participantId,
+  }));
 
   const disableParticipant = participantSelection === '';
   const nonGranteeSelected = participantSelection === 'non-grantee';
@@ -256,19 +269,19 @@ ActivitySummary.propTypes = {
   participants: PropTypes.shape({
     grants: PropTypes.arrayOf(
       PropTypes.shape({
-        label: PropTypes.string.isRequired,
-        options: PropTypes.arrayOf(
+        name: PropTypes.string.isRequired,
+        grants: PropTypes.arrayOf(
           PropTypes.shape({
-            label: PropTypes.string.isRequired,
-            value: PropTypes.number.isRequired,
+            name: PropTypes.string.isRequired,
+            participantId: PropTypes.number.isRequired,
           }),
         ),
       }),
     ),
     nonGrantees: PropTypes.arrayOf(
       PropTypes.shape({
-        label: PropTypes.string.isRequired,
-        value: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+        participantId: PropTypes.number.isRequired,
       }),
     ),
   }).isRequired,
