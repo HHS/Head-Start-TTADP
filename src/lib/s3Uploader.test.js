@@ -7,7 +7,7 @@ const mockData = {
 };
 
 // make sure we save to original value so we can restore it
-const oldEndpoint = process.env.S3_ENDPOINT;
+const oldEndpoint = process.env.LOCAL_DEV;
 
 describe('s3Uploader.verifyVersioning', () => {
   let mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockData);
@@ -54,17 +54,17 @@ describe('s3Uploader', () => {
     mockGet.mockClear();
   });
   afterAll(() => {
-    process.env.S3_ENDPOINT = oldEndpoint;
+    process.env.LOCAL_DEV = oldEndpoint;
   });
 
   it('Correctly Uploads the file', async () => {
-    process.env.S3_ENDPOINT = 'http://minio:9000';
+    process.env.LOCAL_DEV = 'true';
     const got = await s3Uploader(buf, name, goodType);
     expect(mockGet.mock.calls.length).toBe(0);
     await expect(got).toBe(response);
   });
   it('Correctly Uploads the file and checks versioning', async () => {
-    process.env.S3_ENDPOINT = 'http://localhost:9000';
+    process.env.LOCAL_DEV = 'false';
     const got = await s3Uploader(buf, name, goodType);
     expect(mockGet.mock.calls.length).toBe(1);
     await expect(got).toBe(response);
