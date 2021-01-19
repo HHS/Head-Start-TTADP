@@ -120,6 +120,12 @@ components:
           type: number
         name:
           type: string
+    file:
+      type: object
+      description: ID of file created
+      properties:
+        id:
+          type: number
     permission:
       type: object
       description: A combination of region, scope and user allowing that user to perform an action in a region

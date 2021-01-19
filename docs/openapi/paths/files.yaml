@@ -1,0 +1,20 @@
+post:
+  tags:
+    - files
+  operationId: postFile
+  description: Upload a file to s3
+  parameters:
+    - in: path
+      name: reportId
+      schema:
+        type: integer
+      required: true
+      description: Numeric ID of the Activity Report that the file is attached to.
+  responses:
+    200:
+      description: One user by an id
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '../index.yaml#/components/schemas/file'
