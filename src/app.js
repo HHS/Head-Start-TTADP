@@ -27,7 +27,7 @@ app.use(cookieSession({
   name: 'session',
   keys: [process.env.SESSION_SECRET],
 
-  // Cookie Options
+  // Cookie Options. httpOnly is set by default to true for https
   sameSite: 'lax',
 }));
 
