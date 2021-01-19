@@ -25,10 +25,8 @@ async function createFileMetaData(originalFileName, s3FileName, reportId) {
     await sequelize.transaction(async (transaction) => {
       file = await File.create(newFile, transaction);
     });
-    console.log("DB entry created")
     return file.dataValues;
   } catch (error) {
-    console.log(`db error = ${error}`)
     return error;
   }
 }
@@ -38,7 +36,6 @@ const updateStatus = async (fileId, fileStatus) => {
     await sequelize.transaction(async (transaction) => {
       file = await File.update({ status: fileStatus }, { where: { id: fileId } }, transaction);
     });
-    console.log(await File.findAll({ where: { id: fileId } }));
     return file.dataValues;
   } catch (error) {
     return error;
@@ -68,12 +65,10 @@ export default async function uploadHandler(req, res) {
     }
     try {
       await s3Uploader(buffer, fileName, type);
-      const ret = await updateStatus(metadata.id, 'UPLOADED');
-      res.status(200).send(JSON.stringify(ret));
+      await updateStatus(metadata.id, 'UPLOADED');
+      res.status(200).send(JSON.stringify({ id: metadata.id }));
     } catch (err) {
-      const result = await updateStatus(metadata.id, 'UPLOAD_FAILED');
-      console.log(`result=${result}`)
-      console.log(`id=${metadata.id}`)
+      await updateStatus(metadata.id, 'UPLOAD_FAILED');
       await handleErrors(req, res, err, logContext);
     }
   });
