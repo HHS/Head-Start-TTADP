@@ -22,18 +22,3 @@ export const put = async (url, data) => {
   }
   return res;
 };
-
-export const post = async (url, data) => {
-  const res = await fetch(url, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    throw new Error(res.statusText);
-  }
-  return res;
-};

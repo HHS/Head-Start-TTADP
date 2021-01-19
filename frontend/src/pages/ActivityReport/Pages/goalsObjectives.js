@@ -19,7 +19,6 @@ export default {
   position: 3,
   label: 'Goals and objectives',
   path: 'goals-objectives',
-  review: false,
   sections,
   render: () => (
     <GoalsObjectives />
