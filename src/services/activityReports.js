@@ -114,12 +114,12 @@ export async function createOrUpdate(newActivityReport, activityReportId) {
 }
 
 export async function reportParticipants() {
-  const rawGrants = await Grantee.findAll({
+  const grants = await Grantee.findAll({
     attributes: ['id', 'name'],
     include: [{
       model: Grant,
       as: 'grants',
-      attributes: ['id', 'name', 'number'],
+      attributes: [['id', 'participantId'], 'name', 'number'],
       include: [{
         model: Grantee,
         as: 'grantee',
@@ -127,17 +127,9 @@ export async function reportParticipants() {
     }],
   });
 
-  const grants = rawGrants.map((grantee) => ({
-    label: grantee.name,
-    options: grantee.grants.map((grant) => ({
-      value: grant.id,
-      label: grant.name,
-    })),
-  }));
-
   const nonGrantees = await NonGrantee.findAll({
     raw: true,
-    attributes: [['id', 'value'], ['name', 'label']],
+    attributes: [['id', 'participantId'], 'name'],
   });
   return { grants, nonGrantees };
 }
