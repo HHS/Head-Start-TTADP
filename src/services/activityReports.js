@@ -119,13 +119,8 @@ export async function activityRecipients() {
   const rawGrants = await Grant.findAll({
     attributes: ['id', 'name', 'number'],
     include: [{
-      model: Grant,
-      as: 'grants',
-      attributes: ['id', 'name', 'number'],
-      include: [{
-        model: Grantee,
-        as: 'grantee',
-      }],
+      model: Grantee,
+      as: 'grantee',
     }],
   });
 
