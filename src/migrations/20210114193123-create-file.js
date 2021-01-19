@@ -13,6 +13,9 @@ module.exports = {
       key: {
         type: Sequelize.STRING,
       },
+      status: {
+        type: Sequelize.ENUM('UPLOADING', 'UPLOADED', 'UPLOAD_FAILED', 'SCANNING', 'APPROVED', 'REJECTED'),
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
