@@ -116,10 +116,9 @@ components:
       type: object
       description: A grant or non-grantee that can be added to an activity report
       properties:
-        value:
         activityRecipientId:
           type: number
-        label:
+        name:
           type: string
     permission:
       type: object
