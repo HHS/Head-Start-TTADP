@@ -30,7 +30,7 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
-export const getParticipants = async () => {
-  const participants = await get(join(activityReportUrl, 'participants'));
-  return participants.json();
+export const getRecipients = async () => {
+  const recipients = await get(join(activityReportUrl, 'activity-recipients'));
+  return recipients.json();
 };

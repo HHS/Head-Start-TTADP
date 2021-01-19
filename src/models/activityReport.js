@@ -14,7 +14,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
-      ActivityReport.hasMany(models.ActivityParticipant, { foreignKey: 'activityReportId', as: 'activityParticipants' });
+      ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
     }
   }
   ActivityReport.init({
@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       get: formatDate,
     },
-    participantType: {
+    activityRecipientType: {
       allowNull: false,
       type: DataTypes.STRING,
     },

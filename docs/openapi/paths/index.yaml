@@ -14,7 +14,7 @@
   $ref: './activity-reports/activity-reports.yaml'
 '/activity-reports/approvers':
   $ref: './activity-reports/approvers.yaml'
-'/activity-reports/participants':
-  $ref: './activity-reports/participants.yaml'
+'/activity-reports/activity-recipients':
+  $ref: './activity-reports/activity-recipients.yaml'
 '/activity-reports/{activityReportId}':
   $ref: './activity-reports/activity-reports-id.yaml'

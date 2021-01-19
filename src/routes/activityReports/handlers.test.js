@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityParticipant, User, Permission,
+  ActivityReport, ActivityRecipient, User, Permission,
 } from '../../models';
 import {
   getApprovers, saveReport, createReport, getReport,
@@ -36,7 +36,7 @@ const mockResponse = {
 };
 
 const reportObject = {
-  participantType: 'grantee',
+  activityRecipientType: 'grantee',
   status: 'draft',
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
@@ -51,7 +51,7 @@ describe('Activity Report handlers', () => {
   });
 
   afterAll(async () => {
-    await ActivityParticipant.destroy({ where: {} });
+    await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
     await User.destroy({ where: { id: user.id } });
     db.sequelize.close();
@@ -155,8 +155,8 @@ describe('Activity Report handlers', () => {
     it('creates a new report', async () => {
       const beginningARCount = await ActivityReport.count();
       const report = {
-        participantType: 'grantee',
-        activityParticipants: [{ participantId: 1 }],
+        activityRecipientType: 'grantee',
+        activityRecipients: [{ activityRecipientId: 1 }],
       };
       const request = {
         body: report,
