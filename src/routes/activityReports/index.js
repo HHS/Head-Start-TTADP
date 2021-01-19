@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  getApprovers, submitReport,
+  getApprovers, submitReport, saveReport, createReport, getReport, getActivityRecipients,
 } from './handlers';
 
 const router = express.Router();
@@ -9,7 +9,11 @@ const router = express.Router();
  * API for activity reports
  */
 
+router.post('/', createReport);
 router.get('/approvers', getApprovers);
-router.post('/submit', submitReport);
+router.get('/activity-recipients', getActivityRecipients);
+router.get('/:activityReportId', getReport);
+router.put('/:activityReportId', saveReport);
+router.post('/:activityReportId/submit', submitReport);
 
 export default router;

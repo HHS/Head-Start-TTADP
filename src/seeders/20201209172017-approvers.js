@@ -23,12 +23,12 @@ const permissions = [
   },
   {
     userId: 3,
-    regionId: 1,
+    regionId: 2,
     scopeId: APPROVE_REPORTS,
   },
   {
     userId: 4,
-    regionId: 2,
+    regionId: 3,
     scopeId: APPROVE_REPORTS,
   },
 ];

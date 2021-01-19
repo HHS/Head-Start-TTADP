@@ -6,7 +6,7 @@ import authMiddleware, { login } from '../middleware/authMiddleware';
 import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
 import activityReportsRouter from './activityReports';
-import { userById } from './admin/user';
+import { userById } from '../services/users';
 
 export const loginPath = '/login';
 
@@ -34,7 +34,7 @@ router.get('/user', async (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  req.session.destroy();
+  req.session = null;
   res.sendStatus(204);
 });
 
