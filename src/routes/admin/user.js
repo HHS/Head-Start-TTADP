@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
 import {
   User, Permission, sequelize,
 } from '../../models';
+import { userById } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 
 const namespace = 'SERVICE:USER';
@@ -9,18 +9,6 @@ const namespace = 'SERVICE:USER';
 const logContext = {
   namespace,
 };
-
-export const userById = async (userId) => User.findOne({
-  attributes: ['id', 'name', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId', 'role'],
-  where: {
-    id: {
-      [Op.eq]: userId,
-    },
-  },
-  include: [
-    { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
-  ],
-});
 
 /**
  * Gets one user from the database.

@@ -21,6 +21,8 @@ import moment from 'moment';
 
 import './DatePicker.css';
 
+const dateFmt = 'MM/DD/YYYY';
+
 const DateInput = ({
   control, label, minDate, name, disabled, maxDate, openUp, required,
 }) => {
@@ -30,8 +32,8 @@ const DateInput = ({
   const openDirection = openUp ? OPEN_UP : OPEN_DOWN;
 
   const isOutsideRange = (date) => {
-    const isBefore = minDate && date.isBefore(minDate);
-    const isAfter = maxDate && date.isAfter(maxDate);
+    const isBefore = minDate && date.isBefore(moment(minDate, dateFmt));
+    const isAfter = maxDate && date.isAfter(moment(maxDate, dateFmt));
 
     return isBefore || isAfter;
   };
@@ -41,23 +43,26 @@ const DateInput = ({
       <Label id={labelId} htmlFor={name}>{label}</Label>
       <div className="usa-hint" id={hintId}>mm/dd/yyyy</div>
       <Controller
-        render={({ onChange, value, ref }) => (
-          <div className="display-flex smart-hub--date-picker-input">
-            <button onClick={() => { updateFocus(true); }} disabled={disabled} tabIndex={-1} aria-label="open calendar" type="button" className="usa-date-picker__button margin-top-0" />
-            <SingleDatePicker
-              id={name}
-              focused={isFocused}
-              date={value}
-              ref={ref}
-              isOutsideRange={isOutsideRange}
-              numberOfMonths={1}
-              openDirection={openDirection}
-              disabled={disabled}
-              onDateChange={onChange}
-              onFocusChange={({ focused }) => updateFocus(focused)}
-            />
-          </div>
-        )}
+        render={({ onChange, value, ref }) => {
+          const date = value ? moment(value, dateFmt) : null;
+          return (
+            <div className="display-flex smart-hub--date-picker-input">
+              <button onClick={() => { updateFocus(true); }} disabled={disabled} tabIndex={-1} aria-label="open calendar" type="button" className="usa-date-picker__button margin-top-0" />
+              <SingleDatePicker
+                id={name}
+                focused={isFocused}
+                date={date}
+                ref={ref}
+                isOutsideRange={isOutsideRange}
+                numberOfMonths={1}
+                openDirection={openDirection}
+                disabled={disabled}
+                onDateChange={(d) => { onChange(d.format(dateFmt)); }}
+                onFocusChange={({ focused }) => updateFocus(focused)}
+              />
+            </div>
+          );
+        }}
         control={control}
         name={name}
         disabled={disabled}
@@ -76,16 +81,16 @@ DateInput.propTypes = {
   control: PropTypes.object.isRequired,
   name: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  minDate: PropTypes.instanceOf(moment),
-  maxDate: PropTypes.instanceOf(moment),
+  minDate: PropTypes.string,
+  maxDate: PropTypes.string,
   openUp: PropTypes.bool,
   disabled: PropTypes.bool,
   required: PropTypes.bool,
 };
 
 DateInput.defaultProps = {
-  minDate: undefined,
-  maxDate: undefined,
+  minDate: '',
+  maxDate: '',
   disabled: false,
   openUp: false,
   required: true,

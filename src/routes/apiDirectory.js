@@ -5,7 +5,8 @@ import join from 'url-join';
 import authMiddleware, { login } from '../middleware/authMiddleware';
 import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
-import { userById } from './admin/user';
+import activityReportsRouter from './activityReports';
+import { userById } from '../services/users';
 
 export const loginPath = '/login';
 
@@ -16,6 +17,7 @@ const router = express.Router();
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.use('/admin/users', adminRouter);
+router.use('/activity-reports', activityReportsRouter);
 
 router.use('/hello', (req, res) => {
   res.send('Hello from ttadp');
@@ -32,7 +34,7 @@ router.get('/user', async (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  req.session.destroy();
+  req.session = null;
   res.sendStatus(204);
 });
 

@@ -1,0 +1,22 @@
+<agencies xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="gov.hhs.acf.ohs.hses">
+<agency>
+  <agency_id>1335</agency_id>
+  <agency_name>Agency 1, Inc.</agency_name>
+  <agency_type>Community Action Agency (CAA)</agency_type>
+</agency>
+<agency>
+  <agency_id>4365</agency_id>
+  <agency_name>Community College</agency_name>
+  <agency_type>School System</agency_type>
+</agency>
+<agency>
+  <agency_id>119</agency_id>
+  <agency_name>Multi ID Agency</agency_name>
+  <agency_type>Tribal Government or Consortium</agency_type>
+</agency>
+<agency>
+  <agency_id>7709</agency_id>
+  <agency_name>Multi ID Agency</agency_name>
+  <agency_type xsi:nil="true"/>
+</agency>
+</agencies>

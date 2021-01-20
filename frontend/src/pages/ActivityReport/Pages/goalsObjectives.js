@@ -22,4 +22,24 @@ GoalsObjectives.propTypes = {
   register: PropTypes.func.isRequired,
 };
 
-export default GoalsObjectives;
+const sections = [
+  {
+    title: 'Context',
+    anchor: 'context',
+    items: [
+      { label: 'Context', name: 'context' },
+    ],
+  },
+];
+
+export default {
+  position: 3,
+  label: 'Goals and objectives',
+  path: 'goals-objectives',
+  review: false,
+  sections,
+  render: (hookForm) => {
+    const { register } = hookForm;
+    return <GoalsObjectives register={register} />;
+  },
+};

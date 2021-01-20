@@ -21,7 +21,7 @@ const roles = [
 export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      User.belongsTo(models.Region, { foreignKey: 'homeRegionId', as: 'homeRegion' });
+      User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
       User.belongsToMany(models.Scope, {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
@@ -36,6 +36,10 @@ export default (sequelize, DataTypes) => {
       comment: null,
       primaryKey: true,
       autoIncrement: true,
+    },
+    homeRegionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     hsesUserId: {
       type: DataTypes.STRING,
