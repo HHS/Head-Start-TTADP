@@ -13,7 +13,7 @@ const logContext = {
   namespace,
 };
 
-async function createFileMetaData(originalFileName, s3FileName, reportId) {
+export const createFileMetaData = async (originalFileName, s3FileName, reportId) => {
   const newFile = {
     activityReportId: reportId,
     originalFileName,
@@ -29,8 +29,9 @@ async function createFileMetaData(originalFileName, s3FileName, reportId) {
   } catch (error) {
     return error;
   }
-}
-const updateStatus = async (fileId, fileStatus) => {
+};
+
+export const updateStatus = async (fileId, fileStatus) => {
   let file;
   try {
     await sequelize.transaction(async (transaction) => {
