@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
 import {
   Role, Topic, RoleTopic, Goal, TopicGoal, Grant, GrantGoal,
-} from '../src/models';
+} from '../models';
 
 const hubRoles = [
   { name: 'RPM', fullName: 'Regional Program Manager' },
