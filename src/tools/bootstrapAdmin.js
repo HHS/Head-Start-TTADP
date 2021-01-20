@@ -1,6 +1,6 @@
-import { User, Permission } from '../src/models';
-import logger from '../src/logger';
-import SCOPES from '../src/middleware/scopeConstants';
+import { User, Permission } from '../models';
+import logger from '../logger';
+import SCOPES from '../middleware/scopeConstants';
 
 const { ADMIN } = SCOPES;
 
