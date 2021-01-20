@@ -15,7 +15,7 @@ import {
   otherUsers,
   programTypes,
   targetPopulations,
-} from './constants';
+} from '../constants';
 
 const ActivitySummary = ({
   register,
