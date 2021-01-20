@@ -22,6 +22,7 @@ const defaultValues = {
   deliveryMethod: [],
   activityType: [],
   attachments: [],
+  context: '',
   duration: '',
   endDate: null,
   grantees: [],
