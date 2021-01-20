@@ -53,3 +53,22 @@ export const targetPopulations = [
   'Dual-Language Learners',
   'Pregnant Women',
 ];
+
+export const otherUsers = [
+  'User 1',
+  'User 2',
+  'User 3',
+];
+
+export const programTypes = [
+  'program type 1',
+  'program type 2',
+  'program type 3',
+  'program type 4',
+  'program type 5',
+];
+
+export const topics = [
+  'first',
+  'second',
+];
