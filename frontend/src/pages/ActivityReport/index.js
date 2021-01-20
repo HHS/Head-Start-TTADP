@@ -46,24 +46,28 @@ const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 function ActivityReport({ match }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
-  const [submitted, updateSubmitted] = useState(false);
+  const [submitted, updateSubmitted] = useState();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
   const [initialFormData, updateInitialFormData] = useState(defaultValues);
   const [initialAdditionalData, updateAdditionalData] = useState({});
-  const reportId = useRef(activityReportId);
+  const reportId = useRef();
 
   useEffect(() => {
     const fetch = async () => {
       try {
+        updateLoading(true);
         const recipients = await getRecipients();
         updateAdditionalData({ recipients });
         if (activityReportId !== 'new') {
           const report = await getReport(activityReportId);
           updateInitialFormData(report);
           updateSubmitted(report.status === 'submitted');
+          reportId.current = report.id;
         } else {
           updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
+          updateSubmitted(false);
+          reportId.current = 'new';
         }
         updateError();
       } catch (e) {
