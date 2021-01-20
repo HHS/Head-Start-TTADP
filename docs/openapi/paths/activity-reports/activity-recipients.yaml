@@ -14,9 +14,14 @@ get:
             type: object
             properties:
               grants:
-                type: array
-                items:
-                  $ref: '../../index.yaml#/components/schemas/activityRecipient'
+                type: object
+                properties:
+                  name:
+                    type: string
+                  grants:
+                    type: array
+                    items:
+                      $ref: '../../index.yaml#/components/schemas/activityRecipient'
               nonGrantees:
                 type: array
                 items:
