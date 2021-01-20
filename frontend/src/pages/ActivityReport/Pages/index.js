@@ -26,11 +26,12 @@ const reviewPage = {
   review: true,
   label: 'Review and submit',
   path: 'review',
-  render: (allComplete, formData, submitted, onSubmit) => (
+  render: (hookForm, allComplete, formData, submitted, onSubmit) => (
     <ReviewSubmit
       allComplete={allComplete}
       onSubmit={onSubmit}
       submitted={submitted}
+      hookForm={hookForm}
       reviewItems={
         pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
       }

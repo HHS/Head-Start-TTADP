@@ -3,18 +3,41 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import selectEvent from 'react-select-event';
+import userEvent from '@testing-library/user-event';
+import { useForm } from 'react-hook-form';
 
 import ReviewSubmit from '../ReviewSubmit';
 
-const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () => {}) => {
-  render(<ReviewSubmit
-    allComplete={allComplete}
-    submitted={submitted}
-    initialData={initialData}
-    onSubmit={onSubmit}
-    reviewItems={[]}
-  />);
+const Review = ({
+  // eslint-disable-next-line react/prop-types
+  allComplete, submitted, formData, onSubmit,
+}) => {
+  const hookForm = useForm({
+    mode: 'onChange',
+    defaultValues: formData,
+  });
+
+  return (
+    <ReviewSubmit
+      allComplete={allComplete}
+      submitted={submitted}
+      formData={formData}
+      onSubmit={onSubmit}
+      reviewItems={[]}
+      hookForm={hookForm}
+    />
+  );
+};
+
+const renderReview = (allComplete, submitted, formData = { approvingManagerId: null }, onSubmit = () => {}) => {
+  render(
+    <Review
+      allComplete={allComplete}
+      submitted={submitted}
+      formData={formData}
+      onSubmit={onSubmit}
+    />,
+  );
 };
 
 const approvers = [
@@ -22,7 +45,7 @@ const approvers = [
   { id: 2, name: 'user 2' },
 ];
 
-const selectLabel = 'Manager - you may choose more than one.';
+const selectLabel = 'Approving manager';
 
 describe('ReviewSubmit', () => {
   afterEach(() => fetchMock.restore());
@@ -59,7 +82,7 @@ describe('ReviewSubmit', () => {
       renderReview(true, false);
       const button = await screen.findByRole('button');
       expect(button).toBeDisabled();
-      await selectEvent.select(screen.getByLabelText(selectLabel), ['user 1']);
+      userEvent.selectOptions(screen.getByTestId('dropdown'), ['1']);
       expect(await screen.findByRole('button')).toBeEnabled();
     });
   });
@@ -72,7 +95,7 @@ describe('ReviewSubmit', () => {
 
   it('initializes the form with "initialData"', async () => {
     renderReview(true, true, { additionalNotes: 'test' });
-    const textBox = await screen.findByLabelText('Additional notes for this activity (optional)');
+    const textBox = await screen.findByLabelText('Creator notes');
     await waitFor(() => expect(textBox).toHaveValue('test'));
   });
 });

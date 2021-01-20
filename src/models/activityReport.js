@@ -14,6 +14,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
+      ActivityReport.belongsTo(models.User, { foreignKey: 'approvingManagerId', as: 'approvingManager' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
     }
   }
@@ -22,6 +23,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     lastUpdatedById: {
+      type: DataTypes.INTEGER,
+    },
+    approvingManagerId: {
       type: DataTypes.INTEGER,
     },
     resourcesUsed: {
@@ -78,11 +82,20 @@ export default (sequelize, DataTypes) => {
       validate: {
         checkRequiredForSubmission() {
           const requiredForSubmission = [
+            this.approvingManagerId,
+            this.resourcesUsed,
+            this.numberOfParticipants,
             this.deliveryMethod,
             this.duration,
             this.endDate,
-            this.requestor,
             this.startDate,
+            this.activityRecipientType,
+            this.requester,
+            this.programTypes,
+            this.targetPopulations,
+            this.reason,
+            this.participants,
+            this.topics,
             this.ttaType,
           ];
           if (this.status !== 'draft') {
