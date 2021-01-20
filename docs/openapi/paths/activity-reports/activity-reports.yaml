@@ -1,0 +1,18 @@
+post:
+  tags:
+    - activity-reports
+  summary: Create a new activity report
+  requestBody:
+    description: A new activity report
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../index.yaml#/components/schemas/activityReport'
+  responses:
+    200:
+      description: Successfully created activity report
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'

@@ -9,42 +9,13 @@ import {
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
-  reasons, granteeParticipants, nonGranteeParticipants, targetPopulations,
-} from '../constants';
-
-const grantees = [
-  'Grantee Name 1',
-  'Grantee Name 2',
-  'Grantee Name 3',
-];
-
-const nonGrantees = [
-  'CCDF / Child Care Administrator',
-  'Head Start Collaboration Office',
-  'QRIS System',
-  'Regional Head Start Association',
-  'Regional TTA/Other Specialists',
-  'State CCR&R',
-  'State Early Learning Standards',
-  'State Education System',
-  'State Health System',
-  'State Head Start Association',
-  'State Professional Development / Continuing Education',
-];
-
-const otherUsers = [
-  'User 1',
-  'User 2',
-  'User 3',
-];
-
-const programTypes = [
-  'program type 1',
-  'program type 2',
-  'program type 3',
-  'program type 4',
-  'program type 5',
-];
+  nonGranteeParticipants,
+  granteeParticipants,
+  reasons,
+  otherUsers,
+  programTypes,
+  targetPopulations,
+} from './constants';
 
 const ActivitySummary = ({
   register,
@@ -52,27 +23,40 @@ const ActivitySummary = ({
   setValue,
   control,
   getValues,
+  recipients,
 }) => {
-  const participantSelection = watch('participant-category');
-  const startDate = watch('start-date');
-  const endDate = watch('end-date');
-  const previousParticipantSelection = useRef(participantSelection);
+  const activityRecipientType = watch('activityRecipientType');
+  const startDate = watch('startDate');
+  const endDate = watch('endDate');
+  const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
 
-  const disableParticipant = participantSelection === '';
-  const nonGranteeSelected = participantSelection === 'non-grantee';
+  const grants = rawGrants.map((grantee) => ({
+    label: grantee.name,
+    options: grantee.grants.map((grant) => ({
+      value: grant.activityRecipientId,
+      label: grant.name,
+    })),
+  }));
 
-  const subjects = nonGranteeSelected ? nonGrantees : grantees;
-  const subjectsLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+  const nonGrantees = rawNonGrantees.map((nonGrantee) => ({
+    label: nonGrantee.name,
+    value: nonGrantee.activityRecipientId,
+  }));
 
+  const disableRecipients = activityRecipientType === '';
+  const nonGranteeSelected = activityRecipientType === 'non-grantee';
+  const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
+  const previousActivityRecipientType = useRef(activityRecipientType);
+  const recipientLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
   const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
-  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
 
   useEffect(() => {
-    if (previousParticipantSelection.current !== participantSelection) {
-      setValue('grantees', []);
-      previousParticipantSelection.current = participantSelection;
+    if (previousActivityRecipientType.current !== activityRecipientType) {
+      setValue('activityRecipients', []);
+      setValue('participants', []);
+      previousActivityRecipientType.current = activityRecipientType;
     }
-  }, [participantSelection, setValue]);
+  }, [activityRecipientType, setValue]);
 
   const renderCheckbox = (name, value, label) => (
     <Checkbox
@@ -95,10 +79,11 @@ const ActivitySummary = ({
         <title>Activity summary</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Who was the activity for?">
+        <div id="activity-for" />
         <div className="smart-hub--form-section">
           <Radio
             id="category-grantee"
-            name="participant-category"
+            name="activityRecipientType"
             label="Grantee"
             value="grantee"
             className="smart-hub--report-checkbox"
@@ -106,7 +91,7 @@ const ActivitySummary = ({
           />
           <Radio
             id="category-non-grantee"
-            name="participant-category"
+            name="activityRecipientType"
             label="Non-Grantee"
             value="non-grantee"
             className="smart-hub--report-checkbox"
@@ -115,13 +100,14 @@ const ActivitySummary = ({
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="grantees"
-            label={subjectsLabel}
-            disabled={disableParticipant}
+            name="activityRecipients"
+            label={recipientLabel}
+            disabled={disableRecipients}
             control={control}
-            options={
-              subjects.map((participant) => ({ value: participant, label: participant }))
-            }
+            valueProperty="activityRecipientId"
+            labelProperty="name"
+            simple={false}
+            options={selectedRecipients}
           />
         </div>
         <div className="smart-hub--form-section">
@@ -130,44 +116,30 @@ const ActivitySummary = ({
             label="Collaborating Specialists"
             control={control}
             required={false}
-            options={
-              otherUsers.map((user) => ({ value: user, label: user }))
-            }
+            options={otherUsers.map((user) => ({ value: user, label: user }))}
           />
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="program-types"
+            name="programTypes"
             label="Program type(s)"
             control={control}
             required
-            options={
-              programTypes.map((user) => ({ value: user, label: user }))
-            }
+            options={programTypes.map((user) => ({ value: user, label: user }))}
           />
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="target-populations"
+            name="targetPopulations"
             label="Target Populations addressed. You may choose more than one."
             control={control}
             required
-            options={
-              targetPopulations.map((user) => ({ value: user, label: user }))
-            }
-          />
-        </div>
-        <div className="smart-hub--form-section">
-          <Label htmlFor="cdi">If a grantee is under CDI and that grant does not appear above: Enter the grantee name and CDI grant number (if known).</Label>
-          <TextInput
-            id="cdi"
-            name="cdi"
-            type="text"
-            inputRef={register()}
+            options={targetPopulations.map((user) => ({ value: user, label: user }))}
           />
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Reason for Activity">
+        <div id="reasons" />
         <div className="smart-hub--form-section">
           <Fieldset unstyled>
             <legend>
@@ -175,7 +147,7 @@ const ActivitySummary = ({
               Use &quot;Regional Office&quot; for TTA not requested by grantee
             </legend>
             <Radio
-              id="grantee-request"
+              id="granteeRequest"
               name="requester"
               label="Grantee"
               value="grantee"
@@ -183,10 +155,10 @@ const ActivitySummary = ({
               inputRef={register({ required: true })}
             />
             <Radio
-              id="regional-office-request"
+              id="requestorRegionalOffice"
               name="requester"
               label="Regional Office"
-              value="regional-office"
+              value="regionalOffice"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: true })}
             />
@@ -197,20 +169,19 @@ const ActivitySummary = ({
             name="reason"
             label="What was the reason for this activity?"
             control={control}
-            options={
-              reasons.map((reason) => ({ value: reason, label: reason }))
-            }
+            options={reasons.map((reason) => ({ value: reason, label: reason }))}
           />
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Date and Duration">
+        <div id="date" />
         <div className="smart-hub--form-section">
           <Grid row gap>
             <Grid col={6}>
               <DatePicker
                 control={control}
                 maxDate={endDate}
-                name="start-date"
+                name="startDate"
                 label="Start Date"
                 register={register}
                 openUp
@@ -221,7 +192,7 @@ const ActivitySummary = ({
                 control={control}
                 minDate={startDate}
                 disabled={!startDate}
-                name="end-date"
+                name="endDate"
                 label="End Date"
                 register={register}
                 openUp
@@ -229,17 +200,18 @@ const ActivitySummary = ({
             </Grid>
             <Grid col={5}>
               <Label htmlFor="duration">Duration (round to the nearest half hour)</Label>
-              <TextInput id="duration" name="duration" type="number" inputRef={register({ required: true })} />
+              <TextInput id="duration" name="duration" type="number" inputRef={register({ required: true, valueAsNumber: true })} />
             </Grid>
           </Grid>
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Training or Technical Assistance">
+        <div id="tta" />
         <div className="smart-hub--form-section">
           <Fieldset unstyled>
             <legend>What TTA was provided?</legend>
-            {renderCheckbox('activity-type', 'training', 'Training')}
-            {renderCheckbox('activity-type', 'technical-assistance', 'Technical Assistance')}
+            {renderCheckbox('ttaType', 'training', 'Training')}
+            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance')}
           </Fieldset>
         </div>
         <div className="smart-hub--form-section">
@@ -247,16 +219,16 @@ const ActivitySummary = ({
             <legend>How was this activity conducted? (select at least one)</legend>
             <div className="smart-hub--form-section">
               <Radio
-                id="activity-virtual"
-                name="activity-method"
+                id="delivery-method-virtual"
+                name="deliveryMethod"
                 label="Virtual"
                 value="virtual"
                 className="smart-hub--report-checkbox"
                 inputRef={register({ required: true })}
               />
               <Radio
-                id="activity-in-person"
-                name="activity-method"
+                id="delivery-method-in-person"
+                name="deliveryMethod"
                 label="In Person"
                 value="in-person"
                 className="smart-hub--report-checkbox"
@@ -267,10 +239,11 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Other participants">
+        <div id="other-participants" />
         <div className="smart-hub--form-section">
           <MultiSelect
             name="participants"
-            label={participantsLabel}
+            label={recipientLabel}
             control={control}
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
@@ -278,12 +251,12 @@ const ActivitySummary = ({
           />
         </div>
         <div className="smart-hub--form-section">
-          <Label htmlFor="number-of-participants">Number of grantee participants involved</Label>
+          <Label htmlFor="numberOfParticipants">Number of grantee participants involved</Label>
           <TextInput
-            id="number-of-participants"
-            name="number-of-participants"
+            id="numberOfParticipants"
+            name="numberOfParticipants"
             type="number"
-            inputRef={register({ required: true })}
+            inputRef={register({ required: true, valueAsNumber: true })}
           />
         </div>
       </Fieldset>
@@ -296,8 +269,97 @@ ActivitySummary.propTypes = {
   watch: PropTypes.func.isRequired,
   setValue: PropTypes.func.isRequired,
   getValues: PropTypes.func.isRequired,
+  recipients: PropTypes.shape({
+    grants: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        grants: PropTypes.arrayOf(
+          PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            participantId: PropTypes.number.isRequired,
+          }),
+        ),
+      }),
+    ),
+    nonGrantees: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        participantId: PropTypes.number.isRequired,
+      }),
+    ),
+  }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
 };
 
-export default ActivitySummary;
+const sections = [
+  {
+    title: 'Who was the activity for?',
+    anchor: 'activity-for',
+    items: [
+      { label: 'Grantee or Non-grantee', name: 'activityRecipientType' },
+      { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
+      { label: 'Collaborating specialist(s)', name: 'otherUsers', path: 'label' },
+      { label: 'Program type(s)', name: 'programTypes' },
+      { label: 'Target Populations addressed', name: 'targetPopulations' },
+    ],
+  },
+  {
+    title: 'Reason for activity',
+    anchor: 'reasons',
+    items: [
+
+      { label: 'Requested by', name: 'requester' },
+      { label: 'reason(s)', name: 'reason' },
+    ],
+  },
+  {
+    title: 'Activity date',
+    anchor: 'date',
+    items: [
+      { label: 'Start date', name: 'startDate' },
+      { label: 'End date', name: 'endDate' },
+      { label: 'Duration', name: 'duration' },
+    ],
+  },
+  {
+    title: 'Training or Technical Assistance',
+    anchor: 'tta',
+    items: [
+      { label: 'TTA Provided', name: 'ttaType' },
+      { label: 'Conducted', name: 'deliveryMethod' },
+    ],
+  },
+  {
+    title: 'Other participants',
+    anchor: 'other-participants',
+    items: [
+      { label: 'Grantee participants', name: 'participants' },
+      { label: 'Number of participants', name: 'numberOfParticipants' },
+    ],
+  },
+];
+
+export default {
+  position: 1,
+  label: 'Activity summary',
+  path: 'activity-summary',
+  sections,
+  review: false,
+  render: (hookForm, additionalData) => {
+    const {
+      register, watch, setValue, getValues, control,
+    } = hookForm;
+    const { recipients } = additionalData;
+    return (
+      <ActivitySummary
+        register={register}
+        watch={watch}
+        recipients={recipients}
+        setValue={setValue}
+        getValues={getValues}
+        control={control}
+      />
+    );
+  },
+};

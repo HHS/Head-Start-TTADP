@@ -1,137 +1,125 @@
 /*
   Activity report. Makes use of the navigator to split the long form into
-  multiple pages. Each "page" is defined in the `./Pages` directory. To add
-  a new page define a new "pages" array item with a label and renderForm function
-  that accepts a react-hook-form useForm object as an argument (see
-  https://react-hook-form.com/api/)
+  multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
+import { Alert } from '@trussworks/react-uswds';
 
-import ActivitySummary from './Pages/ActivitySummary';
-import TopicsResources from './Pages/TopicsResources';
-import NextSteps from './Pages/NextSteps';
-import ReviewSubmit from './Pages/ReviewSubmit';
-import GoalsObjectives from './Pages/GoalsObjectives';
+import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-
-const pages = [
-  {
-    position: 1,
-    label: 'Activity summary',
-    path: 'activity-summary',
-    render: (hookForm) => {
-      const {
-        register, watch, setValue, getValues, control,
-      } = hookForm;
-      return (
-        <ActivitySummary
-          register={register}
-          watch={watch}
-          setValue={setValue}
-          getValues={getValues}
-          control={control}
-        />
-      );
-    },
-  },
-  {
-    position: 2,
-    label: 'Topics and resources',
-    path: 'topics-resources',
-    render: (hookForm) => {
-      const { control, register } = hookForm;
-      return (
-        <TopicsResources
-          register={register}
-          control={control}
-        />
-      );
-    },
-  },
-  {
-    position: 3,
-    label: 'Goals and objectives',
-    path: 'goals-objectives',
-    render: (hookForm) => {
-      const { register } = hookForm;
-      return <GoalsObjectives register={register} />;
-    },
-  },
-  {
-    position: 4,
-    label: 'Next steps',
-    path: 'next-steps',
-    render: () => (
-      <NextSteps />
-    ),
-  },
-  {
-    position: 5,
-    review: true,
-    label: 'Review and submit',
-    path: 'review',
-    render: (allComplete, onSubmit) => (
-      <ReviewSubmit
-        allComplete={allComplete}
-        onSubmit={onSubmit}
-      />
-    ),
-  },
-];
+import {
+  submitReport, saveReport, getReport, getRecipients, createReport,
+} from '../../fetchers/activityReports';
 
 const defaultValues = {
-  'activity-method': [],
-  'activity-type': [],
+  deliveryMethod: [],
+  activityType: [],
   attachments: [],
-  cdi: '',
   duration: '',
-  'end-date': null,
+  endDate: null,
   grantees: [],
-  'number-of-participants': '',
-  'other-users': [],
-  'participant-category': '',
+  numberOfParticipants: '',
+  otherUsers: [],
+  participantCategory: '',
   participants: [],
-  'program-types': [],
+  programTypes: [],
   reason: [],
   requester: '',
-  'resources-used': '',
-  'start-date': null,
-  'target-populations': [],
+  resourcesUsed: '',
+  startDate: null,
+  targetPopulations: [],
   topics: [],
 };
 
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
-const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
+const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ initialData, match }) {
-  const [submitted, updateSubmitted] = useState(false);
+function ActivityReport({ match }) {
+  const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
-  const { params: { currentPage } } = match;
+  const [submitted, updateSubmitted] = useState(false);
+  const [error, updateError] = useState();
+  const [loading, updateLoading] = useState(true);
+  const [initialFormData, updateInitialFormData] = useState(defaultValues);
+  const [initialAdditionalData, updateAdditionalData] = useState({});
+  const reportId = useRef(activityReportId);
 
-  const onFormSubmit = (data) => {
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const recipients = await getRecipients();
+        updateAdditionalData({ recipients });
+        if (activityReportId !== 'new') {
+          const report = await getReport(activityReportId);
+          updateInitialFormData(report);
+        } else {
+          updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
+        }
+        updateError();
+      } catch (e) {
+        updateError('Unable to load activity report');
+      } finally {
+        updateLoading(false);
+      }
+    };
+    fetch();
+  }, [activityReportId]);
+
+  if (loading) {
+    return (
+      <div>
+        loading...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert type="error">
+        {error}
+      </Alert>
+    );
+  }
+
+  if (!currentPage) {
+    return (
+      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+    );
+  }
+
+  const onSave = async (data) => {
+    const { activityRecipientType, activityRecipients } = data;
+    if (reportId.current === 'new') {
+      if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
+        const savedReport = await createReport(data, {});
+        reportId.current = savedReport.id;
+        return true;
+      }
+    } else {
+      await saveReport(reportId.current, data, {});
+      return true;
+    }
+    return false;
+  };
+
+  const onFormSubmit = async (data) => {
     // eslint-disable-next-line no-console
     console.log('Submit form data', data);
+    await submitReport(reportId.current, data);
     updateSubmitted(true);
   };
 
   const updatePage = (position) => {
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${page.path}`);
+    history.push(`/activity-reports/${activityReportId}/${page.path}`);
   };
-
-  if (!currentPage) {
-    return (
-      <Redirect to="/activity-reports/activity-summary" />
-    );
-  }
 
   return (
     <>
@@ -141,22 +129,18 @@ function ActivityReport({ initialData, match }) {
         updatePage={updatePage}
         currentPage={currentPage}
         submitted={submitted}
-        initialPageState={initialPageState}
-        defaultValues={{ ...defaultValues, ...initialData }}
+        additionalData={initialAdditionalData}
+        initialData={{ ...defaultValues, ...initialFormData }}
         pages={pages}
         onFormSubmit={onFormSubmit}
+        onSave={onSave}
       />
     </>
   );
 }
 
 ActivityReport.propTypes = {
-  initialData: PropTypes.shape({}),
   match: ReactRouterPropTypes.match.isRequired,
-};
-
-ActivityReport.defaultProps = {
-  initialData: {},
 };
 
 export default ActivityReport;

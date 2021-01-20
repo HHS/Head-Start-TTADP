@@ -10,11 +10,7 @@ import {
 
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
-
-const topics = [
-  'first',
-  'second',
-];
+import { topics } from './constants';
 
 const TopicsResources = ({
   register,
@@ -25,6 +21,7 @@ const TopicsResources = ({
       <title>Topics and resources</title>
     </Helmet>
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
+      <div id="topics-covered" />
       <div className="smart-hub--form-section">
         <MultiSelect
           name="topics"
@@ -38,15 +35,16 @@ const TopicsResources = ({
       </div>
     </Fieldset>
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
+      <div id="resources" />
       <div className="smart-hub--form-section">
-        <Label htmlFor="resources-used">
+        <Label htmlFor="resourcesUsed">
           Resources from OHS / ECLKC
           <br />
           Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
         </Label>
         <TextInput
-          id="resources-used"
-          name="resources-used"
+          id="resourcesUsed"
+          name="resourcesUsed"
           type="text"
           inputRef={register({ required: true })}
         />
@@ -64,6 +62,7 @@ const TopicsResources = ({
       </div>
     </Fieldset>
     <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
+      <div id="attachments" />
       <Label htmlFor="attachments">Upload any resources used that are not available through ECLKC</Label>
       <Controller
         name="attachments"
@@ -83,4 +82,44 @@ TopicsResources.propTypes = {
   control: PropTypes.object.isRequired,
 };
 
-export default TopicsResources;
+const sections = [
+  {
+    title: 'Topics covered',
+    anchor: 'topics-resources',
+    items: [
+      { label: 'Topics', name: 'topics' },
+    ],
+  },
+  {
+    title: 'Resources',
+    anchor: 'resources',
+    items: [
+      { label: 'Resources used', name: 'resourcesUsed' },
+      { label: 'Other resources', name: 'other-resources', path: 'name' },
+    ],
+  },
+  {
+    title: 'Attachments',
+    anchor: 'attachments',
+    items: [
+      { label: 'Attachments', name: 'attachments' },
+    ],
+  },
+];
+
+export default {
+  position: 2,
+  label: 'Topics and resources',
+  path: 'topics-resources',
+  sections,
+  review: false,
+  render: (hookForm) => {
+    const { control, register } = hookForm;
+    return (
+      <TopicsResources
+        register={register}
+        control={control}
+      />
+    );
+  },
+};

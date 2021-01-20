@@ -14,4 +14,15 @@ const NextSteps = () => (
 
 NextSteps.propTypes = {};
 
-export default NextSteps;
+const sections = [];
+
+export default {
+  position: 4,
+  label: 'Next steps',
+  path: 'next-steps',
+  review: false,
+  sections,
+  render: () => (
+    <NextSteps />
+  ),
+};
