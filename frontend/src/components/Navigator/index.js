@@ -18,7 +18,7 @@ import {
   IN_PROGRESS, COMPLETE, SUBMITTED,
 } from './constants';
 import SideNav from './components/SideNav';
-import IndicatorHeader from './components/IndicatorHeader';
+import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
   initialData,
@@ -130,13 +130,18 @@ function Navigator({
       <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
         <div id="navigator-form">
           {page.review
-            && page.render(allComplete, formData, submitted, onFormSubmit, additionalData)}
+            && page.render(
+              hookForm,
+              allComplete,
+              formData,
+              submitted,
+              onFormSubmit,
+              additionalData,
+            )}
           {!page.review
             && (
               <Container skipTopPadding>
-                <IndicatorHeader
-                  currentStep={page.position}
-                  totalSteps={pages.filter((p) => !p.review).length}
+                <NavigatorHeader
                   label={page.label}
                 />
                 <Form

@@ -36,6 +36,8 @@ const defaultValues = {
   startDate: null,
   targetPopulations: [],
   topics: [],
+  approvingManagerId: null,
+  additionalNotes: null,
 };
 
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -59,6 +61,7 @@ function ActivityReport({ match }) {
         if (activityReportId !== 'new') {
           const report = await getReport(activityReportId);
           updateInitialFormData(report);
+          updateSubmitted(report.status === 'submitted');
         } else {
           updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
         }
@@ -110,10 +113,8 @@ function ActivityReport({ match }) {
   };
 
   const onFormSubmit = async (data) => {
-    // eslint-disable-next-line no-console
-    console.log('Submit form data', data);
-    await submitReport(reportId.current, data);
-    updateSubmitted(true);
+    const report = await submitReport(reportId.current, data);
+    updateSubmitted(report.status === 'submitted');
   };
 
   const updatePage = (position) => {

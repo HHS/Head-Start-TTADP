@@ -42,7 +42,7 @@ const pages = [
     label: 'review page',
     path: 'review',
     review: true,
-    render: (allComplete, formData, submitted, onSubmit) => (
+    render: (hookForm, allComplete, formData, submitted, onSubmit) => (
       <div>
         <button type="button" data-testid="review" onClick={onSubmit}>Continue</button>
       </div>
