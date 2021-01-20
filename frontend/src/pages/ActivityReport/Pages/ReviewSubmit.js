@@ -39,6 +39,13 @@ const ReviewSubmit = ({
     );
   }
 
+  const setValue = (e) => {
+    if (e === '') {
+      return null;
+    }
+    return parseInt(e, 10);
+  };
+
   return (
     <>
       <Helmet>
@@ -75,7 +82,7 @@ const ReviewSubmit = ({
               approval.
             </p>
             <Label htmlFor="approvingManagerId">Approving manager</Label>
-            <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ required: true })}>
+            <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: true })}>
               <option name="default" value="" disabled hidden>Select a Manager...</option>
               {possibleApprovers.map((approver) => (
                 <option key={approver.id} value={approver.id}>{approver.name}</option>
