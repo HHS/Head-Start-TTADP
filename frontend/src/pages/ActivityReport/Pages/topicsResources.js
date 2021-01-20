@@ -10,7 +10,7 @@ import {
 
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
-import { topics } from './constants';
+import { topics } from '../constants';
 
 const TopicsResources = ({
   register,
