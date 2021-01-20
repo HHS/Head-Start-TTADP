@@ -9,12 +9,13 @@ import {
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
-  otherParticipants,
+  nonGranteeParticipants,
+  granteeParticipants,
   reasons,
   otherUsers,
   programTypes,
   targetPopulations,
-} from './constants';
+} from '../constants';
 
 const ActivitySummary = ({
   register,
@@ -47,10 +48,13 @@ const ActivitySummary = ({
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
   const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
+  const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType) {
-      setValue('activityParticipants', []);
+      setValue('activityRecipients', []);
+      setValue('participants', []);
       previousActivityRecipientType.current = activityRecipientType;
     }
   }, [activityRecipientType, setValue]);
@@ -240,10 +244,10 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <MultiSelect
             name="participants"
-            label="Grantee participant(s) involved"
+            label={participantsLabel}
             control={control}
             options={
-              otherParticipants.map((participant) => ({ value: participant, label: participant }))
+              participants.map((participant) => ({ value: participant, label: participant }))
             }
           />
         </div>
