@@ -47,7 +47,8 @@ const ActivitySummary = ({
   const nonGranteeSelected = activityRecipientType === 'non-grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
+  const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
   const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
 
   useEffect(() => {
@@ -243,7 +244,7 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <MultiSelect
             name="participants"
-            label={recipientLabel}
+            label={participantsLabel}
             control={control}
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
