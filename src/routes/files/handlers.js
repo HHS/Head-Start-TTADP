@@ -67,7 +67,7 @@ export default async function uploadHandler(req, res) {
     try {
       await s3Uploader(buffer, fileName, type);
       await updateStatus(metadata.id, 'UPLOADED');
-      res.status(200).send(JSON.stringify({ id: metadata.id }));
+      res.status(200).send({ id: metadata.id });
     } catch (err) {
       await updateStatus(metadata.id, 'UPLOAD_FAILED');
       await handleErrors(req, res, err, logContext);

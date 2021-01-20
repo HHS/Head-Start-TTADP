@@ -6,14 +6,15 @@ import db, {
   Permission,
 } from '../../models';
 import app from '../../app';
-// import * as S3Uploader from '../../lib/s3Uploader';
-import * as handlers from './handlers';
+import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
 
 const request = require('supertest');
 
+jest.mock('../../lib/s3Uploader');
+
 const mockUser = {
-  id: 100,
+  id: 200,
   homeRegionId: 1,
   permissions: [
     {
@@ -41,11 +42,9 @@ const reportObject = {
 };
 
 describe('File Upload Handlers', () => {
-  // const mockS3Uploader = jest.spyOn(S3Uploader, 'default').mockReturnValue();
-  const spyCreateFileMetaData = jest.spyOn(handlers, 'createFileMetaData');
-  const spyUpdateStatus = jest.spyOn(handlers, 'updateStatus');
   let user;
   let report;
+  let fileId;
   beforeAll(async () => {
     user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     report = await ActivityReport.create(reportObject);
@@ -57,13 +56,12 @@ describe('File Upload Handlers', () => {
     db.sequelize.close();
   });
   it('tests a file upload', async () => {
-    await request(app)
+    fileId = await request(app)
       .post('/api/files')
       .field('reportId', report.dataValues.id)
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
-      .expect(200);
-    // expect(mockS3Uploader).toHaveBeenCalled();
-    expect(spyCreateFileMetaData).toHaveBeenCalled();
-    expect(spyUpdateStatus).toHaveBeenCalled();
+      .expect(200)
+      .then((res) => res.body.id);
+    expect(s3Uploader.mock.calls.length).toBe(1);
   });
 });
