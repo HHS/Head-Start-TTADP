@@ -29,7 +29,12 @@ const Review = ({
   );
 };
 
-const renderReview = (allComplete, submitted, formData = { approvingManagerId: null }, onSubmit = () => {}) => {
+const renderReview = (
+  allComplete,
+  submitted,
+  formData = { approvingManagerId: null },
+  onSubmit = () => {},
+) => {
   render(
     <Review
       allComplete={allComplete}
