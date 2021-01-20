@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
     },
     approvingManagerId: {
       type: DataTypes.INTEGER,
+      allowNull: true,
     },
     resourcesUsed: {
       type: DataTypes.STRING,

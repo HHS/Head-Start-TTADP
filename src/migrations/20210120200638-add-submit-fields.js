@@ -5,6 +5,7 @@ module.exports = {
       'approvingManagerId',
       {
         type: Sequelize.DataTypes.INTEGER,
+        allowNull: true,
         references: {
           model: 'Users',
           key: 'id',
