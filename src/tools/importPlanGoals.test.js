@@ -1,9 +1,9 @@
 import { Op } from 'sequelize';
 import importGoals from './importPlanGoals';
-import { processFiles } from '../src/lib/updateGrantsGrantees';
+import { processFiles } from '../lib/updateGrantsGrantees';
 import db, {
   Role, Topic, RoleTopic, Goal, Grantee, Grant,
-} from '../src/models';
+} from '../models';
 
 describe('Import TTA plan goals', () => {
   afterAll(() => {

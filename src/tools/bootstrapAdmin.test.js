@@ -1,5 +1,5 @@
 import bootstrapAdmin, { ADMIN_EMAIL } from './bootstrapAdmin';
-import db, { User } from '../src/models';
+import db, { User } from '../models';
 
 describe('Bootstrap the first Admin user', () => {
   afterAll(() => {
