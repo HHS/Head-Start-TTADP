@@ -72,6 +72,9 @@ components:
           description: Why the activity was conducted
           items:
             type: string
+        context:
+          type: string
+          description: Additional context an author can provide for a report
         participants:
           type: array
           description: The roles of the people attending the TTA
