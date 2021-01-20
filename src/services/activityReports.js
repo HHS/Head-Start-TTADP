@@ -116,19 +116,18 @@ export async function createOrUpdate(newActivityReport, activityReportId) {
 }
 
 export async function activityRecipients() {
-  const rawGrants = await Grant.findAll({
-    attributes: ['id', 'name', 'number'],
+  const grants = await Grantee.findAll({
+    attributes: ['id', 'name'],
     include: [{
-      model: Grantee,
-      as: 'grantee',
+      model: Grant,
+      as: 'grants',
+      attributes: [['id', 'activityRecipientId'], 'name', 'number'],
+      include: [{
+        model: Grantee,
+        as: 'grantee',
+      }],
     }],
   });
-
-  const grants = rawGrants.map((g) => ({
-    activityRecipientId: g.id,
-    name: g.name,
-  }));
-
   const nonGrantees = await NonGrantee.findAll({
     raw: true,
     attributes: [['id', 'activityRecipientId'], 'name'],
