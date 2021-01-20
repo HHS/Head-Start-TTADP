@@ -3,9 +3,8 @@
 import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
 import {
-  Role, Topic, RoleTopic, Goal, TopicGoal, Grantee, Grant, GrantGoal,
-} from '../src/models';
-import { exit } from 'process';
+  Role, Topic, RoleTopic, Goal, TopicGoal, Grant, GrantGoal,
+} from '../models';
 
 const hubRoles = [
   { name: 'RPM', fullName: 'Regional Program Manager' },
@@ -161,6 +160,7 @@ export default async function importGoals(file, region) {
             const fullGrant = { number: grant.trim(), regionId };
             const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'granteeId'] });
             if (!dbGrant) {
+              // eslint-disable-next-line no-console
               console.log(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
               process.exit(1);
             }
@@ -190,6 +190,7 @@ export default async function importGoals(file, region) {
         ignoreDuplicates: true,
       });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.log(err);
   }
 }
