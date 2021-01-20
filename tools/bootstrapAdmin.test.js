@@ -1,4 +1,4 @@
-import bootstrapAdmin, { ADMIN_EMAIL } from './bootstrapAdmin'
+import bootstrapAdmin, { ADMIN_EMAIL } from './bootstrapAdmin';
 import db, { User } from '../src/models';
 
 describe('Bootstrap the first Admin user', () => {
@@ -15,12 +15,12 @@ describe('Bootstrap the first Admin user', () => {
     });
 
     it('should create an admin permission for the user', async () => {
-      let user = await User.findOne({ where: { email: ADMIN_EMAIL } });
+      const user = await User.findOne({ where: { email: ADMIN_EMAIL } });
       expect(user).toBeDefined();
       expect((await user.getPermissions()).length).toBe(0);
       const newPermission = await bootstrapAdmin();
       expect(newPermission).toBeDefined();
-      expect((await user.getPermissions()).length).toBe(1)
+      expect((await user.getPermissions()).length).toBe(1);
       await newPermission.destroy();
     });
 

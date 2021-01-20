@@ -21,7 +21,7 @@
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src tools --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
-    "lint:ci": "eslint -f eslint-formatter-multiple src",
+    "lint:ci": "eslint -f eslint-formatter-multiple src tools",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
     "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
