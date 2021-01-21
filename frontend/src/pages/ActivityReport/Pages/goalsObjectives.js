@@ -36,6 +36,7 @@ export default {
   position: 3,
   label: 'Goals and objectives',
   path: 'goals-objectives',
+  review: false,
   sections,
   render: (hookForm) => {
     const { register } = hookForm;

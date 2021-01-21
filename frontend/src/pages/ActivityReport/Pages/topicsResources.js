@@ -37,14 +37,14 @@ const TopicsResources = ({
     <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
       <div id="resources" />
       <div className="smart-hub--form-section">
-        <Label htmlFor="resources-used">
+        <Label htmlFor="resourcesUsed">
           Resources from OHS / ECLKC
           <br />
           Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
         </Label>
         <TextInput
-          id="resources-used"
-          name="resources-used"
+          id="resourcesUsed"
+          name="resourcesUsed"
           type="text"
           inputRef={register({ required: true })}
         />
@@ -94,7 +94,7 @@ const sections = [
     title: 'Resources',
     anchor: 'resources',
     items: [
-      { label: 'Resources used', name: 'resources-used' },
+      { label: 'Resources used', name: 'resourcesUsed' },
       { label: 'Other resources', name: 'other-resources', path: 'name' },
     ],
   },
@@ -112,6 +112,7 @@ export default {
   label: 'Topics and resources',
   path: 'topics-resources',
   sections,
+  review: false,
   render: (hookForm) => {
     const { control, register } = hookForm;
     return (
