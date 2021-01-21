@@ -14,11 +14,6 @@ get:
             type: object
             properties:
               grants:
-<<<<<<< HEAD
-                type: array
-                items:
-                  $ref: '../../index.yaml#/components/schemas/activityRecipient'
-=======
                 type: object
                 properties:
                   name:
@@ -27,7 +22,6 @@ get:
                     type: array
                     items:
                       $ref: '../../index.yaml#/components/schemas/activityRecipient'
->>>>>>> main
               nonGrantees:
                 type: array
                 items:
