@@ -8,7 +8,6 @@ import db, {
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
-import * as handlers from './handlers';
 
 const request = require('supertest');
 
