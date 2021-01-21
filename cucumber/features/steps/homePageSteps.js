@@ -22,7 +22,7 @@ Given('I am logged in', async () => {
 
   const loginLinkSelector = 'a[href$="api/login"]';
   // const homeLinkSelector = 'a[href$="/"]';
-  const activityReportsSelector = 'a[href$="activity-reports"]';
+  const activityReportsSelector = 'a[href$="activity-reports/new"]';
 
   await page.goto(scope.uri);
   await page.waitForSelector('em'); // Page title
@@ -52,7 +52,7 @@ Then('I see {string} message', async (string) => {
 
 Then('I see {string} link', async (string) => {
   const page = scope.context.currentPage;
-  const selector = 'a[href$="activity-reports"]';
+  const selector = 'a[href$="activity-reports/new"]';
 
   await page.waitForSelector(selector);
   const value = await page.$eval(selector, (el) => el.textContent);
