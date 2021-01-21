@@ -12,7 +12,7 @@ import updateGrantsGrantees from './lib/updateGrantsGrantees';
 
 import findOrCreateUser from './services/accessValidation';
 
-import logger, { requestLogger } from './logger';
+import logger, { auditLogger, requestLogger } from './logger';
 
 const app = express();
 
@@ -58,11 +58,12 @@ app.get(oauth2CallbackPath, async (req, res) => {
     });
 
     req.session.userId = dbUser.id;
+    auditLogger.info(`User ${dbUser.id} logged in`);
 
-    logger.info(`role: ${req.session.userId} ${req.session.referrerPath}`);
+    logger.debug(`referrer path: ${req.session.referrerPath}`);
     res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
   } catch (error) {
-    logger.error(`Error logging in: ${error}`);
+    auditLogger.error(`Error logging in: ${error}`);
     res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
@@ -82,7 +83,7 @@ const runJob = () => {
   try {
     updateGrantsGrantees();
   } catch (error) {
-    logger.error(`Error processing HSES file: ${error}`);
+    auditLogger.error(`Error processing HSES file: ${error}`);
   }
 };
 
