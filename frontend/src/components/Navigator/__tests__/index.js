@@ -50,19 +50,20 @@ const pages = [
   },
 ];
 
+const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED } };
+
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, updatePage = () => {}) => {
+  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}) => {
     render(
       <Navigator
         submitted={false}
-        initialData={{ pageState: { 1: NOT_STARTED, 2: NOT_STARTED } }}
+        initialData={initialData}
         defaultValues={{ first: '', second: '' }}
         pages={pages}
-        updatePage={updatePage}
         currentPage={currentPage}
         onFormSubmit={onSubmit}
-        onSave={() => {}}
+        onSave={onSave}
       />,
     );
   };
@@ -75,11 +76,11 @@ describe('Navigator', () => {
     await waitFor(() => expect(within(first).getByText('In progress')).toBeVisible());
   });
 
-  it('onContinue calls update page with correct page position', async () => {
-    const updatePage = jest.fn();
-    renderNavigator('second', () => {}, updatePage);
+  it('onContinue calls onSave with correct page position', async () => {
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(3));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: '' }, 3));
   });
 
   it('submits data when "continuing" from the review page', async () => {
@@ -89,10 +90,10 @@ describe('Navigator', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
-  it('calls updatePage on navigation', async () => {
-    const updatePage = jest.fn();
-    renderNavigator('second', () => {}, updatePage);
+  it('calls onSave on navigation', async () => {
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave);
     userEvent.click(screen.getByRole('button', { name: 'first page' }));
-    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ ...initialData, second: '' }, 1));
   });
 });

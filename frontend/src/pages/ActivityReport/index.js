@@ -101,19 +101,29 @@ function ActivityReport({ match }) {
     );
   }
 
-  const onSave = async (data) => {
+  const updatePage = (position) => {
+    const page = pages.find((p) => p.position === position);
+    history.push(`/activity-reports/${reportId.current}/${page.path}`);
+  };
+
+  const onSave = async (data, newIndex) => {
     const { activityRecipientType, activityRecipients } = data;
+    let saved = false;
     if (reportId.current === 'new') {
       if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
         const savedReport = await createReport(data, {});
         reportId.current = savedReport.id;
-        return true;
+        saved = true;
       }
     } else {
       await saveReport(reportId.current, data, {});
-      return true;
+      saved = true;
     }
-    return false;
+
+    if (newIndex) {
+      updatePage(newIndex);
+    }
+    return saved;
   };
 
   const onFormSubmit = async (data) => {
@@ -121,17 +131,11 @@ function ActivityReport({ match }) {
     updateSubmitted(report.status === 'submitted');
   };
 
-  const updatePage = (position) => {
-    const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${activityReportId}/${page.path}`);
-  };
-
   return (
     <>
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
-        updatePage={updatePage}
         currentPage={currentPage}
         submitted={submitted}
         additionalData={initialAdditionalData}
