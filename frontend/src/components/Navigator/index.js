@@ -26,7 +26,6 @@ function Navigator({
   onFormSubmit,
   submitted,
   currentPage,
-  updatePage,
   additionalData,
   onSave,
   autoSaveInterval,
@@ -68,11 +67,12 @@ function Navigator({
     return newPageState;
   };
 
-  const onSaveForm = async (completed) => {
+  const onSaveForm = async (completed, index) => {
     const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
+    const newIndex = index === page.position ? null : index;
     try {
       updateFormData(data);
-      const result = await onSave(data);
+      const result = await onSave(data, newIndex);
       if (result) {
         updateLastSaveTime(moment());
       }
@@ -84,13 +84,8 @@ function Navigator({
     }
   };
 
-  const navigateToPage = (index, completed) => {
-    onSaveForm(completed);
-    updatePage(index);
-  };
-
   const onContinue = () => {
-    navigateToPage(page.position + 1, true);
+    onSaveForm(true, page.position + 1);
   };
 
   useInterval(() => {
@@ -109,7 +104,7 @@ function Navigator({
     const state = p.review ? submittedNavState : stateOfPage;
     return {
       label: p.label,
-      onNavigation: () => navigateToPage(p.position),
+      onNavigation: () => onSaveForm(false, p.position),
       state,
       current,
     };
@@ -124,7 +119,6 @@ function Navigator({
           pages={navigatorPages}
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
-          navigateToPage={navigateToPage}
         />
       </Grid>
       <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
@@ -174,7 +168,6 @@ Navigator.propTypes = {
     }),
   ).isRequired,
   currentPage: PropTypes.string.isRequired,
-  updatePage: PropTypes.func.isRequired,
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
 };
