@@ -1,4 +1,4 @@
-// import { validate } from 'uuid';
+import { validate } from 'uuid';
 import db, {
   File,
   ActivityReport,
@@ -41,7 +41,7 @@ const reportObject = {
   resourcesUsed: 'test',
 };
 
-describe('File Upload Handlers', () => {
+describe('File Upload Handlers happy path', () => {
   let user;
   let report;
   let fileId;
@@ -53,7 +53,6 @@ describe('File Upload Handlers', () => {
     await File.destroy({ where: {} });
     await ActivityReport.destroy({ where: { } });
     await User.destroy({ where: { id: user.id } });
-    db.sequelize.close();
   });
   it('tests a file upload', async () => {
     fileId = await request(app)
@@ -62,6 +61,44 @@ describe('File Upload Handlers', () => {
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
       .expect(200)
       .then((res) => res.body.id);
+    expect(s3Uploader.mock.calls.length).toBe(1);
+  });
+  it('checks the metadata was uploaded to the database', async () => {
+    const file = await File.findAll({ where: { id: fileId } });
+    const uuid = file[0].dataValues.key.slice(0, -4);
+    expect(file[0].dataValues.id).toBe(fileId);
+    expect(file[0].dataValues.status).toBe('UPLOADED');
+    expect(file[0].dataValues.originalFileName).toBe('testfile.pdf');
+    expect(file[0].dataValues.activityReportId).toBe(report.dataValues.id);
+    expect(validate(uuid)).toBe(true);
+  });
+});
+
+describe('File Upload Handlers error handling', () => {
+  let user;
+  let report;
+  beforeAll(async () => {
+    user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
+    report = await ActivityReport.create(reportObject);
+  });
+  afterAll(async () => {
+    await File.destroy({ where: {} });
+    await ActivityReport.destroy({ where: { } });
+    await User.destroy({ where: { id: user.id } });
+    db.sequelize.close();
+  });
+  it('tests a file upload without a report id', async () => {
+    await request(app)
+      .post('/api/files')
+      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .expect(400, { error: 'requestId required' });
+    expect(s3Uploader.mock.calls.length).toBe(1);
+  });
+  it('tests a file upload without a file', async () => {
+    await request(app)
+      .post('/api/files')
+      .field('reportId', report.dataValues.id)
+      .expect(400, { error: 'file required' });
     expect(s3Uploader.mock.calls.length).toBe(1);
   });
 });
