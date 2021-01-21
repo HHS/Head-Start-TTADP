@@ -8,7 +8,7 @@
   },
   "scripts": {
     "axe:ci": "axe --exit --load-delay 1000 `cat axe-urls` --dir ./reports/ --chromedriver-path=\"node_modules/chromedriver/bin/chromedriver\"",
-    "build": "./node_modules/.bin/babel src -d ./build/server  && ./node_modules/.bin/babel config -d build/config",
+    "build": "./node_modules/.bin/babel src -d ./build/server && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\"",
@@ -18,7 +18,7 @@
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src tools --coverage --reporters=default --reporters=jest-junit",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -27,6 +27,8 @@
     "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn cucumber",
+    "db:bootstrap:admin:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapAdminCLI.js",
+    "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:prod": "node_modules/.bin/sequelize db:migrate --options-path .production.sequelizerc",
@@ -49,7 +51,8 @@
     "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
     "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
-    "import:goals": "./node_modules/.bin/babel-node ./tools/importTTAPlanGoals.js"
+    "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
+    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js"
   },
   "repository": {
     "type": "git",
@@ -86,7 +89,7 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 70
+        "branches": 75
       }
     }
   },

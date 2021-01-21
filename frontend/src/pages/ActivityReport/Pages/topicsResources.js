@@ -10,11 +10,7 @@ import {
 
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
-
-const topics = [
-  'first',
-  'second',
-];
+import { topics } from '../constants';
 
 const TopicsResources = ({
   register,
