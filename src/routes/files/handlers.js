@@ -55,8 +55,16 @@ export default async function uploadHandler(req, res) {
     let type;
 
     try {
+      if (!files.File) {
+        res.status(400).send({ error: 'file required' });
+        return;
+      }
       const { path, originalFilename } = files.File[0];
       const { reportId } = fields;
+      if (!reportId) {
+        res.status(400).send({ error: 'requestId required' });
+        return;
+      }
       buffer = fs.readFileSync(path);
       type = await fileType.fromFile(path);
       fileName = `${uuidv4()}.${type.ext}`;
@@ -69,7 +77,9 @@ export default async function uploadHandler(req, res) {
       await updateStatus(metadata.id, 'UPLOADED');
       res.status(200).send({ id: metadata.id });
     } catch (err) {
-      await updateStatus(metadata.id, 'UPLOAD_FAILED');
+      if (metadata) {
+        await updateStatus(metadata.id, 'UPLOAD_FAILED');
+      }
       await handleErrors(req, res, err, logContext);
     }
   });
