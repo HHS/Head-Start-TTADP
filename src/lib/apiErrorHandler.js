@@ -1,7 +1,7 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
-import logger from '../logger';
+import { auditLogger as logger } from '../logger';
 
 /**
  * Handles sequelize errors
