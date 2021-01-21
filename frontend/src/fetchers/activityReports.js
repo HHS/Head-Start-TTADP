@@ -17,14 +17,7 @@ export const fetchApprovers = async () => {
   return res.json();
 };
 
-export const submitReport = async (data, extraData) => {
-  const url = join(activityReportUrl, 'submit');
-  await fetch(url, {
-    method: 'POST',
-    credentials: 'same-origin',
-    body: JSON.stringify({
-      report: data,
-      metaData: extraData,
-    }),
-  });
+export const getRecipients = async () => {
+  const recipients = await get(join(activityReportUrl, 'activity-recipients'));
+  return recipients.json();
 };

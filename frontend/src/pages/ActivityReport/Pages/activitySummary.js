@@ -8,53 +8,14 @@ import {
 
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
-
-const grantees = [
-  'Grantee Name 1',
-  'Grantee Name 2',
-  'Grantee Name 3',
-];
-
-const nonGrantees = [
-  'CCDF / Child Care Administrator',
-  'Head Start Collaboration Office',
-  'QRIS System',
-  'Regional Head Start Association',
-  'Regional TTA/Other Specialists',
-  'State CCR&R',
-  'State Early Learning Standards',
-  'State Education System',
-  'State Health System',
-  'State Head Start Association',
-  'State Professional Development / Continuing Education',
-];
-
-const reasons = [
-  'reason 1',
-  'reason 2',
-];
-
-const otherUsers = [
-  'User 1',
-  'User 2',
-  'User 3',
-];
-
-const programTypes = [
-  'program type 1',
-  'program type 2',
-  'program type 3',
-  'program type 4',
-  'program type 5',
-];
-
-const targetPopulations = [
-  'target pop 1',
-  'target pop 2',
-  'target pop 3',
-  'target pop 4',
-  'target pop 5',
-];
+import {
+  nonGranteeParticipants,
+  granteeParticipants,
+  reasons,
+  otherUsers,
+  programTypes,
+  targetPopulations,
+} from '../constants';
 
 const ActivitySummary = ({
   register,
@@ -62,23 +23,41 @@ const ActivitySummary = ({
   setValue,
   control,
   getValues,
+  recipients,
 }) => {
-  const participantSelection = watch('participant-category');
-  const startDate = watch('start-date');
-  const endDate = watch('end-date');
+  const activityRecipientType = watch('activityRecipientType');
+  const startDate = watch('startDate');
+  const endDate = watch('endDate');
+  const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
 
-  const disableParticipant = participantSelection === '';
-  const nonGranteeSelected = participantSelection === 'non-grantee';
-  const participants = nonGranteeSelected ? nonGrantees : grantees;
-  const previousParticipantSelection = useRef(participantSelection);
-  const participantLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+  const grants = rawGrants.map((grantee) => ({
+    label: grantee.name,
+    options: grantee.grants.map((grant) => ({
+      value: grant.activityRecipientId,
+      label: grant.name,
+    })),
+  }));
+
+  const nonGrantees = rawNonGrantees.map((nonGrantee) => ({
+    label: nonGrantee.name,
+    value: nonGrantee.activityRecipientId,
+  }));
+
+  const disableRecipients = activityRecipientType === '';
+  const nonGranteeSelected = activityRecipientType === 'non-grantee';
+  const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
+  const previousActivityRecipientType = useRef(activityRecipientType);
+  const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
+  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
+  const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
 
   useEffect(() => {
-    if (previousParticipantSelection.current !== participantSelection) {
-      setValue('grantees', []);
-      previousParticipantSelection.current = participantSelection;
+    if (previousActivityRecipientType.current !== activityRecipientType) {
+      setValue('activityRecipients', []);
+      setValue('participants', []);
+      previousActivityRecipientType.current = activityRecipientType;
     }
-  }, [participantSelection, setValue]);
+  }, [activityRecipientType, setValue]);
 
   const renderCheckbox = (name, value, label) => (
     <Checkbox
@@ -105,7 +84,7 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <Radio
             id="category-grantee"
-            name="participant-category"
+            name="activityRecipientType"
             label="Grantee"
             value="grantee"
             className="smart-hub--report-checkbox"
@@ -113,7 +92,7 @@ const ActivitySummary = ({
           />
           <Radio
             id="category-non-grantee"
-            name="participant-category"
+            name="activityRecipientType"
             label="Non-Grantee"
             value="non-grantee"
             className="smart-hub--report-checkbox"
@@ -122,13 +101,14 @@ const ActivitySummary = ({
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="grantees"
-            label={participantLabel}
-            disabled={disableParticipant}
+            name="activityRecipients"
+            label={recipientLabel}
+            disabled={disableRecipients}
             control={control}
-            options={
-              participants.map((participant) => ({ value: participant, label: participant }))
-            }
+            valueProperty="activityRecipientId"
+            labelProperty="name"
+            simple={false}
+            options={selectedRecipients}
           />
         </div>
         <div className="smart-hub--form-section">
@@ -281,7 +261,7 @@ const ActivitySummary = ({
         <div className="smart-hub--form-section">
           <MultiSelect
             name="participants"
-            label="Grantee participant(s) involved"
+            label={participantsLabel}
             control={control}
             options={
               participants.map((participant) => ({ value: participant, label: participant }))
@@ -307,6 +287,25 @@ ActivitySummary.propTypes = {
   watch: PropTypes.func.isRequired,
   setValue: PropTypes.func.isRequired,
   getValues: PropTypes.func.isRequired,
+  recipients: PropTypes.shape({
+    grants: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        grants: PropTypes.arrayOf(
+          PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            participantId: PropTypes.number.isRequired,
+          }),
+        ),
+      }),
+    ),
+    nonGrantees: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        participantId: PropTypes.number.isRequired,
+      }),
+    ),
+  }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
 };
@@ -316,13 +315,11 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Grantee or Non-grantee', name: 'participant-category' },
-      { label: 'Grantee name(s)', name: 'grantees' },
-      { label: 'Grantee number(s)', name: '' },
-      { label: 'Collaborating specialist(s)', name: 'other-users' },
-      { label: 'CDI', name: 'cdi' },
-      { label: 'Program type(s)', name: 'program-types' },
-      { label: 'Target Populations addressed', name: 'target-populations' },
+      { label: 'Grantee or Non-grantee', name: 'activityRecipientType' },
+      { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
+      { label: 'Collaborating specialist(s)', name: 'otherUsers', path: 'label' },
+      { label: 'Program type(s)', name: 'programTypes' },
+      { label: 'Target Populations addressed', name: 'targetPopulations' },
     ],
   },
   {
@@ -370,10 +367,12 @@ export default {
     const {
       register, watch, setValue, getValues, control,
     } = hookForm;
+    const { recipients } = additionalData;
     return (
       <ActivitySummary
         register={register}
         watch={watch}
+        recipients={recipients}
         setValue={setValue}
         getValues={getValues}
         control={control}

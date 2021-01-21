@@ -14,13 +14,15 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { submitReport } from '../../fetchers/activityReports';
+import {
+  submitReport, saveReport, getReport, getRecipients, createReport,
+} from '../../fetchers/activityReports';
 
 const defaultValues = {
   'activity-method': [],
   'activity-type': [],
   attachments: [],
-  cdi: '',
+  context: '',
   duration: '',
   'end-date': null,
   grantees: [],
@@ -42,8 +44,69 @@ const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
 function ActivityReport({ initialData, match }) {
   const [submitted, updateSubmitted] = useState(false);
-  const history = useHistory();
-  const { params: { currentPage } } = match;
+  const [error, updateError] = useState();
+  const [loading, updateLoading] = useState(true);
+  const [initialFormData, updateInitialFormData] = useState(defaultValues);
+  const [initialAdditionalData, updateAdditionalData] = useState({});
+  const reportId = useRef(activityReportId);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const recipients = await getRecipients();
+        updateAdditionalData({ recipients });
+        if (activityReportId !== 'new') {
+          const report = await getReport(activityReportId);
+          updateInitialFormData(report);
+        } else {
+          updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
+        }
+        updateError();
+      } catch (e) {
+        updateError('Unable to load activity report');
+      } finally {
+        updateLoading(false);
+      }
+    };
+    fetch();
+  }, [activityReportId]);
+
+  if (loading) {
+    return (
+      <div>
+        loading...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert type="error">
+        {error}
+      </Alert>
+    );
+  }
+
+  if (!currentPage) {
+    return (
+      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+    );
+  }
+
+  const onSave = async (data) => {
+    const { activityRecipientType, activityRecipients } = data;
+    if (reportId.current === 'new') {
+      if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
+        const savedReport = await createReport(data, {});
+        reportId.current = savedReport.id;
+        return true;
+      }
+    } else {
+      await saveReport(reportId.current, data, {});
+      return true;
+    }
+    return false;
+  };
 
   const onFormSubmit = async (data, extraData) => {
     // eslint-disable-next-line no-console
