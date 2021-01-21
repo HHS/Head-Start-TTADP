@@ -122,17 +122,6 @@ components:
         activityRecipientId:
           type: number
         name:
-<<<<<<< HEAD
-          type: string
-    fileUpload:
-      type: object
-      properties:
-        reportId: 
-          type: number
-          description: "id of the Activity report the file is associated with"
-        File:
-=======
->>>>>>> main
           type: string
           format: binary
           description: "File to be uploaded"
