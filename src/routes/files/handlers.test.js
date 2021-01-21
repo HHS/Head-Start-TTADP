@@ -10,6 +10,7 @@ import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
 
 const request = require('supertest');
+
 const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3Uploader');
