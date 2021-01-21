@@ -2,12 +2,12 @@
   Activity report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
+import { Alert } from '@trussworks/react-uswds';
 
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
@@ -19,30 +19,32 @@ import {
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  'activity-method': [],
-  'activity-type': [],
+  deliveryMethod: [],
+  activityType: [],
   attachments: [],
   context: '',
   duration: '',
-  'end-date': null,
+  endDate: null,
   grantees: [],
-  'number-of-participants': '',
-  'other-users': [],
-  'participant-category': '',
+  numberOfParticipants: '',
+  otherUsers: [],
+  participantCategory: '',
   participants: [],
-  'program-types': [],
+  programTypes: [],
   reason: [],
   requester: '',
-  'resources-used': '',
-  'start-date': null,
-  'target-populations': [],
+  resourcesUsed: '',
+  startDate: null,
+  targetPopulations: [],
   topics: [],
 };
 
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
-const initialPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
+const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ initialData, match }) {
+function ActivityReport({ match }) {
+  const { params: { currentPage, activityReportId } } = match;
+  const history = useHistory();
   const [submitted, updateSubmitted] = useState(false);
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
@@ -108,23 +110,17 @@ function ActivityReport({ initialData, match }) {
     return false;
   };
 
-  const onFormSubmit = async (data, extraData) => {
+  const onFormSubmit = async (data) => {
     // eslint-disable-next-line no-console
-    console.log('Submit form data', data, extraData);
-    await submitReport(data, extraData);
+    console.log('Submit form data', data);
+    await submitReport(reportId.current, data);
     updateSubmitted(true);
   };
 
   const updatePage = (position) => {
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${page.path}`);
+    history.push(`/activity-reports/${activityReportId}/${page.path}`);
   };
-
-  if (!currentPage) {
-    return (
-      <Redirect to="/activity-reports/activity-summary" />
-    );
-  }
 
   return (
     <>
@@ -134,22 +130,18 @@ function ActivityReport({ initialData, match }) {
         updatePage={updatePage}
         currentPage={currentPage}
         submitted={submitted}
-        initialPageState={initialPageState}
-        defaultValues={{ ...defaultValues, ...initialData }}
+        additionalData={initialAdditionalData}
+        initialData={{ ...defaultValues, ...initialFormData }}
         pages={pages}
         onFormSubmit={onFormSubmit}
+        onSave={onSave}
       />
     </>
   );
 }
 
 ActivityReport.propTypes = {
-  initialData: PropTypes.shape({}),
   match: ReactRouterPropTypes.match.isRequired,
-};
-
-ActivityReport.defaultProps = {
-  initialData: {},
 };
 
 export default ActivityReport;
