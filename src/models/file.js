@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('UPLOADING', 'UPLOADED', 'UPLOAD_FAILED', 'SCANNING', 'APPROVED', 'REJECTED'),
       allowNull: false,
     },
+    attachmentType: {
+      type: DataTypes.ENUM('ATTACHMENT', 'RESOURCE'),
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'File',
