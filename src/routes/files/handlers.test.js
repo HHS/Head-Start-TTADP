@@ -8,6 +8,7 @@ import db, {
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
+import * as handlers from './handlers';
 
 const request = require('supertest');
 
@@ -54,14 +55,19 @@ describe('File Upload Handlers happy path', () => {
     await ActivityReport.destroy({ where: { } });
     await User.destroy({ where: { id: user.id } });
   });
+  beforeEach(() => {
+    s3Uploader.mockReset();
+  });
   it('tests a file upload', async () => {
-    fileId = await request(app)
+    await request(app)
       .post('/api/files')
       .field('reportId', report.dataValues.id)
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
       .expect(200)
-      .then((res) => res.body.id);
-    expect(s3Uploader.mock.calls.length).toBe(1);
+      .then((res) => {
+        fileId = res.body.id;
+        expect(s3Uploader).toHaveBeenCalled();
+      });
   });
   it('checks the metadata was uploaded to the database', async () => {
     const file = await File.findAll({ where: { id: fileId } });
@@ -91,14 +97,14 @@ describe('File Upload Handlers error handling', () => {
     await request(app)
       .post('/api/files')
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
-      .expect(400, { error: 'requestId required' });
-    expect(s3Uploader.mock.calls.length).toBe(1);
+      .expect(400, { error: 'requestId required' })
+      .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
   it('tests a file upload without a file', async () => {
     await request(app)
       .post('/api/files')
       .field('reportId', report.dataValues.id)
-      .expect(400, { error: 'file required' });
-    expect(s3Uploader.mock.calls.length).toBe(1);
+      .expect(400, { error: 'file required' })
+      .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
 });
