@@ -66,6 +66,7 @@ describe('File Upload Handlers happy path', () => {
     await request(app)
       .post('/api/files')
       .field('reportId', report.dataValues.id)
+      .field('attachmentType', 'ATTACHMENT')
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
       .expect(200)
       .then((res) => {
@@ -103,6 +104,7 @@ describe('File Upload Handlers error handling', () => {
   it('tests a file upload without a report id', async () => {
     await request(app)
       .post('/api/files')
+      .field('attachmentType', 'ATTACHMENT')
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
       .expect(400, { error: 'requestId required' })
       .then(() => expect(s3Uploader).not.toHaveBeenCalled());
@@ -111,7 +113,25 @@ describe('File Upload Handlers error handling', () => {
     await request(app)
       .post('/api/files')
       .field('reportId', report.dataValues.id)
+      .field('attachmentType', 'ATTACHMENT')
       .expect(400, { error: 'file required' })
+      .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+  });
+  it('tests a file upload without a attachment', async () => {
+    await request(app)
+      .post('/api/files')
+      .field('reportId', report.dataValues.id)
+      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .expect(400, { error: 'attachmentType required' })
+      .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+  });
+  it('tests a file upload with an incorrect attachment value', async () => {
+    await request(app)
+      .post('/api/files')
+      .field('reportId', report.dataValues.id)
+      .field('attachmentType', 'FAKE')
+      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .expect(400, { error: 'incorrect attachmentType. Wanted: ATTACHMENT or RESOURCE. Got: FAKE' })
       .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
 });

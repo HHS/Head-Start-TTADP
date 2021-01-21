@@ -9,14 +9,23 @@ const multiparty = require('multiparty');
 
 const namespace = 'SERVICE:FILES';
 
+const ATTACHMENT = 'ATTACHMENT';
+const RESOURCE = 'RESOURCE';
+
 const logContext = {
   namespace,
 };
 
-export const createFileMetaData = async (originalFileName, s3FileName, reportId) => {
+export const createFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  reportId,
+  attachmentType,
+) => {
   const newFile = {
     activityReportId: reportId,
     originalFileName,
+    attachmentType,
     key: s3FileName,
     status: 'UPLOADING',
   };
@@ -60,15 +69,23 @@ export default async function uploadHandler(req, res) {
         return;
       }
       const { path, originalFilename } = files.File[0];
-      const { reportId } = fields;
+      const { reportId, attachmentType } = fields;
       if (!reportId) {
         res.status(400).send({ error: 'requestId required' });
+        return;
+      }
+      if (!attachmentType) {
+        res.status(400).send({ error: 'attachmentType required' });
+        return;
+      }
+      if (attachmentType[0] !== ATTACHMENT && attachmentType[0] !== RESOURCE) {
+        res.status(400).send({ error: `incorrect attachmentType. Wanted: ${ATTACHMENT} or ${RESOURCE}. Got: ${attachmentType[0]}` });
         return;
       }
       buffer = fs.readFileSync(path);
       type = await fileType.fromFile(path);
       fileName = `${uuidv4()}.${type.ext}`;
-      metadata = await createFileMetaData(originalFilename, fileName, reportId);
+      metadata = await createFileMetaData(originalFilename, fileName, reportId, attachmentType[0]);
     } catch (err) {
       await handleErrors(req, res, err, logContext);
     }
