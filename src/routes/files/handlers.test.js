@@ -10,6 +10,7 @@ import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
 
 const request = require('supertest');
+const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3Uploader');
 
@@ -48,11 +49,14 @@ describe('File Upload Handlers happy path', () => {
   beforeAll(async () => {
     user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     report = await ActivityReport.create(reportObject);
+    process.env.NODE_ENV = 'test';
+    process.env.BYPASS_AUTH = 'true';
   });
   afterAll(async () => {
     await File.destroy({ where: {} });
     await ActivityReport.destroy({ where: { } });
     await User.destroy({ where: { id: user.id } });
+    process.env = ORIGINAL_ENV; // restore original env
   });
   beforeEach(() => {
     s3Uploader.mockReset();
@@ -85,12 +89,15 @@ describe('File Upload Handlers error handling', () => {
   beforeAll(async () => {
     user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     report = await ActivityReport.create(reportObject);
+    process.env.NODE_ENV = 'test';
+    process.env.BYPASS_AUTH = 'true';
   });
   afterAll(async () => {
     await File.destroy({ where: {} });
     await ActivityReport.destroy({ where: { } });
     await User.destroy({ where: { id: user.id } });
     db.sequelize.close();
+    process.env = ORIGINAL_ENV; // restore original env
   });
   it('tests a file upload without a report id', async () => {
     await request(app)
