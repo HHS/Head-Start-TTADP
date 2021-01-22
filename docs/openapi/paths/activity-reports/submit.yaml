@@ -1,0 +1,31 @@
+post:
+  tags:
+    - activity-reports
+  summary: Submit an activity report for approval
+  requestBody:
+    description: The approving manager and any additional notes for the report
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            approvingManagerId:
+              type: string
+              description: The id of the manager assigned to approve the report
+            additionalNotes:
+              type: string
+              description: Any contextual information the author/collaborators want to provide the approving manager
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The submitted activity report
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'
