@@ -58,6 +58,6 @@ describe('MultiSelect', () => {
     await act(async () => {
       userEvent.click(screen.getByTestId('submit'));
     });
-    expect(onSubmit).toHaveBeenCalledWith({ name: null });
+    expect(onSubmit).toHaveBeenCalledWith({ name: [] });
   });
 });

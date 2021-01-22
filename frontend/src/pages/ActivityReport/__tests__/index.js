@@ -58,6 +58,8 @@ describe('ActivityReport', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients', recipients);
+    fetchMock.get('/api/users/collaborators?region=1', []);
+    fetchMock.get('/api/activity-reports/approvers?region=1', []);
   });
 
   it('defaults to activity summary if no page is in the url', async () => {

@@ -3,12 +3,33 @@ import { Op } from 'sequelize';
 
 import {
   ActivityReport,
+  ActivityReportCollaborator,
   sequelize,
   ActivityRecipient,
   Grant,
   Grantee,
   NonGrantee,
+  User,
 } from '../models';
+
+async function saveReportCollaborators(activityReportId, collaborators, transaction) {
+  await ActivityReportCollaborator.destroy({
+    where: {
+      activityReportId: {
+        [Op.eq]: activityReportId,
+      },
+    },
+    transaction,
+  });
+
+  await Promise.all(collaborators.map(async (collaborator) => ActivityReportCollaborator.create({
+    activityReportId,
+    userId: collaborator,
+  },
+  {
+    transaction,
+  })));
+}
 
 async function saveReportRecipients(
   activityReportId,
@@ -40,19 +61,12 @@ async function saveReportRecipients(
   }));
 }
 
-async function update(newReport, activityReportId, transaction) {
-  const result = await ActivityReport.update(newReport, {
-    where: {
-      id: {
-        [Op.eq]: activityReportId,
-      },
-    },
-    returning: true,
-    plain: true,
+async function update(newReport, report, transaction) {
+  const updatedReport = await report.update(newReport, {
     transaction,
     fields: _.keys(newReport),
   });
-  return result[1];
+  return updatedReport;
 }
 
 async function create(report, transaction) {
@@ -91,22 +105,36 @@ export function activityReportById(activityReportId) {
           },
         ],
       },
+      {
+        model: User,
+        attributes: ['id', 'name'],
+        as: 'collaborators',
+      },
     ],
   });
 }
 
-export async function createOrUpdate(newActivityReport, activityReportId) {
+export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
+  const { collaborators, activityRecipients, ...updatedFields } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
-    if (activityReportId) {
-      savedReport = await update(newActivityReport, activityReportId, transaction);
+    if (report) {
+      savedReport = await update(updatedFields, report, transaction);
     } else {
-      savedReport = await create(newActivityReport, transaction);
+      savedReport = await create(updatedFields, transaction);
     }
 
-    if (newActivityReport.activityRecipients) {
+    if (collaborators) {
+      const { id } = savedReport;
+      const newCollaborators = collaborators.map(
+        (g) => g.id,
+      );
+      await saveReportCollaborators(id, newCollaborators, transaction);
+    }
+
+    if (activityRecipients) {
       const { activityRecipientType, id } = savedReport;
-      const activityRecipientIds = newActivityReport.activityRecipients.map(
+      const activityRecipientIds = activityRecipients.map(
         (g) => g.activityRecipientId,
       );
       await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
@@ -115,7 +143,7 @@ export async function createOrUpdate(newActivityReport, activityReportId) {
   return activityReportById(savedReport.id);
 }
 
-export async function activityRecipients() {
+export async function possibleRecipients() {
   const grants = await Grantee.findAll({
     attributes: ['id', 'name'],
     include: [{
@@ -133,9 +161,4 @@ export async function activityRecipients() {
     attributes: [['id', 'activityRecipientId'], 'name'],
   });
   return { grants, nonGrantees };
-}
-
-export async function reportExists(activityReportId) {
-  const report = await ActivityReport.findOne({ where: { id: activityReportId } });
-  return !_.isNull(report);
 }

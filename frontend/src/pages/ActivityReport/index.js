@@ -15,7 +15,13 @@ import Navigator from '../../components/Navigator';
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  submitReport, saveReport, getReport, getRecipients, createReport,
+  submitReport,
+  saveReport,
+  getReport,
+  getRecipients,
+  createReport,
+  getCollaborators,
+  fetchApprovers,
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
@@ -23,6 +29,7 @@ const defaultValues = {
   activityType: [],
   attachments: [],
   context: '',
+  collaborators: [],
   duration: '',
   endDate: null,
   grantees: [],
@@ -39,6 +46,8 @@ const defaultValues = {
   topics: [],
 };
 
+// default region until we have a way of changing on the frontend
+const region = 1;
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
@@ -55,14 +64,21 @@ function ActivityReport({ match }) {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const recipients = await getRecipients();
-        updateAdditionalData({ recipients });
+        const apiCalls = [
+          getRecipients(),
+          getCollaborators(region),
+          fetchApprovers(region),
+        ];
+
         if (activityReportId !== 'new') {
-          const report = await getReport(activityReportId);
-          updateInitialFormData(report);
+          apiCalls.push(getReport(activityReportId));
         } else {
-          updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
+          apiCalls.push(Promise.resolve({ ...defaultValues, pageState: defaultPageState }));
         }
+
+        const [recipients, collaborators, approvers, report] = await Promise.all(apiCalls);
+        updateAdditionalData({ recipients, collaborators, approvers });
+        updateInitialFormData(report);
         updateError();
       } catch (e) {
         updateError('Unable to load activity report');
@@ -99,7 +115,7 @@ function ActivityReport({ match }) {
     const { activityRecipientType, activityRecipients } = data;
     if (reportId.current === 'new') {
       if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-        const savedReport = await createReport(data, {});
+        const savedReport = await createReport({ ...data, regionId: region }, {});
         reportId.current = savedReport.id;
         return true;
       }

@@ -26,8 +26,9 @@ const reviewPage = {
   review: true,
   label: 'Review and submit',
   path: 'review',
-  render: (allComplete, formData, submitted, onSubmit) => (
+  render: (allComplete, formData, submitted, onSubmit, additionalData) => (
     <ReviewSubmit
+      approvers={additionalData.approvers}
       allComplete={allComplete}
       onSubmit={onSubmit}
       submitted={submitted}
