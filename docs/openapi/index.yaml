@@ -136,6 +136,10 @@ components:
           type: string
           format: binary
           description: "File to be uploaded"
+      required:
+      - attachmentType
+      - reportId
+      - File
     fileResponse:
       type: object
       description: ID of file created
