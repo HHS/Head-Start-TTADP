@@ -1,5 +1,13 @@
 import db, { User, Permission, sequelize } from '../models';
 import findOrCreateUser, { validateUserAuthForAdmin } from './accessValidation';
+import { auditLogger } from '../logger';
+
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+    info: jest.fn(),
+  },
+}));
 
 const mockUser = {
   id: 47,
@@ -106,16 +114,15 @@ describe('accessValidation', () => {
       await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
     });
 
-    // I cannot figure out how to mock out a named import properly.
-    // it('Logs an error message on error', async () => {
-    //   const user = {
-    //     hsesUserId: '33',
-    //     email: 'invalid',
-    //     homeRegionId: 3,
-    //   };
-    //   await expect(findOrCreateUser(user)).rejects.toThrow();
-    //   expect(mockLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
-    // });
+    it('Logs an error message on error', async () => {
+      const user = {
+        hsesUserId: '33',
+        email: 'invalid',
+        homeRegionId: 3,
+      };
+      await expect(findOrCreateUser(user)).rejects.toThrow();
+      expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
+    });
   });
   describe('validateUserAuthForAdmin', () => {
     it('returns true if a user has admin priviledges', async () => {

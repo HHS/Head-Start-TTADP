@@ -28,21 +28,25 @@ describe('userAdminAccessMiddleware', () => {
     jest.clearAllMocks();
   });
   beforeEach(async () => {
-    user = (await User.findOrCreate({
+    [user] = await User.findOrCreate({
       where: {
-        email: "admin@acf.hhs.gov",
+        email: 'admin@acf.hhs.gov',
       },
-    }))[0];
+    });
 
     mockSession.userId = user.id;
   });
   afterAll(async () => {
-    await User.destroy({ where: {id: user.id} });
+    await User.destroy({ where: { id: user.id } });
     db.sequelize.close();
   });
 
   it('should allow access if an user has an admin role', async () => {
-    const admin = await Permission.create({scopeId: ADMIN, userId: user.id, regionId: 14});
+    const admin = await Permission.create({
+      scopeId: ADMIN,
+      userId: user.id,
+      regionId: 14,
+    });
 
     await userAdminAccessMiddleware(mockRequest, mockResponse, mockNext);
 
