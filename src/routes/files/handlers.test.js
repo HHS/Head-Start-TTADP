@@ -106,7 +106,7 @@ describe('File Upload Handlers error handling', () => {
       .post('/api/files')
       .field('attachmentType', 'ATTACHMENT')
       .attach('File', `${__dirname}/testfiles/testfile.pdf`)
-      .expect(400, { error: 'requestId required' })
+      .expect(400, { error: 'reportId required' })
       .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
   it('tests a file upload without a file', async () => {
