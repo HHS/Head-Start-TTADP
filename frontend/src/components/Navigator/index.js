@@ -18,7 +18,7 @@ import {
   IN_PROGRESS, COMPLETE, SUBMITTED,
 } from './constants';
 import SideNav from './components/SideNav';
-import IndicatorHeader from './components/IndicatorHeader';
+import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
   initialData,
@@ -26,7 +26,6 @@ function Navigator({
   onFormSubmit,
   submitted,
   currentPage,
-  updatePage,
   additionalData,
   onSave,
   autoSaveInterval,
@@ -68,11 +67,12 @@ function Navigator({
     return newPageState;
   };
 
-  const onSaveForm = async (completed) => {
+  const onSaveForm = async (completed, index) => {
     const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
+    const newIndex = index === page.position ? null : index;
     try {
       updateFormData(data);
-      const result = await onSave(data);
+      const result = await onSave(data, newIndex);
       if (result) {
         updateLastSaveTime(moment());
       }
@@ -84,13 +84,8 @@ function Navigator({
     }
   };
 
-  const navigateToPage = (index, completed) => {
-    onSaveForm(completed);
-    updatePage(index);
-  };
-
   const onContinue = () => {
-    navigateToPage(page.position + 1, true);
+    onSaveForm(true, page.position + 1);
   };
 
   useInterval(() => {
@@ -109,7 +104,7 @@ function Navigator({
     const state = p.review ? submittedNavState : stateOfPage;
     return {
       label: p.label,
-      onNavigation: () => navigateToPage(p.position),
+      onNavigation: () => onSaveForm(false, p.position),
       state,
       current,
     };
@@ -124,19 +119,23 @@ function Navigator({
           pages={navigatorPages}
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
-          navigateToPage={navigateToPage}
         />
       </Grid>
       <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
         <div id="navigator-form">
           {page.review
-            && page.render(allComplete, formData, submitted, onFormSubmit, additionalData)}
+            && page.render(
+              hookForm,
+              allComplete,
+              formData,
+              submitted,
+              onFormSubmit,
+              additionalData,
+            )}
           {!page.review
             && (
               <Container skipTopPadding>
-                <IndicatorHeader
-                  currentStep={page.position}
-                  totalSteps={pages.filter((p) => !p.review).length}
+                <NavigatorHeader
                   label={page.label}
                 />
                 <Form
@@ -169,7 +168,6 @@ Navigator.propTypes = {
     }),
   ).isRequired,
   currentPage: PropTypes.string.isRequired,
-  updatePage: PropTypes.func.isRequired,
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
 };

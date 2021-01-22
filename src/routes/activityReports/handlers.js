@@ -39,10 +39,16 @@ export async function getApprovers(req, res) {
  * @param {*} res - response
  */
 export async function submitReport(req, res) {
-  // Temporary until submitting of report is implemented
-  // eslint-disable-next-line no-console
-  console.log('submit');
-  res.sendStatus(204);
+  try {
+    const { activityReportId } = req.params;
+    const { approvingManagerId, additionalNotes } = req.body;
+    const newReport = { approvingManagerId, additionalNotes };
+    newReport.status = 'submitted';
+    const report = await createOrUpdate(newReport, activityReportId);
+    res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
 }
 
 export async function getActivityRecipients(req, res) {

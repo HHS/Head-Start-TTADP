@@ -1,38 +1,29 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Label, Fieldset, Textarea, Alert, Button, Accordion,
+  Dropdown, Form, Label, Fieldset, Textarea, Alert, Button, Accordion,
 } from '@trussworks/react-uswds';
-import { useForm } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 
-import MultiSelect from '../../../components/MultiSelect';
 import Container from '../../../components/Container';
 
-const defaultValues = {
-  approvingManagers: null,
-  additionalNotes: null,
-};
-
 const ReviewSubmit = ({
-  initialData, allComplete, onSubmit, submitted, reviewItems, approvers,
+  hookForm, allComplete, onSubmit, submitted, reviewItems, approvers,
 }) => {
-  const {
-    handleSubmit, register, formState, control,
-  } = useForm({
-    mode: 'onChange',
-    defaultValues: { ...defaultValues, ...initialData },
-  });
+  const { handleSubmit, register, formState } = hookForm;
+  const { isValid } = formState;
+  const valid = allComplete && isValid;
 
   const onFormSubmit = (data) => {
     onSubmit(data);
   };
 
-  const {
-    isValid,
-  } = formState;
-
-  const valid = allComplete && isValid;
+  const setValue = (e) => {
+    if (e === '') {
+      return null;
+    }
+    return parseInt(e, 10);
+  };
 
   return (
     <>
@@ -60,7 +51,7 @@ const ReviewSubmit = ({
         )}
         <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormSubmit)}>
           <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
-            <Label htmlFor="additionalNotes">Additional notes for this activity (optional)</Label>
+            <Label htmlFor="additionalNotes">Creator notes</Label>
             <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
           </Fieldset>
           <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
@@ -69,20 +60,15 @@ const ReviewSubmit = ({
               Please review all information in each section before submitting to your manager for
               approval.
             </p>
-            <MultiSelect
-              label="Manager - you may choose more than one."
-              name="approvingManagers"
-              labelProperty="name"
-              valueProperty="id"
-              simple={false}
-              options={approvers.map((user) => ({
-                label: user.name,
-                value: user.id,
-              }))}
-              control={control}
-            />
+            <Label htmlFor="approvingManagerId">Approving manager</Label>
+            <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: true })}>
+              <option name="default" value="" disabled hidden>Select a Manager...</option>
+              {approvers.map((approver) => (
+                <option key={approver.id} value={approver.id}>{approver.name}</option>
+              ))}
+            </Dropdown>
           </Fieldset>
-          <Button type="submit" disabled={!valid}>Submit report for approval</Button>
+          <Button type="submit" disabled={!valid}>Submit for approval</Button>
         </Form>
       </Container>
     </>
@@ -90,7 +76,6 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
-  initialData: PropTypes.shape({}),
   approvers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
@@ -100,6 +85,8 @@ ReviewSubmit.propTypes = {
   allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   submitted: PropTypes.bool.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  hookForm: PropTypes.object.isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
@@ -107,10 +94,6 @@ ReviewSubmit.propTypes = {
       content: PropTypes.node.isRequired,
     }),
   ).isRequired,
-};
-
-ReviewSubmit.defaultProps = {
-  initialData: {},
 };
 
 export default ReviewSubmit;
