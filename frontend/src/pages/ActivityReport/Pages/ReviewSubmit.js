@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Label, Fieldset, Textarea, Alert, Button, Accordion,
@@ -6,7 +6,6 @@ import {
 import { useForm } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 
-import { fetchApprovers } from '../../../fetchers/activityReports';
 import MultiSelect from '../../../components/MultiSelect';
 import Container from '../../../components/Container';
 
@@ -16,21 +15,8 @@ const defaultValues = {
 };
 
 const ReviewSubmit = ({
-  initialData, allComplete, onSubmit, submitted, reviewItems,
+  initialData, allComplete, onSubmit, submitted, reviewItems, approvers,
 }) => {
-  const [loading, updateLoading] = useState(true);
-  const [possibleApprovers, updatePossibleApprovers] = useState([]);
-
-  useEffect(() => {
-    updateLoading(true);
-    const fetch = async () => {
-      const approvers = await fetchApprovers();
-      updatePossibleApprovers(approvers);
-      updateLoading(false);
-    };
-    fetch();
-  }, []);
-
   const {
     handleSubmit, register, formState, control,
   } = useForm({
@@ -86,12 +72,14 @@ const ReviewSubmit = ({
             <MultiSelect
               label="Manager - you may choose more than one."
               name="approvingManagers"
-              options={possibleApprovers.map((user) => ({
+              labelProperty="name"
+              valueProperty="id"
+              simple={false}
+              options={approvers.map((user) => ({
                 label: user.name,
                 value: user.id,
               }))}
               control={control}
-              disabled={loading}
             />
           </Fieldset>
           <Button type="submit" disabled={!valid}>Submit report for approval</Button>
@@ -103,6 +91,12 @@ const ReviewSubmit = ({
 
 ReviewSubmit.propTypes = {
   initialData: PropTypes.shape({}),
+  approvers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
   allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   submitted: PropTypes.bool.isRequired,

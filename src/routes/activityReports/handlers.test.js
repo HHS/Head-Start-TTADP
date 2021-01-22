@@ -1,31 +1,20 @@
-import db, {
-  ActivityReport, ActivityRecipient, User, Permission,
-} from '../../models';
 import {
-  getApprovers, saveReport, createReport, getReport,
+  getReport, saveReport, createReport, getActivityRecipients, getApprovers,
 } from './handlers';
+import { activityReportById, createOrUpdate, possibleRecipients } from '../../services/activityReports';
+import { userById, usersWithPermissions } from '../../services/users';
+import ActivityReport from '../../policies/activityReport';
 
-import SCOPES from '../../middleware/scopeConstants';
+jest.mock('../../services/activityReports', () => ({
+  activityReportById: jest.fn(),
+  createOrUpdate: jest.fn(),
+  possibleRecipients: jest.fn(),
+}));
 
-const mockUser = {
-  id: 100,
-  homeRegionId: 1,
-  permissions: [
-    {
-      userId: 100,
-      regionId: 5,
-      scopeId: SCOPES.READ_WRITE_REPORTS,
-    },
-    {
-      userId: 100,
-      regionId: 6,
-      scopeId: SCOPES.READ_WRITE_REPORTS,
-    },
-  ],
-};
-
-const mockSession = jest.fn();
-mockSession.userId = mockUser.id;
+jest.mock('../../services/users', () => ({
+  userById: jest.fn(),
+  usersWithPermissions: jest.fn(),
+}));
 
 const mockResponse = {
   json: jest.fn(),
@@ -35,171 +24,140 @@ const mockResponse = {
   })),
 };
 
-const reportObject = {
-  activityRecipientType: 'grantee',
-  status: 'draft',
-  userId: mockUser.id,
-  lastUpdatedById: mockUser.id,
-  resourcesUsed: 'test',
+const mockRequest = {
+  session: {
+    userId: 1,
+  },
+};
+
+const report = {
+  id: 1,
+  resourcesUsed: 'resources',
+  userId: 1,
 };
 
 describe('Activity Report handlers', () => {
-  let user;
-
-  beforeAll(async () => {
-    user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
-  });
-
-  afterAll(async () => {
-    await ActivityRecipient.destroy({ where: {} });
-    await ActivityReport.destroy({ where: {} });
-    await User.destroy({ where: { id: user.id } });
-    db.sequelize.close();
-  });
-
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('getApprovers', () => {
-    const approverOne = {
-      id: 50,
-      name: 'region 5',
-      permissions: [
-        {
-          userId: 50,
-          regionId: 5,
-          scopeId: SCOPES.APPROVE_REPORTS,
-        },
-      ],
-    };
-    const approverTwo = {
-      id: 51,
-      name: 'region 6',
-      permissions: [
-        {
-          userId: 51,
-          regionId: 6,
-          scopeId: SCOPES.APPROVE_REPORTS,
-        },
-      ],
+  describe('createReport', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+      body: { resourcesUsed: 'test' },
     };
 
-    const approvers = [
-      {
-        id: 50,
-        name: 'region 5',
-      },
-      {
-        id: 51,
-        name: 'region 6',
-      },
-    ];
-
-    beforeEach(async () => {
-      await User.create(approverOne, { include: [{ model: Permission, as: 'permissions' }] });
-      await User.create(approverTwo, { include: [{ model: Permission, as: 'permissions' }] });
+    it('returns the created report', async () => {
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await createReport(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(report);
     });
 
-    afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51] } });
+    it('handles empty requests', async () => {
+      const { body, ...withoutBody } = request;
+      await createReport(withoutBody, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
     });
 
-    it("returns a list of users that have approving permissions on the user's regions", async () => {
-      await getApprovers({ session: mockSession }, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(approvers);
+    it('handles unauthorized requests', async () => {
+      ActivityReport.prototype.canCreate = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await createReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
 
   describe('saveReport', () => {
-    it('updates an already saved report', async () => {
-      const res = await ActivityReport.create(reportObject);
-      const request = {
-        session: mockSession,
-        params: { activityReportId: res.dataValues.id },
-        body: {
-          resourcesUsed: 'updated',
-        },
-      };
-      const expected = {
-        id: res.dataValues.id,
-        ...reportObject,
-        resourcesUsed: 'updated',
-      };
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+      body: { resourcesUsed: 'test' },
+    };
 
+    it('returns the updated report', async () => {
+      activityReportById.mockResolvedValue(report);
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: 1,
+      });
       await saveReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(expected));
+      expect(mockResponse.json).toHaveBeenCalledWith(report);
+    });
+
+    it('handles unauthorized requests', async () => {
+      activityReportById.mockResolvedValue(report);
+      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await saveReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
 
     it('handles reports that are not found', async () => {
-      const request = {
-        session: mockSession,
-        params: { activityReportId: 1000 },
-        body: {},
-      };
+      activityReportById.mockResolvedValue(null);
       await saveReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
 
     it('handles empty requests', async () => {
-      const request = {
-        session: mockSession,
-        params: { activityReportId: 1000 },
-      };
-      await saveReport(request, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
-    });
-  });
-
-  describe('createReport', () => {
-    it('creates a new report', async () => {
-      const beginningARCount = await ActivityReport.count();
-      const report = {
-        activityRecipientType: 'grantee',
-        activityRecipients: [{ activityRecipientId: 1 }],
-      };
-      const request = {
-        body: report,
-        session: mockSession,
-      };
-
-      await createReport(request, mockResponse);
-      const endARCount = await ActivityReport.count();
-      expect(endARCount - beginningARCount).toBe(1);
-    });
-
-    it('handles empty requests', async () => {
-      const request = {
-        session: mockSession,
-      };
-      await createReport(request, mockResponse);
+      const { body, ...withoutBody } = request;
+      await saveReport(withoutBody, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
     });
   });
 
   describe('getReport', () => {
-    it('sends a previously saved activity report', async () => {
-      const res = await ActivityReport.create(reportObject);
-      const request = {
-        session: mockSession,
-        params: { activityReportId: res.dataValues.id },
-      };
-      const expected = {
-        id: res.dataValues.id,
-        ...reportObject,
-      };
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+    };
+
+    it('returns the report', async () => {
+      activityReportById.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: 1,
+      });
 
       await getReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(expected));
+      expect(mockResponse.json).toHaveBeenCalledWith(report);
     });
 
     it('handles reports that are not found', async () => {
-      const request = {
-        session: mockSession,
-        params: { activityReportId: 1000 },
-      };
+      activityReportById.mockResolvedValue(null);
       await getReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('handles unauthorized requests', async () => {
+      activityReportById.mockResolvedValue(report);
+      ActivityReport.prototype.canGet = jest.fn().mockReturnValue(false);
+      await getReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getActivityRecipients', () => {
+    it('returns recipients', async () => {
+      const response = [{ test: 'test' }];
+      possibleRecipients.mockResolvedValue(response);
+      await getActivityRecipients(mockRequest, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+  });
+
+  describe('getApprovers', () => {
+    it('returns a list of approvers', async () => {
+      const response = [{ name: 'name', id: 1 }];
+      usersWithPermissions.mockResolvedValue(response);
+      await getApprovers({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
   });
 });

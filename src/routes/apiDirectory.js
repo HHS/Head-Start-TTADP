@@ -3,11 +3,12 @@ import unless from 'express-unless';
 import join from 'url-join';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
-import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
 import activityReportsRouter from './activityReports';
+import usersRouter from './users';
 import { userById } from '../services/users';
 import { auditLogger } from '../logger';
+import handleErrors from '../lib/apiErrorHandler';
 
 export const loginPath = '/login';
 
@@ -19,6 +20,7 @@ router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.use('/admin/users', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
+router.use('/users', usersRouter);
 
 router.use('/hello', (req, res) => {
   res.send('Hello from ttadp');

@@ -51,6 +51,31 @@ const permissions = [
     regionId: 4,
     scopeId: APPROVE_REPORTS,
   },
+  {
+    userId: 5,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 14,
+    scopeId: ADMIN,
+  },
+  {
+    userId: 7,
+    regionId: 14,
+    scopeId: ADMIN,
+  },
+  {
+    userId: 6,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 7,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
 ];
 
 const users = [
@@ -93,6 +118,26 @@ const users = [
     email: 'cucumber@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Cucumber User',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 3,
+  },
+  {
+    id: 6,
+    email: 'krystyna@adhocteam.us',
+    // These hses ids will likely get out of date at some point, but
+    // still nice to have this shortcut while it lasts
+    hsesUserId: '50153',
+    role: 'Grants Specialist',
+    name: 'Krys',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 3,
+  },
+  {
+    id: 7,
+    email: 'josh@adhocteam.us',
+    role: 'Grants Specialist',
+    name: 'Josh',
+    hsesUserId: '50154',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
   },

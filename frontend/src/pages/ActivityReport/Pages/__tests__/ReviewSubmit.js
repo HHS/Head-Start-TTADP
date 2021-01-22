@@ -1,11 +1,14 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import fetchMock from 'fetch-mock';
-import join from 'url-join';
 import selectEvent from 'react-select-event';
 
 import ReviewSubmit from '../ReviewSubmit';
+
+const approvers = [
+  { id: 1, name: 'user 1' },
+  { id: 2, name: 'user 2' },
+];
 
 const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () => {}) => {
   render(<ReviewSubmit
@@ -14,23 +17,13 @@ const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () =>
     initialData={initialData}
     onSubmit={onSubmit}
     reviewItems={[]}
+    approvers={approvers}
   />);
 };
-
-const approvers = [
-  { id: 1, name: 'user 1' },
-  { id: 2, name: 'user 2' },
-];
 
 const selectLabel = 'Manager - you may choose more than one.';
 
 describe('ReviewSubmit', () => {
-  afterEach(() => fetchMock.restore());
-  beforeEach(() => {
-    const approversUrl = join('/', 'api', 'activity-reports', 'approvers');
-    fetchMock.get(approversUrl, approvers);
-  });
-
   describe('when the form is not complete', () => {
     it('an error alert is shown', async () => {
       renderReview(false, false);

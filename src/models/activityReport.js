@@ -15,6 +15,16 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.belongsToMany(models.User, {
+        through: models.ActivityReportCollaborator,
+        // The key in the join table that points to the model defined in this file
+        foreignKey: 'activityReportId',
+        // The key in the join table that points to the "target" of the belongs to many (Users in
+        // this case)
+        otherKey: 'userId',
+        as: 'collaborators',
+      });
+      ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
     }
   }
   ActivityReport.init({
@@ -74,6 +84,10 @@ export default (sequelize, DataTypes) => {
     },
     pageState: {
       type: DataTypes.JSON,
+    },
+    regionId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     status: {
       allowNull: false,
