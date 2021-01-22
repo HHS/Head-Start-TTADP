@@ -74,6 +74,9 @@ export default (sequelize, DataTypes) => {
     topics: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    context: {
+      type: DataTypes.STRING,
+    },
     pageState: {
       type: DataTypes.JSON,
     },
