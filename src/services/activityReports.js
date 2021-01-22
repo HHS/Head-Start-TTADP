@@ -40,21 +40,6 @@ async function saveReportRecipients(
   }));
 }
 
-async function update(newReport, activityReportId, transaction) {
-  const result = await ActivityReport.update(newReport, {
-    where: {
-      id: {
-        [Op.eq]: activityReportId,
-      },
-    },
-    returning: true,
-    plain: true,
-    transaction,
-    fields: _.keys(newReport),
-  });
-  return result[1];
-}
-
 async function create(report, transaction) {
   return ActivityReport.create(report, { transaction });
 }
@@ -93,6 +78,12 @@ export function activityReportById(activityReportId) {
       },
     ],
   });
+}
+
+async function update(newReport, activityReportId, transaction) {
+  const report = await activityReportById(activityReportId);
+  await report.update(newReport, { transaction });
+  return report;
 }
 
 export async function createOrUpdate(newActivityReport, activityReportId) {
