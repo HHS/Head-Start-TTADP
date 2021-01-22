@@ -19,7 +19,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 8. Run `yarn docker:db:migrate` to run DB migrations
 9. Run `yarn docker:db:seed` to seed the database with test data.
-10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`.
+10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080` and minio with run on `localhost:9000`.
 11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
@@ -30,9 +30,11 @@ Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve docume
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
+You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000`
+
 ### Running Tests
 
-Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate` and `yarn docker:test` to run all tests for the frontend and backend.
+Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate`, `yarn docker:db:seed` and `yarn docker:test` to run all tests for the frontend and backend.
 
 ### Docker on Windows
 

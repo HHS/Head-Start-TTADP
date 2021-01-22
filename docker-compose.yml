@@ -19,7 +19,6 @@ services:
       - db
     environment:
       - POSTGRES_HOST=postgres_docker
-      - S3_ENDPOINT=http://minio:9000
     volumes:
       - ".:/app:rw"
   frontend:
@@ -51,6 +50,12 @@ services:
     volumes:
       - miniodata:/data
     command: server /data
+  aws-cli:
+    image: amazon/aws-cli
+    env_file: .env
+    command: ["--endpoint-url", "$S3_ENDPOINT", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
+
+
 volumes:
   dbdata: {}
   miniodata: {}
