@@ -5,7 +5,7 @@ import axios from 'axios';
 import {
   Grantee, Grant,
 } from '../models';
-import logger from '../logger';
+import { auditLogger } from '../logger';
 
 const fs = require('mz/fs');
 /**
@@ -85,7 +85,7 @@ export async function processFiles() {
         updateOnDuplicate: ['number', 'regionId', 'granteeId', 'status', 'startDate', 'endDate', 'updatedAt'],
       });
   } catch (error) {
-    logger.error(`Error reading or updating database on HSES data import: ${error.message}`);
+    auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);
     throw error;
   }
 }
@@ -119,6 +119,6 @@ export default async function updateGrantsGrantees() {
 
     await processFiles();
   } catch (error) {
-    logger.error(error);
+    auditLogger.error(error);
   }
 }

@@ -7,6 +7,7 @@ import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './user';
 import activityReportsRouter from './activityReports';
 import { userById } from '../services/users';
+import { auditLogger } from '../logger';
 
 export const loginPath = '/login';
 
@@ -34,6 +35,8 @@ router.get('/user', async (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
+  const { userId } = req.session;
+  auditLogger.info(`User ${userId} logged out`);
   req.session = null;
   res.sendStatus(204);
 });

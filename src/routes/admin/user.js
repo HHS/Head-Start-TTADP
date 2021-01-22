@@ -3,6 +3,7 @@ import {
 } from '../../models';
 import { userById } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
+import { auditLogger } from '../../logger';
 
 const namespace = 'SERVICE:USER';
 
@@ -62,6 +63,7 @@ export async function createUser(req, res) {
           include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
         }, transaction);
     });
+    auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -91,6 +93,7 @@ export async function updateUser(req, res) {
       await Permission.bulkCreate(requestUser.permissions,
         { transaction: t });
     });
+    auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
     const user = await userById(userId);
     res.json(user);
   } catch (error) {
@@ -106,6 +109,7 @@ export async function updateUser(req, res) {
  */
 export async function deleteUser(req, res) {
   const { userId } = req.params;
+  auditLogger.info(`User ${req.session.userId} deleting User: ${userId}`);
   try {
     const result = await User.destroy({ where: { id: userId } });
     res.json(result);
