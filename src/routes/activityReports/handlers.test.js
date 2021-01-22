@@ -1,5 +1,5 @@
 import {
-  getReport, saveReport, createReport, getActivityRecipients, getApprovers,
+  getReport, saveReport, createReport, getActivityRecipients, getApprovers, submitReport,
 } from './handlers';
 import { activityReportById, createOrUpdate, possibleRecipients } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -39,6 +39,34 @@ const report = {
 describe('Activity Report handlers', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('submitReport', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+      body: { approvingManagerId: 1, additionalNotes: 'notes' },
+    };
+
+    it('returns the report', async () => {
+      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(true);
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await submitReport(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(report);
+    });
+
+    it('handles unauthorizedRequests', async () => {
+      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(false);
+      activityReportById.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await submitReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
   });
 
   describe('createReport', () => {

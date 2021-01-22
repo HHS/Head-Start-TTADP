@@ -1,4 +1,4 @@
-import {
+import db, {
   User, Permission,
 } from '../models';
 
@@ -11,6 +11,10 @@ import SCOPES from '../middleware/scopeConstants';
 describe('Users DB service', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    db.sequelize.close();
   });
 
   describe('userById', () => {
