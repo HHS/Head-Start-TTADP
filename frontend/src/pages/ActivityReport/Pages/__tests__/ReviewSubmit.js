@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import selectEvent from 'react-select-event';
 
 import ReviewSubmit from '../ReviewSubmit';
 
@@ -21,7 +20,7 @@ const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () =>
   />);
 };
 
-const selectLabel = 'Manager - you may choose more than one.';
+const selectLabel = 'Approving manager';
 
 describe('ReviewSubmit', () => {
   describe('when the form is not complete', () => {
@@ -52,7 +51,7 @@ describe('ReviewSubmit', () => {
       renderReview(true, false);
       const button = await screen.findByRole('button');
       expect(button).toBeDisabled();
-      await selectEvent.select(screen.getByLabelText(selectLabel), ['user 1']);
+      userEvent.selectOptions(screen.getByTestId('dropdown'), ['1']);
       expect(await screen.findByRole('button')).toBeEnabled();
     });
   });
@@ -65,7 +64,7 @@ describe('ReviewSubmit', () => {
 
   it('initializes the form with "initialData"', async () => {
     renderReview(true, true, { additionalNotes: 'test' });
-    const textBox = await screen.findByLabelText('Additional notes for this activity (optional)');
+    const textBox = await screen.findByLabelText('Creator notes');
     await waitFor(() => expect(textBox).toHaveValue('test'));
   });
 });

@@ -286,7 +286,7 @@ ActivitySummary.propTypes = {
         grants: PropTypes.arrayOf(
           PropTypes.shape({
             name: PropTypes.string.isRequired,
-            participantId: PropTypes.number.isRequired,
+            activityRecipientId: PropTypes.number.isRequired,
           }),
         ),
       }),
@@ -294,7 +294,7 @@ ActivitySummary.propTypes = {
     nonGrantees: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
-        participantId: PropTypes.number.isRequired,
+        activityRecipientId: PropTypes.number.isRequired,
       }),
     ),
   }).isRequired,
