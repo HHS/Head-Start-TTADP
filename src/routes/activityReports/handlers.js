@@ -44,8 +44,18 @@ export async function submitReport(req, res) {
     const { approvingManagerId, additionalNotes } = req.body;
     const newReport = { approvingManagerId, additionalNotes };
     newReport.status = 'submitted';
-    const report = await createOrUpdate(newReport, activityReportId);
-    res.json(report);
+
+    const user = await userById(req.session.userId);
+    const report = await activityReportById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedReport = await createOrUpdate(newReport, activityReportId);
+    res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

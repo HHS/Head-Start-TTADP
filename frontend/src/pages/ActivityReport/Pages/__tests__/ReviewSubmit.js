@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import userEvent from '@testing-library/user-event';
+import { useForm } from 'react-hook-form';
 
 import ReviewSubmit from '../ReviewSubmit';
 
@@ -9,15 +11,35 @@ const approvers = [
   { id: 2, name: 'user 2' },
 ];
 
+const RenderReview = ({
+  // eslint-disable-next-line react/prop-types
+  allComplete, submitted, initialData, onSubmit,
+}) => {
+  const hookForm = useForm({
+    mode: 'onChange',
+    defaultValues: { ...initialData, approvingManagerId: null },
+  });
+  return (
+    <ReviewSubmit
+      allComplete={allComplete}
+      submitted={submitted}
+      onSubmit={onSubmit}
+      reviewItems={[]}
+      approvers={approvers}
+      hookForm={hookForm}
+    />
+  );
+};
+
 const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () => {}) => {
-  render(<ReviewSubmit
-    allComplete={allComplete}
-    submitted={submitted}
-    initialData={initialData}
-    onSubmit={onSubmit}
-    reviewItems={[]}
-    approvers={approvers}
-  />);
+  render(
+    <RenderReview
+      allComplete={allComplete}
+      submitted={submitted}
+      onSubmit={onSubmit}
+      initialData={initialData}
+    />,
+  );
 };
 
 const selectLabel = 'Approving manager';
