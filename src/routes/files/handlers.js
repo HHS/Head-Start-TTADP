@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { sequelize, File } from '../../models';
 import s3Uploader from '../../lib/s3Uploader';
 
-const fs = require('fs');
 const fileType = require('file-type');
 const multiparty = require('multiparty');
 
@@ -71,7 +71,7 @@ export default async function uploadHandler(req, res) {
       const { path, originalFilename } = files.File[0];
       const { reportId, attachmentType } = fields;
       if (!reportId) {
-        res.status(400).send({ error: 'requestId required' });
+        res.status(400).send({ error: 'reportId required' });
         return;
       }
       if (!attachmentType) {
@@ -84,10 +84,16 @@ export default async function uploadHandler(req, res) {
       }
       buffer = fs.readFileSync(path);
       type = await fileType.fromFile(path);
+      if (!type) {
+        res.status(400).send('Could not determine file type');
+        return;
+      }
       fileName = `${uuidv4()}.${type.ext}`;
       metadata = await createFileMetaData(originalFilename, fileName, reportId, attachmentType[0]);
     } catch (err) {
       await handleErrors(req, res, err, logContext);
+      res.status(500);
+      return;
     }
     try {
       await s3Uploader(buffer, fileName, type);
