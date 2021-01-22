@@ -1,5 +1,5 @@
 import { User, Permission } from '../models';
-import logger from '../logger';
+import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 
 const { ADMIN } = SCOPES;
@@ -20,7 +20,7 @@ const bootstrapAdmin = async () => {
     },
   });
   if (created) {
-    logger.warn(`SECURITY ALERT: Setting ${ADMIN_EMAIL} as an ADMIN`);
+    auditLogger.warn(`Setting ${ADMIN_EMAIL} as an ADMIN`);
   }
   return permission;
 };
