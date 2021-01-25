@@ -1,11 +1,13 @@
 import db, { User, Permission, sequelize } from '../models';
 import findOrCreateUser, { validateUserAuthForAdmin } from './accessValidation';
-import logger from '../logger';
+import { auditLogger } from '../logger';
 
-jest.mock('../logger', () => (
-  {
+jest.mock('../logger', () => ({
+  auditLogger: {
     error: jest.fn(),
-  }));
+    info: jest.fn(),
+  },
+}));
 
 const mockUser = {
   id: 47,
@@ -119,7 +121,7 @@ describe('accessValidation', () => {
         homeRegionId: 3,
       };
       await expect(findOrCreateUser(user)).rejects.toThrow();
-      expect(logger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
+      expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
     });
   });
   describe('validateUserAuthForAdmin', () => {
