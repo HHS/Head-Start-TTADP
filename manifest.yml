@@ -6,7 +6,7 @@ applications:
     buildpacks:
       - nodejs_buildpack
     env:
-      AUTH_BASE: https://uat.hsesinfo.org
+      AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
       AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
       LOG_JSON_FORMAT: "true"
