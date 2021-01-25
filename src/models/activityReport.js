@@ -17,6 +17,12 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'approvingManagerId', as: 'approvingManager' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'activityFiles' });
+      ActivityReport.belongsToMany(models.Goal, {
+        through: models.ActivityReportGoal,
+        foreignKey: 'activityReportId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
     }
   }
   ActivityReport.init({

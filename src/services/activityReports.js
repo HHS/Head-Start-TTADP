@@ -8,6 +8,7 @@ import {
   Grant,
   Grantee,
   NonGrantee,
+  Goal,
 } from '../models';
 
 async function saveReportRecipients(
@@ -75,6 +76,11 @@ export function activityReportById(activityReportId) {
             required: false,
           },
         ],
+      },
+      {
+        model: Goal,
+        as: 'goals',
+        attributes: ['id', 'name'],
       },
     ],
   });
