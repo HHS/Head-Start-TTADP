@@ -9,6 +9,7 @@ applications:
       AUTH_BASE: https://uat.hsesinfo.org
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
       AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+      LOG_JSON_FORMAT: "true"
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
       NODE_ENV: production
