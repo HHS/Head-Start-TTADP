@@ -60,7 +60,7 @@ export default class ActivityReport {
   }
 
   isCollaborator() {
-    return this.activityReport.collaborators.includes(this.user.id);
+    return this.activityReport.collaborators.some((user) => user.id === this.user.id);
   }
 
   isApprovingManager() {
