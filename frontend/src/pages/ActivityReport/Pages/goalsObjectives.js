@@ -36,7 +36,7 @@ const sections = [
     title: 'Goals and objectives',
     anchor: 'goals-and-objectives',
     items: [
-      { label: 'Goals', name: 'goals', path: 'name' }
+      { label: 'Goals', name: 'goals', path: 'name' },
     ],
   },
   {
