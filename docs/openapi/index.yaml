@@ -123,6 +123,29 @@ components:
           type: number
         name:
           type: string
+    fileUpload:
+      type: object
+      properties:
+        attachmentType:
+          type: string
+          description: "Type of attachment. Acceptable values are ATTACHMENT or RESOURCE"
+        reportId: 
+          type: number
+          description: "id of the Activity report the file is associated with"
+        File:
+          type: string
+          format: binary
+          description: "File to be uploaded"
+      required:
+      - attachmentType
+      - reportId
+      - File
+    fileResponse:
+      type: object
+      description: ID of file created
+      properties:
+        id:
+          type: number
     permission:
       type: object
       description: A combination of region, scope and user allowing that user to perform an action in a region

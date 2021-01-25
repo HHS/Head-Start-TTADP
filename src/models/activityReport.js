@@ -26,6 +26,7 @@ export default (sequelize, DataTypes) => {
         as: 'collaborators',
       });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
+      ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'activityFiles' });
     }
   }
   ActivityReport.init({
