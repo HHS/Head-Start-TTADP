@@ -2,6 +2,8 @@
   $ref: './hello.yaml'
 '/user':
   $ref: './user.yaml'
+'/users/collaborators':
+  $ref: './users.yaml'
 '/logout':
   $ref: './logout.yaml'
 '/login':
