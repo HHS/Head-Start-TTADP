@@ -19,7 +19,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 8. Run `yarn docker:db:migrate` to run DB migrations
 9. Run `yarn docker:db:seed` to seed the database with test data.
-10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080` and minio with run on `localhost:9000`.
+10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080` and minio will run on `localhost:9000`.
 11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
