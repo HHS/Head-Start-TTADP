@@ -19,7 +19,7 @@ const Goals = ({ name }) => (
       </Button>
     </div>
     <div className="margin-left-auto margin-top-2">
-      <Button onClick={(e) => { e.preventDefault(); }} unstyled className="smart-hub--button">
+      <Button onClick={(e) => { e.preventDefault(); }} unstyled className="smart-hub--button" aria-label="remove goal">
         <FontAwesomeIcon color="gray" icon={faTrash} />
       </Button>
     </div>
