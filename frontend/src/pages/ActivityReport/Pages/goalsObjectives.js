@@ -15,6 +15,7 @@ const GoalsObjectives = ({ register, watch }) => {
         <title>Goals and objectives</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
+        <div id="goals-and-objectives" />
         {goals.map((goal) => <Goal name={goal.name} />)}
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
@@ -31,6 +32,13 @@ GoalsObjectives.propTypes = {
 };
 
 const sections = [
+  {
+    title: 'Goals and objectives',
+    anchor: 'goals-and-objectives',
+    items: [
+      { label: 'Goals', name: 'goals', path: 'name' }
+    ],
+  },
   {
     title: 'Context',
     anchor: 'context',
