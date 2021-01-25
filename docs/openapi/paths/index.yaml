@@ -3,7 +3,7 @@
 '/user':
   $ref: './user.yaml'
 '/users/collaborators':
-  $ref: './users.yaml'
+  $ref: './collaborators.yaml'
 '/logout':
   $ref: './logout.yaml'
 '/login':
