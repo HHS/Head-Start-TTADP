@@ -84,6 +84,7 @@ export async function getReport(req, res) {
 
   if (!authorization.canGet()) {
     res.sendStatus(403);
+    return;
   }
 
   res.json(report);
@@ -114,6 +115,7 @@ export async function saveReport(req, res) {
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
+      return;
     }
 
     newReport.lastUpdatedById = userId;
@@ -146,6 +148,7 @@ export async function createReport(req, res) {
     const authorization = new ActivityReport(user, newReport);
     if (!authorization.canCreate()) {
       res.sendStatus(403);
+      return;
     }
 
     const report = await createOrUpdate(newReport);
