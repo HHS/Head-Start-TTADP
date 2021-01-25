@@ -4,6 +4,7 @@ import join from 'url-join';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
 import adminRouter from './user';
+import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
 import { userById } from '../services/users';
@@ -22,6 +23,7 @@ router.use('/admin/users', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
 router.use('/users', usersRouter);
 
+router.use('/files', filesRouter);
 router.use('/hello', (req, res) => {
   res.send('Hello from ttadp');
 });
