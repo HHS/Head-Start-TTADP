@@ -7,7 +7,7 @@ get:
       name: region
       schema:
         type: integer
-      description: The region in of the approvers
+      description: The region id of the approvers
   operationId: getApprovers
   description: Gets all approvers for any region the current user has write permissions
   responses:

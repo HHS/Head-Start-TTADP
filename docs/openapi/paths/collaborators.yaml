@@ -8,7 +8,7 @@ get:
       name: region
       schema:
         type: integer
-      description: The region in of the collaborators
+      description: The region id of the collaborators
   description: >
     Get users that have write permissions on a given region.
     These users can be flagged as collaborators on a report.
