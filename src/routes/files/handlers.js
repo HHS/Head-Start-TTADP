@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
-import { sequelize, File } from '../../models';
+import { File } from '../../models';
 import s3Uploader from '../../lib/s3Uploader';
 
 const fileType = require('file-type');
@@ -31,9 +31,7 @@ export const createFileMetaData = async (
   };
   let file;
   try {
-    await sequelize.transaction(async (transaction) => {
-      file = await File.create(newFile, transaction);
-    });
+    file = await File.create(newFile);
     return file.dataValues;
   } catch (error) {
     return error;
@@ -43,9 +41,7 @@ export const createFileMetaData = async (
 export const updateStatus = async (fileId, fileStatus) => {
   let file;
   try {
-    await sequelize.transaction(async (transaction) => {
-      file = await File.update({ status: fileStatus }, { where: { id: fileId } }, transaction);
-    });
+    file = await File.update({ status: fileStatus }, { where: { id: fileId } });
     return file.dataValues;
   } catch (error) {
     return error;
@@ -64,11 +60,11 @@ export default async function uploadHandler(req, res) {
     let type;
 
     try {
-      if (!files.File) {
+      if (!files.file) {
         res.status(400).send({ error: 'file required' });
         return;
       }
-      const { path, originalFilename } = files.File[0];
+      const { path, originalFilename } = files.file[0];
       const { reportId, attachmentType } = fields;
       if (!reportId) {
         res.status(400).send({ error: 'reportId required' });
@@ -92,7 +88,6 @@ export default async function uploadHandler(req, res) {
       metadata = await createFileMetaData(originalFilename, fileName, reportId, attachmentType[0]);
     } catch (err) {
       await handleErrors(req, res, err, logContext);
-      res.status(500);
       return;
     }
     try {
