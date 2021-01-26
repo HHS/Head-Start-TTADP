@@ -13,12 +13,18 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     userId: {
-      allowNull: true,
+      allowNull: false,
       type: DataTypes.INTEGER,
     },
   }, {
     sequelize,
     modelName: 'ActivityReportCollaborator',
+    indexes: [
+      {
+        unique: true,
+        fields: ['userId', 'activityReportId'],
+      },
+    ],
   });
   return ActivityReportCollaborator;
 };
