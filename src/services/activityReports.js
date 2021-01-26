@@ -13,22 +13,38 @@ import {
 } from '../models';
 
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
-  await ActivityReportCollaborator.destroy({
-    where: {
-      activityReportId: {
-        [Op.eq]: activityReportId,
-      },
-    },
-    transaction,
-  });
-
-  await Promise.all(collaborators.map(async (collaborator) => ActivityReportCollaborator.create({
+  const newCollaborators = collaborators.map((collaborator) => ({
     activityReportId,
     userId: collaborator,
-  },
-  {
-    transaction,
-  })));
+  }));
+
+  if (newCollaborators.length > 0) {
+    await ActivityReportCollaborator.bulkCreate(
+      newCollaborators,
+      { transaction, ignoreDuplicates: true },
+    );
+    console.log('destroy!')
+    await ActivityReportCollaborator.destroy({
+      where: {
+        activityReportId,
+        userId: {
+          [Op.notIn]: collaborators,
+        },
+      },
+    },
+    {
+      transaction,
+    });
+  } else {
+    await ActivityReportCollaborator.destroy({
+      where: {
+        activityReportId,
+      },
+    },
+    {
+      transaction,
+    });
+  }
 }
 
 async function saveReportRecipients(
@@ -37,28 +53,47 @@ async function saveReportRecipients(
   activityRecipientType,
   transaction,
 ) {
-  await ActivityRecipient.destroy({
-    where: {
-      activityReportId: {
-        [Op.eq]: activityReportId,
-      },
-    },
-    transaction,
-  });
-
-  await Promise.all(activityRecipientIds.map(async (activityRecipientId) => {
+  const newRecipients = activityRecipientIds.map((activityRecipientId) => {
     const activityRecipient = {
       activityReportId,
+      grantId: null,
+      nonGranteeId: null,
     };
 
-    if (activityRecipientType === 'grantee') {
-      activityRecipient.grantId = activityRecipientId;
-    } else if (activityRecipientType === 'non-grantee') {
+    if (activityRecipientType === 'non-grantee') {
       activityRecipient.nonGranteeId = activityRecipientId;
+    } else if (activityRecipientType === 'grantee') {
+      activityRecipient.grantId = activityRecipientId;
     }
+    return activityRecipient;
+  });
 
-    return ActivityRecipient.create(activityRecipient, { transaction });
-  }));
+  const where = {
+    activityReportId,
+  };
+
+  if (activityRecipientType === 'non-grantee') {
+    where[Op.or] = {
+      nonGranteeId: {
+        [Op.notIn]: activityRecipientIds,
+      },
+      grantId: {
+        [Op.not]: null,
+      },
+    };
+  } else if (activityRecipientType === 'grantee') {
+    where[Op.or] = {
+      grantId: {
+        [Op.notIn]: activityRecipientIds,
+      },
+      nonGranteeId: {
+        [Op.not]: null,
+      },
+    };
+  }
+
+  await ActivityRecipient.bulkCreate(newRecipients, { transaction, ignoreDuplicates: true });
+  await ActivityRecipient.destroy({ where }, { transaction });
 }
 
 async function update(newReport, report, transaction) {

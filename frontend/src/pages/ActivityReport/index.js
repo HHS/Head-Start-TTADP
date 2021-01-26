@@ -48,7 +48,7 @@ const defaultValues = {
   additionalNotes: null,
 };
 
-// default region until we have a way of changing on the frontend
+// FIXME: default region until we have a way of changing on the frontend
 const region = 1;
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);

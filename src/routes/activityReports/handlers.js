@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
@@ -75,7 +74,7 @@ export async function getActivityRecipients(req, res) {
 export async function getReport(req, res) {
   const { activityReportId } = req.params;
   const report = await activityReportById(activityReportId);
-  if (_.isNil(report)) {
+  if (!report) {
     res.sendStatus(404);
     return;
   }
