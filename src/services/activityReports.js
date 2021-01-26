@@ -23,7 +23,6 @@ async function saveReportCollaborators(activityReportId, collaborators, transact
       newCollaborators,
       { transaction, ignoreDuplicates: true },
     );
-    console.log('destroy!')
     await ActivityReportCollaborator.destroy({
       where: {
         activityReportId,
