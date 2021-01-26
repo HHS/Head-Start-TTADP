@@ -65,7 +65,7 @@ describe('Activity Report policies', () => {
       });
 
       it('is true if the user is a collaborator', () => {
-        const report = activityReport(author.id, collaborator.id);
+        const report = activityReport(author.id, collaborator);
         const policy = new ActivityReport(collaborator, report);
         expect(policy.canUpdate()).toBeTruthy();
       });
@@ -93,7 +93,7 @@ describe('Activity Report policies', () => {
       });
 
       it('is true for the collaborator', () => {
-        const report = activityReport(author.id, collaborator.id);
+        const report = activityReport(author.id, collaborator);
         const policy = new ActivityReport(collaborator, report);
         expect(policy.canGet()).toBeTruthy();
       });
