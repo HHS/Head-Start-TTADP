@@ -77,6 +77,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the created report', async () => {
+      ActivityReport.prototype.canCreate = jest.fn().mockReturnValue(true);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: 1,
@@ -109,6 +110,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the updated report', async () => {
+      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(true);
       activityReportById.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({

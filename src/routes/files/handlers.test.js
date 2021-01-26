@@ -41,6 +41,7 @@ const reportObject = {
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
+  regionId: 1,
 };
 
 describe('File Upload Handlers happy path', () => {
@@ -58,6 +59,7 @@ describe('File Upload Handlers happy path', () => {
     await ActivityReport.destroy({ where: { } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
+    db.sequelize.close();
   });
   beforeEach(() => {
     s3Uploader.mockReset();
