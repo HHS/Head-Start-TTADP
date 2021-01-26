@@ -1,12 +1,26 @@
 import { S3 } from 'aws-sdk';
 
-export const s3 = new S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  endpoint: process.env.S3_ENDPOINT,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  signatureVersion: 'v4',
-  s3ForcePathStyle: true,
-});
+let s3Config;
+
+if (process.env.VCAP_SERVICES) {
+  const bucket = process.env.VCAP_SERVICES.s3[0];
+  s3Config = {
+    accessKeyId: bucket.access_key_id,
+    endpoint: bucket.uri,
+    secretAccessKey: bucket.secret_access_key,
+    signatureVersion: 'v4',
+    s3ForcePathStyle: true,
+  };
+} else {
+  s3Config = {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    endpoint: process.env.S3_ENDPOINT,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    signatureVersion: 'v4',
+    s3ForcePathStyle: true,
+  };
+}
+export const s3 = new S3(s3Config);
 
 export const verifyVersioning = async (bucket = process.env.bucket, s3Client = s3) => {
   const versioningConfiguration = {
@@ -35,7 +49,7 @@ const s3Uploader = async (buffer, name, type, s3Client = s3) => {
     Key: name,
   };
   // Only check for versioning if not using Minio
-  if (process.env.LOCAL_DEV !== 'true') {
+  if (process.env.NODE_ENV === 'production') {
     await verifyVersioning();
   }
 
