@@ -12,7 +12,7 @@ post:
           $ref: '../index.yaml#/components/schemas/fileUpload'
   responses:
     200:
-      description: One user by an id
+      description: Returns the id of the uploaded file
       content:
         application/json:
           schema:
