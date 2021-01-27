@@ -2,7 +2,23 @@
 
 hr="=========="
 
-sequelizecli="node_modules/.bin/sequelize"
+declare sequelizecli="node_modules/.bin/sequelize"
+
+declare -a environments=("local" "test")
+declare env="local"
+
+# Array of subcommands
+declare -a subcommands=(
+    usage
+    setup
+    teardown
+    start
+    stop
+    db
+    lint
+    tests
+)
+
 
 setup() {
     # First, setup up frontend and backend, install dependencies
@@ -163,33 +179,72 @@ stop() {
     docker-compose down
 }
 
-# ====== Main =====
-
-# Pull first param as subcommand, default to 'usage' if no args provided
-subcommand="${1-usage}";
-# Shift parameters, so $@a has remaining params
-shift 2>/dev/null
-
-# If subcommand is empty string, print usage
-if [ -z "$subcommand" ]; then
-    usage
-    exit 1
-fi
-
 usage() {
-    echo "Please provide a subcommand: ${commands[*]}"
+    # shellcheck disable=SC2086
+    cat <<EOF >&2
+Run commands in Docker containers
+Usage: $0 [-h] [-e env] <subcommand...>
+Subcommands:
+    ${subcommands[*]}
+EOF
 }
 
-# Array of subcommands
-declare -a commands=(usage setup teardown start stop db lint tests)
+# ====== Main =====
 
-# Loop over commands array, look for match with $subcommand. Execute fn if match
-for i in "${commands[@]}"; do
-    if [[ "${i}" == "${subcommand}" ]]; then
-        "${subcommand}" "$@"
-        exit 0
+main() {
+    # Parse -options
+    while getopts ":e:h" opt; do
+        case $opt in
+            e)
+                env="${OPTARG-local}"
+                local env_match=0
+                for e in "${environments[@]}"; do
+                    if [[ "$e" == "$env" ]]; then
+                        env_match=1;
+                        break;
+                    fi
+                done
+                if [[ $env_match -eq 0 ]]; then
+                    echo "Invalid environment '${env}'";
+                    exit 1;
+                fi
+                ;;
+            h)
+                usage
+                exit
+                ;;
+            \?)
+                echo "Invalid option" >&2
+                echo
+                ;;
+        esac
+    done
+
+    # After parsing options, shift so $@ has only params
+    shift $((OPTIND -1))
+
+    # Pull first param as subcommand, default to 'usage' if no args provided
+    local subcmd="${1-usage}";
+
+    # Shift parameters, so $@a has remaining params
+    shift 2>/dev/null
+
+    # If subcommand is empty string, print usage
+    if [ -z "$subcmd" ]; then
+        usage
+        exit 1
     fi
-done
 
-# If we didn't run a subcommand and exit already, print usage
-usage
+    # Loop over subcommands, look for match with $subcommand. Execute fn if match
+    for i in "${subcommands[@]}"; do
+        if [[ "${i}" == "${subcmd}" ]]; then
+            "${subcmd}" "$@"
+            exit 0
+        fi
+    done
+
+    # If we didn't run a subcommand and exit already, print usage
+    usage
+}
+
+main "${@-}"
