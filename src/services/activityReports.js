@@ -8,6 +8,7 @@ import {
   Grant,
   Grantee,
   NonGrantee,
+  User,
 } from '../models';
 
 async function saveReportRecipients(
@@ -84,6 +85,42 @@ async function update(newReport, activityReportId, transaction) {
   const report = await activityReportById(activityReportId);
   await report.update(newReport, { transaction });
   return report;
+}
+
+export function activityReports() {
+  return ActivityReport.findAll({
+    include: [
+      {
+        model: ActivityRecipient,
+        attributes: ['id', 'name', 'activityRecipientId'],
+        as: 'activityRecipients',
+        required: false,
+        include: [
+          {
+            model: Grant,
+            attributes: ['id', 'number'],
+            as: 'grant',
+            required: false,
+            include: [{
+              model: Grantee,
+              as: 'grantee',
+              attributes: ['name'],
+            }],
+          },
+          {
+            model: NonGrantee,
+            as: 'nonGrantee',
+            required: false,
+          },
+        ],
+      },
+      {
+        model: User,
+        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+        as: 'author',
+      },
+    ],
+  });
 }
 
 export async function createOrUpdate(newActivityReport, activityReportId) {

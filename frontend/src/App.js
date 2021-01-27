@@ -3,7 +3,7 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import { GridContainer } from '@trussworks/react-uswds';
+import { GridContainer, Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
@@ -15,11 +15,15 @@ import Admin from './pages/Admin';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
+import { render } from 'react-dom';
+import MainLayout from './components/MainLayout';
+import LandingLayout from './components/LandingLayout';
 
 function App() {
   const [user, updateUser] = useState();
@@ -58,6 +62,13 @@ function App() {
   }
 
   const admin = isAdmin(user);
+  const RouteWithLayout = ({ component: Component, layout: Layout, ...rest }) => (
+    <Route {...rest} render={props => (
+      <Layout>
+        <Component {...props} />
+      </Layout>
+    )} />
+  )
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
       <IdleModal
@@ -66,33 +77,22 @@ function App() {
         logoutUser={logout}
       />
       <Switch>
-        <Route
-          exact
-          path="/"
-          render={() => (
-            <Home />
+        <RouteWithLayout exact path="/activity-reports" layout={LandingLayout} component={Landing} />
+        <RouteWithLayout exact path="/" layout={MainLayout} component={Home} />
+        <RouteWithLayout
+            path="/activity-reports/:currentPage?"
+            layout={MainLayout} component={ActivityReport}
+          />
+         {admin && (
+
+        <RouteWithLayout
+            path="/admin/:userId?"
+            layout={MainLayout} component={Admin}
+          />
           )}
-        />
-        <Route
-          path="/activity-reports/:activityReportId/:currentPage?"
-          render={({ match }) => (
-            <ActivityReport match={match} />
-          )}
-        />
-        {admin
-        && (
-        <Route
-          path="/admin/:userId?"
-          render={({ match }) => (
-            <Admin match={match} />
-          )}
-        />
-        )}
-        <Route
-          render={() => (
-            <NotFound />
-          )}
-        />
+
+        <RouteWithLayout layout={MainLayout} component={NotFound} />
+
       </Switch>
     </div>
   );
@@ -103,17 +103,21 @@ function App() {
         <meta charSet="utf-8" />
       </Helmet>
       <BrowserRouter>
-        {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
+        {authenticated && (
+          <a className="usa-skipnav" href="#main-content">
+            Skip to main content
+          </a>
+        )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header authenticated={authenticated} admin={admin} />
           <div className="background-stripe" />
           <section className="usa-section">
-            <GridContainer>
-              {!authenticated
-        && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
-              {authenticated
-        && renderAuthenticatedRoutes()}
-            </GridContainer>
+
+              {!authenticated && (
+                <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+              )}
+              {authenticated && renderAuthenticatedRoutes()}
+
           </section>
         </UserContext.Provider>
       </BrowserRouter>
