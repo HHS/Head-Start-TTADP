@@ -2,12 +2,14 @@ import { S3 } from 'aws-sdk';
 
 let s3Config;
 
+let bucketName = process.env.S3_BUCKET;
 if (process.env.VCAP_SERVICES) {
-  const bucket = process.env.VCAP_SERVICES.s3[0];
+  const { credentials, name } = process.env.VCAP_SERVICES.s3[0];
+  bucketName = name;
   s3Config = {
-    accessKeyId: bucket.access_key_id,
-    endpoint: bucket.uri,
-    secretAccessKey: bucket.secret_access_key,
+    accessKeyId: credentials.access_key_id,
+    endpoint: credentials.fips_endpoint,
+    secretAccessKey: credentials.secret_access_key,
     signatureVersion: 'v4',
     s3ForcePathStyle: true,
   };
@@ -22,7 +24,7 @@ if (process.env.VCAP_SERVICES) {
 }
 export const s3 = new S3(s3Config);
 
-export const verifyVersioning = async (bucket = process.env.bucket, s3Client = s3) => {
+export const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   const versioningConfiguration = {
     MFADelete: 'Disabled',
     Status: 'Enabled',
@@ -44,7 +46,7 @@ export const verifyVersioning = async (bucket = process.env.bucket, s3Client = s
 const s3Uploader = async (buffer, name, type, s3Client = s3) => {
   const params = {
     Body: buffer,
-    Bucket: process.env.S3_BUCKET,
+    Bucket: bucketName,
     ContentType: type.mime,
     Key: name,
   };
