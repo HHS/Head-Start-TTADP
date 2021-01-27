@@ -1,0 +1,7 @@
+version: "3.5"
+services:
+  backend:
+    environment:
+      - POSTGRES_HOST=postgres_docker_test
+  db:
+    container_name: postgres_docker_test
