@@ -67,7 +67,7 @@ describe('File Upload Handlers happy path', () => {
       .post('/api/files')
       .field('reportId', report.dataValues.id)
       .field('attachmentType', 'ATTACHMENT')
-      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .attach('file', `${__dirname}/testfiles/testfile.pdf`)
       .expect(200)
       .then((res) => {
         fileId = res.body.id;
@@ -75,12 +75,12 @@ describe('File Upload Handlers happy path', () => {
       });
   });
   it('checks the metadata was uploaded to the database', async () => {
-    const file = await File.findAll({ where: { id: fileId } });
-    const uuid = file[0].dataValues.key.slice(0, -4);
-    expect(file[0].dataValues.id).toBe(fileId);
-    expect(file[0].dataValues.status).toBe('UPLOADED');
-    expect(file[0].dataValues.originalFileName).toBe('testfile.pdf');
-    expect(file[0].dataValues.activityReportId).toBe(report.dataValues.id);
+    const file = await File.findOne({ where: { id: fileId } });
+    const uuid = file.dataValues.key.slice(0, -4);
+    expect(file.dataValues.id).toBe(fileId);
+    expect(file.dataValues.status).toBe('UPLOADED');
+    expect(file.dataValues.originalFileName).toBe('testfile.pdf');
+    expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
     expect(validate(uuid)).toBe(true);
   });
 });
@@ -105,7 +105,7 @@ describe('File Upload Handlers error handling', () => {
     await request(app)
       .post('/api/files')
       .field('attachmentType', 'ATTACHMENT')
-      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .attach('file', `${__dirname}/testfiles/testfile.pdf`)
       .expect(400, { error: 'reportId required' })
       .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
@@ -121,7 +121,7 @@ describe('File Upload Handlers error handling', () => {
     await request(app)
       .post('/api/files')
       .field('reportId', report.dataValues.id)
-      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .attach('file', `${__dirname}/testfiles/testfile.pdf`)
       .expect(400, { error: 'attachmentType required' })
       .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
@@ -130,7 +130,7 @@ describe('File Upload Handlers error handling', () => {
       .post('/api/files')
       .field('reportId', report.dataValues.id)
       .field('attachmentType', 'FAKE')
-      .attach('File', `${__dirname}/testfiles/testfile.pdf`)
+      .attach('file', `${__dirname}/testfiles/testfile.pdf`)
       .expect(400, { error: 'incorrect attachmentType. Wanted: ATTACHMENT or RESOURCE. Got: FAKE' })
       .then(() => expect(s3Uploader).not.toHaveBeenCalled());
   });
