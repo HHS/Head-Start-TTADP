@@ -4,7 +4,7 @@ let s3Config;
 
 let bucketName = process.env.S3_BUCKET;
 if (process.env.VCAP_SERVICES) {
-  const { credentials } = process.env.VCAP_SERVICES.s3[0];
+  const { credentials } = JSON.parse(process.env.VCAP_SERVICES).s3[0];
   bucketName = credentials.bucket;
   s3Config = {
     accessKeyId: credentials.access_key_id,
