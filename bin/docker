@@ -1,0 +1,195 @@
+#!/bin/bash
+
+hr="=========="
+
+sequelizecli="node_modules/.bin/sequelize"
+
+setup() {
+    # First, setup up frontend and backend, install dependencies
+    # yarn docker:deps
+    setup_backend
+    setup_frontend
+
+    db_setup ""
+
+    # Stop the db manually?
+    # db_stop
+}
+
+setup_backend() {
+    echo "${hr} Setting up backend ${hr}"
+    docker-compose run --rm backend yarn install
+}
+
+setup_frontend() {
+    echo "${hr} Setting up frontend ${hr}"
+    docker-compose run --rm frontend yarn install
+}
+
+teardown() {
+    docker-compose down --volumes
+}
+
+db_migrate() {
+    local -a options=(status undo)
+    local option="${1}"
+    # If 'undo' param provided undo
+    if [[ "undo" == "${option}" ]]; then
+        echo "${hr} Undoing db migrations ${hr}"
+        docker-compose run --rm backend "$sequelizecli" db:migrate:undo
+        exit 0
+    fi
+
+    if [[ "status" == "${option}" ]]; then
+        echo "${hr} Checking db migration status ${hr}"
+        docker-compose run --rm backend "$sequelizecli" db:migrate:status
+        exit 0
+    fi
+
+    # Create/update database tables
+    # yarn docker:db:migrate
+    echo "${hr} Migrating db ${hr}"
+    docker-compose run --rm backend "$sequelizecli" db:migrate
+}
+
+db_seed() {
+    local option="${1}"
+    # If 'undo' param provided undo
+    if [[ "undo" == "${option}" ]]; then
+        echo "${hr} Unseeding db ${hr}"
+        docker-compose run --rm backend "$sequelizecli" db:seed:undo:all
+        exit 0
+    fi
+
+    # Populate db with data
+    # yarn docker:db:seed
+    echo "${hr} Seeding database ${hr}"
+    docker-compose run --rm backend yarn db:seed
+}
+
+db_setup() {
+    db_migrate ""
+    db_seed ""
+}
+
+db_stop() {
+    docker-compose stop db
+}
+
+# Need reliable way to remove db volume and only db volume
+# db_destroy() {
+#     db_stop
+#     docker-compose rm -v -- db
+#     docker volume prune
+# }
+
+db() {
+    declare -a options=(setup migrate seed stop)
+    option="${1}"
+    for i in "${options[@]}"; do
+        if [ "${i}" == "${option}" ]; then
+            shift 2>/dev/null
+            "db_${option}" "$@"
+            exit 0
+        fi
+    done
+
+    # If no matching option, print options
+    echo "db expects one of the following: ${options[*]}"
+    exit 1
+}
+
+test_frontend() {
+    echo "${hr} Running frontend tests ${hr}"
+    docker-compose run --rm frontend yarn test:ci
+}
+
+test_backend() {
+    echo "${hr} Running backend tests ${hr}"
+    docker-compose run --rm backend yarn test:ci
+}
+
+# tests plural, because `test` is a builtin shell command
+tests() {
+    declare -a options=(frontend backend)
+    option="${1}"
+
+    # Check if user specified 'frontend' or 'backend' option
+    if [[ -n $option ]]; then
+        for i in "${options[@]}"; do
+            if [ "${i}" == "${option}" ]; then
+                "test_${option}"
+                exit 0
+            fi
+        done
+    fi
+
+    # Otherwise, run both
+    test_frontend
+    test_backend
+
+}
+
+lint_backend() {
+    echo "${hr} Linting backend ${hr}"
+    docker-compose run --rm backend yarn lint:ci
+}
+
+lint_frontend() {
+    echo "${hr} Linting frontend ${hr}"
+    docker-compose run --rm frontend yarn lint:ci
+}
+
+lint() {
+    local -a options=(frontend backend)
+    option="${1}"
+
+    for i in "${options[@]}"; do
+        if [[ "${i}" == "$option" ]]; then
+            "lint_${option}"
+            exit 0
+        fi
+    done
+
+    lint_frontend
+    lint_backend
+}
+
+start() {
+    docker-compose up
+}
+
+stop() {
+    docker-compose down
+}
+
+# ====== Main =====
+
+# Pull first param as subcommand, default to 'usage' if no args provided
+subcommand="${1-usage}";
+# Shift parameters, so $@a has remaining params
+shift 2>/dev/null
+
+# If subcommand is empty string, print usage
+if [ -z "$subcommand" ]; then
+    usage
+    exit 1
+fi
+
+usage() {
+    echo "Please provide a subcommand: ${commands[*]}"
+}
+
+# Array of subcommands
+declare -a commands=(usage setup teardown start stop db lint tests)
+
+# Loop over commands array, look for match with $subcommand. Execute fn if match
+for i in "${commands[@]}"; do
+    if [[ "${i}" == "${subcommand}" ]]; then
+        "${subcommand}" "$@"
+        exit 0
+    fi
+done
+
+# If we didn't run a subcommand and exit already, print usage
+usage
