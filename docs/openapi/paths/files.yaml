@@ -1,0 +1,20 @@
+post:
+  tags:
+    - files
+  operationId: postFile
+  description: Upload a file to s3
+  requestBody:
+    description: upload a file for an Activity Report
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: '../index.yaml#/components/schemas/fileUpload'
+  responses:
+    200:
+      description: Returns the id of the uploaded file
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '../index.yaml#/components/schemas/fileResponse'
