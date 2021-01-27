@@ -55,6 +55,12 @@ export default (sequelize, DataTypes) => {
       },
     },
     role: DataTypes.ENUM(roles),
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.name}, ${this.role}`;
+      },
+    },
   }, {
     sequelize,
     modelName: 'User',

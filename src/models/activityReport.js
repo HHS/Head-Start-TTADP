@@ -113,6 +113,16 @@ export default (sequelize, DataTypes) => {
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+    },
+    lastSaved: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return moment(this.updatedAt).format('MM/DD/YYYY');
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReport',

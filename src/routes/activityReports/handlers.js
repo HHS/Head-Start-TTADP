@@ -1,7 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  activityRecipients, activityReportById, createOrUpdate, reportExists,
+  activityRecipients, activityReportById, activityReports, createOrUpdate, reportExists,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 
@@ -71,6 +71,21 @@ export async function getReport(req, res) {
     res.sendStatus(404);
   } else {
     res.json(report);
+  }
+}
+
+/**
+ * Retrieve activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReports(req, res) {
+  const reports = await activityReports();
+  if (!reports) {
+    res.sendStatus(404);
+  } else {
+    res.json(reports);
   }
 }
 
