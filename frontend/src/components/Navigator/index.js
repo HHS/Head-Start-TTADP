@@ -142,7 +142,7 @@ function Navigator({
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
-                  {page.render(hookForm, additionalData)}
+                  {page.render(hookForm, additionalData, formData)}
                   <Button type="submit" disabled={!isValid}>Continue</Button>
                 </Form>
               </Container>
