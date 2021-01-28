@@ -132,7 +132,7 @@ components:
         reportId: 
           type: number
           description: "id of the Activity report the file is associated with"
-        File:
+        file:
           type: string
           format: binary
           description: "File to be uploaded"
