@@ -1,5 +1,4 @@
 import join from 'url-join';
-import { get } from './index';
 
 const activityReportUrl = join('/', 'api', 'files');
 
