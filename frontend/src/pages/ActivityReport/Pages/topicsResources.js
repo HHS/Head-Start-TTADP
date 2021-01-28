@@ -15,6 +15,7 @@ import { topics } from '../constants';
 const TopicsResources = ({
   register,
   control,
+  reportId,
 }) => (
   <>
     <Helmet>
@@ -56,7 +57,7 @@ const TopicsResources = ({
           defaultValue={[]}
           control={control}
           render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} id="other-resources" />
+            <FileUploader files={value} onChange={onChange} reportId={reportId} attachmentType="Resources" id="other-resources" />
           )}
         />
       </div>
@@ -69,7 +70,7 @@ const TopicsResources = ({
         defaultValue={[]}
         control={control}
         render={({ onChange, value }) => (
-          <FileUploader files={value} onChange={onChange} id="attachments" />
+          <FileUploader files={value} onChange={onChange} attachmentType="Attachments" reportId={reportId} id="attachments" />
         )}
       />
     </Fieldset>
@@ -113,12 +114,13 @@ export default {
   path: 'topics-resources',
   sections,
   review: false,
-  render: (hookForm) => {
+  render: (hookForm, additionalData, reportId) => {
     const { control, register } = hookForm;
     return (
       <TopicsResources
         register={register}
         control={control}
+        reportId={reportId}
       />
     );
   },
