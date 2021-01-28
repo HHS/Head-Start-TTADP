@@ -81,6 +81,7 @@ TopicsResources.propTypes = {
   register: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
+  reportId: PropTypes.node.isRequired,
 };
 
 const sections = [
