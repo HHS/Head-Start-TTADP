@@ -8,16 +8,37 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
+import * as FS from 'fs';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Tag, Button, Grid } from '@trussworks/react-uswds';
+import { uploadFile } from '../fetchers/File';
 
 import './FileUploader.css';
 
 function Dropzone(props) {
-  const { onChange } = props;
+  const { onChange, id, reportId } = props;
   const onDrop = (e) => {
+    let attachmentType;
+    if (id === 'attachments') {
+      attachmentType = 'ATTACHMENT';
+    } else if (id === "other-resources") {
+      attachmentType = 'RESOURCE';
+    }
+    e.forEach( async (file) => {
+    try {
+      const data = new FormData()
+      data.append("reportId", reportId)
+      data.append("attachmentType", attachmentType)
+      data.append("file", file)
+      await uploadFile(data)
+    } catch (error) {
+      console.log(error)
+    }
+
+    });
+
     console.log(e)
     onChange(e);
   };
@@ -121,7 +142,7 @@ const FileTable = ({onFileRemoved, files}) => {
     </div>
   );
 }
-const FileUploader = ({ onChange, files }) => {
+const FileUploader = ({ onChange, files, reportId, id }) => {
   const onFilesAdded = (newFiles) => {
     onChange([...files, ...newFiles]);
   };
@@ -132,7 +153,7 @@ const FileUploader = ({ onChange, files }) => {
 
   return (
     <>
-      <Dropzone onChange={onFilesAdded} />
+      <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
       <FileTable onFileRemoved={onFileRemoved} files={files} />
         
     </>
