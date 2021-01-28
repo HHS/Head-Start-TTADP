@@ -33,3 +33,11 @@ export const getRecipients = async () => {
   const recipients = await get(join(activityReportUrl, 'activity-recipients'));
   return recipients.json();
 };
+
+export const getGoals = async (grantIds) => {
+  const params = grantIds.map((grantId) => `grantIds=${grantId}`);
+
+  const url = join(activityReportUrl, 'goals', `?${params.join('&')}`);
+  const goals = await get(url);
+  return goals.json();
+};

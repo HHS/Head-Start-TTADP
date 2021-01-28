@@ -73,7 +73,17 @@ const styles = {
 };
 
 function MultiSelect({
-  label, name, options, disabled, control, required, labelProperty, valueProperty, simple,
+  label,
+  name,
+  options,
+  disabled,
+  control,
+  required,
+  labelProperty,
+  valueProperty,
+  simple,
+  multiSelectOptions,
+  components: componentReplacements,
 }) {
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -125,9 +135,13 @@ function MultiSelect({
                 }
               }}
               styles={styles}
-              components={{ DropdownIndicator }}
+              components={{ ...componentReplacements, DropdownIndicator }}
               options={options}
               isDisabled={disabled}
+              isClearable={multiSelectOptions.isClearable}
+              closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect}
+              controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+              hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
               placeholder=""
               isMulti
             />
@@ -169,6 +183,13 @@ MultiSelect.propTypes = {
   ).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
+  components: PropTypes.shape({}),
+  multiSelectOptions: PropTypes.shape({
+    isClearable: PropTypes.bool,
+    closeMenuOnSelect: PropTypes.bool,
+    controlShouldRenderValue: PropTypes.bool,
+    hideSelectedOptions: PropTypes.bool,
+  }),
   disabled: PropTypes.bool,
   required: PropTypes.bool,
 };
@@ -179,6 +200,8 @@ MultiSelect.defaultProps = {
   simple: true,
   labelProperty: 'label',
   valueProperty: 'value',
+  multiSelectOptions: {},
+  components: {},
 };
 
 export default MultiSelect;
