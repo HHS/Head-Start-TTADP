@@ -9,7 +9,7 @@ import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 
 const GoalsObjectives = ({
-  control, grantIds, register, watch,
+  control, grantIds, register, watch, setValue, activityRecipientType,
 }) => {
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [loading, updateLoading] = useState(true);
@@ -17,8 +17,10 @@ const GoalsObjectives = ({
 
   useEffect(() => {
     const fetch = async () => {
-      const fetchedGoals = await getGoals(grantIds);
-      updateAvailableGoals(fetchedGoals);
+      if (activityRecipientType === 'grantee') {
+        const fetchedGoals = await getGoals(grantIds);
+        updateAvailableGoals(fetchedGoals);
+      }
       updateLoading(false);
     };
     fetch();
@@ -37,10 +39,18 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
-        <div id="goals-and-objectives" />
-        <GoalPicker control={control} availableGoals={availableGoals} selectedGoals={goals} />
-      </Fieldset>
+      {activityRecipientType === 'grantee'
+        && (
+        <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
+          <div id="goals-and-objectives" />
+          <GoalPicker
+            setValue={setValue}
+            control={control}
+            availableGoals={availableGoals}
+            selectedGoals={goals}
+          />
+        </Fieldset>
+        )}
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
         <Textarea id="context" name="context" inputRef={register()} />
@@ -51,6 +61,7 @@ const GoalsObjectives = ({
 
 GoalsObjectives.propTypes = {
   register: PropTypes.func.isRequired,
+  setValue: PropTypes.func.isRequired,
   grantIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   watch: PropTypes.func.isRequired,
   control: PropTypes.func.isRequired,
@@ -80,13 +91,18 @@ export default {
   review: false,
   sections,
   render: (hookForm, additionalData, formData) => {
-    const { register, watch, control } = hookForm;
-    const recipients = formData.activityRecipients;
+    const {
+      register, watch, control, setValue,
+    } = hookForm;
+    const recipients = formData.activityRecipients || [];
+    const { activityRecipientType } = formData;
     const grantIds = recipients.map((r) => r.activityRecipientId);
     return (
       <GoalsObjectives
+        activityRecipientType={activityRecipientType}
         grantIds={grantIds}
         formData={formData}
+        setValue={setValue}
         watch={watch}
         register={register}
         control={control}

@@ -156,7 +156,7 @@ export function activityReportById(activityReportId) {
 
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
-  const { collaborators, activityRecipients, ...updatedFields } = newActivityReport;
+  const { goals, collaborators, activityRecipients, ...updatedFields } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);

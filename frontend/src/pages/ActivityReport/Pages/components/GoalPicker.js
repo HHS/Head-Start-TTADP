@@ -12,37 +12,47 @@ const components = {
   Option,
 };
 
-const GoalPicker = ({ control, availableGoals, selectedGoals }) => (
-  <>
-    <div>
-      <MultiSelect
-        name="goals"
-        label="Goal(s) for this activity. select an established goal or create a new one."
-        control={control}
-        valueProperty="id"
-        labelProperty="name"
-        simple={false}
-        components={components}
-        options={availableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
-        multiSelectOptions={{
-          isClearable: false,
-          closeMenuOnSelect: false,
-          controlShouldRenderValue: false,
-          hideSelectedOptions: false,
-        }}
-      />
-    </div>
-    <div>
-      {selectedGoals.map((goal) => (
-        <Goal name={goal.name} />
-      ))}
-    </div>
-  </>
-);
+const GoalPicker = ({
+  control, availableGoals, selectedGoals, setValue,
+}) => {
+  const onRemove = (id) => {
+    const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
+    setValue('goals', newGoals);
+  };
+
+  return (
+    <>
+      <div>
+        <MultiSelect
+          name="goals"
+          label="Goal(s) for this activity. select an established goal or create a new one."
+          control={control}
+          valueProperty="id"
+          labelProperty="name"
+          simple={false}
+          components={components}
+          options={availableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
+          multiSelectOptions={{
+            isClearable: false,
+            closeMenuOnSelect: false,
+            controlShouldRenderValue: false,
+            hideSelectedOptions: false,
+          }}
+        />
+      </div>
+      <div>
+        {selectedGoals.map((goal) => (
+          <Goal key={goal.id} id={goal.id} onRemove={onRemove} name={goal.name} />
+        ))}
+      </div>
+    </>
+  );
+};
 
 GoalPicker.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
+  setValue: PropTypes.func.isRequired,
   availableGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
