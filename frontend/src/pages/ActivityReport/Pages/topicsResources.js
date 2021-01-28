@@ -57,7 +57,7 @@ const TopicsResources = ({
           defaultValue={[]}
           control={control}
           render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} reportId={reportId} attachmentType="Resources" id="other-resources" />
+            <FileUploader files={value} onChange={onChange} reportId={reportId} id="other-resources" />
           )}
         />
       </div>
@@ -70,7 +70,7 @@ const TopicsResources = ({
         defaultValue={[]}
         control={control}
         render={({ onChange, value }) => (
-          <FileUploader files={value} onChange={onChange} attachmentType="Attachments" reportId={reportId} id="attachments" />
+          <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
         )}
       />
     </Fieldset>
