@@ -5,6 +5,7 @@ hr="=========="
 readonly SEQUELIZE_CLI="node_modules/.bin/sequelize"
 readonly DEFAULT_ENV='local'
 readonly -a ENVIRONMENTS=("$DEFAULT_ENV" "test")
+readonly DB_SERVICE='db'
 
 # Array of subcommands
 readonly -a subcommands=(
@@ -15,7 +16,7 @@ readonly -a subcommands=(
     stop
     db
     lint
-    tests
+    'test'
 )
 
 declare -a conf
@@ -102,6 +103,15 @@ db_stop() {
 #     docker volume prune
 # }
 
+db_exists() {
+    # TODO: Less naive detection of database service/image/volume
+    db_lookup="$(docker-compose images --quiet $DB_SERVICE)"
+    if [[ -n "$db_lookup" ]]; then
+        return 1
+    fi
+    return 0
+}
+
 db() {
     declare -a options=(setup migrate seed stop)
     option="${1}"
@@ -124,12 +134,20 @@ test_frontend() {
 }
 
 test_backend() {
+    # Check if db_exists, if not setup db
+    local -i has_db
+    has_db=$(db_exists)
+    if [[ has_db -eq 0 ]]; then
+        echo "${hr} Setting up database prior to testing ${hr}"
+        db_setup
+    fi
     echo "${hr} Running backend tests ${hr}"
     docker-compose "${conf[@]}" run --rm backend yarn test:ci
+    db_stop
 }
 
-# tests plural, because `test` is a builtin shell command
-tests() {
+# 'run_tests', because `test` is a builtin shell command
+run_tests() {
     declare -a options=(frontend backend)
     option="${1}"
 
@@ -276,6 +294,9 @@ main() {
     # Loop over subcommands, look for match with $subcommand. Execute fn if match
     for i in "${subcommands[@]}"; do
         if [[ "${i}" == "${subcmd}" ]]; then
+            if [[ "${subcmd}" == "test" ]]; then
+                subcmd="run_tests";
+            fi
             "${subcmd}" "$@"
             exit 0
         fi
