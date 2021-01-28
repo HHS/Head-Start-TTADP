@@ -1,6 +1,9 @@
 import db, { User, Permission, sequelize } from '../models';
-import findOrCreateUser, { validateUserAuthForAdmin } from './accessValidation';
+import findOrCreateUser, { validateUserAuthForAccess, validateUserAuthForAdmin } from './accessValidation';
 import { auditLogger } from '../logger';
+import SCOPES from '../middleware/scopeConstants';
+
+const { SITE_ACCESS, ADMIN } = SCOPES;
 
 jest.mock('../logger', () => ({
   auditLogger: {
@@ -20,30 +23,26 @@ const mockUser = {
   permissions: [
     {
       userId: 47,
-      regionId: 1,
-      scopeId: 2,
+      regionId: 14,
+      scopeId: ADMIN,
     },
     {
       userId: 47,
-      regionId: 2,
-      scopeId: 1,
+      regionId: 14,
+      scopeId: SITE_ACCESS,
     },
   ],
 };
 
-const mockSession = jest.fn();
-mockSession.userId = mockUser.id;
-const mockRequest = {
-  params: { userId: mockUser.id },
-  session: mockSession,
-  connection: {
-    setTimeout: jest.fn(),
-  },
-  log: {
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-};
+const setupUser = async (user) => (
+  sequelize.transaction(async (transaction) => {
+    await User.destroy({ where: { id: user.id } }, { transaction });
+    await User.create(user, {
+      include: [{ model: Permission, as: 'permissions' }],
+      transaction,
+    });
+  })
+);
 
 describe('accessValidation', () => {
   afterAll(async () => {
@@ -124,56 +123,55 @@ describe('accessValidation', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
     });
   });
+
+  describe('validateUserAuthForAccess', () => {
+    it('returns true if a user has SITE_ACCESS priviledges', async () => {
+      await setupUser(mockUser);
+
+      const valid = await validateUserAuthForAccess(mockUser.id);
+      expect(valid).toBe(true);
+    });
+
+    it('returns false if a user does not have SITE_ACCESS', async () => {
+      const user = {
+        ...mockUser,
+        permissions: [],
+      };
+      await setupUser(user);
+
+      const valid = await validateUserAuthForAccess(mockUser.id);
+      expect(valid).toBe(false);
+    });
+  });
+
   describe('validateUserAuthForAdmin', () => {
     it('returns true if a user has admin priviledges', async () => {
-      await User.destroy({ where: { id: mockUser.id } });
-      await sequelize.transaction((transaction) => User.create(mockUser,
-        {
-          include: [{ model: Permission, as: 'permissions' }],
-          transaction,
-        }));
+      await setupUser(mockUser);
 
-      const valid = await validateUserAuthForAdmin(mockRequest);
-
+      const valid = await validateUserAuthForAdmin(mockUser.id);
       expect(valid).toBe(true);
     });
 
     it('returns false if a user does not have admin priviledges', async () => {
-      mockUser.permissions[0].scopeId = 3; // change to non-admin
-      mockUser.id = 48;
-      mockUser.hsesUserId = '48';
-      mockUser.email = 'test48@test.com';
-      mockUser.permissions[0].userId = mockUser.id;
-      mockUser.permissions[1].userId = mockUser.id;
-      mockSession.userId = 48;
+      const user = {
+        ...mockUser,
+        permissions: [mockUser.permissions[1]],
+      };
+      await setupUser(user);
 
-      await User.destroy({ where: { id: 48 } });
-      await sequelize.transaction((transaction) => User.create(mockUser,
-        {
-          include: [{ model: Permission, as: 'permissions' }],
-          transaction,
-        }));
-      const valid = await validateUserAuthForAdmin(mockRequest);
-
+      const valid = await validateUserAuthForAdmin(user.id);
       expect(valid).toBe(false);
     });
 
     it('returns false if a user does not exist in database', async () => {
-      mockUser.id = 49;
-      mockUser.hsesUserId = '49';
-      mockUser.email = 'test49@test.com';
-      mockUser.permissions[0].userId = mockUser.id;
-      mockUser.permissions[1].userId = mockUser.id;
-      mockSession.userId = 49;
+      await User.destroy({ where: { id: mockUser.id } });
 
-      const valid = await validateUserAuthForAdmin(mockRequest);
-
+      const valid = await validateUserAuthForAdmin(mockUser.id);
       expect(valid).toBe(false);
     });
 
     it('Throws on error', async () => {
-      mockSession.userId = undefined;
-      await expect(validateUserAuthForAdmin(mockRequest)).rejects.toThrow();
+      await expect(validateUserAuthForAdmin(undefined)).rejects.toThrow();
     });
   });
 });
