@@ -40,6 +40,16 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+    indexes: [
+      {
+        unique: true,
+        fields: ['grantId', 'activityReportId'],
+      },
+      {
+        unique: true,
+        fields: ['nonGranteeId', 'activityReportId'],
+      },
+    ],
     sequelize,
     modelName: 'ActivityRecipient',
     validate: {
