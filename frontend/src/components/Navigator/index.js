@@ -172,6 +172,7 @@ Navigator.propTypes = {
   currentPage: PropTypes.string.isRequired,
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
+  reportId: PropTypes.node.isRequired,
 };
 
 Navigator.defaultProps = {
