@@ -1,64 +1,50 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import fetchMock from 'fetch-mock';
-import join from 'url-join';
 import userEvent from '@testing-library/user-event';
 import { useForm } from 'react-hook-form';
 
 import ReviewSubmit from '../ReviewSubmit';
-
-const Review = ({
-  // eslint-disable-next-line react/prop-types
-  allComplete, submitted, formData, onSubmit,
-}) => {
-  const hookForm = useForm({
-    mode: 'onChange',
-    defaultValues: formData,
-  });
-
-  return (
-    <ReviewSubmit
-      allComplete={allComplete}
-      submitted={submitted}
-      formData={formData}
-      onSubmit={onSubmit}
-      reviewItems={[]}
-      hookForm={hookForm}
-    />
-  );
-};
-
-const renderReview = (
-  allComplete,
-  submitted,
-  formData = { approvingManagerId: null },
-  onSubmit = () => {},
-) => {
-  render(
-    <Review
-      allComplete={allComplete}
-      submitted={submitted}
-      formData={formData}
-      onSubmit={onSubmit}
-    />,
-  );
-};
 
 const approvers = [
   { id: 1, name: 'user 1' },
   { id: 2, name: 'user 2' },
 ];
 
+const RenderReview = ({
+  // eslint-disable-next-line react/prop-types
+  allComplete, submitted, initialData, onSubmit,
+}) => {
+  const hookForm = useForm({
+    mode: 'onChange',
+    defaultValues: { ...initialData, approvingManagerId: null },
+  });
+  return (
+    <ReviewSubmit
+      allComplete={allComplete}
+      submitted={submitted}
+      onSubmit={onSubmit}
+      reviewItems={[]}
+      approvers={approvers}
+      hookForm={hookForm}
+    />
+  );
+};
+
+const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () => {}) => {
+  render(
+    <RenderReview
+      allComplete={allComplete}
+      submitted={submitted}
+      onSubmit={onSubmit}
+      initialData={initialData}
+    />,
+  );
+};
+
 const selectLabel = 'Approving manager';
 
 describe('ReviewSubmit', () => {
-  afterEach(() => fetchMock.restore());
-  beforeEach(() => {
-    const approversUrl = join('/', 'api', 'activity-reports', 'approvers');
-    fetchMock.get(approversUrl, approvers);
-  });
-
   describe('when the form is not complete', () => {
     it('an error alert is shown', async () => {
       renderReview(false, false);

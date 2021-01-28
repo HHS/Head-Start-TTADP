@@ -1,12 +1,13 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
+import ActivityReport from '../../policies/activityReport';
 import {
-  activityRecipients, activityReportById, createOrUpdate, reportExists,
+  possibleRecipients, activityReportById, createOrUpdate,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 
-const { READ_WRITE_REPORTS, APPROVE_REPORTS } = SCOPES;
+const { APPROVE_REPORTS } = SCOPES;
 
 const namespace = 'SERVICE:ACTIVITY_REPORTS';
 
@@ -38,12 +39,9 @@ export async function getGoals(req, res) {
  * @param {*} res - response
  */
 export async function getApprovers(req, res) {
-  const user = await userById(req.session.userId);
-  const reportRegions = user.permissions
-    .filter((p) => p.scopeId === READ_WRITE_REPORTS)
-    .map((p) => p.regionId);
+  const { region } = req.query;
   try {
-    const users = await usersWithPermissions(reportRegions, [APPROVE_REPORTS]);
+    const users = await usersWithPermissions([region], [APPROVE_REPORTS]);
     res.json(users);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -62,16 +60,26 @@ export async function submitReport(req, res) {
     const { approvingManagerId, additionalNotes } = req.body;
     const newReport = { approvingManagerId, additionalNotes };
     newReport.status = 'submitted';
-    const report = await createOrUpdate(newReport, activityReportId);
-    res.json(report);
+
+    const user = await userById(req.session.userId);
+    const report = await activityReportById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedReport = await createOrUpdate(newReport, activityReportId);
+    res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
 
 export async function getActivityRecipients(req, res) {
-  const recipients = await activityRecipients();
-  res.json(recipients);
+  const activityRecipients = await possibleRecipients();
+  res.json(activityRecipients);
 }
 
 /**
@@ -85,9 +93,17 @@ export async function getReport(req, res) {
   const report = await activityReportById(activityReportId);
   if (!report) {
     res.sendStatus(404);
-  } else {
-    res.json(report);
+    return;
   }
+  const user = await userById(req.session.userId);
+  const authorization = new ActivityReport(user, report);
+
+  if (!authorization.canGet()) {
+    res.sendStatus(403);
+    return;
+  }
+
+  res.json(report);
 }
 
 /**
@@ -105,17 +121,23 @@ export async function saveReport(req, res) {
     }
     const userId = parseInt(req.session.userId, 10);
     const { activityReportId } = req.params;
-
-    if (!await reportExists(activityReportId)) {
+    const report = await activityReportById(activityReportId);
+    if (!report) {
       res.sendStatus(404);
       return;
     }
 
-    newReport.userId = userId;
+    const user = await userById(req.session.userId);
+    const authorization = new ActivityReport(user, report);
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
     newReport.lastUpdatedById = userId;
 
-    const report = await createOrUpdate(newReport, activityReportId);
-    res.json(report);
+    const savedReport = await createOrUpdate(newReport, report);
+    res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -138,6 +160,12 @@ export async function createReport(req, res) {
     newReport.status = 'draft';
     newReport.userId = userId;
     newReport.lastUpdatedById = userId;
+    const user = await userById(req.session.userId);
+    const authorization = new ActivityReport(user, newReport);
+    if (!authorization.canCreate()) {
+      res.sendStatus(403);
+      return;
+    }
 
     const report = await createOrUpdate(newReport);
     res.json(report);

@@ -131,7 +131,7 @@ function MultiSelect({
                 if (event) {
                   onChange(event, controllerOnChange);
                 } else {
-                  controllerOnChange(event);
+                  controllerOnChange([]);
                 }
               }}
               styles={styles}
