@@ -2,14 +2,12 @@
 
 hr="=========="
 
-declare sequelizecli="node_modules/.bin/sequelize"
-
-declare -a environments=("local" "test")
-
-declare -a conf
+readonly SEQUELIZE_CLI="node_modules/.bin/sequelize"
+readonly DEFAULT_ENV='local'
+readonly -a ENVIRONMENTS=("$DEFAULT_ENV" "test")
 
 # Array of subcommands
-declare -a subcommands=(
+readonly -a subcommands=(
     usage
     setup
     teardown
@@ -19,6 +17,8 @@ declare -a subcommands=(
     lint
     tests
 )
+
+declare -a conf
 
 
 setup() {
@@ -55,20 +55,20 @@ db_migrate() {
     # If 'undo' param provided undo
     if [[ "undo" == "${option}" ]]; then
         echo "${hr} Undoing db migrations ${hr}"
-        docker-compose "${conf[@]}" run --rm backend "$sequelizecli" db:migrate:undo
+        docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:migrate:undo
         exit 0
     fi
 
     if [[ "status" == "${option}" ]]; then
         echo "${hr} Checking db migration status ${hr}"
-        docker-compose "${conf[@]}" run --rm backend "$sequelizecli" db:migrate:status
+        docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:migrate:status
         exit 0
     fi
 
     # Create/update database tables
     # yarn docker:db:migrate
     echo "${hr} Migrating db ${hr}"
-    docker-compose "${conf[@]}" run --rm backend "$sequelizecli" db:migrate
+    docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:migrate
 }
 
 db_seed() {
@@ -76,7 +76,7 @@ db_seed() {
     # If 'undo' param provided undo
     if [[ "undo" == "${option}" ]]; then
         echo "${hr} Unseeding db ${hr}"
-        docker-compose "${conf[@]}" run --rm backend "$sequelizecli" db:seed:undo:all
+        docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:seed:undo:all
         exit 0
     fi
 
@@ -217,24 +217,32 @@ EOF
 
 # ====== Main =====
 
+check_env() {
+    local env_match=0
+    for e in "${ENVIRONMENTS[@]}"; do
+        if [[ "$e" == "${1}" ]]; then
+            env_match=1;
+            break;
+        fi
+    done
+    if [[ $env_match -eq 0 ]]; then
+        echo "Invalid environment '${1}'";
+        echo "Valid environments are: ${ENVIRONMENTS[*]}"
+        exit 1;
+    fi
+}
+
 main() {
-    local env="local"
+    docker_env="${DOCKER_ENV:-$DEFAULT_ENV}"
+    local env_conf="$docker_env"
+    check_env "$env_conf"
+
     # Parse -options
     while getopts ":e:h" opt; do
         case $opt in
             e)
-                env="${OPTARG-local}"
-                local env_match=0
-                for e in "${environments[@]}"; do
-                    if [[ "$e" == "$env" ]]; then
-                        env_match=1;
-                        break;
-                    fi
-                done
-                if [[ $env_match -eq 0 ]]; then
-                    echo "Invalid environment '${env}'";
-                    exit 1;
-                fi
+                env_conf="${OPTARG:-$env_conf}"
+                check_env "$env_conf"
                 ;;
             h)
                 usage
@@ -251,7 +259,7 @@ main() {
     shift $((OPTIND -1))
 
     # Pull first param as subcommand, default to 'usage' if no args provided
-    local subcmd="${1-usage}";
+    local subcmd="${1:-usage}";
 
     # Shift parameters, so $@a has remaining params
     shift 2>/dev/null
@@ -262,7 +270,8 @@ main() {
         exit 1
     fi
 
-    conf=($(compose_conf "$env"))
+    # 'conf' is an array, so we follow https://github.com/koalaman/shellcheck/wiki/SC2207
+    IFS=" " read -r -a conf <<< "$(compose_conf "$env_conf")"
 
     # Loop over subcommands, look for match with $subcommand. Execute fn if match
     for i in "${subcommands[@]}"; do
@@ -276,4 +285,4 @@ main() {
     usage
 }
 
-main "${@-}"
+main "$@"
