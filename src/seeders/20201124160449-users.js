@@ -1,19 +1,23 @@
-const SCOPES = {
-  SITE_ACCESS: 1,
-  ADMIN: 2,
-  READ_WRITE_REPORTS: 3,
-  READ_REPORTS: 4,
-  APPROVE_REPORTS: 5,
-};
-
-const {
-  ADMIN, READ_WRITE_REPORTS, READ_REPORTS, APPROVE_REPORTS,
-} = SCOPES;
+const SITE_ACCESS = 1;
+const ADMIN = 2;
+const READ_WRITE_REPORTS = 3;
+const READ_REPORTS = 4;
+const APPROVE_REPORTS = 5;
 
 const permissions = [
   {
     userId: 1,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 1,
     scopeId: ADMIN,
+    regionId: 14,
+  },
+  {
+    userId: 3,
+    scopeId: SITE_ACCESS,
     regionId: 14,
   },
   {
@@ -35,6 +39,11 @@ const permissions = [
     userId: 3,
     regionId: 3,
     scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 4,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
   },
   {
     userId: 4,
@@ -53,13 +62,28 @@ const permissions = [
   },
   {
     userId: 5,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 5,
     regionId: 1,
     scopeId: READ_WRITE_REPORTS,
   },
   {
     userId: 6,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 6,
     regionId: 14,
     scopeId: ADMIN,
+  },
+  {
+    userId: 7,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
   },
   {
     userId: 7,
