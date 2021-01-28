@@ -30,10 +30,16 @@
   /* border: 1px solid #979797; */
 }
 
-/* .files-table--file-name {
-  width: 50%;
-} */
+.files-table--thead th, .files-table td {
+  padding: .5rem;
+  text-align: left;
+  font-size: .9rem;
+}
+.files-table--container {
+  border: solid 1px #979797;
+  min-height: 8rem;
+}
 
-.files-table td {
+.files-table--empty {
   text-align: center;
 }

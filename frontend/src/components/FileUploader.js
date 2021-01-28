@@ -63,30 +63,27 @@ Dropzone.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-const FileUploader = ({ onChange, files }) => {
-  const onFilesAdded = (newFiles) => {
-    onChange([...files, ...newFiles]);
-  };
-
-  const onFileRemoved = (removedFileIndex) => {
-    onChange(files.filter((f, index) => (index !== removedFileIndex)));
-  };
-
+const FileTable = ({onFileRemoved, files}) => {
+  let msg 
+  if (files.length === 0) {
+    msg = (
+      <p className="files-table--empty">No files uploaded</p>
+    )
+  }
   return (
-    <>
-      <Dropzone onChange={onFilesAdded} />
-      <table row gap className="margin-top-2 files-table">
-        <thead bgcolor="#F8F8F8">
-        <th>
+    <div className="files-table--container margin-top-2">
+      <table row gap className="files-table">
+        <thead className="files-table--thead" bgcolor="#F8F8F8">
+        <th width="50%">
           Name
         </th>
-        <th>
+        <th width="20%">
           Size
         </th>
-        <th>
+        <th width="20%">
           Status
         </th>
-        <th>
+        <th width="10%">
         </th>
         </thead>
         <tbody>
@@ -120,6 +117,23 @@ const FileUploader = ({ onChange, files }) => {
         ))}
         </tbody>
       </table>
+      { msg }
+    </div>
+  );
+}
+const FileUploader = ({ onChange, files }) => {
+  const onFilesAdded = (newFiles) => {
+    onChange([...files, ...newFiles]);
+  };
+
+  const onFileRemoved = (removedFileIndex) => {
+    onChange(files.filter((f, index) => (index !== removedFileIndex)));
+  };
+
+  return (
+    <>
+      <Dropzone onChange={onFilesAdded} />
+      <FileTable onFileRemoved={onFileRemoved} files={files} />
         
     </>
   );
