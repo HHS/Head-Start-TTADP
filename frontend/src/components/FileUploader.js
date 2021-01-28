@@ -10,8 +10,8 @@ import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import {  Button } from '@trussworks/react-uswds';
-import { uploadFile } from '../fetchers/File';
+import { Button } from '@trussworks/react-uswds';
+import uploadFile from '../fetchers/File';
 
 import './FileUploader.css';
 
@@ -24,13 +24,13 @@ function Dropzone(props) {
     } else if (id === 'other-resources') {
       attachmentType = 'RESOURCE';
     }
-    e.forEach( async (file) => {
+    e.forEach(async (file) => {
       try {
         const data = new FormData();
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
-        data.append('file', file)
-        await uploadFile(data)
+        data.append('file', file);
+        await uploadFile(data);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(error);
@@ -45,7 +45,7 @@ function Dropzone(props) {
       {...getRootProps()}
     >
       <input {...getInputProps()} />
-      <button className='usa-button'>
+      <button type="button" className="usa-button">
         Browse files
       </button>
     </div>
@@ -54,69 +54,77 @@ function Dropzone(props) {
 
 Dropzone.propTypes = {
   onChange: PropTypes.func.isRequired,
-  reportId: PropTypes.any.isRequired,
+  reportId: PropTypes.node.isRequired,
   id: PropTypes.string.isRequired,
 };
 
-const FileTable = ({onFileRemoved, files}) => {
-  let msg 
+const FileTable = ({ onFileRemoved, files }) => {
+  let msg;
   if (files.length === 0) {
     msg = (
-      <p className='files-table--empty'>No files uploaded</p>
-    )
+      <p className="files-table--empty">No files uploaded</p>
+    );
   }
   return (
-    <div className='files-table--container margin-top-2'>
-      <table row gap className='files-table'>
-        <thead className='files-table--thead' bgcolor='#F8F8F8'>
-        <th width='50%'>
-          Name
-        </th>
-        <th width='20%'>
-          Size
-        </th>
-        <th width='20%'>
-          Status
-        </th>
-        <th width='10%'>
-        </th>
+    <div className="files-table--container margin-top-2">
+      <table row gap className="files-table">
+        <thead className="files-table--thead" bgcolor="#F8F8F8">
+          <th width="50%">
+            Name
+          </th>
+          <th width="20%">
+            Size
+          </th>
+          <th width="20%">
+            Status
+          </th>
+          <th width="10%" aria-label="remove file" />
         </thead>
         <tbody>
-        {files.map((file, index) => (
-        <tr>
-            <td className='files-table--file-name'>
-              {file.name}
-            </td>
-            <td>
-              {`${(file.size / 1000).toFixed(1) } KB`}
-            </td>
-            <td>
-              Uploaded
-            </td>
-          <td>
-              <Button
-                role='button'
-                className='smart-hub--file-tag-button'
-                unstyled
-                aria-label='remove file'
-                onClick={() => { onFileRemoved(index); }}
-              >
-                <span className='fa-stack fa-sm'>
-                  <FontAwesomeIcon className='fa-stack-1x' color='black' icon={faTrash} />
-                </span>
-              </Button>
-          </td>
+          {files.map((file, index) => (
+            <tr>
+              <td className="files-table--file-name">
+                {file.name}
+              </td>
+              <td>
+                {`${(file.size / 1000).toFixed(1)} KB`}
+              </td>
+              <td>
+                Uploaded
+              </td>
+              <td>
+                <Button
+                  role="button"
+                  className="smart-hub--file-tag-button"
+                  unstyled
+                  aria-label="remove file"
+                  onClick={() => { onFileRemoved(index); }}
+                >
+                  <span className="fa-stack fa-sm">
+                    <FontAwesomeIcon className="fa-stack-1x" color="black" icon={faTrash} />
+                  </span>
+                </Button>
+              </td>
 
-          </tr>
+            </tr>
 
-        ))}
+          ))}
         </tbody>
       </table>
       { msg }
     </div>
   );
-}
-const FileUploader = ({ onChange, files, reportId, id }) => {
+};
+FileTable.propTypes = {
+  onFileRemoved: PropTypes.func.isRequired,
+  files: PropTypes.arrayOf(PropTypes.instanceOf(File)),
+};
+FileTable.defaultProps = {
+  files: [],
+};
+const FileUploader = ({
+  onChange, files, reportId, id,
+}) => {
   const onFilesAdded = (newFiles) => {
     onChange([...files, ...newFiles]);
   };
@@ -129,7 +137,7 @@ const FileUploader = ({ onChange, files, reportId, id }) => {
     <>
       <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
       <FileTable onFileRemoved={onFileRemoved} files={files} />
-        
+
     </>
   );
 };
@@ -137,6 +145,8 @@ const FileUploader = ({ onChange, files, reportId, id }) => {
 FileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
   files: PropTypes.arrayOf(PropTypes.instanceOf(File)),
+  reportId: PropTypes.node.isRequired,
+  id: PropTypes.string.isRequired,
 };
 
 FileUploader.defaultProps = {
