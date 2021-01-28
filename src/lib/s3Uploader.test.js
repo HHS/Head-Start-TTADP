@@ -7,7 +7,7 @@ const mockData = {
 };
 
 // make sure we save to original value so we can restore it
-const oldEndpoint = process.env.LOCAL_DEV;
+const oldEnv = process.env.NODE_ENV;
 
 describe('s3Uploader.verifyVersioning', () => {
   let mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockData);
@@ -54,17 +54,17 @@ describe('s3Uploader', () => {
     mockGet.mockClear();
   });
   afterAll(() => {
-    process.env.LOCAL_DEV = oldEndpoint;
+    process.env.NODE_ENV = oldEnv;
   });
 
   it('Correctly Uploads the file', async () => {
-    process.env.LOCAL_DEV = 'true';
+    process.env.NODE_ENV = 'development';
     const got = await s3Uploader(buf, name, goodType);
     expect(mockGet.mock.calls.length).toBe(0);
     await expect(got).toBe(response);
   });
   it('Correctly Uploads the file and checks versioning', async () => {
-    process.env.LOCAL_DEV = 'false';
+    process.env.NODE_ENV = 'production';
     const got = await s3Uploader(buf, name, goodType);
     expect(mockGet.mock.calls.length).toBe(1);
     await expect(got).toBe(response);
