@@ -1,5 +1,5 @@
 import bootstrapAdmin, { ADMIN_EMAIL } from './bootstrapAdmin';
-import db, { User } from '../models';
+import db, { User, Permission } from '../models';
 
 describe('Bootstrap the first Admin user', () => {
   afterAll(() => {
@@ -7,28 +7,30 @@ describe('Bootstrap the first Admin user', () => {
   });
 
   describe('when user already exists', () => {
+    let user;
     beforeAll(async () => {
-      await User.findOrCreate({ where: { email: ADMIN_EMAIL } });
+      [user] = await User.findOrCreate({ where: { email: ADMIN_EMAIL } });
+    });
+    afterEach(async () => {
+      await Permission.destroy({ where: { userId: user.id } });
     });
     afterAll(async () => {
       await User.destroy({ where: { email: ADMIN_EMAIL } });
     });
 
-    it('should create an admin permission for the user', async () => {
-      const user = await User.findOne({ where: { email: ADMIN_EMAIL } });
+    it('should create an admin and site access permission for the user', async () => {
       expect(user).toBeDefined();
       expect((await user.getPermissions()).length).toBe(0);
-      const newPermission = await bootstrapAdmin();
-      expect(newPermission).toBeDefined();
-      expect((await user.getPermissions()).length).toBe(1);
-      await newPermission.destroy();
+      const newPermissions = await bootstrapAdmin();
+      expect(newPermissions.length).toBe(2);
+      expect((await user.getPermissions()).length).toBe(2);
     });
 
     it('is idempotent', async () => {
-      const permission = await bootstrapAdmin();
-      const secondRun = await bootstrapAdmin();
-      expect(secondRun.id).toBe(permission.id);
-      await permission.destroy();
+      await bootstrapAdmin();
+      expect((await user.getPermissions()).length).toBe(2);
+      await bootstrapAdmin();
+      expect((await user.getPermissions()).length).toBe(2);
     });
   });
 
