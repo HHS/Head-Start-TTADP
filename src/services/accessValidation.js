@@ -2,7 +2,7 @@ import { User, Permission, sequelize } from '../models';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 
-const { ADMIN } = SCOPES;
+const { SITE_ACCESS, ADMIN } = SCOPES;
 
 const namespace = 'SERVICE:ACCESS_VALIDATION';
 
@@ -36,16 +36,32 @@ export default function findOrCreateUser(data) {
   }));
 }
 
-export async function validateUserAuthForAdmin(req) {
-  const { userId } = req.session;
+export async function validateUserAuthForAccess(userId) {
   try {
-    const userPermissions = await Permission.findAll({
-      attributes: ['scopeId'],
-      where: { userId },
+    const userPermission = await Permission.findOne({
+      where: {
+        userId,
+        scopeId: SITE_ACCESS,
+      },
     });
-    return userPermissions.some((permission) => (permission.scopeId === ADMIN));
+    return userPermission !== null;
   } catch (error) {
     logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
+    throw error;
+  }
+}
+
+export async function validateUserAuthForAdmin(userId) {
+  try {
+    const userPermission = await Permission.findOne({
+      where: {
+        userId,
+        scopeId: ADMIN,
+      },
+    });
+    return userPermission !== null;
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - ADMIN Access error - ${error}`);
     throw error;
   }
 }
