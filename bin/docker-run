@@ -51,8 +51,6 @@ setup_backend() {
 setup_frontend() {
     echo "${hr} Setting up frontend ${hr}"
     echo_exec "docker-compose ${conf} run --rm frontend yarn install"
-    echo "$cmd"
-    $cmd
 }
 
 teardown() {
@@ -68,16 +66,12 @@ db_migrate() {
     if [[ "undo" == "${option}" ]]; then
         echo "${hr} Undoing db migrations ${hr}"
         echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:migrate:undo"
-        echo "$cmd"
-        $cmd
         exit 0
     fi
 
     if [[ "status" == "${option}" ]]; then
         echo "${hr} Checking db migration status ${hr}"
         echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:migrate:status"
-        echo "$cmd"
-        $cmd
         exit 0
     fi
 
@@ -85,8 +79,6 @@ db_migrate() {
     # yarn docker:db:migrate
     echo "${hr} Migrating db ${hr}"
     echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:migrate"
-    echo "$cmd"
-    $cmd
 }
 
 db_seed() {
@@ -95,8 +87,6 @@ db_seed() {
     if [[ "undo" == "${option}" ]]; then
         echo "${hr} Unseeding db ${hr}"
         echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:seed:undo:all"
-        echo "$cmd"
-        $cmd
         exit 0
     fi
 
@@ -104,8 +94,6 @@ db_seed() {
     # yarn docker:db:seed
     echo "${hr} Seeding database ${hr}"
     echo_exec "docker-compose ${conf} run --rm backend yarn db:seed"
-    echo "$cmd"
-    $cmd
 }
 
 db_setup() {
@@ -115,8 +103,6 @@ db_setup() {
 
 db_stop() {
     echo_exec "docker-compose ${conf} stop db"
-    echo "$cmd"
-    $cmd
 }
 
 # Need reliable way to remove db volume and only db volume
@@ -192,15 +178,11 @@ run_tests() {
 lint_backend() {
     echo "${hr} Linting backend ${hr}"
     echo_exec "docker-compose ${conf} run --rm backend yarn lint:ci"
-    echo "$cmd"
-    $cmd
 }
 
 lint_frontend() {
     echo "${hr} Linting frontend ${hr}"
     echo_exec "docker-compose ${conf} run --rm frontend yarn lint:ci"
-    echo "$cmd"
-    $cmd
 }
 
 lint() {
@@ -220,14 +202,10 @@ lint() {
 
 start() {
     echo_exec "docker-compose ${conf} up"
-    echo "$cmd"
-    $cmd
 }
 
 stop() {
     echo_exec "docker-compose ${conf} down"
-    echo "$cmd"
-    $cmd
 }
 
 # ===== Process env configs
