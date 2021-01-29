@@ -67,8 +67,9 @@ const FileTable = ({ onFileRemoved, files }) => {
   }
   return (
     <div className="files-table--container margin-top-2">
-      <table row gap className="files-table">
+      <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
+          <tr>
           <th width="50%">
             Name
           </th>
@@ -79,10 +80,12 @@ const FileTable = ({ onFileRemoved, files }) => {
             Status
           </th>
           <th width="10%" aria-label="remove file" />
+
+          </tr>
         </thead>
         <tbody>
           {files.map((file, index) => (
-            <tr>
+            <tr id={`files-table-row-${index}`}>
               <td className="files-table--file-name">
                 {file.name}
               </td>

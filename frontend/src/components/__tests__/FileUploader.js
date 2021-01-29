@@ -34,7 +34,7 @@ describe('FileUploader', () => {
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file')]);
-    const ui = <FileUploader onChange={mockOnChange} files={[]} />;
+    const ui = <FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
@@ -45,16 +45,17 @@ describe('FileUploader', () => {
   });
 
   it('files are properly displayed', () => {
-    render(<FileUploader onChange={() => {}} files={[file('fileOne'), file('fileTwo')]} />);
+    render(<FileUploader reportId="new" id="attachment"  onChange={() => {}} files={[file('fileOne'), file('fileTwo')]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
 
   it('files can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<FileUploader onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
-    const fileOne = screen.getByText('fileOne');
-    fireEvent.click(fileOne.nextSibling);
+    render(<FileUploader reportId="new" id="attachment"  onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
+    const fileTwo = screen.getByText('fileTwo');
+    console.log(fileTwo.parentNode.lastChild.firstChild)
+    fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
 
     expect(mockOnChange).toHaveBeenCalledWith([file('fileTwo')]);
   });
