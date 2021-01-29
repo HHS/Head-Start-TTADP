@@ -1,18 +1,20 @@
 get:
   tags:
     - activity-reports
-  summary: Potential activity report approvers
+  operationId: getCollaborators
+  summary: Possible report collaborators
   parameters:
     - in: query
       name: region
       schema:
         type: integer
-      description: The region id of the approvers
-  operationId: getApprovers
-  description: Gets all approvers for any region the current user has write permissions
+      description: The region id of the collaborators
+  description: >
+    Get users that have write permissions on a given region.
+    These users can be flagged as collaborators on a report.
   responses:
     200:
-      description: All approvers for any region the user has write permissions
+      description: Possible collaborators
       content:
         application/json:
           schema:
