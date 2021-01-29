@@ -51,13 +51,13 @@ const TopicsResources = ({
         />
       </div>
       <div className="smart-hub--form-section">
-        <Label htmlFor="other-resources">Upload any resources used that are not available through ECLKC</Label>
+        <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
         <Controller
-          name="other-resources"
+          name="otherResources"
           defaultValue={[]}
           control={control}
           render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} reportId={reportId} id="other-resources" />
+            <FileUploader files={value} onChange={onChange} reportId={reportId} id="otherResources" />
           )}
         />
       </div>
@@ -97,7 +97,7 @@ const sections = [
     anchor: 'resources',
     items: [
       { label: 'Resources used', name: 'resourcesUsed' },
-      { label: 'Other resources', name: 'other-resources', path: 'name' },
+      { label: 'Other resources', name: 'otherResources', path: 'name' },
     ],
   },
   {
