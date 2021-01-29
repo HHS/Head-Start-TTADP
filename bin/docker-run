@@ -4,7 +4,8 @@ hr="=========="
 
 readonly SEQUELIZE_CLI="node_modules/.bin/sequelize"
 readonly DEFAULT_ENV='local'
-readonly -a ENVIRONMENTS=("$DEFAULT_ENV" "test")
+readonly TEST_ENV='test'
+readonly -a ENVIRONMENTS=("$DEFAULT_ENV" "$TEST_ENV")
 readonly DB_SERVICE='db'
 
 # Array of subcommands
@@ -21,6 +22,7 @@ readonly -a subcommands=(
 
 # conf should be assigned a string like `-f docker-compose.yml -f docker-compose.locale.yml`/conf
 declare conf
+declare -i env_override=0
 
 # Expects a command as a string, which it will echo and then execute
 echo_exec() {
@@ -112,7 +114,7 @@ db_setup() {
 }
 
 db_stop() {
-   echo_exec "docker-compose ${conf} stop db"
+    echo_exec "docker-compose ${conf} stop db"
     echo "$cmd"
     $cmd
 }
@@ -252,6 +254,7 @@ compose_conf() {
     )
 
     echo "${configs[@]}"
+    return 0
 }
 
 # ===== Usage =====
@@ -285,6 +288,9 @@ check_env() {
 
 main() {
     docker_env="${DOCKER_ENV:-$DEFAULT_ENV}"
+    if [[ -n "$DOCKER_ENV" ]]; then
+        env_override=1
+    fi
     local env_conf="$docker_env"
     check_env "$env_conf"
 
@@ -294,6 +300,7 @@ main() {
             e)
                 env_conf="${OPTARG:-$env_conf}"
                 check_env "$env_conf"
+                env_override=1
                 ;;
             h)
                 usage
@@ -327,6 +334,12 @@ main() {
     for i in "${subcommands[@]}"; do
         if [[ "${i}" == "${subcmd}" ]]; then
             if [[ "${subcmd}" == "test" ]]; then
+                if [[ $env_override -eq 0 ]]; then
+                    echo "${hr}> Test commands use 'test' config, unless overridden <${hr}"
+                    conf=$(compose_conf "$TEST_ENV")
+                else
+                    echo "Running tests in '$env_conf'"
+                fi
                 subcmd="run_tests";
             fi
             "${subcmd}" "$@"
