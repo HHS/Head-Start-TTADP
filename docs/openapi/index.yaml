@@ -107,9 +107,11 @@ components:
           description: The type of the activity, Training or Technical Assistance (or both)
           items:
             type: string
-    approvingUser:
+    selectableUser:
       type: object
-      description: Users with permission to approve reports
+      description: >
+        Users with only their id and name, ready to be placed in a select box on the frontend without
+        further modification
       properties:
         id:
           type: number

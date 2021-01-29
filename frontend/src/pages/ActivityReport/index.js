@@ -15,7 +15,13 @@ import Navigator from '../../components/Navigator';
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  submitReport, saveReport, getReport, getRecipients, createReport,
+  submitReport,
+  saveReport,
+  getReport,
+  getRecipients,
+  createReport,
+  getCollaborators,
+  getApprovers,
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
@@ -23,11 +29,11 @@ const defaultValues = {
   activityType: [],
   attachments: [],
   context: '',
+  collaborators: [],
   duration: '',
   endDate: null,
   grantees: [],
   numberOfParticipants: '',
-  otherUsers: [],
   participantCategory: '',
   participants: [],
   programTypes: [],
@@ -41,6 +47,8 @@ const defaultValues = {
   additionalNotes: null,
 };
 
+// FIXME: default region until we have a way of changing on the frontend
+const region = 1;
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
@@ -58,18 +66,25 @@ function ActivityReport({ match }) {
     const fetch = async () => {
       try {
         updateLoading(true);
-        const recipients = await getRecipients();
-        updateAdditionalData({ recipients });
+
+        const apiCalls = [
+          getRecipients(),
+          getCollaborators(region),
+          getApprovers(region),
+        ];
+
         if (activityReportId !== 'new') {
-          const report = await getReport(activityReportId);
-          updateInitialFormData(report);
-          updateSubmitted(report.status === 'submitted');
-          reportId.current = report.id;
+          apiCalls.push(getReport(activityReportId));
         } else {
-          updateInitialFormData({ ...defaultValues, pageState: defaultPageState });
-          updateSubmitted(false);
-          reportId.current = 'new';
+          apiCalls.push(Promise.resolve({ ...defaultValues, pageState: defaultPageState }));
         }
+
+        const [recipients, collaborators, approvers, report] = await Promise.all(apiCalls);
+
+        reportId.current = activityReportId;
+        updateAdditionalData({ recipients, collaborators, approvers });
+        updateInitialFormData(report);
+        updateSubmitted(report.status === 'submitted');
         updateError();
       } catch (e) {
         updateError('Unable to load activity report');
@@ -112,7 +127,7 @@ function ActivityReport({ match }) {
     let saved = false;
     if (reportId.current === 'new') {
       if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-        const savedReport = await createReport(data, {});
+        const savedReport = await createReport({ ...data, regionId: region }, {});
         reportId.current = savedReport.id;
         saved = true;
       }
