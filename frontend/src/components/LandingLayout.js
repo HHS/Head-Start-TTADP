@@ -6,7 +6,7 @@ function LandingLayout({
   children}) {
   return (
     <Grid row>
-      <Grid tablet={{ col: true }}>{children}</Grid>
+      <Grid tablet={{ col: true }} className='smart-hub--fit-content'>{children}</Grid>
     </Grid>
   );
 }
