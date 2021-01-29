@@ -3,6 +3,7 @@
 hr="=========="
 
 readonly SEQUELIZE_CLI="node_modules/.bin/sequelize"
+readonly DEFAULT_CONFIG='docker-compose.yml'
 readonly DEFAULT_ENV='local'
 readonly TEST_ENV='test'
 readonly -a ENVIRONMENTS=("$DEFAULT_ENV" "$TEST_ENV")
@@ -217,7 +218,7 @@ compose_conf() {
     local envfile="docker-compose.${env}.yml"
 
     if [[ "$env" == "local" ]]; then
-        envfile="docker-compose.yml"
+        envfile="$DEFAULT_CONFIG"
     fi
 
     if [[ ! -e "$envfile" ]]; then
