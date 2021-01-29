@@ -29,7 +29,7 @@ describe('FileUploader', () => {
     },
   });
 
-  const file = (name) => new File([''], name, { type: 'text/html' });
+  const file = (name) => { return {originalFileName: name, fileSize: 2000, status: "Uploaded"}};
 
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
@@ -54,7 +54,7 @@ describe('FileUploader', () => {
     const mockOnChange = jest.fn();
     render(<FileUploader reportId="new" id="attachment"  onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
     const fileTwo = screen.getByText('fileTwo');
-    console.log(fileTwo.parentNode.lastChild.firstChild)
+    console.log(fileTwo.parentNode)
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
 
     expect(mockOnChange).toHaveBeenCalledWith([file('fileTwo')]);
