@@ -6,6 +6,7 @@ import {
   ActivityReportCollaborator,
   sequelize,
   ActivityRecipient,
+  File,
   Grant,
   Grantee,
   NonGrantee,
@@ -144,13 +145,31 @@ export function activityReportById(activityReportId) {
         attributes: ['id', 'name'],
         as: 'collaborators',
       },
+      {
+        model: File,
+        where: { attachmentType: 'ATTACHMENT' },
+        as: 'attachments',
+        required: false,
+      },
+      {
+        model: File,
+        where: { attachmentType: 'RESOURCE' },
+        as: 'otherResources',
+        required: false,
+      },
     ],
   });
 }
 
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
-  const { collaborators, activityRecipients, ...updatedFields } = newActivityReport;
+  const {
+    collaborators,
+    activityRecipients,
+    attachments,
+    otherResources,
+    ...updatedFields
+  } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);
