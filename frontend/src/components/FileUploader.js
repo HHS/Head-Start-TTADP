@@ -21,7 +21,7 @@ function Dropzone(props) {
     let attachmentType;
     if (id === 'attachments') {
       attachmentType = 'ATTACHMENT';
-    } else if (id === 'other-resources') {
+    } else if (id === 'otherResources') {
       attachmentType = 'RESOURCE';
     }
     e.forEach(async (file) => {
@@ -31,12 +31,12 @@ function Dropzone(props) {
         data.append('attachmentType', attachmentType);
         data.append('file', file);
         await uploadFile(data);
+        onChange([{originalFileName: file.name, fileSize: file.size, status: "Uploaded"}])
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(error);
       }
     });
-    onChange(e);
   };
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
@@ -87,13 +87,13 @@ const FileTable = ({ onFileRemoved, files }) => {
           {files.map((file, index) => (
             <tr id={`files-table-row-${index}`}>
               <td className="files-table--file-name">
-                {file.name}
+                {file.originalFileName}
               </td>
               <td>
-                {`${(file.size / 1000).toFixed(1)} KB`}
+                {`${(file.fileSize / 1000).toFixed(1)} KB`}
               </td>
               <td>
-                Uploaded
+                {file.status}
               </td>
               <td>
                 <Button
@@ -147,7 +147,7 @@ const FileUploader = ({
 
 FileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
-  files: PropTypes.arrayOf(PropTypes.instanceOf(File)),
+  files: PropTypes.arrayOf(PropTypes.object),
   reportId: PropTypes.node.isRequired,
   id: PropTypes.string.isRequired,
 };
