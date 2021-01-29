@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Tag } from '@trussworks/react-uswds';
+import { Link, Tag, Table } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import UserContext from '../../UserContext';
@@ -20,6 +20,10 @@ function renderReports(reports, offset, perPage) {
       id, activityRecipients, startDate, author, topics, collaborators, lastSaved, status
     } = report;
 
+    const recipientsTitle = activityRecipients.reduce((result, ar) => {
+      return result + ar.grant.grantee.name + '\n';
+    }, "");
+
     const recipients = activityRecipients.map(ar => (
         <Tag className='smart-hub--table-collection'>{ar.grant.grantee.name}</Tag>
     ));
@@ -28,15 +32,15 @@ function renderReports(reports, offset, perPage) {
 
     return (
       <tr>
-        <th scope="row">
-          <Link href="/activity-reports">{fullId}</Link>
-        </th>
         <td>
-          <EllipsisText text={recipients} length={"60"} />
+          <Link href="/activity-reports">{fullId}</Link>
+        </td>
+        <td>
+          <span className='smart-hub--ellipsis' title={recipientsTitle}>{recipients}</span>
         </td>
         <td>{startDate}</td>
         <td>
-          <EllipsisText text={author.fullName} length={"30"} />
+          <span className='smart-hub--ellipsis' title={author.fullName}>{author.fullName}</span>
         </td>
         <td>{topics}</td>
         <td>{collaborators}</td>
@@ -51,19 +55,23 @@ function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [error, updateError] = useState();
-  const [sortConfig, setSortConfig] = React.useState(null);
+  const [sortConfig, setSortConfig] = React.useState({ key: 'lastSaved', direction: 'descending'});
   const [offset, setOffset] = useState(1);
   const [perPage] = useState(1);
   const [pageCount, setPageCount] = useState(1)
   const [activePage, setActivePage] = useState(1)
 
   const requestSort = key => {
+    console.log(`requesting ${key}`);
     let direction = 'ascending';
+    console.log('before');
     console.log(sortConfig);
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+    console.log('after');
+    console.log(sortConfig);
   }
   let sortedReports = [...reports];
   React.useMemo(() => {
@@ -83,10 +91,10 @@ function Landing() {
           }, item);
         console.log(`Value a: ${getValue(a)}`);
         if (getValue(a) < getValue(b)) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
+          return sortConfig.direction === "descending" ? -1 : 1;
         }
         if (getValue(a) > getValue(b)) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
+          return sortConfig.direction === "descending" ? 1 : -1;
         }
         return 0;
       });
@@ -104,17 +112,12 @@ const handlePageChange= (pageNumber) => {
     async function fetchReports() {
       setIsLoaded(false);
       try {
-        console.log('using effect');
         const reps = await getReports();
         // updateReports(await getReports());
-        console.log(`offset: ${offset}, perPage: ${perPage}`);
-        const slice = reps.slice(offset-1, offset - 1 + perPage);
-        console.log(reps);
-        console.log(slice);
+        // const slice = reps.slice(offset-1, offset - 1 + perPage);
         // setData(slice);
-        console.log('updating reports');
-        updateReports(slice);
-        setPageCount(Math.ceil(reports.length / perPage));
+        // updateReports(slice);
+        updateReports(reps);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -123,7 +126,14 @@ const handlePageChange= (pageNumber) => {
       setIsLoaded(true);
     }
     fetchReports();
-  }, [offset]);
+  }, []);
+
+  const getClassNamesFor = (name) => {
+    if (!sortConfig) {
+      return;
+    }
+    return sortConfig.key === name ? sortConfig.direction : undefined;
+  };
 
   return (
     <>
@@ -133,104 +143,116 @@ const handlePageChange= (pageNumber) => {
       <UserContext.Consumer>
         {({ user, logout }) => (
           <>
-          <h1 className='landing'>Activity Reports
-          <Link referrerPolicy="same-origin" className="usa-button" variant="unstyled" href="/activity-reports/new">
-          + New Activity Report
-        </Link></h1>
-          <Container className='landing'>
-          <table className="usa-table usa-table--borderless usa-table--striped">
-              <caption>My activity report alerts</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Report ID</th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      requestSort("activityRecipients");
-                      updateReports(sortedReports);
-                    }}
-                  >
-                    Grantee
-                  </th>
-                  <th scope="col">Start date</th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      requestSort("author.name");
-                      updateReports(sortedReports);
-                    }}
-                  >
-                    Creator
-                  </th>
-                  <th scope="col">Collaborator(s)</th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      requestSort("status");
-                      updateReports(sortedReports);
-                    }}
-                  >
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+            <h1 className="landing">
+              Activity Reports
+              <Link
+                referrerPolicy="same-origin"
+                className="usa-button"
+                variant="unstyled"
+                href="/activity-reports/new"
+              >
+                + New Activity Report
+              </Link>
+            </h1>
+            <Container className="landing" padding={0}>
+              <Table bordered={false}>
+                <caption className="smart-hub--table-caption">
+                  My activity report alerts
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Report ID</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("activityRecipients");
+                        updateReports(sortedReports);
+                      }}
+                    >
+                      Grantee
+                    </th>
+                    <th scope="col">Start date</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("author.name");
+                        updateReports(sortedReports);
+                      }}
+                    >
+                      Creator
+                    </th>
+                    <th scope="col">Collaborator(s)</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("status");
+                        updateReports(sortedReports);
+                      }}
+                    >
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </Table>
             </Container>
-          <Container className='landing'>
-            <table className="usa-table usa-table--borderless usa-table--striped">
-              <caption>Activity reports 
-              <Pagination
-              hideFirstLastPages
-              prevPageText='Prev'
-              nextPageText='Next'
-              activePage={activePage}
-              itemsCountPerPage={1}
-              totalItemsCount={450}
-              pageRangeDisplayed={2}
-              onChange={handlePageChange}
-            /></caption>
-              <thead>
-                <tr>
-                  <th scope="col">Report ID</th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      requestSort("activityRecipients");
-                      updateReports(sortedReports);
-                    }}
-                  >
-                    Grantee
-                  </th>
-                  <th scope="col">Start date</th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      requestSort("author.name");
-                      updateReports(sortedReports);
-                    }}
-                  >
-                    Creator
-                  </th>
-                  <th scope="col">Topic(s)</th>
-                  <th scope="col">Collaborator(s)</th>
-                  <th scope="col">Last saved</th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      requestSort("status");
-                      updateReports(sortedReports);
-                    }}
-                  >
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>{renderReports(reports, offset, perPage)}</tbody>
-            </table>
-          </Container>
+            <Container className="landing" padding={0}>
+              <Table className="usa-table usa-table--borderless usa-table--striped">
+                <caption>Activity reports</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Report ID</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("activityRecipients");
+                        updateReports(sortedReports);
+                      }}
+                      className={getClassNamesFor("activityRecipients")}
+                    >
+                      Grantee
+                    </th>
+                    <th scope="col">Start date</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("author.name");
+                        updateReports(sortedReports);
+                      }}
+                      className={getClassNamesFor("author.name")}
+                    >
+                      Creator
+                    </th>
+                    <th scope="col">Topic(s)</th>
+                    <th scope="col">Collaborator(s)</th>
+                    <th
+                      scope="col"
+                      scope="col"
+                      onClick={() => {
+                        requestSort("lastSaved");
+                        updateReports(sortedReports);
+                      }}
+                      className={getClassNamesFor("lastSaved")}
+                    >
+                      Last saved
+                    </th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("status");
+                        updateReports(sortedReports);
+                      }}
+                      className={getClassNamesFor("status")}
+                    >
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                {renderReports(reports, offset, perPage)}
+              </Table>
+            </Container>
           </>
-          )}
+        )}
       </UserContext.Consumer>
     </>
   );

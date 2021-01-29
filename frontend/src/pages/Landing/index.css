@@ -1,7 +1,5 @@
 .landing {
   max-width: 100%;
-  margin-left: 240px;
-  margin-right: 40px;
 }
   
 .pagination ul {
@@ -21,9 +19,51 @@ h1 {
   font-family: 'Times New Roman', Times, serif;
 }
 
+.usa-table {
+  line-height: 2.5;
+}
+
+.usa-table caption {
+  font-size: 19px;
+  padding: 20px;
+  margin-bottom: -0.25rem;
+}
+
+.usa-table thead th {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.usa-table--borderless th:first-child {
+  padding-left: 20px;
+}
+
+.usa-table td {
+  font-size: 15px;
+  white-space: nowrap;
+  background-color: transparent;
+  border-style: none;
+}
+
 .usa-button {
   margin-left: 25px;
   vertical-align: middle;
+}
+
+.usa-table--borderless thead th {
+  border-top: solid 1.5px;
+  border-color: #ECEEF1;
+  border-bottom: none;
+  background-color: white;
+}
+
+.usa-table tr:nth-child(odd) {
+  background-color:#F8F8F8;
+}
+
+.usa-section {
+  margin-left: 250px;
+  max-width: fit-content;
 }
 
 .smart-hub--table-collection {
@@ -54,4 +94,25 @@ h1 {
   text-align: center;
   font-weight: bold;
   text-transform: capitalize;
+}
+
+.smart-hub--ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  width: 130px;
+  vertical-align: middle;
+}
+
+thead th.ascending::after {
+  content: "▲";
+  display: inline-block;
+  margin-left: 0.25em;
+}
+
+thead th.descending::after {
+  content: "▼";
+  display: inline-block;
+  margin-left: 0.25em;
 }
