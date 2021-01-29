@@ -120,11 +120,10 @@ db_stop() {
 }
 
 # Need reliable way to remove db volume and only db volume
-# db_destroy() {
-#     db_stop
-#     docker-compose rm -v -- db
-#     docker volume prune
-# }
+db_destroy() {
+    echo "${hr} Destroying db ${hr}"
+    echo_exec "docker-compose ${conf} down --volumes"
+}
 
 db_exists() {
     # TODO: Less naive detection of database service/image/volume
@@ -154,8 +153,6 @@ db() {
 test_frontend() {
     echo "${hr} Running frontend tests ${hr}"
     echo_exec "docker-compose ${conf} run --rm frontend yarn test:ci"
-    echo "$cmd"
-    $cmd
 }
 
 test_backend() {
@@ -168,9 +165,7 @@ test_backend() {
     fi
     echo "${hr} Running backend tests ${hr}"
     echo_exec "docker-compose ${conf} run --rm backend yarn test:ci"
-    echo "$cmd"
-    $cmd
-    db_stop
+    db_destroy
 }
 
 # 'run_tests', because `test` is a builtin shell command
@@ -243,17 +238,16 @@ compose_conf() {
     local env="${1}"
     local envfile="docker-compose.${env}.yml"
 
+    if [[ "$env" == "local" ]]; then
+        envfile="docker-compose.yml"
+    fi
+
     if [[ ! -e "$envfile" ]]; then
         echo "$envfile does not appear to exist!"
         exit 1
     fi
 
-    configs=(
-        '-f docker-compose.yml'
-        "-f docker-compose.${env}.yml"
-    )
-
-    echo "${configs[@]}"
+    echo "-f ${envfile}"
     return 0
 }
 
