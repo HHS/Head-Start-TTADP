@@ -3,7 +3,7 @@ import { get, put, post } from './index';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 
-export const fetchApprovers = async (region) => {
+export const getApprovers = async (region) => {
   const res = await get(join(activityReportUrl, 'approvers', `?region=${region}`));
   return res.json();
 };

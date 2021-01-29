@@ -54,12 +54,6 @@ export const targetPopulations = [
   'Pregnant Women',
 ];
 
-export const otherUsers = [
-  'User 1',
-  'User 2',
-  'User 3',
-];
-
 export const programTypes = [
   'program type 1',
   'program type 2',
