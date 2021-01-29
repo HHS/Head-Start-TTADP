@@ -19,8 +19,15 @@ readonly -a subcommands=(
     'test'
 )
 
-declare -a conf
+# conf should be assigned a string like `-f docker-compose.yml -f docker-compose.locale.yml`/conf
+declare conf
 
+# Expects a command as a string, which it will echo and then execute
+echo_exec() {
+    local cmd="${1}"
+    echo "$cmd"
+    $cmd
+}
 
 setup() {
     # First, setup up frontend and backend, install dependencies
@@ -36,17 +43,19 @@ setup() {
 
 setup_backend() {
     echo "${hr} Setting up backend ${hr}"
-    docker-compose "${conf[@]}" run --rm backend yarn install
+    echo_exec "docker-compose ${conf} run --rm backend yarn install"
 }
 
 setup_frontend() {
     echo "${hr} Setting up frontend ${hr}"
-    docker-compose "${conf[@]}" run --rm frontend yarn install
+    echo_exec "docker-compose ${conf} run --rm frontend yarn install"
+    echo "$cmd"
+    $cmd
 }
 
 teardown() {
     docker-compose \
-        "${conf[@]}" \
+        "${conf}" \
         down --volumes
 }
 
@@ -56,20 +65,26 @@ db_migrate() {
     # If 'undo' param provided undo
     if [[ "undo" == "${option}" ]]; then
         echo "${hr} Undoing db migrations ${hr}"
-        docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:migrate:undo
+        echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:migrate:undo"
+        echo "$cmd"
+        $cmd
         exit 0
     fi
 
     if [[ "status" == "${option}" ]]; then
         echo "${hr} Checking db migration status ${hr}"
-        docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:migrate:status
+        echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:migrate:status"
+        echo "$cmd"
+        $cmd
         exit 0
     fi
 
     # Create/update database tables
     # yarn docker:db:migrate
     echo "${hr} Migrating db ${hr}"
-    docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:migrate
+    echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:migrate"
+    echo "$cmd"
+    $cmd
 }
 
 db_seed() {
@@ -77,14 +92,18 @@ db_seed() {
     # If 'undo' param provided undo
     if [[ "undo" == "${option}" ]]; then
         echo "${hr} Unseeding db ${hr}"
-        docker-compose "${conf[@]}" run --rm backend "$SEQUELIZE_CLI" db:seed:undo:all
+        echo_exec "docker-compose ${conf} run --rm backend $SEQUELIZE_CLI db:seed:undo:all"
+        echo "$cmd"
+        $cmd
         exit 0
     fi
 
     # Populate db with data
     # yarn docker:db:seed
     echo "${hr} Seeding database ${hr}"
-    docker-compose "${conf[@]}" run --rm backend yarn db:seed
+    echo_exec "docker-compose ${conf} run --rm backend yarn db:seed"
+    echo "$cmd"
+    $cmd
 }
 
 db_setup() {
@@ -93,7 +112,9 @@ db_setup() {
 }
 
 db_stop() {
-    docker-compose "${conf[@]}" stop db
+   echo_exec "docker-compose ${conf} stop db"
+    echo "$cmd"
+    $cmd
 }
 
 # Need reliable way to remove db volume and only db volume
@@ -130,7 +151,9 @@ db() {
 
 test_frontend() {
     echo "${hr} Running frontend tests ${hr}"
-    docker-compose "${conf[@]}" run --rm frontend yarn test:ci
+    echo_exec "docker-compose ${conf} run --rm frontend yarn test:ci"
+    echo "$cmd"
+    $cmd
 }
 
 test_backend() {
@@ -142,7 +165,9 @@ test_backend() {
         db_setup
     fi
     echo "${hr} Running backend tests ${hr}"
-    docker-compose "${conf[@]}" run --rm backend yarn test:ci
+    echo_exec "docker-compose ${conf} run --rm backend yarn test:ci"
+    echo "$cmd"
+    $cmd
     db_stop
 }
 
@@ -169,12 +194,16 @@ run_tests() {
 
 lint_backend() {
     echo "${hr} Linting backend ${hr}"
-    docker-compose "${conf[@]}" run --rm backend yarn lint:ci
+    echo_exec "docker-compose ${conf} run --rm backend yarn lint:ci"
+    echo "$cmd"
+    $cmd
 }
 
 lint_frontend() {
     echo "${hr} Linting frontend ${hr}"
-    docker-compose "${conf[@]}" run --rm frontend yarn lint:ci
+    echo_exec "docker-compose ${conf} run --rm frontend yarn lint:ci"
+    echo "$cmd"
+    $cmd
 }
 
 lint() {
@@ -193,11 +222,15 @@ lint() {
 }
 
 start() {
-    docker-compose "${conf[@]}" up
+    echo_exec "docker-compose ${conf} up"
+    echo "$cmd"
+    $cmd
 }
 
 stop() {
-    docker-compose "${conf[@]}" down
+    echo_exec "docker-compose ${conf} down"
+    echo "$cmd"
+    $cmd
 }
 
 # ===== Process env configs
@@ -288,8 +321,7 @@ main() {
         exit 1
     fi
 
-    # 'conf' is an array, so we follow https://github.com/koalaman/shellcheck/wiki/SC2207
-    IFS=" " read -r -a conf <<< "$(compose_conf "$env_conf")"
+    conf=$(compose_conf "$env_conf")
 
     # Loop over subcommands, look for match with $subcommand. Execute fn if match
     for i in "${subcommands[@]}"; do
