@@ -41,4 +41,15 @@ describe('App', () => {
       expect(await screen.findByText('HSES Login')).toBeVisible();
     });
   });
+
+  describe('when user is locked', () => {
+    beforeEach(() => {
+      fetchMock.get(userUrl, 403);
+      render(<App />);
+    });
+
+    it('displays the login button for now. in the future this should show the "request permissions" UI', async () => {
+      expect(await screen.findByText('HSES Login')).toBeVisible();
+    });
+  });
 });

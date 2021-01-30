@@ -3,8 +3,8 @@ import { get, put, post } from './index';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 
-export const fetchApprovers = async () => {
-  const res = await get(join(activityReportUrl, 'approvers'));
+export const getApprovers = async (region) => {
+  const res = await get(join(activityReportUrl, 'approvers', `?region=${region}`));
   return res.json();
 };
 
@@ -178,4 +178,8 @@ export const getReports = async () => {
     }
   ];
   return repts;
+export const getCollaborators = async (region) => {
+  const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
+  const collaborators = await get(url);
+  return collaborators.json();
 };

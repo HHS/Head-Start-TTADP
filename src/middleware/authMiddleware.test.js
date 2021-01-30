@@ -1,7 +1,8 @@
 import {} from 'dotenv/config';
 import { UNAUTHORIZED } from 'http-codes';
-
+import db, { User, Permission, sequelize } from '../models';
 import authMiddleware, { login } from './authMiddleware';
+import SCOPES from './scopeConstants';
 
 describe('authMiddleware', () => {
   const ORIGINAL_ENV = process.env;
@@ -13,12 +14,36 @@ describe('authMiddleware', () => {
 
   afterAll(() => {
     process.env = ORIGINAL_ENV; // restore original env
+    db.sequelize.close();
   });
 
+  const mockUser = {
+    id: 63,
+    name: 'Auth Middleware',
+    hsesUserId: '63',
+    permissions: [{
+      userId: 63,
+      regionId: 14,
+      scopeId: SCOPES.SITE_ACCESS,
+    }],
+  };
+
+  const setupUser = async (user) => (
+    sequelize.transaction(async (transaction) => {
+      await User.destroy({ where: { id: user.id } }, { transaction });
+      await User.create(user, {
+        include: [{ model: Permission, as: 'permissions' }],
+        transaction,
+      });
+    })
+  );
+
   it('should allow access if user data is present', async () => {
+    await setupUser(mockUser);
+
     const mockNext = jest.fn();
     const mockSession = jest.fn();
-    mockSession.userId = 2;
+    mockSession.userId = mockUser.id;
     const mockRequest = {
       path: '/api/endpoint',
       session: mockSession,
@@ -77,6 +102,12 @@ describe('authMiddleware', () => {
 
   it('bypass authorization if variables are set for UAT or accessibility testing', async () => {
     // auth is bypassed if non-prod NODE_ENV and BYPASS_AUTH = 'true', needed for cucumber and axe
+    const user = {
+      ...mockUser,
+      id: process.env.CURRENT_USER_ID,
+      hsesUserId: process.env.CURRENT_USER_ID,
+    };
+    await setupUser(user);
     process.env.NODE_ENV = 'development';
     process.env.BYPASS_AUTH = 'true';
 

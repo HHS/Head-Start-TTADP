@@ -1,19 +1,23 @@
-const SCOPES = {
-  SITE_ACCESS: 1,
-  ADMIN: 2,
-  READ_WRITE_REPORTS: 3,
-  READ_REPORTS: 4,
-  APPROVE_REPORTS: 5,
-};
-
-const {
-  ADMIN, READ_WRITE_REPORTS, READ_REPORTS, APPROVE_REPORTS,
-} = SCOPES;
+const SITE_ACCESS = 1;
+const ADMIN = 2;
+const READ_WRITE_REPORTS = 3;
+const READ_REPORTS = 4;
+const APPROVE_REPORTS = 5;
 
 const permissions = [
   {
     userId: 1,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 1,
     scopeId: ADMIN,
+    regionId: 14,
+  },
+  {
+    userId: 3,
+    scopeId: SITE_ACCESS,
     regionId: 14,
   },
   {
@@ -35,6 +39,11 @@ const permissions = [
     userId: 3,
     regionId: 3,
     scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 4,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
   },
   {
     userId: 4,
@@ -50,6 +59,46 @@ const permissions = [
     userId: 4,
     regionId: 4,
     scopeId: APPROVE_REPORTS,
+  },
+  {
+    userId: 5,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 5,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 6,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 6,
+    regionId: 14,
+    scopeId: ADMIN,
+  },
+  {
+    userId: 7,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 7,
+    regionId: 14,
+    scopeId: ADMIN,
+  },
+  {
+    userId: 6,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 7,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
   },
 ];
 
@@ -93,6 +142,26 @@ const users = [
     email: 'cucumber@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Cucumber User',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 3,
+  },
+  {
+    id: 6,
+    email: 'krystyna@adhocteam.us',
+    // These hses ids will likely get out of date at some point, but
+    // still nice to have this shortcut while it lasts
+    hsesUserId: '50153',
+    role: 'Grants Specialist',
+    name: 'Krys',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 3,
+  },
+  {
+    id: 7,
+    email: 'josh@adhocteam.us',
+    role: 'Grants Specialist',
+    name: 'Josh',
+    hsesUserId: '50154',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
   },

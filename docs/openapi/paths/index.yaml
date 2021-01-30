@@ -2,6 +2,8 @@
   $ref: './hello.yaml'
 '/user':
   $ref: './user.yaml'
+'/users/collaborators':
+  $ref: './collaborators.yaml'
 '/logout':
   $ref: './logout.yaml'
 '/login':
@@ -20,3 +22,5 @@
   $ref: './activity-reports/activity-reports-id.yaml'
 '/activity-reports/{activityReportId}/submit':
   $ref: './activity-reports/submit.yaml'
+'/files':
+  $ref: './files.yaml'

@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 
 import {
   ActivityReport,
+  ActivityReportCollaborator,
   sequelize,
   ActivityRecipient,
   Grant,
@@ -11,35 +12,96 @@ import {
   User,
 } from '../models';
 
+async function saveReportCollaborators(activityReportId, collaborators, transaction) {
+  const newCollaborators = collaborators.map((collaborator) => ({
+    activityReportId,
+    userId: collaborator,
+  }));
+
+  if (newCollaborators.length > 0) {
+    await ActivityReportCollaborator.bulkCreate(
+      newCollaborators,
+      { transaction, ignoreDuplicates: true },
+    );
+    await ActivityReportCollaborator.destroy({
+      where: {
+        activityReportId,
+        userId: {
+          [Op.notIn]: collaborators,
+        },
+      },
+    },
+    {
+      transaction,
+    });
+  } else {
+    await ActivityReportCollaborator.destroy({
+      where: {
+        activityReportId,
+      },
+    },
+    {
+      transaction,
+    });
+  }
+}
+
 async function saveReportRecipients(
   activityReportId,
   activityRecipientIds,
   activityRecipientType,
   transaction,
 ) {
-  await ActivityRecipient.destroy({
-    where: {
-      activityReportId: {
-        [Op.eq]: activityReportId,
-      },
-    },
-    transaction,
-  });
-
-  await Promise.all(activityRecipientIds.map(async (activityRecipientId) => {
+  const newRecipients = activityRecipientIds.map((activityRecipientId) => {
     const activityRecipient = {
       activityReportId,
+      grantId: null,
+      nonGranteeId: null,
     };
 
-    if (activityRecipientType === 'grantee') {
-      activityRecipient.grantId = activityRecipientId;
-    } else if (activityRecipientType === 'non-grantee') {
+    if (activityRecipientType === 'non-grantee') {
       activityRecipient.nonGranteeId = activityRecipientId;
+    } else if (activityRecipientType === 'grantee') {
+      activityRecipient.grantId = activityRecipientId;
     }
+    return activityRecipient;
+  });
 
-    return ActivityRecipient.create(activityRecipient, { transaction });
-  }));
+  const where = {
+    activityReportId,
+  };
+
+  if (activityRecipientType === 'non-grantee') {
+    where[Op.or] = {
+      nonGranteeId: {
+        [Op.notIn]: activityRecipientIds,
+      },
+      grantId: {
+        [Op.not]: null,
+      },
+    };
+  } else if (activityRecipientType === 'grantee') {
+    where[Op.or] = {
+      grantId: {
+        [Op.notIn]: activityRecipientIds,
+      },
+      nonGranteeId: {
+        [Op.not]: null,
+      },
+    };
+  }
+
+  await ActivityRecipient.bulkCreate(newRecipients, { transaction, ignoreDuplicates: true });
+  await ActivityRecipient.destroy({ where }, { transaction });
 }
+
+// async function update(newReport, report, transaction) {
+//   const updatedReport = await report.update(newReport, {
+//     transaction,
+//     fields: _.keys(newReport),
+//   });
+//   return updatedReport;
+// }
 
 async function create(report, transaction) {
   return ActivityReport.create(report, { transaction });
@@ -76,6 +138,11 @@ export function activityReportById(activityReportId) {
             required: false,
           },
         ],
+      },
+      {
+        model: User,
+        attributes: ['id', 'name'],
+        as: 'collaborators',
       },
     ],
   });
@@ -123,18 +190,28 @@ export function activityReports() {
   });
 }
 
-export async function createOrUpdate(newActivityReport, activityReportId) {
+// export async function createOrUpdate(newActivityReport, activityReportId) {
+export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
+  const { collaborators, activityRecipients, ...updatedFields } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
-    if (activityReportId) {
-      savedReport = await update(newActivityReport, activityReportId, transaction);
+    if (report) {
+      savedReport = await update(updatedFields, report, transaction);
     } else {
-      savedReport = await create(newActivityReport, transaction);
+      savedReport = await create(updatedFields, transaction);
     }
 
-    if (newActivityReport.activityRecipients) {
+    if (collaborators) {
+      const { id } = savedReport;
+      const newCollaborators = collaborators.map(
+        (g) => g.id,
+      );
+      await saveReportCollaborators(id, newCollaborators, transaction);
+    }
+
+    if (activityRecipients) {
       const { activityRecipientType, id } = savedReport;
-      const activityRecipientIds = newActivityReport.activityRecipients.map(
+      const activityRecipientIds = activityRecipients.map(
         (g) => g.activityRecipientId,
       );
       await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
@@ -143,7 +220,7 @@ export async function createOrUpdate(newActivityReport, activityReportId) {
   return activityReportById(savedReport.id);
 }
 
-export async function activityRecipients() {
+export async function possibleRecipients() {
   const grants = await Grantee.findAll({
     attributes: ['id', 'name'],
     include: [{
@@ -161,9 +238,4 @@ export async function activityRecipients() {
     attributes: [['id', 'activityRecipientId'], 'name'],
   });
   return { grants, nonGrantees };
-}
-
-export async function reportExists(activityReportId) {
-  const report = await ActivityReport.findOne({ where: { id: activityReportId } });
-  return !_.isNull(report);
 }
