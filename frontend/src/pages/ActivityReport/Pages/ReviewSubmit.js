@@ -1,43 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button, Accordion,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
-import { fetchApprovers } from '../../../fetchers/activityReports';
 import Container from '../../../components/Container';
 
 const ReviewSubmit = ({
-  hookForm, allComplete, onSubmit, submitted, reviewItems,
+  hookForm, allComplete, onSubmit, submitted, reviewItems, approvers,
 }) => {
-  const [loading, updateLoading] = useState(true);
-  const [possibleApprovers, updatePossibleApprovers] = useState([]);
   const { handleSubmit, register, formState } = hookForm;
   const { isValid } = formState;
   const valid = allComplete && isValid;
 
-  useEffect(() => {
-    updateLoading(true);
-    const fetch = async () => {
-      const approvers = await fetchApprovers();
-      updatePossibleApprovers(approvers);
-      updateLoading(false);
-    };
-    fetch();
-  }, []);
-
   const onFormSubmit = (data) => {
     onSubmit(data);
   };
-
-  if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
-  }
 
   const setValue = (e) => {
     if (e === '') {
@@ -84,7 +63,7 @@ const ReviewSubmit = ({
             <Label htmlFor="approvingManagerId">Approving manager</Label>
             <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: true })}>
               <option name="default" value="" disabled hidden>Select a Manager...</option>
-              {possibleApprovers.map((approver) => (
+              {approvers.map((approver) => (
                 <option key={approver.id} value={approver.id}>{approver.name}</option>
               ))}
             </Dropdown>
@@ -97,6 +76,12 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
+  approvers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
   allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   submitted: PropTypes.bool.isRequired,

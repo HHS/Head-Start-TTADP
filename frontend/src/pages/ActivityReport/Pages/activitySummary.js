@@ -12,7 +12,6 @@ import {
   nonGranteeParticipants,
   granteeParticipants,
   reasons,
-  otherUsers,
   programTypes,
   targetPopulations,
 } from '../constants';
@@ -24,6 +23,7 @@ const ActivitySummary = ({
   control,
   getValues,
   recipients,
+  collaborators,
 }) => {
   const activityRecipientType = watch('activityRecipientType');
   const startDate = watch('startDate');
@@ -113,11 +113,14 @@ const ActivitySummary = ({
         </div>
         <div className="smart-hub--form-section">
           <MultiSelect
-            name="other-users"
+            name="collaborators"
             label="Collaborating Specialists"
             control={control}
             required={false}
-            options={otherUsers.map((user) => ({ value: user, label: user }))}
+            valueProperty="id"
+            labelProperty="name"
+            simple={false}
+            options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
           />
         </div>
         <div className="smart-hub--form-section">
@@ -126,7 +129,7 @@ const ActivitySummary = ({
             label="Program type(s)"
             control={control}
             required
-            options={programTypes.map((user) => ({ value: user, label: user }))}
+            options={programTypes.map((pt) => ({ value: pt, label: pt }))}
           />
         </div>
         <div className="smart-hub--form-section">
@@ -135,7 +138,7 @@ const ActivitySummary = ({
             label="Target Populations addressed. You may choose more than one."
             control={control}
             required
-            options={targetPopulations.map((user) => ({ value: user, label: user }))}
+            options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
           />
         </div>
       </Fieldset>
@@ -270,6 +273,12 @@ ActivitySummary.propTypes = {
   watch: PropTypes.func.isRequired,
   setValue: PropTypes.func.isRequired,
   getValues: PropTypes.func.isRequired,
+  collaborators: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      id: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
   recipients: PropTypes.shape({
     grants: PropTypes.arrayOf(
       PropTypes.shape({
@@ -300,7 +309,7 @@ const sections = [
     items: [
       { label: 'Grantee or Non-grantee', name: 'activityRecipientType' },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
-      { label: 'Collaborating specialist(s)', name: 'otherUsers', path: 'label' },
+      { label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name' },
       { label: 'Program type(s)', name: 'programTypes' },
       { label: 'Target Populations addressed', name: 'targetPopulations' },
     ],
@@ -351,7 +360,7 @@ export default {
     const {
       register, watch, setValue, getValues, control,
     } = hookForm;
-    const { recipients } = additionalData;
+    const { recipients, collaborators } = additionalData;
     return (
       <ActivitySummary
         register={register}
@@ -360,6 +369,7 @@ export default {
         setValue={setValue}
         getValues={getValues}
         control={control}
+        collaborators={collaborators}
       />
     );
   },

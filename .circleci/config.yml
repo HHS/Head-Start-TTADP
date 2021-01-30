@@ -133,7 +133,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-135-submit-report"
+    default: "js-109-add-collaborators"
     type: string
 jobs:
   build_and_lint:

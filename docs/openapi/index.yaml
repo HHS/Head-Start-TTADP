@@ -107,9 +107,11 @@ components:
           description: The type of the activity, Training or Technical Assistance (or both)
           items:
             type: string
-    approvingUser:
+    selectableUser:
       type: object
-      description: Users with permission to approve reports
+      description: >
+        Users with only their id and name, ready to be placed in a select box on the frontend without
+        further modification
       properties:
         id:
           type: number
@@ -123,6 +125,29 @@ components:
           type: number
         name:
           type: string
+    fileUpload:
+      type: object
+      properties:
+        attachmentType:
+          type: string
+          description: "Type of attachment. Acceptable values are ATTACHMENT or RESOURCE"
+        reportId: 
+          type: number
+          description: "id of the Activity report the file is associated with"
+        file:
+          type: string
+          format: binary
+          description: "File to be uploaded"
+      required:
+      - attachmentType
+      - reportId
+      - File
+    fileResponse:
+      type: object
+      description: ID of file created
+      properties:
+        id:
+          type: number
     permission:
       type: object
       description: A combination of region, scope and user allowing that user to perform an action in a region
