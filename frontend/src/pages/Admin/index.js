@@ -81,7 +81,7 @@ function Admin(props) {
 
   const filteredUsers = _.filter(users, (u) => {
     const { email, name } = u;
-    return `${email}${name}`.includes(userSearch);
+    return `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
   });
 
   const onSave = async (newUser) => {
