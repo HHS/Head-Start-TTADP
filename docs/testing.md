@@ -10,8 +10,8 @@ When writing tests that rely on asynchronous operations, such as writing to the 
 Here's how that might look:
 
 ```
-let a = await someAsyncFun();
-let b = await anotherAsyncFun();
+let a = someAsyncFun();
+let b = anotherAsyncFun();
 
 return Promise.all([a, b]);
 ```
