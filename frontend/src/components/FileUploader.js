@@ -67,12 +67,6 @@ Dropzone.propTypes = {
 };
 
 const FileTable = ({ onFileRemoved, files }) => {
-  let msg;
-  if (files.length === 0) {
-    msg = (
-      <p className="files-table--empty">No files uploaded</p>
-    );
-  }
   return (
     <div className="files-table--container margin-top-2">
       <table className="files-table">
@@ -122,7 +116,9 @@ const FileTable = ({ onFileRemoved, files }) => {
           ))}
         </tbody>
       </table>
-      { msg }
+      { files.length === 0 && (
+      <p className="files-table--empty">No files uploaded</p>
+      )}
     </div>
   );
 };
