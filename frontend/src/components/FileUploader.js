@@ -66,62 +66,60 @@ Dropzone.propTypes = {
   id: PropTypes.string.isRequired,
 };
 
-const FileTable = ({ onFileRemoved, files }) => {
-  return (
-    <div className="files-table--container margin-top-2">
-      <table className="files-table">
-        <thead className="files-table--thead" bgcolor="#F8F8F8">
-          <tr>
-            <th width="50%">
-              Name
-            </th>
-            <th width="20%">
-              Size
-            </th>
-            <th width="20%">
-              Status
-            </th>
-            <th width="10%" aria-label="remove file" />
+const FileTable = ({ onFileRemoved, files }) => (
+  <div className="files-table--container margin-top-2">
+    <table className="files-table">
+      <thead className="files-table--thead" bgcolor="#F8F8F8">
+        <tr>
+          <th width="50%">
+            Name
+          </th>
+          <th width="20%">
+            Size
+          </th>
+          <th width="20%">
+            Status
+          </th>
+          <th width="10%" aria-label="remove file" />
+
+        </tr>
+      </thead>
+      <tbody>
+        {files.map((file, index) => (
+          <tr id={`files-table-row-${index}`}>
+            <td className="files-table--file-name">
+              {file.originalFileName}
+            </td>
+            <td>
+              {`${(file.fileSize / 1000).toFixed(1)} KB`}
+            </td>
+            <td>
+              {file.status}
+            </td>
+            <td>
+              <Button
+                role="button"
+                className="smart-hub--file-tag-button"
+                unstyled
+                aria-label="remove file"
+                onClick={() => { onFileRemoved(index); }}
+              >
+                <span className="fa-stack fa-sm">
+                  <FontAwesomeIcon className="fa-stack-1x" color="black" icon={faTrash} />
+                </span>
+              </Button>
+            </td>
 
           </tr>
-        </thead>
-        <tbody>
-          {files.map((file, index) => (
-            <tr id={`files-table-row-${index}`}>
-              <td className="files-table--file-name">
-                {file.originalFileName}
-              </td>
-              <td>
-                {`${(file.fileSize / 1000).toFixed(1)} KB`}
-              </td>
-              <td>
-                {file.status}
-              </td>
-              <td>
-                <Button
-                  role="button"
-                  className="smart-hub--file-tag-button"
-                  unstyled
-                  aria-label="remove file"
-                  onClick={() => { onFileRemoved(index); }}
-                >
-                  <span className="fa-stack fa-sm">
-                    <FontAwesomeIcon className="fa-stack-1x" color="black" icon={faTrash} />
-                  </span>
-                </Button>
-              </td>
 
-            </tr>
-
-          ))}
-        </tbody>
-      </table>
-      { files.length === 0 && (
+        ))}
+      </tbody>
+    </table>
+    { files.length === 0 && (
       <p className="files-table--empty">No files uploaded</p>
-      )}
-    </div>
-  );
-};
+    )}
+  </div>
+);
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
   files: PropTypes.arrayOf(PropTypes.object),
