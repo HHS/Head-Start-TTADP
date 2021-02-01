@@ -31,7 +31,7 @@ function Dropzone(props) {
         data.append('attachmentType', attachmentType);
         data.append('file', file);
         await uploadFile(data);
-        onChange([{originalFileName: file.name, fileSize: file.size, status: "Uploaded"}])
+        onChange([{ originalFileName: file.name, fileSize: file.size, status: 'Uploaded' }]);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(error);
@@ -70,16 +70,16 @@ const FileTable = ({ onFileRemoved, files }) => {
       <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
-          <th width="50%">
-            Name
-          </th>
-          <th width="20%">
-            Size
-          </th>
-          <th width="20%">
-            Status
-          </th>
-          <th width="10%" aria-label="remove file" />
+            <th width="50%">
+              Name
+            </th>
+            <th width="20%">
+              Size
+            </th>
+            <th width="20%">
+              Status
+            </th>
+            <th width="10%" aria-label="remove file" />
 
           </tr>
         </thead>
@@ -120,7 +120,7 @@ const FileTable = ({ onFileRemoved, files }) => {
 };
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
-  files: PropTypes.arrayOf(PropTypes.instanceOf(File)),
+  files: PropTypes.arrayOf(PropTypes.object),
 };
 FileTable.defaultProps = {
   files: [],
