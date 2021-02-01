@@ -69,7 +69,7 @@ describe('Admin Page', () => {
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(2);
-      })
+      });
 
       it('user filtering is case-insentive', async () => {
         const filter = await screen.findByLabelText('Filter Users');
@@ -78,7 +78,7 @@ describe('Admin Page', () => {
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);
         expect(links[0]).toHaveTextContent('Harry Potter');
-      })
+      });
 
       it('allows a user to be selected', async () => {
         const button = await screen.findByText('Harry Potter');
