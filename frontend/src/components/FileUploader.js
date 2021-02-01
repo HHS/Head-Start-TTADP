@@ -34,8 +34,8 @@ function Dropzone(props) {
         await uploadFile(data);
         onChange([{ originalFileName: file.name, fileSize: file.size, status: 'Uploaded' }]);
       } catch (error) {
+        setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
-        setErrorMessage(`${file.name} failed to upload`)
         console.log(error);
       }
     });
@@ -50,7 +50,7 @@ function Dropzone(props) {
       <button type="button" className="usa-button">
         Browse files
       </button>
-       {errorMessage
+      {errorMessage
         && (
           <Alert type="error" slim noIcon className="smart-hub--save-alert">
             {errorMessage}
