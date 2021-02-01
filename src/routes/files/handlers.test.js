@@ -16,18 +16,23 @@ const ORIGINAL_ENV = process.env;
 jest.mock('../../lib/s3Uploader');
 
 const mockUser = {
-  id: 200,
+  id: process.env.CURRENT_USER_ID,
   homeRegionId: 1,
   permissions: [
     {
-      userId: 200,
+      userId: process.env.CURRENT_USER_ID,
       regionId: 5,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
     {
-      userId: 200,
+      userId: process.env.CURRENT_USER_ID,
       regionId: 6,
       scopeId: SCOPES.READ_WRITE_REPORTS,
+    },
+    {
+      userId: process.env.CURRENT_USER_ID,
+      regionId: 14,
+      scopeId: SCOPES.SITE_ACCESS,
     },
   ],
 };
