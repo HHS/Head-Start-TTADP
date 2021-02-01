@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "Running tests in using test config 'docker-compose.test.yml'"
+
+docker-compose \
+    -f 'docker-compose.test.yml' \
+    run test-backend bash -c "yarn db:migrate; yarn db:seed; yarn test:ci"
+wait
+docker-compose \
+    -f 'docker-compose.test.yml' \
+    down --volumes
