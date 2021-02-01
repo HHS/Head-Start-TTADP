@@ -5,18 +5,19 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '@trussworks/react-uswds';
+import { Button, Alert } from '@trussworks/react-uswds';
 import uploadFile from '../fetchers/File';
 
 import './FileUploader.css';
 
 function Dropzone(props) {
   const { onChange, id, reportId } = props;
+  const [errorMessage, setErrorMessage] = useState();
   const onDrop = (e) => {
     let attachmentType;
     if (id === 'attachments') {
@@ -34,6 +35,7 @@ function Dropzone(props) {
         onChange([{ originalFileName: file.name, fileSize: file.size, status: 'Uploaded' }]);
       } catch (error) {
         // eslint-disable-next-line no-console
+        setErrorMessage(`${file.name} failed to upload`)
         console.log(error);
       }
     });
@@ -48,6 +50,12 @@ function Dropzone(props) {
       <button type="button" className="usa-button">
         Browse files
       </button>
+       {errorMessage
+        && (
+          <Alert type="error" slim noIcon className="smart-hub--save-alert">
+            {errorMessage}
+          </Alert>
+        )}
     </div>
   );
 }

@@ -147,13 +147,23 @@ export function activityReportById(activityReportId) {
       },
       {
         model: File,
-        where: { attachmentType: 'ATTACHMENT' },
+        where: {
+          attachmentType: 'ATTACHMENT',
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
+        },
         as: 'attachments',
         required: false,
       },
       {
         model: File,
-        where: { attachmentType: 'RESOURCE' },
+        where: {
+          attachmentType: 'RESOURCE',
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
+        },
         as: 'otherResources',
         required: false,
       },
