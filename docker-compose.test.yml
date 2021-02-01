@@ -1,6 +1,6 @@
 version: "3.5"
 services:
-  backend:
+  test-backend:
     build:
       context: .
     command: yarn server
@@ -8,12 +8,14 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - testdb
+      - test-db
     environment:
       - POSTGRES_HOST=postgres_docker_test
     volumes:
       - ".:/app:rw"
-  frontend:
+    networks:
+      - test
+  test-frontend:
     build:
       context: .
     command: yarn start
@@ -25,26 +27,31 @@ services:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
     environment:
-      - BACKEND_PROXY=http://backend:8080
-  testdb:
+      - BACKEND_PROXY=http://test-backend:8080
+    networks:
+      - test
+  test-db:
     image: postgres:12.4
     container_name: postgres_docker_test
     env_file: .env
     ports:
       - "6543:5432"
-  minio:
+    networks:
+      - test
+  test-minio:
     image: minio/minio
     env_file: .env
     ports:
       - "9000:9000"
-    volumes:
-      - miniodata:/data
     command: server /data
+    networks:
+      - test
   aws-cli:
     image: amazon/aws-cli
     env_file: .env
     command: ["--endpoint-url", "$S3_ENDPOINT", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
+    networks:
+      - test
 
-
-volumes:
-  miniodata: {}
+networks:
+  test:
