@@ -16,7 +16,7 @@ const GoalsObjectives = ({ register, watch }) => {
       </Helmet>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
         <div id="goals-and-objectives" />
-        {goals.map((goal) => <Goal name={goal.name} />)}
+        {goals.map((goal) => <Goal key={goal.name} name={goal.name} />)}
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
