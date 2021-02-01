@@ -89,16 +89,6 @@ describe('File Upload', () => {
       expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
-    // it('checks that we get the proper data back', async ()  => {
-    //   let fileObject;
-    //   await request(app)
-    //     .get(`/api/files/${report.dataValues.id}`)
-    //     .expect(200)
-    //     .then((res) => {
-    //       fileObject = res.body[0];
-    //     });
-    //     const {id, activityReportId, }
-    // });
   });
 
   describe('File Upload Handlers error handling', () => {
