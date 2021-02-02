@@ -107,6 +107,17 @@ async function create(report, transaction) {
   return ActivityReport.create(report, { transaction });
 }
 
+export async function review(report, status, managerNotes) {
+  const updatedReport = await report.update({
+    status,
+    managerNotes,
+  },
+  {
+    fields: ['status', 'managerNotes'],
+  });
+  return updatedReport;
+}
+
 export function activityReportById(activityReportId) {
   return ActivityReport.findOne({
     where: {

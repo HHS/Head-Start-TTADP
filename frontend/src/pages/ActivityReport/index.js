@@ -3,6 +3,7 @@
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -22,6 +23,7 @@ import {
   createReport,
   getCollaborators,
   getApprovers,
+  reviewReport,
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
@@ -52,14 +54,15 @@ const region = 1;
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ match }) {
+function ActivityReport({ match, user }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
-  const [submitted, updateSubmitted] = useState();
+  const [status, updateStatus] = useState();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
   const [initialFormData, updateInitialFormData] = useState(defaultValues);
   const [initialAdditionalData, updateAdditionalData] = useState({});
+  const [approvingManager, updateApprovingManager] = useState(false);
   const reportId = useRef();
 
   useEffect(() => {
@@ -84,7 +87,8 @@ function ActivityReport({ match }) {
         reportId.current = activityReportId;
         updateAdditionalData({ recipients, collaborators, approvers });
         updateInitialFormData(report);
-        updateSubmitted(report.status === 'submitted');
+        updateStatus(report.status || 'draft');
+        updateApprovingManager(report.approvingManagerId === user.id);
         updateError();
       } catch (e) {
         updateError('Unable to load activity report');
@@ -93,7 +97,7 @@ function ActivityReport({ match }) {
       }
     };
     fetch();
-  }, [activityReportId]);
+  }, [activityReportId, user.id]);
 
   if (loading) {
     return (
@@ -144,7 +148,12 @@ function ActivityReport({ match }) {
 
   const onFormSubmit = async (data) => {
     const report = await submitReport(reportId.current, data);
-    updateSubmitted(report.status === 'submitted');
+    updateStatus(report.status);
+  };
+
+  const onReview = async (data) => {
+    const report = await reviewReport(reportId.current, data);
+    updateStatus(report.status);
   };
 
   return (
@@ -153,12 +162,14 @@ function ActivityReport({ match }) {
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
         currentPage={currentPage}
-        submitted={submitted}
         additionalData={initialAdditionalData}
         initialData={{ ...defaultValues, ...initialFormData }}
         pages={pages}
         onFormSubmit={onFormSubmit}
         onSave={onSave}
+        status={status}
+        approvingManager={approvingManager}
+        onReview={onReview}
       />
     </>
   );
@@ -166,6 +177,9 @@ function ActivityReport({ match }) {
 
 ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
+  user: PropTypes.shape({
+    id: PropTypes.number,
+  }).isRequired,
 };
 
 export default ActivityReport;

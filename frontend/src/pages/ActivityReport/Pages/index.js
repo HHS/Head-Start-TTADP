@@ -26,19 +26,29 @@ const reviewPage = {
   review: true,
   label: 'Review and submit',
   path: 'review',
-  render: (hookForm, allComplete, formData, submitted, onSubmit, additionalData) => (
-    <ReviewSubmit
-      approvers={additionalData.approvers}
-      allComplete={allComplete}
-      onSubmit={onSubmit}
-      submitted={submitted}
-      hookForm={hookForm}
-      reviewItems={
-        pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
-      }
-      initialData={formData}
-    />
-  ),
+  render:
+    (
+      hookForm,
+      allComplete,
+      formData,
+      onSubmit,
+      additionalData,
+      onReview,
+      approvingManager,
+    ) => (
+      <ReviewSubmit
+        approvers={additionalData.approvers}
+        allComplete={allComplete}
+        onSubmit={onSubmit}
+        onReview={onReview}
+        hookForm={hookForm}
+        approvingManager={approvingManager}
+        reviewItems={
+          pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
+        }
+        initialData={formData}
+      />
+    ),
 };
 
 export default [...pages, reviewPage];
