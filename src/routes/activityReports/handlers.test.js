@@ -16,6 +16,8 @@ jest.mock('../../services/users', () => ({
   usersWithPermissions: jest.fn(),
 }));
 
+jest.mock('../../policies/activityReport');
+
 const mockResponse = {
   json: jest.fn(),
   sendStatus: jest.fn(),
@@ -49,7 +51,9 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the report', async () => {
-      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(true);
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: 1,
@@ -59,7 +63,9 @@ describe('Activity Report handlers', () => {
     });
 
     it('handles unauthorizedRequests', async () => {
-      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(false);
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: 1,
@@ -77,7 +83,9 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the created report', async () => {
-      ActivityReport.prototype.canCreate = jest.fn().mockReturnValue(true);
+      ActivityReport.mockImplementationOnce(() => ({
+        canCreate: () => true,
+      }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: 1,
@@ -93,7 +101,9 @@ describe('Activity Report handlers', () => {
     });
 
     it('handles unauthorized requests', async () => {
-      ActivityReport.prototype.canCreate = jest.fn().mockReturnValue(false);
+      ActivityReport.mockImplementationOnce(() => ({
+        canCreate: () => false,
+      }));
       userById.mockResolvedValue({
         id: 1,
       });
@@ -110,7 +120,9 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the updated report', async () => {
-      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(true);
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
       activityReportById.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
@@ -122,7 +134,9 @@ describe('Activity Report handlers', () => {
 
     it('handles unauthorized requests', async () => {
       activityReportById.mockResolvedValue(report);
-      ActivityReport.prototype.canUpdate = jest.fn().mockReturnValue(false);
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
       userById.mockResolvedValue({
         id: 1,
       });
@@ -150,6 +164,9 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the report', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canGet: () => true,
+      }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: 1,
@@ -167,7 +184,9 @@ describe('Activity Report handlers', () => {
 
     it('handles unauthorized requests', async () => {
       activityReportById.mockResolvedValue(report);
-      ActivityReport.prototype.canGet = jest.fn().mockReturnValue(false);
+      ActivityReport.mockImplementationOnce(() => ({
+        canGet: () => false,
+      }));
       await getReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
