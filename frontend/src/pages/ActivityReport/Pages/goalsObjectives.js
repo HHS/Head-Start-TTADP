@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
   Fieldset, Label, Textarea,
 } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
@@ -14,10 +15,11 @@ const GoalsObjectives = ({
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [loading, updateLoading] = useState(true);
   const goals = watch('goals');
+  const hasGrants = grantIds.length > 0;
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     const fetch = async () => {
-      if (activityRecipientType === 'grantee') {
+      if (activityRecipientType === 'grantee' && hasGrants) {
         const fetchedGoals = await getGoals(grantIds);
         updateAvailableGoals(fetchedGoals);
       }
@@ -39,7 +41,7 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      {activityRecipientType === 'grantee'
+      {activityRecipientType === 'grantee' && hasGrants
         && (
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
           <div id="goals-and-objectives" />
@@ -62,9 +64,10 @@ const GoalsObjectives = ({
 GoalsObjectives.propTypes = {
   register: PropTypes.func.isRequired,
   setValue: PropTypes.func.isRequired,
-  grantIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   watch: PropTypes.func.isRequired,
-  control: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  control: PropTypes.object.isRequired,
   activityRecipientType: PropTypes.string.isRequired,
 };
 
