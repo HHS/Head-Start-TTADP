@@ -1,28 +1,44 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-
 import {
   Fieldset, Label, Textarea,
 } from '@trussworks/react-uswds';
 
-const GoalsObjectives = ({ register }) => (
-  <>
-    <Helmet>
-      <title>Goals and objectives</title>
-    </Helmet>
-    <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
-      <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
-      <Textarea id="context" name="context" inputRef={register()} />
-    </Fieldset>
-  </>
-);
+import Goal from './components/Goal';
+
+const GoalsObjectives = ({ register, watch }) => {
+  const goals = watch('goals');
+  return (
+    <>
+      <Helmet>
+        <title>Goals and objectives</title>
+      </Helmet>
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
+        <div id="goals-and-objectives" />
+        {goals.map((goal) => <Goal key={goal.name} name={goal.name} />)}
+      </Fieldset>
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
+        <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
+        <Textarea id="context" name="context" inputRef={register()} />
+      </Fieldset>
+    </>
+  );
+};
 
 GoalsObjectives.propTypes = {
   register: PropTypes.func.isRequired,
+  watch: PropTypes.func.isRequired,
 };
 
 const sections = [
+  {
+    title: 'Goals and objectives',
+    anchor: 'goals-and-objectives',
+    items: [
+      { label: 'Goals', name: 'goals', path: 'name' },
+    ],
+  },
   {
     title: 'Context',
     anchor: 'context',
@@ -39,7 +55,7 @@ export default {
   review: false,
   sections,
   render: (hookForm) => {
-    const { register } = hookForm;
-    return <GoalsObjectives register={register} />;
+    const { register, watch } = hookForm;
+    return <GoalsObjectives watch={watch} register={register} />;
   },
 };
