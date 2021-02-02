@@ -1,0 +1,14 @@
+.smart-hub--goal {
+  border-left: 4px solid #0166ab;
+  display: flex;
+  flex-flow: row;
+  margin-top: 1rem;
+}
+
+.smart-hub--goal-content {
+  margin-left: 1rem;
+}
+
+.usa-form .smart-hub--button {
+  margin-top: 0;
+}
