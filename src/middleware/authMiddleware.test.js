@@ -38,8 +38,13 @@ describe('authMiddleware', () => {
     })
   );
 
+  const destroyUser = async (user) => (
+    User.destroy({ where: { id: user.id } })
+  );
+
   it('should allow access if user data is present', async () => {
     await setupUser(mockUser);
+    process.env.CURRENT_USER_ID = 63;
 
     const mockNext = jest.fn();
     const mockSession = jest.fn();
@@ -55,6 +60,7 @@ describe('authMiddleware', () => {
     await authMiddleware(mockRequest, mockResponse, mockNext);
     expect(mockResponse.redirect).not.toHaveBeenCalled();
     expect(mockNext).toHaveBeenCalled();
+    await destroyUser(mockUser);
   });
 
   it('should redirect to login if user data is not present', async () => {
@@ -125,6 +131,7 @@ describe('authMiddleware', () => {
     await authMiddleware(mockRequest, mockResponse, mockNext);
     expect(mockResponse.redirect).not.toHaveBeenCalled();
     expect(mockNext).toHaveBeenCalled();
+    await destroyUser(mockUser);
   });
 
   it('require authorization if variables are set NOT for UAT or accessibility testing', async () => {
