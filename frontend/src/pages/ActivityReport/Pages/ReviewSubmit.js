@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Dropdown, Form, Label, Fieldset, Textarea, Alert, Button, Accordion,
+  Alert, Accordion,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import Container from '../../../components/Container';
+import SubmitterReviewPage from './SubmitterReviewPage';
+import ApproverReviewPage from './ApproverReviewPage';
 import './ReviewSubmit.css';
-
-const possibleStatus = [
-  'Approved',
-  'Needs Action',
-];
 
 const ReviewSubmit = ({
   hookForm,
@@ -54,13 +51,6 @@ const ReviewSubmit = ({
     }
   };
 
-  const setValue = (e) => {
-    if (e === '') {
-      return null;
-    }
-    return parseInt(e, 10);
-  };
-
   return (
     <>
       <Helmet>
@@ -76,84 +66,28 @@ const ReviewSubmit = ({
         </Alert>
         )}
         {!approvingManager
-          && (
-            <>
-              {submitted
-              && (
-              <Alert noIcon className="margin-y-4" type="success">
-                <b>Success</b>
-                <br />
-                This report was successfully submitted for approval
-              </Alert>
-              )}
-              {!allComplete
-              && (
-              <Alert noIcon className="margin-y-4" type="error">
-                <b>Incomplete report</b>
-                <br />
-                This report cannot be submitted until all sections are complete
-              </Alert>
-              )}
-              <h2>Submit Report</h2>
-              <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormSubmit)}>
-                <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
-                  <Label htmlFor="additionalNotes">Creator notes</Label>
-                  <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
-                </Fieldset>
-                <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
-                  <p className="margin-top-4">
-                    Submitting this form for approval means that you will no longer be in draft
-                    mode. Please review all information in each section before submitting to your
-                    manager for approval.
-                  </p>
-                  <Label htmlFor="approvingManagerId">Approving manager</Label>
-                  <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: true })}>
-                    <option name="default" value="" disabled hidden>Select a Manager...</option>
-                    {approvers.map((approver) => (
-                      <option key={approver.id} value={approver.id}>{approver.name}</option>
-                    ))}
-                  </Dropdown>
-                </Fieldset>
-                <Button type="submit" disabled={!valid}>Submit for approval</Button>
-              </Form>
-            </>
-          )}
+        && (
+        <SubmitterReviewPage
+          submitted={submitted}
+          allComplete={allComplete}
+          register={register}
+          approvers={approvers}
+          valid={valid}
+          handleSubmit={handleSubmit}
+          onFormSubmit={onFormSubmit}
+        />
+        )}
         {approvingManager
-          && (
-            <>
-              {reviewed
-              && (
-              <Alert noIcon className="margin-y-4" type="success">
-                <b>Success</b>
-                <br />
-                Your review of this report was successfully submitted
-              </Alert>
-              )}
-              <h2>Review and approve report</h2>
-              <div className="smart-hub--creator-notes">
-                <p>
-                  <span className="text-bold">Creator notes</span>
-                  <br />
-                  <br />
-                  { additionalNotes || 'No creator notes' }
-                </p>
-              </div>
-              <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-                <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
-                  <Label htmlFor="managerNotes">Manager notes</Label>
-                  <Textarea inputRef={register} id="managerNotes" name="managerNotes" />
-                </Fieldset>
-                <Label htmlFor="status">Choose report status</Label>
-                <Dropdown id="status" name="status" defaultValue="" inputRef={register({ required: true })}>
-                  <option name="default" value="" disabled hidden>- Select -</option>
-                  {possibleStatus.map((status) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </Dropdown>
-                <Button type="submit" disabled={!valid}>Submit</Button>
-              </Form>
-            </>
-          )}
+        && (
+        <ApproverReviewPage
+          reviewed={reviewed}
+          additionalNotes={additionalNotes}
+          register={register}
+          valid={valid}
+          handleSubmit={handleSubmit}
+          onFormReview={onFormReview}
+        />
+        )}
       </Container>
     </>
   );
