@@ -36,7 +36,7 @@ describe('FileUploader', () => {
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file')]);
-    const ui = <FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
+    const ui = <FileUploader reportId="3" id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
@@ -44,6 +44,19 @@ describe('FileUploader', () => {
     await flushPromises(rerender, ui);
 
     expect(mockOnChange).toHaveBeenCalled();
+  });
+
+  it('checks that onDrop does not run if reportId is new', async () => {
+    const mockOnChange = jest.fn();
+    const data = mockData([file('file')]);
+    const ui = <FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
+    const { container, rerender } = render(ui);
+    const dropzone = container.querySelector('div');
+
+    await dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, ui);
+
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 
   it('files are properly displayed', () => {
