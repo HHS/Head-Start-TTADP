@@ -18,27 +18,35 @@ import './FileUploader.css';
 function Dropzone(props) {
   const { onChange, id, reportId } = props;
   const [errorMessage, setErrorMessage] = useState();
-  const onDrop = (e) => {
+  const onDrop = async (e) => {
+    if (props.reportId === 'new') {
+      setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected')
+      return
+    }
+    let newFiles = [];
     let attachmentType;
     if (id === 'attachments') {
       attachmentType = 'ATTACHMENT';
     } else if (id === 'otherResources') {
       attachmentType = 'RESOURCE';
     }
-    e.forEach(async (file) => {
+    for (let i = 0; i < e.length; i++) {
+      const file = e[i];
       try {
         const data = new FormData();
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
         data.append('file', file);
         await uploadFile(data);
-        onChange([{ originalFileName: file.name, fileSize: file.size, status: 'Uploaded' }]);
+        newFiles.push({ originalFileName: file.name, fileSize: file.size, status: 'Uploaded' });
+        setErrorMessage(null)
       } catch (error) {
         setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
         console.log(error);
       }
-    });
+    } 
+    onChange(newFiles)
   };
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
