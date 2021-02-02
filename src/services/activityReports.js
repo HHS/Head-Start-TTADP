@@ -9,6 +9,7 @@ import {
   Grant,
   Grantee,
   NonGrantee,
+  Goal,
   User,
 } from '../models';
 
@@ -140,6 +141,11 @@ export function activityReportById(activityReportId) {
         ],
       },
       {
+        model: Goal,
+        as: 'goals',
+        attributes: ['id', 'name'],
+      },
+      {
         model: User,
         attributes: ['id', 'name'],
         as: 'collaborators',
@@ -150,7 +156,9 @@ export function activityReportById(activityReportId) {
 
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
-  const { collaborators, activityRecipients, ...updatedFields } = newActivityReport;
+  const {
+    collaborators, activityRecipients, goals, ...updatedFields
+  } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);
