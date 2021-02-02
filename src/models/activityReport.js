@@ -95,6 +95,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    managerNotes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       allowNull: false,
       type: DataTypes.STRING,

@@ -39,3 +39,9 @@ export const getCollaborators = async (region) => {
   const collaborators = await get(url);
   return collaborators.json();
 };
+
+export const reviewReport = async (reportId, data) => {
+  const url = join(activityReportUrl, reportId.toString(10), 'review');
+  const report = await put(url, data);
+  return report.json();
+};
