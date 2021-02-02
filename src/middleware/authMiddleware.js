@@ -1,6 +1,7 @@
 import {} from 'dotenv/config';
 import ClientOAuth2 from 'client-oauth2';
 import { auditLogger } from '../logger';
+import { validateUserAuthForAccess } from '../services/accessValidation';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
@@ -45,9 +46,16 @@ export default async function authMiddleware(req, res, next) {
     auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${process.env.CURRENT_USER_ID}`);
     req.session.userId = process.env.CURRENT_USER_ID;
   }
-  if (!req.session.userId) {
+  let userId = null;
+  if (req.session) {
+    userId = req.session.userId;
+  }
+  if (!userId) {
     res.sendStatus(401);
-  } else {
+  } else if (await validateUserAuthForAccess(userId)) {
     next();
+  } else {
+    auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
+    res.sendStatus(403);
   }
 }

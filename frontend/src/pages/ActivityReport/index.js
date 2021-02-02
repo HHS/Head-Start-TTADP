@@ -21,7 +21,7 @@ import {
   getRecipients,
   createReport,
   getCollaborators,
-  fetchApprovers,
+  getApprovers,
 } from '../../fetchers/activityReports';
 
 // All new reports will show these two goals
@@ -44,7 +44,6 @@ const defaultValues = {
   endDate: null,
   grantees: [],
   numberOfParticipants: '',
-  otherUsers: [],
   participantCategory: '',
   participants: [],
   programTypes: [],
@@ -82,7 +81,7 @@ function ActivityReport({ match }) {
         const apiCalls = [
           getRecipients(),
           getCollaborators(region),
-          fetchApprovers(region),
+          getApprovers(region),
         ];
 
         if (activityReportId !== 'new') {

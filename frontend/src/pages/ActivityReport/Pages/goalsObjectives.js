@@ -65,6 +65,7 @@ GoalsObjectives.propTypes = {
   grantIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   watch: PropTypes.func.isRequired,
   control: PropTypes.func.isRequired,
+  activityRecipientType: PropTypes.string.isRequired,
 };
 
 const sections = [

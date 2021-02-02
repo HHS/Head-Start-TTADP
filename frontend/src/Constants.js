@@ -1,4 +1,5 @@
 export const SCOPE_IDS = {
+  SITE_ACCESS: 1,
   ADMIN: 2,
   READ_WRITE_ACTIVITY_REPORTS: 3,
   READ_ACTIVITY_REPORTS: 4,
@@ -21,6 +22,10 @@ export const REGIONAL_SCOPES = {
 };
 
 export const GLOBAL_SCOPES = {
+  [SCOPE_IDS.SITE_ACCESS]: {
+    name: 'SITE_ACCESS',
+    description: 'User can login and view the TTAHUB site',
+  },
   [SCOPE_IDS.ADMIN]: {
     name: 'ADMIN',
     description: 'User can view the admin panel and change user permissions (including their own)',
