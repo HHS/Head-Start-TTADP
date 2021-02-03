@@ -23,7 +23,6 @@ function Dropzone(props) {
       setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
       return;
     }
-    const newFiles = [];
     let attachmentType;
     if (id === 'attachments') {
       attachmentType = 'ATTACHMENT';
@@ -36,17 +35,22 @@ function Dropzone(props) {
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
         data.append('file', file);
-        await uploadFile(data);
-        newFiles.push({ originalFileName: file.name, fileSize: file.size, status: 'Uploaded' });
-        setErrorMessage(null);
+        res = await uploadFile(data);
       } catch (error) {
         setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
         console.log(error);
+        return null;
       }
+      setErrorMessage(null);
+      return {
+        key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
+      };
     };
-    e.forEach(async (file) => upload(file));
-    onChange(newFiles);
+    const newFiles = e.map((file) => upload(file));
+    Promise.all(newFiles).then((values) => {
+      onChange(values);
+    });
   };
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
@@ -94,7 +98,7 @@ const FileTable = ({ onFileRemoved, files }) => (
       </thead>
       <tbody>
         {files.map((file, index) => (
-          <tr id={`files-table-row-${index}`}>
+          <tr key={file.key} id={`files-table-row-${index}`}>
             <td className="files-table--file-name">
               {file.originalFileName}
             </td>
@@ -112,8 +116,8 @@ const FileTable = ({ onFileRemoved, files }) => (
                 aria-label="remove file"
                 onClick={() => { onFileRemoved(index); }}
               >
-                <span className="fa-stack fa-sm">
-                  <FontAwesomeIcon className="fa-stack-1x" color="black" icon={faTrash} />
+                <span className="fa-sm">
+                  <FontAwesomeIcon color="black" icon={faTrash} />
                 </span>
               </Button>
             </td>
