@@ -57,7 +57,7 @@ const ReviewSubmit = ({
         <title>Review and submit</title>
       </Helmet>
       <Accordion bordered={false} items={reviewItems} />
-      <Container skipTopPadding className="margin-top-2 padding-top-2">
+      <Container skipTopPadding className="smart-hub-review margin-top-2 padding-top-2">
         {error && (
         <Alert noIcon className="margin-y-4" type="error">
           <b>Error</b>

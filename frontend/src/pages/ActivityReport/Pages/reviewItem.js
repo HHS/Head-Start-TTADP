@@ -37,28 +37,37 @@ const sectionType = {
 
 const Section = ({
   title, items, basePath, anchor,
-}) => (
-  <div className="margin-bottom-3">
-    <Grid row>
-      <Grid col={6}>
-        <b className="margin-y-1">{title}</b>
+}) => {
+  const isEmpty = !items.some(({ value }) => value && value.length);
+  const classes = [
+    'smart-hub-review-section',
+    isEmpty ? 'smart-hub-review-section--empty' : '',
+    'margin-bottom-3',
+  ].filter((x) => x).join(' ');
+
+  return (
+    <div className={classes}>
+      <Grid row>
+        <Grid col={6}>
+          <b className="margin-y-1">{title}</b>
+        </Grid>
+        <Grid col={6} className="flex-align-end display-flex flex-column flex-justify-center">
+          <HashLink
+            aria-label={`Edit form section "${title}"`}
+            to={`${basePath}#${anchor}`}
+            className="smart-hub-edit-link pull-right"
+          >
+            Edit
+          </HashLink>
+        </Grid>
       </Grid>
-      <Grid col={6} className="flex-align-end display-flex flex-column flex-justify-center">
-        <HashLink
-          aria-label={`Edit form section "${title}"`}
-          to={`${basePath}#${anchor}`}
-          className="pull-right"
-        >
-          Edit
-        </HashLink>
-      </Grid>
-    </Grid>
-    <hr />
-    {items.map(({ label, value, path }) => (
-      <Item key={label} label={label} value={value} path={path} />
-    ))}
-  </div>
-);
+      <hr />
+      {items.map(({ label, value, path }) => (
+        <Item key={label} label={label} value={value} path={path} />
+      ))}
+    </div>
+  );
+};
 
 Section.propTypes = sectionType;
 
@@ -73,8 +82,11 @@ const Item = ({ label, value, path }) => {
     values = values.map((v) => _.get(v, path));
   }
 
+  const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
+  const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
+
   return (
-    <Grid row className="margin-top-1">
+    <Grid row className={classes}>
       <Grid col={6}>
         {label}
       </Grid>
