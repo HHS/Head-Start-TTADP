@@ -17,17 +17,14 @@ const logContext = {
 };
 
 export const createFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  reportId,
-  attachmentType,
-) => {
+  originalFileName, s3FileName, reportId, attachmentType, fileSize) => {
   const newFile = {
     activityReportId: reportId,
     originalFileName,
     attachmentType,
     key: s3FileName,
     status: 'UPLOADING',
+    fileSize,
   };
   let file;
   try {
@@ -64,8 +61,11 @@ export default async function uploadHandler(req, res) {
         res.status(400).send({ error: 'file required' });
         return;
       }
-      const { path, originalFilename } = files.file[0];
+      const { path, originalFilename, size } = files.file[0];
       const { reportId, attachmentType } = fields;
+      if (!size) {
+        res.status(400).send({ error: 'fileSize required' });
+      }
       if (!reportId) {
         res.status(400).send({ error: 'reportId required' });
         return;
@@ -85,7 +85,13 @@ export default async function uploadHandler(req, res) {
         return;
       }
       fileName = `${uuidv4()}.${type.ext}`;
-      metadata = await createFileMetaData(originalFilename, fileName, reportId, attachmentType[0]);
+      metadata = await createFileMetaData(
+        originalFilename,
+        fileName,
+        reportId,
+        attachmentType[0],
+        size,
+      );
     } catch (err) {
       await handleErrors(req, res, err, logContext);
       return;

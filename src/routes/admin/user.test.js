@@ -55,7 +55,10 @@ describe('User route handler', () => {
     jest.clearAllMocks();
   });
   afterAll(async () => {
-    await User.destroy({ where: {} });
+    await User.destroy({ where: { id: 49 } });
+    await User.destroy({ where: { id: 50 } });
+    await User.destroy({ where: { id: 52 } });
+    await User.destroy({ where: { id: 53 } });
     db.sequelize.close();
   });
 
