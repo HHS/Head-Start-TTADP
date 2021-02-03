@@ -168,7 +168,7 @@ function ActivityReport({ match, user }) {
   };
 
   return (
-    <>
+    <div className="smart-hub-activity-report">
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
@@ -183,7 +183,7 @@ function ActivityReport({ match, user }) {
         approvingManager={approvingManager}
         onReview={onReview}
       />
-    </>
+    </div>
   );
 }
 
