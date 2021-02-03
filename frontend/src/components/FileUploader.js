@@ -35,7 +35,7 @@ function Dropzone(props) {
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
         data.append('file', file);
-        res = await uploadFile(data);
+        await uploadFile(data);
       } catch (error) {
         setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
