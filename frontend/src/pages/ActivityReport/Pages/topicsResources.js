@@ -97,14 +97,14 @@ const sections = [
     anchor: 'resources',
     items: [
       { label: 'Resources used', name: 'resourcesUsed' },
-      { label: 'Other resources', name: 'otherResources', path: 'name' },
+      { label: 'Other resources', name: 'otherResources', path: 'originalFileName' },
     ],
   },
   {
     title: 'Attachments',
     anchor: 'attachments',
     items: [
-      { label: 'Attachments', name: 'attachments' },
+      { label: 'Attachments', name: 'attachments', path: 'originalFileName' },
     ],
   },
 ];
