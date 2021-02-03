@@ -24,6 +24,16 @@ import {
   getApprovers,
 } from '../../fetchers/activityReports';
 
+// All new reports will show these two goals
+const fakeGoals = [
+  {
+    name: 'This is the first fake goal. The buttons do not work.',
+  },
+  {
+    name: 'This is the second fake goal. It has text that should wrap to the next line so you can see how the goals component handles long goals.',
+  },
+];
+
 const defaultValues = {
   deliveryMethod: [],
   activityType: [],
@@ -45,6 +55,7 @@ const defaultValues = {
   topics: [],
   approvingManagerId: null,
   additionalNotes: null,
+  goals: fakeGoals,
 };
 
 // FIXME: default region until we have a way of changing on the frontend
@@ -152,6 +163,7 @@ function ActivityReport({ match }) {
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
+        reportId={reportId.current}
         currentPage={currentPage}
         submitted={submitted}
         additionalData={initialAdditionalData}
