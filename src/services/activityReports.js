@@ -6,9 +6,11 @@ import {
   ActivityReportCollaborator,
   sequelize,
   ActivityRecipient,
+  File,
   Grant,
   Grantee,
   NonGrantee,
+  Goal,
   User,
 } from '../models';
 
@@ -140,9 +142,36 @@ export function activityReportById(activityReportId) {
         ],
       },
       {
+        model: Goal,
+        as: 'goals',
+        attributes: ['id', 'name'],
+      },
+      {
         model: User,
         attributes: ['id', 'name'],
         as: 'collaborators',
+      },
+      {
+        model: File,
+        where: {
+          attachmentType: 'ATTACHMENT',
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
+        },
+        as: 'attachments',
+        required: false,
+      },
+      {
+        model: File,
+        where: {
+          attachmentType: 'RESOURCE',
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
+        },
+        as: 'otherResources',
+        required: false,
       },
     ],
   });
@@ -193,7 +222,14 @@ export function activityReports() {
 // export async function createOrUpdate(newActivityReport, activityReportId) {
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
-  const { collaborators, activityRecipients, ...updatedFields } = newActivityReport;
+  const {
+    goals,
+    collaborators,
+    activityRecipients,
+    attachments,
+    otherResources,
+    ...updatedFields
+  } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);
