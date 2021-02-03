@@ -38,3 +38,88 @@ body {
 .SingleDatePickerInput__disabled {
   opacity: 0.7;
 }
+
+/* ========== Print Styles ========== */
+
+@page {
+  margin: 0.5in;
+}
+
+@media print {
+
+ * {
+    color: #000 !important;
+    box-shadow: none !important;
+    font-size: 14pt;
+ }
+
+  body {
+    background: #fff !important;
+    font-size: 12pt;
+  }
+
+  /* Hide things that don't need to be printed */
+  .background-stripe,
+  .usa-nav,
+  .usa-menu-btn,
+  .smart-hub-sidenav-wrapper,
+  .smart-hub-edit-link,
+  .smart-hub-review-item--empty,
+  input:empty,
+  textarea:empty,
+  button[type="submit"]
+  {
+    display: none !important;
+  }
+
+  .smart-hub-review-section--empty {
+    margin-bottom: 1in;
+  }
+
+  /* Show content that is hidden, e.g. collapsed accordions */
+  [hidden] {
+    display: unset;
+  }
+
+  .usa-section {
+    padding: 0;
+  }
+
+  .new-activity-report {
+    font-size: 36pt;
+    margin: 0.25in 0;
+  }
+
+  .smart-hub-navigator-wrapper {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .smart-hub-review > div {
+    padding: 0 !important;
+  }
+
+  .usa-accordion__button {
+    background: none !important;
+  }
+
+  .usa-accordion__heading {
+    break-before: auto;
+    break-after: avoid-page;
+  }
+
+  .usa-accordion__heading .usa-accordion__button {
+    color: #888 !important;
+    padding: 0;
+  }
+
+  .usa-accordion__content {
+    break-before: avoid-page;
+    break-after: auto;
+    display: block;
+    margin-bottom: 0.5in;
+    padding: 0;
+  }
+
+}
