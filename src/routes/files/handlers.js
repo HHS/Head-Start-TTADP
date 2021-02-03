@@ -69,7 +69,7 @@ export default async function uploadHandler(req, res) {
       const { path, originalFilename, size } = files.file[0];
       const { reportId, attachmentType } = fields;
       if (!size) {
-        res.status(400).send({ error: 'improper file size' });
+        res.status(400).send({ error: 'fileSize required' });
       }
       if (!reportId) {
         res.status(400).send({ error: 'reportId required' });
