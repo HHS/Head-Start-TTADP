@@ -3,10 +3,12 @@ import React from 'react';
 import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
+import * as fileFetcher from '../../fetchers/File';
 
 import FileUploader from '../FileUploader';
 
 describe('FileUploader', () => {
+  jest.spyOn(fileFetcher, 'default').mockImplementation(() => Promise.resolve());
   const dispatchEvt = (node, type, data) => {
     const event = new Event(type, { bubbles: true });
     Object.assign(event, data);
@@ -29,33 +31,46 @@ describe('FileUploader', () => {
     },
   });
 
-  const file = (name) => new File([''], name, { type: 'text/html' });
+  const file = (name) => ({ originalFileName: name, fileSize: 2000, status: 'Uploaded' });
 
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file')]);
-    const ui = <FileUploader onChange={mockOnChange} files={[]} />;
+    const ui = <FileUploader reportId="3" id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
-    dispatchEvt(dropzone, 'drop', data);
+    await dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, ui);
 
     expect(mockOnChange).toHaveBeenCalled();
   });
 
+  it('checks that onDrop does not run if reportId is new', async () => {
+    const mockOnChange = jest.fn();
+    const data = mockData([file('file')]);
+    const ui = <FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
+    const { container, rerender } = render(ui);
+    const dropzone = container.querySelector('div');
+
+    await dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, ui);
+
+    expect(mockOnChange).not.toHaveBeenCalled();
+  });
+
   it('files are properly displayed', () => {
-    render(<FileUploader onChange={() => {}} files={[file('fileOne'), file('fileTwo')]} />);
+    render(<FileUploader reportId="new" id="attachment" onChange={() => {}} files={[file('fileOne'), file('fileTwo')]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
 
   it('files can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<FileUploader onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
-    const fileOne = screen.getByText('fileOne');
-    fireEvent.click(fileOne.nextSibling);
+    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
+    const fileTwo = screen.getByText('fileTwo');
+    fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
 
-    expect(mockOnChange).toHaveBeenCalledWith([file('fileTwo')]);
+    expect(mockOnChange).toHaveBeenCalledWith([file('fileOne')]);
   });
 });
