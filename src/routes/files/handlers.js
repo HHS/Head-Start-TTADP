@@ -17,12 +17,7 @@ const logContext = {
 };
 
 export const createFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  reportId,
-  attachmentType,
-  fileSize,
-) => {
+  originalFileName, s3FileName, reportId, attachmentType, fileSize) => {
   const newFile = {
     activityReportId: reportId,
     originalFileName,
