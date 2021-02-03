@@ -68,9 +68,6 @@ const Item = ({ label, value, path }) => {
   if (!Array.isArray(value)) {
     values = [value];
   }
-  if (label === 'Other Resources' || label === 'Attachments') {
-    values = values.map((v) => v.originalFileName);
-  }
 
   if (path) {
     values = values.map((v) => _.get(v, path));
