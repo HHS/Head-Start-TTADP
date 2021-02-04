@@ -16,7 +16,7 @@ docker exec test-backend bash -c "yarn db:seed;"
 docker exec test-backend bash -c "yarn test:ci"
 
 # Test frontend
-docker exec test-backend bash -c "yarn --cwd frontend run test:ci"
+docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
 
 # Cleanup
 docker-compose \
