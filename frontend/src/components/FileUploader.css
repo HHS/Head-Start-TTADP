@@ -23,3 +23,23 @@
 .fa-stack {
   width: 1em;
 }
+
+.files-table {
+  width: 100%;
+  border-collapse: collapse;
+  /* border: 1px solid #979797; */
+}
+
+.files-table--thead th, .files-table td {
+  padding: .5rem;
+  text-align: left;
+  font-size: .9rem;
+}
+.files-table--container {
+  border: solid 1px #979797;
+  min-height: 8rem;
+}
+
+.files-table--empty {
+  text-align: center;
+}

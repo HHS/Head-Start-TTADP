@@ -172,6 +172,7 @@ function ActivityReport({ match, user }) {
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
+        reportId={reportId.current}
         currentPage={currentPage}
         additionalData={initialAdditionalData}
         initialData={{ ...defaultValues, ...initialFormData }}
