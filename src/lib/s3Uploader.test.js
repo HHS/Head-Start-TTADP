@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import s3Uploader, { verifyVersioning, s3 } from './s3Uploader';
+import s3Uploader, { verifyVersioning, s3, getPresignedURL } from './s3Uploader';
 
 const mockData = {
   MFADelete: 'Disabled',
@@ -68,5 +68,20 @@ describe('s3Uploader', () => {
     const got = await s3Uploader(buf, name, goodType);
     expect(mockGet.mock.calls.length).toBe(1);
     await expect(got).toBe(response);
+  });
+});
+
+describe('s3Uploader.getPresignedUrl', () => {
+  const Bucket = 'fakeBucket';
+  const Key = 'fakeKey';
+  const mockGet = jest.spyOn(s3, 'getSignedUrl').mockImplementation(async () => mockData);
+  beforeEach(() => {
+    mockGet.mockClear();
+  });
+  it('calls getSignedUrl() with correct parameters', async () => {
+    const got = await getPresignedURL(Key, Bucket);
+    console.log(got);
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockGet).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
   });
 });
