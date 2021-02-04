@@ -74,14 +74,14 @@ describe('s3Uploader', () => {
 describe('s3Uploader.getPresignedUrl', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
-  const mockGet = jest.spyOn(s3, 'getSignedUrl').mockImplementation(async () => mockData);
+  const mockGetURL = jest.spyOn(s3, 'getSignedUrl').mockImplementation(async () => ({ url: 'https://example.com' }));
   beforeEach(() => {
-    mockGet.mockClear();
+    mockGetURL.mockClear();
   });
   it('calls getSignedUrl() with correct parameters', async () => {
-    const got = await getPresignedURL(Key, Bucket);
-    console.log(got);
-    expect(mockGet).toHaveBeenCalled();
-    expect(mockGet).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
+    const url = getPresignedURL(Key, Bucket);
+    await expect(url).resolves.toMatchObject({ url: 'https://example.com' });
+    expect(mockGetURL).toHaveBeenCalled();
+    expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
   });
 });
