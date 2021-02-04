@@ -42,7 +42,7 @@ const pages = [
     label: 'review page',
     path: 'review',
     review: true,
-    render: (hookForm, allComplete, formData, submitted, onSubmit) => (
+    render: (hookForm, allComplete, formData, onSubmit) => (
       <div>
         <button type="button" data-testid="review" onClick={onSubmit}>Continue</button>
       </div>
@@ -59,6 +59,9 @@ describe('Navigator', () => {
       <Navigator
         submitted={false}
         initialData={initialData}
+        status="draft"
+        onReview={() => {}}
+        approvingManager={false}
         defaultValues={{ first: '', second: '' }}
         pages={pages}
         currentPage={currentPage}

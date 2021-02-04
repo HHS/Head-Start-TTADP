@@ -15,6 +15,10 @@ export default class ActivityReport {
     this.activityReport = activityReport;
   }
 
+  canReview() {
+    return this.isApprovingManager();
+  }
+
   canCreate() {
     return this.canWriteInRegion();
   }

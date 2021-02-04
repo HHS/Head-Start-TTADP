@@ -64,3 +64,5 @@ export const REGIONS = [
   11,
   12,
 ];
+
+export const DECIMAL_BASE = 10;

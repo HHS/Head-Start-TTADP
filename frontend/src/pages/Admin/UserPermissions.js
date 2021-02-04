@@ -5,7 +5,7 @@ import {
   Checkbox, Grid, Fieldset,
 } from '@trussworks/react-uswds';
 
-import { REGIONAL_SCOPES } from '../../Constants';
+import { REGIONAL_SCOPES, DECIMAL_BASE } from '../../Constants';
 import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
 import CurrentPermissions from './components/CurrentPermissions';
 import RegionDropdown from '../../components/RegionDropdown';
@@ -82,7 +82,7 @@ function UserPermissions({
 
   const onSelectedRegionChange = (e) => {
     const { value } = e.target;
-    updateSelectedRegion(parseInt(value, 10));
+    updateSelectedRegion(parseInt(value, DECIMAL_BASE));
   };
 
   return (
