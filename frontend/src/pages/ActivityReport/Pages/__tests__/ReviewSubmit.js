@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { useForm } from 'react-hook-form';
 
 import ReviewSubmit from '../ReviewSubmit';
-import { withText } from '../../../../testHelpers';
 
 const approvers = [
   { id: 1, name: 'user 1' },
