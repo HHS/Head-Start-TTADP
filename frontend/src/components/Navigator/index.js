@@ -22,6 +22,7 @@ import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
   initialData,
+  initialLastUpdated,
   pages,
   onFormSubmit,
   onReview,
@@ -35,7 +36,7 @@ function Navigator({
 }) {
   const [formData, updateFormData] = useState(initialData);
   const [errorMessage, updateErrorMessage] = useState();
-  const [lastSaveTime, updateLastSaveTime] = useState();
+  const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const { pageState } = formData;
 
   const page = pages.find((p) => p.path === currentPage);
@@ -77,8 +78,8 @@ function Navigator({
       const result = await onSave(data, newIndex);
       if (result) {
         updateLastSaveTime(moment());
+        updateErrorMessage();
       }
-      updateErrorMessage();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
@@ -159,6 +160,7 @@ function Navigator({
 
 Navigator.propTypes = {
   initialData: PropTypes.shape({}),
+  initialLastUpdated: PropTypes.instanceOf(moment),
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
@@ -183,6 +185,7 @@ Navigator.defaultProps = {
   initialData: {},
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
+  initialLastUpdated: null,
 };
 
 export default Navigator;
