@@ -43,6 +43,9 @@ const renderActivityReport = (id, location = 'activity-summary') => {
     <Router history={history}>
       <ActivityReport
         match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+        location={{
+          state: undefined, hash: '', pathname: '', search: '',
+        }}
         user={{ id: 1 }}
       />
     </Router>,
