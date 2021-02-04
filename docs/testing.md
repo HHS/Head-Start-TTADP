@@ -26,6 +26,12 @@ When writing tests that create database records, it might also help to use a `tr
 
 ## Testing in Docker
 
+### Using `./bin/run-tests`
+
+To simplify running tests in Docker, there is a bash script, `./bin/run-tests` that will run the appropriate commands to start `test-` variations of the services used in tests. You should be able to run tests using that command while your development Docker environment is running. The script uses a separate `docker-compose.test.yml` which does not create a user-accessible network and cleans up after itself once tests have run.
+
+### Running tests in your development Docker environment
+
 When running tests in Docker, be aware that there are tests that will modify/delete database records. For tests to run, the 'db' service needs to exist and `db:migrate` and `db:seed` need to have been run (to create the tables and populate certain records).
 
 In the `docker-compose.yml` configuration, the database is set up to persist to a volume, "dbdata", so database records will persist between runs of the 'db' service, unless you remove that volume explicitly (e.g. `docker volume rm` or `docker-compose down --volumes`).
