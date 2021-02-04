@@ -13,31 +13,42 @@ const approvers = [
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, submitted, initialData, onSubmit,
+  allComplete, initialData, onSubmit, onReview, approvingManagerId, approvingManager,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { ...initialData, approvingManagerId: null },
+    defaultValues: { ...initialData, approvingManagerId },
   });
   return (
     <ReviewSubmit
       allComplete={allComplete}
-      submitted={submitted}
       onSubmit={onSubmit}
       reviewItems={[]}
       approvers={approvers}
       hookForm={hookForm}
+      initialData={initialData}
+      onReview={onReview}
+      approvingManager={approvingManager}
     />
   );
 };
 
-const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () => {}) => {
+const renderReview = (
+  allComplete,
+  approvingManager = false,
+  initialData = {},
+  onSubmit = () => {},
+  onReview = () => {},
+  approvingManagerId = null,
+) => {
   render(
     <RenderReview
       allComplete={allComplete}
-      submitted={submitted}
       onSubmit={onSubmit}
       initialData={initialData}
+      approvingManager={approvingManager}
+      onReview={onReview}
+      approvingManagerId={approvingManagerId}
     />,
   );
 };
@@ -45,6 +56,14 @@ const renderReview = (allComplete, submitted, initialData = {}, onSubmit = () =>
 const selectLabel = 'Approving manager';
 
 describe('ReviewSubmit', () => {
+  describe('when the user is the approving manager', () => {
+    it('shows the manager UI', async () => {
+      renderReview(true, true);
+      const header = await screen.findByText('Review and approve report');
+      expect(header).toBeVisible();
+    });
+  });
+
   describe('when the form is not complete', () => {
     it('an error alert is shown', async () => {
       renderReview(false, false);
@@ -79,13 +98,14 @@ describe('ReviewSubmit', () => {
   });
 
   it('a success modal is shown once submitted', async () => {
-    renderReview(true, true);
+    renderReview(true, false, {}, () => {}, () => {}, 1);
+    userEvent.click(await screen.findByTestId('button'));
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveClass('usa-alert--success');
   });
 
   it('initializes the form with "initialData"', async () => {
-    renderReview(true, true, { additionalNotes: 'test' });
+    renderReview(true, false, { additionalNotes: 'test' });
     const textBox = await screen.findByLabelText('Creator notes');
     await waitFor(() => expect(textBox).toHaveValue('test'));
   });
