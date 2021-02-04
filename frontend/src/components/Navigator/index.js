@@ -31,6 +31,7 @@ function Navigator({
   autoSaveInterval,
   approvingManager,
   status,
+  reportId,
 }) {
   const [formData, updateFormData] = useState(initialData);
   const [errorMessage, updateErrorMessage] = useState();
@@ -133,6 +134,7 @@ function Navigator({
               additionalData,
               onReview,
               approvingManager,
+              reportId,
             )}
           {!page.review
             && (
@@ -144,7 +146,7 @@ function Navigator({
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
-                  {page.render(hookForm, additionalData)}
+                  {page.render(hookForm, additionalData, reportId)}
                   <Button type="submit" disabled={!isValid}>Continue</Button>
                 </Form>
               </Container>
@@ -174,6 +176,7 @@ Navigator.propTypes = {
   currentPage: PropTypes.string.isRequired,
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
+  reportId: PropTypes.node.isRequired,
 };
 
 Navigator.defaultProps = {
