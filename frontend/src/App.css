@@ -41,8 +41,9 @@ body {
 
 /* ========== Print Styles ========== */
 
-@page {
-  margin: 0.5in;
+/* This is for elements that in the DOM that should appear only when printing */
+.print-only {
+  display: none;
 }
 
 @media print {
@@ -58,6 +59,29 @@ body {
     font-size: 12pt;
   }
 
+  @page {
+    margin: 0.5in;
+  }
+
+  .grid-container {
+    max-width: unset;
+    width: 100%;
+  }
+
+  .usa-header {
+    background: #fff !important;
+    border-bottom: 1px solid #e6e6e6;
+  }
+
+  .usa-nav-container {
+    padding: 0 !important;
+    margin: 0 0.125in !important;
+  }
+
+  .print-only {
+    display: unset;
+  }
+
   /* Hide things that don't need to be printed */
   .background-stripe,
   .usa-nav,
@@ -65,11 +89,21 @@ body {
   .smart-hub-sidenav-wrapper,
   .smart-hub-edit-link,
   .smart-hub-review-item--empty,
+  .no-print,
   input:empty,
   textarea:empty,
   button[type="submit"]
   {
     display: none !important;
+  }
+
+  .usa-alert {
+    background: none;
+    border: 1px solid #adadad;
+  }
+  /* .usa-alert uses a :before to create the left border, which we want to remove */
+  .usa-alert::before {
+    display: none;
   }
 
   .smart-hub-review-section--empty {
@@ -81,7 +115,10 @@ body {
     display: unset;
   }
 
-  .usa-section {
+  .usa-section,
+  .usa-section > div
+  {
+    margin: 0;
     padding: 0;
   }
 
@@ -110,7 +147,7 @@ body {
   }
 
   .usa-accordion__heading .usa-accordion__button {
-    color: #888 !important;
+    color: #454545 !important;
     padding: 0;
   }
 
