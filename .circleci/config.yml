@@ -228,7 +228,7 @@ jobs:
       - run:
           name: Run cucumber
           command: |
-            sleep 5
+            sleep 10
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
