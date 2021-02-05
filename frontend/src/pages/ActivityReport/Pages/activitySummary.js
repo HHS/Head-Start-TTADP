@@ -55,6 +55,7 @@ const ActivitySummary = ({
     if (previousActivityRecipientType.current !== activityRecipientType) {
       setValue('activityRecipients', []);
       setValue('participants', []);
+      setValue('programTypes', []);
       previousActivityRecipientType.current = activityRecipientType;
     }
   }, [activityRecipientType, setValue]);
@@ -123,6 +124,8 @@ const ActivitySummary = ({
             options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
           />
         </div>
+        {!nonGranteeSelected
+        && (
         <div className="smart-hub--form-section">
           <MultiSelect
             name="programTypes"
@@ -132,6 +135,7 @@ const ActivitySummary = ({
             options={programTypes.map((pt) => ({ value: pt, label: pt }))}
           />
         </div>
+        )}
         <div className="smart-hub--form-section">
           <MultiSelect
             name="targetPopulations"
