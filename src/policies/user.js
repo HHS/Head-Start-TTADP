@@ -9,7 +9,8 @@ export default class Users {
   canViewUsersInRegion(region) {
     const permissions = this.user.permissions.find(
       (permission) => (
-        permission.scopeId === SCOPES.READ_WRITE_REPORTS
+        (permission.scopeId === SCOPES.READ_WRITE_REPORTS
+          || permission.scopeId === SCOPES.APPROVE_REPORTS)
         && permission.regionId === region),
     );
     return !_.isUndefined(permissions);
