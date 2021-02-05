@@ -35,14 +35,18 @@ const formData = () => ({
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],
   topics: 'first',
+  updatedAt: new Date().toISOString(),
 });
 const history = createMemoryHistory();
 
-const renderActivityReport = (id, location = 'activity-summary') => {
+const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null) => {
   render(
     <Router history={history}>
       <ActivityReport
         match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+        location={{
+          state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+        }}
         user={{ id: 1 }}
       />
     </Router>,
@@ -61,6 +65,24 @@ describe('ActivityReport', () => {
     fetchMock.get('/api/activity-reports/activity-recipients', recipients);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
+  });
+
+  describe('last saved time', () => {
+    it('is shown if history.state.showLastUpdatedTime is true', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      renderActivityReport('1', 'activity-summary', true);
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      expect(await screen.findByTestId('alert')).toBeVisible();
+    });
+
+    it('is not shown if history.state.showLastUpdatedTime is null', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      renderActivityReport('1', 'activity-summary');
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      expect(screen.queryByTestId('alert')).toBeNull();
+    });
   });
 
   it('defaults to activity summary if no page is in the url', async () => {
