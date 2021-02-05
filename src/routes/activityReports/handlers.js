@@ -134,7 +134,6 @@ export async function saveReport(req, res) {
 
     newReport.lastUpdatedById = userId;
 
-    console.log('trying to update');
     const savedReport = await createOrUpdate(newReport, report);
     res.json(savedReport);
   } catch (error) {
