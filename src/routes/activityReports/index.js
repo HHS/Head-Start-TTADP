@@ -1,6 +1,12 @@
 import express from 'express';
 import {
-  getApprovers, submitReport, saveReport, createReport, getReport, getReports, getActivityRecipients,
+  getApprovers,
+  submitReport,
+  saveReport,
+  createReport,
+  getReport,
+  getReports,
+  getActivityRecipients,
 } from './handlers';
 
 const router = express.Router();
