@@ -7,6 +7,7 @@ import {
 
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
+import { REPORT_STATUSES } from '../../../Constants';
 
 const pages = [
   {
@@ -59,7 +60,7 @@ describe('Navigator', () => {
       <Navigator
         submitted={false}
         initialData={initialData}
-        status="draft"
+        status={REPORT_STATUSES.DRAFT}
         onReview={() => {}}
         approvingManager={false}
         defaultValues={{ first: '', second: '' }}
@@ -76,7 +77,7 @@ describe('Navigator', () => {
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
     const first = await screen.findByRole('button', { name: 'first page' });
-    await waitFor(() => expect(within(first).getByText('In progress')).toBeVisible());
+    await waitFor(() => expect(within(first).getByText('In Progress')).toBeVisible());
   });
 
   it('onContinue calls onSave with correct page position', async () => {

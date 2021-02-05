@@ -5,10 +5,11 @@ import {
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
-import Container from '../../../components/Container';
-import SubmitterReviewPage from './SubmitterReviewPage';
-import ApproverReviewPage from './ApproverReviewPage';
-import './ReviewSubmit.css';
+import Container from '../../../../components/Container';
+import Submitter from './Submitter';
+import Approver from './Approver';
+import './index.css';
+import { REPORT_STATUSES } from '../../../../Constants';
 
 const ReviewSubmit = ({
   hookForm,
@@ -18,14 +19,15 @@ const ReviewSubmit = ({
   reviewItems,
   approvers,
   approvingManager,
-  initialData,
+  status,
+  formData,
 }) => {
   const { handleSubmit, register, formState } = hookForm;
-  const { additionalNotes } = initialData;
+  const { additionalNotes } = formData;
   const { isValid } = formState;
   const valid = allComplete && isValid;
 
-  const [submitted, updateSubmitted] = useState(false);
+  const [submitted, updateSubmitted] = useState(status === REPORT_STATUSES.SUBMITTED);
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
 
@@ -67,7 +69,8 @@ const ReviewSubmit = ({
         )}
         {!approvingManager
         && (
-        <SubmitterReviewPage
+        <Submitter
+          status={status}
           submitted={submitted}
           allComplete={allComplete}
           register={register}
@@ -75,17 +78,20 @@ const ReviewSubmit = ({
           valid={valid}
           handleSubmit={handleSubmit}
           onFormSubmit={onFormSubmit}
+          formData={formData}
         />
         )}
         {approvingManager
         && (
-        <ApproverReviewPage
+        <Approver
+          status={status}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
           register={register}
           valid={valid}
           handleSubmit={handleSubmit}
           onFormReview={onFormReview}
+          formData={formData}
         />
         )}
       </Container>
@@ -103,8 +109,9 @@ ReviewSubmit.propTypes = {
   allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
+  status: PropTypes.string.isRequired,
   approvingManager: PropTypes.bool.isRequired,
-  initialData: PropTypes.shape({
+  formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types

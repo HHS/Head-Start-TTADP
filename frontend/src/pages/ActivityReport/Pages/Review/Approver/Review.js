@@ -1,15 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
 
-const possibleStatus = [
-  'Approved',
-  'Needs Action',
-];
+import { managerReportStatuses } from '../../../../../Constants';
 
-const ApproverReviewPage = ({
+const Review = ({
   reviewed,
   additionalNotes,
   register,
@@ -27,12 +25,12 @@ const ApproverReviewPage = ({
       </Alert>
       )}
     <h2>Review and approve report</h2>
-    <div className="smart-hub--creator-notes">
+    <div className="smart-hub--creator-notes" aria-label="additionalNotes">
       <p>
         <span className="text-bold">Creator notes</span>
         <br />
         <br />
-        { additionalNotes || 'No creator notes' }
+        { additionalNotes }
       </p>
     </div>
     <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
@@ -43,8 +41,8 @@ const ApproverReviewPage = ({
       <Label htmlFor="status">Choose report status</Label>
       <Dropdown id="status" name="status" defaultValue="" inputRef={register({ required: true })}>
         <option name="default" value="" disabled hidden>- Select -</option>
-        {possibleStatus.map((status) => (
-          <option key={status} value={status}>{status}</option>
+        {managerReportStatuses.map((status) => (
+          <option key={status} value={status}>{_.startCase(status)}</option>
         ))}
       </Dropdown>
       <Button type="submit" disabled={!valid}>Submit</Button>
@@ -52,13 +50,17 @@ const ApproverReviewPage = ({
   </>
 );
 
-ApproverReviewPage.propTypes = {
+Review.propTypes = {
   reviewed: PropTypes.bool.isRequired,
-  additionalNotes: PropTypes.string.isRequired,
+  additionalNotes: PropTypes.string,
   register: PropTypes.func.isRequired,
   valid: PropTypes.bool.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
 };
 
-export default ApproverReviewPage;
+Review.defaultProps = {
+  additionalNotes: 'No creator notes',
+};
+
+export default Review;
