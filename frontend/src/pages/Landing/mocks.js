@@ -1,99 +1,100 @@
-export const activityReports = [
+const activityReports = [
   {
-    startDate: "02/08/2021",
-    lastSaved: "02/04/2021",
+    startDate: '02/08/2021',
+    lastSaved: '02/04/2021',
     id: 1,
-    topics: ["Behavioral / Mental Health", "CLASS: Instructional Support"],
-    status: "draft",
+    topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+    status: 'draft',
     activityRecipients: [
       {
         activityRecipientId: 5,
-        name: "Johnston-Romaguera - 14CH00003",
+        name: 'Johnston-Romaguera - 14CH00003',
         id: 1,
         grant: {
           id: 5,
-          number: "14CH00003",
+          number: '14CH00003',
           grantee: {
-            name: "Johnston-Romaguera",
+            name: 'Johnston-Romaguera',
           },
         },
         nonGrantee: null,
       },
       {
         activityRecipientId: 4,
-        name: "Johnston-Romaguera - 14CH00002",
+        name: 'Johnston-Romaguera - 14CH00002',
         id: 2,
         grant: {
           id: 4,
-          number: "14CH00002",
+          number: '14CH00002',
           grantee: {
-            name: "Johnston-Romaguera",
+            name: 'Johnston-Romaguera',
           },
         },
         nonGrantee: null,
       },
       {
         activityRecipientId: 1,
-        name: "Grantee Name - 14CH1234",
+        name: 'Grantee Name - 14CH1234',
         id: 3,
         grant: {
           id: 1,
-          number: "14CH1234",
+          number: '14CH1234',
           grantee: {
-            name: "Grantee Name",
+            name: 'Grantee Name',
           },
         },
         nonGrantee: null,
       },
     ],
     author: {
-      fullName: "Kiwi, Grants Specialist",
-      name: "Kiwi",
-      role: "Grants Specialist",
+      fullName: 'Kiwi, Grants Specialist',
+      name: 'Kiwi',
+      role: 'Grants Specialist',
       homeRegionId: 3,
     },
     collaborators: [
       {
-        name: "Orange",
+        name: 'Orange',
       },
       {
-        name: "Hermione Granger",
+        name: 'Hermione Granger',
       },
     ],
   },
   {
-    startDate: "02/01/2021",
-    lastSaved: "02/04/2021",
+    startDate: '02/01/2021',
+    lastSaved: '02/04/2021',
     id: 2,
-    topics: ["Five-Year Grant", "CLASS: Emotional Support"],
-    status: "draft",
+    topics: ['Five-Year Grant', 'CLASS: Emotional Support'],
+    status: 'draft',
     activityRecipients: [
       {
         activityRecipientId: 3,
-        name: "QRIS System",
+        name: 'QRIS System',
         id: 31,
         grant: null,
         nonGrantee: {
           id: 3,
-          name: "QRIS System",
-          createdAt: "2021-02-03T21:00:57.149Z",
-          updatedAt: "2021-02-03T21:00:57.149Z",
+          name: 'QRIS System',
+          createdAt: '2021-02-03T21:00:57.149Z',
+          updatedAt: '2021-02-03T21:00:57.149Z',
         },
       },
     ],
     author: {
-      fullName: "Kiwi, Grants Specialist",
-      name: "Kiwi",
-      role: "Grants Specialist",
+      fullName: 'Kiwi, Grants Specialist',
+      name: 'Kiwi',
+      role: 'Grants Specialist',
       homeRegionId: 3,
     },
     collaborators: [
       {
-        name: "Cucumber User",
+        name: 'Cucumber User',
       },
       {
-        name: "Hermione Granger",
+        name: 'Hermione Granger',
       },
     ],
   },
 ];
+export default activityReports;
