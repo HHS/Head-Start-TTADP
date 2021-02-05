@@ -82,16 +82,18 @@ function App() {
           component={Landing}
         />
         <RouteWithLayout exact path="/" layout={MainLayout} component={Home} />
-        <RouteWithLayout
+        <Route
           path="/activity-reports/:activityReportId/:currentPage?"
-          layout={MainLayout}
-          component={ActivityReport}
+          render={({ match, location }) => (
+            <MainLayout>
+              <ActivityReport location={location} match={match} user={user} />
+            </MainLayout>
+          )}
         />
         {admin && (
-          <RouteWithLayout
+          <Route
             path="/admin/:userId?"
-            layout={MainLayout}
-            component={Admin}
+            render={({ match }) => <MainLayout><Admin match={match} /></MainLayout>}
           />
         )}
         <RouteWithLayout layout={MainLayout} component={NotFound} />
