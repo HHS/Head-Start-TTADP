@@ -3,7 +3,6 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import { GridContainer, Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
@@ -21,7 +20,6 @@ import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
-import { render } from 'react-dom';
 import MainLayout from './components/MainLayout';
 import LandingLayout from './components/LandingLayout';
 
@@ -77,22 +75,26 @@ function App() {
         logoutUser={logout}
       />
       <Switch>
-        <RouteWithLayout exact path="/activity-reports" layout={LandingLayout} component={Landing} />
+        <RouteWithLayout
+          exact
+          path="/activity-reports"
+          layout={LandingLayout}
+          component={Landing}
+        />
         <RouteWithLayout exact path="/" layout={MainLayout} component={Home} />
         <RouteWithLayout
-            path="/activity-reports/:currentPage?"
-            layout={MainLayout} component={ActivityReport}
-          />
-         {admin && (
-
-        <RouteWithLayout
+          path="/activity-reports/:activityReportId/:currentPage?"
+          layout={MainLayout}
+          component={ActivityReport}
+        />
+        {admin && (
+          <RouteWithLayout
             path="/admin/:userId?"
-            layout={MainLayout} component={Admin}
+            layout={MainLayout}
+            component={Admin}
           />
-          )}
-
+        )}
         <RouteWithLayout layout={MainLayout} component={NotFound} />
-
       </Switch>
     </div>
   );

@@ -1,5 +1,5 @@
 .landing {
-  max-width: 100%;
+  max-width: fit-content;
 }
   
 .pagination ul {
@@ -14,39 +14,39 @@
   padding-right: 5px;
 }
 
-h1 {
+h1.landing {
   font-size: 45px;
   font-family: 'Times New Roman', Times, serif;
 }
 
-.usa-table {
-  line-height: 2.5;
+.landing .usa-table {
+  line-height: 1.5;
 }
 
-.usa-table caption {
+.landing .usa-table caption {
   font-size: 19px;
-  padding: 20px;
+  padding: 14px 0px 17px 20px;
   margin-bottom: -0.25rem;
 }
 
-.usa-table thead th {
+.landing .usa-table thead th {
   font-size: 13px;
   white-space: nowrap;
 }
 
-.usa-table--borderless th:first-child {
+.landing .usa-table--borderless th:first-child {
   padding-left: 20px;
 }
 
-.usa-table td {
+.landing .usa-table td {
   font-size: 15px;
   white-space: nowrap;
   background-color: transparent;
   border-style: none;
 }
 
-.usa-button {
-  margin-left: 25px;
+.landing .usa-button {
+  margin-left: 45px;
   vertical-align: middle;
 }
 
@@ -63,7 +63,6 @@ h1 {
 
 .usa-section {
   margin-left: 250px;
-  max-width: fit-content;
 }
 
 .smart-hub--table-collection {
@@ -90,6 +89,10 @@ h1 {
   color: #148439;
 }
 
+.smart-hub--status- {
+  background: #f8f8f8;
+}
+
 .smart-hub--table-tag-status {
   text-align: center;
   font-weight: bold;
@@ -101,8 +104,31 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
-  width: 130px;
+  width: 210px;
   vertical-align: middle;
+}
+
+.smart-hub--dotdotdot {
+  font-size: 25px;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  padding-bottom: 15px;
+  line-height: 0.75;
+}
+
+.smart-hub--plus {
+  font-size: 40px;
+}
+
+.smart-hub--new-report {
+  margin-left: 10px;
+  margin-top: 7px;
+  float: right;
+}
+
+.smart-hub--new-report-btn {
+  line-height: 0.5;
 }
 
 thead th.ascending::after {
@@ -115,4 +141,8 @@ thead th.descending::after {
   content: "▼";
   display: inline-block;
   margin-left: 0.25em;
+}
+
+.landing .usa-alert {
+  padding: 20px;
 }

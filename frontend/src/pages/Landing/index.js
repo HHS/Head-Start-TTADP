@@ -1,51 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import { Link, Tag, Table } from '@trussworks/react-uswds';
-import { Helmet } from 'react-helmet';
+import React, { useState, useEffect } from "react";
+import { Tag, Table, Alert } from "@trussworks/react-uswds";
+import { Helmet } from "react-helmet";
+import moment from "moment";
+import { Link } from "react-router-dom";
 
-import UserContext from '../../UserContext';
-import Container from '../../components/Container';
-import { getReports } from '../../fetchers/activityReports';
-import 'uswds/dist/css/uswds.css';
-// import '@trussworks/react-uswds/lib/uswds.css'
-import '@trussworks/react-uswds/lib/index.css';
-import EllipsisText from "react-ellipsis-text";
-import Pagination from "react-js-pagination";
-import './index.css';
-// import { GridContainer, Grid } from '@trussworks/react-uswds';
-// import './index.css';
+import UserContext from "../../UserContext";
+import Container from "../../components/Container";
+import { getReports } from "../../fetchers/activityReports";
+import "uswds/dist/css/uswds.css";
+import "@trussworks/react-uswds/lib/index.css";
+import "./index.css";
 
-function renderReports(reports, offset, perPage) {
-  return reports.map((report) => {
+function renderReports(reports) {
+  const emptyReport = {
+    id: '',
+    activityRecipients: [],
+    startDate: '',
+    author: '',
+    topics: [],
+    collaborators: [],
+    lastSaved: '',
+    status: ''
+  };
+
+  const displayReports = reports.length ? reports : [emptyReport];
+
+  return displayReports.map((report) => {
     const {
-      id, activityRecipients, startDate, author, topics, collaborators, lastSaved, status
+      id,
+      activityRecipients,
+      startDate,
+      author,
+      topics,
+      collaborators,
+      lastSaved,
+      status,
     } = report;
 
     const recipientsTitle = activityRecipients.reduce((result, ar) => {
-      return result + ar.grant.grantee.name + '\n';
+      return result + (ar.grant ? ar.grant.grantee.name : ar.name) + "\n";
     }, "");
 
-    const recipients = activityRecipients.map(ar => (
-        <Tag className='smart-hub--table-collection'>{ar.grant.grantee.name}</Tag>
+    const recipients = activityRecipients.map((ar, index) => (
+      <Tag
+        key={`${ar.name?.slice(1, 3)}_${index}`}
+        className="smart-hub--table-collection"
+      >
+        {ar.grant ? ar.grant.grantee.name : ar.name}
+      </Tag>
     ));
 
-    const fullId = `R${author.homeRegionId < 10 ? ('0' + author.homeRegionId) : author.homeRegionId}-${id <= 999999 ? ('00000' + id).slice(-6) : id}`;
+    const topicsTitle = topics.reduce((result, topic) => {
+      return result + topic + "\n";
+    }, "");
+
+    const topicsWithTags = topics.map((topic, index) => (
+      <Tag
+        key={`${topic.slice(1, 3)}_${index}`}
+        className="smart-hub--table-collection"
+      >
+        {topic}
+      </Tag>
+    ));
+
+    const collaboratorsTitle = collaborators.reduce((result, collaborator) => {
+      return result + collaborator.name + "\n";
+    }, "");
+
+    const collaboratorsWithTags = collaborators.map((collaborator, index) => (
+      <Tag
+        key={`${collaborator.name?.slice(1, 3)}_${index}`}
+        className="smart-hub--table-collection"
+      >
+        {collaborator.name}
+      </Tag>
+    ));
+
+    const fullId = !id ? '' : `R${
+      author.homeRegionId < 10 ? "0" + author.homeRegionId : author.homeRegionId
+    }-${id <= 999999 ? ("00000" + id).slice(-6) : id}`;
 
     return (
-      <tr>
+      <tr key={`landing_${id}`}>
         <td>
-          <Link href="/activity-reports">{fullId}</Link>
+          <Link
+            to={`/activity-reports/${id}/activity-summary`}
+            href={`/activity-reports/${id}/activity-summary`}
+          >
+            {fullId}
+          </Link>
         </td>
         <td>
-          <span className='smart-hub--ellipsis' title={recipientsTitle}>{recipients}</span>
+          <span className="smart-hub--ellipsis" title={recipientsTitle}>
+            {recipients}
+          </span>
         </td>
         <td>{startDate}</td>
         <td>
-          <span className='smart-hub--ellipsis' title={author.fullName}>{author.fullName}</span>
+          <span className="smart-hub--ellipsis" title={author.fullName}>
+            {author.fullName}
+          </span>
         </td>
-        <td>{topics}</td>
-        <td>{collaborators}</td>
+        <td>
+          <span className="smart-hub--ellipsis" title={topicsTitle}>
+            {topicsWithTags}
+          </span>
+        </td>
+        <td>
+          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
+            {collaboratorsWithTags}
+          </span>
+        </td>
         <td>{lastSaved}</td>
-        <td><Tag className={`smart-hub--table-tag-status smart-hub--status-${status}`}>{status}</Tag></td>
+        <td>
+          <Tag
+            className={`smart-hub--table-tag-status smart-hub--status-${status}`}
+          >
+            {status}
+          </Tag>
+        </td>
+        <td>
+          <button className="smart-hub--dotdotdot">...</button>
+        </td>
       </tr>
     );
   });
@@ -55,24 +131,24 @@ function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [error, updateError] = useState();
-  const [sortConfig, setSortConfig] = React.useState({ key: 'lastSaved', direction: 'descending'});
-  const [offset, setOffset] = useState(1);
-  const [perPage] = useState(1);
-  const [pageCount, setPageCount] = useState(1)
-  const [activePage, setActivePage] = useState(1)
+  const [sortConfig, setSortConfig] = React.useState({
+    key: "lastSaved",
+    direction: "descending",
+  });
 
-  const requestSort = key => {
-    console.log(`requesting ${key}`);
-    let direction = 'ascending';
-    console.log('before');
-    console.log(sortConfig);
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+  const requestSort = (key) => {
+    let direction = "ascending";
+
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
     }
     setSortConfig({ key, direction });
-    console.log('after');
-    console.log(sortConfig);
-  }
+    updateReports(sortedReports);
+  };
   let sortedReports = [...reports];
   React.useMemo(() => {
     if (sortConfig !== null) {
@@ -81,47 +157,51 @@ function Landing() {
         const getValue = (item) =>
           keys.reduce((object, key) => {
             const result = (object || {})[key];
-            if (key === 'activityRecipients') {
-              return result.reduce((longString, ar) => {
-                return longString + ' ' + ar.name;
-              }, "");
+            if (key === "activityRecipients" || key === "collaborators") {
+              return result[0]?.name;
+            } else if (key === "topics") {
+              return result[0];
+            } else if (key === "startDate" || key === "lastSaved") {
+              let date = (object || {})[key];
+              // Format with year first
+              return date ? moment(date, "MM/DD/YYYY", 'America/New_York').format("YYYY-MM-DD") : undefined;
             } else {
               return (object || {})[key];
             }
           }, item);
-        console.log(`Value a: ${getValue(a)}`);
+
         if (getValue(a) < getValue(b)) {
           return sortConfig.direction === "descending" ? -1 : 1;
         }
         if (getValue(a) > getValue(b)) {
           return sortConfig.direction === "descending" ? 1 : -1;
         }
+        if (getValue(a) === undefined) {
+          if (getValue(b) !== undefined) {
+            return sortConfig.direction === "descending" ? 1 : -1;
+          }
+        }
+        if (getValue(b) === undefined) {
+          if (getValue(a) !== undefined) {
+            return sortConfig.direction === "descending" ? -1 : 1;
+          }
+        }
         return 0;
       });
     }
     return sortedReports;
-  }, [reports, sortConfig]);
-
-const handlePageChange= (pageNumber) => {
-  console.log(`active page is ${pageNumber}`);
-  setActivePage(pageNumber);
-  setOffset(pageNumber);
-}
+  }, [sortConfig, sortedReports]);
 
   useEffect(() => {
     async function fetchReports() {
       setIsLoaded(false);
       try {
         const reps = await getReports();
-        // updateReports(await getReports());
-        // const slice = reps.slice(offset-1, offset - 1 + perPage);
-        // setData(slice);
-        // updateReports(slice);
         updateReports(reps);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
-        updateError('Unable to fetch reports');
+        updateError("Unable to fetch reports");
       }
       setIsLoaded(true);
     }
@@ -135,6 +215,10 @@ const handlePageChange= (pageNumber) => {
     return sortConfig.key === name ? sortConfig.direction : undefined;
   };
 
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <Helmet>
@@ -146,91 +230,85 @@ const handlePageChange= (pageNumber) => {
             <h1 className="landing">
               Activity Reports
               <Link
+                to={`/activity-reports/new`}
                 referrerPolicy="same-origin"
-                className="usa-button"
+                className="usa-button smart-hub--new-report-btn"
                 variant="unstyled"
-                href="/activity-reports/new"
               >
-                + New Activity Report
+                <span className="smart-hub--plus">+</span>
+                <span className="smart-hub--new-report">
+                  New Activity Report
+                </span>
               </Link>
+              {error && (
+                <Alert type="error" role="alert">
+                  {error}
+                </Alert>
+              )}
             </h1>
-            <Container className="landing" padding={0}>
-              <Table bordered={false}>
-                <caption className="smart-hub--table-caption">
-                  My activity report alerts
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Report ID</th>
-                    <th
-                      scope="col"
-                      onClick={() => {
-                        requestSort("activityRecipients");
-                        updateReports(sortedReports);
-                      }}
-                    >
-                      Grantee
-                    </th>
-                    <th scope="col">Start date</th>
-                    <th
-                      scope="col"
-                      onClick={() => {
-                        requestSort("author.name");
-                        updateReports(sortedReports);
-                      }}
-                    >
-                      Creator
-                    </th>
-                    <th scope="col">Collaborator(s)</th>
-                    <th
-                      scope="col"
-                      onClick={() => {
-                        requestSort("status");
-                        updateReports(sortedReports);
-                      }}
-                    >
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </Table>
-            </Container>
             <Container className="landing" padding={0}>
               <Table className="usa-table usa-table--borderless usa-table--striped">
                 <caption>Activity reports</caption>
                 <thead>
                   <tr>
-                    <th scope="col">Report ID</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("regionId");
+                      }}
+                      className={getClassNamesFor("regionId")}
+                    >
+                      Report ID
+                    </th>
                     <th
                       scope="col"
                       onClick={() => {
                         requestSort("activityRecipients");
-                        updateReports(sortedReports);
                       }}
                       className={getClassNamesFor("activityRecipients")}
                     >
                       Grantee
                     </th>
-                    <th scope="col">Start date</th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("startDate");
+                      }}
+                      className={getClassNamesFor("startDate")}
+                    >
+                      Start date
+                    </th>
                     <th
                       scope="col"
                       onClick={() => {
                         requestSort("author.name");
-                        updateReports(sortedReports);
                       }}
                       className={getClassNamesFor("author.name")}
                     >
                       Creator
                     </th>
-                    <th scope="col">Topic(s)</th>
-                    <th scope="col">Collaborator(s)</th>
                     <th
                       scope="col"
+                      onClick={() => {
+                        requestSort("topics");
+                      }}
+                      className={getClassNamesFor("topics")}
+                    >
+                      Topic(s)
+                    </th>
+                    <th
+                      scope="col"
+                      onClick={() => {
+                        requestSort("collaborators");
+                      }}
+                      className={getClassNamesFor("collaborators")}
+                    >
+                      Collaborator(s)
+                    </th>
+                    <th
                       scope="col"
                       onClick={() => {
                         requestSort("lastSaved");
-                        updateReports(sortedReports);
                       }}
                       className={getClassNamesFor("lastSaved")}
                     >
@@ -246,9 +324,10 @@ const handlePageChange= (pageNumber) => {
                     >
                       Status
                     </th>
+                    <th></th>
                   </tr>
                 </thead>
-                {renderReports(reports, offset, perPage)}
+                <tbody>{renderReports(reports)}</tbody>
               </Table>
             </Container>
           </>

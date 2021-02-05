@@ -185,6 +185,7 @@ async function update(newReport, activityReportId, transaction) {
 
 export function activityReports() {
   return ActivityReport.findAll({
+    attributes: ['id', 'startDate', 'lastSaved', 'topics', 'status', 'regionId'],
     include: [
       {
         model: ActivityRecipient,
@@ -215,11 +216,16 @@ export function activityReports() {
         attributes: ['name', 'role', 'fullName', 'homeRegionId'],
         as: 'author',
       },
+      {
+        model: User,
+        attributes: ['name'],
+        as: 'collaborators',
+        through: { attributes: [] },
+      },
     ],
   });
 }
 
-// export async function createOrUpdate(newActivityReport, activityReportId) {
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
@@ -232,7 +238,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
     if (report) {
-      savedReport = await update(updatedFields, report, transaction);
+      savedReport = await update(updatedFields, report.id, transaction);
     } else {
       savedReport = await create(updatedFields, transaction);
     }

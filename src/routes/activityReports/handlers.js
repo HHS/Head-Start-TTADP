@@ -2,7 +2,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
 import {
-  possibleRecipients, activityReportById, createOrUpdate,
+  possibleRecipients, activityReportById, createOrUpdate, activityReports,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 
@@ -134,6 +134,7 @@ export async function saveReport(req, res) {
 
     newReport.lastUpdatedById = userId;
 
+    console.log('trying to update');
     const savedReport = await createOrUpdate(newReport, report);
     res.json(savedReport);
   } catch (error) {
