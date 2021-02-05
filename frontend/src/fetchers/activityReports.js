@@ -1,5 +1,6 @@
 import join from 'url-join';
 import { get, put, post } from './index';
+import { DECIMAL_BASE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 
@@ -9,13 +10,13 @@ export const getApprovers = async (region) => {
 };
 
 export const submitReport = async (reportId, data) => {
-  const url = join(activityReportUrl, reportId.toString(10), 'submit');
+  const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'submit');
   const report = await post(url, data);
   return report.json();
 };
 
 export const saveReport = async (reportId, data) => {
-  const report = await put(join(activityReportUrl, reportId.toString(10)), data);
+  const report = await put(join(activityReportUrl, reportId.toString(DECIMAL_BASE)), data);
   return report.json();
 };
 
@@ -25,7 +26,7 @@ export const createReport = async (data) => {
 };
 
 export const getReport = async (reportId) => {
-  const report = await get(join(activityReportUrl, reportId.toString(10)));
+  const report = await get(join(activityReportUrl, reportId.toString(DECIMAL_BASE)));
   return report.json();
 };
 
@@ -38,4 +39,10 @@ export const getCollaborators = async (region) => {
   const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
   const collaborators = await get(url);
   return collaborators.json();
+};
+
+export const reviewReport = async (reportId, data) => {
+  const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'review');
+  const report = await put(url, data);
+  return report.json();
 };

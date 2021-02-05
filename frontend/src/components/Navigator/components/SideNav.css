@@ -49,8 +49,13 @@
   color: #f8f8f8;
 }
 
+.smart-hub--tag-needs-action {
+  background-color: #f9e0e4;
+  color: #d42240;
+}
+
 .smart-hub--tag {
-  width: 84px;
+  width: 94px;
   text-align: center;
   font-weight: normal;
   display: inline-block;

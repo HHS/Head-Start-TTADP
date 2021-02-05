@@ -7,6 +7,7 @@ import {
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
+import { DECIMAL_BASE } from '../../Constants';
 
 const NUMBER_FIELDS = [
   'homeRegionId',
@@ -29,13 +30,13 @@ function UserSection({ user, onSave }) {
     const { name, value } = e.target;
     updateUser({
       ...formUser,
-      [name]: NUMBER_FIELDS.includes(name) ? parseInt(value, 10) : value,
+      [name]: NUMBER_FIELDS.includes(name) ? parseInt(value, DECIMAL_BASE) : value,
     });
   };
 
   const onPermissionChange = (e, strRegion) => {
-    const scope = parseInt(e.target.name, 10);
-    const region = parseInt(strRegion, 10);
+    const scope = parseInt(e.target.name, DECIMAL_BASE);
+    const region = parseInt(strRegion, DECIMAL_BASE);
     const { checked } = e.target;
 
     if (checked) {
