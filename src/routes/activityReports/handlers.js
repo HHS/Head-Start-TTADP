@@ -5,6 +5,7 @@ import {
   possibleRecipients, activityReportById, createOrUpdate, review,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
+import { REPORT_STATUSES } from '../../constants';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -69,7 +70,7 @@ export async function submitReport(req, res) {
     const { activityReportId } = req.params;
     const { approvingManagerId, additionalNotes } = req.body;
     const newReport = { approvingManagerId, additionalNotes };
-    newReport.status = 'Submitted';
+    newReport.status = REPORT_STATUSES.SUBMITTED;
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(activityReportId);
@@ -167,7 +168,7 @@ export async function createReport(req, res) {
       return;
     }
     const userId = parseInt(req.session.userId, 10);
-    newReport.status = 'draft';
+    newReport.status = REPORT_STATUSES.DRAFT;
     newReport.userId = userId;
     newReport.lastUpdatedById = userId;
     const user = await userById(req.session.userId);

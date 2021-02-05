@@ -8,6 +8,7 @@ import db, {
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../../constants';
 
 const request = require('supertest');
 
@@ -42,7 +43,7 @@ mockSession.userId = mockUser.id;
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: 'draft',
+  status: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',

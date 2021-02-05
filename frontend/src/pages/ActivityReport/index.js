@@ -16,6 +16,7 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
+import { REPORT_STATUSES } from '../../Constants';
 import {
   submitReport,
   saveReport,
@@ -117,7 +118,7 @@ function ActivityReport({ match, user, location }) {
 
         updateAdditionalData({ recipients, collaborators, approvers });
         updateInitialFormData(report);
-        updateStatus(report.status || 'draft');
+        updateStatus(report.status || REPORT_STATUSES.DRAFT);
         updateApprovingManager(report.approvingManagerId === user.id);
         updateCanWrite(canWriteReport);
 
@@ -152,8 +153,9 @@ function ActivityReport({ match, user, location }) {
   }
 
   if (!currentPage) {
+    const defaultPage = status === REPORT_STATUSES.DRAFT ? 'activity-summary' : 'review';
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Redirect push to={`/activity-reports/${activityReportId}/${defaultPage}`} />
     );
   }
 

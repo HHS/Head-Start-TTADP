@@ -4,6 +4,7 @@ import db, {
 import {
   createOrUpdate, activityReportById,
 } from './activityReports';
+import { REPORT_STATUSES } from '../constants';
 
 const mockUser = {
   id: 100,
@@ -13,7 +14,7 @@ const mockUser = {
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: 'draft',
+  status: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,

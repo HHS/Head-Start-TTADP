@@ -135,7 +135,7 @@ function Navigator({
               additionalData,
               onReview,
               approvingManager,
-              reportId,
+              status,
             )}
           {!page.review
             && (
