@@ -17,6 +17,7 @@ services:
   test-frontend:
     build:
       context: .
+    container_name: test-frontend
     command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true

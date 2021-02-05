@@ -36,7 +36,7 @@ const RenderReview = ({
 const renderReview = (
   allComplete,
   approvingManager = false,
-  initialData = {},
+  initialData = { additionalNotes: '' },
   onSubmit = () => {},
   onReview = () => {},
   approvingManagerId = null,
@@ -61,6 +61,27 @@ describe('ReviewSubmit', () => {
       renderReview(true, true);
       const header = await screen.findByText('Review and approve report');
       expect(header).toBeVisible();
+    });
+
+    it('allows the manager to review the report', async () => {
+      const onReview = jest.fn();
+      renderReview(true, true, { additionalNotes: '', status: 'Approved' }, () => {}, onReview);
+      const reviewButton = await screen.findByRole('button');
+      userEvent.click(reviewButton);
+      await waitFor(() => expect(onReview).toHaveBeenCalled());
+    });
+
+    it('the review button handles errors', async () => {
+      const onReview = jest.fn();
+      onReview.mockImplementation(() => {
+        throw new Error();
+      });
+
+      renderReview(true, true, { additionalNotes: '', status: 'Approved' }, () => {}, onReview);
+      const reviewButton = await screen.findByRole('button');
+      userEvent.click(reviewButton);
+      const error = await screen.findByTestId('alert');
+      expect(error).toHaveTextContent('Unable to review report');
     });
   });
 
@@ -94,6 +115,29 @@ describe('ReviewSubmit', () => {
       expect(button).toBeDisabled();
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['1']);
       expect(await screen.findByRole('button')).toBeEnabled();
+    });
+
+    it('the submit button calls onSubmit', async () => {
+      const onSubmit = jest.fn();
+      renderReview(true, false, {}, onSubmit, () => {}, 1);
+      const button = await screen.findByRole('button');
+      expect(button).toBeEnabled();
+      userEvent.click(button);
+      await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    });
+
+    it('the submit button handles errors', async () => {
+      const onSubmit = jest.fn();
+      onSubmit.mockImplementation(() => {
+        throw new Error();
+      });
+
+      renderReview(true, false, {}, onSubmit, () => {}, 1);
+      const button = await screen.findByRole('button');
+      expect(button).toBeEnabled();
+      userEvent.click(button);
+      const error = await screen.findByTestId('alert');
+      expect(error).toHaveTextContent('Unable to submit report');
     });
   });
 
