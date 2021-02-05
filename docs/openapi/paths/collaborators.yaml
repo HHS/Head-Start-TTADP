@@ -20,4 +20,4 @@ get:
           schema:
             type: array
             items:
-              $ref: '../../index.yaml#/components/schemas/selectableUser'
+              $ref: '../index.yaml#/components/schemas/selectableUser'

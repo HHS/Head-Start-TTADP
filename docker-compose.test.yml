@@ -1,0 +1,39 @@
+version: "3.5"
+services:
+  test-backend:
+    build:
+      context: .
+    container_name: test-backend
+    command: yarn server
+    user: ${CURRENT_USER:-root}
+    depends_on:
+      - test-db
+    environment:
+      - POSTGRES_HOST=test-db
+    volumes:
+      - ".:/app:rw"
+    networks:
+      - ttadp-test
+  test-frontend:
+    build:
+      context: .
+    container_name: test-frontend
+    command: yarn start
+    user: ${CURRENT_USER:-root}
+    stdin_open: true
+    volumes:
+      - "./frontend:/app:rw"
+      - "./scripts:/app/scripts"
+    environment:
+      - BACKEND_PROXY=http://test-backend:8080
+    networks:
+      - ttadp-test
+  test-db:
+    image: postgres:12.4
+    container_name: test-db
+    env_file: .env
+    networks:
+      - ttadp-test
+# Use non-default network so we don't conflict with the developer environment
+networks:
+  ttadp-test:
