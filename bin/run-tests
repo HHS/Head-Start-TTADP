@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo "Running tests in using test config 'docker-compose.test.yml'"
+# Start containers
+docker-compose -f 'docker-compose.test.yml' up -d
+
+# Let postgres initialize
+echo "Give postgres a few seconds to start up..."
+sleep 5
+
+# Migrate and seed db
+docker exec test-backend bash -c "yarn db:migrate"
+docker exec test-backend bash -c "yarn db:seed;"
+
+# Test backend
+docker exec test-backend bash -c "yarn test:ci"
+
+# Test frontend
+docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+
+# Cleanup
+docker-compose \
+    -f 'docker-compose.test.yml' \
+    down --volumes

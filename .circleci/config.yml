@@ -228,7 +228,7 @@ jobs:
       - run:
           name: Run cucumber
           command: |
-            sleep 5
+            sleep 10
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
@@ -240,12 +240,12 @@ jobs:
       - run:
           name: Start up local server
           command: | # production style build (single BE server with static FE)
-            docker-compose -f docker-compose-test.yml run --rm server yarn install --production=false
-            docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend install --production=false
-            docker-compose -f docker-compose-test.yml run --rm server yarn build
-            docker-compose -f docker-compose-test.yml run --rm server yarn --cwd frontend run build
-            docker-compose -f docker-compose-test.yml up -d
-            docker-compose -f docker-compose-test.yml exec server yarn db:migrate:ci
+            docker-compose -f docker-compose.dss.yml run --rm server yarn install --production=false
+            docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
+            docker-compose -f docker-compose.dss.yml run --rm server yarn build
+            docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
+            docker-compose -f docker-compose.dss.yml up -d
+            docker-compose -f docker-compose.dss.yml exec server yarn db:migrate:ci
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-weekly
