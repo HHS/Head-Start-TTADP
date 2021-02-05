@@ -30,6 +30,8 @@ When writing tests that create database records, it might also help to use a `tr
 
 To simplify running tests in Docker, there is a bash script, `./bin/run-tests` that will run the appropriate commands to start `test-` variations of the services used in tests. You should be able to run tests using that command while your development Docker environment is running. The script uses a separate `docker-compose.test.yml` which does not create a user-accessible network and cleans up after itself once tests have run.
 
+By default, `./bin/run-tests` will run both backend and frontend tests. If you want to run only one set of tests, supply 'frontend' or 'backend' as a parameter. So to run only the backend tests, you'd run `./bin/run-tests backend`.
+
 ### Running tests in your development Docker environment
 
 When running tests in Docker, be aware that there are tests that will modify/delete database records. For tests to run, the 'db' service needs to exist and `db:migrate` and `db:seed` need to have been run (to create the tables and populate certain records).

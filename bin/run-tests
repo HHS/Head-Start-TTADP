@@ -1,24 +1,52 @@
 #!/bin/bash
 
-echo "Running tests in using test config 'docker-compose.test.yml'"
-# Start containers
-docker-compose -f 'docker-compose.test.yml' up -d
+declare -a options=(frontend backend)
+declare lr=">>>>>>>>"
 
-# Let postgres initialize
-echo "Give postgres a few seconds to start up..."
-sleep 5
+echo_heading() {
+    echo
+    echo "$lr" "$*"
+}
 
-# Migrate and seed db
-docker exec test-backend bash -c "yarn db:migrate"
-docker exec test-backend bash -c "yarn db:seed;"
+main(){
+    local opt=""
 
-# Test backend
-docker exec test-backend bash -c "yarn test:ci"
+    for o in "${options[@]}"; do
+        if [[ "${1}" == "$o"  ]]; then
+            opt="$o";
+        fi
+    done
 
-# Test frontend
-docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+    echo_heading "Running tests in using test config 'docker-compose.test.yml'"
+    # Start containers
+    docker-compose -f 'docker-compose.test.yml' up -d
 
-# Cleanup
-docker-compose \
-    -f 'docker-compose.test.yml' \
-    down --volumes
+    # Let postgres initialize
+    echo_heading "Giving postgres a few seconds to start up..."
+    sleep 5
+
+    # Migrate and seed db
+    echo_heading "Migrating & seeding db"
+    docker exec test-backend bash -c "yarn db:migrate"
+    docker exec test-backend bash -c "yarn db:seed;"
+
+    if [[ "$opt" == "backend" || -z "$opt" ]]; then
+        # Test backend
+        echo_heading "Running backend tests"
+        docker exec test-backend bash -c "yarn test:ci"
+    fi
+
+    if [[ "$opt" == "frontend" || -z "$opt" ]]; then
+        # Test frontend
+        echo_heading "Running frontend tests"
+        docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+    fi
+
+    # Cleanup
+    echo_heading "Cleaning up test containers"
+    docker-compose \
+        -f 'docker-compose.test.yml' \
+        down --volumes
+}
+
+main "$@"
