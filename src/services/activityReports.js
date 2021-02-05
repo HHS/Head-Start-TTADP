@@ -232,7 +232,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
     if (report) {
-      savedReport = await update(updatedFields, report.id, transaction);
+      savedReport = await update(updatedFields, report, transaction);
     } else {
       savedReport = await create(updatedFields, transaction);
     }
