@@ -1,24 +1,77 @@
 #!/bin/bash
 
-echo "Running tests in using test config 'docker-compose.test.yml'"
-# Start containers
-docker-compose -f 'docker-compose.test.yml' up -d
+declare -a options=(frontend backend)
+declare lr=">>>>>>>>"
+declare -i exit_code=0
 
-# Let postgres initialize
-echo "Give postgres a few seconds to start up..."
-sleep 5
+log() {
+    echo "$lr $*"
+}
 
-# Migrate and seed db
-docker exec test-backend bash -c "yarn db:migrate"
-docker exec test-backend bash -c "yarn db:seed;"
+check_exit() {
+    if [[ "$1" -ne 0 ]]; then
+        echo "$lr last docker-compose command failed"
+        ((exit_code++))
+    fi
+}
 
-# Test backend
-docker exec test-backend bash -c "yarn test:ci"
+main() {
+    local opt=""
 
-# Test frontend
-docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+    for o in "${options[@]}"; do
+        if [[ "${1}" == "$o"  ]]; then
+            opt="$o";
+        fi
+    done
 
-# Cleanup
-docker-compose \
-    -f 'docker-compose.test.yml' \
-    down --volumes
+    log "Running tests in using test config 'docker-compose.test.yml'"
+    # Start containers
+    docker-compose -f 'docker-compose.test.yml' up -d
+    check_exit "$?"
+
+    # Let postgres initialize
+    echo
+    log "Giving postgres a few seconds to start up..."
+    sleep 5
+
+    # Migrate and seed db
+    echo
+    log "Migrating & seeding db"
+    docker exec test-backend bash -c "yarn db:migrate"
+    check_exit "$?"
+    docker exec test-backend bash -c "yarn db:seed;"
+    check_exit "$?"
+
+    if [[ "$opt" == "backend" || -z "$opt" ]]; then
+        # Test backend
+        echo
+        log "Running backend tests"
+        docker exec test-backend bash -c "yarn test:ci"
+        check_exit "$?"
+    fi
+
+    if [[ "$opt" == "frontend" || -z "$opt" ]]; then
+        # Test frontend
+        echo
+        log "Running frontend tests"
+        docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+        check_exit "$?"
+    fi
+
+    # Cleanup
+    echo
+    log "Cleaning up test containers"
+    docker-compose \
+        -f 'docker-compose.test.yml' \
+        down --volumes
+    check_exit "$?"
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo
+        log "Errors occurred during script execution"
+    fi
+
+    exit "$exit_code"
+}
+
+main "$@"
