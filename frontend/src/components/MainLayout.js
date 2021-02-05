@@ -2,8 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { GridContainer } from '@trussworks/react-uswds';
 
-function MainLayout({
-  children}) {
+function MainLayout({ children }) {
   return (
     <GridContainer>
       {children}

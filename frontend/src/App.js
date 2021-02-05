@@ -60,13 +60,7 @@ function App() {
   }
 
   const admin = isAdmin(user);
-  const RouteWithLayout = ({ component: Component, layout: Layout, ...rest }) => (
-    <Route {...rest} render={props => (
-      <Layout>
-        <Component {...props} />
-      </Layout>
-    )} />
-  )
+
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
       <IdleModal
@@ -75,13 +69,22 @@ function App() {
         logoutUser={logout}
       />
       <Switch>
-        <RouteWithLayout
+        <Route
           exact
           path="/activity-reports"
-          layout={LandingLayout}
-          component={Landing}
+          render={({ match }) => (
+            <LandingLayout><Landing match={match} /></LandingLayout>
+          )}
         />
-        <RouteWithLayout exact path="/" layout={MainLayout} component={Home} />
+
+        <Route
+          exact
+          path="/"
+          render={() => (
+            <MainLayout><Home /></MainLayout>
+          )}
+        />
+
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
@@ -90,13 +93,18 @@ function App() {
             </MainLayout>
           )}
         />
+
         {admin && (
           <Route
             path="/admin/:userId?"
             render={({ match }) => <MainLayout><Admin match={match} /></MainLayout>}
           />
         )}
-        <RouteWithLayout layout={MainLayout} component={NotFound} />
+
+        <Route
+          render={() => <MainLayout><NotFound /></MainLayout>}
+        />
+
       </Switch>
     </div>
   );
@@ -117,10 +125,10 @@ function App() {
           <div className="background-stripe" />
           <section className="usa-section">
 
-              {!authenticated && (
-                <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-              )}
-              {authenticated && renderAuthenticatedRoutes()}
+            {!authenticated && (
+            <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+            )}
+            {authenticated && renderAuthenticatedRoutes()}
 
           </section>
         </UserContext.Provider>
