@@ -97,13 +97,13 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where }, { transaction });
 }
 
-// async function update(newReport, report, transaction) {
-//   const updatedReport = await report.update(newReport, {
-//     transaction,
-//     fields: _.keys(newReport),
-//   });
-//   return updatedReport;
-// }
+async function update(newReport, report, transaction) {
+  const updatedReport = await report.update(newReport, {
+    transaction,
+    fields: _.keys(newReport),
+  });
+  return updatedReport;
+}
 
 async function create(report, transaction) {
   return ActivityReport.create(report, { transaction });
@@ -175,12 +175,6 @@ export function activityReportById(activityReportId) {
       },
     ],
   });
-}
-
-async function update(newReport, activityReportId, transaction) {
-  const report = await activityReportById(activityReportId);
-  await report.update(newReport, { transaction });
-  return report;
 }
 
 export function activityReports() {
