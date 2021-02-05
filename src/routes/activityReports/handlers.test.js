@@ -1,7 +1,15 @@
 import {
-  getReport, saveReport, createReport, getActivityRecipients, getApprovers, submitReport,
+  getReport,
+  saveReport,
+  createReport,
+  getActivityRecipients,
+  getApprovers,
+  submitReport,
+  reviewReport,
 } from './handlers';
-import { activityReportById, createOrUpdate, possibleRecipients } from '../../services/activityReports';
+import {
+  activityReportById, createOrUpdate, possibleRecipients, review,
+} from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 
@@ -9,6 +17,7 @@ jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
   createOrUpdate: jest.fn(),
   possibleRecipients: jest.fn(),
+  review: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -41,6 +50,36 @@ const report = {
 describe('Activity Report handlers', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('reviewReport', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+      body: { status: 'Approved', managerNotes: 'notes' },
+    };
+
+    it('returns the new status', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      activityReportById.mockResolvedValue({ status: 'Approved' });
+      review.mockResolvedValue({ status: 'Approved' });
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await reviewReport(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ status: 'Approved' });
+    });
+
+    it('handles unauthorizedRequests', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => false,
+      }));
+      activityReportById.mockResolvedValue({ status: 'Approved' });
+      await reviewReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
   });
 
   describe('submitReport', () => {

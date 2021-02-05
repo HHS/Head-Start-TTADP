@@ -9,6 +9,7 @@ import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
 import { updateUser, getUsers } from '../../fetchers/Admin';
+import { DECIMAL_BASE } from '../../Constants';
 
 /**
  * Render the left hand user navigation in the Admin UI. Use the user's full name
@@ -65,7 +66,7 @@ function Admin(props) {
   useEffect(() => {
     if (userId) {
       updateSelectedUser(users.find((u) => (
-        u.id === parseInt(userId, 10)
+        u.id === parseInt(userId, DECIMAL_BASE)
       )));
       updateSaved(false);
     }
@@ -81,7 +82,7 @@ function Admin(props) {
 
   const filteredUsers = _.filter(users, (u) => {
     const { email, name } = u;
-    return `${email}${name}`.includes(userSearch);
+    return `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
   });
 
   const onSave = async (newUser) => {

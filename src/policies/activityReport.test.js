@@ -42,6 +42,20 @@ const manager = user(true, false, 3);
 const otherUser = user(false, true, 4);
 
 describe('Activity Report policies', () => {
+  describe('canReview', () => {
+    it('is true if the user is the approving manager', () => {
+      const report = activityReport(author.id, null, 'submitted', manager.id);
+      const policy = new ActivityReport(manager, report);
+      expect(policy.canReview()).toBeTruthy();
+    });
+
+    it('is false if the user is not the approving manager', () => {
+      const report = activityReport(author.id);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReview()).toBeFalsy();
+    });
+  });
+
   describe('canCreate', () => {
     it('is true if the user has write permissions in the region', () => {
       const report = activityReport(author.id);

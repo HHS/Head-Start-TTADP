@@ -2,7 +2,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
 import {
-  possibleRecipients, activityReportById, createOrUpdate, activityReports,
+  possibleRecipients, activityReportById, createOrUpdate, review, activityReports,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 
@@ -32,6 +32,33 @@ export async function getApprovers(req, res) {
 }
 
 /**
+ * Review a report setting it's status to approved or needs action
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function reviewReport(req, res) {
+  try {
+    const { activityReportId } = req.params;
+    const { status, managerNotes } = req.body;
+
+    const user = await userById(req.session.userId);
+    const report = await activityReportById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canReview()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedReport = await review(report, status, managerNotes);
+    res.json(savedReport);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
  * Flags a report as submitted for approval
  *
  * @param {*} req - request
@@ -42,7 +69,7 @@ export async function submitReport(req, res) {
     const { activityReportId } = req.params;
     const { approvingManagerId, additionalNotes } = req.body;
     const newReport = { approvingManagerId, additionalNotes };
-    newReport.status = 'submitted';
+    newReport.status = 'Submitted';
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(activityReportId);
@@ -53,7 +80,7 @@ export async function submitReport(req, res) {
       return;
     }
 
-    const savedReport = await createOrUpdate(newReport, activityReportId);
+    const savedReport = await createOrUpdate(newReport, report);
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

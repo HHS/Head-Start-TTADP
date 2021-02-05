@@ -5,7 +5,7 @@ import { render, screen, within } from '@testing-library/react';
 
 import UserPermissions from '../UserPermissions';
 import { withText } from '../../../testHelpers';
-import { SCOPE_IDS } from '../../../Constants';
+import { SCOPE_IDS, DECIMAL_BASE } from '../../../Constants';
 
 const {
   READ_ACTIVITY_REPORTS,
@@ -46,7 +46,7 @@ describe('UserPermissions', () => {
 
     it('has correct global permissions checked', () => {
       const checkbox = screen.getByRole('checkbox', { checked: true });
-      expect(checkbox.name).toBe(ADMIN.toString(10));
+      expect(checkbox.name).toBe(ADMIN.toString(DECIMAL_BASE));
     });
 
     it('displays the current regional permissions', () => {
