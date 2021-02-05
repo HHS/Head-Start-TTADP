@@ -2,13 +2,20 @@
 
 declare -a options=(frontend backend)
 declare lr=">>>>>>>>"
+declare -i exit_code=0
 
-echo_heading() {
-    echo
-    echo "$lr" "$*"
+log() {
+    echo "$lr $*"
 }
 
-main(){
+check_exit() {
+    if [[ "$1" -ne 0 ]]; then
+        echo "$lr last docker-compose command failed"
+        ((exit_code++))
+    fi
+}
+
+main() {
     local opt=""
 
     for o in "${options[@]}"; do
@@ -17,36 +24,54 @@ main(){
         fi
     done
 
-    echo_heading "Running tests in using test config 'docker-compose.test.yml'"
+    log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
     docker-compose -f 'docker-compose.test.yml' up -d
+    check_exit "$?"
 
     # Let postgres initialize
-    echo_heading "Giving postgres a few seconds to start up..."
+    echo
+    log "Giving postgres a few seconds to start up..."
     sleep 5
 
     # Migrate and seed db
-    echo_heading "Migrating & seeding db"
+    echo
+    log "Migrating & seeding db"
     docker exec test-backend bash -c "yarn db:migrate"
+    check_exit "$?"
     docker exec test-backend bash -c "yarn db:seed;"
+    check_exit "$?"
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
         # Test backend
-        echo_heading "Running backend tests"
+        echo
+        log "Running backend tests"
         docker exec test-backend bash -c "yarn test:ci"
+        check_exit "$?"
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then
         # Test frontend
-        echo_heading "Running frontend tests"
+        echo
+        log "Running frontend tests"
         docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+        check_exit "$?"
     fi
 
     # Cleanup
-    echo_heading "Cleaning up test containers"
+    echo
+    log "Cleaning up test containers"
     docker-compose \
         -f 'docker-compose.test.yml' \
         down --volumes
+    check_exit "$?"
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo
+        log "Errors occurred during script execution"
+    fi
+
+    exit "$exit_code"
 }
 
 main "$@"
