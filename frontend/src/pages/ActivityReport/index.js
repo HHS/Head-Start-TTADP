@@ -75,6 +75,8 @@ function ActivityReport({ match, user }) {
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
   const reportId = useRef();
+  const { name, role } = user;
+  const reportCreator = { name, role };
 
   useEffect(() => {
     const fetch = async () => {
@@ -172,6 +174,7 @@ function ActivityReport({ match, user }) {
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
+        reportCreator={reportCreator}
         reportId={reportId.current}
         currentPage={currentPage}
         additionalData={initialAdditionalData}
@@ -191,6 +194,8 @@ ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
+    name: PropTypes.string,
+    role: PropTypes.string,
   }).isRequired,
 };
 
