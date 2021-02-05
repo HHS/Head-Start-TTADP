@@ -8,7 +8,7 @@ const PrintSummary = ({ reportCreator }) => {
   const { name, role = '' } = reportCreator;
 
   return (
-    <div className="smart-hub-meta-summary grid-container print-only">
+    <div className="font-family-sans smart-hub-meta-summary grid-container print-only">
       <Grid row>
         <Grid col={6}>
           Report Creator
