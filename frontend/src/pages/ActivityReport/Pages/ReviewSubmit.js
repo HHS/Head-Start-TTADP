@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet';
 import Container from '../../../components/Container';
 import SubmitterReviewPage from './SubmitterReviewPage';
 import ApproverReviewPage from './ApproverReviewPage';
+import PrintSummary from './PrintSummary';
 import './ReviewSubmit.css';
 
 const ReviewSubmit = ({
@@ -19,6 +20,7 @@ const ReviewSubmit = ({
   approvers,
   approvingManager,
   initialData,
+  reportCreator,
 }) => {
   const { handleSubmit, register, formState } = hookForm;
   const { additionalNotes } = initialData;
@@ -56,6 +58,7 @@ const ReviewSubmit = ({
       <Helmet>
         <title>Review and submit</title>
       </Helmet>
+      <PrintSummary reportCreator={reportCreator} />
       <Accordion bordered={false} items={reviewItems} />
       <Container skipTopPadding className="smart-hub-review margin-top-2 padding-top-2">
         {error && (
@@ -106,6 +109,10 @@ ReviewSubmit.propTypes = {
   approvingManager: PropTypes.bool.isRequired,
   initialData: PropTypes.shape({
     additionalNotes: PropTypes.string,
+  }).isRequired,
+  reportCreator: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    role: PropTypes.string.isRequired,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   hookForm: PropTypes.object.isRequired,

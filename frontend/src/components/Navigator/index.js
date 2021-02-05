@@ -32,6 +32,7 @@ function Navigator({
   approvingManager,
   status,
   reportId,
+  reportCreator,
 }) {
   const [formData, updateFormData] = useState(initialData);
   const [errorMessage, updateErrorMessage] = useState();
@@ -135,6 +136,7 @@ function Navigator({
               onReview,
               approvingManager,
               reportId,
+              reportCreator,
             )}
           {!page.review
             && (
@@ -177,6 +179,10 @@ Navigator.propTypes = {
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
   reportId: PropTypes.node.isRequired,
+  reportCreator: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    role: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 Navigator.defaultProps = {
