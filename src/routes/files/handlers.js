@@ -4,6 +4,10 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { File } from '../../models';
 import s3Uploader from '../../lib/s3Uploader';
 
+import ActivityReport from '../../policies/activityReport';
+import { activityReportById } from '../../services/activityReports';
+import { userById } from '../../services/users';
+
 const fileType = require('file-type');
 const multiparty = require('multiparty');
 
@@ -48,6 +52,7 @@ export const updateStatus = async (fileId, fileStatus) => {
 export default async function uploadHandler(req, res) {
   const form = new multiparty.Form();
   form.parse(req, async (error, fields, files) => {
+    const { reportId, attachmentType } = fields;
     if (error) {
       res.status(500).send(error);
     }
@@ -56,13 +61,21 @@ export default async function uploadHandler(req, res) {
     let fileName;
     let type;
 
+    const user = await userById(req.session.userId);
+    const report = await activityReportById(reportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
     try {
       if (!files.file) {
         res.status(400).send({ error: 'file required' });
         return;
       }
       const { path, originalFilename, size } = files.file[0];
-      const { reportId, attachmentType } = fields;
       if (!size) {
         res.status(400).send({ error: 'fileSize required' });
       }

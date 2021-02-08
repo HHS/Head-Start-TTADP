@@ -8,6 +8,9 @@ import db, {
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
+import ActivityReportPolicy from '../../policies/activityReport';
+
+jest.mock('../../policies/activityReport');
 
 const request = require('supertest');
 
@@ -50,31 +53,35 @@ const reportObject = {
 };
 
 describe('File Upload', () => {
-  afterAll(() => {
+  let user;
+  let report;
+  let fileId;
+  beforeAll(async () => {
+    user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
+    report = await ActivityReport.create(reportObject);
+    process.env.NODE_ENV = 'test';
+    process.env.BYPASS_AUTH = 'true';
+    process.env.CURRENT_USER_ID = 100;
+  });
+  afterAll(async () => {
+    await File.destroy({ where: {} });
+    await ActivityReport.destroy({ where: { } });
+    await User.destroy({ where: { id: user.id } });
+    process.env = ORIGINAL_ENV; // restore original env
     db.sequelize.close();
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('File Upload Handlers happy path', () => {
-    let user;
-    let report;
-    let fileId;
-    beforeAll(async () => {
-      user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
-      report = await ActivityReport.create(reportObject);
-      process.env.NODE_ENV = 'test';
-      process.env.BYPASS_AUTH = 'true';
-      process.env.CURRENT_USER_ID = 100;
-    });
-    afterAll(async () => {
-      await File.destroy({ where: {} });
-      await ActivityReport.destroy({ where: { } });
-      await User.destroy({ where: { id: user.id } });
-      process.env = ORIGINAL_ENV; // restore original env
-    });
     beforeEach(() => {
       s3Uploader.mockReset();
     });
     it('tests a file upload', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
@@ -87,6 +94,9 @@ describe('File Upload', () => {
         });
     });
     it('checks the metadata was uploaded to the database', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
       const file = await File.findOne({ where: { id: fileId } });
       const uuid = file.dataValues.key.slice(0, -4);
       expect(file.dataValues.id).toBe(fileId);
@@ -98,23 +108,10 @@ describe('File Upload', () => {
   });
 
   describe('File Upload Handlers error handling', () => {
-    let user;
-    let report;
-    beforeAll(async () => {
-      user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
-      report = await ActivityReport.create(reportObject);
-      process.env.NODE_ENV = 'test';
-      process.env.BYPASS_AUTH = 'true';
-      process.env.CURRENT_USER_ID = 100;
-    });
-    afterAll(async () => {
-      await File.destroy({ where: {} });
-      await ActivityReport.destroy({ where: { } });
-      await User.destroy({ where: { id: user.id } });
-      db.sequelize.close();
-      process.env = ORIGINAL_ENV; // restore original env
-    });
     it('tests a file upload without a report id', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
       await request(app)
         .post('/api/files')
         .field('attachmentType', 'ATTACHMENT')
@@ -123,6 +120,9 @@ describe('File Upload', () => {
         .then(() => expect(s3Uploader).not.toHaveBeenCalled());
     });
     it('tests a file upload without a file', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
@@ -131,6 +131,9 @@ describe('File Upload', () => {
         .then(() => expect(s3Uploader).not.toHaveBeenCalled());
     });
     it('tests a file upload without a attachment', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
@@ -139,12 +142,28 @@ describe('File Upload', () => {
         .then(() => expect(s3Uploader).not.toHaveBeenCalled());
     });
     it('tests a file upload with an incorrect attachment value', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .field('attachmentType', 'FAKE')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'incorrect attachmentType. Wanted: ATTACHMENT or RESOURCE. Got: FAKE' })
+        .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+    });
+    it('tests an unauthorized upload', async () => {
+      jest.clearAllMocks();
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => false,
+      }));
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .field('attachmentType', 'ATTACHMENT')
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(403)
         .then(() => expect(s3Uploader).not.toHaveBeenCalled());
     });
   });

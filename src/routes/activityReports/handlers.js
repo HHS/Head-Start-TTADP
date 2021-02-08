@@ -1,6 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
+import User from '../../policies/user';
 import {
   possibleRecipients, activityReportById, createOrUpdate, review,
 } from '../../services/activityReports';
@@ -23,6 +24,14 @@ const logContext = {
  */
 export async function getApprovers(req, res) {
   const { region } = req.query;
+  const user = await userById(req.session.userId);
+  const authorization = new User(user);
+
+  if (!authorization.canViewUsersInRegion(region)) {
+    res.sendStatus(403);
+    return;
+  }
+
   try {
     const users = await usersWithPermissions([region], [APPROVE_REPORTS]);
     res.json(users);
