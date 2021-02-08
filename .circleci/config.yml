@@ -226,9 +226,11 @@ jobs:
           name: Seed database
           command: yarn db:seed:ci
       - run:
+          name: wait for server to start
+          command: ./bin/ping-server
+      - run:
           name: Run cucumber
           command: |
-            sleep 10
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
