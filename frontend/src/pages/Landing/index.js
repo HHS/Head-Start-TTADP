@@ -10,6 +10,37 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 
+export const activityReportId = (id, regionId) => {
+  return `R${
+    regionId < 10
+      ? `0${regionId}`
+      : regionId
+  }-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
+}
+
+export const getValue = (item, sortConfig) => {
+  const keys = sortConfig.key.split(".");
+
+  // const getValueForItem = (item) =>
+  return keys.reduce((object, key) => {
+      const result = (object || {})[key];
+      if (key === "activityRecipients" || key === "collaborators") {
+        return result[0].name;
+      } else if (key === "topics") {
+        return result[0];
+      } else if (key === "startDate" || key === "lastSaved") {
+        const date = (object || {})[key];
+        // Format with year first
+        return date
+          ? moment(date, "MM/DD/YYYY", "America/New_York").format("YYYY-MM-DD")
+          : undefined;
+      } else if (key === "regionId") {
+        return activityReportId((object || {})["id"], (object || {})[key]);
+      }
+      return (object || {})[key];
+    }, item);
+};
+
 function renderReports(reports) {
   const emptyReport = {
     id: '',
@@ -34,6 +65,7 @@ function renderReports(reports) {
       collaborators,
       lastSaved,
       status,
+      regionId,
     } = report;
 
     const recipientsTitle = activityRecipients.reduce(
@@ -77,14 +109,10 @@ function renderReports(reports) {
         {collaborator.name}
       </Tag>
     ));
-
+    
     const fullId = !id
       ? ''
-      : `R${
-        author.homeRegionId < 10
-          ? `0${author.homeRegionId}`
-          : author.homeRegionId
-      }-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
+      : activityReportId(id, regionId);
 
     return (
       <tr key={`landing_${id}`}>
@@ -147,7 +175,6 @@ function Landing() {
   const sortedReports = [...reports];
   const requestSort = (key) => {
     let direction = 'ascending';
-
     if (
       sortConfig
       && sortConfig.key === key
@@ -155,53 +182,21 @@ function Landing() {
     ) {
       direction = 'descending';
     }
+    console.log(direction);
     setSortConfig({ key, direction });
     updateReports(sortedReports);
   };
 
   React.useMemo(() => {
-    if (sortConfig !== null) {
       sortedReports.sort((a, b) => {
-        const keys = sortConfig.key.split('.');
-        const getValue = (item) => keys.reduce((object, key) => {
-          const result = (object || {})[key];
-          if (key === 'activityRecipients' || key === 'collaborators') {
-            return result[0].name;
-          }
-          if (key === 'topics') {
-            return result[0];
-          }
-          if (key === 'startDate' || key === 'lastSaved') {
-            const date = (object || {})[key];
-            // Format with year first
-            return date
-              ? moment(date, 'MM/DD/YYYY', 'America/New_York').format(
-                'YYYY-MM-DD',
-              )
-              : undefined;
-          }
-          return (object || {})[key];
-        }, item);
-
-        if (getValue(a) < getValue(b)) {
+        if (getValue(a, sortConfig) < getValue(b, sortConfig)) {
           return sortConfig.direction === 'descending' ? -1 : 1;
         }
-        if (getValue(a) > getValue(b)) {
+        if (getValue(a, sortConfig) > getValue(b, sortConfig)) {
           return sortConfig.direction === 'descending' ? 1 : -1;
-        }
-        if (getValue(a) === undefined) {
-          if (getValue(b) !== undefined) {
-            return sortConfig.direction === 'descending' ? 1 : -1;
-          }
-        }
-        if (getValue(b) === undefined) {
-          if (getValue(a) !== undefined) {
-            return sortConfig.direction === 'descending' ? -1 : 1;
-          }
         }
         return 0;
       });
-    }
     return sortedReports;
   }, [sortConfig, sortedReports]);
 
@@ -222,10 +217,7 @@ function Landing() {
   }, []);
 
   const getClassNamesFor = (name) => {
-    if (!sortConfig) {
-      return undefined;
-    }
-    return sortConfig.key === name ? sortConfig.direction : undefined;
+    return sortConfig.key === name ? sortConfig.direction : '';
   };
 
   if (!isLoaded) {
@@ -326,7 +318,6 @@ function Landing() {
                 scope="col"
                 onClick={() => {
                   requestSort('status');
-                  updateReports(sortedReports);
                 }}
                 className={getClassNamesFor('status')}
               >
