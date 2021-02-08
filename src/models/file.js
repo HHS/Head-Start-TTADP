@@ -1,5 +1,5 @@
 import { Model } from 'sequelize';
-import { getPresignedURL, getPresignedUrl } from '../lib/s3Uploader';
+import { getPresignedURL } from '../lib/s3Uploader';
 
 module.exports = (sequelize, DataTypes) => {
   class File extends Model {
@@ -40,8 +40,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     url: {
       type: DataTypes.VIRTUAL,
-      async get() {
-        return getPresignedURL(this.key);
+      get() {
+        const url = getPresignedURL(this.key);
+        return url;
       },
     },
   }, {
