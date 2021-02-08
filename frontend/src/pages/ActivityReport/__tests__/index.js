@@ -47,7 +47,7 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
         location={{
           state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
         }}
-        user={{ id: 1 }}
+        user={{ id: 1, name: 'Walter Burns', role: 'Reporter' }}
       />
     </Router>,
   );
