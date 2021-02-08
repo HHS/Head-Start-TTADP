@@ -24,7 +24,7 @@ if (process.env.VCAP_SERVICES) {
 }
 export const s3 = new S3(s3Config);
 
-export const getPresignedURL = async (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
+export const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
   let url;
   try {
     const params = {
@@ -32,7 +32,7 @@ export const getPresignedURL = async (Key, Bucket = bucketName, s3Client = s3, E
       Key,
       Expires,
     };
-    url = await s3Client.getSignedUrl('getObject', params);
+    url = s3Client.getSignedUrl('getObject', params);
   } catch (error) {
     return error;
   }
