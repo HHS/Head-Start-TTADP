@@ -45,6 +45,7 @@ const ActivitySummary = ({
 
   const disableRecipients = activityRecipientType === '';
   const nonGranteeSelected = activityRecipientType === 'non-grantee';
+  const granteeSelected = activityRecipientType === 'grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
   const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
@@ -124,7 +125,7 @@ const ActivitySummary = ({
             options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
           />
         </div>
-        {!nonGranteeSelected
+        {granteeSelected
         && (
         <div className="smart-hub--form-section">
           <MultiSelect
