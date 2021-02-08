@@ -226,7 +226,7 @@ jobs:
           name: Seed database
           command: yarn db:seed:ci
       - run:
-          name: wait for server to start
+          name: Wait for server to start
           command: ./bin/ping-server
       - run:
           name: Run cucumber
