@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
+import moment from 'moment';
 
 import Admin from '../index';
 import { SCOPE_IDS } from '../../../Constants';
@@ -34,6 +35,7 @@ describe('Admin Page', () => {
         name: undefined,
         homeRegionId: 1,
         role: 'Grantee Specialist',
+        lastLogin: moment().subtract(65, 'days').toISOString(),
         permissions: [],
       },
       {
@@ -42,6 +44,7 @@ describe('Admin Page', () => {
         name: 'Harry Potter',
         homeRegionId: 1,
         role: 'Grantee Specialist',
+        lastLogin: moment().toISOString(),
         permissions: [{
           userId: 3,
           scopeId: SCOPE_IDS.SITE_ACCESS,
@@ -88,6 +91,15 @@ describe('Admin Page', () => {
       it('user list is filterable by SITE_ACCESS permission', async () => {
         const checkbox = await screen.findByRole('checkbox', { name: 'Show Only Locked Users' });
         userEvent.click(checkbox);
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(1);
+        expect(links[0]).toHaveTextContent('gs@hogwarts.com');
+      });
+
+      it('user list is filterable by last login', async () => {
+        const radio = await screen.findByRole('radio', { name: 'Show Last Login > 60 days ago' });
+        userEvent.click(radio);
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);

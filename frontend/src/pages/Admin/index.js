@@ -3,8 +3,9 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import {
-  Label, TextInput, Grid, SideNav, Alert, Checkbox,
+  Label, TextInput, Grid, SideNav, Alert, Checkbox, Radio,
 } from '@trussworks/react-uswds';
+import moment from 'moment';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
@@ -43,6 +44,7 @@ function Admin(props) {
   const [selectedUser, updateSelectedUser] = useState();
   const [userSearch, updateUserSearch] = useState('');
   const [lockedFilter, updateLockedFilter] = useState(false);
+  const [loginFilter, updateLoginFilter] = useState(false);
   const [saved, updateSaved] = useState(false);
 
   useEffect(() => {
@@ -75,16 +77,20 @@ function Admin(props) {
 
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
-      const { email, name, permissions } = u;
+      const { email, name, permissions, lastLogin } = u;
       const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
       let userMatchesLockFilter = true;
       if (lockedFilter) {
         userMatchesLockFilter = !_.some(permissions,
           (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS));
       }
-      return userMatchesFilter && userMatchesLockFilter;
+      let userMatchesLoginFilter = true;
+      if (loginFilter !== false) {
+        userMatchesLoginFilter = moment(lastLogin).isBefore(moment().subtract(loginFilter, 'days'));
+      }
+      return userMatchesFilter && userMatchesLockFilter && userMatchesLoginFilter;
     })
-  ), [users, userSearch, lockedFilter]);
+  ), [users, userSearch, lockedFilter, loginFilter]);
 
   if (!isLoaded) {
     return (
@@ -130,6 +136,27 @@ function Admin(props) {
               id="show-locked-users"
               checked={lockedFilter}
               onChange={() => updateLockedFilter(!lockedFilter)}
+            />
+            <Radio
+              label="Show any Last Login"
+              id="show-last-all"
+              name="last-login-filter"
+              checked={loginFilter === false}
+              onChange={() => updateLoginFilter(false)}
+            />
+            <Radio
+              label="Show Last Login > 60 days ago"
+              id="show-last-60"
+              name="last-login-filter"
+              checked={loginFilter === 60}
+              onChange={() => updateLoginFilter(60)}
+            />
+            <Radio
+              label="Show Last Login > 180 days ago"
+              id="show-last-180"
+              name="last-login-filter"
+              checked={loginFilter === 180}
+              onChange={() => updateLoginFilter(180)}
             />
             <Label htmlFor="input-filter-users">Filter Users</Label>
             <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
