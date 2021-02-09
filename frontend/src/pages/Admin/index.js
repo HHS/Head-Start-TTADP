@@ -44,7 +44,6 @@ function Admin(props) {
   const [selectedUser, updateSelectedUser] = useState();
   const [userSearch, updateUserSearch] = useState('');
   const [lockedFilter, updateLockedFilter] = useState(false);
-  const [loginFilter, updateLoginFilter] = useState(false);
   const [saved, updateSaved] = useState(false);
 
   useEffect(() => {
@@ -79,25 +78,27 @@ function Admin(props) {
     _.some(permissions, (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS))
   );
 
+  // rules for to-lock and to-disable filters are laid out in Access Control SOP:
+  // https://github.com/HHS/Head-Start-TTADP/wiki/Access-Control-&-Account-Management-SOP#account-review-frequency-and-process
+  const lockThreshold = moment().subtract(60, 'days');
+  const disableThreshold = moment().subtract(180, 'days');
+
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
-      const { email, name, permissions, lastLogin } = u;
+      const { email, name, permissions } = u;
+      const lastLogin = moment(u.lastLogin);
       const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
       let userMatchesLockFilter = true;
-      if (lockedFilter === 'locked') {
-        userMatchesLockFilter = !permissionsIncludesAccess(permissions);
-      } else if (lockedFilter === 'unlocked') {
-        userMatchesLockFilter = permissionsIncludesAccess(permissions);
-      } else if (lockedFilter === 'any') {
-        userMatchesLockFilter = permissions.length > 0;
+      if (lockedFilter === 'recent') {
+        userMatchesLockFilter = lastLogin.isAfter(lockThreshold) && !permissionsIncludesAccess(permissions);
+      } else if (lockedFilter === 'to-lock') {
+        userMatchesLockFilter = lastLogin.isBefore(lockThreshold) && permissionsIncludesAccess(permissions);
+      } else if (lockedFilter === 'to-disable') {
+        userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
       }
-      let userMatchesLoginFilter = true;
-      if (loginFilter !== false) {
-        userMatchesLoginFilter = moment(lastLogin).isBefore(moment().subtract(loginFilter, 'days'));
-      }
-      return userMatchesFilter && userMatchesLockFilter && userMatchesLoginFilter;
+      return userMatchesFilter && userMatchesLockFilter;
     })
-  ), [users, userSearch, lockedFilter, loginFilter]);
+  ), [users, userSearch, lockedFilter]);
 
   if (!isLoaded) {
     return (
@@ -138,57 +139,34 @@ function Admin(props) {
         <h1 className="text-center">User Administration</h1>
         <Grid row gap>
           <Grid col={4}>
-            <Fieldset className="smart-hub--report-legend" legend="Lock Status Filtering">
+            <Fieldset className="smart-hub--report-legend" legend="Access Control Filtering">
               <Radio
-                label="Show any lock status"
-                id="show-locked-all"
+                label="Show all users"
+                id="access-control-filter-all"
                 name="lock-filter"
                 checked={lockedFilter === false}
                 onChange={() => updateLockedFilter(false)}
               />
               <Radio
-                label="Show only locked users"
-                id="show-locked-lock"
+                label="Show recent locked logins"
+                id="access-control-filter-recent"
                 name="lock-filter"
-                checked={lockedFilter === 'locked'}
-                onChange={() => updateLockedFilter('locked')}
+                checked={lockedFilter === 'recent'}
+                onChange={() => updateLockedFilter('recent')}
               />
               <Radio
-                label="Show only unlocked users"
-                id="show-locked-unlock"
+                label="Show users to lock"
+                id="access-control-filter-lock"
                 name="lock-filter"
-                checked={lockedFilter === 'unlocked'}
-                onChange={() => updateLockedFilter('unlocked')}
+                checked={lockedFilter === 'to-lock'}
+                onChange={() => updateLockedFilter('to-lock')}
               />
               <Radio
-                label="Show users with any permissions"
-                id="show-locked-any"
+                label="Show users to disable"
+                id="access-control-filter-disable"
                 name="lock-filter"
-                checked={lockedFilter === 'any'}
-                onChange={() => updateLockedFilter('any')}
-              />
-            </Fieldset>
-            <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Last Login Filtering">
-              <Radio
-                label="Show any last login"
-                id="show-last-all"
-                name="last-login-filter"
-                checked={loginFilter === false}
-                onChange={() => updateLoginFilter(false)}
-              />
-              <Radio
-                label="Show last login > 60 days ago"
-                id="show-last-60"
-                name="last-login-filter"
-                checked={loginFilter === 60}
-                onChange={() => updateLoginFilter(60)}
-              />
-              <Radio
-                label="Show last login > 180 days ago"
-                id="show-last-180"
-                name="last-login-filter"
-                checked={loginFilter === 180}
-                onChange={() => updateLoginFilter(180)}
+                checked={lockedFilter === 'to-disable'}
+                onChange={() => updateLockedFilter('to-disable')}
               />
             </Fieldset>
             <Label htmlFor="input-filter-users">Filter Users</Label>
