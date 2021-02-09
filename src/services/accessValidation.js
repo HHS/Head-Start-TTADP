@@ -21,8 +21,8 @@ export default function findOrCreateUser(data) {
   return sequelize.transaction((transaction) => User.findOrCreate({
     where: {
       hsesUserId: data.hsesUserId,
-      ...data,
     },
+    defaults: data,
     transaction,
   }).then(([user, created]) => {
     if (created) {

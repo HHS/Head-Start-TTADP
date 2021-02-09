@@ -109,6 +109,29 @@ describe('accessValidation', () => {
       expect(existingUserAfter).toBeInstanceOf(User);
     });
 
+    it('Finds the existing user when email is changed', async () => {
+      const userId = 35;
+      const oldEmail = 'test35@test.com';
+      const updatedEmail = 'new.email35@test.com';
+      const user = {
+        hsesUserId: '35',
+        email: oldEmail,
+      };
+      // Verify that user 35 is set up as we expect
+      await User.destroy({ where: { id: userId } });
+      await User.create({ ...user, id: userId });
+
+      const retrievedUser = await findOrCreateUser({
+        ...user,
+        email: updatedEmail,
+      });
+
+      expect(retrievedUser.id).toEqual(userId);
+
+      // TODO: should eventually update email addresses
+      expect(retrievedUser.email).toEqual(oldEmail);
+    });
+
     it('Throws when there is something wrong', async () => {
       await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
     });
@@ -119,6 +142,7 @@ describe('accessValidation', () => {
         email: 'invalid',
         homeRegionId: 3,
       };
+      await User.destroy({ where: { hsesUserId: '33' } });
       await expect(findOrCreateUser(user)).rejects.toThrow();
       expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
     });
