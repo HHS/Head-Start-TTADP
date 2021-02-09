@@ -135,7 +135,7 @@ components:
         attachmentType:
           type: string
           description: "Type of attachment. Acceptable values are ATTACHMENT or RESOURCE"
-        reportId: 
+        reportId:
           type: number
           description: "id of the Activity report the file is associated with"
         file:
@@ -179,6 +179,8 @@ components:
         homeRegionId:
           type: number
         title:
+          type: string
+        lastLogin:
           type: string
         permissions:
           type: array
