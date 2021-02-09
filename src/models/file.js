@@ -42,6 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const url = getPresignedURL(this.key);
+        console.log(url)
         return url;
       },
     },
