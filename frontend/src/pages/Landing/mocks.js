@@ -97,7 +97,7 @@ const activityReports = [
       {
         fullName: 'Cucumber User, GS',
         name: 'Cucumber User',
-        role: 'Grantee Specialist'
+        role: 'Grantee Specialist',
       },
       {
         fullName: 'Hermione Granger, SS',
