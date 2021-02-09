@@ -15,28 +15,31 @@ import moment from 'moment';
 import Container from '../Container';
 
 import {
-  IN_PROGRESS, COMPLETE, SUBMITTED,
+  IN_PROGRESS, COMPLETE,
 } from './constants';
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
   initialData,
+  initialLastUpdated,
   pages,
   onFormSubmit,
-  submitted,
+  onReview,
   currentPage,
   additionalData,
   onSave,
   autoSaveInterval,
+  approvingManager,
+  status,
+  reportId,
 }) {
   const [formData, updateFormData] = useState(initialData);
   const [errorMessage, updateErrorMessage] = useState();
-  const [lastSaveTime, updateLastSaveTime] = useState();
+  const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const { pageState } = formData;
 
   const page = pages.find((p) => p.path === currentPage);
-  const submittedNavState = submitted ? SUBMITTED : null;
   const allComplete = _.every(pageState, (state) => state === COMPLETE);
 
   const hookForm = useForm({
@@ -75,8 +78,8 @@ function Navigator({
       const result = await onSave(data, newIndex);
       if (result) {
         updateLastSaveTime(moment());
+        updateErrorMessage();
       }
-      updateErrorMessage();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
@@ -101,7 +104,7 @@ function Navigator({
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
     const stateOfPage = current ? IN_PROGRESS : pageState[p.position];
-    const state = p.review ? submittedNavState : stateOfPage;
+    const state = p.review ? status : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => onSaveForm(false, p.position),
@@ -128,9 +131,11 @@ function Navigator({
               hookForm,
               allComplete,
               formData,
-              submitted,
               onFormSubmit,
               additionalData,
+              onReview,
+              approvingManager,
+              reportId,
             )}
           {!page.review
             && (
@@ -142,7 +147,7 @@ function Navigator({
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
-                  {page.render(hookForm, additionalData, formData)}
+                  {page.render(hookForm, additionalData, formData, reportId)}
                   <Button type="submit" disabled={!isValid}>Continue</Button>
                 </Form>
               </Container>
@@ -155,9 +160,12 @@ function Navigator({
 
 Navigator.propTypes = {
   initialData: PropTypes.shape({}),
+  initialLastUpdated: PropTypes.instanceOf(moment),
   onFormSubmit: PropTypes.func.isRequired,
-  submitted: PropTypes.bool.isRequired,
   onSave: PropTypes.func.isRequired,
+  status: PropTypes.string.isRequired,
+  onReview: PropTypes.func.isRequired,
+  approvingManager: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(
     PropTypes.shape({
       review: PropTypes.bool.isRequired,
@@ -170,12 +178,14 @@ Navigator.propTypes = {
   currentPage: PropTypes.string.isRequired,
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
+  reportId: PropTypes.node.isRequired,
 };
 
 Navigator.defaultProps = {
   initialData: {},
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
+  initialLastUpdated: null,
 };
 
 export default Navigator;

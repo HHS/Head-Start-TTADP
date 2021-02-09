@@ -10,6 +10,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 
 import Admin from '../index';
+import { SCOPE_IDS } from '../../../Constants';
 
 describe('Admin Page', () => {
   const usersUrl = join('/api', 'admin', 'users');
@@ -29,7 +30,7 @@ describe('Admin Page', () => {
     const users = [
       {
         id: 2,
-        email: 'email',
+        email: 'gs@hogwarts.com',
         name: undefined,
         homeRegionId: 1,
         role: 'Grantee Specialist',
@@ -37,11 +38,15 @@ describe('Admin Page', () => {
       },
       {
         id: 3,
-        email: 'email',
+        email: 'potter@hogwarts.com',
         name: 'Harry Potter',
         homeRegionId: 1,
         role: 'Grantee Specialist',
-        permissions: [],
+        permissions: [{
+          userId: 3,
+          scopeId: SCOPE_IDS.SITE_ACCESS,
+          regionId: 14,
+        }],
       },
     ];
 
@@ -54,13 +59,39 @@ describe('Admin Page', () => {
         render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
       });
 
-      it('user list is filterable', async () => {
+      it('user list is filterable by name', async () => {
         const filter = await screen.findByLabelText('Filter Users');
         userEvent.type(filter, 'Harry');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);
         expect(links[0]).toHaveTextContent('Harry Potter');
+      });
+
+      it('User list is filterable by email', async () => {
+        const filter = await screen.findByLabelText('Filter Users');
+        userEvent.type(filter, '@hogwarts.com');
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(2);
+      });
+
+      it('user filtering is case-insentive', async () => {
+        const filter = await screen.findByLabelText('Filter Users');
+        userEvent.type(filter, 'harry');
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(1);
+        expect(links[0]).toHaveTextContent('Harry Potter');
+      });
+
+      it('user list is filterable by SITE_ACCESS permission', async () => {
+        const checkbox = await screen.findByRole('checkbox', { name: 'Show Only Locked Users' });
+        userEvent.click(checkbox);
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(1);
+        expect(links[0]).toHaveTextContent('gs@hogwarts.com');
       });
 
       it('allows a user to be selected', async () => {

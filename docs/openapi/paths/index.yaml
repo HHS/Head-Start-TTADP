@@ -24,5 +24,7 @@
   $ref: './activity-reports/activity-reports-id.yaml'
 '/activity-reports/{activityReportId}/submit':
   $ref: './activity-reports/submit.yaml'
+'/activity-reports/{activityReportId}/review':
+  $ref: './activity-reports/review.yaml'
 '/files':
   $ref: './files.yaml'

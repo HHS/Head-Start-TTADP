@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import {
-  Label, TextInput, Grid, SideNav, Alert,
+  Label, TextInput, Grid, SideNav, Alert, Checkbox,
 } from '@trussworks/react-uswds';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
 import { updateUser, getUsers } from '../../fetchers/Admin';
+import { SCOPE_IDS, DECIMAL_BASE } from '../../Constants';
 
 /**
  * Render the left hand user navigation in the Admin UI. Use the user's full name
@@ -41,6 +42,7 @@ function Admin(props) {
   const [users, updateUsers] = useState([]);
   const [selectedUser, updateSelectedUser] = useState();
   const [userSearch, updateUserSearch] = useState('');
+  const [lockedFilter, updateLockedFilter] = useState(false);
   const [saved, updateSaved] = useState(false);
 
   useEffect(() => {
@@ -65,11 +67,24 @@ function Admin(props) {
   useEffect(() => {
     if (userId) {
       updateSelectedUser(users.find((u) => (
-        u.id === parseInt(userId, 10)
+        u.id === parseInt(userId, DECIMAL_BASE)
       )));
       updateSaved(false);
     }
   }, [userId, users]);
+
+  const filteredUsers = useMemo(() => (
+    _.filter(users, (u) => {
+      const { email, name, permissions } = u;
+      const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
+      let userMatchesLockFilter = true;
+      if (lockedFilter) {
+        userMatchesLockFilter = !_.some(permissions,
+          (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS));
+      }
+      return userMatchesFilter && userMatchesLockFilter;
+    })
+  ), [users, userSearch, lockedFilter]);
 
   if (!isLoaded) {
     return (
@@ -78,11 +93,6 @@ function Admin(props) {
       </div>
     );
   }
-
-  const filteredUsers = _.filter(users, (u) => {
-    const { email, name } = u;
-    return `${email}${name}`.includes(userSearch);
-  });
 
   const onSave = async (newUser) => {
     let updatedUser;
@@ -115,6 +125,12 @@ function Admin(props) {
         <h1 className="text-center">User Administration</h1>
         <Grid row gap>
           <Grid col={4}>
+            <Checkbox
+              label="Show Only Locked Users"
+              id="show-locked-users"
+              checked={lockedFilter}
+              onChange={() => updateLockedFilter(!lockedFilter)}
+            />
             <Label htmlFor="input-filter-users">Filter Users</Label>
             <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
             <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">

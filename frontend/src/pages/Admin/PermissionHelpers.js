@@ -1,8 +1,13 @@
 import _ from 'lodash';
-import { REGIONAL_SCOPES, GLOBAL_SCOPES, REGIONS } from '../../Constants';
+import {
+  REGIONAL_SCOPES,
+  GLOBAL_SCOPES,
+  REGIONS,
+  DECIMAL_BASE,
+} from '../../Constants';
 
-const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, 10));
-const globalScopeIds = Object.keys(GLOBAL_SCOPES).map((s) => parseInt(s, 10));
+const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
+const globalScopeIds = Object.keys(GLOBAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
 const allScopes = { ...REGIONAL_SCOPES, ...GLOBAL_SCOPES };
 
 export function scopeFromId(scopeId) {
