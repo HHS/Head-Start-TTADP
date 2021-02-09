@@ -11,6 +11,7 @@ const SubmitterReviewPage = ({
   submitted,
   allComplete,
   register,
+  watch,
   approvers,
   valid,
   handleSubmit,
@@ -22,6 +23,10 @@ const SubmitterReviewPage = ({
     }
     return parseInt(e, DECIMAL_BASE);
   };
+
+  const watchTextValue = watch('managerNotes');
+  const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
+
   return (
     <>
       {submitted
@@ -44,7 +49,7 @@ const SubmitterReviewPage = ({
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
           <Label htmlFor="additionalNotes">Creator notes</Label>
-          <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
+          <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
         </Fieldset>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
           <p className="margin-top-4">
@@ -74,6 +79,7 @@ SubmitterReviewPage.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
+  watch: PropTypes.func.isRequired,
   valid: PropTypes.bool.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,

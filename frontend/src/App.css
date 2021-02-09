@@ -82,7 +82,9 @@ body {
     display: unset;
   }
 
-  /* Hide things that don't need to be printed */
+  /* Hide things that don't need to be printed
+   * ':empty' doesn't work on <textarea>, so we need to check values and set 'no-print' if empty
+   * */
   .background-stripe,
   .usa-nav,
   .usa-menu-btn,
@@ -91,7 +93,6 @@ body {
   .smart-hub-review-item--empty,
   .no-print,
   input:empty,
-  textarea:empty,
   button[type="submit"]
   {
     display: none !important;

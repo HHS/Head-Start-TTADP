@@ -22,7 +22,9 @@ const ReviewSubmit = ({
   initialData,
   reportCreator,
 }) => {
-  const { handleSubmit, register, formState } = hookForm;
+  const {
+    handleSubmit, register, formState, watch,
+  } = hookForm;
   const { additionalNotes } = initialData;
   const { isValid } = formState;
   const valid = allComplete && isValid;
@@ -74,6 +76,7 @@ const ReviewSubmit = ({
           submitted={submitted}
           allComplete={allComplete}
           register={register}
+          watch={watch}
           approvers={approvers}
           valid={valid}
           handleSubmit={handleSubmit}
@@ -86,6 +89,7 @@ const ReviewSubmit = ({
           reviewed={reviewed}
           additionalNotes={additionalNotes}
           register={register}
+          watch={watch}
           valid={valid}
           handleSubmit={handleSubmit}
           onFormReview={onFormReview}
