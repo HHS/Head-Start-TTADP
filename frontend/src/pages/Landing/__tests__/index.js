@@ -291,7 +291,7 @@ describe('Landing Page', () => {
     const topic = page.getValue(activityReports[0], { key: 'topics', direction: 'ascending' });
 
     expect(spy).toHaveBeenCalled();
-    expect(topic).toBe('Behavioral / Mental Health');
+    expect(topic).toBe('Behavioral / Mental HealthCLASS: Instructional Support');
 
     const creator = page.getValue(activityReports[0], { key: 'author.name', direction: 'ascending' });
     expect(creator).toBe('Kiwi');
