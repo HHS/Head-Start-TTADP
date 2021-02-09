@@ -24,15 +24,15 @@ export const getValue = (item, sortConfig) => {
     const result = (object || {})[key];
     if (key === 'activityRecipients' || key === 'collaborators') {
       return result[0].name;
-    } if (key === 'topics') {
+    } else if (key === 'topics') {
       return result[0];
-    } if (key === 'startDate' || key === 'lastSaved') {
+    } else if (key === 'startDate' || key === 'lastSaved') {
       const date = (object || {})[key];
       // Format with year first
       return date
         ? moment(date, 'MM/DD/YYYY', 'America/New_York').format('YYYY-MM-DD')
         : undefined;
-    } if (key === 'regionId') {
+    } else if (key === 'regionId') {
       return activityReportId((object || {}).id, (object || {})[key]);
     }
     return (object || {})[key];
@@ -95,16 +95,16 @@ function renderReports(reports) {
     ));
 
     const collaboratorsTitle = collaborators.reduce(
-      (result, collaborator) => `${result + collaborator.name}\n`,
+      (result, collaborator) => `${result + collaborator.fullName}\n`,
       '',
     );
 
     const collaboratorsWithTags = collaborators.map((collaborator) => (
       <Tag
-        key={`${collaborator.name.slice(1, 13)}`}
+        key={`${collaborator.fullName.slice(1, 13)}`}
         className="smart-hub--table-collection"
       >
-        {collaborator.name}
+        {collaborator.fullName}
       </Tag>
     ));
 
