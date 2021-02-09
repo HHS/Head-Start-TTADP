@@ -29,7 +29,7 @@ export const getValue = (item, sortConfig) => {
     }
     if (key === 'topics') {
       return result.map((i) => i).join('');
-    } 
+    }
     if (key === 'startDate' || key === 'lastSaved') {
       const date = (object || {})[key];
       // Format with year first
