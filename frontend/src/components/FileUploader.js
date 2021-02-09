@@ -101,7 +101,6 @@ const FileTable = ({ onFileRemoved, files }) => (
           <tr key={file.key} id={`files-table-row-${index}`}>
             <td className="files-table--file-name">
               {file.originalFileName}
-              {console.log(file.url)}
             </td>
             <td>
               {`${(file.fileSize / 1000).toFixed(1)} KB`}
