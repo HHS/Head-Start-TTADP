@@ -25,16 +25,16 @@ if (process.env.VCAP_SERVICES) {
 export const s3 = new S3(s3Config);
 
 export const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
-  let url;
+  const url = { url: null, error: null };
   try {
     const params = {
       Bucket,
       Key,
       Expires,
     };
-    url = s3Client.getSignedUrl('getObject', params);
+    url.url = s3Client.getSignedUrl('getObject', params);
   } catch (error) {
-    return error;
+    url.error = error;
   }
   return url;
 };
