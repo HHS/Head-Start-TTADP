@@ -3,7 +3,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import {
-  Label, TextInput, Grid, SideNav, Alert, Checkbox, Radio,
+  Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import UserSection from './UserSection';
@@ -75,14 +75,21 @@ function Admin(props) {
     }
   }, [userId, users]);
 
+  const permissionsIncludesAccess = (permissions) => (
+    _.some(permissions, (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS))
+  );
+
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
       const { email, name, permissions, lastLogin } = u;
       const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
       let userMatchesLockFilter = true;
-      if (lockedFilter) {
-        userMatchesLockFilter = !_.some(permissions,
-          (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS));
+      if (lockedFilter === 'locked') {
+        userMatchesLockFilter = !permissionsIncludesAccess(permissions);
+      } else if (lockedFilter === 'unlocked') {
+        userMatchesLockFilter = permissionsIncludesAccess(permissions);
+      } else if (lockedFilter === 'any') {
+        userMatchesLockFilter = permissions.length > 0;
       }
       let userMatchesLoginFilter = true;
       if (loginFilter !== false) {
@@ -131,33 +138,59 @@ function Admin(props) {
         <h1 className="text-center">User Administration</h1>
         <Grid row gap>
           <Grid col={4}>
-            <Checkbox
-              label="Show Only Locked Users"
-              id="show-locked-users"
-              checked={lockedFilter}
-              onChange={() => updateLockedFilter(!lockedFilter)}
-            />
-            <Radio
-              label="Show any Last Login"
-              id="show-last-all"
-              name="last-login-filter"
-              checked={loginFilter === false}
-              onChange={() => updateLoginFilter(false)}
-            />
-            <Radio
-              label="Show Last Login > 60 days ago"
-              id="show-last-60"
-              name="last-login-filter"
-              checked={loginFilter === 60}
-              onChange={() => updateLoginFilter(60)}
-            />
-            <Radio
-              label="Show Last Login > 180 days ago"
-              id="show-last-180"
-              name="last-login-filter"
-              checked={loginFilter === 180}
-              onChange={() => updateLoginFilter(180)}
-            />
+            <Fieldset className="smart-hub--report-legend" legend="Lock Status Filtering">
+              <Radio
+                label="Show any lock status"
+                id="show-locked-all"
+                name="lock-filter"
+                checked={lockedFilter === false}
+                onChange={() => updateLockedFilter(false)}
+              />
+              <Radio
+                label="Show only locked users"
+                id="show-locked-lock"
+                name="lock-filter"
+                checked={lockedFilter === 'locked'}
+                onChange={() => updateLockedFilter('locked')}
+              />
+              <Radio
+                label="Show only unlocked users"
+                id="show-locked-unlock"
+                name="lock-filter"
+                checked={lockedFilter === 'unlocked'}
+                onChange={() => updateLockedFilter('unlocked')}
+              />
+              <Radio
+                label="Show users with any permissions"
+                id="show-locked-any"
+                name="lock-filter"
+                checked={lockedFilter === 'any'}
+                onChange={() => updateLockedFilter('any')}
+              />
+            </Fieldset>
+            <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Last Login Filtering">
+              <Radio
+                label="Show any last login"
+                id="show-last-all"
+                name="last-login-filter"
+                checked={loginFilter === false}
+                onChange={() => updateLoginFilter(false)}
+              />
+              <Radio
+                label="Show last login > 60 days ago"
+                id="show-last-60"
+                name="last-login-filter"
+                checked={loginFilter === 60}
+                onChange={() => updateLoginFilter(60)}
+              />
+              <Radio
+                label="Show last login > 180 days ago"
+                id="show-last-180"
+                name="last-login-filter"
+                checked={loginFilter === 180}
+                onChange={() => updateLoginFilter(180)}
+              />
+            </Fieldset>
             <Label htmlFor="input-filter-users">Filter Users</Label>
             <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
             <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
