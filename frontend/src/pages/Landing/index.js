@@ -19,20 +19,25 @@ export const activityReportId = (id, regionId) => `R${
 export const getValue = (item, sortConfig) => {
   const keys = sortConfig.key.split('.');
 
-  // const getValueForItem = (item) =>
   return keys.reduce((object, key) => {
     const result = (object || {})[key];
-    if (key === 'activityRecipients' || key === 'collaborators') {
-      return result[0].name;
-    } if (key === 'topics') {
-      return result[0];
-    } if (key === 'startDate' || key === 'lastSaved') {
+    if (key === 'activityRecipients') {
+      return result.map((i) => i.name).join('');
+    }
+    if (key === 'collaborators') {
+      return result.map((i) => i.fullName).join('');
+    }
+    if (key === 'topics') {
+      return result.map((i) => i).join('');
+    } 
+    if (key === 'startDate' || key === 'lastSaved') {
       const date = (object || {})[key];
       // Format with year first
       return date
         ? moment(date, 'MM/DD/YYYY', 'America/New_York').format('YYYY-MM-DD')
         : undefined;
-    } if (key === 'regionId') {
+    }
+    if (key === 'regionId') {
       return activityReportId((object || {}).id, (object || {})[key]);
     }
     return (object || {})[key];
