@@ -106,7 +106,7 @@ function App() {
         {authenticated && <a className="usa-skipnav" href="#main-content">Skip to main content</a>}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header authenticated={authenticated} admin={admin} />
-          <div className="background-stripe" />
+          <div className="background-stripe no-print" />
           <section className="usa-section">
             <GridContainer>
               {!authenticated

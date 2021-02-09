@@ -116,7 +116,7 @@ function Navigator({
 
   return (
     <Grid row gap>
-      <Grid className="smart-hub-sidenav-wrapper" col={12} tablet={{ col: 6 }} desktop={{ col: 4 }}>
+      <Grid className="smart-hub-sidenav-wrapper no-print" col={12} tablet={{ col: 6 }} desktop={{ col: 4 }}>
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"

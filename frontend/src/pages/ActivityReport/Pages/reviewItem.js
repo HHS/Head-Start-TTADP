@@ -41,7 +41,7 @@ const Section = ({
   const isEmpty = !items.some(({ value }) => value && value.length);
   const classes = [
     'smart-hub-review-section',
-    isEmpty ? 'smart-hub-review-section--empty' : '',
+    isEmpty ? 'smart-hub-review-section--empty no-print' : '',
     'margin-bottom-3',
   ].filter((x) => x).join(' ');
 
@@ -55,7 +55,7 @@ const Section = ({
           <HashLink
             aria-label={`Edit form section "${title}"`}
             to={`${basePath}#${anchor}`}
-            className="smart-hub-edit-link pull-right"
+            className="smart-hub-edit-link pull-right no-print"
           >
             Edit
           </HashLink>
