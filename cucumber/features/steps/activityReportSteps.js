@@ -5,12 +5,19 @@ const {
 const assertTrue = require('assert');
 const scope = require('../support/scope');
 
-Given('I am on the activity reports page', async () => {
+Given('I am on the landing page', async () => {
   const page = scope.context.currentPage;
-  const selector = 'a[href$="/activity-reports/new"]';
+  const selector = 'a[href$="activity-reports"]';
   await Promise.all([
     page.waitForNavigation(),
     page.click(selector),
+  ]);
+  await scope.context.currentPage.waitForSelector('h1');
+
+  const selectorNewReport = 'a[href$="activity-reports/new"]';
+  await Promise.all([
+    page.waitForNavigation(),
+    page.click(selectorNewReport),
   ]);
   await scope.context.currentPage.waitForSelector('h1');
 });
