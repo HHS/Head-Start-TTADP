@@ -1,5 +1,4 @@
-import { Model } from 'sequelize';
-import { getPresignedURL } from '../lib/s3Uploader';
+const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class File extends Model {
@@ -37,13 +36,6 @@ module.exports = (sequelize, DataTypes) => {
     fileSize: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    url: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const url = getPresignedURL(this.key);
-        return url;
-      },
     },
   }, {
     sequelize,
