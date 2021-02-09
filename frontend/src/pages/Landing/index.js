@@ -10,35 +10,33 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 
-export const activityReportId = (id, regionId) => {
-  return `R${
-    regionId < 10
-      ? `0${regionId}`
-      : regionId
-  }-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
-}
+export const activityReportId = (id, regionId) => `R${
+  regionId < 10
+    ? `0${regionId}`
+    : regionId
+}-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
 
 export const getValue = (item, sortConfig) => {
-  const keys = sortConfig.key.split(".");
+  const keys = sortConfig.key.split('.');
 
   // const getValueForItem = (item) =>
   return keys.reduce((object, key) => {
-      const result = (object || {})[key];
-      if (key === "activityRecipients" || key === "collaborators") {
-        return result[0].name;
-      } else if (key === "topics") {
-        return result[0];
-      } else if (key === "startDate" || key === "lastSaved") {
-        const date = (object || {})[key];
-        // Format with year first
-        return date
-          ? moment(date, "MM/DD/YYYY", "America/New_York").format("YYYY-MM-DD")
-          : undefined;
-      } else if (key === "regionId") {
-        return activityReportId((object || {})["id"], (object || {})[key]);
-      }
-      return (object || {})[key];
-    }, item);
+    const result = (object || {})[key];
+    if (key === 'activityRecipients' || key === 'collaborators') {
+      return result[0].name;
+    } if (key === 'topics') {
+      return result[0];
+    } if (key === 'startDate' || key === 'lastSaved') {
+      const date = (object || {})[key];
+      // Format with year first
+      return date
+        ? moment(date, 'MM/DD/YYYY', 'America/New_York').format('YYYY-MM-DD')
+        : undefined;
+    } if (key === 'regionId') {
+      return activityReportId((object || {}).id, (object || {})[key]);
+    }
+    return (object || {})[key];
+  }, item);
 };
 
 function renderReports(reports) {
@@ -109,7 +107,7 @@ function renderReports(reports) {
         {collaborator.name}
       </Tag>
     ));
-    
+
     const fullId = !id
       ? ''
       : activityReportId(id, regionId);
@@ -182,21 +180,20 @@ function Landing() {
     ) {
       direction = 'descending';
     }
-    console.log(direction);
     setSortConfig({ key, direction });
     updateReports(sortedReports);
   };
 
   React.useMemo(() => {
-      sortedReports.sort((a, b) => {
-        if (getValue(a, sortConfig) < getValue(b, sortConfig)) {
-          return sortConfig.direction === 'descending' ? -1 : 1;
-        }
-        if (getValue(a, sortConfig) > getValue(b, sortConfig)) {
-          return sortConfig.direction === 'descending' ? 1 : -1;
-        }
-        return 0;
-      });
+    sortedReports.sort((a, b) => {
+      if (getValue(a, sortConfig) < getValue(b, sortConfig)) {
+        return sortConfig.direction === 'descending' ? -1 : 1;
+      }
+      if (getValue(a, sortConfig) > getValue(b, sortConfig)) {
+        return sortConfig.direction === 'descending' ? 1 : -1;
+      }
+      return 0;
+    });
     return sortedReports;
   }, [sortConfig, sortedReports]);
 
@@ -216,9 +213,7 @@ function Landing() {
     fetchReports();
   }, []);
 
-  const getClassNamesFor = (name) => {
-    return sortConfig.key === name ? sortConfig.direction : '';
-  };
+  const getClassNamesFor = (name) => (sortConfig.key === name ? sortConfig.direction : '');
 
   if (!isLoaded) {
     return <div>Loading...</div>;
