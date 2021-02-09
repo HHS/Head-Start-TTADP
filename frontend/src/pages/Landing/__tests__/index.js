@@ -117,7 +117,7 @@ describe('Landing Page', () => {
 
   test('displays the correct collaborators', async () => {
     const collaborators = await screen.findByRole('cell', {
-      name: /cucumber user\nhermione granger/i,
+      name: /cucumber user, gs\nhermione granger, ss/i,
     });
 
     expect(collaborators).toBeVisible();

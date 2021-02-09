@@ -58,7 +58,7 @@ export default (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.name}, ${this.role}`;
+        return `${this.name}, ${this.role.split(' ').map((word) => word[0]).join('')}`;
       },
     },
   }, {

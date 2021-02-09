@@ -223,7 +223,7 @@ export function activityReports() {
       },
       {
         model: User,
-        attributes: ['name'],
+        attributes: ['name', 'role', 'fullName'],
         as: 'collaborators',
         through: { attributes: [] },
       },

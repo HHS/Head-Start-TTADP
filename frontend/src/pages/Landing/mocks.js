@@ -48,17 +48,21 @@ const activityReports = [
       },
     ],
     author: {
-      fullName: 'Kiwi, Grants Specialist',
+      fullName: 'Kiwi, GS',
       name: 'Kiwi',
       role: 'Grants Specialist',
-      homeRegionId: 3,
+      homeRegionId: 14,
     },
     collaborators: [
       {
+        fullName: 'Orange, GS',
         name: 'Orange',
+        role: 'Grants Specialist',
       },
       {
+        fullName: 'Hermione Granger, SS',
         name: 'Hermione Granger',
+        role: 'System Specialist',
       },
     ],
   },
@@ -84,17 +88,21 @@ const activityReports = [
       },
     ],
     author: {
-      fullName: 'Kiwi, Grants Specialist',
+      fullName: 'Kiwi, GS',
       name: 'Kiwi',
       role: 'Grants Specialist',
-      homeRegionId: 3,
+      homeRegionId: 14,
     },
     collaborators: [
       {
+        fullName: 'Cucumber User, GS',
         name: 'Cucumber User',
+        role: 'Grantee Specialist'
       },
       {
+        fullName: 'Hermione Granger, SS',
         name: 'Hermione Granger',
+        role: 'System Specialist',
       },
     ],
   },
