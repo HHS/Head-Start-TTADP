@@ -89,8 +89,8 @@ describe('Admin Page', () => {
       });
 
       it('user list is filterable by SITE_ACCESS permission', async () => {
-        const checkbox = await screen.findByRole('checkbox', { name: 'Show Only Locked Users' });
-        userEvent.click(checkbox);
+        const radio = await screen.findByRole('radio', { name: 'Show only locked users' });
+        userEvent.click(radio);
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);
@@ -98,7 +98,7 @@ describe('Admin Page', () => {
       });
 
       it('user list is filterable by last login', async () => {
-        const radio = await screen.findByRole('radio', { name: 'Show Last Login > 60 days ago' });
+        const radio = await screen.findByRole('radio', { name: 'Show last login > 60 days ago' });
         userEvent.click(radio);
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
