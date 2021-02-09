@@ -5,9 +5,20 @@ import {
   Permission,
 } from '../models';
 
+export const userAttributes = [
+  'id',
+  'name',
+  'hsesUserId',
+  'email',
+  'phoneNumber',
+  'homeRegionId',
+  'role',
+  'lastLogin',
+];
+
 export async function userById(userId) {
   return User.findOne({
-    attributes: ['id', 'name', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId', 'role'],
+    attributes: userAttributes,
     where: {
       id: {
         [Op.eq]: userId,

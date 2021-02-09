@@ -3,8 +3,9 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import {
-  Label, TextInput, Grid, SideNav, Alert, Checkbox,
+  Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
 } from '@trussworks/react-uswds';
+import moment from 'moment';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
@@ -73,14 +74,29 @@ function Admin(props) {
     }
   }, [userId, users]);
 
+  const permissionsIncludesAccess = (permissions) => (
+    _.some(permissions, (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS))
+  );
+
+  // rules for to-lock and to-disable filters are laid out in Access Control SOP:
+  // https://github.com/HHS/Head-Start-TTADP/wiki/Access-Control-&-Account-Management-SOP#account-review-frequency-and-process
+  const lockThreshold = moment().subtract(60, 'days');
+  const disableThreshold = moment().subtract(180, 'days');
+
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
       const { email, name, permissions } = u;
+      const lastLogin = moment(u.lastLogin);
       const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
       let userMatchesLockFilter = true;
-      if (lockedFilter) {
-        userMatchesLockFilter = !_.some(permissions,
-          (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS));
+      if (lockedFilter === 'recent') {
+        userMatchesLockFilter = lastLogin.isAfter(lockThreshold)
+          && !permissionsIncludesAccess(permissions);
+      } else if (lockedFilter === 'to-lock') {
+        userMatchesLockFilter = lastLogin.isBefore(lockThreshold)
+          && permissionsIncludesAccess(permissions);
+      } else if (lockedFilter === 'to-disable') {
+        userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
       }
       return userMatchesFilter && userMatchesLockFilter;
     })
@@ -125,12 +141,36 @@ function Admin(props) {
         <h1 className="text-center">User Administration</h1>
         <Grid row gap>
           <Grid col={4}>
-            <Checkbox
-              label="Show Only Locked Users"
-              id="show-locked-users"
-              checked={lockedFilter}
-              onChange={() => updateLockedFilter(!lockedFilter)}
-            />
+            <Fieldset className="smart-hub--report-legend" legend="Access Control Filtering">
+              <Radio
+                label="Show all users"
+                id="access-control-filter-all"
+                name="lock-filter"
+                checked={lockedFilter === false}
+                onChange={() => updateLockedFilter(false)}
+              />
+              <Radio
+                label="Show recent locked logins"
+                id="access-control-filter-recent"
+                name="lock-filter"
+                checked={lockedFilter === 'recent'}
+                onChange={() => updateLockedFilter('recent')}
+              />
+              <Radio
+                label="Show users to lock"
+                id="access-control-filter-lock"
+                name="lock-filter"
+                checked={lockedFilter === 'to-lock'}
+                onChange={() => updateLockedFilter('to-lock')}
+              />
+              <Radio
+                label="Show users to disable"
+                id="access-control-filter-disable"
+                name="lock-filter"
+                checked={lockedFilter === 'to-disable'}
+                onChange={() => updateLockedFilter('to-disable')}
+              />
+            </Fieldset>
             <Label htmlFor="input-filter-users">Filter Users</Label>
             <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
             <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
