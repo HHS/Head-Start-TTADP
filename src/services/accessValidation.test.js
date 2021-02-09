@@ -1,3 +1,4 @@
+import moment from 'moment';
 import db, { User, Permission, sequelize } from '../models';
 import findOrCreateUser, { validateUserAuthForAccess, validateUserAuthForAdmin } from './accessValidation';
 import { auditLogger } from '../logger';
@@ -75,6 +76,22 @@ describe('accessValidation', () => {
       expect(retrievedUser.hsesUserId).toEqual(user.hsesUserId);
       expect(retrievedUser.email).toEqual(user.email);
       expect(retrievedUser.id).toEqual(user.id);
+    });
+
+    it('Updates the lastLogin timestamp when a matching user exists', async () => {
+      const userId = 36;
+      const user = {
+        hsesUserId: '36',
+        email: 'test36@test.com',
+        homeRegionId: 3,
+      };
+      const originalLastLogin = moment().subtract(1, 'day');
+      await User.destroy({ where: { id: userId } });
+      await User.create({ ...user, id: userId, lastLogin: originalLastLogin });
+
+      const retrievedUser = await findOrCreateUser(user);
+      expect(retrievedUser.id).toEqual(userId);
+      expect(originalLastLogin.isBefore(retrievedUser.lastLogin)).toBe(true);
     });
 
     it('Creates a new user when a matching user does not exist', async () => {
