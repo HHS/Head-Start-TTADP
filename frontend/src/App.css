@@ -85,12 +85,8 @@ body {
   /* Hide things that don't need to be printed
    * ':empty' doesn't work on <textarea>, so we need to check values and set 'no-print' if empty
    * */
-  .background-stripe,
   .usa-nav,
   .usa-menu-btn,
-  .smart-hub-sidenav-wrapper,
-  .smart-hub-edit-link,
-  .smart-hub-review-item--empty,
   .no-print,
   input:empty,
   button[type="submit"]
