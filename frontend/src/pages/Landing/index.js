@@ -24,15 +24,15 @@ export const getValue = (item, sortConfig) => {
     const result = (object || {})[key];
     if (key === 'activityRecipients' || key === 'collaborators') {
       return result[0].name;
-    } else if (key === 'topics') {
+    } if (key === 'topics') {
       return result[0];
-    } else if (key === 'startDate' || key === 'lastSaved') {
+    } if (key === 'startDate' || key === 'lastSaved') {
       const date = (object || {})[key];
       // Format with year first
       return date
         ? moment(date, 'MM/DD/YYYY', 'America/New_York').format('YYYY-MM-DD')
         : undefined;
-    } else if (key === 'regionId') {
+    } if (key === 'regionId') {
       return activityReportId((object || {}).id, (object || {})[key]);
     }
     return (object || {})[key];
