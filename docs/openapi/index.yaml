@@ -107,6 +107,40 @@ components:
           description: The type of the activity, Training or Technical Assistance (or both)
           items:
             type: string
+    shortActivityReport:
+      type: object
+      description: >
+        This object represents a shorter version of a report on an activity that a specialist has completed
+        with 1 to many grants or non-grantees
+      properties:
+        id:
+          type: number
+        regionId:
+          type: number
+          description: Home region id of the activity report user
+        startDate:
+          type: string
+        lastSaved:
+          type: string
+        topics:
+          type: array
+          description: Topics covered during the TTA
+          items:
+            type: string
+        activityRecipients:
+          type: array
+          description: Activity recipients - grantees or non-grantees
+          items:
+            type: object
+        collaborators:
+          type: array
+          description: Collaborating user names
+          items:
+            type: object
+        status:
+          type: string
+          enum: ['approved', 'draft', 'submitted']
+          description: The current state of the report
     selectableUser:
       type: object
       description: >
