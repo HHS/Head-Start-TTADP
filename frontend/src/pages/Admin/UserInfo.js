@@ -55,6 +55,7 @@ UserInfo.propTypes = {
     role: PropTypes.string,
     hsesUserId: PropTypes.string,
     phoneNumber: PropTypes.string,
+    lastLogin: PropTypes.string,
   }).isRequired,
   onUserChange: PropTypes.func.isRequired,
 };

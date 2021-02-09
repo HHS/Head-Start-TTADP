@@ -28,7 +28,7 @@ describe('UserInfo', () => {
 
     test('has a blank last login', async () => {
       expect(screen.getByLabelText('Last Login')).toHaveValue('');
-    })
+    });
   });
 
   describe('with a full user object', () => {

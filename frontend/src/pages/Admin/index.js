@@ -90,9 +90,11 @@ function Admin(props) {
       const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
       let userMatchesLockFilter = true;
       if (lockedFilter === 'recent') {
-        userMatchesLockFilter = lastLogin.isAfter(lockThreshold) && !permissionsIncludesAccess(permissions);
+        userMatchesLockFilter = lastLogin.isAfter(lockThreshold)
+          && !permissionsIncludesAccess(permissions);
       } else if (lockedFilter === 'to-lock') {
-        userMatchesLockFilter = lastLogin.isBefore(lockThreshold) && permissionsIncludesAccess(permissions);
+        userMatchesLockFilter = lastLogin.isBefore(lockThreshold)
+          && permissionsIncludesAccess(permissions);
       } else if (lockedFilter === 'to-disable') {
         userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
       }
