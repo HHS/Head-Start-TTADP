@@ -1,3 +1,5 @@
+const moment = require('moment');
+
 const SITE_ACCESS = 1;
 const ADMIN = 2;
 const READ_WRITE_REPORTS = 3;
@@ -111,6 +113,7 @@ const users = [
     name: 'Hermione Granger',
     phoneNumber: '555-555-5550',
     homeRegionId: 1,
+    lastLogin: moment().toISOString(),
   },
   {
     id: 2,
@@ -120,6 +123,7 @@ const users = [
     name: undefined,
     phoneNumber: undefined,
     homeRegionId: undefined,
+    lastLogin: moment().subtract(190, 'days').toISOString(),
   },
   {
     id: 3,
@@ -128,6 +132,7 @@ const users = [
     name: 'Harry Potter',
     phoneNumber: '555-555-5551',
     homeRegionId: 2,
+    lastLogin: moment().toISOString(),
   },
   {
     id: 4,
@@ -136,6 +141,7 @@ const users = [
     name: 'Ron Weasley',
     phoneNumber: '555-555-5552',
     homeRegionId: 3,
+    lastLogin: moment().subtract(65, 'days').toISOString(),
   },
   {
     id: 5,
@@ -144,6 +150,7 @@ const users = [
     name: 'Cucumber User',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
+    lastLogin: moment().toISOString(),
   },
   {
     id: 6,
@@ -155,6 +162,7 @@ const users = [
     name: 'Krys',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
+    lastLogin: moment().toISOString(),
   },
   {
     id: 7,
@@ -164,6 +172,7 @@ const users = [
     hsesUserId: '50154',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
+    lastLogin: moment().toISOString(),
   },
 ];
 
