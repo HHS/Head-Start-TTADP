@@ -10,10 +10,4 @@ get:
         application/json:
           schema:
             type: object
-            properties:
-              userId:
-                type: number
-              name:
-                type: string
-              role:
-                type: string
+            $ref: '../index.yaml#/components/schemas/user'
