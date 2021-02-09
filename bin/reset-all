@@ -1,0 +1,13 @@
+#!/bin/bash
+
+yarn docker:stop
+
+docker volume prune
+
+yarn docker:deps
+
+yarn docker:db:migrate
+
+yarn docker:db:seed
+
+yarn docker:stop
