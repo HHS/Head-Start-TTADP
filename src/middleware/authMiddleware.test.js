@@ -131,7 +131,7 @@ describe('authMiddleware', () => {
     await authMiddleware(mockRequest, mockResponse, mockNext);
     expect(mockResponse.redirect).not.toHaveBeenCalled();
     expect(mockNext).toHaveBeenCalled();
-    await destroyUser(mockUser);
+    await destroyUser(user);
   });
 
   it('require authorization if variables are set NOT for UAT or accessibility testing', async () => {

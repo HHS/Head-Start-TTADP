@@ -1,6 +1,13 @@
 import express from 'express';
 import {
-  getApprovers, submitReport, saveReport, createReport, getReport, getActivityRecipients, getGoals,
+  getApprovers,
+  submitReport,
+  saveReport,
+  createReport,
+  getReport,
+  getActivityRecipients,
+  getGoals,
+  reviewReport,
 } from './handlers';
 
 const router = express.Router();
@@ -15,6 +22,7 @@ router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
 router.get('/:activityReportId', getReport);
 router.put('/:activityReportId', saveReport);
+router.put('/:activityReportId/review', reviewReport);
 router.post('/:activityReportId/submit', submitReport);
 
 export default router;
