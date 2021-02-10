@@ -100,7 +100,7 @@ function Admin(props) {
       }
       return userMatchesFilter && userMatchesLockFilter;
     })
-  ), [users, userSearch, lockedFilter]);
+  ), [users, userSearch, lockedFilter, disableThreshold, lockThreshold]);
 
   if (!isLoaded) {
     return (
