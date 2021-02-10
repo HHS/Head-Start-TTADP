@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, within,
+  render, screen, within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -146,134 +146,7 @@ describe('Landing Page', () => {
     expect(optionButtons.length).toBe(2);
   });
 
-  it('requests sort when clicked on Status column', async () => {
-    let statusColumnHeader = await screen.findByText(/status/i);
-    fireEvent.click(statusColumnHeader);
-    statusColumnHeader = await screen.findByText(/status/i);
-    expect(statusColumnHeader).toHaveClass('ascending');
-  });
 
-  it('requests sort when clicked on Last Saved column', async () => {
-    let columnHeader = await screen.findByText(/last saved/i);
-    expect(columnHeader).toHaveClass('descending');
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/last saved/i);
-    expect(columnHeader).toHaveClass('ascending');
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/last saved/i);
-    expect(columnHeader).toHaveClass('descending');
-  });
-
-  it('requests sort when clicked on Collaborator(s) column', async () => {
-    let columnHeader = await screen.findByText(/collaborator\(s\)/i);
-    expect(columnHeader.className).toBe('');
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/collaborator\(s\)/i);
-    expect(columnHeader).toHaveClass('ascending');
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/collaborator\(s\)/i);
-    expect(columnHeader).toHaveClass('descending');
-
-    const statusColumnHeader = await screen.findByText(/status/i);
-    expect(statusColumnHeader.className).toBe('');
-  });
-
-  it('requests sort when clicked on Topic(s) column', async () => {
-    let columnHeader = await screen.findByText(/topic\(s\)/i);
-    expect(columnHeader.className).toBe('');
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/topic\(s\)/i);
-    expect(columnHeader).toHaveClass('ascending');
-
-    const allTableCells = await screen.findAllByRole('cell');
-    expect(allTableCells.length).toBe(18);
-    expect(allTableCells[4]).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support');
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/topic\(s\)/i);
-    expect(columnHeader).toHaveClass('descending');
-  });
-
-  it('requests sort when clicked on Creator column', async () => {
-    let columnHeader = await screen.findByText(/creator/i);
-    expect(columnHeader.className).toBe('');
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/creator/i);
-    expect(columnHeader).toHaveClass('ascending');
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/creator/i);
-    expect(columnHeader).toHaveClass('descending');
-  });
-
-  it('requests sort when clicked on Start date column', async () => {
-    let columnHeader = await screen.findByText(/start date/i);
-    expect(columnHeader.className).toBe('');
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/start date/i);
-    expect(columnHeader).toHaveClass('ascending');
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByText(/start date/i);
-    expect(columnHeader).toHaveClass('descending');
-  });
-
-  it('requests sort when clicked on Grantee column', async () => {
-    let columnHeader = await screen.findByRole('columnheader', {
-      name: /grantee/i,
-    });
-    expect(columnHeader.className).toBe('');
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByRole('columnheader', {
-      name: /grantee/i,
-    });
-    expect(columnHeader).toHaveClass('ascending');
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByRole('columnheader', {
-      name: /grantee/i,
-    });
-    expect(columnHeader).toHaveClass('descending');
-  });
-
-  it('requests sort when clicked on Report ID column', async () => {
-    let columnHeader = await screen.findByRole('columnheader', {
-      name: /report id/i,
-    });
-    expect(columnHeader.className).toBe('');
-
-    let allTableCells = await screen.findAllByRole('cell');
-    expect(allTableCells[0]).toHaveTextContent('R14-000001');
-
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByRole('columnheader', {
-      name: /report id/i,
-    });
-    expect(columnHeader).toHaveClass('ascending');
-
-    allTableCells = await screen.findAllByRole('cell');
-    expect(allTableCells[0]).toHaveTextContent('R14-000001');
-    expect(allTableCells[9]).toHaveTextContent('R14-000002');
-
-    // click again
-    fireEvent.click(columnHeader);
-    columnHeader = await screen.findByRole('columnheader', {
-      name: /report id/i,
-    });
-    expect(columnHeader).toHaveClass('descending');
-
-    allTableCells = await screen.findAllByRole('cell');
-    expect(allTableCells[0]).toHaveTextContent('R14-000002');
-    expect(allTableCells[9]).toHaveTextContent('R14-000001');
-
-    // click one more time
-    fireEvent.click(columnHeader);
-    allTableCells = await screen.findAllByRole('cell');
-    expect(allTableCells[0]).toHaveTextContent('R14-000001');
-    expect(allTableCells[9]).toHaveTextContent('R14-000002');
-  });
 
   test('activityReportId is correct', () => {
     const spy = jest.spyOn(page, 'activityReportId');
@@ -281,26 +154,6 @@ describe('Landing Page', () => {
 
     expect(spy).toHaveBeenCalled();
     expect(reportId).toBe('R09-000333');
-
-    spy.mockRestore();
-  });
-
-  test('correct values are accessed', () => {
-    const spy = jest.spyOn(page, 'getValue');
-
-    const topic = page.getValue(activityReports[0], { key: 'topics', direction: 'ascending' });
-
-    expect(spy).toHaveBeenCalled();
-    expect(topic).toBe('Behavioral / Mental HealthCLASS: Instructional Support');
-
-    const creator = page.getValue(activityReports[0], { key: 'author.name', direction: 'ascending' });
-    expect(creator).toBe('Kiwi');
-
-    const status = page.getValue(activityReports[0], { key: 'status', direction: 'ascending' });
-    expect(status).toBe('draft');
-
-    const reportId = page.getValue(activityReports[0], { key: 'regionId', direction: 'ascending' });
-    expect(reportId).toBe('R14-000001');
 
     spy.mockRestore();
   });
