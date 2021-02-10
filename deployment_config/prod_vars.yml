@@ -6,3 +6,4 @@ REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 rds_instance: ttahub-prod
 s3_doc_upload_bucket: ttahub-document-upload-prod
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
+CLAMAV_ENDPOINT: http://clamapi-ttahub-dev.apps.internal:8080
