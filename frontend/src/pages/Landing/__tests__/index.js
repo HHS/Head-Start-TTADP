@@ -146,8 +146,6 @@ describe('Landing Page', () => {
     expect(optionButtons.length).toBe(2);
   });
 
-
-
   test('activityReportId is correct', () => {
     const spy = jest.spyOn(page, 'activityReportId');
     const reportId = page.activityReportId(333, 9);
