@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Table, Alert } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import moment from 'moment';
 import { Link } from 'react-router-dom';
 
 import Container from '../../components/Container';
@@ -15,34 +14,6 @@ export const activityReportId = (id, regionId) => `R${
     ? `0${regionId}`
     : regionId
 }-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
-
-export const getValue = (item, sortConfig) => {
-  const keys = sortConfig.key.split('.');
-
-  return keys.reduce((object, key) => {
-    const result = (object || {})[key];
-    if (key === 'activityRecipients') {
-      return result.map((i) => i.name).join('');
-    }
-    if (key === 'collaborators') {
-      return result.map((i) => i.fullName).join('');
-    }
-    if (key === 'topics') {
-      return result.map((i) => i).join('');
-    }
-    if (key === 'startDate' || key === 'lastSaved') {
-      const date = (object || {})[key];
-      // Format with year first
-      return date
-        ? moment(date, 'MM/DD/YYYY', 'America/New_York').format('YYYY-MM-DD')
-        : undefined;
-    }
-    if (key === 'regionId') {
-      return activityReportId((object || {}).id, (object || {})[key]);
-    }
-    return (object || {})[key];
-  }, item);
-};
 
 function renderReports(reports) {
   const emptyReport = {
@@ -170,37 +141,6 @@ function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [error, updateError] = useState();
-  const [sortConfig, setSortConfig] = React.useState({
-    key: 'lastSaved',
-    direction: 'descending',
-  });
-
-  const sortedReports = [...reports];
-  const requestSort = (key) => {
-    let direction = 'ascending';
-    if (
-      sortConfig
-      && sortConfig.key === key
-      && sortConfig.direction === 'ascending'
-    ) {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
-    updateReports(sortedReports);
-  };
-
-  React.useMemo(() => {
-    sortedReports.sort((a, b) => {
-      if (getValue(a, sortConfig) < getValue(b, sortConfig)) {
-        return sortConfig.direction === 'descending' ? -1 : 1;
-      }
-      if (getValue(a, sortConfig) > getValue(b, sortConfig)) {
-        return sortConfig.direction === 'descending' ? 1 : -1;
-      }
-      return 0;
-    });
-    return sortedReports;
-  }, [sortConfig, sortedReports]);
 
   useEffect(() => {
     async function fetchReports() {
@@ -217,8 +157,6 @@ function Landing() {
     }
     fetchReports();
   }, []);
-
-  const getClassNamesFor = (name) => (sortConfig.key === name ? sortConfig.direction : '');
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -251,78 +189,14 @@ function Landing() {
           <caption>Activity reports</caption>
           <thead>
             <tr>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('regionId');
-                }}
-                className={getClassNamesFor('regionId')}
-              >
-                Report ID
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('activityRecipients');
-                }}
-                className={getClassNamesFor('activityRecipients')}
-              >
-                Grantee
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('startDate');
-                }}
-                className={getClassNamesFor('startDate')}
-              >
-                Start date
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('author.name');
-                }}
-                className={getClassNamesFor('author.name')}
-              >
-                Creator
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('topics');
-                }}
-                className={getClassNamesFor('topics')}
-              >
-                Topic(s)
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('collaborators');
-                }}
-                className={getClassNamesFor('collaborators')}
-              >
-                Collaborator(s)
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('lastSaved');
-                }}
-                className={getClassNamesFor('lastSaved')}
-              >
-                Last saved
-              </th>
-              <th
-                scope="col"
-                onClick={() => {
-                  requestSort('status');
-                }}
-                className={getClassNamesFor('status')}
-              >
-                Status
-              </th>
+              <th scope="col">Report ID</th>
+              <th scope="col">Grantee</th>
+              <th scope="col">Start date</th>
+              <th scope="col">Creator</th>
+              <th scope="col">Topic(s)</th>
+              <th scope="col">Collaborator(s)</th>
+              <th scope="col">Last saved</th>
+              <th scope="col">Status</th>
               <th scope="col" aria-label="..." />
             </tr>
           </thead>
