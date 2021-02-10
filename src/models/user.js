@@ -61,6 +61,7 @@ export default (sequelize, DataTypes) => {
         return `${this.name}, ${this.role.split(' ').map((word) => word[0]).join('')}`;
       },
     },
+    lastLogin: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'User',
