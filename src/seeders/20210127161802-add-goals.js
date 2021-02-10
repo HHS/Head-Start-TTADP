@@ -14,28 +14,28 @@ Grantee will receive strategies for ensuring they can consistently meet enrollme
 
 const goals = [
   {
-    id: 100,
+    id: 1,
     name: 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
   },
   {
-    id: 101,
+    id: 2,
     name: 'Grantee supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
   },
   {
-    id: 102,
+    id: 3,
     name: bulletedGoal,
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
   },
   {
-    id: 103,
+    id: 4,
     name: longGoal,
     status: 'Not Started',
     createdAt: now,
@@ -45,33 +45,33 @@ const goals = [
 
 const grantGoals = [
   {
-    id: 100,
+    id: 1,
     grantId: 1,
-    goalId: 100,
+    goalId: 1,
     granteeId: 1,
     createdAt: now,
     updatedAt: now,
   },
   {
-    id: 101,
+    id: 2,
     grantId: 1,
-    goalId: 101,
+    goalId: 2,
     granteeId: 1,
     createdAt: now,
     updatedAt: now,
   },
   {
-    id: 102,
+    id: 3,
     grantId: 1,
-    goalId: 102,
+    goalId: 3,
     granteeId: 1,
     createdAt: now,
     updatedAt: now,
   },
   {
-    id: 103,
+    id: 4,
     grantId: 2,
-    goalId: 103,
+    goalId: 4,
     granteeId: 2,
     createdAt: now,
     updatedAt: now,
@@ -83,6 +83,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.bulkInsert('Goals', goals, { transaction });
       await queryInterface.bulkInsert('GrantGoals', grantGoals, { transaction });
+      await queryInterface.sequelize.query('ALTER SEQUENCE "Goals_id_seq" RESTART WITH 10;', { transaction });
+      await queryInterface.sequelize.query('ALTER SEQUENCE "GrantGoals_id_seq" RESTART WITH 10;', { transaction });
     });
   },
 
