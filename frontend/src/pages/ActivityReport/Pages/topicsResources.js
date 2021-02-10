@@ -115,7 +115,7 @@ export default {
   path: 'topics-resources',
   sections,
   review: false,
-  render: (hookForm, additionalData, reportId) => {
+  render: (hookForm, additionalData, formData, reportId) => {
     const { control, register } = hookForm;
     return (
       <TopicsResources
