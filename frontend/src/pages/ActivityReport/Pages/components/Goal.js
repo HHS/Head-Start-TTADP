@@ -7,7 +7,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import './Goal.css';
 
-const Goals = ({ name }) => (
+const Goals = ({ id, name, onRemove }) => (
   <div className="smart-hub--goal">
     <div className="smart-hub--goal-content">
       <p className="margin-top-0">
@@ -19,7 +19,7 @@ const Goals = ({ name }) => (
       </Button>
     </div>
     <div className="margin-left-auto margin-top-2">
-      <Button onClick={(e) => { e.preventDefault(); }} unstyled className="smart-hub--button" aria-label="remove goal">
+      <Button onClick={(e) => { e.preventDefault(); onRemove(id); }} unstyled className="smart-hub--button" aria-label="remove goal">
         <FontAwesomeIcon color="gray" icon={faTrash} />
       </Button>
     </div>
@@ -27,7 +27,9 @@ const Goals = ({ name }) => (
 );
 
 Goals.propTypes = {
+  id: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
+  onRemove: PropTypes.func.isRequired,
 };
 
 export default Goals;

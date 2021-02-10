@@ -35,9 +35,11 @@ export const getRecipients = async () => {
   return recipients.json();
 };
 
-export const getReports = async () => {
-  const reports = await get(activityReportUrl);
-  return reports.json();
+export const getGoals = async (grantIds) => {
+  const params = grantIds.map((grantId) => `grantIds=${grantId}`);
+  const url = join(activityReportUrl, 'goals', `?${params.join('&')}`);
+  const goals = await get(url);
+  return goals.json();
 };
 
 export const getCollaborators = async (region) => {

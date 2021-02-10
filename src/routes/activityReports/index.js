@@ -7,6 +7,7 @@ import {
   getReport,
   getReports,
   getActivityRecipients,
+  getGoals,
   reviewReport,
 } from './handlers';
 
@@ -19,6 +20,7 @@ const router = express.Router();
 router.post('/', createReport);
 router.get('/approvers', getApprovers);
 router.get('/activity-recipients', getActivityRecipients);
+router.get('/goals', getGoals);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
