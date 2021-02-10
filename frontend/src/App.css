@@ -124,6 +124,11 @@ body {
     margin: 0.25in 0;
   }
 
+  .smart-hub-status-label {
+    background: none;
+    border: 1px solid #adadad;
+  }
+
   .smart-hub-navigator-wrapper {
     width: 100%;
     padding-left: 0;
