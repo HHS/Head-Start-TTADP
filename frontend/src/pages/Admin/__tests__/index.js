@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
+import moment from 'moment';
 
 import Admin from '../index';
 import { SCOPE_IDS } from '../../../Constants';
@@ -34,7 +35,12 @@ describe('Admin Page', () => {
         name: undefined,
         homeRegionId: 1,
         role: 'Grantee Specialist',
-        permissions: [],
+        lastLogin: moment().subtract(65, 'days').toISOString(),
+        permissions: [{
+          userId: 2,
+          scopeId: SCOPE_IDS.SITE_ACCESS,
+          regionId: 14,
+        }],
       },
       {
         id: 3,
@@ -42,10 +48,24 @@ describe('Admin Page', () => {
         name: 'Harry Potter',
         homeRegionId: 1,
         role: 'Grantee Specialist',
+        lastLogin: moment().toISOString(),
         permissions: [{
           userId: 3,
           scopeId: SCOPE_IDS.SITE_ACCESS,
           regionId: 14,
+        }],
+      },
+      {
+        id: 4,
+        email: 'granger@hogwarts.com',
+        name: 'Hermione Granger',
+        homeRegionId: 1,
+        role: 'Early Childhood Specialist',
+        lastLogin: moment().subtract(190, 'days').toISOString(),
+        permissions: [{
+          userId: 4,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+          regionId: 1,
         }],
       },
     ];
@@ -73,7 +93,7 @@ describe('Admin Page', () => {
         userEvent.type(filter, '@hogwarts.com');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
-        expect(links.length).toBe(2);
+        expect(links.length).toBe(3);
       });
 
       it('user filtering is case-insentive', async () => {
@@ -85,13 +105,22 @@ describe('Admin Page', () => {
         expect(links[0]).toHaveTextContent('Harry Potter');
       });
 
-      it('user list is filterable by SITE_ACCESS permission', async () => {
-        const checkbox = await screen.findByRole('checkbox', { name: 'Show Only Locked Users' });
-        userEvent.click(checkbox);
+      it('user list is filterable by users to lock', async () => {
+        const radio = await screen.findByRole('radio', { name: 'Show users to lock' });
+        userEvent.click(radio);
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);
         expect(links[0]).toHaveTextContent('gs@hogwarts.com');
+      });
+
+      it('user list is filterable by users to disable', async () => {
+        const radio = await screen.findByRole('radio', { name: 'Show users to disable' });
+        userEvent.click(radio);
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(1);
+        expect(links[0]).toHaveTextContent('Hermione Granger');
       });
 
       it('allows a user to be selected', async () => {
