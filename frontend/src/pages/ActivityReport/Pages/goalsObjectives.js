@@ -1,23 +1,58 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
   Fieldset, Label, Textarea,
 } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 
-import Goal from './components/Goal';
+import GoalPicker from './components/GoalPicker';
+import { getGoals } from '../../../fetchers/activityReports';
 
-const GoalsObjectives = ({ register, watch }) => {
+const GoalsObjectives = ({
+  control, grantIds, register, watch, setValue, activityRecipientType,
+}) => {
+  const [availableGoals, updateAvailableGoals] = useState([]);
+  const [loading, updateLoading] = useState(true);
   const goals = watch('goals');
+  const hasGrants = grantIds.length > 0;
+
+  useDeepCompareEffect(() => {
+    const fetch = async () => {
+      if (activityRecipientType === 'grantee' && hasGrants) {
+        const fetchedGoals = await getGoals(grantIds);
+        updateAvailableGoals(fetchedGoals);
+      }
+      updateLoading(false);
+    };
+    fetch();
+  }, [grantIds]);
+
+  if (loading) {
+    return (
+      <div>
+        loading...
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
-        <div id="goals-and-objectives" />
-        {goals.map((goal) => <Goal key={goal.name} name={goal.name} />)}
-      </Fieldset>
+      {activityRecipientType === 'grantee' && hasGrants
+        && (
+        <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
+          <div id="goals-and-objectives" />
+          <GoalPicker
+            setValue={setValue}
+            control={control}
+            availableGoals={availableGoals}
+            selectedGoals={goals}
+          />
+        </Fieldset>
+        )}
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
         <Textarea id="context" name="context" inputRef={register()} />
@@ -28,7 +63,12 @@ const GoalsObjectives = ({ register, watch }) => {
 
 GoalsObjectives.propTypes = {
   register: PropTypes.func.isRequired,
+  setValue: PropTypes.func.isRequired,
+  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   watch: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  control: PropTypes.object.isRequired,
+  activityRecipientType: PropTypes.string.isRequired,
 };
 
 const sections = [
@@ -54,8 +94,23 @@ export default {
   path: 'goals-objectives',
   review: false,
   sections,
-  render: (hookForm) => {
-    const { register, watch } = hookForm;
-    return <GoalsObjectives watch={watch} register={register} />;
+  render: (hookForm, additionalData, formData) => {
+    const {
+      register, watch, control, setValue,
+    } = hookForm;
+    const recipients = formData.activityRecipients || [];
+    const { activityRecipientType } = formData;
+    const grantIds = recipients.map((r) => r.activityRecipientId);
+    return (
+      <GoalsObjectives
+        activityRecipientType={activityRecipientType}
+        grantIds={grantIds}
+        formData={formData}
+        setValue={setValue}
+        watch={watch}
+        register={register}
+        control={control}
+      />
+    );
   },
 };

@@ -24,6 +24,21 @@ if (process.env.VCAP_SERVICES) {
 }
 export const s3 = new S3(s3Config);
 
+export const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
+  const url = { url: null, error: null };
+  try {
+    const params = {
+      Bucket,
+      Key,
+      Expires,
+    };
+    url.url = s3Client.getSignedUrl('getObject', params);
+  } catch (error) {
+    url.error = error;
+  }
+  return url;
+};
+
 export const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   const versioningConfiguration = {
     MFADelete: 'Disabled',
