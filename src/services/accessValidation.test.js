@@ -1,3 +1,4 @@
+import moment from 'moment';
 import db, { User, Permission, sequelize } from '../models';
 import findOrCreateUser, { validateUserAuthForAccess, validateUserAuthForAdmin } from './accessValidation';
 import { auditLogger } from '../logger';
@@ -77,6 +78,22 @@ describe('accessValidation', () => {
       expect(retrievedUser.id).toEqual(user.id);
     });
 
+    it('Updates the lastLogin timestamp when a matching user exists', async () => {
+      const userId = 36;
+      const user = {
+        hsesUserId: '36',
+        email: 'test36@test.com',
+        homeRegionId: 3,
+      };
+      const originalLastLogin = moment().subtract(1, 'day');
+      await User.destroy({ where: { id: userId } });
+      await User.create({ ...user, id: userId, lastLogin: originalLastLogin });
+
+      const retrievedUser = await findOrCreateUser(user);
+      expect(retrievedUser.id).toEqual(userId);
+      expect(originalLastLogin.isBefore(retrievedUser.lastLogin)).toBe(true);
+    });
+
     it('Creates a new user when a matching user does not exist', async () => {
       const user = {
         id: 34,
@@ -109,6 +126,29 @@ describe('accessValidation', () => {
       expect(existingUserAfter).toBeInstanceOf(User);
     });
 
+    it('Finds the existing user when email is changed', async () => {
+      const userId = 35;
+      const oldEmail = 'test35@test.com';
+      const updatedEmail = 'new.email35@test.com';
+      const user = {
+        hsesUserId: '35',
+        email: oldEmail,
+      };
+      // Verify that user 35 is set up as we expect
+      await User.destroy({ where: { id: userId } });
+      await User.create({ ...user, id: userId });
+
+      const retrievedUser = await findOrCreateUser({
+        ...user,
+        email: updatedEmail,
+      });
+
+      expect(retrievedUser.id).toEqual(userId);
+
+      // TODO: should eventually update email addresses
+      expect(retrievedUser.email).toEqual(oldEmail);
+    });
+
     it('Throws when there is something wrong', async () => {
       await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
     });
@@ -119,6 +159,7 @@ describe('accessValidation', () => {
         email: 'invalid',
         homeRegionId: 3,
       };
+      await User.destroy({ where: { hsesUserId: '33' } });
       await expect(findOrCreateUser(user)).rejects.toThrow();
       expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
     });
