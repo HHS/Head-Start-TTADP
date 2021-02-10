@@ -55,6 +55,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     role: DataTypes.ENUM(roles),
+    lastLogin: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'User',
