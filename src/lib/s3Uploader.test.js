@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import s3Uploader, { verifyVersioning, s3 } from './s3Uploader';
+import s3Uploader, { verifyVersioning, s3, getPresignedURL } from './s3Uploader';
 
 const mockData = {
   MFADelete: 'Disabled',
@@ -68,5 +68,28 @@ describe('s3Uploader', () => {
     const got = await s3Uploader(buf, name, goodType);
     expect(mockGet.mock.calls.length).toBe(1);
     await expect(got).toBe(response);
+  });
+});
+
+describe('s3Uploader.getPresignedUrl', () => {
+  const Bucket = 'fakeBucket';
+  const Key = 'fakeKey';
+  const fakeError = new Error('fake error');
+  const mockGetURL = jest.spyOn(s3, 'getSignedUrl').mockImplementation(() => 'https://example.com');
+  beforeEach(() => {
+    mockGetURL.mockClear();
+  });
+  it('calls getSignedUrl() with correct parameters', () => {
+    const url = getPresignedURL(Key, Bucket);
+    expect(url).toMatchObject({ url: 'https://example.com', error: null });
+    expect(mockGetURL).toHaveBeenCalled();
+    expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
+  });
+  it('calls getSignedUrl() witcih incorrect parameters', async () => {
+    mockGetURL.mockImplementationOnce(() => { throw fakeError; });
+    const url = getPresignedURL(Key, Bucket);
+    expect(url).toMatchObject({ url: null, error: fakeError });
+    expect(mockGetURL).toHaveBeenCalled();
+    expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
   });
 });
