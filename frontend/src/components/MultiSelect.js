@@ -23,7 +23,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
-import { Label } from '@trussworks/react-uswds';
 import { Controller } from 'react-hook-form';
 
 import arrowBoth from '../images/arrow-both.svg';
@@ -73,7 +72,6 @@ const styles = {
 };
 
 function MultiSelect({
-  label,
   name,
   options,
   disabled,
@@ -117,44 +115,45 @@ function MultiSelect({
   };
 
   return (
-    <Label>
-      {label}
-      <Controller
-        render={({ onChange: controllerOnChange, value }) => {
-          const values = value ? getValues(value) : value;
-          return (
-            <Select
-              className="margin-top-1"
-              id={name}
-              value={values}
-              onChange={(event) => {
-                if (event) {
-                  onChange(event, controllerOnChange);
-                } else {
-                  controllerOnChange([]);
-                }
-              }}
-              styles={styles}
-              components={{ ...componentReplacements, DropdownIndicator }}
-              options={options}
-              isDisabled={disabled}
-              isClearable={multiSelectOptions.isClearable}
-              closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect}
-              controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
-              hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-              placeholder=""
-              isMulti
-            />
-          );
-        }}
-        control={control}
-        defaultValue={[]}
-        rules={{
-          required,
-        }}
-        name={name}
-      />
-    </Label>
+    <Controller
+      render={({ onChange: controllerOnChange, value }) => {
+        const values = value ? getValues(value) : value;
+        return (
+          <Select
+            className="margin-top-1"
+            id={name}
+            value={values}
+            onChange={(event) => {
+              if (event) {
+                onChange(event, controllerOnChange);
+              } else {
+                controllerOnChange([]);
+              }
+            }}
+            styles={styles}
+            components={{ ...componentReplacements, DropdownIndicator }}
+            options={options}
+            isDisabled={disabled}
+            isClearable={multiSelectOptions.isClearable}
+            closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect}
+            controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+            hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
+            placeholder=""
+            isMulti
+          />
+        );
+      }}
+      control={control}
+      rules={{
+        validate: (value) => {
+          if (required && (!value || value.length === 0)) {
+            return required;
+          }
+          return true;
+        },
+      }}
+      name={name}
+    />
   );
 }
 
@@ -164,7 +163,6 @@ const value = PropTypes.oneOfType([
 ]);
 
 MultiSelect.propTypes = {
-  label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   labelProperty: PropTypes.string,
   valueProperty: PropTypes.string,
@@ -191,12 +189,12 @@ MultiSelect.propTypes = {
     hideSelectedOptions: PropTypes.bool,
   }),
   disabled: PropTypes.bool,
-  required: PropTypes.bool,
+  required: PropTypes.string,
 };
 
 MultiSelect.defaultProps = {
   disabled: false,
-  required: true,
+  required: 'Please select at least one item',
   simple: true,
   labelProperty: 'label',
   valueProperty: 'value',
