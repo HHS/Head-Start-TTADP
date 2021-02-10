@@ -30,6 +30,11 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
+export const getReports = async () => {
+  const reports = await get(activityReportUrl);
+  return reports.json();
+};
+
 export const getRecipients = async () => {
   const recipients = await get(join(activityReportUrl, 'activity-recipients'));
   return recipients.json();
