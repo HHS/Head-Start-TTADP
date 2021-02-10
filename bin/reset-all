@@ -1,0 +1,11 @@
+#!/bin/bash
+
+yarn docker:stop --volumes
+
+yarn docker:deps
+
+yarn docker:db:migrate
+
+yarn docker:db:seed
+
+yarn docker:stop
