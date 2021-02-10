@@ -66,7 +66,10 @@ describe('Activity Reports DB service', () => {
     });
 
     it('handles reports with collaborators', async () => {
-      const report = await createOrUpdate({ ...reportObject, collaborators: [{ id: 1000 }] });
+      const report = await createOrUpdate({
+        ...reportObject,
+        collaborators: [{ id: mockUser.id }],
+      });
       expect(report.collaborators.length).toBe(1);
       expect(report.collaborators[0].name).toBe('user');
     });
