@@ -4,6 +4,7 @@ import ActivityReport from '../../policies/activityReport';
 import {
   possibleRecipients, activityReportById, createOrUpdate, review, activityReports,
 } from '../../services/activityReports';
+import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 
 const { APPROVE_REPORTS } = SCOPES;
@@ -13,6 +14,22 @@ const namespace = 'SERVICE:ACTIVITY_REPORTS';
 const logContext = {
   namespace,
 };
+
+/**
+ * Gets all goals for any number of grants for use in an activity report
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getGoals(req, res) {
+  try {
+    const { grantIds } = req.query;
+    const goals = await goalsForGrants(grantIds);
+    res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
 
 /**
  * Gets all users that have approve permissions for the current user's
