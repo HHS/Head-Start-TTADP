@@ -7,6 +7,7 @@ import {
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
+import { DECIMAL_BASE } from '../../constants';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -44,7 +45,7 @@ export async function getApprovers(req, res) {
   const user = await userById(req.session.userId);
   const authorization = new User(user);
 
-  if (!authorization.canViewUsersInRegion(region)) {
+  if (!authorization.canViewUsersInRegion(parseInt(region, DECIMAL_BASE))) {
     res.sendStatus(403);
     return;
   }
