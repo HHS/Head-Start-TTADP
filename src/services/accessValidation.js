@@ -21,14 +21,15 @@ export default function findOrCreateUser(data) {
   return sequelize.transaction((transaction) => User.findOrCreate({
     where: {
       hsesUserId: data.hsesUserId,
-      ...data,
     },
+    defaults: data,
     transaction,
   }).then(([user, created]) => {
     if (created) {
       logger.info(`Created user ${user.id} with no access permissions`);
+      return user;
     }
-    return user;
+    return user.update({ lastLogin: sequelize.fn('NOW') }, { transaction });
   }).catch((error) => {
     const msg = `Error finding or creating user in database - ${error}`;
     logger.error(`${namespace} - ${msg}`);

@@ -1,7 +1,7 @@
 import {
   User, Permission, sequelize,
 } from '../../models';
-import { userById } from '../../services/users';
+import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
 
@@ -36,7 +36,7 @@ export async function getUser(req, res) {
 export default async function getUsers(req, res) {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'name', 'role', 'hsesUserId', 'email', 'phoneNumber', 'homeRegionId'],
+      attributes: userAttributes,
       include: [
         { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
       ],
@@ -81,17 +81,14 @@ export async function updateUser(req, res) {
   const { userId } = req.params;
 
   try {
-    await sequelize.transaction(async (t) => {
+    await sequelize.transaction(async (transaction) => {
       await User.update(requestUser,
         {
           include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
           where: { id: userId },
-        }, { transaction: t });
-
-      await Permission.destroy({ where: { userId } },
-        { transaction: t });
-      await Permission.bulkCreate(requestUser.permissions,
-        { transaction: t });
+        }, { transaction });
+      await Permission.destroy({ where: { userId } }, { transaction });
+      await Permission.bulkCreate(requestUser.permissions, { transaction });
     });
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
     const user = await userById(userId);
