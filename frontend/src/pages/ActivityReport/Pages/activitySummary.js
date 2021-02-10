@@ -45,6 +45,7 @@ const ActivitySummary = ({
 
   const disableRecipients = activityRecipientType === '';
   const nonGranteeSelected = activityRecipientType === 'non-grantee';
+  const granteeSelected = activityRecipientType === 'grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
   const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
@@ -55,6 +56,7 @@ const ActivitySummary = ({
     if (previousActivityRecipientType.current !== activityRecipientType) {
       setValue('activityRecipients', []);
       setValue('participants', []);
+      setValue('programTypes', []);
       previousActivityRecipientType.current = activityRecipientType;
     }
   }, [activityRecipientType, setValue]);
@@ -123,6 +125,8 @@ const ActivitySummary = ({
             options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
           />
         </div>
+        {granteeSelected
+        && (
         <div className="smart-hub--form-section">
           <MultiSelect
             name="programTypes"
@@ -132,6 +136,7 @@ const ActivitySummary = ({
             options={programTypes.map((pt) => ({ value: pt, label: pt }))}
           />
         </div>
+        )}
         <div className="smart-hub--form-section">
           <MultiSelect
             name="targetPopulations"
