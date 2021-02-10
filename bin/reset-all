@@ -1,8 +1,6 @@
 #!/bin/bash
 
-yarn docker:stop
-
-docker volume prune
+yarn docker:stop --volumes
 
 yarn docker:deps
 
