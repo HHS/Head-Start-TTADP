@@ -2,49 +2,56 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
+  Dropdown, Form, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
 
 import { DECIMAL_BASE } from '../../../Constants';
+import FormItem from '../../../components/FormItem';
 
 const SubmitterReviewPage = ({
   submitted,
-  allComplete,
   register,
   approvers,
-  valid,
   handleSubmit,
   onFormSubmit,
+  pages,
 }) => {
+  const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
+  const incompletePages = filtered.map((f) => f.label);
+  const hasIncompletePages = incompletePages.length > 0;
   const setValue = (e) => {
     if (e === '') {
       return null;
     }
     return parseInt(e, DECIMAL_BASE);
   };
+
+  const onSubmit = (e) => {
+    if (!hasIncompletePages) {
+      onFormSubmit(e);
+    }
+  };
+
   return (
     <>
       {submitted
-  && (
-  <Alert noIcon className="margin-y-4" type="success">
-    <b>Success</b>
-    <br />
-    This report was successfully submitted for approval
-  </Alert>
-  )}
-      {!allComplete
-  && (
-  <Alert noIcon className="margin-y-4" type="error">
-    <b>Incomplete report</b>
-    <br />
-    This report cannot be submitted until all sections are complete
-  </Alert>
-  )}
+      && (
+      <Alert noIcon className="margin-y-4" type="success">
+        <b>Success</b>
+        <br />
+        This report was successfully submitted for approval
+      </Alert>
+      )}
       <h2>Submit Report</h2>
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormSubmit)}>
+      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
-          <Label htmlFor="additionalNotes">Creator notes</Label>
-          <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
+          <FormItem
+            label="Creator notes"
+            name="additionalNotes"
+            required={false}
+          >
+            <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
+          </FormItem>
         </Fieldset>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
           <p className="margin-top-4">
@@ -52,15 +59,35 @@ const SubmitterReviewPage = ({
             mode. Please review all information in each section before submitting to your
             manager for approval.
           </p>
-          <Label htmlFor="approvingManagerId">Approving manager</Label>
-          <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: true })}>
-            <option name="default" value="" disabled hidden>Select a Manager...</option>
-            {approvers.map((approver) => (
-              <option key={approver.id} value={approver.id}>{approver.name}</option>
-            ))}
-          </Dropdown>
+          <FormItem
+            label="Approving manager"
+            name="approvingManagerId"
+          >
+            <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: 'A manager must be assigned to the report before submitting' })}>
+              <option name="default" value="" disabled hidden>- Select -</option>
+              {approvers.map((approver) => (
+                <option key={approver.id} value={approver.id}>{approver.name}</option>
+              ))}
+            </Dropdown>
+          </FormItem>
         </Fieldset>
-        <Button type="submit" disabled={!valid}>Submit for approval</Button>
+        {hasIncompletePages
+        && (
+        <Alert noIcon slim type="error">
+          <b>Incomplete report</b>
+          <br />
+          This report cannot be submitted until all sections are complete.
+          Please review the following sections:
+          <ul>
+            {incompletePages.map((page) => (
+              <li key={page}>
+                {page}
+              </li>
+            ))}
+          </ul>
+        </Alert>
+        )}
+        <Button type="submit">Submit for approval</Button>
       </Form>
     </>
   );
@@ -68,15 +95,18 @@ const SubmitterReviewPage = ({
 
 SubmitterReviewPage.propTypes = {
   submitted: PropTypes.bool.isRequired,
-  allComplete: PropTypes.bool.isRequired,
   register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
-  valid: PropTypes.bool.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    review: PropTypes.bool,
+    state: PropTypes.string,
+    label: PropTypes.string,
+  })).isRequired,
 };
 
 export default SubmitterReviewPage;
