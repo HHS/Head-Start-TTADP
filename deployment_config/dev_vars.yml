@@ -6,3 +6,4 @@ REDIRECT_URI_HOST: https://tta-smarthub-dev.app.cloud.gov
 rds_instance: ttahub-dev
 s3_doc_upload_bucket: ttahub-document-upload-dev
 TTA_SMART_HUB_URI: https://tta-smarthub-dev.app.cloud.gov
+CLAMAV_ENDPOINT: http://clamapi-ttahub-dev.apps.internal:8080

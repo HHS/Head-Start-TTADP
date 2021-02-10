@@ -1,0 +1,25 @@
+get:
+  tags:
+    - activity-reports
+  summary: Get possible goals for activity report
+  parameters:
+    - in: query
+      name: grantIds
+      description: Array of grant ids
+      schema:
+        type: array
+        items:
+          type: number
+  operationId: getGoals
+  description: >
+    Get all the goals for all grant ids specified. These goals are in a format
+    ready for use in the UI.
+  responses:
+    200:
+      description: All goals for the given grant ids
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../index.yaml#/components/schemas/goal'
