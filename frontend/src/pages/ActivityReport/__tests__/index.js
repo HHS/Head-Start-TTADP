@@ -85,6 +85,15 @@ describe('ActivityReport', () => {
     });
   });
 
+  it('program type is hidden unless grantee is selected', async () => {
+    renderActivityReport('new');
+    const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+    await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeNull());
+    const nonGrantee = within(information).getByLabelText('Grantee');
+    fireEvent.click(nonGrantee);
+    await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeVisible());
+  });
+
   it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport('new', null);
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
