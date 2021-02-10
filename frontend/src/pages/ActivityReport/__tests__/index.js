@@ -85,7 +85,7 @@ describe('ActivityReport', () => {
     });
   });
 
-  it('hides program type if non-grantee is selected', async () => {
+  it('program type is hidden unless grantee is selected', async () => {
     renderActivityReport('new');
     const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
     await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeNull());
