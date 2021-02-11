@@ -14,7 +14,7 @@ const approvers = [
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager
+  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
