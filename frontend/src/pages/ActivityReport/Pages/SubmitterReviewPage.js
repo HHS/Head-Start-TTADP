@@ -24,7 +24,7 @@ const SubmitterReviewPage = ({
     return parseInt(e, DECIMAL_BASE);
   };
 
-  const watchTextValue = watch('managerNotes');
+  const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
   return (
