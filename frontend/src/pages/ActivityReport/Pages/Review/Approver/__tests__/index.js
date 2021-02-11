@@ -9,7 +9,7 @@ import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
-  status, onFormReview, reviewed, valid, formData,
+  onFormReview, reviewed, valid, formData,
 }) => {
   const { register, handleSubmit } = useForm({
     mode: 'onChange',
@@ -18,7 +18,6 @@ const RenderApprover = ({
 
   return (
     <Approver
-      status={status}
       register={register}
       handleSubmit={handleSubmit}
       onFormReview={onFormReview}
@@ -29,13 +28,13 @@ const RenderApprover = ({
   );
 };
 
-const renderReview = (status, onFormReview, reviewed, valid, notes) => {
+const renderReview = (status, onFormReview, reviewed, valid, notes = '') => {
   const formData = {
     approvingManager: { name: 'name' },
     managerNotes: notes,
     additionalNotes: notes,
     approvingManagerId: '1',
-    status: REPORT_STATUSES.APPROVED,
+    status,
   };
   render(
     <RenderApprover
@@ -58,6 +57,8 @@ describe('Approver review page', () => {
     it('allows the approver to submit a review', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true, true);
+      const dropdown = await screen.findByTestId('dropdown');
+      userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);
       const alert = await screen.findByTestId('alert');

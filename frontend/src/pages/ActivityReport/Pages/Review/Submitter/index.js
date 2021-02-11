@@ -8,7 +8,6 @@ import Approved from './Approved';
 import { REPORT_STATUSES } from '../../../../../Constants';
 
 const Submitter = ({
-  status,
   submitted,
   allComplete,
   register,
@@ -18,10 +17,15 @@ const Submitter = ({
   onFormSubmit,
   formData,
 }) => {
+  const {
+    approvingManager,
+    managerNotes,
+    additionalNotes,
+    status,
+  } = formData;
   const notReviewed = status === REPORT_STATUSES.DRAFT || status === REPORT_STATUSES.SUBMITTED;
   const needsAction = status === REPORT_STATUSES.NEEDS_ACTION;
   const approved = status === REPORT_STATUSES.APPROVED;
-  const { approvingManager, managerNotes, additionalNotes } = formData;
 
   return (
     <>
@@ -59,7 +63,6 @@ const Submitter = ({
 };
 
 Submitter.propTypes = {
-  status: PropTypes.string.isRequired,
   submitted: PropTypes.bool.isRequired,
   allComplete: PropTypes.bool.isRequired,
   register: PropTypes.func.isRequired,
@@ -76,6 +79,7 @@ Submitter.propTypes = {
     }),
     managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
+    status: PropTypes.string,
   }).isRequired,
 };
 

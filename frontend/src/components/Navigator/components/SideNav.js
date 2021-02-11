@@ -5,7 +5,7 @@
 */
 import React from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
+import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
 import { Button, Tag, Alert } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
@@ -55,7 +55,7 @@ function SideNav({
           {page.state !== REPORT_STATUSES.DRAFT
             && (
             <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
-              {_.startCase(page.state)}
+              {startCase(page.state)}
             </Tag>
             )}
         </span>

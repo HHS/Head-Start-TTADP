@@ -12,7 +12,7 @@ const Approved = ({
         <span className="text-bold">Creator notes</span>
         <br />
         <br />
-        { additionalNotes }
+        { additionalNotes || 'No creator notes' }
       </p>
     </div>
     <div className="smart-hub--creator-notes margin-top-2">
@@ -20,7 +20,7 @@ const Approved = ({
         <span className="text-bold">Manager notes</span>
         <br />
         <br />
-        { managerNotes }
+        { managerNotes || 'No manager notes' }
       </p>
     </div>
   </>
@@ -32,8 +32,8 @@ Approved.propTypes = {
 };
 
 Approved.defaultProps = {
-  additionalNotes: 'No creator notes',
-  managerNotes: 'No manager notes',
+  additionalNotes: '',
+  managerNotes: '',
 };
 
 export default Approved;

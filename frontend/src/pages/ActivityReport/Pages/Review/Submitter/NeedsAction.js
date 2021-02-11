@@ -32,7 +32,7 @@ const NeedsAction = ({
           <span className="text-bold">Creator notes</span>
           <br />
           <br />
-          { additionalNotes }
+          { additionalNotes || 'No creator notes' }
         </p>
       </div>
       <div className="smart-hub--creator-notes margin-top-2">
@@ -53,7 +53,7 @@ const NeedsAction = ({
           {' '}
           from
           {' '}
-          { approvingManager.name }
+          { approvingManager.name || 'No manager notes' }
         </div>
       </div>
       <div className="margin-top-3">
@@ -75,8 +75,8 @@ NeedsAction.propTypes = {
 };
 
 NeedsAction.defaultProps = {
-  additionalNotes: 'No creator notes',
-  managerNotes: 'No manager notes',
+  additionalNotes: '',
+  managerNotes: '',
 };
 
 export default NeedsAction;

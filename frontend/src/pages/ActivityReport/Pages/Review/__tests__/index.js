@@ -14,7 +14,7 @@ const approvers = [
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager, status,
+  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -30,7 +30,6 @@ const RenderReview = ({
       hookForm={hookForm}
       formData={formData}
       onReview={onReview}
-      status={status}
       approvingManager={approvingManager}
     />
   );
@@ -48,9 +47,8 @@ const renderReview = (
   render(
     <RenderReview
       allComplete={allComplete}
-      status={status}
       onSubmit={onSubmit}
-      formData={formData}
+      formData={{ ...formData, status }}
       approvingManager={approvingManager}
       onReview={onReview}
       approvingManagerId={approvingManagerId}

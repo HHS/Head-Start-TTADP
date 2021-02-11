@@ -58,9 +58,10 @@ describe('Navigator', () => {
   const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}) => {
     render(
       <Navigator
+        reportId={1}
         submitted={false}
-        initialData={initialData}
-        status={REPORT_STATUSES.DRAFT}
+        formData={initialData}
+        updateFormData={() => {}}
         onReview={() => {}}
         approvingManager={false}
         defaultValues={{ first: '', second: '' }}

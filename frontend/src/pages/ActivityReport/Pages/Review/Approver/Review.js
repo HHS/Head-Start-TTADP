@@ -30,7 +30,7 @@ const Review = ({
         <span className="text-bold">Creator notes</span>
         <br />
         <br />
-        { additionalNotes }
+        { additionalNotes || 'No creator notes'}
       </p>
     </div>
     <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
@@ -52,15 +52,11 @@ const Review = ({
 
 Review.propTypes = {
   reviewed: PropTypes.bool.isRequired,
-  additionalNotes: PropTypes.string,
+  additionalNotes: PropTypes.string.isRequired,
   register: PropTypes.func.isRequired,
   valid: PropTypes.bool.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
-};
-
-Review.defaultProps = {
-  additionalNotes: 'No creator notes',
 };
 
 export default Review;

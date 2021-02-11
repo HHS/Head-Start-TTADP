@@ -85,6 +85,8 @@ components:
           description: Topics covered during the TTA
           items:
             type: string
+        approvingManager:
+          $ref: '#/components/schemas/user'
         pageState:
           type: object
           enum: ['Not Started', 'In progress', 'Completed']
