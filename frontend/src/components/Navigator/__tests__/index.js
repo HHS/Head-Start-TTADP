@@ -7,7 +7,6 @@ import {
 
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
-import { REPORT_STATUSES } from '../../../Constants';
 
 const pages = [
   {
