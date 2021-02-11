@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { File } from '../../models';
 import s3Uploader from '../../lib/s3Uploader';
 
-import ActivityReport from '../../policies/activityReport';
+import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 
@@ -63,7 +63,7 @@ export default async function uploadHandler(req, res) {
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(reportId);
-    const authorization = new ActivityReport(user, report);
+    const authorization = new ActivityReportPolicy(user, report);
 
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
