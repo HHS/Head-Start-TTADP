@@ -9,7 +9,7 @@ import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
-  status, submitted, allComplete, onFormSubmit, formData, valid,
+  submitted, allComplete, onFormSubmit, formData, valid,
 }) => {
   const { register, handleSubmit } = useForm({
     mode: 'onChange',
@@ -18,7 +18,6 @@ const RenderSubmitter = ({
 
   return (
     <Submitter
-      status={status}
       submitted={submitted}
       allComplete={allComplete}
       onFormSubmit={onFormSubmit}
@@ -35,8 +34,9 @@ const renderReview = (status, submitted, allComplete, onFormSubmit) => {
   const formData = {
     approvingManager: { name: 'name' },
     approvingManagerId: 1,
-    status: REPORT_STATUSES.APPROVED,
+    status,
   };
+
   render(
     <RenderSubmitter
       status={status}
@@ -79,14 +79,14 @@ describe('Submitter review page', () => {
 
   describe('when the report is approved', () => {
     it('displays the approved component', async () => {
-      renderReview(REPORT_STATUSES.APPROVED, () => {}, false, true);
+      renderReview(REPORT_STATUSES.APPROVED, false, true, () => {});
       expect(await screen.findByText('Report approved')).toBeVisible();
     });
   });
 
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => {}, false, true);
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, false, true, () => {});
       expect(await screen.findByText('Review and re-submit report')).toBeVisible();
     });
 

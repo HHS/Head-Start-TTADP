@@ -19,11 +19,10 @@ const ReviewSubmit = ({
   reviewItems,
   approvers,
   approvingManager,
-  status,
   formData,
 }) => {
   const { handleSubmit, register, formState } = hookForm;
-  const { additionalNotes } = formData;
+  const { additionalNotes, status } = formData;
   const { isValid } = formState;
   const valid = allComplete && isValid;
 
@@ -109,10 +108,10 @@ ReviewSubmit.propTypes = {
   allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   approvingManager: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
+    status: PropTypes.string,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   hookForm: PropTypes.object.isRequired,
