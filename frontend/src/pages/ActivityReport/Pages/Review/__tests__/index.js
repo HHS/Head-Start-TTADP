@@ -15,7 +15,7 @@ const approvers = [
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager,
+  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager, pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -32,10 +32,23 @@ const RenderReview = ({
         formData={formData}
         onReview={onReview}
         approvingManager={approvingManager}
+        pages={pages}
       />
     </FormProvider>
   );
 };
+
+const completePages = [{
+  label: 'label',
+  state: 'Complete',
+  review: false,
+}];
+
+const incompletePages = [{
+  label: 'incomplete',
+  state: 'In progress',
+  review: false,
+}];
 
 const renderReview = (
   allComplete,
@@ -45,7 +58,10 @@ const renderReview = (
   onSubmit = () => {},
   onReview = () => {},
   approvingManagerId = null,
+  complete = true,
 ) => {
+  const pages = complete ? completePages : incompletePages;
+
   render(
     <RenderReview
       allComplete={allComplete}
@@ -54,11 +70,12 @@ const renderReview = (
       approvingManager={approvingManager}
       onReview={onReview}
       approvingManagerId={approvingManagerId}
+      pages={pages}
     />,
   );
 };
 
-const selectLabel = 'Approving manager';
+const selectLabel = 'Approving manager (Required)';
 
 describe('ReviewSubmit', () => {
   describe('when the user is the approving manager', () => {
@@ -93,18 +110,12 @@ describe('ReviewSubmit', () => {
   });
 
   describe('when the form is not complete', () => {
-    it('an error alert is shown', async () => {
-      renderReview(false, false);
-      const alert = await screen.findByTestId('alert');
-      expect(alert).toHaveClass('usa-alert--error');
-      await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
-    });
-
-    it('the submit button is disabled', async () => {
+    it('an error message is shown when the report is submitted', async () => {
       renderReview(false, false);
       const button = await screen.findByRole('button');
-      expect(button).toBeDisabled();
-      await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
+      userEvent.click(button);
+      const error = await screen.findByTestId('errorMessage');
+      expect(error).toBeVisible();
     });
   });
 
@@ -114,14 +125,6 @@ describe('ReviewSubmit', () => {
       const alert = screen.queryByTestId('alert');
       expect(alert).toBeNull();
       await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
-    });
-
-    it('the submit button is disabled until one approver is selected', async () => {
-      renderReview(true, false);
-      const button = await screen.findByRole('button');
-      expect(button).toBeDisabled();
-      userEvent.selectOptions(screen.getByTestId('dropdown'), ['1']);
-      expect(await screen.findByRole('button')).toBeEnabled();
     });
 
     it('the submit button calls onSubmit', async () => {
