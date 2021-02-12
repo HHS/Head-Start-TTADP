@@ -5,8 +5,22 @@ import {
   render, screen, waitFor, within,
 } from '@testing-library/react';
 
+import { useFormContext } from 'react-hook-form';
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
+
+// eslint-disable-next-line react/prop-types
+const Input = ({ name }) => {
+  const { register } = useFormContext();
+  return (
+    <input
+      type="radio"
+      data-testid={name}
+      name={name}
+      ref={register}
+    />
+  );
+};
 
 const pages = [
   {
@@ -14,13 +28,8 @@ const pages = [
     path: 'first',
     label: 'first page',
     review: false,
-    render: (hookForm) => (
-      <input
-        type="radio"
-        data-testid="first"
-        ref={hookForm.register}
-        name="first"
-      />
+    render: () => (
+      <Input name="first" />
     ),
   },
   {
@@ -28,13 +37,8 @@ const pages = [
     path: 'second',
     label: 'second page',
     review: false,
-    render: (hookForm) => (
-      <input
-        type="radio"
-        data-testid="second"
-        ref={hookForm.register}
-        name="second"
-      />
+    render: () => (
+      <Input name="second" />
     ),
   },
   {
@@ -42,7 +46,7 @@ const pages = [
     label: 'review page',
     path: 'review',
     review: true,
-    render: (hookForm, allComplete, formData, onSubmit) => (
+    render: (allComplete, formData, onSubmit) => (
       <div>
         <button type="button" data-testid="review" onClick={onSubmit}>Continue</button>
       </div>
