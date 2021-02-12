@@ -202,7 +202,7 @@ function ActivityReport({ match, user, location }) {
   return (
     <>
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
-      <h1 className="new-activity-report">New activity report for Region 14</h1>
+      <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">New activity report for Region 14</h1>
       <Navigator
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}
