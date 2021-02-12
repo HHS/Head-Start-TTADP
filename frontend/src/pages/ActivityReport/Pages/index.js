@@ -28,7 +28,6 @@ const reviewPage = {
   path: 'review',
   render:
     (
-      hookForm,
       allComplete,
       formData,
       onSubmit,
@@ -41,7 +40,6 @@ const reviewPage = {
         allComplete={allComplete}
         onSubmit={onSubmit}
         onReview={onReview}
-        hookForm={hookForm}
         approvingManager={approvingManager}
         reviewItems={
           pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))

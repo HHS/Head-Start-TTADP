@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /*
   The navigator is a component used to show multiple form pages. It displays a stickied nav window
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
@@ -6,7 +7,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { Form, Button, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
@@ -124,10 +125,10 @@ function Navigator({
         />
       </Grid>
       <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
-        <div id="navigator-form">
-          {page.review
+        <FormProvider {...hookForm}>
+          <div id="navigator-form">
+            {page.review
             && page.render(
-              hookForm,
               allComplete,
               formData,
               onFormSubmit,
@@ -135,7 +136,7 @@ function Navigator({
               onReview,
               approvingManager,
             )}
-          {!page.review
+            {!page.review
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
@@ -145,12 +146,13 @@ function Navigator({
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
-                  {page.render(hookForm, additionalData, formData, reportId)}
+                  {page.render(additionalData, formData, reportId)}
                   <Button type="submit" disabled={!isValid}>Continue</Button>
                 </Form>
               </Container>
             )}
-        </div>
+          </div>
+        </FormProvider>
       </Grid>
     </Grid>
   );
