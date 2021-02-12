@@ -3,11 +3,13 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { GridContainer, Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 
 import UserContext from './UserContext';
+import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
@@ -122,15 +124,21 @@ function App() {
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header authenticated={authenticated} admin={admin} />
-          <div className="background-stripe" />
-          <section className="usa-section">
-
-            {!authenticated && (
-            <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-            )}
-            {authenticated && renderAuthenticatedRoutes()}
-
-          </section>
+          <Grid row>
+            <Grid col={2}>
+              <SiteNav />
+            </Grid>
+            <Grid col="fill">
+              <section className="usa-section padding-top-0">
+                <GridContainer>
+                  {!authenticated
+            && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
+                  {authenticated
+            && renderAuthenticatedRoutes()}
+                </GridContainer>
+              </section>
+            </Grid>
+          </Grid>
         </UserContext.Provider>
       </BrowserRouter>
     </>

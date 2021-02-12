@@ -1,17 +1,15 @@
-.background-stripe {
-  position: absolute;
-  top: 0;
-  z-index: -1;
-  left: 0;
-  width: 200px;
-  height: 100%;
-  content: "";
+.smart-hub-bg-blue {
   background-color: #264a64;
 }
 
-header {
-  background-color: #f8f8f8;
+.smart-hub-title {
+  font-size: 1.25rem;
 }
+
+.smart-hub-border-darkblue {
+  border-color: #1b3649
+}
+
 body {
   background-color: #f8f8f8;
 }
