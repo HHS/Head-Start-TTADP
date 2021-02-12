@@ -4,6 +4,7 @@ import {
   Alert, Accordion,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
+import { useFormContext } from 'react-hook-form';
 
 import Container from '../../../../components/Container';
 import Submitter from './Submitter';
@@ -12,7 +13,6 @@ import './index.css';
 import { REPORT_STATUSES } from '../../../../Constants';
 
 const ReviewSubmit = ({
-  hookForm,
   allComplete,
   onSubmit,
   onReview,
@@ -21,7 +21,7 @@ const ReviewSubmit = ({
   approvingManager,
   formData,
 }) => {
-  const { handleSubmit, register, formState } = hookForm;
+  const { handleSubmit, register, formState } = useFormContext();
   const { additionalNotes, status } = formData;
   const { isValid } = formState;
   const valid = allComplete && isValid;
@@ -114,7 +114,6 @@ ReviewSubmit.propTypes = {
     status: PropTypes.string,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
-  hookForm: PropTypes.object.isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,

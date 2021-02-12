@@ -1,8 +1,9 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import ReviewSubmit from '../index';
 import { REPORT_STATUSES } from '../../../../../Constants';
@@ -22,16 +23,17 @@ const RenderReview = ({
   });
 
   return (
-    <ReviewSubmit
-      allComplete={allComplete}
-      onSubmit={onSubmit}
-      reviewItems={[]}
-      approvers={approvers}
-      hookForm={hookForm}
-      formData={formData}
-      onReview={onReview}
-      approvingManager={approvingManager}
-    />
+    <FormProvider {...hookForm}>
+      <ReviewSubmit
+        allComplete={allComplete}
+        onSubmit={onSubmit}
+        reviewItems={[]}
+        approvers={approvers}
+        formData={formData}
+        onReview={onReview}
+        approvingManager={approvingManager}
+      />
+    </FormProvider>
   );
 };
 
