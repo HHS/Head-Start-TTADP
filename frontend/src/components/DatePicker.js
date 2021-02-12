@@ -10,10 +10,8 @@
    2. react-dates had easily readable documentation and conveniences such as `maxDate`
       and `minDate`. I couldn't find great docs using the USWDS datepicker javascript
 */
-
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Label } from '@trussworks/react-uswds';
 import { SingleDatePicker } from 'react-dates';
 import { OPEN_UP, OPEN_DOWN } from 'react-dates/constants';
 import { Controller } from 'react-hook-form';
@@ -24,9 +22,8 @@ import './DatePicker.css';
 const dateFmt = 'MM/DD/YYYY';
 
 const DateInput = ({
-  control, label, minDate, name, disabled, maxDate, openUp, required,
+  control, minDate, name, disabled, maxDate, openUp, required,
 }) => {
-  const labelId = `${name}-id`;
   const hintId = `${name}-hint`;
   const [isFocused, updateFocus] = useState(false);
   const openDirection = openUp ? OPEN_UP : OPEN_DOWN;
@@ -40,8 +37,7 @@ const DateInput = ({
 
   return (
     <>
-      <Label id={labelId} htmlFor={name}>{label}</Label>
-      <div className="usa-hint" id={hintId}>mm/dd/yyyy</div>
+      <div className="usa-hint font-body-2xs" id={hintId}>mm/dd/yyyy</div>
       <Controller
         render={({ onChange, value, ref }) => {
           const date = value ? moment(value, dateFmt) : null;
@@ -68,7 +64,7 @@ const DateInput = ({
         disabled={disabled}
         defaultValue={null}
         rules={{
-          required,
+          required: required ? 'Please select a date' : false,
         }}
       />
     </>
@@ -80,7 +76,6 @@ DateInput.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   name: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
   minDate: PropTypes.string,
   maxDate: PropTypes.string,
   openUp: PropTypes.bool,

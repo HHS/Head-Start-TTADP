@@ -13,18 +13,16 @@ import './index.css';
 import { REPORT_STATUSES } from '../../../../Constants';
 
 const ReviewSubmit = ({
-  allComplete,
   onSubmit,
   onReview,
   reviewItems,
   approvers,
   approvingManager,
   formData,
+  pages,
 }) => {
-  const { handleSubmit, register, formState } = useFormContext();
+  const { handleSubmit, register } = useFormContext();
   const { additionalNotes, status } = formData;
-  const { isValid } = formState;
-  const valid = allComplete && isValid;
 
   const [submitted, updateSubmitted] = useState(status === REPORT_STATUSES.SUBMITTED);
   const [reviewed, updateReviewed] = useState(false);
@@ -71,10 +69,9 @@ const ReviewSubmit = ({
         <Submitter
           status={status}
           submitted={submitted}
-          allComplete={allComplete}
           register={register}
           approvers={approvers}
-          valid={valid}
+          pages={pages}
           handleSubmit={handleSubmit}
           onFormSubmit={onFormSubmit}
           formData={formData}
@@ -87,7 +84,6 @@ const ReviewSubmit = ({
           reviewed={reviewed}
           additionalNotes={additionalNotes}
           register={register}
-          valid={valid}
           handleSubmit={handleSubmit}
           onFormReview={onFormReview}
           formData={formData}
@@ -105,7 +101,6 @@ ReviewSubmit.propTypes = {
       name: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
@@ -121,6 +116,11 @@ ReviewSubmit.propTypes = {
       content: PropTypes.node.isRequired,
     }),
   ).isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    review: PropTypes.bool,
+    state: PropTypes.string,
+    label: PropTypes.string,
+  })).isRequired,
 };
 
 export default ReviewSubmit;

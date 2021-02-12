@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import Approver from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
@@ -11,20 +11,21 @@ const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
   onFormReview, reviewed, valid, formData,
 }) => {
-  const { register, handleSubmit } = useForm({
+  const hookForm = useForm({
     mode: 'onChange',
     defaultValues: formData,
   });
 
   return (
-    <Approver
-      register={register}
-      handleSubmit={handleSubmit}
-      onFormReview={onFormReview}
-      reviewed={reviewed}
-      valid={valid}
-      formData={formData}
-    />
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    <FormProvider {...hookForm}>
+      <Approver
+        onFormReview={onFormReview}
+        reviewed={reviewed}
+        valid={valid}
+        formData={formData}
+      />
+    </FormProvider>
   );
 };
 
