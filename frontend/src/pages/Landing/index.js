@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Table, Alert, Grid } from '@trussworks/react-uswds';
+import {
+  Tag, Table, Alert, Grid,
+} from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
@@ -51,7 +53,7 @@ function renderReports(reports) {
 
     const recipients = activityRecipients.map((ar) => (
       <Tag
-        key={ar.name.slice(1, 3) + '_' + ar.id}
+        key={`${ar.name.slice(1, 3)}_${ar.id}`}
         className="smart-hub--table-collection"
       >
         {ar.grant ? ar.grant.grantee.name : ar.name}
@@ -91,11 +93,11 @@ function renderReports(reports) {
       : activityReportId(id, regionId);
 
     return (
-      <tr key={'landing_' + id}>
-        <th scope="row" >
+      <tr key={`landing_${id}`}>
+        <th scope="row">
           <Link
-          to={'/activity-reports/' + id + '/activity-summary'}
-          href={'/activity-reports/' + id + '/activity-summary'}
+            to={`/activity-reports/${id}/activity-summary`}
+            href={`/activity-reports/${id}/activity-summary`}
           >
             {fullId}
           </Link>
@@ -124,7 +126,7 @@ function renderReports(reports) {
         <td>{lastSaved}</td>
         <td>
           <Tag
-            className={'smart-hub--table-tag-status smart-hub--status-' + status}
+            className={`smart-hub--table-tag-status smart-hub--status-${status}`}
           >
             {status}
           </Tag>
@@ -184,7 +186,6 @@ function Landing() {
             <span className="smart-hub--new-report">New Activity Report</span>
           </Link>
         </Grid>
-        <Grid></Grid>
       </Grid>
       <Grid row>
         {error && (
