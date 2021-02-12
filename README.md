@@ -2,6 +2,25 @@
 
 Welcome to the home of the OHS TTADP.
 
+<table>
+<tr>
+<th scope="col">HHS</th>
+<th scope="col">Ad Hoc</th>
+</tr>
+<tr>
+<td>
+
+[![HHS](https://circleci.com/gh/HHS/Head-Start-TTADP.svg?style=shield)](https://app.circleci.com/pipelines/github/HHS/Head-Start-TTADP)
+
+</td>
+<td>
+
+[![adhocteam](https://circleci.com/gh/adhocteam/Head-Start-TTADP.svg?style=shield)](https://app.circleci.com/pipelines/github/adhocteam/Head-Start-TTADP)
+
+</td>
+</tr>
+</table>
+
 ## What We're Building and Why
 
 For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
@@ -13,7 +32,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 1. Make sure Docker is installed. To check run `docker ps`.
 2. Make sure you have Node 12.20.0 installed.
-3. Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed. 
+3. Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed.
 4. Copy `.env.example` to `.env`.  
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
