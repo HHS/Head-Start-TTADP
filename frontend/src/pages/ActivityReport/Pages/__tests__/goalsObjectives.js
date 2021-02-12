@@ -1,8 +1,9 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
 
 import goalsObjectives from '../goalsObjectives';
@@ -21,9 +22,9 @@ const RenderGoalsObjectives = ({
   const activityRecipients = grantIds.map((id) => ({ activityRecipientId: id }));
   const data = { ...initialData, activityRecipientType, activityRecipients };
   return (
-    <>
-      {goalsObjectives.render(hookForm, {}, data)}
-    </>
+    <FormProvider {...hookForm}>
+      {goalsObjectives.render({}, data)}
+    </FormProvider>
   );
 };
 
