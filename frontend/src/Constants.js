@@ -66,3 +66,15 @@ export const REGIONS = [
 ];
 
 export const DECIMAL_BASE = 10;
+
+export const managerReportStatuses = [
+  'needs_action',
+  'approved',
+];
+
+export const REPORT_STATUSES = {
+  DRAFT: 'draft',
+  SUBMITTED: 'submitted',
+  NEEDS_ACTION: 'needs_action',
+  APPROVED: 'approved',
+};
