@@ -5,13 +5,20 @@ import {
   Fieldset, Label, Textarea,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import { useFormContext } from 'react-hook-form';
 
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 
 const GoalsObjectives = ({
-  control, grantIds, register, watch, setValue, activityRecipientType,
+  grantIds, activityRecipientType,
 }) => {
+  const {
+    control,
+    register,
+    watch,
+    setValue,
+  } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [loading, updateLoading] = useState(true);
   const goals = watch('goals');
@@ -62,12 +69,7 @@ const GoalsObjectives = ({
 };
 
 GoalsObjectives.propTypes = {
-  register: PropTypes.func.isRequired,
-  setValue: PropTypes.func.isRequired,
   grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  watch: PropTypes.func.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  control: PropTypes.object.isRequired,
   activityRecipientType: PropTypes.string.isRequired,
 };
 
@@ -94,10 +96,7 @@ export default {
   path: 'goals-objectives',
   review: false,
   sections,
-  render: (hookForm, additionalData, formData) => {
-    const {
-      register, watch, control, setValue,
-    } = hookForm;
+  render: (additionalData, formData) => {
     const recipients = formData.activityRecipients || [];
     const { activityRecipientType } = formData;
     const grantIds = recipients.map((r) => r.activityRecipientId);
@@ -105,11 +104,6 @@ export default {
       <GoalsObjectives
         activityRecipientType={activityRecipientType}
         grantIds={grantIds}
-        formData={formData}
-        setValue={setValue}
-        watch={watch}
-        register={register}
-        control={control}
       />
     );
   },
