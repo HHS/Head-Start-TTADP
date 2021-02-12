@@ -16,6 +16,7 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
+import { REPORT_STATUSES } from '../../Constants';
 import {
   submitReport,
   saveReport,
@@ -59,6 +60,7 @@ const defaultValues = {
   approvingManagerId: null,
   additionalNotes: null,
   goals: fakeGoals,
+  status: REPORT_STATUSES.DRAFT,
 };
 
 // FIXME: default region until we have a way of changing on the frontend
@@ -69,10 +71,9 @@ const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 function ActivityReport({ match, user, location }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
-  const [status, updateStatus] = useState();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
-  const [initialFormData, updateInitialFormData] = useState(defaultValues);
+  const [formData, updateFormData] = useState();
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
   const [canWrite, updateCanWrite] = useState(false);
@@ -116,8 +117,7 @@ function ActivityReport({ match, user, location }) {
         const canWriteReport = isCollaborator || isAuthor;
 
         updateAdditionalData({ recipients, collaborators, approvers });
-        updateInitialFormData(report);
-        updateStatus(report.status || 'draft');
+        updateFormData(report);
         updateApprovingManager(report.approvingManagerId === user.id);
         updateCanWrite(canWriteReport);
 
@@ -152,8 +152,9 @@ function ActivityReport({ match, user, location }) {
   }
 
   if (!currentPage) {
+    const defaultPage = formData.status === REPORT_STATUSES.DRAFT ? 'activity-summary' : 'review';
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Redirect push to={`/activity-reports/${activityReportId}/${defaultPage}`} />
     );
   }
 
@@ -190,12 +191,12 @@ function ActivityReport({ match, user, location }) {
 
   const onFormSubmit = async (data) => {
     const report = await submitReport(reportId.current, data);
-    updateStatus(report.status);
+    updateFormData(report);
   };
 
   const onReview = async (data) => {
     const report = await reviewReport(reportId.current, data);
-    updateStatus(report.status);
+    updateFormData(report);
   };
 
   return (
@@ -207,11 +208,11 @@ function ActivityReport({ match, user, location }) {
         reportId={reportId.current}
         currentPage={currentPage}
         additionalData={initialAdditionalData}
-        initialData={{ ...defaultValues, ...initialFormData }}
+        formData={formData}
+        updateFormData={updateFormData}
         pages={pages}
         onFormSubmit={onFormSubmit}
         onSave={onSave}
-        status={status}
         approvingManager={approvingManager}
         onReview={onReview}
       />
