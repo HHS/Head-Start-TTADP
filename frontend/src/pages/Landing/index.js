@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Table, Alert } from '@trussworks/react-uswds';
+import { Tag, Table, Alert, Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
+import SimpleBar from 'simplebar-react';
+import 'simplebar/dist/simplebar.min.css';
 
 import Container from '../../components/Container';
 import { getReports } from '../../fetchers/activityReports';
@@ -49,7 +51,7 @@ function renderReports(reports) {
 
     const recipients = activityRecipients.map((ar) => (
       <Tag
-        key={`${ar.name.slice(1, 3)}_${ar.id}`}
+        key={ar.name.slice(1, 3) + '_' + ar.id}
         className="smart-hub--table-collection"
       >
         {ar.grant ? ar.grant.grantee.name : ar.name}
@@ -63,7 +65,7 @@ function renderReports(reports) {
 
     const topicsWithTags = topics.map((topic) => (
       <Tag
-        key={`${topic.slice(1, 13)}`}
+        key={topic.slice(1, 13)}
         className="smart-hub--table-collection"
       >
         {topic}
@@ -77,7 +79,7 @@ function renderReports(reports) {
 
     const collaboratorsWithTags = collaborators.map((collaborator) => (
       <Tag
-        key={`${collaborator.fullName.slice(1, 13)}`}
+        key={collaborator.fullName.slice(1, 13)}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
@@ -89,15 +91,15 @@ function renderReports(reports) {
       : activityReportId(id, regionId);
 
     return (
-      <tr key={`landing_${id}`}>
-        <td>
+      <tr key={'landing_' + id}>
+        <th scope="row" >
           <Link
-            to={`/activity-reports/${id}/activity-summary`}
-            href={`/activity-reports/${id}/activity-summary`}
+          to={'/activity-reports/' + id + '/activity-summary'}
+          href={'/activity-reports/' + id + '/activity-summary'}
           >
             {fullId}
           </Link>
-        </td>
+        </th>
         <td>
           <span className="smart-hub--ellipsis" title={recipientsTitle}>
             {recipients}
@@ -122,7 +124,7 @@ function renderReports(reports) {
         <td>{lastSaved}</td>
         <td>
           <Tag
-            className={`smart-hub--table-tag-status smart-hub--status-${status}`}
+            className={'smart-hub--table-tag-status smart-hub--status-' + status}
           >
             {status}
           </Tag>
@@ -167,42 +169,51 @@ function Landing() {
       <Helmet>
         <title>Landing</title>
       </Helmet>
-      <h1 className="landing">
-        Activity Reports
-        <Link
-          to="/activity-reports/new"
-          referrerPolicy="same-origin"
-          className="usa-button smart-hub--new-report-btn"
-          variant="unstyled"
-        >
-          <span className="smart-hub--plus">+</span>
-          <span className="smart-hub--new-report">New Activity Report</span>
-        </Link>
+      <Grid row gap>
+        <Grid col={3}>
+          <h1 className="landing">Activity Reports</h1>
+        </Grid>
+        <Grid className="smart-hub--create-new-report">
+          <Link
+            to="/activity-reports/new"
+            referrerPolicy="same-origin"
+            className="usa-button smart-hub--new-report-btn"
+            variant="unstyled"
+          >
+            <span className="smart-hub--plus">+</span>
+            <span className="smart-hub--new-report">New Activity Report</span>
+          </Link>
+        </Grid>
+        <Grid></Grid>
+      </Grid>
+      <Grid row>
         {error && (
           <Alert type="error" role="alert">
             {error}
           </Alert>
         )}
-      </h1>
-      <Container className="landing" padding={0}>
-        <Table className="usa-table usa-table--borderless usa-table--striped">
-          <caption>Activity reports</caption>
-          <thead>
-            <tr>
-              <th scope="col">Report ID</th>
-              <th scope="col">Grantee</th>
-              <th scope="col">Start date</th>
-              <th scope="col">Creator</th>
-              <th scope="col">Topic(s)</th>
-              <th scope="col">Collaborator(s)</th>
-              <th scope="col">Last saved</th>
-              <th scope="col">Status</th>
-              <th scope="col" aria-label="..." />
-            </tr>
-          </thead>
-          <tbody>{renderReports(reports)}</tbody>
-        </Table>
-      </Container>
+      </Grid>
+      <SimpleBar>
+        <Container className="landing inline-size" padding={0}>
+          <Table className="usa-table usa-table--borderless usa-table--striped">
+            <caption>Activity reports</caption>
+            <thead>
+              <tr>
+                <th scope="col">Report ID</th>
+                <th scope="col">Grantee</th>
+                <th scope="col">Start date</th>
+                <th scope="col">Creator</th>
+                <th scope="col">Topic(s)</th>
+                <th scope="col">Collaborator(s)</th>
+                <th scope="col">Last saved</th>
+                <th scope="col">Status</th>
+                <th scope="col" aria-label="..." />
+              </tr>
+            </thead>
+            <tbody>{renderReports(reports)}</tbody>
+          </Table>
+        </Container>
+      </SimpleBar>
     </>
   );
 }

@@ -67,14 +67,6 @@ describe('Landing Page', () => {
     expect(topicsColumnHeader).toBeVisible();
   });
 
-  test('displays Report ID Grantee Start date Creator Topic(s) Collaborator(s) Last saved Status', async () => {
-    const columnHeaders = await screen.findByRole('row', {
-      name:
-        'Report ID Grantee Start date Creator Topic(s) Collaborator(s) Last saved Status ...',
-    });
-    expect(columnHeaders).toBeVisible();
-  });
-
   test('displays the correct report id', async () => {
     const reportIdLink = await screen.findByRole('link', {
       name: /r14-000001/i,
@@ -171,8 +163,8 @@ describe('Landing Page error', () => {
     fetchMock.get('/api/activity-reports', []);
     render(<MemoryRouter><Landing authenticated /></MemoryRouter>);
     const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(9);
-    const reportId = within(rowCells[0]).getByRole('link');
-    expect(reportId).toHaveTextContent('');
+    expect(rowCells.length).toBe(8);
+    const grantee = rowCells[0];
+    expect(grantee).toHaveTextContent('');
   });
 });

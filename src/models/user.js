@@ -58,7 +58,10 @@ export default (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.name}, ${this.role.split(' ').map((word) => word[0]).join('')}`;
+        if (this.role) {
+          return this.role === 'TTAC' ? `${this.name}, ${this.role}` : `${this.name}, ${this.role.split(' ').map((word) => word[0]).join('')}`;
+        }
+        return this.name;
       },
     },
     lastLogin: DataTypes.DATE,
