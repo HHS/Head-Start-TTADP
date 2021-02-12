@@ -1,7 +1,13 @@
 import ActivityReport from './activityReport';
 import SCOPES from '../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../constants';
 
-function activityReport(author, collaborator, status = 'draft', approvingManager = null) {
+function activityReport(
+  author,
+  collaborator,
+  status = REPORT_STATUSES.DRAFT,
+  approvingManager = null,
+) {
   const report = {
     userId: author,
     regionId: 1,
@@ -44,7 +50,7 @@ const otherUser = user(false, true, 4);
 describe('Activity Report policies', () => {
   describe('canReview', () => {
     it('is true if the user is the approving manager', () => {
-      const report = activityReport(author.id, null, 'submitted', manager.id);
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED, manager.id);
       const policy = new ActivityReport(manager, report);
       expect(policy.canReview()).toBeTruthy();
     });
@@ -113,7 +119,7 @@ describe('Activity Report policies', () => {
       });
 
       it('is true for the approving manager', () => {
-        const report = activityReport(author.id, null, 'draft', manager.id);
+        const report = activityReport(author.id, null, REPORT_STATUSES.DRAFT, manager.id);
         const policy = new ActivityReport(manager, report);
         expect(policy.canGet()).toBeTruthy();
       });
@@ -127,7 +133,7 @@ describe('Activity Report policies', () => {
 
     describe('for approved reports', () => {
       it('is true for users with read permissions in the region', () => {
-        const report = activityReport(author.id, null, 'approved');
+        const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canGet()).toBeTruthy();
       });

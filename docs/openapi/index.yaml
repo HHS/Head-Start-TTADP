@@ -85,6 +85,8 @@ components:
           description: Topics covered during the TTA
           items:
             type: string
+        approvingManager:
+          $ref: '#/components/schemas/user'
         pageState:
           type: object
           enum: ['Not Started', 'In progress', 'Completed']
@@ -100,7 +102,11 @@ components:
               type: string
         status:
           type: string
-          enum: ['draft', 'submitted']
+          enum:
+            - draft
+            - submitted
+            - approved
+            - needs_action
           description: The current state of the report
         ttaType:
           type: array

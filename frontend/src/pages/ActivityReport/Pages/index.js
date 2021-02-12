@@ -3,8 +3,8 @@ import activitySummary from './activitySummary';
 import topicsResources from './topicsResources';
 import nextSteps from './nextSteps';
 import goalsObjectives from './goalsObjectives';
-import ReviewSubmit from './ReviewSubmit';
-import reviewItem from './reviewItem';
+import ReviewSubmit from './Review';
+import reviewItem from './Review/reviewItem';
 
 /*
   Note these are not react nodes but objects used by the navigator to render out
@@ -28,7 +28,6 @@ const reviewPage = {
   path: 'review',
   render:
     (
-      hookForm,
       formData,
       onSubmit,
       additionalData,
@@ -40,12 +39,11 @@ const reviewPage = {
         approvers={additionalData.approvers}
         onSubmit={onSubmit}
         onReview={onReview}
-        hookForm={hookForm}
         approvingManager={approvingManager}
         reviewItems={
           pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
         }
-        initialData={formData}
+        formData={formData}
         pages={allPages}
       />
     ),

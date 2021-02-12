@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 
 import {
@@ -14,80 +14,66 @@ import FormItem from '../../../components/FormItem';
 import { topics } from '../constants';
 
 const TopicsResources = ({
-  register,
-  control,
   reportId,
-}) => (
-  <>
-    <Helmet>
-      <title>Topics and resources</title>
-    </Helmet>
-    <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
-      <div id="topics-covered" />
-      <div className="smart-hub--form-section">
-        <FormItem
-          label="Topic(s) covered. You may choose more than one."
-          name="topics"
-        >
-          <MultiSelect
-            name="topics"
+}) => {
+  const { register, control } = useFormContext();
+  return (
+    <>
+      <Helmet>
+        <title>Topics and resources</title>
+      </Helmet>
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
+        <div id="topics-covered" />
+        <div className="smart-hub--form-section">
+          <FormItem
             label="Topic(s) covered. You may choose more than one."
-            control={control}
-            placeholder="Select a topic..."
-            required="Please select at least one topic"
-            options={
+            name="topics"
+          >
+            <MultiSelect
+              name="topics"
+              label="Topic(s) covered. You may choose more than one."
+              control={control}
+              placeholder="Select a topic..."
+              required="Please select at least one topic"
+              options={
               topics.map((topic) => ({ value: topic, label: topic }))
             }
+            />
+          </FormItem>
+        </div>
+      </Fieldset>
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="OHS / ECLKC resources">
+        <div id="resources" />
+        <div className="smart-hub--form-section">
+          <Label htmlFor="resourcesUsed">
+            Resources from OHS / ECLKC
+            <br />
+            Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
+          </Label>
+          <TextInput
+            id="resourcesUsed"
+            name="resourcesUsed"
+            type="text"
+            inputRef={register()}
           />
-        </FormItem>
-      </div>
-    </Fieldset>
-    <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="OHS / ECLKC resources">
-      <div id="resources" />
-      <div className="smart-hub--form-section">
-        <Label htmlFor="resourcesUsed">
-          Resources from OHS / ECLKC
-          <br />
-          Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
-        </Label>
-        <TextInput
-          id="resourcesUsed"
-          name="resourcesUsed"
-          type="text"
-          inputRef={register()}
-        />
-      </div>
-      <div className="smart-hub--form-section">
-        <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
-        <Controller
-          name="otherResources"
-          defaultValue={[]}
-          control={control}
-          render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} reportId={reportId} id="otherResources" />
-          )}
-        />
-      </div>
-    </Fieldset>
-    <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
-      <div id="attachments" />
-      <Label htmlFor="attachments">Upload any resources used that are not available through ECLKC</Label>
-      <Controller
-        name="attachments"
-        defaultValue={[]}
-        control={control}
-        render={({ onChange, value }) => (
-          <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
-        )}
-      />
-    </Fieldset>
-  </>
-);
+        </div>
+        <div className="smart-hub--form-section">
+          <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
+          <Controller
+            name="attachments"
+            defaultValue={[]}
+            control={control}
+            render={({ onChange, value }) => (
+              <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
+            )}
+          />
+        </div>
+      </Fieldset>
+    </>
+  );
+};
 
 TopicsResources.propTypes = {
-  register: PropTypes.func.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  control: PropTypes.object.isRequired,
   reportId: PropTypes.node.isRequired,
 };
 
@@ -122,14 +108,9 @@ export default {
   path: 'topics-resources',
   sections,
   review: false,
-  render: (hookForm, additionalData, formData, reportId) => {
-    const { control, register } = hookForm;
-    return (
-      <TopicsResources
-        register={register}
-        control={control}
-        reportId={reportId}
-      />
-    );
-  },
+  render: (additionalData, formData, reportId) => (
+    <TopicsResources
+      reportId={reportId}
+    />
+  ),
 };
