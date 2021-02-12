@@ -37,7 +37,7 @@ export const createFileMetaData = async (
     originalFileName,
     attachmentType,
     key: s3FileName,
-    status: 'UPLOADING',
+    status: fileStatuses.uploading,
     fileSize,
   };
   let file;
@@ -131,9 +131,10 @@ export default async function uploadHandler(req, res) {
     }
     try {
       await addToScanQueue({ key: metadata.key });
+      await updateStatus(metadata.id, fileStatuses.scanning);
     } catch (err) {
       if (metadata) {
-        await updateStatus(metadata.id, fileStatuses.rejected);
+        await updateStatus(metadata.id, fileStatuses.uploaded);
       }
       await handleErrors(req, res, err, logContext);
     }
