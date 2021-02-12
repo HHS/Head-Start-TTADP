@@ -55,11 +55,9 @@ export const targetPopulations = [
 ];
 
 export const programTypes = [
-  'program type 1',
-  'program type 2',
-  'program type 3',
-  'program type 4',
-  'program type 5',
+  'Early Head Start (ages 0-3)',
+  'Head Start (ages 3-5)',
+  'EHS-CCP',
 ];
 
 export const topics = [
