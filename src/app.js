@@ -29,7 +29,6 @@ app.use(cookieSession({
 
   // Cookie Options. httpOnly is set by default to true for https
   sameSite: 'lax',
-  secure: true,
   secureProxy: true,
 }));
 
