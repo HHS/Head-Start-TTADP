@@ -5,10 +5,10 @@ import {
   Dropdown, Form, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
 
-import { DECIMAL_BASE } from '../../../Constants';
-import FormItem from '../../../components/FormItem';
+import { DECIMAL_BASE } from '../../../../../Constants';
+import FormItem from '../../../../../components/FormItem';
 
-const SubmitterReviewPage = ({
+const Draft = ({
   submitted,
   register,
   approvers,
@@ -93,7 +93,7 @@ const SubmitterReviewPage = ({
   );
 };
 
-SubmitterReviewPage.propTypes = {
+Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
   register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
@@ -109,4 +109,4 @@ SubmitterReviewPage.propTypes = {
   })).isRequired,
 };
 
-export default SubmitterReviewPage;
+export default Draft;

@@ -6,9 +6,12 @@
 */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import {
-  Form, Button, Grid, Alert,
+  Form,
+  Button,
+  Grid,
+  Alert,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
@@ -23,7 +26,8 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
-  initialData,
+  formData,
+  updateFormData,
   initialLastUpdated,
   pages,
   onFormSubmit,
@@ -33,10 +37,8 @@ function Navigator({
   onSave,
   autoSaveInterval,
   approvingManager,
-  status,
   reportId,
 }) {
-  const [formData, updateFormData] = useState(initialData);
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const { pageState } = formData;
@@ -106,7 +108,7 @@ function Navigator({
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
     const stateOfPage = current ? IN_PROGRESS : pageState[p.position];
-    const state = p.review ? status : stateOfPage;
+    const state = p.review ? formData.status : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => onSaveForm(false, p.position),
@@ -132,7 +134,6 @@ function Navigator({
           <div id="navigator-form">
             {page.review
             && page.render(
-              hookForm,
               formData,
               onFormSubmit,
               additionalData,
@@ -156,7 +157,7 @@ function Navigator({
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
-                  {page.render(hookForm, additionalData, formData, reportId)}
+                  {page.render(additionalData, formData, reportId)}
                   <Button type="submit">Continue</Button>
                 </Form>
               </Container>
@@ -169,11 +170,14 @@ function Navigator({
 }
 
 Navigator.propTypes = {
-  initialData: PropTypes.shape({}),
+  formData: PropTypes.shape({
+    status: PropTypes.string,
+    pageState: PropTypes.shape({}),
+  }).isRequired,
+  updateFormData: PropTypes.func.isRequired,
   initialLastUpdated: PropTypes.instanceOf(moment),
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   onReview: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(
@@ -192,7 +196,6 @@ Navigator.propTypes = {
 };
 
 Navigator.defaultProps = {
-  initialData: {},
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   initialLastUpdated: null,
