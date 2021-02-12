@@ -189,7 +189,7 @@ MultiSelect.propTypes = {
     hideSelectedOptions: PropTypes.bool,
   }),
   disabled: PropTypes.bool,
-  required: PropTypes.string,
+  required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
 };
 
 MultiSelect.defaultProps = {

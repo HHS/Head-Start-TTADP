@@ -81,7 +81,7 @@ const Item = ({ label, value, path }) => {
       <Grid col={6}>
         {values.map((v, index) => (
           <Grid aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="flex-align-end display-flex flex-column flex-justify-center">
-            {v}
+            {Number.isNaN(v) ? '' : v}
           </Grid>
         ))}
       </Grid>

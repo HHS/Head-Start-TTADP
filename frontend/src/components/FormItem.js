@@ -31,7 +31,7 @@ function FormItem({
 FormItem.propTypes = {
   label: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
-  name: PropTypes.isRequired,
+  name: PropTypes.string.isRequired,
   required: PropTypes.bool,
 };
 
