@@ -61,9 +61,10 @@ describe('Navigator', () => {
   const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}) => {
     render(
       <Navigator
+        reportId={1}
         submitted={false}
-        initialData={initialData}
-        status="draft"
+        formData={initialData}
+        updateFormData={() => {}}
         onReview={() => {}}
         approvingManager={false}
         defaultValues={{ first: '', second: '' }}
@@ -80,7 +81,7 @@ describe('Navigator', () => {
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
     const first = await screen.findByRole('button', { name: 'first page' });
-    await waitFor(() => expect(within(first).getByText('In progress')).toBeVisible());
+    await waitFor(() => expect(within(first).getByText('In Progress')).toBeVisible());
   });
 
   it('onContinue calls onSave with correct page position', async () => {
