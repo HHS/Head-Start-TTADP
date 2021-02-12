@@ -261,7 +261,9 @@ jobs:
               --network="project_smarthub" \
               -t owasp/zap2docker-weekly zap-baseline.py \
               -t http://server:8080 \
-              -c zap.conf -I -i
+              -c zap.conf -I -i -r owasp_report.html
+      - store_artifacts:
+          path: reports/owasp_report.html
   accessibility_scan:
     executor: docker-postgres-executor
     steps:
