@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { useFormContext } from 'react-hook-form';
 
 import {
   Fieldset, Radio, Label, Grid, TextInput, Checkbox,
@@ -17,14 +18,16 @@ import {
 } from '../constants';
 
 const ActivitySummary = ({
-  register,
-  watch,
-  setValue,
-  control,
-  getValues,
   recipients,
   collaborators,
 }) => {
+  const {
+    register,
+    watch,
+    setValue,
+    control,
+    getValues,
+  } = useFormContext();
   const activityRecipientType = watch('activityRecipientType');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -274,10 +277,6 @@ const ActivitySummary = ({
 };
 
 ActivitySummary.propTypes = {
-  register: PropTypes.func.isRequired,
-  watch: PropTypes.func.isRequired,
-  setValue: PropTypes.func.isRequired,
-  getValues: PropTypes.func.isRequired,
   collaborators: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
@@ -303,8 +302,6 @@ ActivitySummary.propTypes = {
       }),
     ),
   }).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  control: PropTypes.object.isRequired,
 };
 
 const sections = [
@@ -361,19 +358,11 @@ export default {
   path: 'activity-summary',
   sections,
   review: false,
-  render: (hookForm, additionalData) => {
-    const {
-      register, watch, setValue, getValues, control,
-    } = hookForm;
+  render: (additionalData) => {
     const { recipients, collaborators } = additionalData;
     return (
       <ActivitySummary
-        register={register}
-        watch={watch}
         recipients={recipients}
-        setValue={setValue}
-        getValues={getValues}
-        control={control}
         collaborators={collaborators}
       />
     );
