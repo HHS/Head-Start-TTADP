@@ -12,6 +12,7 @@ import {
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
+import User from '../../policies/user';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
@@ -25,6 +26,7 @@ jest.mock('../../services/users', () => ({
   usersWithPermissions: jest.fn(),
 }));
 
+jest.mock('../../policies/user');
 jest.mock('../../policies/activityReport');
 
 const mockResponse = {
@@ -242,10 +244,23 @@ describe('Activity Report handlers', () => {
 
   describe('getApprovers', () => {
     it('returns a list of approvers', async () => {
+      User.mockImplementation(() => ({
+        canViewUsersInRegion: () => true,
+      }));
       const response = [{ name: 'name', id: 1 }];
       usersWithPermissions.mockResolvedValue(response);
       await getApprovers({ ...mockRequest, query: { region: 1 } }, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+
+    it('handles unauthorized', async () => {
+      User.mockImplementation(() => ({
+        canViewUsersInRegion: () => false,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      usersWithPermissions.mockResolvedValue(response);
+      await getApprovers({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
 });

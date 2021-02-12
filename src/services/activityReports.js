@@ -184,6 +184,11 @@ export function activityReportById(activityReportId) {
         as: 'otherResources',
         required: false,
       },
+      {
+        model: User,
+        as: 'approvingManager',
+        required: false,
+      },
     ],
   });
 }
@@ -196,6 +201,7 @@ export async function createOrUpdate(newActivityReport, report) {
     activityRecipients,
     attachments,
     otherResources,
+    approvingManager,
     ...updatedFields
   } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
