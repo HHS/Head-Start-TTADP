@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { File } from '../../models';
 import s3Uploader from '../../lib/s3Uploader';
+import addToScanQueue from '../../services/queue';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -14,6 +15,15 @@ const RESOURCE = 'RESOURCE';
 
 const logContext = {
   namespace,
+};
+
+const fileStatuses = {
+  uploading: 'UPLOADING',
+  uploaded: 'UPLOADED',
+  uploadFailed: 'UPLOAD_FAILED',
+  scanning: 'SCANNING',
+  approved: 'APPROVED',
+  rejected: 'REJECTED',
 };
 
 export const createFileMetaData = async (
@@ -98,11 +108,19 @@ export default async function uploadHandler(req, res) {
     }
     try {
       await s3Uploader(buffer, fileName, type);
-      await updateStatus(metadata.id, 'UPLOADED');
+      await updateStatus(metadata.id, fileStatuses.uploaded);
       res.status(200).send({ id: metadata.id });
     } catch (err) {
       if (metadata) {
-        await updateStatus(metadata.id, 'UPLOAD_FAILED');
+        await updateStatus(metadata.id, fileStatuses.uploaded);
+      }
+      await handleErrors(req, res, err, logContext);
+    }
+    try {
+      await addToScanQueue({ key: metadata.key });
+    } catch (err) {
+      if (metadata) {
+        await updateStatus(metadata.id, fileStatuses.rejected);
       }
       await handleErrors(req, res, err, logContext);
     }
