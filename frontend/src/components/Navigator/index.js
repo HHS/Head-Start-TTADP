@@ -22,7 +22,8 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
-  initialData,
+  formData,
+  updateFormData,
   initialLastUpdated,
   pages,
   onFormSubmit,
@@ -32,10 +33,8 @@ function Navigator({
   onSave,
   autoSaveInterval,
   approvingManager,
-  status,
   reportId,
 }) {
-  const [formData, updateFormData] = useState(initialData);
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const { pageState } = formData;
@@ -105,7 +104,7 @@ function Navigator({
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
     const stateOfPage = current ? IN_PROGRESS : pageState[p.position];
-    const state = p.review ? status : stateOfPage;
+    const state = p.review ? formData.status : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => onSaveForm(false, p.position),
@@ -136,7 +135,6 @@ function Navigator({
               additionalData,
               onReview,
               approvingManager,
-              reportId,
             )}
             {!page.review
             && (
@@ -161,11 +159,14 @@ function Navigator({
 }
 
 Navigator.propTypes = {
-  initialData: PropTypes.shape({}),
+  formData: PropTypes.shape({
+    status: PropTypes.string,
+    pageState: PropTypes.shape({}),
+  }).isRequired,
+  updateFormData: PropTypes.func.isRequired,
   initialLastUpdated: PropTypes.instanceOf(moment),
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   onReview: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(
@@ -184,7 +185,6 @@ Navigator.propTypes = {
 };
 
 Navigator.defaultProps = {
-  initialData: {},
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   initialLastUpdated: null,

@@ -7,7 +7,7 @@ import {
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import { DECIMAL_BASE } from '../../constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -96,7 +96,7 @@ export async function submitReport(req, res) {
     const { activityReportId } = req.params;
     const { approvingManagerId, additionalNotes } = req.body;
     const newReport = { approvingManagerId, additionalNotes };
-    newReport.status = 'Submitted';
+    newReport.status = REPORT_STATUSES.SUBMITTED;
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(activityReportId);
@@ -194,7 +194,7 @@ export async function createReport(req, res) {
       return;
     }
     const userId = parseInt(req.session.userId, 10);
-    newReport.status = 'draft';
+    newReport.status = REPORT_STATUSES.DRAFT;
     newReport.userId = userId;
     newReport.lastUpdatedById = userId;
     const user = await userById(req.session.userId);

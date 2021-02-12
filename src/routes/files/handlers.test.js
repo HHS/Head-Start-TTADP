@@ -8,6 +8,7 @@ import db, {
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
 import SCOPES from '../../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 
 jest.mock('../../policies/activityReport');
@@ -45,7 +46,7 @@ mockSession.userId = mockUser.id;
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: 'draft',
+  status: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
