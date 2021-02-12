@@ -252,16 +252,22 @@ jobs:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-weekly
       - run:
+          name: Make reports directory group writeable
+          command: chmod g+w reports
+      - run:
           name: Run OWASP ZAP
           command: |
             docker run \
-              -v $(pwd)/zap.conf:/zap/wrk/zap.conf:rw \
+              -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
               -v $(pwd)/reports:/zap/wrk:rw \
               --rm \
+              --user zap:$(id -g) \
               --network="project_smarthub" \
               -t owasp/zap2docker-weekly zap-baseline.py \
               -t http://server:8080 \
-              -c zap.conf -I -i
+              -c zap.conf -I -i -r owasp_report.html
+      - store_artifacts:
+          path: reports/owasp_report.html
   accessibility_scan:
     executor: docker-postgres-executor
     steps:
