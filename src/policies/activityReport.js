@@ -8,6 +8,7 @@
 */
 import _ from 'lodash';
 import SCOPES from '../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../constants';
 
 export default class ActivityReport {
   constructor(user, activityReport) {
@@ -35,7 +36,7 @@ export default class ActivityReport {
       return canReadUnapproved;
     }
 
-    if (status === 'approved') {
+    if (status === REPORT_STATUSES.APPROVED) {
       return this.canReadInRegion();
     }
 
