@@ -6,7 +6,7 @@ import {
 } from './activityReports';
 
 const mockUser = {
-  id: 100,
+  id: 1000,
   homeRegionId: 1,
   name: 'user',
 };
@@ -34,7 +34,7 @@ describe('Activity Reports DB service', () => {
   afterAll(async () => {
     await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
-    await User.destroy({ where: { id: 100 } });
+    await User.destroy({ where: { id: mockUser.id } });
     await NonGrantee.destroy({ where: { id: 100 } });
     await Grant.destroy({ where: { id: 100 } });
     await Grantee.destroy({ where: { id: 100 } });
@@ -61,15 +61,15 @@ describe('Activity Reports DB service', () => {
     });
 
     it('creates a new report with non-grantee recipient', async () => {
-      const beginningARCount = await ActivityReport.count();
       const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'non-grantee' });
-      const endARCount = await ActivityReport.count();
-      expect(endARCount - beginningARCount).toBe(1);
       expect(report.activityRecipients[0].nonGrantee.id).toBe(100);
     });
 
     it('handles reports with collaborators', async () => {
-      const report = await createOrUpdate({ ...reportObject, collaborators: [{ id: 100 }] });
+      const report = await createOrUpdate({
+        ...reportObject,
+        collaborators: [{ id: mockUser.id }],
+      });
       expect(report.collaborators.length).toBe(1);
       expect(report.collaborators[0].name).toBe('user');
     });
