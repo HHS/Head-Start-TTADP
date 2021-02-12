@@ -6,12 +6,9 @@ import Approved from './Approved';
 import { REPORT_STATUSES } from '../../../../../Constants';
 
 const Approver = ({
-  register,
-  handleSubmit,
   onFormReview,
   reviewed,
   formData,
-  valid,
 }) => {
   const { managerNotes, additionalNotes, status } = formData;
   const review = status === REPORT_STATUSES.SUBMITTED || status === REPORT_STATUSES.NEEDS_ACTION;
@@ -22,11 +19,8 @@ const Approver = ({
       {review
       && (
       <Review
-        valid={valid}
         reviewed={reviewed}
         additionalNotes={additionalNotes}
-        register={register}
-        handleSubmit={handleSubmit}
         onFormReview={onFormReview}
       />
       )}
@@ -42,11 +36,8 @@ const Approver = ({
 };
 
 Approver.propTypes = {
-  register: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
   reviewed: PropTypes.bool.isRequired,
-  valid: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     approvingManager: PropTypes.shape({
       name: PropTypes.string,

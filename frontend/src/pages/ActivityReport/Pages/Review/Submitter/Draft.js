@@ -1,24 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import {
   Dropdown, Form, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
+import { useFormContext } from 'react-hook-form';
 
+import IncompletePages from './IncompletePages';
 import { DECIMAL_BASE } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
 
 const Draft = ({
   submitted,
-  register,
   approvers,
-  handleSubmit,
   onFormSubmit,
-  pages,
+  incompletePages,
 }) => {
-  const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
-  const incompletePages = filtered.map((f) => f.label);
+  const { register, handleSubmit } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
+
   const setValue = (e) => {
     if (e === '') {
       return null;
@@ -71,22 +70,7 @@ const Draft = ({
             </Dropdown>
           </FormItem>
         </Fieldset>
-        {hasIncompletePages
-        && (
-        <Alert noIcon slim type="error">
-          <b>Incomplete report</b>
-          <br />
-          This report cannot be submitted until all sections are complete.
-          Please review the following sections:
-          <ul>
-            {incompletePages.map((page) => (
-              <li key={page}>
-                {page}
-              </li>
-            ))}
-          </ul>
-        </Alert>
-        )}
+        {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         <Button type="submit">Submit for approval</Button>
       </Form>
     </>
@@ -95,18 +79,12 @@ const Draft = ({
 
 Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
-  register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    review: PropTypes.bool,
-    state: PropTypes.string,
-    label: PropTypes.string,
-  })).isRequired,
+  incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default Draft;
