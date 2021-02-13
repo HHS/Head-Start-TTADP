@@ -38,6 +38,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   ActivityReport.init({
+    displayId: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `R${this.regionId.toString().padStart(2, '0')}-AR-${this.id}`;
+      },
+    },
     userId: {
       type: DataTypes.INTEGER,
     },
