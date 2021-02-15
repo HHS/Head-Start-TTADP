@@ -1,0 +1,33 @@
+{
+  "name": "head-start-ttadp-worker",
+  "version": "1.0.0",
+  "description": "Job worker for the Office of Head Start Training & Technical Assistance Data Platform",
+  "main": "worker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "nodemon  worker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hhs/Head-Start-TTADP.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hhs/Head-Start-TTADP/issues"
+  },
+  "homepage": "https://github.com/hhs/Head-Start-TTADP#readme",
+  "dependencies": {
+    "aws-sdk": "^2.841.0",
+    "axios": "^0.21.1",
+    "bull": "^3.20.1",
+    "dot-env": "^0.0.1",
+    "dotenv": "^8.2.0",
+    "form-data": "^3.0.0",
+    "throng": "^5.0.0",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
