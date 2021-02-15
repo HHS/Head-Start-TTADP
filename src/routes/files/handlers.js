@@ -25,6 +25,8 @@ const fileStatuses = {
   uploading: 'UPLOADING',
   uploaded: 'UPLOADED',
   uploadFailed: 'UPLOAD_FAILED',
+  queued: 'SCANNING_QUEUED',
+  queueingFailed: 'QUEUEING_FAILED',
   scanning: 'SCANNING',
   approved: 'APPROVED',
   rejected: 'REJECTED',
@@ -125,16 +127,16 @@ export default async function uploadHandler(req, res) {
       res.status(200).send({ id: metadata.id });
     } catch (err) {
       if (metadata) {
-        await updateStatus(metadata.id, fileStatuses.uploaded);
+        await updateStatus(metadata.id, fileStatuses.uploadFailed);
       }
       await handleErrors(req, res, err, logContext);
     }
     try {
       await addToScanQueue({ key: metadata.key });
-      await updateStatus(metadata.id, fileStatuses.scanning);
+      await updateStatus(metadata.id, fileStatuses.queued);
     } catch (err) {
       if (metadata) {
-        await updateStatus(metadata.id, fileStatuses.uploaded);
+        await updateStatus(metadata.id, fileStatuses.queueingFailed);
       }
       await handleErrors(req, res, err, logContext);
     }

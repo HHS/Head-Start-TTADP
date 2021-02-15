@@ -7,6 +7,7 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
+import addToScanQueue from '../../services/queue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -18,6 +19,7 @@ const request = require('supertest');
 const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3Uploader');
+jest.mock('../../services/queue');
 
 const mockUser = {
   id: 100,
