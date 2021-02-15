@@ -7,6 +7,8 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
+// disable this to allow mocking this function
+// eslint-disable-next-line no-unused-vars
 import addToScanQueue from '../../services/queue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
