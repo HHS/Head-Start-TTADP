@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
@@ -11,6 +10,7 @@ const Draft = ({
   submitted,
   allComplete,
   register,
+  watch,
   approvers,
   valid,
   handleSubmit,
@@ -23,8 +23,6 @@ const Draft = ({
     return parseInt(e, DECIMAL_BASE);
   };
 
-  // FIXME: Use 'register', 'handleSubmit' from useFormContext rather than passed props
-  const { watch } = useFormContext();
   const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
@@ -76,6 +74,7 @@ Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
   allComplete: PropTypes.bool.isRequired,
   register: PropTypes.func.isRequired,
+  watch: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

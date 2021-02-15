@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
@@ -12,12 +11,11 @@ const Review = ({
   reviewed,
   additionalNotes,
   register,
+  watch,
   valid,
   handleSubmit,
   onFormReview,
 }) => {
-  // FIXME: Use 'register', 'handleSubmit' from useFormContext rather than passed props
-  const { watch } = useFormContext();
   const watchTextValue = watch('managerNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
@@ -62,6 +60,7 @@ Review.propTypes = {
   reviewed: PropTypes.bool.isRequired,
   additionalNotes: PropTypes.string.isRequired,
   register: PropTypes.func.isRequired,
+  watch: PropTypes.func.isRequired,
   valid: PropTypes.bool.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,

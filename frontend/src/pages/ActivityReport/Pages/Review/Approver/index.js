@@ -7,6 +7,7 @@ import { REPORT_STATUSES } from '../../../../../Constants';
 
 const Approver = ({
   register,
+  watch,
   handleSubmit,
   onFormReview,
   reviewed,
@@ -26,6 +27,7 @@ const Approver = ({
         reviewed={reviewed}
         additionalNotes={additionalNotes}
         register={register}
+        watch={watch}
         handleSubmit={handleSubmit}
         onFormReview={onFormReview}
       />
@@ -43,6 +45,7 @@ const Approver = ({
 
 Approver.propTypes = {
   register: PropTypes.func.isRequired,
+  watch: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
   reviewed: PropTypes.bool.isRequired,
