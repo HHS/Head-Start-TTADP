@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
@@ -90,52 +91,56 @@ function renderReports(reports) {
 
 function MyAlerts({ reports }) {
   return (
-     <>
-      { reports && reports.length == 0 && (
-          <Container className="landing" padding={0}>
-            <div id='caughtUp'>
-              <div><h2>You're all caught up!</h2></div>
-              <p id='beginNew'>Would you like to begin a new activity report?</p>
-              <NewReport></NewReport>
-            </div>
-          </Container>
-        ) }
+    <>
+      { reports && reports.length === 0 && (
+      <Container className="landing" padding={0}>
+        <div id="caughtUp">
+          <div><h2>You&apos;re all caught up!</h2></div>
+          <p id="beginNew">Would you like to begin a new activity report?</p>
+          <NewReport />
+        </div>
+      </Container>
+      ) }
       { reports && reports.length > 0 && (
-        <SimpleBar>
-          <Container className="landing inline-size" padding={0}>
-            <Table bordered={false}>
-              <caption className="smart-hub--table-caption">
-                My activity report alerts
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Report ID</th>
-                  <th
-                    scope="col"
-                  >
-                    Grantee
-                  </th>
-                  <th scope="col">Start date</th>
-                  <th
-                    scope="col"
-                  >
-                    Creator
-                  </th>
-                  <th scope="col">Collaborator(s)</th>
-                  <th
-                    scope="col"
-                  >
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>{renderReports(reports)}</tbody>
-            </Table>
-          </Container>
-        </SimpleBar>
+      <SimpleBar>
+        <Container className="landing inline-size" padding={0}>
+          <Table bordered={false}>
+            <caption className="smart-hub--table-caption">
+              My activity report alerts
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Report ID</th>
+                <th
+                  scope="col"
+                >
+                  Grantee
+                </th>
+                <th scope="col">Start date</th>
+                <th
+                  scope="col"
+                >
+                  Creator
+                </th>
+                <th scope="col">Collaborator(s)</th>
+                <th
+                  scope="col"
+                >
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>{renderReports(reports)}</tbody>
+          </Table>
+        </Container>
+      </SimpleBar>
       )}
     </>
   );
 }
+
+MyAlerts.propTypes = {
+  reports: PropTypes.node.isRequired,
+};
 
 export default MyAlerts;

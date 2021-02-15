@@ -8,8 +8,7 @@ import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 
 import Container from '../../components/Container';
-import { getReports } from '../../fetchers/activityReports';
-import { getReportAlerts } from '../../fetchers/activityReports';
+import { getReports, getReportAlerts } from '../../fetchers/activityReports';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
@@ -173,7 +172,7 @@ function Landing() {
           <h1 className="landing">Activity Reports</h1>
         </Grid>
         <Grid className="smart-hub--create-new-report">
-          { reportAlerts && reportAlerts.length > 0 && <NewReport></NewReport> }
+          { reportAlerts && reportAlerts.length > 0 && <NewReport /> }
         </Grid>
       </Grid>
       <Grid row>
@@ -183,7 +182,7 @@ function Landing() {
           </Alert>
         )}
       </Grid>
-      <MyAlerts reports={reportAlerts}></MyAlerts>
+      <MyAlerts reports={reportAlerts} />
       <SimpleBar>
         <Container className="landing inline-size" padding={0}>
           <Table className="usa-table usa-table--borderless usa-table--striped">
