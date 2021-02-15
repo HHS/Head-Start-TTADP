@@ -1,11 +1,13 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
+import User from '../../policies/user';
 import {
-  possibleRecipients, activityReportById, createOrUpdate, review,
+  possibleRecipients, activityReportById, createOrUpdate, review, activityReports,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
+import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -40,6 +42,14 @@ export async function getGoals(req, res) {
  */
 export async function getApprovers(req, res) {
   const { region } = req.query;
+  const user = await userById(req.session.userId);
+  const authorization = new User(user);
+
+  if (!authorization.canViewUsersInRegion(parseInt(region, DECIMAL_BASE))) {
+    res.sendStatus(403);
+    return;
+  }
+
   try {
     const users = await usersWithPermissions([region], [APPROVE_REPORTS]);
     res.json(users);
@@ -86,7 +96,7 @@ export async function submitReport(req, res) {
     const { activityReportId } = req.params;
     const { approvingManagerId, additionalNotes } = req.body;
     const newReport = { approvingManagerId, additionalNotes };
-    newReport.status = 'Submitted';
+    newReport.status = REPORT_STATUSES.SUBMITTED;
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(activityReportId);
@@ -131,6 +141,21 @@ export async function getReport(req, res) {
   }
 
   res.json(report);
+}
+
+/**
+ * Retrieve activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReports(req, res) {
+  const reports = await activityReports();
+  if (!reports) {
+    res.sendStatus(404);
+  } else {
+    res.json(reports);
+  }
 }
 
 /**
@@ -184,7 +209,7 @@ export async function createReport(req, res) {
       return;
     }
     const userId = parseInt(req.session.userId, 10);
-    newReport.status = 'draft';
+    newReport.status = REPORT_STATUSES.DRAFT;
     newReport.userId = userId;
     newReport.lastUpdatedById = userId;
     const user = await userById(req.session.userId);

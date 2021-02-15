@@ -1,24 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useWatch } from 'react-hook-form';
+import _ from 'lodash';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
 
-const possibleStatus = [
-  'Approved',
-  'Needs Action',
-];
+import { managerReportStatuses } from '../../../../../Constants';
 
-const ApproverReviewPage = ({
+const Review = ({
   reviewed,
   additionalNotes,
   register,
-  watch,
   valid,
   handleSubmit,
   onFormReview,
 }) => {
-  const watchTextValue = watch('managerNotes');
+  const watchTextValue = useWatch('managerNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
   return (
@@ -48,8 +46,8 @@ const ApproverReviewPage = ({
         <Label htmlFor="status">Choose report status</Label>
         <Dropdown id="status" name="status" defaultValue="" inputRef={register({ required: true })}>
           <option name="default" value="" disabled hidden>- Select -</option>
-          {possibleStatus.map((status) => (
-            <option key={status} value={status}>{status}</option>
+          {managerReportStatuses.map((status) => (
+            <option key={status} value={status}>{_.startCase(status)}</option>
           ))}
         </Dropdown>
         <Button type="submit" disabled={!valid}>Submit</Button>
@@ -58,14 +56,13 @@ const ApproverReviewPage = ({
   );
 };
 
-ApproverReviewPage.propTypes = {
+Review.propTypes = {
   reviewed: PropTypes.bool.isRequired,
   additionalNotes: PropTypes.string.isRequired,
   register: PropTypes.func.isRequired,
-  watch: PropTypes.func.isRequired,
   valid: PropTypes.bool.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
 };
 
-export default ApproverReviewPage;
+export default Review;
