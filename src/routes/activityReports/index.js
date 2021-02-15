@@ -5,6 +5,7 @@ import {
   saveReport,
   createReport,
   getReport,
+  getReports,
   getActivityRecipients,
   getGoals,
   reviewReport,
@@ -21,6 +22,7 @@ router.get('/approvers', getApprovers);
 router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
 router.get('/:activityReportId', getReport);
+router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
 router.put('/:activityReportId/review', reviewReport);
 router.post('/:activityReportId/submit', submitReport);
