@@ -32,7 +32,7 @@ const Review = ({
         </Alert>
         )}
       <h2>Review and approve report</h2>
-      <div className="smart-hub--creator-notes">
+      <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
           <br />
