@@ -185,15 +185,19 @@ Navigator.propTypes = {
   additionalData: PropTypes.shape({}),
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    role: PropTypes.string.isRequired,
-  }).isRequired,
+    name: PropTypes.string,
+    role: PropTypes.string,
+  }),
 };
 
 Navigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   initialLastUpdated: null,
+  reportCreator: {
+    name: null,
+    role: null,
+  },
 };
 
 export default Navigator;
