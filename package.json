@@ -87,7 +87,8 @@
   },
   "jest": {
     "testPathIgnorePatterns": [
-      "<rootDir>/frontend/"
+      "<rootDir>/frontend/",
+      "<rootDir>/worker/"
     ],
     "coverageThreshold": {
       "global": {
