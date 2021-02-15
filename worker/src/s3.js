@@ -32,4 +32,7 @@ function downloadFile(key) {
   return s3.getObject(params).promise();
 }
 
-module.exports = downloadFile;
+module.exports = {
+  downloadFile,
+  s3,
+};
