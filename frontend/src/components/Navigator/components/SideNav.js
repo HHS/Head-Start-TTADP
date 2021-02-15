@@ -5,6 +5,7 @@
 */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
 import { Button, Tag, Alert } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
@@ -12,8 +13,9 @@ import moment from 'moment';
 
 import Container from '../../Container';
 import './SideNav.css';
+import { REPORT_STATUSES } from '../../../Constants';
 import {
-  NOT_STARTED, IN_PROGRESS, COMPLETE, SUBMITTED, APPROVED, NEEDS_ACTION,
+  NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../constants';
 
 const tagClass = (state) => {
@@ -24,11 +26,11 @@ const tagClass = (state) => {
       return 'smart-hub--tag-in-progress';
     case COMPLETE:
       return 'smart-hub--tag-complete';
-    case SUBMITTED:
+    case REPORT_STATUSES.SUBMITTED:
       return 'smart-hub--tag-submitted';
-    case APPROVED:
+    case REPORT_STATUSES.APPROVED:
       return 'smart-hub--tag-submitted';
-    case NEEDS_ACTION:
+    case REPORT_STATUSES.NEEDS_ACTION:
       return 'smart-hub--tag-needs-action';
     default:
       return '';
@@ -50,10 +52,10 @@ function SideNav({
       >
         <span className="margin-left-2">{page.label}</span>
         <span className="margin-left-auto margin-right-2">
-          {page.state !== 'draft'
+          {page.state !== REPORT_STATUSES.DRAFT
             && (
             <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
-              {page.state}
+              {startCase(page.state)}
             </Tag>
             )}
         </span>

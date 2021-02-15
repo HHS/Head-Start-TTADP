@@ -18,8 +18,8 @@ put:
               type: string
               description: The status of the report after review
               enum:
-                - Approved
-                - Needs Action
+                - approved
+                - needs_action
             managerNotes:
               type: string
               description: Any notes the manager needs to relay to the author/collaborators of the report
@@ -40,7 +40,7 @@ put:
               status:
                 type: string
                 enum:
-                 - Approved
-                 - Needs Action
+                  - approved
+                  - needs_action
               managerNotes:
                 type: string
