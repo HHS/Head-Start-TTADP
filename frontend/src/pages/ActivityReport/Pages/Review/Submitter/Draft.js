@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
@@ -24,7 +24,8 @@ const Draft = ({
   };
 
   // FIXME: Use 'register', 'handleSubmit' from useFormContext rather than passed props
-  const watchTextValue = useWatch({ name: 'additionalNotes' });
+  const { watch } = useFormContext();
+  const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
   return (
