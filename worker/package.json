@@ -4,8 +4,11 @@
   "description": "Job worker for the Office of Head Start Training & Technical Assistance Data Platform",
   "main": "worker.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "nodemon  worker.js"
+    "server": "nodemon  src/worker.js",
+    "lint": "eslint src",
+    "lint:ci": "eslint -f eslint-formatter-multiple src",
+    "test": "jest src",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit"
   },
   "repository": {
     "type": "git",
@@ -24,6 +27,7 @@
     "dot-env": "^0.0.1",
     "dotenv": "^8.2.0",
     "form-data": "^3.0.0",
+    "sequelize": "^6.5.0",
     "throng": "^5.0.0",
     "winston": "^3.3.3"
   },
