@@ -9,19 +9,17 @@ import 'simplebar/dist/simplebar.min.css';
 
 import Container from '../../components/Container';
 import { getReports } from '../../fetchers/activityReports';
+import { getReportAlerts } from '../../fetchers/activityReports';
+import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
-
-export const activityReportId = (id, regionId) => `R${
-  regionId < 10
-    ? `0${regionId}`
-    : regionId
-}-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
+import MyAlerts from './MyAlerts';
 
 function renderReports(reports) {
   const emptyReport = {
     id: '',
+    displayId: '',
     activityRecipients: [],
     startDate: '',
     author: '',
@@ -36,6 +34,7 @@ function renderReports(reports) {
   return displayReports.map((report) => {
     const {
       id,
+      displayId,
       activityRecipients,
       startDate,
       author,
@@ -43,7 +42,6 @@ function renderReports(reports) {
       collaborators,
       lastSaved,
       status,
-      regionId,
     } = report;
 
     const recipientsTitle = activityRecipients.reduce(
@@ -88,10 +86,6 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const fullId = !id
-      ? ''
-      : activityReportId(id, regionId);
-
     return (
       <tr key={`landing_${id}`}>
         <th scope="row">
@@ -99,7 +93,7 @@ function renderReports(reports) {
             to={`/activity-reports/${id}/activity-summary`}
             href={`/activity-reports/${id}/activity-summary`}
           >
-            {fullId}
+            {displayId}
           </Link>
         </th>
         <td>
@@ -144,6 +138,7 @@ function renderReports(reports) {
 function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
+  const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
 
   useEffect(() => {
@@ -151,7 +146,9 @@ function Landing() {
       setIsLoaded(false);
       try {
         const reps = await getReports();
+        const alerts = await getReportAlerts();
         updateReports(reps);
+        updateReportAlerts(alerts);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -172,19 +169,11 @@ function Landing() {
         <title>Landing</title>
       </Helmet>
       <Grid row gap>
-        <Grid col={3}>
+        <Grid>
           <h1 className="landing">Activity Reports</h1>
         </Grid>
         <Grid className="smart-hub--create-new-report">
-          <Link
-            to="/activity-reports/new"
-            referrerPolicy="same-origin"
-            className="usa-button smart-hub--new-report-btn"
-            variant="unstyled"
-          >
-            <span className="smart-hub--plus">+</span>
-            <span className="smart-hub--new-report">New Activity Report</span>
-          </Link>
+          { reportAlerts && reportAlerts.length > 0 && <NewReport></NewReport> }
         </Grid>
       </Grid>
       <Grid row>
@@ -194,6 +183,7 @@ function Landing() {
           </Alert>
         )}
       </Grid>
+      <MyAlerts reports={reportAlerts}></MyAlerts>
       <SimpleBar>
         <Container className="landing inline-size" padding={0}>
           <Table className="usa-table usa-table--borderless usa-table--striped">
