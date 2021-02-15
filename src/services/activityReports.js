@@ -195,7 +195,7 @@ export function activityReportById(activityReportId) {
 
 export function activityReports() {
   return ActivityReport.findAll({
-    attributes: ['id', 'startDate', 'lastSaved', 'topics', 'status', 'regionId'],
+    attributes: ['id', 'displayId', 'startDate', 'lastSaved', 'topics', 'status', 'regionId'],
     include: [
       {
         model: ActivityRecipient,
@@ -228,7 +228,79 @@ export function activityReports() {
       },
       {
         model: User,
-        attributes: ['name', 'role', 'fullName'],
+        attributes: ['id', 'name', 'role', 'fullName'],
+        as: 'collaborators',
+        through: { attributes: [] },
+      },
+    ],
+  });
+}
+/**
+ * Retrieves alerts based on the following logic:
+ * One or both of these high level conditions are true -
+ * manager - approvingManagerId matches and report status is submitted
+ * specialist - author id or one of the collaborator's id matches and status is not approved
+ * @param {*} userId
+ */
+export function activityReportAlerts(userId) {
+  return ActivityReport.findAll({
+    where: {
+      [Op.or]: [
+        {
+          status: 'submitted', approvingManagerId: userId,
+        },
+        {
+          [Op.and]: [
+            {
+              status: {
+                [Op.ne]: 'approved',
+                [Op.ne]: 'submitted',
+              },
+            },
+            {
+              [Op.or]: [
+                { userId },
+                { '$collaborators.id$': userId },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    attributes: ['id', 'displayId', 'startDate', 'status', 'regionId', 'userId', 'approvingManagerId'],
+    include: [
+      {
+        model: ActivityRecipient,
+        attributes: ['id', 'name', 'activityRecipientId'],
+        as: 'activityRecipients',
+        required: false,
+        include: [
+          {
+            model: Grant,
+            attributes: ['id', 'number'],
+            as: 'grant',
+            required: false,
+            include: [{
+              model: Grantee,
+              as: 'grantee',
+              attributes: ['name'],
+            }],
+          },
+          {
+            model: NonGrantee,
+            as: 'nonGrantee',
+            required: false,
+          },
+        ],
+      },
+      {
+        model: User,
+        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+        as: 'author',
+      },
+      {
+        model: User,
+        attributes: ['id', 'name', 'role', 'fullName'],
         as: 'collaborators',
         through: { attributes: [] },
       },

@@ -9,11 +9,11 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import Landing from '../index';
 import activityReports from '../mocks';
-import * as page from '../index';
 
 describe('Landing Page', () => {
   beforeEach(() => {
     fetchMock.get('/api/activity-reports', activityReports);
+    fetchMock.get('/api/activity-reports/alerts', []);
     const user = {
       name: 'test@test.com',
     };
@@ -69,7 +69,7 @@ describe('Landing Page', () => {
 
   test('displays the correct report id', async () => {
     const reportIdLink = await screen.findByRole('link', {
-      name: /r14-000001/i,
+      name: /r14-ar-1/i,
     });
 
     expect(reportIdLink).toBeVisible();
@@ -80,15 +80,15 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct grantees', async () => {
-    const grantees = await screen.findByRole('cell', {
+    const grantee = await screen.findByRole('cell', {
       name: /johnston-romaguera\njohnston-romaguera\ngrantee name/i,
     });
-    const nonGrantees = await screen.findByRole('cell', {
+    const nonGrantee = await screen.findByRole('cell', {
       name: /qris system/i,
     });
 
-    expect(grantees).toBeVisible();
-    expect(nonGrantees).toBeVisible();
+    expect(grantee).toBeVisible();
+    expect(nonGrantee).toBeVisible();
   });
 
   test('displays the correct start date', async () => {
@@ -138,24 +138,25 @@ describe('Landing Page', () => {
     expect(optionButtons.length).toBe(2);
   });
 
-  test('activityReportId is correct', () => {
-    const spy = jest.spyOn(page, 'activityReportId');
-    const reportId = page.activityReportId(333, 9);
+  test('displays the new activity report button', async () => {
+    const newActivityReportBtns = await screen.findAllByText(/New Activity Report/);
 
-    expect(spy).toHaveBeenCalled();
-    expect(reportId).toBe('R09-000333');
-
-    spy.mockRestore();
+    expect(newActivityReportBtns.length).toBe(1);
   });
 });
 
 describe('Landing Page error', () => {
   afterEach(() => fetchMock.restore());
 
+  beforeEach(() => {
+    fetchMock.get('/api/activity-reports/alerts', []);
+  });
+
   it('handles errors by displaying an error message', async () => {
     fetchMock.get('/api/activity-reports', 500);
     render(<MemoryRouter><Landing authenticated /></MemoryRouter>);
     const alert = await screen.findByRole('alert');
+    expect(alert).toBeVisible();
     expect(alert).toHaveTextContent('Unable to fetch reports');
   });
 
