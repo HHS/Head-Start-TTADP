@@ -130,6 +130,7 @@ export default async function uploadHandler(req, res) {
         await updateStatus(metadata.id, fileStatuses.uploadFailed);
       }
       await handleErrors(req, res, err, logContext);
+      return
     }
     try {
       await addToScanQueue({ key: metadata.key });
