@@ -7,7 +7,7 @@ const scanQueue = new Queue('scan', `redis://${REDIS_HOST}:${REDIS_PORT}`, { red
 
 export default async function addToScanQueue(fileKey) {
   const retries = process.env.FILE_SCAN_RETRIES || 5;
-  const delay = process.env.FILE_SCAN_BACKOFF_DELAY || 5000;
+  const delay = process.env.FILE_SCAN_BACKOFF_DELAY || 10000;
   const backOffOpts = {
     type: 'exponential',
     delay,
