@@ -52,7 +52,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
     },
     additionalNotes: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     numberOfParticipants: {
       type: DataTypes.INTEGER,
@@ -94,7 +94,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     context: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     pageState: {
       type: DataTypes.JSON,
