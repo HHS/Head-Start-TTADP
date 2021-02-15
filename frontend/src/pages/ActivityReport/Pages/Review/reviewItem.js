@@ -47,7 +47,7 @@ const Section = ({
 
   return (
     <div className={classes}>
-      <Grid row>
+      <Grid row className="border-bottom padding-bottom-1 margin-bottom-105">
         <Grid col={6}>
           <b className="margin-y-1">{title}</b>
         </Grid>
@@ -61,7 +61,6 @@ const Section = ({
           </HashLink>
         </Grid>
       </Grid>
-      <hr />
       {items.map(({ label, value, path }) => (
         <Item key={label} label={label} value={value} path={path} />
       ))}
