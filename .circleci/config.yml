@@ -203,7 +203,7 @@ jobs:
             ./run-yarn-audit.sh;
       - run:
           name: Test frontend
-          command: yarn --cwd frontend run test:ci
+          command: yarn --cwd frontend run test:ci --maxWorkers=50%
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
