@@ -1,8 +1,9 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 
 import Submitter from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
@@ -11,22 +12,25 @@ const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
   submitted, allComplete, onFormSubmit, formData, valid,
 }) => {
-  const { register, handleSubmit } = useForm({
+  const hookForm = useForm({
     mode: 'onChange',
     defaultValues: formData,
   });
+  const { register, handleSubmit } = hookForm;
 
   return (
-    <Submitter
-      submitted={submitted}
-      allComplete={allComplete}
-      onFormSubmit={onFormSubmit}
-      register={register}
-      handleSubmit={handleSubmit}
-      valid={valid}
-      approvers={[{ name: 'test', id: 1 }]}
-      formData={formData}
-    />
+    <FormProvider {...hookForm}>
+      <Submitter
+        submitted={submitted}
+        allComplete={allComplete}
+        onFormSubmit={onFormSubmit}
+        register={register}
+        handleSubmit={handleSubmit}
+        valid={valid}
+        approvers={[{ name: 'test', id: 1 }]}
+        formData={formData}
+      />
+    </FormProvider>
   );
 };
 
