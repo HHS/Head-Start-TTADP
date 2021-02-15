@@ -12,8 +12,8 @@ describe('My Alerts', () => {
   beforeEach(() => {
     render(
       <MemoryRouter>
-        <MyAlerts reports={activityReports}></MyAlerts>
-      </MemoryRouter>
+        <MyAlerts reports={activityReports} />
+      </MemoryRouter>,
     );
   });
 
