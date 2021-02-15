@@ -238,8 +238,9 @@ export function activityReports() {
 /**
  * Retrieves alerts based on the following logic:
  * One or both of these high level conditions are true -
- * manager - approvingManagerId matches and report status is submitted
- * specialist - author id or one of the collaborator's id matches and status is not approved
+ * manager - approvingManagerId matches and report status is submitted.
+ * specialist - author id or one of the collaborator's id matches and status is not approved nor
+ * submitted.
  * @param {*} userId
  */
 export function activityReportAlerts(userId) {
