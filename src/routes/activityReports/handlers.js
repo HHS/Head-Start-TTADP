@@ -3,7 +3,7 @@ import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import {
-  possibleRecipients, activityReportById, createOrUpdate, review,
+  possibleRecipients, activityReportById, createOrUpdate, review, activityReports,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -141,6 +141,21 @@ export async function getReport(req, res) {
   }
 
   res.json(report);
+}
+
+/**
+ * Retrieve activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReports(req, res) {
+  const reports = await activityReports();
+  if (!reports) {
+    res.sendStatus(404);
+  } else {
+    res.json(reports);
+  }
 }
 
 /**

@@ -55,6 +55,15 @@ export default (sequelize, DataTypes) => {
       },
     },
     role: DataTypes.ENUM(roles),
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.role) {
+          return this.role === 'TTAC' ? `${this.name}, ${this.role}` : `${this.name}, ${this.role.split(' ').map((word) => word[0]).join('')}`;
+        }
+        return this.name;
+      },
+    },
     lastLogin: DataTypes.DATE,
   }, {
     sequelize,
