@@ -193,6 +193,49 @@ export function activityReportById(activityReportId) {
   });
 }
 
+export function activityReports() {
+  return ActivityReport.findAll({
+    attributes: ['id', 'startDate', 'lastSaved', 'topics', 'status', 'regionId'],
+    include: [
+      {
+        model: ActivityRecipient,
+        attributes: ['id', 'name', 'activityRecipientId'],
+        as: 'activityRecipients',
+        required: false,
+        include: [
+          {
+            model: Grant,
+            attributes: ['id', 'number'],
+            as: 'grant',
+            required: false,
+            include: [{
+              model: Grantee,
+              as: 'grantee',
+              attributes: ['name'],
+            }],
+          },
+          {
+            model: NonGrantee,
+            as: 'nonGrantee',
+            required: false,
+          },
+        ],
+      },
+      {
+        model: User,
+        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+        as: 'author',
+      },
+      {
+        model: User,
+        attributes: ['name', 'role', 'fullName'],
+        as: 'collaborators',
+        through: { attributes: [] },
+      },
+    ],
+  });
+}
+
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
