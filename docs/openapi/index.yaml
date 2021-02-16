@@ -113,11 +113,11 @@ components:
           description: The type of the activity, Training or Technical Assistance (or both)
           items:
             type: string
-        specialistNotes:
-          description: List of notes that a specliasts enters
+        specialistNextSteps:
+          description: List of notes/next steps that a specialists enters
           $ref: '#/components/schema/nextStepNotes'
-        granteeNotes:
-          description: List of notes that a grantee enters
+        granteeNextSteps:
+          description: List of notes/next steps that are assigned to the grantee
           $ref: '#/components/schema/nextStepNotes'
     shortActivityReport:
       type: object
