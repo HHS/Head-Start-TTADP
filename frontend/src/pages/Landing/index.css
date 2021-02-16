@@ -1,0 +1,165 @@
+.landing {
+  max-width: fit-content;
+}
+  
+.pagination ul {
+  display: table-caption;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.pagination li {
+  display: inline-block;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+h1.landing {
+  font-size: 45px;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.landing .usa-table {
+  line-height: 1.5;
+}
+
+.landing .usa-table caption {
+  font-size: 19px;
+  padding: 14px 0px 17px 20px;
+  margin-bottom: -0.25rem;
+}
+
+.landing .usa-table thead th {
+  font-size: 13px;
+  white-space: nowrap;
+  background-color: white;
+  border-top: solid 1.5px;
+  border-color: #ECEEF1;
+  border-bottom: none;
+}
+
+.landing .usa-table--borderless th:first-child {
+  padding-left: 20px;
+}
+
+.landing .usa-table td {
+  font-size: 15px;
+  white-space: nowrap;
+  background-color: transparent;
+  border-style: none;
+}
+
+.landing .usa-table th {
+  font-size: 15px;
+  white-space: nowrap;
+  background-color: transparent;
+  border-style: none;
+}
+
+.landing .usa-button {
+  margin-left: 45px;
+  vertical-align: middle;
+}
+
+.usa-table tr:nth-child(odd) {
+  background-color:#F8F8F8;
+}
+
+.usa-section {
+  margin-left: 250px;
+}
+
+.smart-hub--table-collection {
+  background: #ECEEF1;
+  color: #21272D;
+  text-align: center;
+  font-weight: normal;
+  text-transform: none;
+  font-size: 14px;
+}
+
+.smart-hub--status-draft {
+  background: #E2EFF7;
+  color: #0166AB;
+}
+
+.smart-hub--status-submitted {
+  background: #eceef1;
+  color: #475260;
+}
+
+.smart-hub--status-approved {
+  background: #f0fcf4;
+  color: #148439;
+}
+
+.smart-hub--status- {
+  background: #f8f8f8;
+}
+
+.smart-hub--table-tag-status {
+  text-align: center;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.smart-hub--ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  width: 210px;
+  vertical-align: middle;
+}
+
+.smart-hub--dotdotdot {
+  font-size: 25px;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  padding-bottom: 15px;
+  line-height: 0.75;
+}
+
+.smart-hub--plus {
+  font-size: 40px;
+}
+
+.smart-hub--new-report {
+  margin-left: 10px;
+  margin-top: 7px;
+  float: right;
+}
+
+.smart-hub--new-report-btn {
+  line-height: 0.5;
+  min-width: 220px;
+}
+
+.smart-hub--create-new-report {
+  padding-top: 30px;
+}
+
+thead th.ascending::after {
+  content: "▲";
+  display: inline-block;
+  margin-left: 0.25em;
+}
+
+thead th.descending::after {
+  content: "▼";
+  display: inline-block;
+  margin-left: 0.25em;
+}
+
+.landing .usa-alert {
+  padding: 20px;
+}
+
+.inline-size {
+  inline-size: fit-content;
+}
+
+.simplebar-scrollbar:before {
+  background: #c5c5c5;
+}
