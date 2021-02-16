@@ -121,7 +121,7 @@ function renderReports(reports) {
           <Tag
             className={`smart-hub--table-tag-status smart-hub--status-${status}`}
           >
-            {status === 'Needs_action' ? 'Needs action' : status}
+            {status === 'needs_action' ? 'Needs action' : status}
           </Tag>
         </td>
         <td>

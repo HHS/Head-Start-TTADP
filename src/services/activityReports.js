@@ -248,27 +248,37 @@ export function activityReportAlerts(userId) {
     where: {
       [Op.or]: [
         {
-          status: 'submitted', approvingManagerId: userId,
+          [Op.or]: [{ status: 'submitted' }, { status: 'needs_action' }],
+          approvingManagerId: userId,
         },
         {
           [Op.and]: [
             {
-              status: {
-                [Op.ne]: 'approved',
-                [Op.ne]: 'submitted',
-              },
+              [Op.and]: [
+                {
+                  status: { [Op.ne]: 'approved' },
+                },
+                {
+                  status: { [Op.ne]: 'submitted' },
+                },
+              ],
             },
             {
-              [Op.or]: [
-                { userId },
-                { '$collaborators.id$': userId },
-              ],
+              [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
             },
           ],
         },
       ],
     },
-    attributes: ['id', 'displayId', 'startDate', 'status', 'regionId', 'userId', 'approvingManagerId'],
+    attributes: [
+      'id',
+      'displayId',
+      'startDate',
+      'status',
+      'regionId',
+      'userId',
+      'approvingManagerId',
+    ],
     include: [
       {
         model: ActivityRecipient,
@@ -281,11 +291,13 @@ export function activityReportAlerts(userId) {
             attributes: ['id', 'number'],
             as: 'grant',
             required: false,
-            include: [{
-              model: Grantee,
-              as: 'grantee',
-              attributes: ['name'],
-            }],
+            include: [
+              {
+                model: Grantee,
+                as: 'grantee',
+                attributes: ['name'],
+              },
+            ],
           },
           {
             model: NonGrantee,
