@@ -123,10 +123,10 @@ function App() {
           </a>
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
-          <Header authenticated={authenticated} admin={admin} />
+          <Header />
           <Grid row>
             <Grid col={2}>
-              <SiteNav />
+              <SiteNav admin={admin} />
             </Grid>
             <Grid col="fill">
               <section className="usa-section padding-top-0">
