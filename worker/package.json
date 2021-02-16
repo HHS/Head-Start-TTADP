@@ -27,7 +27,8 @@
     "dot-env": "^0.0.1",
     "dotenv": "^8.2.0",
     "form-data": "^3.0.0",
-    "sequelize": "^6.5.0",
+    "pg": "^8.5.1",
+    "sequelize": "^5.22.3",
     "throng": "^5.0.0",
     "winston": "^3.3.3"
   },
