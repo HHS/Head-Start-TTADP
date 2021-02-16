@@ -1,0 +1,15 @@
+.smart-hub--objective {
+  background-color: #f8f8f8;
+  padding: 22px;
+}
+
+.smart-hub--objective-tag {
+  text-transform: none;
+  background-color: #e2eff7;
+  color: #21272d;
+  font-weight: bold;
+}
+
+.usa-form .smart-hub--button__no-margin {
+  margin-top: 0;
+}

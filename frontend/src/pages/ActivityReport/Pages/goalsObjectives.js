@@ -14,14 +14,12 @@ const GoalsObjectives = ({
   grantIds, activityRecipientType,
 }) => {
   const {
-    control,
     register,
     watch,
-    setValue,
   } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [loading, updateLoading] = useState(true);
-  const goals = watch('goals');
+  const goals = watch('goals', []);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
@@ -53,8 +51,6 @@ const GoalsObjectives = ({
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
           <div id="goals-and-objectives" />
           <GoalPicker
-            setValue={setValue}
-            control={control}
             availableGoals={availableGoals}
             selectedGoals={goals}
           />

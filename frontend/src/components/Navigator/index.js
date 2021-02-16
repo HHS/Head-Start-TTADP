@@ -45,6 +45,7 @@ function Navigator({
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: formData,
+    shouldUnregister: false,
   });
 
   const {

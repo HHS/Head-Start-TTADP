@@ -2,25 +2,29 @@ import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import GoalPicker from '../GoalPicker';
 import { withText } from '../../../../../testHelpers';
 
 // eslint-disable-next-line react/prop-types
 const RenderGoal = ({ availableGoals, selectedGoals }) => {
-  const { control, setValue } = useForm({
+  const hookForm = useForm({
+    mode: 'onChange',
     defaultValues: {
       goals: selectedGoals,
     },
   });
+
   return (
-    <GoalPicker
-      availableGoals={availableGoals}
-      selectedGoals={selectedGoals}
-      control={control}
-      setValue={setValue}
-    />
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    <FormProvider {...hookForm}>
+      <GoalPicker
+        availableGoals={availableGoals}
+        selectedGoals={selectedGoals}
+      />
+      <div data-testid="valid">{ hookForm.formState.isValid ? 'true' : 'false' }</div>
+    </FormProvider>
   );
 };
 
@@ -38,9 +42,57 @@ describe('GoalPicker', () => {
       );
 
       expect(await screen.findByText(withText('1 goal selected'))).toBeVisible();
-      const goal = await screen.findByLabelText('remove goal');
+      const goal = await screen.findByLabelText('remove goal 1');
       userEvent.click(goal);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
+    });
+  });
+
+  describe('goals field is invalid', () => {
+    it('if there are no goals', async () => {
+      render(
+        <RenderGoal
+          availableGoals={[]}
+          selectedGoals={[]}
+        />,
+      );
+      const valid = await screen.findByTestId('valid');
+      expect(valid).toHaveTextContent('false');
+    });
+
+    it('if a goal has no objectives', async () => {
+      render(
+        <RenderGoal
+          availableGoals={[{ id: 1, name: 'label' }]}
+          selectedGoals={[{ id: 1, name: 'label' }]}
+        />,
+      );
+      const valid = await screen.findByTestId('valid');
+      expect(valid).toHaveTextContent('false');
+    });
+
+    it('if a goal has an objective being edited', async () => {
+      render(
+        <RenderGoal
+          availableGoals={[{ id: 1, name: 'label' }]}
+          selectedGoals={[{ id: 1, name: 'label', objectives: [{ edit: true }] }]}
+        />,
+      );
+      const valid = await screen.findByTestId('valid');
+      expect(valid.textContent).toEqual('false');
+    });
+  });
+
+  describe('goals are valid', () => {
+    it('if there is at least one goal and every goal has at least one objective that and no objectives are being edited', async () => {
+      render(
+        <RenderGoal
+          availableGoals={[{ id: 1, name: 'label' }]}
+          selectedGoals={[{ id: 1, name: 'label', objectives: [{ edit: false }] }]}
+        />,
+      );
+      const valid = await screen.findByTestId('valid');
+      expect(valid).toHaveTextContent('true');
     });
   });
 
