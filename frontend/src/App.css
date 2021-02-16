@@ -1,3 +1,7 @@
+.smart-hub-height-hd {
+  height: 1080px;
+}
+
 .smart-hub-bg-blue {
   background-color: #264a64;
 }
@@ -8,6 +12,10 @@
 
 .smart-hub-border-darkblue {
   border-color: #1b3649
+}
+
+.smart-hub-cursor-pointer:hover {
+  cursor: pointer;
 }
 
 body {
