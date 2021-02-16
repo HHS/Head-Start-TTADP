@@ -53,7 +53,10 @@ const DateInput = ({
                 numberOfMonths={1}
                 openDirection={openDirection}
                 disabled={disabled}
-                onDateChange={(d) => { onChange(d.format(dateFmt)); }}
+                onDateChange={(d) => {
+                  const newDate = d ? d.format(dateFmt) : d;
+                  onChange(newDate);
+                }}
                 onFocusChange={({ focused }) => updateFocus(focused)}
               />
             </div>
