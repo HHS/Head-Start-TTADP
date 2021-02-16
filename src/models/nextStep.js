@@ -4,13 +4,9 @@ module.exports = (sequelize, DataTypes) => {
   class NextStep extends Model {
     static associate(models) {
       NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
-      NextStep.belongsTo(models.User, { foreignKey: 'userId' });
     }
   }
   NextStep.init({
-    userId: {
-      type: DataTypes.INTEGER,
-    },
     activityReportId: {
       type: DataTypes.INTEGER,
     },

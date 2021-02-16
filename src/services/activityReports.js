@@ -100,11 +100,10 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where }, { transaction });
 }
 
-async function saveNotes(activityReportId, userId, notes, isGranteeNotes, transaction) {
+async function saveNotes(activityReportId, notes, isGranteeNotes, transaction) {
   const noteType = isGranteeNotes ? 'GRANTEE' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
   const where = {
-    userId,
     activityReportId,
     noteType,
     id: {
@@ -120,7 +119,6 @@ async function saveNotes(activityReportId, userId, notes, isGranteeNotes, transa
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
-      userId,
       activityReportId,
       noteType,
     }));
@@ -326,13 +324,13 @@ export async function createOrUpdate(newActivityReport, report) {
     }
 
     if (granteeNextSteps) {
-      const { id, userId } = savedReport;
-      await saveNotes(id, userId, granteeNextSteps, true, transaction);
+      const { id } = savedReport;
+      await saveNotes(id, granteeNextSteps, true, transaction);
     }
 
     if (specialistNextSteps) {
-      const { id, userId } = savedReport;
-      await saveNotes(id, userId, specialistNextSteps, false, transaction);
+      const { id } = savedReport;
+      await saveNotes(id, specialistNextSteps, false, transaction);
     }
   });
   return activityReportById(savedReport.id);
