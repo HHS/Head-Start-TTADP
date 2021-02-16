@@ -29,7 +29,7 @@ app.use(cookieSession({
 
   // Cookie Options. httpOnly is set by default to true for https
   sameSite: 'lax',
-  secureProxy: true,
+  secureProxy: (process.env.NODE_ENV === 'production'),
 }));
 
 if (process.env.NODE_ENV === 'production') {
