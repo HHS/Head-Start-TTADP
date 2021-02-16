@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 
+import { DECIMAL_BASE } from '../constants';
+
 import {
   ActivityReport,
   ActivityReportCollaborator,
@@ -12,6 +14,7 @@ import {
   NonGrantee,
   Goal,
   User,
+  NextStep,
 } from '../models';
 
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
@@ -95,6 +98,34 @@ async function saveReportRecipients(
 
   await ActivityRecipient.bulkCreate(newRecipients, { transaction, ignoreDuplicates: true });
   await ActivityRecipient.destroy({ where }, { transaction });
+}
+
+async function saveNotes(activityReportId, userId, notes, isGranteeNotes, transaction) {
+  const noteType = isGranteeNotes ? 'GRANTEE' : 'SPECIALIST';
+  const ids = notes.map((n) => n.id).filter((id) => !!id);
+  const where = {
+    userId,
+    activityReportId,
+    noteType,
+    id: {
+      [Op.notIn]: ids,
+    },
+  };
+  // Remove any notes that are no longer relevant
+  await NextStep.destroy({ where }, { transaction });
+
+  if (notes.length > 0) {
+    // If a note has an id, and its content has changed, update to the newer content
+    // If no id, then assume its a new entry
+    const newNotes = notes.map((note) => ({
+      id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
+      note: note.note,
+      userId,
+      activityReportId,
+      noteType,
+    }));
+    await NextStep.bulkCreate(newNotes, { transaction, updateOnDuplicate: ['note', 'updatedAt'] });
+  }
 }
 
 async function update(newReport, report, transaction) {
@@ -185,6 +216,28 @@ export function activityReportById(activityReportId) {
         required: false,
       },
       {
+        model: NextStep,
+        where: {
+          noteType: {
+            [Op.eq]: 'SPECIALIST',
+          },
+        },
+        attributes: ['note', 'id'],
+        as: 'specialistNotes',
+        required: false,
+      },
+      {
+        model: NextStep,
+        where: {
+          noteType: {
+            [Op.eq]: 'GRANTEE',
+          },
+        },
+        attributes: ['note', 'id'],
+        as: 'granteeNotes',
+        required: false,
+      },
+      {
         model: User,
         as: 'approvingManager',
         required: false,
@@ -245,6 +298,8 @@ export async function createOrUpdate(newActivityReport, report) {
     attachments,
     otherResources,
     approvingManager,
+    granteeNotes,
+    specialistNotes,
     ...updatedFields
   } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
@@ -268,6 +323,16 @@ export async function createOrUpdate(newActivityReport, report) {
         (g) => g.activityRecipientId,
       );
       await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
+    }
+
+    if (granteeNotes) {
+      const { id, userId } = savedReport;
+      await saveNotes(id, userId, granteeNotes, true, transaction);
+    }
+
+    if (specialistNotes) {
+      const { id, userId } = savedReport;
+      await saveNotes(id, userId, specialistNotes, false, transaction);
     }
   });
   return activityReportById(savedReport.id);
