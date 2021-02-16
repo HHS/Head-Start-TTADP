@@ -51,6 +51,7 @@
     "test": "react-scripts test",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true yarn test --coverage --reporters=default --reporters=jest-junit",
     "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
     "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "eslintConfig": {

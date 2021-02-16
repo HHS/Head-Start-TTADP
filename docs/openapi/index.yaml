@@ -24,6 +24,11 @@ components:
       properties:
         id:
           type: number
+        displayId:
+          type: string
+          description: >
+            A human readable report ID, of the form `R[Region]-AR-[ID]`. A report with
+            the ID of 20 in region 8 would have a displayId of `R08-AR-20`
         userId:
           type: number
           description: The id of the author of the report
