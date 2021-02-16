@@ -1,11 +1,17 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.changeColumn('ActivityReports', 'additionalNotes', { type: Sequelize.TEXT });
-    await queryInterface.changeColumn('ActivityReports', 'context', { type: Sequelize.TEXT });
+    Promise.all([
+      queryInterface.changeColumn('ActivityReports', 'additionalNotes', { type: Sequelize.TEXT }),
+      queryInterface.changeColumn('ActivityReports', 'context', { type: Sequelize.TEXT }),
+      queryInterface.changeColumn('ActivityReports', 'resourcesUsed', { type: Sequelize.TEXT }),
+    ]);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.changeColumn('ActivityReports', 'additionalNotes', { type: Sequelize.STRING });
-    await queryInterface.changeColumn('ActivityReports', 'context', { type: Sequelize.STRING });
+    Promise.all([
+      queryInterface.changeColumn('ActivityReports', 'additionalNotes', { type: Sequelize.STRING }),
+      queryInterface.changeColumn('ActivityReports', 'context', { type: Sequelize.STRING }),
+      queryInterface.changeColumn('ActivityReports', 'resourcesUsed', { type: Sequelize.STRING }),
+    ]);
   },
 };

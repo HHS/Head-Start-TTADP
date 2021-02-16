@@ -49,7 +49,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     resourcesUsed: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     additionalNotes: {
       type: DataTypes.TEXT,
