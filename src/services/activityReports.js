@@ -223,7 +223,7 @@ export function activityReportById(activityReportId) {
           },
         },
         attributes: ['note', 'id'],
-        as: 'specialistNotes',
+        as: 'specialistNextSteps',
         required: false,
       },
       {
@@ -234,7 +234,7 @@ export function activityReportById(activityReportId) {
           },
         },
         attributes: ['note', 'id'],
-        as: 'granteeNotes',
+        as: 'granteeNextSteps',
         required: false,
       },
       {
@@ -298,8 +298,8 @@ export async function createOrUpdate(newActivityReport, report) {
     attachments,
     otherResources,
     approvingManager,
-    granteeNotes,
-    specialistNotes,
+    granteeNextSteps,
+    specialistNextSteps,
     ...updatedFields
   } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
@@ -325,14 +325,14 @@ export async function createOrUpdate(newActivityReport, report) {
       await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
     }
 
-    if (granteeNotes) {
+    if (granteeNextSteps) {
       const { id, userId } = savedReport;
-      await saveNotes(id, userId, granteeNotes, true, transaction);
+      await saveNotes(id, userId, granteeNextSteps, true, transaction);
     }
 
-    if (specialistNotes) {
+    if (specialistNextSteps) {
       const { id, userId } = savedReport;
-      await saveNotes(id, userId, specialistNotes, false, transaction);
+      await saveNotes(id, userId, specialistNextSteps, false, transaction);
     }
   });
   return activityReportById(savedReport.id);

@@ -80,17 +80,17 @@ describe('Activity Reports DB service', () => {
       // Given an report with some notes
       const reportObjectWithNotes = {
         ...reportObject,
-        specialistNotes: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNotes: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       // When that report is created
       const report = await createOrUpdate(reportObjectWithNotes);
 
       // Then we see that it was saved correctly
-      expect(report.specialistNotes.length).toBe(2);
-      expect(report.granteeNotes.length).toBe(2);
-      expect(report.specialistNotes.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
-      expect(report.granteeNotes.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+      expect(report.specialistNextSteps.length).toBe(2);
+      expect(report.granteeNextSteps.length).toBe(2);
+      expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
+      expect(report.granteeNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
     });
 
     it('handles specialist notes being created', async () => {
@@ -98,17 +98,17 @@ describe('Activity Reports DB service', () => {
       // And no grantee notes
       const reportWithNotes = {
         ...reportObject,
-        specialistNotes: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNotes: [],
+        specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+        granteeNextSteps: [],
       };
 
       // When that report is created
       const report = await createOrUpdate(reportWithNotes);
 
       // Then we see that it was saved correctly
-      expect(report.granteeNotes.length).toBe(0);
-      expect(report.specialistNotes.length).toBe(2);
-      expect(report.specialistNotes.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
+      expect(report.granteeNextSteps.length).toBe(0);
+      expect(report.specialistNextSteps.length).toBe(2);
+      expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
     });
 
     it('handles grantee notes being created', async () => {
@@ -116,35 +116,35 @@ describe('Activity Reports DB service', () => {
       // And not specialist notes
       const reportWithNotes = {
         ...reportObject,
-        specialistNotes: [],
-        granteeNotes: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        specialistNextSteps: [],
+        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
 
       // When that report is created
       const report = await createOrUpdate(reportWithNotes);
 
       // Then we see that it was saved correctly
-      expect(report.specialistNotes.length).toBe(0);
-      expect(report.granteeNotes.length).toBe(2);
-      expect(report.granteeNotes.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+      expect(report.specialistNextSteps.length).toBe(0);
+      expect(report.granteeNextSteps.length).toBe(2);
+      expect(report.granteeNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
     });
 
     it('handles specialist notes being updated', async () => {
       // Given a report with some notes
       const reportWithNotes = {
         ...reportObject,
-        specialistNotes: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNotes: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await ActivityReport.create(reportWithNotes);
 
       // When the report is updated with new set of specialist notes
-      const notes = { specialistNotes: [{ note: 'harry' }, { note: 'spongebob' }] };
+      const notes = { specialistNextSteps: [{ note: 'harry' }, { note: 'spongebob' }] };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see it was updated correctly
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.specialistNotes.map((n) => n.note))
+      expect(updatedReport.specialistNextSteps.map((n) => n.note))
         .toEqual(expect.arrayContaining(['harry', 'spongebob']));
     });
 
@@ -152,18 +152,18 @@ describe('Activity Reports DB service', () => {
       // Given a report with some notes
       const reportWithNotes = {
         ...reportObject,
-        specialistNotes: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNotes: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await ActivityReport.create(reportWithNotes);
 
       // When the report is updated with new set of grantee notes
-      const notes = { granteeNotes: [{ note: 'One Piece' }, { note: 'spongebob' }] };
+      const notes = { granteeNextSteps: [{ note: 'One Piece' }, { note: 'spongebob' }] };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see it was updated correctly
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.granteeNotes.map((n) => n.note))
+      expect(updatedReport.granteeNextSteps.map((n) => n.note))
         .toEqual(expect.arrayContaining(['One Piece', 'spongebob']));
     });
 
@@ -171,51 +171,51 @@ describe('Activity Reports DB service', () => {
       // Given a report with some notes
       const reportWithNotes = {
         ...reportObject,
-        specialistNotes: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNotes: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await ActivityReport.create(reportWithNotes);
 
       // When the report is updated with empty notes
       const notes = {
-        granteeNotes: [],
-        specialistNotes: [],
+        granteeNextSteps: [],
+        specialistNextSteps: [],
       };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see the report was updated correctly
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.granteeNotes.length).toBe(0);
-      expect(updatedReport.specialistNotes.length).toBe(0);
+      expect(updatedReport.granteeNextSteps.length).toBe(0);
+      expect(updatedReport.specialistNextSteps.length).toBe(0);
     });
 
     it('handles notes being the same', async () => {
       // Given a report with some notes
       const reportWithNotes = {
         ...reportObject,
-        specialistNotes: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNotes: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await createOrUpdate(reportWithNotes);
-      const granteeIds = report.granteeNotes.map((note) => note.id);
-      const specialistsIds = report.specialistNotes.map((note) => note.id);
+      const granteeIds = report.granteeNextSteps.map((note) => note.id);
+      const specialistsIds = report.specialistNextSteps.map((note) => note.id);
 
       // When the report is updated with same notes
       const notes = {
-        specialistNotes: report.specialistNotes,
-        granteeNotes: report.granteeNotes,
+        specialistNextSteps: report.specialistNextSteps,
+        granteeNextSteps: report.granteeNextSteps,
       };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see nothing changes
       // And we are re-using the same old ids
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.granteeNotes.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
-      expect(updatedReport.granteeNotes.map((n) => n.id))
+      expect(updatedReport.granteeNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+      expect(updatedReport.granteeNextSteps.map((n) => n.id))
         .toEqual(expect.arrayContaining(granteeIds));
 
-      expect(updatedReport.specialistNotes.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
-      expect(updatedReport.specialistNotes.map((n) => n.id))
+      expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
+      expect(updatedReport.specialistNextSteps.map((n) => n.id))
         .toEqual(expect.arrayContaining(specialistsIds));
     });
   });
