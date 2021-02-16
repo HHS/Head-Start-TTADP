@@ -16,16 +16,6 @@ module.exports = {
           },
         },
       },
-      userId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: {
-            tableName: 'Users',
-          },
-          key: 'id',
-        },
-      },
       note: {
         allowNull: false,
         type: Sequelize.TEXT,

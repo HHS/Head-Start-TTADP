@@ -26,7 +26,6 @@ export default (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
-      User.hasMany(models.NextStep, { foreignKey: 'userId', as: 'notes' });
     }
   }
   User.init({
