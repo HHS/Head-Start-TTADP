@@ -44,7 +44,7 @@ function renderReports(reports) {
 
     const collaboratorsWithTags = collaborators.map((collaborator) => (
       <Tag
-        key={collaborator.fullName.slice(1, 13)}
+        key={collaborator.id}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
@@ -55,8 +55,8 @@ function renderReports(reports) {
       <tr key={`my_alerts_${id}`}>
         <td>
           <Link
-            to={`/activity-reports/${id}/activity-summary`}
-            href={`/activity-reports/${id}/activity-summary`}
+            to={`/activity-reports/${id}`}
+            href={`/activity-reports/${id}`}
           >
             {displayId}
           </Link>
