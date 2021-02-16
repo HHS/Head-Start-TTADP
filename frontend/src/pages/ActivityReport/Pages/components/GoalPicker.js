@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useFormContext } from 'react-hook-form';
 
 import Goal from './Goal';
 import MultiSelect from '../../../../components/MultiSelect';
-
 import Option from './GoalOption';
 import Input from './GoalInput';
 
@@ -13,8 +13,9 @@ const components = {
 };
 
 const GoalPicker = ({
-  control, availableGoals, selectedGoals, setValue,
+  availableGoals, selectedGoals,
 }) => {
+  const { setValue, control } = useFormContext();
   const onRemove = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
     setValue('goals', newGoals);
@@ -31,6 +32,29 @@ const GoalPicker = ({
           labelProperty="name"
           simple={false}
           components={components}
+          rules={{
+            validate: (goals) => {
+              if (goals.length < 1) {
+                return 'Every report must have at least one goal';
+              }
+
+              const unfinishedGoals = goals.some((goal) => {
+                // Every goal must have an objective for the `goals` field has unfinished goals
+                if (goal.objectives && goal.objectives.length > 0) {
+                  // If any of the objectives for this goal are being edited the `goals` field has
+                  // unfinished goals
+
+                  const objectivesEditing = goal.objectives.some((objective) => objective.edit);
+                  if (!objectivesEditing) {
+                    return false;
+                  }
+                }
+                // return true, this goal is unfinished
+                return true;
+              });
+              return unfinishedGoals ? 'Every goal requires at least one objective' : true;
+            },
+          }}
           options={availableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
           multiSelectOptions={{
             isClearable: false,
@@ -41,8 +65,14 @@ const GoalPicker = ({
         />
       </div>
       <div>
-        {selectedGoals.map((goal) => (
-          <Goal key={goal.id} id={goal.id} onRemove={onRemove} name={goal.name} />
+        {selectedGoals.map((goal, index) => (
+          <Goal
+            key={goal.id}
+            goalIndex={index}
+            id={goal.id}
+            onRemove={onRemove}
+            name={goal.name}
+          />
         ))}
       </div>
     </>
@@ -50,9 +80,6 @@ const GoalPicker = ({
 };
 
 GoalPicker.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
-  control: PropTypes.object.isRequired,
-  setValue: PropTypes.func.isRequired,
   availableGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,

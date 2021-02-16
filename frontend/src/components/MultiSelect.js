@@ -82,6 +82,7 @@ function MultiSelect({
   labelProperty,
   valueProperty,
   simple,
+  rules,
   multiSelectOptions,
   components: componentReplacements,
 }) {
@@ -97,7 +98,11 @@ function MultiSelect({
         value: v, label: v,
       }));
     }
-    return value.map((item) => ({ label: item[labelProperty], value: item[valueProperty] }));
+    return value.map((item) => ({
+      ...item,
+      label: item[labelProperty],
+      value: item[valueProperty],
+    }));
   };
 
   /*
@@ -111,7 +116,11 @@ function MultiSelect({
       controllerOnChange(event.map((v) => v.value));
     } else {
       controllerOnChange(
-        event.map((item) => ({ [labelProperty]: item.label, [valueProperty]: item.value })),
+        event.map((item) => ({
+          ...item,
+          [labelProperty]: item.label,
+          [valueProperty]: item.value,
+        })),
       );
     }
   };
@@ -150,6 +159,7 @@ function MultiSelect({
         control={control}
         defaultValue={[]}
         rules={{
+          ...rules,
           required,
         }}
         name={name}
@@ -192,6 +202,7 @@ MultiSelect.propTypes = {
   }),
   disabled: PropTypes.bool,
   required: PropTypes.bool,
+  rules: PropTypes.shape({}),
 };
 
 MultiSelect.defaultProps = {
@@ -202,6 +213,7 @@ MultiSelect.defaultProps = {
   valueProperty: 'value',
   multiSelectOptions: {},
   components: {},
+  rules: {},
 };
 
 export default MultiSelect;

@@ -37,7 +37,7 @@ const Option = (props) => {
       {...innerProps}
     >
       <div className="display-flex" style={{ whiteSpace: 'pre-wrap' }}>
-        <Checkbox checked={isSelected} />
+        <Checkbox readOnly checked={isSelected} />
         {children}
       </div>
     </div>
