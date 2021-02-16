@@ -69,21 +69,11 @@ services:
     image: amazon/aws-cli
     env_file: .env
     command: ["--endpoint-url", "$S3_ENDPOINT", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
-  clamav-server:
-    image: mkodockx/docker-clamav:alpine
   clamav-rest:
-    image: lokori/clamav-rest
-    depends_on:
-      - clamav-server
-    environment:
-      CLAMD_HOST: clamav-server
-    ports:
-      - "8081:8080"
+    image: ajilaag/clamav-rest
   redis:
     image: redis:5.0.6-alpine
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
-    depends_on:
-      - clamav-rest
     env_file: .env
 volumes:
   dbdata: {}
