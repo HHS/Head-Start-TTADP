@@ -1,11 +1,7 @@
-import { Model } from 'sequelize';
+const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class File extends Model {
-    static associate(models) {
-      File.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
-    }
-  }
+  class File extends Model {}
   File.init({
     activityReportId: {
       allowNull: false,

@@ -17,7 +17,7 @@ const maxJobsPerWorker = process.env.MAX_JOBS_PER_WORKER || 5;
 function start() {
   const scanQueue = new Queue('scan', `redis://${REDIS_HOST}:${REDIS_PORT}`, { redis: { password: REDIS_PASS } });
   scanQueue.on('failed', (job, error) => logger.error(`job ${job.data.key} failed with error ${error}`));
-  scanQueue.on('completed', (job, result) => logger.info(`job ${job.data.key} completed with result "${result}"`));
+  scanQueue.on('completed', (job, result) => logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`));
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
 }
 
