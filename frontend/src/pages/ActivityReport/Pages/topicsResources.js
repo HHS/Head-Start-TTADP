@@ -57,17 +57,31 @@ const TopicsResources = ({
             inputRef={register()}
           />
         </div>
+      </Fieldset>
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Upload resources">
         <div className="smart-hub--form-section">
           <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
           <Controller
-            name="attachments"
+            name="otherResources"
             defaultValue={[]}
             control={control}
             render={({ onChange, value }) => (
-              <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
+              <FileUploader files={value} onChange={onChange} reportId={reportId} id="otherResources" />
             )}
           />
         </div>
+      </Fieldset>
+      <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
+        <div id="attachments" />
+        <Label htmlFor="attachments">Agendas, service plans, sign-in sheets, etc.</Label>
+        <Controller
+          name="attachments"
+          defaultValue={[]}
+          control={control}
+          render={({ onChange, value }) => (
+            <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
+          )}
+        />
       </Fieldset>
     </>
   );
