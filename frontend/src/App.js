@@ -126,7 +126,7 @@ function App() {
           <Header />
           <Grid row>
             <Grid col={2}>
-              <SiteNav admin={admin} />
+              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
             </Grid>
             <Grid col="fill">
               <section className="usa-section padding-top-0">
