@@ -34,6 +34,7 @@ const reviewPage = {
       additionalData,
       onReview,
       approvingManager,
+      onResetToDraft,
     ) => (
       <ReviewSubmit
         approvers={additionalData.approvers}
@@ -41,6 +42,7 @@ const reviewPage = {
         onSubmit={onSubmit}
         onReview={onReview}
         approvingManager={approvingManager}
+        onResetToDraft={onResetToDraft}
         reviewItems={
           pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
         }

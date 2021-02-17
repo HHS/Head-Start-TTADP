@@ -22,12 +22,14 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 
 function Navigator({
+  editable,
   formData,
   updateFormData,
   initialLastUpdated,
   pages,
   onFormSubmit,
   onReview,
+  onResetToDraft,
   currentPage,
   additionalData,
   onSave,
@@ -71,6 +73,9 @@ function Navigator({
   };
 
   const onSaveForm = async (completed, index) => {
+    if (!editable) {
+      return;
+    }
     const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
     const newIndex = index === page.position ? null : index;
     try {
@@ -103,7 +108,12 @@ function Navigator({
 
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
-    const stateOfPage = current ? IN_PROGRESS : pageState[p.position];
+
+    let stateOfPage = pageState[p.position];
+    if (stateOfPage !== COMPLETE) {
+      stateOfPage = current ? IN_PROGRESS : pageState[p.position];
+    }
+
     const state = p.review ? formData.status : stateOfPage;
     return {
       label: p.label,
@@ -135,6 +145,7 @@ function Navigator({
               additionalData,
               onReview,
               approvingManager,
+              onResetToDraft,
             )}
             {!page.review
             && (
@@ -159,6 +170,8 @@ function Navigator({
 }
 
 Navigator.propTypes = {
+  onResetToDraft: PropTypes.func.isRequired,
+  editable: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     status: PropTypes.string,
     pageState: PropTypes.shape({}),

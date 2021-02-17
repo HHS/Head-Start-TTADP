@@ -26,6 +26,7 @@ import {
   getCollaborators,
   getApprovers,
   reviewReport,
+  resetToDraft,
 } from '../../fetchers/activityReports';
 
 // All new reports will show these two goals
@@ -76,7 +77,7 @@ function ActivityReport({ match, user, location }) {
   const [formData, updateFormData] = useState();
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
-  const [canWrite, updateCanWrite] = useState(false);
+  const [editable, updateEditable] = useState(false);
   const [initialLastUpdated, updateInitialLastUpdated] = useState();
   const reportId = useRef();
 
@@ -114,12 +115,14 @@ function ActivityReport({ match, user, location }) {
         const isCollaborator = report.collaborators
           && report.collaborators.find((u) => u.id === user.id);
         const isAuthor = report.userId === user.id;
-        const canWriteReport = isCollaborator || isAuthor;
+        const canWriteReport = (isCollaborator || isAuthor)
+          && (report.status === REPORT_STATUSES.DRAFT
+              || report.status === REPORT_STATUSES.NEEDS_ACTION);
 
         updateAdditionalData({ recipients, collaborators, approvers });
         updateFormData(report);
         updateApprovingManager(report.approvingManagerId === user.id);
-        updateCanWrite(canWriteReport);
+        updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
           updateInitialLastUpdated(moment(report.updatedAt));
@@ -151,10 +154,15 @@ function ActivityReport({ match, user, location }) {
     );
   }
 
-  if (!currentPage) {
-    const defaultPage = formData.status === REPORT_STATUSES.DRAFT ? 'activity-summary' : 'review';
+  if (!editable && currentPage !== 'review') {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/${defaultPage}`} />
+      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+    );
+  }
+
+  if (!currentPage) {
+    return (
+      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 
@@ -170,28 +178,28 @@ function ActivityReport({ match, user, location }) {
   const onSave = async (data, newIndex) => {
     const { activityRecipientType, activityRecipients } = data;
     let updatedReport = false;
-    if (canWrite) {
-      if (reportId.current === 'new') {
-        if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: region }, {});
-          reportId.current = savedReport.id;
-          updatedReport = false;
-        }
-      } else {
-        await saveReport(reportId.current, data, {});
-        updatedReport = true;
+    if (reportId.current === 'new') {
+      if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
+        const savedReport = await createReport({ ...data, regionId: region }, {});
+        reportId.current = savedReport.id;
+        updatedReport = false;
       }
+    } else {
+      await saveReport(reportId.current, data, {});
+      updatedReport = true;
     }
 
     if (newIndex) {
       updatePage(newIndex);
     }
+
     return updatedReport;
   };
 
   const onFormSubmit = async (data) => {
     const report = await submitReport(reportId.current, data);
     updateFormData(report);
+    updateEditable(false);
   };
 
   const onReview = async (data) => {
@@ -199,11 +207,18 @@ function ActivityReport({ match, user, location }) {
     updateFormData(report);
   };
 
+  const onResetToDraft = async () => {
+    const report = await resetToDraft(reportId.current);
+    updateFormData(report);
+    updateEditable(true);
+  };
+
   return (
     <>
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
+        editable={editable}
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}
         currentPage={currentPage}
@@ -213,6 +228,7 @@ function ActivityReport({ match, user, location }) {
         pages={pages}
         onFormSubmit={onFormSubmit}
         onSave={onSave}
+        onResetToDraft={onResetToDraft}
         approvingManager={approvingManager}
         onReview={onReview}
       />
