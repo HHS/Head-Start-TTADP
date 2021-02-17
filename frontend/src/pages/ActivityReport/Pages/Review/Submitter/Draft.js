@@ -15,6 +15,7 @@ const Draft = ({
   valid,
   handleSubmit,
   onFormSubmit,
+  onSaveForm,
 }) => {
   const setValue = (e) => {
     if (e === '') {
@@ -60,6 +61,7 @@ const Draft = ({
             ))}
           </Dropdown>
         </Fieldset>
+        <Button outline type="button" onClick={() => { onSaveForm(false); }}>Save Draft</Button>
         <Button type="submit" disabled={!valid}>Submit for approval</Button>
       </Form>
     </>
@@ -68,6 +70,7 @@ const Draft = ({
 
 Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
+  onSaveForm: PropTypes.func.isRequired,
   allComplete: PropTypes.bool.isRequired,
   register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({

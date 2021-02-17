@@ -102,7 +102,7 @@ describe('ReviewSubmit', () => {
 
     it('the submit button is disabled', async () => {
       renderReview(false, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeDisabled();
       await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
     });
@@ -118,16 +118,16 @@ describe('ReviewSubmit', () => {
 
     it('the submit button is disabled until one approver is selected', async () => {
       renderReview(true, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeDisabled();
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['1']);
-      expect(await screen.findByRole('button')).toBeEnabled();
+      expect(await screen.findByRole('button', { name: 'Submit for approval' })).toBeEnabled();
     });
 
     it('the submit button calls onSubmit', async () => {
       const onSubmit = jest.fn();
       renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
       await waitFor(() => expect(onSubmit).toHaveBeenCalled());
@@ -140,7 +140,7 @@ describe('ReviewSubmit', () => {
       });
 
       renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
       const error = await screen.findByTestId('alert');
@@ -150,7 +150,7 @@ describe('ReviewSubmit', () => {
 
   it('a success modal is shown once submitted', async () => {
     renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
-    userEvent.click(await screen.findByTestId('button'));
+    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveClass('usa-alert--success');
   });

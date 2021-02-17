@@ -167,7 +167,7 @@ function ActivityReport({ match, user, location }) {
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
-  const onSave = async (data, newIndex) => {
+  const onSave = async (data) => {
     const { activityRecipientType, activityRecipients } = data;
     let updatedReport = false;
     if (canWrite) {
@@ -181,10 +181,6 @@ function ActivityReport({ match, user, location }) {
         await saveReport(reportId.current, data, {});
         updatedReport = true;
       }
-    }
-
-    if (newIndex) {
-      updatePage(newIndex);
     }
     return updatedReport;
   };
@@ -204,6 +200,7 @@ function ActivityReport({ match, user, location }) {
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <h1 className="new-activity-report">New activity report for Region 14</h1>
       <Navigator
+        updatePage={updatePage}
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}
         currentPage={currentPage}

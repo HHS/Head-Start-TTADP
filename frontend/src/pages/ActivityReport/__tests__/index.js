@@ -118,7 +118,7 @@ describe('ActivityReport', () => {
       const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
       await reactSelectEvent.select(granteeSelectbox, ['grant']);
 
-      const button = await screen.findByRole('button', { name: 'Topics and resources' });
+      const button = await screen.findByRole('button', { name: 'Save draft' });
       userEvent.click(button);
 
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
@@ -176,10 +176,10 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', data);
 
       renderActivityReport(1);
-      expect(await screen.findByText('Continue')).toBeDisabled();
+      expect(await screen.findByText('Save & Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Virtual');
       fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
+      await waitFor(() => expect(screen.getByText('Save & Continue')).not.toBeDisabled());
     });
   });
 
@@ -190,10 +190,10 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', data);
 
       renderActivityReport(1);
-      expect(await screen.findByText('Continue')).toBeDisabled();
+      expect(await screen.findByText('Save & Continue')).toBeDisabled();
       const box = await screen.findByLabelText('Training');
       fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Continue')).not.toBeDisabled());
+      await waitFor(() => expect(screen.getByText('Save & Continue')).not.toBeDisabled());
     });
   });
 });
