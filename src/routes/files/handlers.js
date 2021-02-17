@@ -8,7 +8,7 @@ import addToScanQueue from '../../services/queue';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import logger from '../../logger';
+import { auditLogger } from '../../logger';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -139,7 +139,7 @@ export default async function uploadHandler(req, res) {
     } catch (err) {
       if (metadata) {
         await updateStatus(metadata.id, fileStatuses.queueingFailed);
-        logger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+        auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
       }
     }
   });
