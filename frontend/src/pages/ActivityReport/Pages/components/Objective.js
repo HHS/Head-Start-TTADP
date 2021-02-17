@@ -20,7 +20,7 @@ const statuses = [
 const Objective = ({
   objectiveIndex, goalIndex, remove,
 }) => {
-  const { watch, control } = useFormContext();
+  const { watch, control, trigger } = useFormContext();
   const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
 
   const objectPath = `goals[${goalIndex}].objectives[${objectiveIndex}]`;
@@ -36,6 +36,14 @@ const Objective = ({
   const updateEdit = (isEditing) => {
     if (isEditing || (title && ttaProvided && status)) {
       updateShowEdit(isEditing);
+      // FIXME This trigger causes the goals field to be validated.
+      // This is temporary while we wait for more report changes to make it
+      // to main. Without this trigger the continue button is always disabled
+      // (unless you change pages and come back to this page). In the future
+      // the continue button won't be disabled at all and the validation of
+      // this field will happen on submit, but until that happens we force
+      // the revalidation here so the form isn't annoying to use in the meantime.
+      trigger('goals');
     }
   };
 
