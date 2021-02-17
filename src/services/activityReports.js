@@ -153,6 +153,11 @@ export function activityReportById(activityReportId) {
         ],
       },
       {
+        model: User,
+        as: 'author',
+        attributes: ['name'],
+      },
+      {
         model: Goal,
         as: 'goals',
         attributes: ['id', 'name'],
@@ -245,6 +250,7 @@ export async function createOrUpdate(newActivityReport, report) {
     attachments,
     otherResources,
     approvingManager,
+    author,
     ...updatedFields
   } = newActivityReport;
   await sequelize.transaction(async (transaction) => {
@@ -271,6 +277,13 @@ export async function createOrUpdate(newActivityReport, report) {
     }
   });
   return activityReportById(savedReport.id);
+}
+
+export async function setStatus(report, status) {
+  const updatedReport = await report.update({ status }, {
+    fields: ['status'],
+  });
+  return updatedReport;
 }
 
 export async function possibleRecipients() {

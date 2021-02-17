@@ -84,6 +84,12 @@ describe('Activity Report policies', () => {
         expect(policy.canUpdate()).toBeTruthy();
       });
 
+      it('is true if the user is the author and report status is NEEDS_ACTION', () => {
+        const report = activityReport(author.id, null, REPORT_STATUSES.NEEDS_ACTION);
+        const policy = new ActivityReport(author, report);
+        expect(policy.canUpdate()).toBeTruthy();
+      });
+
       it('is true if the user is a collaborator', () => {
         const report = activityReport(author.id, collaborator);
         const policy = new ActivityReport(collaborator, report);
@@ -100,6 +106,18 @@ describe('Activity Report policies', () => {
     it('is false if the user cannot write in the region', () => {
       const report = activityReport(otherUser.id);
       const policy = new ActivityReport(otherUser, report);
+      expect(policy.canUpdate()).toBeFalsy();
+    });
+
+    it('is false if the report has been submitted', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canUpdate()).toBeFalsy();
+    });
+
+    it('is false if the report has been approved', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
+      const policy = new ActivityReport(author, report);
       expect(policy.canUpdate()).toBeFalsy();
     });
   });

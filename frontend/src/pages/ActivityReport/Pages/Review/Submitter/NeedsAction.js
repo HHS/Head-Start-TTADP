@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Alert, Button } from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
@@ -17,15 +17,6 @@ const NeedsAction = ({
 
   return (
     <>
-      <Alert noIcon className="margin-y-4" type="error">
-        <b>
-          { approvingManager.name }
-          {' '}
-          has requested updates to this activity report
-        </b>
-        <br />
-        Please review the manager notes below and re-submit for approval.
-      </Alert>
       <h2>Review and re-submit report</h2>
       <div className="smart-hub--creator-notes">
         <p>
@@ -40,7 +31,7 @@ const NeedsAction = ({
           <span className="text-bold">Manager notes</span>
           <br />
           <br />
-          { managerNotes }
+          { managerNotes || 'No manager notes' }
         </p>
       </div>
       <div>
@@ -53,7 +44,7 @@ const NeedsAction = ({
           {' '}
           from
           {' '}
-          { approvingManager.name || 'No manager notes' }
+          { approvingManager.name }
         </div>
       </div>
       <div className="margin-top-3">

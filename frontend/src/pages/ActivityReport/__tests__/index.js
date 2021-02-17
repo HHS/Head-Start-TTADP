@@ -12,6 +12,7 @@ import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
+import { REPORT_STATUSES } from '../../../Constants';
 
 const formData = () => ({
   deliveryMethod: 'in-person',
@@ -31,6 +32,7 @@ const formData = () => ({
   participants: ['CEO / CFO / Executive'],
   programTypes: ['type 1'],
   requester: 'grantee',
+  status: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],
