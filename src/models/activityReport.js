@@ -40,6 +40,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   ActivityReport.init({
+    displayId: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `R${this.regionId.toString().padStart(2, '0')}-AR-${this.id}`;
+      },
+    },
     userId: {
       type: DataTypes.INTEGER,
     },
@@ -51,10 +57,10 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     resourcesUsed: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     additionalNotes: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     numberOfParticipants: {
       type: DataTypes.INTEGER,
@@ -96,7 +102,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     context: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
     },
     pageState: {
       type: DataTypes.JSON,
