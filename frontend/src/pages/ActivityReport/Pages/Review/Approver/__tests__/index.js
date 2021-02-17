@@ -16,13 +16,10 @@ const RenderApprover = ({
     mode: 'onChange',
     defaultValues: formData,
   });
-  const { register, handleSubmit } = hookForm;
 
   return (
     <FormProvider {...hookForm}>
       <Approver
-        register={register}
-        handleSubmit={handleSubmit}
         onFormReview={onFormReview}
         reviewed={reviewed}
         valid={valid}
