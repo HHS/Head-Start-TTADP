@@ -3,10 +3,12 @@ import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { File } from '../../models';
 import s3Uploader from '../../lib/s3Uploader';
+import addToScanQueue from '../../services/queue';
 
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
 import { userById } from '../../services/users';
+import { auditLogger } from '../../logger';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -20,6 +22,17 @@ const logContext = {
   namespace,
 };
 
+const fileStatuses = {
+  uploading: 'UPLOADING',
+  uploaded: 'UPLOADED',
+  uploadFailed: 'UPLOAD_FAILED',
+  queued: 'SCANNING_QUEUED',
+  queueingFailed: 'QUEUEING_FAILED',
+  scanning: 'SCANNING',
+  approved: 'APPROVED',
+  rejected: 'REJECTED',
+};
+
 export const createFileMetaData = async (
   originalFileName, s3FileName, reportId, attachmentType, fileSize) => {
   const newFile = {
@@ -27,7 +40,7 @@ export const createFileMetaData = async (
     originalFileName,
     attachmentType,
     key: s3FileName,
-    status: 'UPLOADING',
+    status: fileStatuses.uploading,
     fileSize,
   };
   let file;
@@ -111,13 +124,23 @@ export default async function uploadHandler(req, res) {
     }
     try {
       await s3Uploader(buffer, fileName, type);
-      await updateStatus(metadata.id, 'UPLOADED');
+      await updateStatus(metadata.id, fileStatuses.uploaded);
       res.status(200).send({ id: metadata.id });
     } catch (err) {
       if (metadata) {
-        await updateStatus(metadata.id, 'UPLOAD_FAILED');
+        await updateStatus(metadata.id, fileStatuses.uploadFailed);
       }
       await handleErrors(req, res, err, logContext);
+      return;
+    }
+    try {
+      await addToScanQueue({ key: metadata.key });
+      await updateStatus(metadata.id, fileStatuses.queued);
+    } catch (err) {
+      if (metadata) {
+        await updateStatus(metadata.id, fileStatuses.queueingFailed);
+        auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+      }
     }
   });
 }
