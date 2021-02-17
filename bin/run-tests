@@ -62,7 +62,7 @@ main() {
         # Test frontend
         echo
         log "Running worker tests"
-        docker exec test-worker bash -c "yarn --cwd worker run test:ci"
+        docker exec test-worker bash -c "yarn --cwd worker run test:ci --detectOpenHandles"
         check_exit "$?"
     fi
 
