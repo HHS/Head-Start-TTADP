@@ -44,4 +44,5 @@ const processFile = (key) => downloadFile(key).then((data) => {
 
 module.exports = {
   processFile,
+  fileStatuses,
 };

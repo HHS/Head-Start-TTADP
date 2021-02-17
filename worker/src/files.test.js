@@ -1,6 +1,7 @@
 const axios = require('axios');
-const { processFile } = require('./files');
+const { processFile, fileStatuses } = require('./files');
 const { s3 } = require('./s3');
+const { File } = require('./models');
 
 const s3Return = {
   AcceptRanges: 'bytes',
@@ -11,20 +12,55 @@ const s3Return = {
   Metadata: {},
   Body: Buffer.from('Hello World!'),
 };
-const mockS3 = jest.spyOn(s3, 'getObject').mockImplementation(() => ({ promise: () => Promise.resolve(s3Return) }));
-const mockAxios = jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve({ data: 'everything ok: true\n' }));
 
-describe('File Upload', () => {
+const mockS3 = jest.spyOn(s3, 'getObject').mockImplementation(() => ({ promise: () => Promise.resolve(s3Return) }));
+
+const mockAxios = jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve());
+const axiosCleanResponse = { status: 200, data: { Status: 'OK', Description: '' } };
+const axiosDirtyError = new Error();
+axiosDirtyError.response = { status: 406, data: { Status: 'FOUND', Description: 'Eicar-Test-Signature' } };
+const axiosServerError = new Error();
+axiosServerError.response = { status: 500 };
+
+const mockFindOne = jest.spyOn(File, 'findOne').mockImplementation(
+  () => Promise.resolve({ dataValues: { id: 1 } }),
+);
+const mockUpdate = jest.spyOn(File, 'update').mockImplementation(() => Promise.resolve());
+const fileKey = '9f830aaa-5bfc-4f9c-a8c6-30753d1440b4.pdf';
+
+describe('File Scanner tests', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-
-  describe('File Scanner tests', () => {
-    it('tests a file scan', async () => {
-      const got = processFile('test.txt');
-      await expect(got).resolves.toBe('everything ok: true\n');
-      expect(mockS3).toBeCalled();
-      expect(mockAxios).toBeCalled();
-    });
+  it('tests a clean file scan', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
+    const got = await processFile(fileKey);
+    expect(got.status).toBe(200);
+    expect(got.data).toStrictEqual({ Status: 'OK', Description: '' });
+    expect(mockS3).toBeCalled();
+    expect(mockAxios).toBeCalled();
+    expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
+    expect(mockUpdate).toBeCalledWith(
+      { status: fileStatuses.approved },
+      { where: { id: 1 } },
+    );
+  });
+  it('tests a dirty file scan', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosDirtyError));
+    const got = await processFile(fileKey);
+    expect(got.status).toBe(406);
+    expect(got.data).toStrictEqual({ Status: 'FOUND', Description: 'Eicar-Test-Signature' });
+    expect(mockS3).toBeCalled();
+    expect(mockAxios).toBeCalled();
+    expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
+    expect(mockUpdate).toBeCalledWith(
+      { status: fileStatuses.rejected },
+      { where: { id: 1 } },
+    );
+  });
+  it('tests an error', async () => {
+    mockAxios.mockImplementationOnce(() => Promise.reject(axiosServerError));
+    const got = processFile(fileKey);
+    await expect(got).rejects.toBe(axiosServerError);
   });
 });
