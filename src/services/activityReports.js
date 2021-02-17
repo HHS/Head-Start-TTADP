@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '../constants';
 
 import {
   ActivityReport,
@@ -248,7 +249,10 @@ export function activityReportAlerts(userId) {
     where: {
       [Op.or]: [
         {
-          [Op.or]: [{ status: 'submitted' }, { status: 'needs_action' }],
+          [Op.or]: [
+            { status: REPORT_STATUSES.SUBMITTED },
+            { status: REPORT_STATUSES.NEEDS_ACTION },
+          ],
           approvingManagerId: userId,
         },
         {
@@ -256,10 +260,10 @@ export function activityReportAlerts(userId) {
             {
               [Op.and]: [
                 {
-                  status: { [Op.ne]: 'approved' },
+                  status: { [Op.ne]: REPORT_STATUSES.APPROVED },
                 },
                 {
-                  status: { [Op.ne]: 'submitted' },
+                  status: { [Op.ne]: REPORT_STATUSES.SUBMITTED },
                 },
               ],
             },
