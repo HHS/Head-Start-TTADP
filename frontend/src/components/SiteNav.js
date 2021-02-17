@@ -30,9 +30,6 @@ const SiteNav = ({
     <button type="button" onClick={logout} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
       Logout
     </button>,
-    <NavLink to="/activity-reports">
-      Settings
-    </NavLink>,
   ];
 
   const adminNavItem = [
