@@ -32,10 +32,6 @@ describe('SiteNav', () => {
       expect(screen.queryAllByRole('link').length).not.toBe(0);
     });
 
-    it('displays the settings button', async () => {
-      expect(await screen.findByText('Settings')).toBeVisible();
-    });
-
     it('displays the logout button', async () => {
       expect(await screen.findByText('Logout')).toBeVisible();
     });
