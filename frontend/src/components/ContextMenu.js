@@ -5,7 +5,7 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
@@ -13,12 +13,27 @@ import { Button } from '@trussworks/react-uswds';
 
 import './ContextMenu.css';
 
+const ESCAPE_KEY_CODE = 27;
+
 function ContextMenu({
   label, menuItems, backgroundColor, left,
 }) {
   const [shown, updateShown] = useState(false);
   const defaultClass = 'smart-hub--context-menu';
   const menuClass = left ? `${defaultClass} smart-hub--context-menu__left` : defaultClass;
+
+  const onEscape = useCallback((event) => {
+    if (event.keyCode === ESCAPE_KEY_CODE) {
+      updateShown(false);
+    }
+  }, [updateShown]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', onEscape, false);
+    return () => {
+      document.removeEventListener('keydown', onEscape, false);
+    };
+  }, [onEscape]);
 
   const onBlur = (e) => {
     const { currentTarget } = e;
