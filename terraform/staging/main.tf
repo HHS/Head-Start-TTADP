@@ -80,8 +80,8 @@ data "cloudfoundry_space" "dev_space" {
   name     = var.cf_dev_space_name
 }
 
-data "cloudfoundry_app" "clamav_rest" {
-  name_or_id = var.clamav_rest_app_name
+data "cloudfoundry_app" "clamav_api" {
+  name_or_id = var.clamav_api_app_name
   space      = data.cloudfoundry_space.dev_space.id
 }
 
@@ -93,7 +93,7 @@ data "cloudfoundry_app" "ttahub" {
 resource "cloudfoundry_network_policy" "clamav_routing" {
   policy {
     source_app      = data.cloudfoundry_app.ttahub.id
-    destination_app = data.cloudfoundry_app.clamav_rest.id
-    port            = "8080"
+    destination_app = data.cloudfoundry_app.clamav_api.id
+    port            = "9443"
   }
 }
