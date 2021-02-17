@@ -23,7 +23,7 @@ const ReviewSubmit = ({
   reportCreator,
   formData,
 }) => {
-  const { handleSubmit, register, formState } = useFormContext();
+  const { formState } = useFormContext();
   const { additionalNotes, status } = formData;
   const { isValid } = formState;
   const valid = allComplete && isValid;
@@ -75,10 +75,8 @@ const ReviewSubmit = ({
           status={status}
           submitted={submitted}
           allComplete={allComplete}
-          register={register}
           approvers={approvers}
           valid={valid}
-          handleSubmit={handleSubmit}
           onFormSubmit={onFormSubmit}
           formData={formData}
         />
@@ -89,9 +87,7 @@ const ReviewSubmit = ({
           status={status}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
-          register={register}
           valid={valid}
-          handleSubmit={handleSubmit}
           onFormReview={onFormReview}
           formData={formData}
         />

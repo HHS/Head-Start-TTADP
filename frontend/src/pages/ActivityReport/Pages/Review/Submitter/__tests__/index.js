@@ -16,7 +16,6 @@ const RenderSubmitter = ({
     mode: 'onChange',
     defaultValues: formData,
   });
-  const { register, handleSubmit } = hookForm;
 
   return (
     <FormProvider {...hookForm}>
@@ -24,8 +23,6 @@ const RenderSubmitter = ({
         submitted={submitted}
         allComplete={allComplete}
         onFormSubmit={onFormSubmit}
-        register={register}
-        handleSubmit={handleSubmit}
         valid={valid}
         approvers={[{ name: 'test', id: 1 }]}
         formData={formData}

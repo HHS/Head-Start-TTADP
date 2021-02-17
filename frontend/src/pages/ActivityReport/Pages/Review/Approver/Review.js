@@ -11,13 +11,10 @@ import { managerReportStatuses } from '../../../../../Constants';
 const Review = ({
   reviewed,
   additionalNotes,
-  register,
   valid,
-  handleSubmit,
   onFormReview,
 }) => {
-  // FIXME: Use 'register', 'handleSubmit' from useFormContext rather than passed props
-  const { watch } = useFormContext();
+  const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('managerNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
@@ -61,9 +58,7 @@ const Review = ({
 Review.propTypes = {
   reviewed: PropTypes.bool.isRequired,
   additionalNotes: PropTypes.string.isRequired,
-  register: PropTypes.func.isRequired,
   valid: PropTypes.bool.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
 };
 

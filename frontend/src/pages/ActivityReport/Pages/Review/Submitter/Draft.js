@@ -10,10 +10,8 @@ import { DECIMAL_BASE } from '../../../../../Constants';
 const Draft = ({
   submitted,
   allComplete,
-  register,
   approvers,
   valid,
-  handleSubmit,
   onFormSubmit,
 }) => {
   const setValue = (e) => {
@@ -23,8 +21,7 @@ const Draft = ({
     return parseInt(e, DECIMAL_BASE);
   };
 
-  // FIXME: Use 'register', 'handleSubmit' from useFormContext rather than passed props
-  const { watch } = useFormContext();
+  const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
@@ -75,13 +72,11 @@ const Draft = ({
 Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
   allComplete: PropTypes.bool.isRequired,
-  register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
   valid: PropTypes.bool.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
 };
 
