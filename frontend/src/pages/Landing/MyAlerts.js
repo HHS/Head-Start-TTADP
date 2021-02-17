@@ -140,7 +140,11 @@ function MyAlerts({ reports }) {
 }
 
 MyAlerts.propTypes = {
-  reports: PropTypes.node.isRequired,
+  reports: PropTypes.arrayOf(PropTypes.object),
+};
+
+MyAlerts.defaultProps = {
+  reports: [],
 };
 
 export default MyAlerts;
