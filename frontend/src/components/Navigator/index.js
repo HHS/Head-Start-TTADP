@@ -34,6 +34,7 @@ function Navigator({
   autoSaveInterval,
   approvingManager,
   reportId,
+  updatePage,
 }) {
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
@@ -70,12 +71,10 @@ function Navigator({
     return newPageState;
   };
 
-  const onSaveForm = async (completed, index) => {
+  const onSaveForm = async (completed) => {
     const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
-    const newIndex = index === page.position ? null : index;
     try {
-      updateFormData(data);
-      const result = await onSave(data, newIndex);
+      const result = await onSave(data);
       if (result) {
         updateLastSaveTime(moment());
         updateErrorMessage();
@@ -87,8 +86,16 @@ function Navigator({
     }
   };
 
+  const onUpdatePage = (index, completed) => {
+    const newIndex = index === page.position ? null : index;
+    const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
+    updateFormData(data);
+    updatePage(newIndex);
+  };
+
   const onContinue = () => {
-    onSaveForm(true, page.position + 1);
+    onSaveForm(true);
+    onUpdatePage(page.position + 1, true);
   };
 
   useInterval(() => {
@@ -107,7 +114,7 @@ function Navigator({
     const state = p.review ? formData.status : stateOfPage;
     return {
       label: p.label,
-      onNavigation: () => onSaveForm(false, p.position),
+      onNavigation: () => onUpdatePage(p.position),
       state,
       current,
     };
@@ -135,6 +142,7 @@ function Navigator({
               additionalData,
               onReview,
               approvingManager,
+              onSaveForm,
             )}
             {!page.review
             && (
@@ -147,7 +155,11 @@ function Navigator({
                   className="smart-hub--form-large"
                 >
                   {page.render(additionalData, formData, reportId)}
-                  <Button type="submit" disabled={!isValid}>Continue</Button>
+                  <div className="display-flex">
+                    <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                    <Button type="button" onClick={() => { onSaveForm(false); }}>Save draft</Button>
+                    <Button className="margin-left-auto margin-right-0" type="submit" disabled={!isValid}>Save & Continue</Button>
+                  </div>
                 </Form>
               </Container>
             )}
@@ -169,6 +181,7 @@ Navigator.propTypes = {
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
+  updatePage: PropTypes.func.isRequired,
   pages: PropTypes.arrayOf(
     PropTypes.shape({
       review: PropTypes.bool.isRequired,

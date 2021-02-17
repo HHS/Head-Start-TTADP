@@ -34,11 +34,13 @@ const reviewPage = {
       additionalData,
       onReview,
       approvingManager,
+      onSaveForm,
     ) => (
       <ReviewSubmit
         approvers={additionalData.approvers}
         allComplete={allComplete}
         onSubmit={onSubmit}
+        onSaveForm={onSaveForm}
         onReview={onReview}
         approvingManager={approvingManager}
         reviewItems={

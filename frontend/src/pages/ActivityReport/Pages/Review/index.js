@@ -20,6 +20,7 @@ const ReviewSubmit = ({
   approvers,
   approvingManager,
   formData,
+  onSaveForm,
 }) => {
   const { handleSubmit, register, formState } = useFormContext();
   const { additionalNotes, status } = formData;
@@ -78,6 +79,7 @@ const ReviewSubmit = ({
           handleSubmit={handleSubmit}
           onFormSubmit={onFormSubmit}
           formData={formData}
+          onSaveForm={onSaveForm}
         />
         )}
         {approvingManager
@@ -99,6 +101,7 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
+  onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,

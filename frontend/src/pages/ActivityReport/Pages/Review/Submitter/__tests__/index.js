@@ -59,7 +59,7 @@ describe('Submitter review page', () => {
     it('allows the author to submit for review', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.DRAFT, false, true, mockSubmit);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });

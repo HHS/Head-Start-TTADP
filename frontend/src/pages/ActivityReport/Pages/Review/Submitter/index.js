@@ -16,6 +16,7 @@ const Submitter = ({
   handleSubmit,
   onFormSubmit,
   formData,
+  onSaveForm,
 }) => {
   const {
     approvingManager,
@@ -37,6 +38,7 @@ const Submitter = ({
         register={register}
         approvers={approvers}
         valid={valid}
+        onSaveForm={onSaveForm}
         handleSubmit={handleSubmit}
         onFormSubmit={onFormSubmit}
       />
@@ -65,6 +67,7 @@ const Submitter = ({
 Submitter.propTypes = {
   submitted: PropTypes.bool.isRequired,
   allComplete: PropTypes.bool.isRequired,
+  onSaveForm: PropTypes.func.isRequired,
   register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
