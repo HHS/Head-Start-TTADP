@@ -5,7 +5,7 @@ import React from 'react';
 import PrintSummary from '../PrintSummary';
 
 describe('PrintSummary', () => {
-  it('when a reportCreator with name and role is provided, it renders that (without displaying it)', () => {
+  it('when a reportCreator with name and role is provided, it renders that', () => {
     const reportCreator = { name: 'Lois Lane', role: 'Reporter' };
 
     render(
@@ -19,7 +19,7 @@ describe('PrintSummary', () => {
     expect(screen.queryByText('Report Creator')).not.toBeNull();
   });
 
-  it('when a reportCreator with name but no role is provided, it renders the name (without displaying it)', () => {
+  it('when a reportCreator with name but no role is provided, it renders the name', () => {
     const reportCreator = { name: 'Clark Kent' };
 
     render(
