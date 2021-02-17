@@ -31,11 +31,13 @@ function ContextMenu({
   };
 
   return (
-    <div onBlur={onBlur}>
+    <div
+      onBlur={onBlur}
+    >
       <Button
-        type="button"
         className="smart-hub--context-menu-button smart-hub--button__no-margin"
         unstyled
+        aria-haspopup
         onClick={() => updateShown((previous) => !previous)}
         aria-label={label}
       >
@@ -44,13 +46,17 @@ function ContextMenu({
       {shown
     && (
     <div className={menuClass} style={{ backgroundColor }}>
-      {menuItems.map((item) => (
-        <Button type="button" onClick={item.onClick} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin" key={item.label}>
-          <div className="smart-hub--context-menu-item-label">
-            {item.label}
-          </div>
-        </Button>
-      ))}
+      <ul className="usa-list usa-list--unstyled" role="menu">
+        {menuItems.map((item) => (
+          <li key={item.label} role="menuitem">
+            <Button type="button" onClick={item.onClick} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
+              <div className="smart-hub--context-menu-item-label">
+                {item.label}
+              </div>
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
     )}
     </div>
