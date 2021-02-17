@@ -1,5 +1,6 @@
 const axios = require('axios');
 const FormData = require('form-data');
+const https = require('https');
 const { downloadFile } = require('./s3');
 const { File } = require('./models');
 
@@ -28,7 +29,8 @@ const processFile = (key) => downloadFile(key).then((data) => {
   const form = new FormData();
   form.append('name', key);
   form.append('file', data.Body, { filename: key, contentType: data.ContentType });
-  return axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, { headers: { ...form.getHeaders() } })
+  const agent = new https.Agent({ rejectUnauthorized: false });
+  return axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, { httpsAgent: agent, headers: { ...form.getHeaders() } })
     .then((res) => {
       updateFileStatus(key, fileStatuses.approved);
       return ({ status: res.status, data: res.data });
