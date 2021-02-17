@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import join from 'url-join';
 import {
-  screen, render, fireEvent,
+  screen, render,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
