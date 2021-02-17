@@ -7,9 +7,7 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
-// disable this to allow mocking this function
-// eslint-disable-next-line no-unused-vars
-import addToScanQueue from '../../services/queue';
+import * as queue from '../../services/queue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -21,7 +19,6 @@ const request = require('supertest');
 const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3Uploader');
-jest.mock('../../services/queue');
 
 const mockUser = {
   id: 100,
@@ -47,6 +44,7 @@ const mockUser = {
 
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
+const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'grantee',
@@ -97,6 +95,7 @@ describe('File Upload', () => {
           fileId = res.body.id;
           expect(s3Uploader).toHaveBeenCalled();
         });
+      expect(mockAddToScanQueue).toHaveBeenCalled();
     });
     it('checks the metadata was uploaded to the database', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
