@@ -120,7 +120,11 @@ export async function submitReport(req, res) {
 }
 
 export async function getActivityRecipients(req, res) {
-  const activityRecipients = await possibleRecipients();
+  const { regions } = req.query;
+  const targetRegions = regions
+    ? regions.map((region) => parseInt(region, DECIMAL_BASE))
+    : undefined;
+  const activityRecipients = await possibleRecipients(targetRegions);
   res.json(activityRecipients);
 }
 

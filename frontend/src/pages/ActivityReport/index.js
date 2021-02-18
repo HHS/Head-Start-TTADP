@@ -10,6 +10,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
+import { allRegionsUserHasPermissionTo } from '../../permissions';
 
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
@@ -94,7 +95,7 @@ function ActivityReport({ match, user, location }) {
         updateLoading(true);
 
         const apiCalls = [
-          getRecipients(),
+          getRecipients(allRegionsUserHasPermissionTo(user)),
           getCollaborators(region),
           getApprovers(region),
         ];
