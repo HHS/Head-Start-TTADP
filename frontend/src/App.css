@@ -39,3 +39,125 @@ body {
   opacity: 0.7;
 }
 
+/* ========== Print Styles ========== */
+
+/* This is for elements that in the DOM that should appear only when printing */
+.print-only {
+  display: none;
+}
+
+@media print {
+
+ * {
+    color: #000 !important;
+    box-shadow: none !important;
+    font-size: 12pt;
+ }
+
+  body {
+    background: #fff !important;
+    font-size: 12pt;
+  }
+
+  @page {
+    margin: 0.5in;
+  }
+
+  .grid-container {
+    max-width: unset;
+    width: 100%;
+  }
+
+  .usa-header {
+    background: #fff !important;
+  }
+
+  .usa-nav-container {
+    padding: 0 !important;
+    margin: 0 0.125in !important;
+  }
+
+  .print-only {
+    display: unset;
+  }
+
+  /* Hide things that don't need to be printed
+   * ':empty' doesn't work on <textarea>, so we need to check values and set 'no-print' if empty
+   * */
+  .usa-nav,
+  .usa-menu-btn,
+  .no-print,
+  input:empty,
+  button[type="submit"]
+  {
+    display: none !important;
+  }
+
+  .usa-alert {
+    background: none;
+    border: 1px solid #adadad;
+  }
+  /* .usa-alert uses a :before to create the left border, which we want to remove */
+  .usa-alert::before {
+    display: none;
+  }
+
+  .smart-hub-review-section--empty {
+    margin-bottom: 1in;
+  }
+
+  /* Show content that is hidden, e.g. collapsed accordions */
+  [hidden] {
+    display: unset;
+  }
+
+  .usa-section,
+  .usa-section > div
+  {
+    margin: 0;
+    padding: 0;
+  }
+
+  .new-activity-report {
+    font-size: 36pt;
+    margin: 0.25in 0;
+  }
+
+  .smart-hub-status-label {
+    background: none;
+    border: 1px solid #adadad;
+  }
+
+  .smart-hub-navigator-wrapper {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .smart-hub-review > div {
+    padding: 0 !important;
+  }
+
+  .usa-accordion__button {
+    background: none !important;
+  }
+
+  .usa-accordion__heading {
+    break-before: auto;
+    break-after: avoid-page;
+  }
+
+  .usa-accordion__heading .usa-accordion__button {
+    color: #454545 !important;
+    padding: 0;
+  }
+
+  .usa-accordion__content {
+    break-before: avoid-page;
+    break-after: auto;
+    display: block;
+    margin-bottom: 0.5in;
+    padding: 0;
+  }
+
+}

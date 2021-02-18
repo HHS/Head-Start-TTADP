@@ -137,9 +137,11 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct statuses', async () => {
-    const statuses = await screen.findAllByText(/draft/i);
+    const draft = await screen.findByText(/draft/i);
+    const needsAction = await screen.findByText(/needs action/i);
 
-    expect(statuses.length).toBe(2);
+    expect(draft).toBeVisible();
+    expect(needsAction).toBeVisible();
   });
 
   test('displays the options buttons', async () => {

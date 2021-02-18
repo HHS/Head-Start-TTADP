@@ -7,6 +7,7 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import s3Uploader from '../../lib/s3Uploader';
+import * as queue from '../../services/queue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -43,6 +44,7 @@ const mockUser = {
 
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
+const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'grantee',
@@ -93,6 +95,7 @@ describe('File Upload', () => {
           fileId = res.body.id;
           expect(s3Uploader).toHaveBeenCalled();
         });
+      expect(mockAddToScanQueue).toHaveBeenCalled();
     });
     it('checks the metadata was uploaded to the database', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
