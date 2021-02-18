@@ -6,6 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form';
+import ReviewPage from './Review/ReviewPage';
 
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
@@ -90,12 +91,16 @@ const sections = [
   },
 ];
 
+const ReviewSection = () => (
+  <ReviewPage sections={sections} path="goals-objectives" />
+);
+
 export default {
   position: 3,
   label: 'Goals and objectives',
   path: 'goals-objectives',
   review: false,
-  sections,
+  reviewSection: () => <ReviewSection />,
   render: (additionalData, formData) => {
     const recipients = formData.activityRecipients || [];
     const { activityRecipientType } = formData;
