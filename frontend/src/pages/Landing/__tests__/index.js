@@ -211,12 +211,5 @@ describe('Landing Page error', () => {
     renderLanding(user);
 
     await expect(screen.findAllByText(/New Activity Report/)).rejects.toThrow();
-    // try {
-    //   expect((await screen.findAllByText(/New Activity Report/)).length).toBe(0);
-    // } catch (error) {
-    //   // screen.findAllByText throws an exception if no element is found
-    //   // hence this assertion
-    //   expect(true).toBeTruthy();
-    // }
   });
 });
