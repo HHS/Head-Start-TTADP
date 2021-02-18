@@ -125,7 +125,7 @@ function App() {
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <Grid row>
-            <Grid col={2}>
+            <Grid col={2} className="no-print">
               <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
             </Grid>
             <Grid col="fill">
