@@ -21,7 +21,14 @@ const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'form-action': ["'self'"],
+    },
+  },
+}));
 
 app.use(cookieSession({
   name: 'session',
