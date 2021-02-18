@@ -3,6 +3,7 @@ const activityReports = [
     startDate: '02/08/2021',
     lastSaved: '02/04/2021',
     id: 1,
+    displayId: 'R14-AR-1',
     regionId: 14,
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     status: 'draft',
@@ -70,9 +71,10 @@ const activityReports = [
     startDate: '02/01/2021',
     lastSaved: '02/04/2021',
     id: 2,
+    displayId: 'R14-AR-2',
     regionId: 14,
     topics: [],
-    status: 'draft',
+    status: 'needs_action',
     activityRecipients: [
       {
         activityRecipientId: 3,

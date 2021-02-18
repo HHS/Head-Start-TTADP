@@ -45,14 +45,8 @@ variable "env" {
   default     = "prod"
 }
 
-variable "clamav_server_app_name" {
-  type        = string
-  description = "app name for clamd server"
-  default     = "clamav-server-ttahub-prod"
-}
-
-variable "clamav_rest_app_name" {
+variable "clamav_api_app_name" {
   type        = string
   description = "app name for clamav api server"
-  default     = "clamav-rest-ttahub-prod"
+  default     = "clamav-api-ttahub-prod"
 }
