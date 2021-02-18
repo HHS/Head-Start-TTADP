@@ -132,10 +132,6 @@ h1.landing {
   min-width: 220px;
 }
 
-.smart-hub--create-new-report {
-  padding-top: 30px;
-}
-
 thead th.ascending::after {
   content: "▲";
   display: inline-block;

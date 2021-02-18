@@ -172,10 +172,10 @@ function Landing() {
         <title>Landing</title>
       </Helmet>
       <Grid row gap>
-        <Grid col={3}>
+        <Grid col="auto">
           <h1 className="landing">Activity Reports</h1>
         </Grid>
-        <Grid className="smart-hub--create-new-report">
+        <Grid col="auto" className="flex-align-self-center">
           <Link
             to="/activity-reports/new"
             referrerPolicy="same-origin"
