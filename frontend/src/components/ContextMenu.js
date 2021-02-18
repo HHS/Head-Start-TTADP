@@ -5,7 +5,7 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
@@ -13,12 +13,27 @@ import { Button } from '@trussworks/react-uswds';
 
 import './ContextMenu.css';
 
+const ESCAPE_KEY_CODE = 27;
+
 function ContextMenu({
   label, menuItems, backgroundColor, left,
 }) {
   const [shown, updateShown] = useState(false);
   const defaultClass = 'smart-hub--context-menu';
   const menuClass = left ? `${defaultClass} smart-hub--context-menu__left` : defaultClass;
+
+  const onEscape = useCallback((event) => {
+    if (event.keyCode === ESCAPE_KEY_CODE) {
+      updateShown(false);
+    }
+  }, [updateShown]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', onEscape, false);
+    return () => {
+      document.removeEventListener('keydown', onEscape, false);
+    };
+  }, [onEscape]);
 
   const onBlur = (e) => {
     const { currentTarget } = e;
@@ -31,11 +46,13 @@ function ContextMenu({
   };
 
   return (
-    <div onBlur={onBlur}>
+    <div
+      onBlur={onBlur}
+    >
       <Button
-        type="button"
         className="smart-hub--context-menu-button smart-hub--button__no-margin"
         unstyled
+        aria-haspopup
         onClick={() => updateShown((previous) => !previous)}
         aria-label={label}
       >
@@ -44,13 +61,17 @@ function ContextMenu({
       {shown
     && (
     <div className={menuClass} style={{ backgroundColor }}>
-      {menuItems.map((item) => (
-        <Button type="button" onClick={item.onClick} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin" key={item.label}>
-          <div className="smart-hub--context-menu-item-label">
-            {item.label}
-          </div>
-        </Button>
-      ))}
+      <ul className="usa-list usa-list--unstyled" role="menu">
+        {menuItems.map((item) => (
+          <li key={item.label} role="menuitem">
+            <Button type="button" onClick={item.onClick} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
+              <div className="smart-hub--context-menu-item-label">
+                {item.label}
+              </div>
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
     )}
     </div>
