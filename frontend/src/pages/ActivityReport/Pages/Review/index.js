@@ -9,6 +9,7 @@ import { useFormContext } from 'react-hook-form';
 import Container from '../../../../components/Container';
 import Submitter from './Submitter';
 import Approver from './Approver';
+import PrintSummary from '../PrintSummary';
 import './index.css';
 import { REPORT_STATUSES } from '../../../../Constants';
 
@@ -19,9 +20,10 @@ const ReviewSubmit = ({
   reviewItems,
   approvers,
   approvingManager,
+  reportCreator,
   formData,
 }) => {
-  const { handleSubmit, register, formState } = useFormContext();
+  const { formState } = useFormContext();
   const { additionalNotes, status } = formData;
   const { isValid } = formState;
   const valid = allComplete && isValid;
@@ -57,8 +59,9 @@ const ReviewSubmit = ({
       <Helmet>
         <title>Review and submit</title>
       </Helmet>
+      <PrintSummary reportCreator={reportCreator} />
       <Accordion bordered={false} items={reviewItems} />
-      <Container skipTopPadding className="margin-top-2 padding-top-2">
+      <Container skipTopPadding className="smart-hub-review margin-top-2 padding-top-2">
         {error && (
         <Alert noIcon className="margin-y-4" type="error">
           <b>Error</b>
@@ -72,10 +75,8 @@ const ReviewSubmit = ({
           status={status}
           submitted={submitted}
           allComplete={allComplete}
-          register={register}
           approvers={approvers}
           valid={valid}
-          handleSubmit={handleSubmit}
           onFormSubmit={onFormSubmit}
           formData={formData}
         />
@@ -86,9 +87,7 @@ const ReviewSubmit = ({
           status={status}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
-          register={register}
           valid={valid}
-          handleSubmit={handleSubmit}
           onFormReview={onFormReview}
           formData={formData}
         />
@@ -112,6 +111,10 @@ ReviewSubmit.propTypes = {
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
     status: PropTypes.string,
+  }).isRequired,
+  reportCreator: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    role: PropTypes.string.isRequired,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   reviewItems: PropTypes.arrayOf(
