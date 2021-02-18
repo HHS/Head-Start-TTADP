@@ -26,7 +26,16 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM('UPLOADING', 'UPLOADED', 'UPLOAD_FAILED', 'SCANNING', 'APPROVED', 'REJECTED'),
+      type: DataTypes.ENUM(
+        'UPLOADING',
+        'UPLOADED',
+        'UPLOAD_FAILED',
+        'QUEUEING_FAILED',
+        'SCANNING_QUEUED',
+        'SCANNING',
+        'APPROVED',
+        'REJECTED',
+      ),
       allowNull: false,
     },
     attachmentType: {
