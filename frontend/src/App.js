@@ -3,7 +3,7 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import { GridContainer, Grid } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
@@ -22,7 +22,6 @@ import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
-import MainLayout from './components/MainLayout';
 import LandingLayout from './components/LandingLayout';
 
 function App() {
@@ -83,28 +82,26 @@ function App() {
           exact
           path="/"
           render={() => (
-            <MainLayout><Home /></MainLayout>
+            <Home />
           )}
         />
 
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
-            <MainLayout>
-              <ActivityReport location={location} match={match} user={user} />
-            </MainLayout>
+            <ActivityReport location={location} match={match} user={user} />
           )}
         />
 
         {admin && (
           <Route
             path="/admin/:userId?"
-            render={({ match }) => <MainLayout><Admin match={match} /></MainLayout>}
+            render={({ match }) => <Admin match={match} />}
           />
         )}
 
         <Route
-          render={() => <MainLayout><NotFound /></MainLayout>}
+          render={() => <NotFound />}
         />
 
       </Switch>
@@ -129,13 +126,11 @@ function App() {
               <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
             </Grid>
             <Grid col="fill">
-              <section className="usa-section padding-top-0">
-                <GridContainer>
-                  {!authenticated
-            && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
-                  {authenticated
-            && renderAuthenticatedRoutes()}
-                </GridContainer>
+              <section className="usa-section padding-top-3 margin-left-5">
+                {!authenticated
+          && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
+                {authenticated
+          && renderAuthenticatedRoutes()}
               </section>
             </Grid>
           </Grid>
