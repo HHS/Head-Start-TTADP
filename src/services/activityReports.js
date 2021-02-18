@@ -1,8 +1,6 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '../constants';
-
-import { DECIMAL_BASE } from '../constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
 
 import {
   ActivityReport,
