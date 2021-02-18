@@ -74,7 +74,7 @@ const activityReports = [
     displayId: 'R14-AR-2',
     regionId: 14,
     topics: [],
-    status: 'draft',
+    status: 'needs_action',
     activityRecipients: [
       {
         activityRecipientId: 3,
