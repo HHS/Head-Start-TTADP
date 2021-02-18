@@ -121,11 +121,11 @@ function App() {
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
-          <Grid row>
-            <Grid col={2} className="no-print">
+          <Grid row className="flex-align-start">
+            <Grid col="2" desktop={{ col: 'auto' }} className="no-print">
               <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
             </Grid>
-            <Grid col="fill">
+            <Grid col="fill" className="maxw-desktop-lg margin-right-2">
               <section className="usa-section padding-top-3 margin-left-5">
                 {!authenticated
           && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
