@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useFormContext } from 'react-hook-form';
 import {
   Dropdown, Form, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
-import { useFormContext } from 'react-hook-form';
 
 import IncompletePages from './IncompletePages';
 import { DECIMAL_BASE } from '../../../../../Constants';
@@ -15,7 +15,7 @@ const Draft = ({
   onFormSubmit,
   incompletePages,
 }) => {
-  const { register, handleSubmit } = useFormContext();
+  const { watch, register, handleSubmit } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
 
   const setValue = (e) => {
@@ -30,6 +30,8 @@ const Draft = ({
       onFormSubmit(e);
     }
   };
+  const watchTextValue = watch('additionalNotes');
+  const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
   return (
     <>
@@ -49,7 +51,7 @@ const Draft = ({
             name="additionalNotes"
             required={false}
           >
-            <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
+            <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
           </FormItem>
         </Fieldset>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">

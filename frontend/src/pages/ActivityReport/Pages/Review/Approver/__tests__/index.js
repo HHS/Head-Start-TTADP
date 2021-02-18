@@ -1,9 +1,9 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-
 import Approver from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
 
@@ -17,7 +17,6 @@ const RenderApprover = ({
   });
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Approver
         onFormReview={onFormReview}

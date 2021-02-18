@@ -1,8 +1,9 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 
 import Submitter from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
@@ -17,7 +18,6 @@ const RenderSubmitter = ({
   });
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Submitter
         submitted={submitted}

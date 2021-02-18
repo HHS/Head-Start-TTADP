@@ -17,10 +17,12 @@
 h1.landing {
   font-size: 45px;
   font-family: 'Times New Roman', Times, serif;
+  white-space: nowrap;
+  margin-right: 30px;
 }
 
 .landing .usa-table {
-  line-height: 1.5;
+  line-height: 2;
 }
 
 .landing .usa-table caption {
@@ -93,6 +95,11 @@ h1.landing {
   color: #148439;
 }
 
+.smart-hub--status-needs_action {
+  background: #f9e0e4;
+  color: #d42240;
+}
+
 .smart-hub--status- {
   background: #f8f8f8;
 }
@@ -162,4 +169,18 @@ thead th.descending::after {
 
 .simplebar-scrollbar:before {
   background: #c5c5c5;
+}
+
+#caughtUp {
+  padding: 100px 320px;
+  white-space: nowrap;
+}
+
+#caughtUp h2 {
+  white-space: nowrap;
+  padding-left: 50px;
+}
+
+#beginNew {
+  padding-bottom: 15px;
 }
