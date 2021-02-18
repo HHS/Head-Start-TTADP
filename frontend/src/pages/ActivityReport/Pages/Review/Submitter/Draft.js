@@ -8,7 +8,6 @@ import {
 import { DECIMAL_BASE } from '../../../../../Constants';
 
 const Draft = ({
-  submitted,
   allComplete,
   register,
   approvers,
@@ -24,14 +23,6 @@ const Draft = ({
   };
   return (
     <>
-      {submitted
-      && (
-      <Alert noIcon className="margin-y-4" type="success">
-        <b>Success</b>
-        <br />
-        This report was successfully submitted for approval
-      </Alert>
-      )}
       {!allComplete
       && (
       <Alert noIcon className="margin-y-4" type="error">
@@ -67,7 +58,6 @@ const Draft = ({
 };
 
 Draft.propTypes = {
-  submitted: PropTypes.bool.isRequired,
   allComplete: PropTypes.bool.isRequired,
   register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({

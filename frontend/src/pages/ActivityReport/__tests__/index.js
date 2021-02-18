@@ -36,12 +36,14 @@ const formData = () => ({
   resourcesUsed: 'eclkcurl',
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],
+  author: { name: 'test' },
   topics: 'first',
+  userId: 1,
   updatedAt: new Date().toISOString(),
 });
 const history = createMemoryHistory();
 
-const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null) => {
+const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
       <ActivityReport
@@ -49,7 +51,7 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
         location={{
           state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
         }}
-        user={{ id: 1 }}
+        user={{ id: userId }}
       />
     </Router>,
   );
@@ -67,6 +69,15 @@ describe('ActivityReport', () => {
     fetchMock.get('/api/activity-reports/activity-recipients', recipients);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
+  });
+
+  describe('for read only users', () => {
+    it('redirects the user to the review page', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      renderActivityReport('1', null, null, 2);
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+    });
   });
 
   describe('last saved time', () => {

@@ -9,7 +9,7 @@ import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
-  submitted, allComplete, onFormSubmit, formData, valid,
+  submitted, allComplete, onFormSubmit, formData, valid, onResetToDraft,
 }) => {
   const { register, handleSubmit } = useForm({
     mode: 'onChange',
@@ -21,6 +21,7 @@ const RenderSubmitter = ({
       submitted={submitted}
       allComplete={allComplete}
       onFormSubmit={onFormSubmit}
+      onResetToDraft={onResetToDraft}
       register={register}
       handleSubmit={handleSubmit}
       valid={valid}
@@ -30,7 +31,7 @@ const RenderSubmitter = ({
   );
 };
 
-const renderReview = (status, submitted, allComplete, onFormSubmit) => {
+const renderReview = (status, submitted, allComplete, onFormSubmit, resetToDraft = () => {}) => {
   const formData = {
     approvingManager: { name: 'name' },
     approvingManagerId: 1,
@@ -44,6 +45,7 @@ const renderReview = (status, submitted, allComplete, onFormSubmit) => {
       allComplete={allComplete}
       onFormSubmit={onFormSubmit}
       formData={formData}
+      onResetToDraft={resetToDraft}
       valid
     />,
   );
@@ -69,18 +71,29 @@ describe('Submitter review page', () => {
       const alert = await screen.findByTestId('alert');
       expect(alert.textContent).toContain('Incomplete report');
     });
-
-    it('displays success if the report has been submitted', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, true, true, () => {});
-      const alert = await screen.findByTestId('alert');
-      expect(alert.textContent).toContain('Success');
-    });
   });
 
   describe('when the report is approved', () => {
     it('displays the approved component', async () => {
       renderReview(REPORT_STATUSES.APPROVED, false, true, () => {});
       expect(await screen.findByText('Report approved')).toBeVisible();
+    });
+  });
+
+  describe('when the report has been submitted', () => {
+    it('displays the submitted page', async () => {
+      renderReview(REPORT_STATUSES.SUBMITTED, false, true, () => {});
+      const allAlerts = await screen.findAllByTestId('alert');
+      const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
+      expect(successAlert).toBeVisible();
+    });
+
+    it('the reset to draft button works', async () => {
+      const onReset = jest.fn();
+      renderReview(REPORT_STATUSES.SUBMITTED, false, true, () => {}, onReset);
+      const button = await screen.findByRole('button', { name: 'Reset to Draft' });
+      userEvent.click(button);
+      await waitFor(() => expect(onReset).toHaveBeenCalled());
     });
   });
 

@@ -61,6 +61,7 @@ describe('Navigator', () => {
   const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}) => {
     render(
       <Navigator
+        editable
         reportId={1}
         submitted={false}
         formData={initialData}

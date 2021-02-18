@@ -24,13 +24,16 @@ const RenderApprover = ({
       reviewed={reviewed}
       valid={valid}
       formData={formData}
-    />
+    >
+      <div />
+    </Approver>
   );
 };
 
 const renderReview = (status, onFormReview, reviewed, valid, notes = '') => {
   const formData = {
     approvingManager: { name: 'name' },
+    author: { name: 'user' },
     managerNotes: notes,
     additionalNotes: notes,
     approvingManagerId: '1',
@@ -61,8 +64,9 @@ describe('Approver review page', () => {
       userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      const alert = await screen.findByTestId('alert');
-      expect(alert.textContent).toContain('Success');
+      const alerts = await screen.findAllByTestId('alert');
+      const success = alerts.find((alert) => alert.textContent.includes('Success'));
+      expect(success).toBeVisible();
       expect(mockSubmit).toHaveBeenCalled();
     });
 
