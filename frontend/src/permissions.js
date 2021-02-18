@@ -13,4 +13,35 @@ const isAdmin = (user) => {
   ) !== undefined;
 };
 
+/**
+ * Return all regions that user has a minimum of read access to.
+ * All permissions that qualify this criteria are:
+ * Admin
+ * Read Activity Reports
+ * Read Write Activity Reports
+ * @param {*} - user object
+ * @returns {array} - An array of integers, where each integer signifies a region.
+ */
+
+export const allRegionsUserHasPermissionTo = (user) => {
+  const permissions = _.get(user, 'permissions');
+
+  if (!permissions) return [];
+
+  const minPermissions = [
+    SCOPE_IDS.ADMIN,
+    SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+  ];
+
+  const regions = [];
+  permissions.forEach((perm) => {
+    if (minPermissions.includes(perm.scopeId)) {
+      regions.push(perm.regionId);
+    }
+  });
+
+  return _.uniq(regions);
+};
+
 export default isAdmin;
