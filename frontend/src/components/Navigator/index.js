@@ -34,6 +34,7 @@ function Navigator({
   autoSaveInterval,
   approvingManager,
   reportId,
+  reportCreator,
 }) {
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
@@ -115,7 +116,7 @@ function Navigator({
 
   return (
     <Grid row gap>
-      <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 4 }}>
+      <Grid className="smart-hub-sidenav-wrapper no-print" col={12} tablet={{ col: 6 }} desktop={{ col: 4 }}>
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
@@ -124,7 +125,7 @@ function Navigator({
           errorMessage={errorMessage}
         />
       </Grid>
-      <Grid col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
+      <Grid className="smart-hub-navigator-wrapper" col={12} tablet={{ col: 6 }} desktop={{ col: 8 }}>
         <FormProvider {...hookForm}>
           <div id="navigator-form">
             {page.review
@@ -135,6 +136,7 @@ function Navigator({
               additionalData,
               onReview,
               approvingManager,
+              reportCreator,
             )}
             {!page.review
             && (
@@ -182,12 +184,20 @@ Navigator.propTypes = {
   autoSaveInterval: PropTypes.number,
   additionalData: PropTypes.shape({}),
   reportId: PropTypes.node.isRequired,
+  reportCreator: PropTypes.shape({
+    name: PropTypes.string,
+    role: PropTypes.string,
+  }),
 };
 
 Navigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   initialLastUpdated: null,
+  reportCreator: {
+    name: null,
+    role: null,
+  },
 };
 
 export default Navigator;
