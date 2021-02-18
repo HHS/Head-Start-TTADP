@@ -41,7 +41,7 @@ const SiteNav = ({
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
-    <div className="smart-hub-sitenav position-relative font-ui text-white smart-hub-bg-blue smart-hub-height-hd minh-tablet no-print">
+    <div className="smart-hub-sitenav position-relative font-ui text-white smart-hub-bg-blue maxw-card-lg minw-15 smart-hub-height-hd minh-tablet no-print">
       {authenticated && (
         <>
           <div className="width-full">
