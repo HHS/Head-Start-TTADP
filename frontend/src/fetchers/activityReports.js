@@ -3,6 +3,7 @@ import { get, put, post } from './index';
 import { DECIMAL_BASE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
+const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
 
 export const getApprovers = async (region) => {
   const res = await get(join(activityReportUrl, 'approvers', `?region=${region}`));
@@ -32,6 +33,11 @@ export const getReport = async (reportId) => {
 
 export const getReports = async () => {
   const reports = await get(activityReportUrl);
+  return reports.json();
+};
+
+export const getReportAlerts = async () => {
+  const reports = await get(activityReportAlertUrl);
   return reports.json();
 };
 
