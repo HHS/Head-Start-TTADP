@@ -42,6 +42,7 @@ const defaultValues = {
   deliveryMethod: [],
   activityType: [],
   attachments: [],
+  otherResources: [],
   context: '',
   collaborators: [],
   duration: '',
