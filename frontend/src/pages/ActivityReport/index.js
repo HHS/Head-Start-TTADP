@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
-import { Alert } from '@trussworks/react-uswds';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
 
 import pages from './Pages';
@@ -199,11 +199,23 @@ function ActivityReport({ match, user, location }) {
     updateFormData(report);
   };
 
+  const reportCreator = { name: user.name, role: user.role };
+
   return (
-    <>
+    <div className="smart-hub-activity-report">
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
-      <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">New activity report for Region 14</h1>
+      <Grid row className="flex-justify">
+        <Grid col="auto">
+          <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">New activity report for Region 14</h1>
+        </Grid>
+        <Grid col="auto" className="flex-align-self-center">
+          {formData.status && (
+            <div className="smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold">{formData.status}</div>
+          )}
+        </Grid>
+      </Grid>
       <Navigator
+        reportCreator={reportCreator}
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}
         currentPage={currentPage}
@@ -216,7 +228,7 @@ function ActivityReport({ match, user, location }) {
         approvingManager={approvingManager}
         onReview={onReview}
       />
-    </>
+    </div>
   );
 }
 
@@ -225,6 +237,8 @@ ActivityReport.propTypes = {
   location: ReactRouterPropTypes.location.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
+    name: PropTypes.string,
+    role: PropTypes.string,
   }).isRequired,
 };
 
