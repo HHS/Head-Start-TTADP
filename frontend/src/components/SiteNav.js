@@ -5,6 +5,8 @@ import { NavLink as Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 
+import './SiteNav.css';
+
 const navLinkClasses = [
   'display-block',
   'padding-x-2',
@@ -18,7 +20,11 @@ const navLinkClasses = [
   'hover:text-no-underline',
 ].join(' ');
 
-const NavLink = (props) => (<Link className={navLinkClasses} {...props} />);
+const activeNavLinkClasses = 'border-left-05 border-white';
+
+const NavLink = (props) => (
+  <Link activeClassName={activeNavLinkClasses} className={navLinkClasses} {...props} />
+);
 
 const SiteNav = ({
   admin,
@@ -44,8 +50,8 @@ const SiteNav = ({
     <div className="smart-hub-sitenav position-relative font-ui text-white smart-hub-bg-blue maxw-card-lg minw-15 smart-hub-height-hd minh-tablet no-print">
       {authenticated && (
         <>
-          <div className="width-full">
-            <div role="complementary" className="margin-x-2 border-bottom smart-hub-border-darkblue padding-y-2">
+          <div className="width-full smart-hub-sitenav-separator--after">
+            <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
               <p className="text-bold margin-y-105">{ user.name }</p>
               <p className="font-sans-3xs margin-y-105">{ user.email }</p>
             </div>
@@ -55,7 +61,8 @@ const SiteNav = ({
               <ul className="add-list-reset">
                 <li>
                   <Link
-                    className="display-block border-left-05 border-white text-white text-bold text-no-underline padding-2 margin-y-2"
+                    activeClassName={activeNavLinkClasses}
+                    className="display-block text-white text-bold text-no-underline padding-2 margin-y-2"
                     to="/activity-reports"
                   >
                     <span className="padding-right-105">
@@ -66,8 +73,8 @@ const SiteNav = ({
                 </li>
               </ul>
             </div>
-            <div className="width-full position-absolute bottom-0 padding-bottom-6">
-              <ul className="add-list-reset margin-x-2 padding-top-2 text-base-lightest border-top smart-hub-border-darkblue">
+            <div className="width-full position-absolute bottom-0 padding-bottom-6 smart-hub-sitenav-separator--before">
+              <ul className="add-list-reset padding-top-2 text-base-lightest">
                 {items.map((item, i) => (<li key={`smart-hub-nav__item-${i}`}>{item}</li>))}
               </ul>
             </div>

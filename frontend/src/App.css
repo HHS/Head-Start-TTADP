@@ -10,10 +10,6 @@
   font-size: 1.25rem;
 }
 
-.smart-hub-border-darkblue {
-  border-color: #1b3649
-}
-
 .smart-hub-cursor-pointer:hover {
   cursor: pointer;
 }
