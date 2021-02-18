@@ -93,7 +93,9 @@ Approver.propTypes = {
     managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
     status: PropTypes.string,
-    author: PropTypes.string,
+    author: PropTypes.shape({
+      name: PropTypes.string,
+    }),
   }).isRequired,
 };
 
