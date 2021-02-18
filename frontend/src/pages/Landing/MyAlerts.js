@@ -44,7 +44,7 @@ function renderReports(reports) {
 
     const collaboratorsWithTags = collaborators.map((collaborator) => (
       <Tag
-        key={collaborator.fullName.slice(1,3) + collaborator.id}
+        key={collaborator.fullName.slice(1, 3) + collaborator.id}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
