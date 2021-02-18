@@ -13,6 +13,11 @@ const approvers = [
   { id: 2, name: 'user 2' },
 ];
 
+const reportCreator = {
+  name: 'Walter Burns',
+  role: 'Reporter',
+};
+
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
   allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager,
@@ -32,6 +37,7 @@ const RenderReview = ({
         formData={formData}
         onReview={onReview}
         approvingManager={approvingManager}
+        reportCreator={reportCreator}
       />
     </FormProvider>
   );
