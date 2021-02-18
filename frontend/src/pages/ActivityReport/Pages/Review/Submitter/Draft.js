@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
+import { useFormContext } from 'react-hook-form';
 import {
   Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
@@ -10,10 +10,8 @@ import { DECIMAL_BASE } from '../../../../../Constants';
 const Draft = ({
   submitted,
   allComplete,
-  register,
   approvers,
   valid,
-  handleSubmit,
   onFormSubmit,
   onSaveForm,
 }) => {
@@ -23,6 +21,11 @@ const Draft = ({
     }
     return parseInt(e, DECIMAL_BASE);
   };
+
+  const { handleSubmit, register, watch } = useFormContext();
+  const watchTextValue = watch('additionalNotes');
+  const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
+
   return (
     <>
       {submitted
@@ -45,7 +48,7 @@ const Draft = ({
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
           <Label htmlFor="additionalNotes">Creator notes</Label>
-          <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" />
+          <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
         </Fieldset>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
           <p className="margin-top-4">
@@ -72,13 +75,11 @@ Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   allComplete: PropTypes.bool.isRequired,
-  register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
   valid: PropTypes.bool.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
 };
 

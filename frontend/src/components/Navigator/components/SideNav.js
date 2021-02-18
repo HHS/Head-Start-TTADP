@@ -64,7 +64,7 @@ function SideNav({
   ));
 
   return (
-    <Sticky top={50} enabled={!isMobile}>
+    <Sticky className="smart-hub-sidenav" top={50} enabled={!isMobile}>
       <Container padding={0}>
         <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
         <ul className="smart-hub--navigator-list">
