@@ -93,6 +93,9 @@ const ReviewSection = () => {
     topics: formTopics,
   } = getValues();
 
+  const hasOtherResources = otherResources && otherResources.length <= 0;
+  const hasAttachments = attachments && attachments.length <= 0;
+
   return (
     <>
       <Section
@@ -108,7 +111,7 @@ const ReviewSection = () => {
         />
       </Section>
       <Section
-        hidePrint={!!otherResources.length <= 0 && isUndefined(resourcesUsed)}
+        hidePrint={!hasOtherResources && isUndefined(resourcesUsed)}
         key="Resources"
         basePath="resources"
         anchor="resources"
@@ -127,7 +130,7 @@ const ReviewSection = () => {
         ))}
       </Section>
       <Section
-        hidePrint={!!attachments.length <= 0}
+        hidePrint={!hasAttachments}
         key="Attachments"
         basePath="attachments"
         anchor="attachments"

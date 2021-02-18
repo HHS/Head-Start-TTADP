@@ -57,7 +57,7 @@ const RenderReviewPage = () => {
   );
 };
 
-describe('AccordionItem', () => {
+describe('ReviewPage', () => {
   beforeEach(() => {
     render(
       <RenderReviewPage />,
