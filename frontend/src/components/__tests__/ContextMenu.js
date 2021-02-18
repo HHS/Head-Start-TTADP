@@ -47,6 +47,16 @@ describe('ContextMenu', () => {
       await waitFor(() => expect(onClick).toHaveBeenCalled());
     });
 
+    it('can be closed by pressing escape', async () => {
+      const onClick = jest.fn();
+      render(<ContextMenu menuItems={menuItems('one', onClick)} label="label" />);
+      const button = await screen.findByTestId('button');
+      userEvent.click(button);
+      expect(await screen.findByText('one')).toBeVisible();
+      userEvent.type(button, '{esc}', { skipClick: true });
+      await waitFor(() => expect(screen.queryByText('one')).toBeNull());
+    });
+
     it('hides the menu on blur', async () => {
       render(
         <>
