@@ -35,6 +35,7 @@ const reviewPage = {
       onReview,
       approvingManager,
       onSaveForm,
+      reportCreator,
     ) => (
       <ReviewSubmit
         approvers={additionalData.approvers}
@@ -47,6 +48,7 @@ const reviewPage = {
           pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
         }
         formData={formData}
+        reportCreator={reportCreator}
       />
     ),
 };

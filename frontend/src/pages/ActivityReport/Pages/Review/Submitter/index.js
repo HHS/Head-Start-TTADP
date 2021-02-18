@@ -10,10 +10,8 @@ import { REPORT_STATUSES } from '../../../../../Constants';
 const Submitter = ({
   submitted,
   allComplete,
-  register,
   approvers,
   valid,
-  handleSubmit,
   onFormSubmit,
   formData,
   onSaveForm,
@@ -35,11 +33,9 @@ const Submitter = ({
       <DraftReview
         submitted={submitted}
         allComplete={allComplete}
-        register={register}
         approvers={approvers}
         valid={valid}
         onSaveForm={onSaveForm}
-        handleSubmit={handleSubmit}
         onFormSubmit={onFormSubmit}
       />
       )}
@@ -68,13 +64,11 @@ Submitter.propTypes = {
   submitted: PropTypes.bool.isRequired,
   allComplete: PropTypes.bool.isRequired,
   onSaveForm: PropTypes.func.isRequired,
-  register: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
   valid: PropTypes.bool.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   formData: PropTypes.shape({
     approvingManager: PropTypes.shape({
