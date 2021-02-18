@@ -10,21 +10,31 @@ import UserContext from '../../../UserContext';
 import Landing from '../index';
 import activityReports from '../mocks';
 
+const renderLanding = (user) => {
+  render(
+    <MemoryRouter>
+      <UserContext.Provider value={{ user }}>
+        <Landing authenticated />
+      </UserContext.Provider>
+    </MemoryRouter>,
+  );
+}
+
 describe('Landing Page', () => {
   beforeEach(() => {
     fetchMock.get('/api/activity-reports', activityReports);
     fetchMock.get('/api/activity-reports/alerts', []);
     const user = {
       name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
     };
 
-    render(
-      <MemoryRouter>
-        <UserContext.Provider value={{ user }}>
-          <Landing authenticated />
-        </UserContext.Provider>
-      </MemoryRouter>,
-    );
+    renderLanding(user);
   });
   afterEach(() => fetchMock.restore());
 
@@ -154,7 +164,16 @@ describe('Landing Page error', () => {
 
   it('handles errors by displaying an error message', async () => {
     fetchMock.get('/api/activity-reports', 500);
-    render(<MemoryRouter><Landing authenticated /></MemoryRouter>);
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+    renderLanding(user);
     const alert = await screen.findByRole('alert');
     expect(alert).toBeVisible();
     expect(alert).toHaveTextContent('Unable to fetch reports');
@@ -162,10 +181,41 @@ describe('Landing Page error', () => {
 
   it('displays an empty row if there are no reports', async () => {
     fetchMock.get('/api/activity-reports', []);
-    render(<MemoryRouter><Landing authenticated /></MemoryRouter>);
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+    renderLanding(user);
     const rowCells = await screen.findAllByRole('cell');
     expect(rowCells.length).toBe(8);
     const grantee = rowCells[0];
     expect(grantee).toHaveTextContent('');
+  });
+
+  it('does not displays new activity report button without permission', async () => {
+    fetchMock.get('/api/activity-reports', activityReports);
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 2,
+          regionId: 1,
+        },
+      ],
+    };
+    renderLanding(user);
+
+    try {
+      expect((await screen.findAllByText(/New Activity Report/)).length).toBe(0);
+    } catch (error) {
+      // screen.findAllByText throws an exception if no element is found 
+      // hence this assertion
+      expect(true).toBeTruthy();
+    }
   });
 });

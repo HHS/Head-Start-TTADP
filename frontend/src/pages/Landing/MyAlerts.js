@@ -44,7 +44,7 @@ function renderReports(reports) {
 
     const collaboratorsWithTags = collaborators.map((collaborator) => (
       <Tag
-        key={collaborator.id}
+        key={collaborator.fullName.slice(1,3) + collaborator.id}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
@@ -89,15 +89,15 @@ function renderReports(reports) {
   });
 }
 
-function MyAlerts({ reports }) {
+function MyAlerts({ reports, newBtn }) {
   return (
     <>
       { reports && reports.length === 0 && (
       <Container className="landing" padding={0}>
         <div id="caughtUp">
           <div><h2>You&apos;re all caught up!</h2></div>
-          <p id="beginNew">Would you like to begin a new activity report?</p>
-          <NewReport />
+          { newBtn && <p id="beginNew">Would you like to begin a new activity report?</p> }
+          { newBtn && <NewReport /> }
         </div>
       </Container>
       ) }
@@ -141,6 +141,7 @@ function MyAlerts({ reports }) {
 
 MyAlerts.propTypes = {
   reports: PropTypes.arrayOf(PropTypes.object),
+  newBtn: PropTypes.bool.isRequired,
 };
 
 MyAlerts.defaultProps = {

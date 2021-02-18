@@ -10,9 +10,10 @@ import activityReports from '../mocks';
 
 describe('My Alerts', () => {
   beforeEach(() => {
+    const newBtn = true;
     render(
       <MemoryRouter>
-        <MyAlerts reports={activityReports} />
+        <MyAlerts reports={activityReports} newBtn={newBtn} />
       </MemoryRouter>,
     );
   });
