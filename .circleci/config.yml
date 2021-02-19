@@ -250,16 +250,7 @@ jobs:
           command: chmod g+w reports
       - run:
           name: Run OWASP ZAP
-          command: |
-            docker run \
-              -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
-              -v $(pwd)/reports:/zap/wrk:rw \
-              --rm \
-              --user zap:$(id -g) \
-              --network="project_smarthub" \
-              -t owasp/zap2docker-weekly zap-baseline.py \
-              -t http://server:8080 \
-              -c zap.conf -I -i -r owasp_report.html
+          command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
   accessibility_scan:

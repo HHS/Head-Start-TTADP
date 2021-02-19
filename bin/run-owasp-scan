@@ -1,0 +1,29 @@
+#!/bin/bash
+###########################
+#
+# Allow running OWASP Zap scans on demand. This script expects
+# a server running at http://server:8080. This can be setup with
+#
+# ./bin/prod-style-server
+#
+# The only argument for this script is the network name docker will
+# find server on. For a default git clone, this should be
+#
+# ./bin/run-owasp-scan head-start-ttadp_smarthub
+#
+###########################
+
+declare network="project_smarthub"
+if [ -n "$1" ]; then
+  network=$1
+fi
+
+docker run \
+  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
+  -v $(pwd)/reports:/zap/wrk:rw \
+  --rm \
+  --user zap:$(id -g) \
+  --network=$network \
+  -t owasp/zap2docker-weekly zap-baseline.py \
+  -t http://server:8080 \
+  -c zap.conf -I -i -r owasp_report.html
