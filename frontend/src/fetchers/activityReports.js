@@ -41,9 +41,8 @@ export const getReportAlerts = async () => {
   return reports.json();
 };
 
-export const getRecipients = async (regions) => {
-  const params = regions.map((region) => `regions=${region}`);
-  const recipients = await get(join(activityReportUrl, 'activity-recipients', `?${params.join('&')}`));
+export const getRecipients = async (region) => {
+  const recipients = await get(join(activityReportUrl, 'activity-recipients', `?region=${region}`));
   return recipients.json();
 };
 
