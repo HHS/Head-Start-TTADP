@@ -5,6 +5,7 @@ import axios from 'axios';
 import cookieSession from 'cookie-session';
 import path from 'path';
 import join from 'url-join';
+import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
@@ -24,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content'),
       'form-action': ["'self'"],
     },
   },
