@@ -73,7 +73,7 @@ function App() {
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <LandingLayout><Landing match={match} user={user} /></LandingLayout>
+            <LandingLayout><Landing match={match} /></LandingLayout>
           )}
         />
 
