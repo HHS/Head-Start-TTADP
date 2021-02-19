@@ -372,7 +372,7 @@ export async function createOrUpdate(newActivityReport, report) {
  */
 
 export async function possibleRecipients(regionId) {
-  const where = regionId? { regionId } : undefined;
+  const where = regionId ? { regionId } : undefined;
 
   const grants = await Grantee.findAll({
     attributes: ['id', 'name'],
