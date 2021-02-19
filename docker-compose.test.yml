@@ -18,7 +18,7 @@ services:
     build:
       context: .
     container_name: test-frontend
-    command: yarn start
+    command: bash
     user: ${CURRENT_USER:-root}
     stdin_open: true
     volumes:
