@@ -41,7 +41,7 @@ describe('File Scanner tests', () => {
     expect(mockAxios).toBeCalled();
     expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toBeCalledWith(
-      { status: fileStatuses.approved },
+      { status: fileStatuses.APPROVED },
       { where: { id: 1 } },
     );
   });
@@ -54,7 +54,7 @@ describe('File Scanner tests', () => {
     expect(mockAxios).toBeCalled();
     expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toBeCalledWith(
-      { status: fileStatuses.rejected },
+      { status: fileStatuses.REJECTED },
       { where: { id: 1 } },
     );
   });
