@@ -2,6 +2,7 @@ const { S3 } = require('aws-sdk');
 
 let s3Config;
 
+// take configuration from cloud.gov if it is available. If not, use env variables.
 let bucketName = process.env.S3_BUCKET;
 if (process.env.VCAP_SERVICES) {
   const { credentials } = JSON.parse(process.env.VCAP_SERVICES).s3[0];
