@@ -11,12 +11,12 @@ describe('Import TTA plan goals', () => {
   });
   describe('Update grants and grantees', () => {
     beforeAll(async () => {
-      await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
-      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
+      await Grant.destroy({ where: { id: { [Op.gt]: 20 } }, truncate: true, cascade: true });
+      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } }, truncate: true, cascade: true });
     });
     afterEach(async () => {
-      await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
-      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
+      await Grant.destroy({ where: { id: { [Op.gt]: 20 } }, truncate: true, cascade: true });
+      await Grantee.destroy({ where: { id: { [Op.gt]: 20 }, truncate: true, cascade: true } });
     });
     it('should import or update grantees', async () => {
       const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: 20 } } });
