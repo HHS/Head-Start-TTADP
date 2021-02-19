@@ -239,7 +239,7 @@ describe('Activity Report handlers', () => {
       possibleRecipients.mockResolvedValue(response);
 
       const mockRequestWithRegion = { ...mockRequest, query: { region: 14 } };
-      const resp = await getActivityRecipients(mockRequestWithRegion, mockResponse);
+      await getActivityRecipients(mockRequestWithRegion, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
 
@@ -248,7 +248,7 @@ describe('Activity Report handlers', () => {
       possibleRecipients.mockResolvedValue(response);
 
       const mockRequestWithNoRegion = { ...mockRequest, query: {} };
-      const resp = await getActivityRecipients(mockRequestWithNoRegion, mockResponse);
+      await getActivityRecipients(mockRequestWithNoRegion, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
   });
