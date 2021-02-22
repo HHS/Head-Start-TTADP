@@ -12,12 +12,12 @@ Given('I am on the landing page', async () => {
     page.waitForNavigation(),
     page.click(selector),
   ]);
+
   await scope.context.currentPage.waitForSelector('h1');
 
-  const selectorNewReport = 'a[href$="activity-reports/new"]';
   await Promise.all([
     page.waitForNavigation(),
-    page.click(selectorNewReport),
+    await page.goto(`${scope.uri}/activity-reports/new`),
   ]);
   await scope.context.currentPage.waitForSelector('h1');
 });
