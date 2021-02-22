@@ -84,6 +84,7 @@ const ReviewSubmit = ({
           reviewed={reviewed}
           additionalNotes={additionalNotes}
           onFormReview={onFormReview}
+          error={error}
           formData={formData}
         >
           <Accordion bordered={false} items={reviewItems} />

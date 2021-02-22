@@ -159,13 +159,6 @@ describe('ReviewSubmit', () => {
     });
   });
 
-  it('a success modal is shown once submitted', async () => {
-    renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
-    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
-    const alert = await screen.findByTestId('alert');
-    expect(alert).toHaveClass('usa-alert--success');
-  });
-
   it('initializes the form with "initialData"', async () => {
     renderReview(true, false, REPORT_STATUSES.DRAFT, { additionalNotes: 'test' });
     const textBox = await screen.findByLabelText('Creator notes');
