@@ -11,6 +11,12 @@ export const fileStatuses = {
   rejected: 'REJECTED',
 };
 
+export const deleteFile = async (id) => {
+  await File.destroy({ where: { id } });
+};
+
+export const getFileById = async (id) => File.findOne({ where: { id } });
+
 export const updateStatus = async (fileId, fileStatus) => {
   let file;
   try {
