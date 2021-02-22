@@ -241,13 +241,7 @@ jobs:
           at: .
       - run:
           name: Start up local server
-          command: | # production style build (single BE server with static FE)
-            docker-compose -f docker-compose.dss.yml run --rm server yarn install --production=false
-            docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
-            docker-compose -f docker-compose.dss.yml run --rm server yarn build
-            docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
-            docker-compose -f docker-compose.dss.yml up -d
-            docker-compose -f docker-compose.dss.yml exec server yarn db:migrate:ci
+          command: ./bin/prod-style-server
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-weekly
@@ -256,16 +250,7 @@ jobs:
           command: chmod g+w reports
       - run:
           name: Run OWASP ZAP
-          command: |
-            docker run \
-              -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
-              -v $(pwd)/reports:/zap/wrk:rw \
-              --rm \
-              --user zap:$(id -g) \
-              --network="project_smarthub" \
-              -t owasp/zap2docker-weekly zap-baseline.py \
-              -t http://server:8080 \
-              -c zap.conf -I -i -r owasp_report.html
+          command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
   accessibility_scan:
