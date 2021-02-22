@@ -1,5 +1,5 @@
-import isAdmin, { allRegionsUserHasPermissionTo } from '../permissions';
 import { SCOPE_IDS } from '../Constants';
+import isAdmin, { hasReadWrite } from '../permissions';
 
 describe('permissions', () => {
   describe('isAdmin', () => {
@@ -58,6 +58,32 @@ describe('permissions', () => {
       };
       const regions = allRegionsUserHasPermissionTo(user);
       expect(regions).toEqual(expect.arrayContaining([14, 3, 4]));
+    });
+  });
+
+  describe('hasReadWrite', () => {
+    it('returns true if the user has read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasReadWrite(user)).toBeTruthy();
+    });
+
+    it('returns false if the user does not have read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 2,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasReadWrite(user)).toBeFalsy();
     });
   });
 });
