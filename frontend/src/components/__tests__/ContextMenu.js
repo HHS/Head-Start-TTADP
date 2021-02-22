@@ -58,12 +58,12 @@ describe('ContextMenu', () => {
     });
 
     it('can be shifted left', async () => {
-      render(<ContextMenu left menuItems={menuItems('one')} label="label" />);
+      render(<ContextMenu left={false} menuItems={menuItems('one')} label="label" />);
       const button = await screen.findByTestId('button');
       userEvent.click(button);
       const menu = await screen.findByTestId('menu');
-      expect(menu).toHaveClass('smart-hub--context-menu__left');
-    })
+      expect(menu).not.toHaveClass('smart-hub--context-menu__left');
+    });
 
     it('ignores keypresses that are not escape', async () => {
       const onClick = jest.fn();
