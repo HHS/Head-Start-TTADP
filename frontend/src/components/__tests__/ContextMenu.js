@@ -57,6 +57,24 @@ describe('ContextMenu', () => {
       await waitFor(() => expect(screen.queryByText('one')).toBeNull());
     });
 
+    it('can be shifted left', async () => {
+      render(<ContextMenu left menuItems={menuItems('one')} label="label" />);
+      const button = await screen.findByTestId('button');
+      userEvent.click(button);
+      const menu = await screen.findByTestId('menu');
+      expect(menu).toHaveClass('smart-hub--context-menu__left');
+    })
+
+    it('ignores keypresses that are not escape', async () => {
+      const onClick = jest.fn();
+      render(<ContextMenu menuItems={menuItems('one', onClick)} label="label" />);
+      const button = await screen.findByTestId('button');
+      userEvent.click(button);
+      expect(await screen.findByText('one')).toBeVisible();
+      userEvent.type(button, 'a', { skipClick: true });
+      expect(await screen.findByText('one')).toBeVisible();
+    });
+
     it('hides the menu on blur', async () => {
       render(
         <>

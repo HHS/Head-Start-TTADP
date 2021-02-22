@@ -10,7 +10,7 @@ import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
-  submitted, onFormSubmit, formData, pages,
+  submitted, onFormSubmit, formData, pages, onSave,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -24,7 +24,7 @@ const RenderSubmitter = ({
         onFormSubmit={onFormSubmit}
         approvers={[{ name: 'test', id: 1 }]}
         formData={formData}
-        onSaveForm={() => {}}
+        onSaveForm={onSave}
         pages={pages}
       />
     </FormProvider>
@@ -43,7 +43,7 @@ const incompletePages = [{
   review: false,
 }];
 
-const renderReview = (status, submitted, onFormSubmit, complete = true) => {
+const renderReview = (status, submitted, onFormSubmit, complete = true, onSave = () => {}) => {
   const formData = {
     approvingManager: { name: 'name' },
     approvingManagerId: 1,
@@ -57,6 +57,7 @@ const renderReview = (status, submitted, onFormSubmit, complete = true) => {
       submitted={submitted}
       onFormSubmit={onFormSubmit}
       formData={formData}
+      onSave={onSave}
       pages={pages}
     />,
   );
@@ -101,6 +102,14 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, true, () => {});
       const alert = await screen.findByTestId('alert');
       expect(alert.textContent).toContain('Success');
+    });
+
+    it('a draft can be saved', async () => {
+      const mockSave = jest.fn();
+      renderReview(REPORT_STATUSES.DRAFT, false, () => {}, true, mockSave);
+      const button = await screen.findByRole('button', { name: 'Save Draft' });
+      userEvent.click(button);
+      await waitFor(() => expect(mockSave).toHaveBeenCalled());
     });
   });
 
