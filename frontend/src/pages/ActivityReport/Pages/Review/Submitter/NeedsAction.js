@@ -4,15 +4,21 @@ import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
+import IncompletePages from './IncompletePages';
+
 const NeedsAction = ({
   additionalNotes,
   managerNotes,
   onSubmit,
   approvingManager,
-  valid,
+  incompletePages,
 }) => {
+  const hasIncompletePages = incompletePages.length > 0;
+
   const submit = async () => {
-    await onSubmit({ approvingManagerId: approvingManager.id, additionalNotes });
+    if (!hasIncompletePages) {
+      await onSubmit({ approvingManagerId: approvingManager.id, additionalNotes });
+    }
   };
 
   return (
@@ -47,8 +53,9 @@ const NeedsAction = ({
           { approvingManager.name }
         </div>
       </div>
+      {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <div className="margin-top-3">
-        <Button disabled={!valid} onClick={submit}>Re-submit for Approval</Button>
+        <Button onClick={submit}>Re-submit for Approval</Button>
       </div>
     </>
   );
@@ -58,7 +65,7 @@ NeedsAction.propTypes = {
   additionalNotes: PropTypes.string,
   managerNotes: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
-  valid: PropTypes.bool.isRequired,
+  incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
   approvingManager: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

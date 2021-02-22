@@ -4,26 +4,25 @@ import {
   Accordion,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
 
 import Submitter from './Submitter';
 import Approver from './Approver';
+import PrintSummary from '../PrintSummary';
 import './index.css';
 
 const ReviewSubmit = ({
-  allComplete,
   onSubmit,
   onReview,
   reviewItems,
   approvers,
   approvingManager,
+  reportCreator,
   formData,
   onResetToDraft,
+  onSaveForm,
+  pages,
 }) => {
-  const { handleSubmit, register, formState } = useFormContext();
   const { additionalNotes, status } = formData;
-  const { isValid } = formState;
-  const valid = allComplete && isValid;
 
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
@@ -62,19 +61,18 @@ const ReviewSubmit = ({
       <Helmet>
         <title>Review and submit</title>
       </Helmet>
+      <PrintSummary reportCreator={reportCreator} />
       {!approvingManager
         && (
         <Submitter
           status={status}
-          allComplete={allComplete}
-          register={register}
           approvers={approvers}
-          valid={valid}
-          handleSubmit={handleSubmit}
+          pages={pages}
           onFormSubmit={onFormSubmit}
           onResetToDraft={onReset}
           formData={formData}
           error={error}
+          onSaveForm={onSaveForm}
         >
           <Accordion bordered={false} items={reviewItems} />
         </Submitter>
@@ -85,10 +83,6 @@ const ReviewSubmit = ({
           status={status}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
-          register={register}
-          valid={valid}
-          error={error}
-          handleSubmit={handleSubmit}
           onFormReview={onFormReview}
           formData={formData}
         >
@@ -100,13 +94,13 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
+  onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
   onResetToDraft: PropTypes.func.isRequired,
@@ -114,6 +108,10 @@ ReviewSubmit.propTypes = {
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
     status: PropTypes.string,
+  }).isRequired,
+  reportCreator: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    role: PropTypes.string.isRequired,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   reviewItems: PropTypes.arrayOf(
@@ -123,6 +121,11 @@ ReviewSubmit.propTypes = {
       content: PropTypes.node.isRequired,
     }),
   ).isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    review: PropTypes.bool,
+    state: PropTypes.string,
+    label: PropTypes.string,
+  })).isRequired,
 };
 
 export default ReviewSubmit;

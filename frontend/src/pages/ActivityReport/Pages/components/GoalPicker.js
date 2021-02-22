@@ -30,6 +30,7 @@ const GoalPicker = ({
           valueProperty="id"
           labelProperty="name"
           simple={false}
+          required={false}
           components={components}
           options={availableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
           multiSelectOptions={{

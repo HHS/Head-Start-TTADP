@@ -3,7 +3,13 @@ import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import {
-  possibleRecipients, activityReportById, createOrUpdate, review, activityReports, setStatus,
+  possibleRecipients,
+  activityReportById,
+  createOrUpdate,
+  review,
+  activityReports,
+  setStatus,
+  activityReportAlerts,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -171,6 +177,23 @@ export async function getReport(req, res) {
  */
 export async function getReports(req, res) {
   const reports = await activityReports();
+  if (!reports) {
+    res.sendStatus(404);
+  } else {
+    res.json(reports);
+  }
+}
+
+/**
+ * Retrieve activity report alerts
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReportAlerts(req, res) {
+  const { userId } = req.session;
+  const reports = await activityReportAlerts(userId);
+
   if (!reports) {
     res.sendStatus(404);
   } else {

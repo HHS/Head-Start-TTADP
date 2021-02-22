@@ -18,7 +18,7 @@ services:
     build:
       context: .
     container_name: test-frontend
-    command: yarn start
+    command: bash
     user: ${CURRENT_USER:-root}
     stdin_open: true
     volumes:
@@ -26,6 +26,20 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://test-backend:8080
+    networks:
+      - ttadp-test
+  test-worker:
+    build:
+      context: .
+    container_name: test-worker
+    command: yarn server
+    env_file: .env
+    depends_on:
+      - test-db
+    environment:
+      - POSTGRES_HOST=test-db
+    volumes:
+      - "./worker:/app:rw"
     networks:
       - ttadp-test
   test-db:

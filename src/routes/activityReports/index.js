@@ -6,6 +6,7 @@ import {
   createReport,
   getReport,
   getReports,
+  getReportAlerts,
   getActivityRecipients,
   getGoals,
   reviewReport,
@@ -22,6 +23,7 @@ router.post('/', createReport);
 router.get('/approvers', getApprovers);
 router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
+router.get('/alerts', getReportAlerts);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);

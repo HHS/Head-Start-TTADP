@@ -8,12 +8,9 @@ import { REPORT_STATUSES } from '../../../../../Constants';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
-  register,
-  handleSubmit,
   onFormReview,
   reviewed,
   formData,
-  valid,
   children,
   error,
 }) => {
@@ -58,11 +55,8 @@ const Approver = ({
         {review
         && (
         <Review
-          valid={valid}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
-          register={register}
-          handleSubmit={handleSubmit}
           onFormReview={onFormReview}
         />
         )}
@@ -79,11 +73,8 @@ const Approver = ({
 };
 
 Approver.propTypes = {
-  register: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
   reviewed: PropTypes.bool.isRequired,
-  valid: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,
   error: PropTypes.string,
   formData: PropTypes.shape({
