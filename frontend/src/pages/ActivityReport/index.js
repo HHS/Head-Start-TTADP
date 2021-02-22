@@ -177,6 +177,8 @@ function ActivityReport({ match, user, location }) {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
           const savedReport = await createReport({ ...data, regionId: region }, {});
           reportId.current = savedReport.id;
+          const current = pages.find((p) => p.path === currentPage);
+          updatePage(current.position);
           updatedReport = false;
         }
       } else {
