@@ -17,6 +17,7 @@ import Navigator from '../../components/Navigator';
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import { REPORT_STATUSES } from '../../Constants';
+import { getRegionWithReadWrite } from '../../permissions';
 import {
   submitReport,
   saveReport,
@@ -80,6 +81,8 @@ function ActivityReport({ match, user, location }) {
   const [initialLastUpdated, updateInitialLastUpdated] = useState();
   const reportId = useRef();
 
+  const regionIdToUse = region || getRegionWithReadWrite(user);
+
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
 
   useEffect(() => {
@@ -94,9 +97,9 @@ function ActivityReport({ match, user, location }) {
         updateLoading(true);
 
         const apiCalls = [
-          getRecipients(region),
-          getCollaborators(region),
-          getApprovers(region),
+          getRecipients(regionIdToUse),
+          getCollaborators(regionIdToUse),
+          getApprovers(regionIdToUse),
         ];
 
         if (activityReportId !== 'new') {
@@ -173,7 +176,7 @@ function ActivityReport({ match, user, location }) {
     if (canWrite) {
       if (reportId.current === 'new') {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: region }, {});
+          const savedReport = await createReport({ ...data, regionId: regionIdToUse }, {});
           reportId.current = savedReport.id;
           updatedReport = false;
         }

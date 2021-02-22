@@ -44,6 +44,22 @@ export const allRegionsUserHasPermissionTo = (user) => {
   return _.uniq(regions);
 };
 
+/**
+ * Search the user's permissions for any region they have read/write permissions to.
+ * Return *first* region that matches this criteria. Otherwise return -1.
+ * @param {*} user - user object
+ * @returns {number} - region id if the user has read/write access for a region, -1 otherwise
+ */
+
+export const getRegionWithReadWrite = (user) => {
+  const { permissions } = user;
+  if (!permissions) return -1;
+
+  const perm = permissions.find((p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS);
+  return perm? permission.regionId : -1;
+}
+
+/**
  * Search the user's permissions for a read/write permisions for a region
  * @param {*} user - user object
  * @returns {boolean} - True if the user has re/write access for a region, false otherwise
