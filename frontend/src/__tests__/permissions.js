@@ -1,5 +1,5 @@
 import { SCOPE_IDS } from '../Constants';
-import isAdmin, { hasReadWrite } from '../permissions';
+import isAdmin, { hasReadWrite, allRegionsUserHasPermissionTo } from '../permissions';
 
 describe('permissions', () => {
   describe('isAdmin', () => {

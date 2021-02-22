@@ -107,8 +107,8 @@ describe('Activity Reports DB service', () => {
 
     it('retrieves all recipients when not specifying region ', async () => {
       const recipients = await possibleRecipients();
-      // 8 From db being seeded + 1 that we create for this test suite = 9
-      expect(recipients.grants.length).toBe(9);
+      // 11 From db being seeded + 1 that we create for this test suite = 12
+      expect(recipients.grants.length).toBe(12);
     });
   });
 });
