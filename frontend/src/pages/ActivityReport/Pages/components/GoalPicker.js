@@ -31,6 +31,7 @@ const GoalPicker = ({
           valueProperty="id"
           labelProperty="name"
           simple={false}
+          required={false}
           components={components}
           rules={{
             validate: (goals) => {
