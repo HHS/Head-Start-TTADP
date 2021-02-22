@@ -56,8 +56,8 @@ export const getRegionWithReadWrite = (user) => {
   if (!permissions) return -1;
 
   const perm = permissions.find((p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS);
-  return perm? permission.regionId : -1;
-}
+  return perm ? perm.regionId : -1;
+};
 
 /**
  * Search the user's permissions for a read/write permisions for a region
