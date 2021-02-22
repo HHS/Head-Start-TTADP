@@ -79,7 +79,7 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary', true);
-      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
       expect(await screen.findByTestId('alert')).toBeVisible();
     });
 
