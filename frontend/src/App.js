@@ -3,7 +3,6 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
@@ -121,19 +120,17 @@ function App() {
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
-          <Grid row className="flex-align-start">
-            <Grid col="2" desktop={{ col: 'auto' }} className="no-print">
-              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
-            </Grid>
-            <Grid col="fill" className="maxw-desktop-lg margin-right-2">
-              <section className="usa-section padding-top-3 margin-left-5">
+          <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+          <div className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
+            <div className="grid-col-12 margin-top-2 margin-right-2">
+              <section className="usa-section padding-top-3">
                 {!authenticated
           && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
                 {authenticated
           && renderAuthenticatedRoutes()}
               </section>
-            </Grid>
-          </Grid>
+            </div>
+          </div>
         </UserContext.Provider>
       </BrowserRouter>
     </>
