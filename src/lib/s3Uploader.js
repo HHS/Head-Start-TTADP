@@ -58,6 +58,14 @@ export const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   return new Promise((resolve) => resolve(data));
 };
 
+export const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
+  const params = {
+    Bucket: bucket,
+    Key: key,
+  };
+  return s3Client.deleteObject(params).promise();
+};
+
 const s3Uploader = async (buffer, name, type, s3Client = s3) => {
   const params = {
     Body: buffer,
