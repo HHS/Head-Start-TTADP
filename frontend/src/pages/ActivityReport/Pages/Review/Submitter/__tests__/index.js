@@ -24,6 +24,7 @@ const RenderSubmitter = ({
         onFormSubmit={onFormSubmit}
         approvers={[{ name: 'test', id: 1 }]}
         formData={formData}
+        onSaveForm={() => {}}
         pages={pages}
       />
     </FormProvider>
@@ -91,7 +92,7 @@ describe('Submitter review page', () => {
     it('fails to submit if there are pages that have not been completed', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.DRAFT, false, mockSubmit, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval'});
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });

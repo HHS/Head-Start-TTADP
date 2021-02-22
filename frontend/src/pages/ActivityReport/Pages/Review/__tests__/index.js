@@ -36,6 +36,7 @@ const RenderReview = ({
         approvers={approvers}
         formData={formData}
         onReview={onReview}
+        onSaveForm={() => {}}
         approvingManager={approvingManager}
         pages={pages}
         reportCreator={reportCreator}
@@ -118,7 +119,7 @@ describe('ReviewSubmit', () => {
   describe('when the form is not complete', () => {
     it('an error message is shown when the report is submitted', async () => {
       renderReview(false, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       const error = await screen.findByTestId('errorMessage');
       expect(error).toBeVisible();

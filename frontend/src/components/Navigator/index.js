@@ -77,7 +77,8 @@ function Navigator({
   };
 
   const onSaveForm = async (completed) => {
-    const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
+    const { status, ...values } = getValues();
+    const data = { ...formData, ...values, pageState: newNavigatorState(completed) };
     try {
       const result = await onSave(data);
       if (result) {
@@ -93,7 +94,8 @@ function Navigator({
 
   const onUpdatePage = (index, completed) => {
     const newIndex = index === page.position ? null : index;
-    const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
+    const { status, ...values } = getValues();
+    const data = { ...formData, ...values, pageState: newNavigatorState(completed) };
     updateFormData(data);
     updatePage(newIndex);
   };
