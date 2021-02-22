@@ -10,6 +10,16 @@
     "test": "jest src",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit"
   },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "statements": 90,
+        "functions": 90,
+        "branches": 90,
+        "lines": 90
+      }
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hhs/Head-Start-TTADP.git"

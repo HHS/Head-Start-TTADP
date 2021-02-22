@@ -1,7 +1,7 @@
 const throng = require('throng');
 const dotenv = require('dotenv');
 const Queue = require('bull');
-const logger = require('./logger');
+const { logger, auditLogger } = require('./logger');
 const { processFile } = require('./files');
 
 dotenv.config(process.cwd(), '../.env');
@@ -20,8 +20,14 @@ const maxJobsPerWorker = process.env.MAX_JOBS_PER_WORKER || 5;
 // Pull jobs off the redis queue and process them.
 function start() {
   const scanQueue = new Queue('scan', `redis://${REDIS_HOST}:${REDIS_PORT}`, { redis: { password: REDIS_PASS } });
-  scanQueue.on('failed', (job, error) => logger.error(`job ${job.data.key} failed with error ${error}`));
-  scanQueue.on('completed', (job, result) => logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`));
+  scanQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
+  scanQueue.on('completed', (job, result) => {
+    if (result.status === 200) {
+      logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    } else {
+      auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    }
+  });
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
 }
 
