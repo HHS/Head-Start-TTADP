@@ -11,7 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Button, Alert } from '@trussworks/react-uswds';
-import uploadFile from '../fetchers/File';
+import uploadFile, { deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
 
@@ -146,10 +146,10 @@ const FileUploader = ({
     onChange([...files, ...newFiles]);
   };
 
-  const onFileRemoved = (removedFileIndex) => {
+  const onFileRemoved = async(removedFileIndex) => {
     const file = files[removedFileIndex]
-    console.log(file)
-    onChange(files.filter((f, index) => (index !== removedFileIndex)));
+    await deleteFile(file.id) 
+    onChange(files.filter((f) => (f.id !== file.id)));
   };
 
   return (
