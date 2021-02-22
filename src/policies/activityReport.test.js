@@ -133,7 +133,6 @@ describe('Activity Report policies', () => {
       const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
       const policy = new ActivityReport(author, report);
       expect(policy.canReset()).toBeTruthy();
-
     });
 
     it('is true for collaborators', async () => {

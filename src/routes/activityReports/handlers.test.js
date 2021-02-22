@@ -273,7 +273,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the updated report', async () => {
-      const result = { status: 'draft' }
+      const result = { status: 'draft' };
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
