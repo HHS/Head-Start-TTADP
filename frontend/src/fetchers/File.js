@@ -13,3 +13,14 @@ export default async function uploadFile(data) {
   }
   return res;
 }
+
+export const deleteFile = async (fileId) => {
+  const res = await fetch(join(activityReportUrl,fileId), {
+    method: 'DELETE',
+    credentials: 'same-origin',
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res;
+}
