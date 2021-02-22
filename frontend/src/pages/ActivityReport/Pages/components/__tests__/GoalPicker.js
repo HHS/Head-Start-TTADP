@@ -1,27 +1,26 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import GoalPicker from '../GoalPicker';
 import { withText } from '../../../../../testHelpers';
 
 // eslint-disable-next-line react/prop-types
 const RenderGoal = ({ availableGoals, selectedGoals }) => {
-  const { control, setValue, watch } = useForm({
+  const hookForm = useForm({
     defaultValues: {
       goals: selectedGoals,
     },
   });
-  const goals = watch('goals');
   return (
-    <GoalPicker
-      availableGoals={availableGoals}
-      selectedGoals={goals}
-      control={control}
-      setValue={setValue}
-    />
+    <FormProvider {...hookForm}>
+      <GoalPicker
+        availableGoals={availableGoals}
+      />
+    </FormProvider>
   );
 };
 
