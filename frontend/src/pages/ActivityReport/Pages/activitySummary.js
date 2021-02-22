@@ -166,6 +166,7 @@ const ActivitySummary = ({
           <FormItem
             label="Target Populations addressed. You may choose more than one."
             name="targetPopulations"
+            required={false}
           >
             <MultiSelect
               name="targetPopulations"
