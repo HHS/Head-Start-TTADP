@@ -59,7 +59,7 @@ main() {
     fi
 
     if [[ "$opt" == "worker" || -z "$opt" ]]; then
-        # Test frontend
+        # Test worker
         echo
         log "Running worker tests"
         docker exec test-worker bash -c "yarn --cwd worker run test:ci --detectOpenHandles"

@@ -26,4 +26,18 @@ const logger = createLogger({
   ],
 });
 
-module.exports = logger;
+const auditLogger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.label({ label: 'AUDIT' }),
+    formatter,
+  ),
+  transports: [
+    new transports.Console(),
+  ],
+});
+
+module.exports = {
+  logger,
+  auditLogger,
+};
