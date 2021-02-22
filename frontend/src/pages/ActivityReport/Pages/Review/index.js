@@ -20,6 +20,7 @@ const ReviewSubmit = ({
   approvingManager,
   reportCreator,
   formData,
+  onSaveForm,
   pages,
 }) => {
   const { additionalNotes, status } = formData;
@@ -74,6 +75,7 @@ const ReviewSubmit = ({
           pages={pages}
           onFormSubmit={onFormSubmit}
           formData={formData}
+          onSaveForm={onSaveForm}
         />
         )}
         {approvingManager
@@ -92,6 +94,7 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
+  onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
