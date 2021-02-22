@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 
+import UserContext from '../../UserContext';
 import Container from '../../components/Container';
 import { getReports, getReportAlerts } from '../../fetchers/activityReports';
 import NewReport from './NewReport';
@@ -14,6 +15,7 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
+import { hasReadWrite } from '../../permissions';
 
 function renderReports(reports) {
   const emptyReport = {
@@ -167,43 +169,49 @@ function Landing() {
       <Helmet>
         <title>Landing</title>
       </Helmet>
-      <Grid row gap>
-        <Grid>
-          <h1 className="landing">Activity Reports</h1>
-        </Grid>
-        <Grid className="flex-align-self-center">
-          { reportAlerts && reportAlerts.length > 0 && <NewReport /> }
-        </Grid>
-      </Grid>
-      <Grid row>
-        {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
+      <UserContext.Consumer>
+        {({ user }) => (
+          <>
+            <Grid row gap>
+              <Grid>
+                <h1 className="landing">Activity Reports</h1>
+              </Grid>
+              <Grid className="flex-align-self-center">
+                {reportAlerts && reportAlerts.length > 0 && hasReadWrite(user) && <NewReport />}
+              </Grid>
+            </Grid>
+            <Grid row>
+              {error && (
+                <Alert type="error" role="alert">
+                  {error}
+                </Alert>
+              )}
+            </Grid>
+            <MyAlerts reports={reportAlerts} newBtn={hasReadWrite(user)} />
+            <SimpleBar>
+              <Container className="landing inline-size" padding={0}>
+                <Table className="usa-table usa-table--borderless usa-table--striped">
+                  <caption>Activity reports</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Report ID</th>
+                      <th scope="col">Grantee</th>
+                      <th scope="col">Start date</th>
+                      <th scope="col">Creator</th>
+                      <th scope="col">Topic(s)</th>
+                      <th scope="col">Collaborator(s)</th>
+                      <th scope="col">Last saved</th>
+                      <th scope="col">Status</th>
+                      <th scope="col" aria-label="..." />
+                    </tr>
+                  </thead>
+                  <tbody>{renderReports(reports)}</tbody>
+                </Table>
+              </Container>
+            </SimpleBar>
+          </>
         )}
-      </Grid>
-      <MyAlerts reports={reportAlerts} />
-      <SimpleBar>
-        <Container className="landing inline-size" padding={0}>
-          <Table className="usa-table usa-table--borderless usa-table--striped">
-            <caption>Activity reports</caption>
-            <thead>
-              <tr>
-                <th scope="col">Report ID</th>
-                <th scope="col">Grantee</th>
-                <th scope="col">Start date</th>
-                <th scope="col">Creator</th>
-                <th scope="col">Topic(s)</th>
-                <th scope="col">Collaborator(s)</th>
-                <th scope="col">Last saved</th>
-                <th scope="col">Status</th>
-                <th scope="col" aria-label="..." />
-              </tr>
-            </thead>
-            <tbody>{renderReports(reports)}</tbody>
-          </Table>
-        </Container>
-      </SimpleBar>
+      </UserContext.Consumer>
     </>
   );
 }

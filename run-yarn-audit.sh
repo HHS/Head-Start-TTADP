@@ -6,7 +6,8 @@
 set -u
 
 set +e
-output=$(yarn audit --level low --json)
+cmd="yarn audit --level low --json"
+output=$($cmd)
 result=$?
 set -e
 
@@ -30,7 +31,7 @@ echo fixes and they do not apply to production, you may ignore them
 echo
 echo To ignore these vulnerabilities, run:
 echo
-echo "yarn audit --json | grep auditAdvisory > yarn-audit-known-issues"
+echo "$cmd | grep auditAdvisory > yarn-audit-known-issues"
 echo
 echo and commit the yarn-audit-known-issues file
 echo
