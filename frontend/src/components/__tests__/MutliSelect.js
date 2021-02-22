@@ -5,6 +5,7 @@ import selectEvent from 'react-select-event';
 import { act } from 'react-dom/test-utils';
 import { useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
+import { Label } from '@trussworks/react-uswds';
 
 import MultiSelect from '../MultiSelect';
 
@@ -27,14 +28,16 @@ describe('MultiSelect', () => {
 
     return (
       <form onSubmit={handleSubmit(submit)}>
-        <MultiSelect
-          control={control}
-          label="label"
-          name="name"
-          options={options}
-          required={false}
-        />
-        <button data-testid="submit" type="submit">submit</button>
+        <Label>
+          label
+          <MultiSelect
+            control={control}
+            name="name"
+            options={options}
+            required={false}
+          />
+          <button data-testid="submit" type="submit">submit</button>
+        </Label>
       </form>
     );
   };

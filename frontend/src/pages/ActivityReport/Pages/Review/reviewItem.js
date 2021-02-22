@@ -37,28 +37,36 @@ const sectionType = {
 
 const Section = ({
   title, items, basePath, anchor,
-}) => (
-  <div className="margin-bottom-3">
-    <Grid row>
-      <Grid col={6}>
-        <b className="margin-y-1">{title}</b>
+}) => {
+  const isEmpty = !items.some(({ value }) => value && value.length);
+  const classes = [
+    'smart-hub-review-section',
+    isEmpty ? 'smart-hub-review-section--empty no-print' : '',
+    'margin-bottom-3',
+  ].filter((x) => x).join(' ');
+
+  return (
+    <div className={classes}>
+      <Grid row className="border-bottom padding-bottom-1 margin-bottom-105">
+        <Grid col={6}>
+          <b className="margin-y-1">{title}</b>
+        </Grid>
+        <Grid col={6} className="flex-align-end display-flex flex-column flex-justify-center">
+          <HashLink
+            aria-label={`Edit form section "${title}"`}
+            to={`${basePath}#${anchor}`}
+            className="smart-hub-edit-link pull-right no-print"
+          >
+            Edit
+          </HashLink>
+        </Grid>
       </Grid>
-      <Grid col={6} className="flex-align-end display-flex flex-column flex-justify-center">
-        <HashLink
-          aria-label={`Edit form section "${title}"`}
-          to={`${basePath}#${anchor}`}
-          className="pull-right"
-        >
-          Edit
-        </HashLink>
-      </Grid>
-    </Grid>
-    <hr />
-    {items.map(({ label, value, path }) => (
-      <Item key={label} label={label} value={value} path={path} />
-    ))}
-  </div>
-);
+      {items.map(({ label, value, path }) => (
+        <Item key={label} label={label} value={value} path={path} />
+      ))}
+    </div>
+  );
+};
 
 Section.propTypes = sectionType;
 
@@ -73,15 +81,18 @@ const Item = ({ label, value, path }) => {
     values = values.map((v) => _.get(v, path));
   }
 
+  const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
+  const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
+
   return (
-    <Grid row className="margin-top-1">
+    <Grid row className={classes}>
       <Grid col={6}>
         {label}
       </Grid>
       <Grid col={6}>
         {values.map((v, index) => (
           <Grid aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="flex-align-end display-flex flex-column flex-justify-center">
-            {v}
+            {Number.isNaN(v) ? '' : v}
           </Grid>
         ))}
       </Grid>

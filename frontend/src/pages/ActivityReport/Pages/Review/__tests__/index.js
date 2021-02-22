@@ -13,9 +13,14 @@ const approvers = [
   { id: 2, name: 'user 2' },
 ];
 
+const reportCreator = {
+  name: 'Walter Burns',
+  role: 'Reporter',
+};
+
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager,
+  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager, pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -32,11 +37,26 @@ const RenderReview = ({
         formData={formData}
         onReview={onReview}
         onResetToDraft={() => {}}
+        onSaveForm={() => {}}
         approvingManager={approvingManager}
+        pages={pages}
+        reportCreator={reportCreator}
       />
     </FormProvider>
   );
 };
+
+const completePages = [{
+  label: 'label',
+  state: 'Complete',
+  review: false,
+}];
+
+const incompletePages = [{
+  label: 'incomplete',
+  state: 'In progress',
+  review: false,
+}];
 
 const renderReview = (
   allComplete,
@@ -46,7 +66,10 @@ const renderReview = (
   onSubmit = () => {},
   onReview = () => {},
   approvingManagerId = null,
+  complete = true,
 ) => {
+  const pages = complete ? completePages : incompletePages;
+
   render(
     <RenderReview
       allComplete={allComplete}
@@ -55,11 +78,12 @@ const renderReview = (
       approvingManager={approvingManager}
       onReview={onReview}
       approvingManagerId={approvingManagerId}
+      pages={pages}
     />,
   );
 };
 
-const selectLabel = 'Approving manager';
+const selectLabel = 'Approving manager (Required)';
 
 describe('ReviewSubmit', () => {
   describe('when the user is the approving manager', () => {
@@ -94,18 +118,12 @@ describe('ReviewSubmit', () => {
   });
 
   describe('when the form is not complete', () => {
-    it('an error alert is shown', async () => {
+    it('an error message is shown when the report is submitted', async () => {
       renderReview(false, false);
-      const alert = await screen.findByTestId('alert');
-      expect(alert).toHaveClass('usa-alert--error');
-      await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
-    });
-
-    it('the submit button is disabled', async () => {
-      renderReview(false, false);
-      const button = await screen.findByRole('button');
-      expect(button).toBeDisabled();
-      await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
+      userEvent.click(button);
+      const error = await screen.findByTestId('errorMessage');
+      expect(error).toBeVisible();
     });
   });
 
@@ -117,18 +135,10 @@ describe('ReviewSubmit', () => {
       await waitFor(() => expect(screen.getByLabelText(selectLabel)).toBeEnabled());
     });
 
-    it('the submit button is disabled until one approver is selected', async () => {
-      renderReview(true, false);
-      const button = await screen.findByRole('button');
-      expect(button).toBeDisabled();
-      userEvent.selectOptions(screen.getByTestId('dropdown'), ['1']);
-      expect(await screen.findByRole('button')).toBeEnabled();
-    });
-
     it('the submit button calls onSubmit', async () => {
       const onSubmit = jest.fn();
       renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
       await waitFor(() => expect(onSubmit).toHaveBeenCalled());
@@ -141,12 +151,19 @@ describe('ReviewSubmit', () => {
       });
 
       renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
       const error = await screen.findByText('Unable to submit report');
       expect(error).toBeVisible();
     });
+  });
+
+  it('a success modal is shown once submitted', async () => {
+    renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
+    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
+    const alert = await screen.findByTestId('alert');
+    expect(alert).toHaveClass('usa-alert--success');
   });
 
   it('initializes the form with "initialData"', async () => {

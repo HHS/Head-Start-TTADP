@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
-import { Alert } from '@trussworks/react-uswds';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
 
 import pages from './Pages';
@@ -41,6 +41,8 @@ const fakeGoals = [
 
 const defaultValues = {
   deliveryMethod: [],
+  activityRecipientType: '',
+  activityRecipients: [],
   activityType: [],
   attachments: [],
   context: '',
@@ -167,6 +169,10 @@ function ActivityReport({ match, user, location }) {
   }
 
   const updatePage = (position) => {
+    if (!editable) {
+      return;
+    }
+
     const page = pages.find((p) => p.position === position);
     const state = {};
     if (activityReportId === 'new' && reportId.current !== 'new') {
@@ -175,24 +181,21 @@ function ActivityReport({ match, user, location }) {
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
-  const onSave = async (data, newIndex) => {
+  const onSave = async (data) => {
     const { activityRecipientType, activityRecipients } = data;
     let updatedReport = false;
     if (reportId.current === 'new') {
       if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
         const savedReport = await createReport({ ...data, regionId: region }, {});
         reportId.current = savedReport.id;
+        const current = pages.find((p) => p.path === currentPage);
+        updatePage(current.position);
         updatedReport = false;
       }
     } else {
       await saveReport(reportId.current, data, {});
       updatedReport = true;
     }
-
-    if (newIndex) {
-      updatePage(newIndex);
-    }
-
     return updatedReport;
   };
 
@@ -213,12 +216,25 @@ function ActivityReport({ match, user, location }) {
     updateEditable(true);
   };
 
+  const reportCreator = { name: user.name, role: user.role };
+
   return (
-    <>
+    <div className="smart-hub-activity-report">
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
-      <h1 className="new-activity-report">New activity report for Region 14</h1>
+      <Grid row className="flex-justify">
+        <Grid col="auto">
+          <h1 className="new-activity-report">New activity report for Region 14</h1>
+        </Grid>
+        <Grid col="auto" className="flex-align-self-center">
+          {formData.status && (
+            <div className="smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold">{formData.status}</div>
+          )}
+        </Grid>
+      </Grid>
       <Navigator
         editable={editable}
+        updatePage={updatePage}
+        reportCreator={reportCreator}
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}
         currentPage={currentPage}
@@ -232,7 +248,7 @@ function ActivityReport({ match, user, location }) {
         approvingManager={approvingManager}
         onReview={onReview}
       />
-    </>
+    </div>
   );
 }
 
@@ -241,6 +257,8 @@ ActivityReport.propTypes = {
   location: ReactRouterPropTypes.location.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
+    name: PropTypes.string,
+    role: PropTypes.string,
   }).isRequired,
 };
 

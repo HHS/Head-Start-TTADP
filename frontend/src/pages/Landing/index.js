@@ -7,21 +7,20 @@ import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 
+import UserContext from '../../UserContext';
 import Container from '../../components/Container';
-import { getReports } from '../../fetchers/activityReports';
+import { getReports, getReportAlerts } from '../../fetchers/activityReports';
+import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
-
-export const activityReportId = (id, regionId) => `R${
-  regionId < 10
-    ? `0${regionId}`
-    : regionId
-}-${id <= 999999 ? `00000${id}`.slice(-6) : id}`;
+import MyAlerts from './MyAlerts';
+import { hasReadWrite } from '../../permissions';
 
 function renderReports(reports) {
   const emptyReport = {
     id: '',
+    displayId: '',
     activityRecipients: [],
     startDate: '',
     author: '',
@@ -36,6 +35,7 @@ function renderReports(reports) {
   return displayReports.map((report) => {
     const {
       id,
+      displayId,
       activityRecipients,
       startDate,
       author,
@@ -43,7 +43,6 @@ function renderReports(reports) {
       collaborators,
       lastSaved,
       status,
-      regionId,
     } = report;
 
     const recipientsTitle = activityRecipients.reduce(
@@ -88,10 +87,6 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const fullId = !id
-      ? ''
-      : activityReportId(id, regionId);
-
     return (
       <tr key={`landing_${id}`}>
         <th scope="row">
@@ -99,7 +94,7 @@ function renderReports(reports) {
             to={`/activity-reports/${id}/activity-summary`}
             href={`/activity-reports/${id}/activity-summary`}
           >
-            {fullId}
+            {displayId}
           </Link>
         </th>
         <td>
@@ -128,7 +123,7 @@ function renderReports(reports) {
           <Tag
             className={`smart-hub--table-tag-status smart-hub--status-${status}`}
           >
-            {status}
+            {status === 'needs_action' ? 'Needs action' : status}
           </Tag>
         </td>
         <td>
@@ -144,6 +139,7 @@ function renderReports(reports) {
 function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
+  const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
 
   useEffect(() => {
@@ -151,7 +147,9 @@ function Landing() {
       setIsLoaded(false);
       try {
         const reps = await getReports();
+        const alerts = await getReportAlerts();
         updateReports(reps);
+        updateReportAlerts(alerts);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -171,50 +169,49 @@ function Landing() {
       <Helmet>
         <title>Landing</title>
       </Helmet>
-      <Grid row gap>
-        <Grid col={3}>
-          <h1 className="landing">Activity Reports</h1>
-        </Grid>
-        <Grid className="smart-hub--create-new-report">
-          <Link
-            to="/activity-reports/new"
-            referrerPolicy="same-origin"
-            className="usa-button smart-hub--new-report-btn"
-            variant="unstyled"
-          >
-            <span className="smart-hub--plus">+</span>
-            <span className="smart-hub--new-report">New Activity Report</span>
-          </Link>
-        </Grid>
-      </Grid>
-      <Grid row>
-        {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
+      <UserContext.Consumer>
+        {({ user }) => (
+          <>
+            <Grid row gap>
+              <Grid>
+                <h1 className="landing">Activity Reports</h1>
+              </Grid>
+              <Grid className="smart-hub--create-new-report">
+                {reportAlerts && reportAlerts.length > 0 && hasReadWrite(user) && <NewReport />}
+              </Grid>
+            </Grid>
+            <Grid row>
+              {error && (
+                <Alert type="error" role="alert">
+                  {error}
+                </Alert>
+              )}
+            </Grid>
+            <MyAlerts reports={reportAlerts} newBtn={hasReadWrite(user)} />
+            <SimpleBar>
+              <Container className="landing inline-size" padding={0}>
+                <Table className="usa-table usa-table--borderless usa-table--striped">
+                  <caption>Activity reports</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Report ID</th>
+                      <th scope="col">Grantee</th>
+                      <th scope="col">Start date</th>
+                      <th scope="col">Creator</th>
+                      <th scope="col">Topic(s)</th>
+                      <th scope="col">Collaborator(s)</th>
+                      <th scope="col">Last saved</th>
+                      <th scope="col">Status</th>
+                      <th scope="col" aria-label="..." />
+                    </tr>
+                  </thead>
+                  <tbody>{renderReports(reports)}</tbody>
+                </Table>
+              </Container>
+            </SimpleBar>
+          </>
         )}
-      </Grid>
-      <SimpleBar>
-        <Container className="landing inline-size" padding={0}>
-          <Table className="usa-table usa-table--borderless usa-table--striped">
-            <caption>Activity reports</caption>
-            <thead>
-              <tr>
-                <th scope="col">Report ID</th>
-                <th scope="col">Grantee</th>
-                <th scope="col">Start date</th>
-                <th scope="col">Creator</th>
-                <th scope="col">Topic(s)</th>
-                <th scope="col">Collaborator(s)</th>
-                <th scope="col">Last saved</th>
-                <th scope="col">Status</th>
-                <th scope="col" aria-label="..." />
-              </tr>
-            </thead>
-            <tbody>{renderReports(reports)}</tbody>
-          </Table>
-        </Container>
-      </SimpleBar>
+      </UserContext.Consumer>
     </>
   );
 }

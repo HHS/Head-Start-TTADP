@@ -10,16 +10,14 @@ import Approved from './Approved';
 import Submitted from './Submitted';
 
 const Submitter = ({
-  allComplete,
-  register,
   approvers,
-  valid,
-  handleSubmit,
   onFormSubmit,
   formData,
   onResetToDraft,
   children,
   error,
+  onSaveForm,
+  pages,
 }) => {
   const {
     approvingManager,
@@ -66,6 +64,9 @@ const Submitter = ({
     </>
   );
 
+  const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
+  const incompletePages = filtered.map((f) => f.label);
+
   return (
     <>
       {renderTopAlert()}
@@ -81,11 +82,9 @@ const Submitter = ({
         {draft
         && (
         <DraftReview
-          allComplete={allComplete}
-          register={register}
+          onSaveForm={onSaveForm}
+          incompletePages={incompletePages}
           approvers={approvers}
-          valid={valid}
-          handleSubmit={handleSubmit}
           onFormSubmit={onFormSubmit}
         />
         )}
@@ -104,7 +103,7 @@ const Submitter = ({
           managerNotes={managerNotes}
           onSubmit={onFormSubmit}
           approvingManager={approvingManager}
-          valid={valid}
+          incompletePages={incompletePages}
         />
         )}
         {approved
@@ -123,14 +122,16 @@ Submitter.propTypes = {
   onResetToDraft: PropTypes.func.isRequired,
   error: PropTypes.string,
   children: PropTypes.node.isRequired,
-  allComplete: PropTypes.bool.isRequired,
-  register: PropTypes.func.isRequired,
+  onSaveForm: PropTypes.func.isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    state: PropTypes.string,
+    review: PropTypes.bool,
+    label: PropTypes.string,
+  })).isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
-  valid: PropTypes.bool.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   formData: PropTypes.shape({
     approvingManager: PropTypes.shape({
