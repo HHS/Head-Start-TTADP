@@ -27,8 +27,7 @@ const generateS3Config = () => {
   };
 };
 
-const { bucketName, s3Config } = generateS3Config;
-
+const { bucketName, s3Config } = generateS3Config();
 const s3 = new S3(s3Config);
 
 function downloadFile(key) {
