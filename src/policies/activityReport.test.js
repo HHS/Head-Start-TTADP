@@ -122,6 +122,27 @@ describe('Activity Report policies', () => {
     });
   });
 
+  describe('canReset', () => {
+    it('is false for reports that have not been submitted', async () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReset()).toBeFalsy();
+    });
+
+    it('is true for the author', async () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReset()).toBeTruthy();
+
+    });
+
+    it('is true for collaborators', async () => {
+      const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(collaborator, report);
+      expect(policy.canReset()).toBeTruthy();
+    });
+  });
+
   describe('canGet', () => {
     describe('for unapproved reports', () => {
       it('is true for the author', () => {

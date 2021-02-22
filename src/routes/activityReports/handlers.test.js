@@ -6,9 +6,10 @@ import {
   getApprovers,
   submitReport,
   reviewReport,
+  resetToDraft,
 } from './handlers';
 import {
-  activityReportById, createOrUpdate, possibleRecipients, review,
+  activityReportById, createOrUpdate, possibleRecipients, review, setStatus,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
@@ -19,6 +20,7 @@ jest.mock('../../services/activityReports', () => ({
   createOrUpdate: jest.fn(),
   possibleRecipients: jest.fn(),
   review: jest.fn(),
+  setStatus: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -260,6 +262,31 @@ describe('Activity Report handlers', () => {
       const response = [{ name: 'name', id: 1 }];
       usersWithPermissions.mockResolvedValue(response);
       await getApprovers({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('resetToDraft', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+    };
+
+    it('returns the updated report', async () => {
+      const result = { status: 'draft' }
+      ActivityReport.mockImplementation(() => ({
+        canReset: () => true,
+      }));
+      setStatus.mockResolvedValue(result);
+      await resetToDraft(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(result);
+    });
+
+    it('handles unauthorized', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canReset: () => false,
+      }));
+      await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
