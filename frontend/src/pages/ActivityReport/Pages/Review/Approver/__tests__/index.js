@@ -3,8 +3,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-
+import { FormProvider, useForm } from 'react-hook-form';
 import Approver from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
 
