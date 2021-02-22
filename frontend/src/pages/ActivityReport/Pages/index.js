@@ -28,18 +28,17 @@ const reviewPage = {
   path: 'review',
   render:
     (
-      allComplete,
       formData,
       onSubmit,
       additionalData,
       onReview,
       approvingManager,
       onSaveForm,
+      allPages,
       reportCreator,
     ) => (
       <ReviewSubmit
         approvers={additionalData.approvers}
-        allComplete={allComplete}
         onSubmit={onSubmit}
         onSaveForm={onSaveForm}
         onReview={onReview}
@@ -48,6 +47,7 @@ const reviewPage = {
           pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
         }
         formData={formData}
+        pages={allPages}
         reportCreator={reportCreator}
       />
     ),

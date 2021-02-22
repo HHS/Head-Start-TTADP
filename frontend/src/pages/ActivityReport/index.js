@@ -40,6 +40,8 @@ const fakeGoals = [
 
 const defaultValues = {
   deliveryMethod: [],
+  activityRecipientType: '',
+  activityRecipients: [],
   activityType: [],
   attachments: [],
   context: '',

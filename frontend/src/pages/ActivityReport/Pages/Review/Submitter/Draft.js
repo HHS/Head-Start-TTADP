@@ -2,19 +2,23 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import {
-  Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
+  Dropdown, Form, Fieldset, Textarea, Alert, Button,
 } from '@trussworks/react-uswds';
 
+import IncompletePages from './IncompletePages';
 import { DECIMAL_BASE } from '../../../../../Constants';
+import FormItem from '../../../../../components/FormItem';
 
 const Draft = ({
   submitted,
-  allComplete,
   approvers,
-  valid,
   onFormSubmit,
   onSaveForm,
+  incompletePages,
 }) => {
+  const { watch, register, handleSubmit } = useFormContext();
+  const hasIncompletePages = incompletePages.length > 0;
+
   const setValue = (e) => {
     if (e === '') {
       return null;
@@ -22,7 +26,11 @@ const Draft = ({
     return parseInt(e, DECIMAL_BASE);
   };
 
-  const { handleSubmit, register, watch } = useFormContext();
+  const onSubmit = (e) => {
+    if (!hasIncompletePages) {
+      onFormSubmit(e);
+    }
+  };
   const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
@@ -36,19 +44,16 @@ const Draft = ({
         This report was successfully submitted for approval
       </Alert>
       )}
-      {!allComplete
-      && (
-      <Alert noIcon className="margin-y-4" type="error">
-        <b>Incomplete report</b>
-        <br />
-        This report cannot be submitted until all sections are complete
-      </Alert>
-      )}
       <h2>Submit Report</h2>
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormSubmit)}>
+      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
-          <Label htmlFor="additionalNotes">Creator notes</Label>
-          <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
+          <FormItem
+            label="Creator notes"
+            name="additionalNotes"
+            required={false}
+          >
+            <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
+          </FormItem>
         </Fieldset>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
           <p className="margin-top-4">
@@ -56,16 +61,21 @@ const Draft = ({
             mode. Please review all information in each section before submitting to your
             manager for approval.
           </p>
-          <Label htmlFor="approvingManagerId">Approving manager</Label>
-          <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: true })}>
-            <option name="default" value="" disabled hidden>Select a Manager...</option>
-            {approvers.map((approver) => (
-              <option key={approver.id} value={approver.id}>{approver.name}</option>
-            ))}
-          </Dropdown>
+          <FormItem
+            label="Approving manager"
+            name="approvingManagerId"
+          >
+            <Dropdown id="approvingManagerId" name="approvingManagerId" inputRef={register({ setValueAs: setValue, required: 'A manager must be assigned to the report before submitting' })}>
+              <option name="default" value="" disabled hidden>- Select -</option>
+              {approvers.map((approver) => (
+                <option key={approver.id} value={approver.id}>{approver.name}</option>
+              ))}
+            </Dropdown>
+          </FormItem>
         </Fieldset>
+        {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         <Button outline type="button" onClick={() => { onSaveForm(false); }}>Save Draft</Button>
-        <Button type="submit" disabled={!valid}>Submit for approval</Button>
+        <Button type="submit">Submit for approval</Button>
       </Form>
     </>
   );
@@ -74,13 +84,12 @@ const Draft = ({
 Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
   onSaveForm: PropTypes.func.isRequired,
-  allComplete: PropTypes.bool.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
-  valid: PropTypes.bool.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
+  incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default Draft;
