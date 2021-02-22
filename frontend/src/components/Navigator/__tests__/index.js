@@ -115,6 +115,14 @@ describe('Navigator', () => {
     expect(await screen.findByTestId('alert')).toHaveTextContent('Please complete all required fields before submitting this report.');
   });
 
+  it('onBack calls onUpdatePage', async () => {
+    const updatePage = jest.fn();
+    renderNavigator('third', () => {}, () => {}, updatePage);
+    const button = await screen.findByRole('button', { name: 'Back'});
+    userEvent.click(button);
+    expect(updatePage).toHaveBeenCalledWith(2);
+  });
+
   it('calls onSave on navigation', async () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
