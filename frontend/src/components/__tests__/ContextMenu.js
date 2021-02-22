@@ -57,7 +57,7 @@ describe('ContextMenu', () => {
       await waitFor(() => expect(screen.queryByText('one')).toBeNull());
     });
 
-    it('can be shifted left', async () => {
+    it('can be shifted right', async () => {
       render(<ContextMenu left={false} menuItems={menuItems('one')} label="label" />);
       const button = await screen.findByTestId('button');
       userEvent.click(button);
