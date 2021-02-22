@@ -52,7 +52,7 @@ function Dropzone(props) {
       onChange(values);
     });
   };
-  const { getRootProps, getInputProps } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .zip' });
 
   return (
     <div
@@ -171,6 +171,8 @@ const FileUploader = ({
   };
 
   const onFileRemoved = (removedFileIndex) => {
+    const file = files[removedFileIndex]
+    console.log(file)
     onChange(files.filter((f, index) => (index !== removedFileIndex)));
   };
 
