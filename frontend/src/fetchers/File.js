@@ -1,9 +1,9 @@
 import join from 'url-join';
 
-const activityReportUrl = join('/', 'api', 'files');
+const fileUrl = join('/', 'api', 'files');
 
 export default async function uploadFile(data) {
-  const res = await fetch(activityReportUrl, {
+  const res = await fetch(fileUrl, {
     method: 'POST',
     credentials: 'same-origin',
     body: data,
@@ -15,7 +15,7 @@ export default async function uploadFile(data) {
 }
 
 export const deleteFile = async (fileId) => {
-  const res = await fetch(join(activityReportUrl,fileId), {
+  const res = await fetch(join(fileUrl, fileId.toString()), {
     method: 'DELETE',
     credentials: 'same-origin',
   });
