@@ -17,7 +17,6 @@ const GoalsObjectives = ({
     control,
     register,
     watch,
-    setValue,
   } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [loading, updateLoading] = useState(true);
@@ -53,7 +52,6 @@ const GoalsObjectives = ({
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
           <div id="goals-and-objectives" />
           <GoalPicker
-            setValue={setValue}
             control={control}
             availableGoals={availableGoals}
             selectedGoals={goals}

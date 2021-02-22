@@ -7,11 +7,11 @@ import {
 } from '@trussworks/react-uswds';
 
 import { managerReportStatuses } from '../../../../../Constants';
+import FormItem from '../../../../../components/FormItem';
 
 const Review = ({
   reviewed,
   additionalNotes,
-  valid,
   onFormReview,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
@@ -42,14 +42,18 @@ const Review = ({
           <Label htmlFor="managerNotes">Manager notes</Label>
           <Textarea inputRef={register} id="managerNotes" name="managerNotes" className={textAreaClass} />
         </Fieldset>
-        <Label htmlFor="status">Choose report status</Label>
-        <Dropdown id="status" name="status" defaultValue="" inputRef={register({ required: true })}>
-          <option name="default" value="" disabled hidden>- Select -</option>
-          {managerReportStatuses.map((status) => (
-            <option key={status} value={status}>{_.startCase(status)}</option>
-          ))}
-        </Dropdown>
-        <Button type="submit" disabled={!valid}>Submit</Button>
+        <FormItem
+          name="status"
+          label="Choose report status"
+        >
+          <Dropdown id="status" name="status" defaultValue="" inputRef={register({ required: true })}>
+            <option name="default" value="" disabled hidden>- Select -</option>
+            {managerReportStatuses.map((status) => (
+              <option key={status} value={status}>{_.startCase(status)}</option>
+            ))}
+          </Dropdown>
+        </FormItem>
+        <Button type="submit">Submit</Button>
       </Form>
     </>
   );
@@ -58,7 +62,6 @@ const Review = ({
 Review.propTypes = {
   reviewed: PropTypes.bool.isRequired,
   additionalNotes: PropTypes.string.isRequired,
-  valid: PropTypes.bool.isRequired,
   onFormReview: PropTypes.func.isRequired,
 };
 
