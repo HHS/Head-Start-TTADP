@@ -10,14 +10,14 @@ import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
 
 // eslint-disable-next-line react/prop-types
-const Input = ({ name }) => {
+const Input = ({ name, required }) => {
   const { register } = useFormContext();
   return (
     <input
       type="radio"
       data-testid={name}
       name={name}
-      ref={register}
+      ref={register({ required })}
     />
   );
 };
@@ -43,12 +43,21 @@ const pages = [
   },
   {
     position: 3,
+    path: 'third',
+    label: 'third page',
+    review: false,
+    render: () => (
+      <Input name="third" required />
+    ),
+  },
+  {
+    position: 4,
     label: 'review page',
     path: 'review',
     review: true,
-    render: (allComplete, formData, onSubmit) => (
+    render: (formData, onFormSubmit) => (
       <div>
-        <button type="button" data-testid="review" onClick={onSubmit}>Continue</button>
+        <button type="button" data-testid="review" onClick={onFormSubmit}>Continue</button>
       </div>
     ),
   },
@@ -88,7 +97,7 @@ describe('Navigator', () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: '' }, 3));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: null }, 3));
   });
 
   it('submits data when "continuing" from the review page', async () => {
@@ -98,10 +107,17 @@ describe('Navigator', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
+  it('shows an error message if the form is not valid', async () => {
+    renderNavigator('third');
+    const button = await screen.findByRole('button', { name: 'Continue' });
+    userEvent.click(button);
+    expect(await screen.findByTestId('alert')).toHaveTextContent('Please complete all required fields before submitting this report.');
+  });
+
   it('calls onSave on navigation', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
     userEvent.click(screen.getByRole('button', { name: 'first page' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ ...initialData, second: '' }, 1));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ ...initialData, second: null }, 1));
   });
 });
