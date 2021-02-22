@@ -1,10 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
-import { File } from '../../models';
-import { uploadFile } from '../../lib/s3';
-import addToScanQueue from '../../services/scanQueue';
-
+import s3Uploader from '../../lib/s3Uploader';
+import addToScanQueue from '../../services/queue';
+import createFileMetaData, { updateStatus, fileStatuses } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
 import { userById } from '../../services/users';
@@ -21,43 +20,6 @@ const RESOURCE = 'RESOURCE';
 
 const logContext = {
   namespace,
-};
-
-const {
-  UPLOADING,
-  UPLOADED,
-  UPLOAD_FAILED,
-  QUEUED,
-  QUEUEING_FAILED,
-} = FILE_STATUSES;
-
-export const createFileMetaData = async (
-  originalFileName, s3FileName, reportId, attachmentType, fileSize) => {
-  const newFile = {
-    activityReportId: reportId,
-    originalFileName,
-    attachmentType,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  let file;
-  try {
-    file = await File.create(newFile);
-    return file.dataValues;
-  } catch (error) {
-    return error;
-  }
-};
-
-export const updateStatus = async (fileId, fileStatus) => {
-  let file;
-  try {
-    file = await File.update({ status: fileStatus }, { where: { id: fileId } });
-    return file.dataValues;
-  } catch (error) {
-    return error;
-  }
 };
 
 export default async function uploadHandler(req, res) {
