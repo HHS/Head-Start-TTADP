@@ -1,5 +1,17 @@
-.smart-hub-height-hd {
-  height: 1080px;
+.smart-hub-offset-nav {
+  margin-left: 8rem;
+}
+
+@media all and (min-width: 30em){
+  .tablet\:smart-hub-offset-nav {
+    margin-left: 11rem;
+  }
+}
+
+@media all and (min-width: 64em){
+  .desktop\:smart-hub-offset-nav {
+    margin-left: 16rem;
+  }
 }
 
 .smart-hub-bg-blue {

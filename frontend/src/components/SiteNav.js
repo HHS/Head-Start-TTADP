@@ -47,7 +47,7 @@ const SiteNav = ({
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
-    <div className="smart-hub-sitenav position-relative font-ui text-white smart-hub-bg-blue maxw-card-lg minw-15 smart-hub-height-hd minh-tablet no-print">
+    <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
       {authenticated && (
         <>
           <div className="width-full smart-hub-sitenav-separator--after">
@@ -73,7 +73,7 @@ const SiteNav = ({
                 </li>
               </ul>
             </div>
-            <div className="width-full position-absolute bottom-0 padding-bottom-6 smart-hub-sitenav-separator--before">
+            <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before">
               <ul className="add-list-reset padding-top-2 text-base-lightest">
                 {items.map((item, i) => (<li key={`smart-hub-nav__item-${i}`}>{item}</li>))}
               </ul>
