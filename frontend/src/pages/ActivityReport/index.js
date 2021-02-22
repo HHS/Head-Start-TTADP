@@ -170,7 +170,7 @@ function ActivityReport({ match, user, location }) {
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
-  const onSave = async (data, newIndex) => {
+  const onSave = async (data) => {
     const { activityRecipientType, activityRecipients } = data;
     let updatedReport = false;
     if (canWrite) {
@@ -178,16 +178,14 @@ function ActivityReport({ match, user, location }) {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
           const savedReport = await createReport({ ...data, regionId: region }, {});
           reportId.current = savedReport.id;
+          const current = pages.find((p) => p.path === currentPage);
+          updatePage(current.position);
           updatedReport = false;
         }
       } else {
         await saveReport(reportId.current, data, {});
         updatedReport = true;
       }
-    }
-
-    if (newIndex) {
-      updatePage(newIndex);
     }
     return updatedReport;
   };
@@ -218,6 +216,7 @@ function ActivityReport({ match, user, location }) {
         </Grid>
       </Grid>
       <Navigator
+        updatePage={updatePage}
         reportCreator={reportCreator}
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}
