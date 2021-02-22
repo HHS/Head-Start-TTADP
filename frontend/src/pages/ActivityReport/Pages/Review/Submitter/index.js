@@ -12,6 +12,7 @@ const Submitter = ({
   approvers,
   onFormSubmit,
   formData,
+  onSaveForm,
   pages,
 }) => {
   const {
@@ -34,6 +35,7 @@ const Submitter = ({
       <DraftReview
         submitted={submitted}
         approvers={approvers}
+        onSaveForm={onSaveForm}
         onFormSubmit={onFormSubmit}
         incompletePages={incompletePages}
       />
@@ -61,6 +63,7 @@ const Submitter = ({
 
 Submitter.propTypes = {
   submitted: PropTypes.bool.isRequired,
+  onSaveForm: PropTypes.func.isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,

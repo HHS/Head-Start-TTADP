@@ -171,7 +171,7 @@ const ActivitySummary = ({
             <MultiSelect
               name="targetPopulations"
               control={control}
-              required="Please select at least one target population"
+              required={false}
               options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
             />
           </FormItem>
