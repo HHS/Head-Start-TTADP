@@ -9,7 +9,6 @@ const Approver = ({
   onFormReview,
   reviewed,
   formData,
-  valid,
 }) => {
   const { managerNotes, additionalNotes, status } = formData;
   const review = status === REPORT_STATUSES.SUBMITTED || status === REPORT_STATUSES.NEEDS_ACTION;
@@ -20,7 +19,6 @@ const Approver = ({
       {review
       && (
       <Review
-        valid={valid}
         reviewed={reviewed}
         additionalNotes={additionalNotes}
         onFormReview={onFormReview}
@@ -40,7 +38,6 @@ const Approver = ({
 Approver.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   reviewed: PropTypes.bool.isRequired,
-  valid: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     approvingManager: PropTypes.shape({
       name: PropTypes.string,
