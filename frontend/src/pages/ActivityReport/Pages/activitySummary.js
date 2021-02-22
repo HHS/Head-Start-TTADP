@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 
 import {
-  Fieldset, Radio, Label, Grid, TextInput, Checkbox,
+  Fieldset, Radio, Grid, TextInput, Checkbox,
 } from '@trussworks/react-uswds';
 
 import DatePicker from '../../../components/DatePicker';
@@ -16,6 +16,7 @@ import {
   programTypes,
   targetPopulations,
 } from '../constants';
+import FormItem from '../../../components/FormItem';
 
 const ActivitySummary = ({
   recipients,
@@ -64,7 +65,7 @@ const ActivitySummary = ({
     }
   }, [activityRecipientType, setValue]);
 
-  const renderCheckbox = (name, value, label) => (
+  const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
       id={value}
       label={label}
@@ -73,7 +74,7 @@ const ActivitySummary = ({
       className="smart-hub--report-checkbox"
       inputRef={register({
         validate: () => (
-          getValues(name).length ? true : `${name} is required`
+          getValues(name).length ? true : requiredMessage
         ),
       })}
     />
@@ -87,84 +88,110 @@ const ActivitySummary = ({
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="smart-hub--form-section">
-          <Radio
-            id="category-grantee"
+          <FormItem
+            label="Was this activity for a grantee or non-grantee?"
             name="activityRecipientType"
-            label="Grantee"
-            value="grantee"
-            className="smart-hub--report-checkbox"
-            inputRef={register({ required: true })}
-          />
-          <Radio
-            id="category-non-grantee"
-            name="activityRecipientType"
-            label="Non-Grantee"
-            value="non-grantee"
-            className="smart-hub--report-checkbox"
-            inputRef={register({ required: true })}
-          />
+            isCheckbox
+          >
+            <Radio
+              id="category-grantee"
+              name="activityRecipientType"
+              label="Grantee"
+              value="grantee"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Please specify grantee or non-grantee' })}
+            />
+            <Radio
+              id="category-non-grantee"
+              name="activityRecipientType"
+              label="Non-Grantee"
+              value="non-grantee"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Please specify grantee or non-grantee' })}
+            />
+          </FormItem>
         </div>
         <div className="smart-hub--form-section">
-          <MultiSelect
-            name="activityRecipients"
+          <FormItem
             label={recipientLabel}
-            disabled={disableRecipients}
-            control={control}
-            valueProperty="activityRecipientId"
-            labelProperty="name"
-            simple={false}
-            options={selectedRecipients}
-          />
+            name="activityRecipients"
+          >
+            <MultiSelect
+              name="activityRecipients"
+              disabled={disableRecipients}
+              control={control}
+              valueProperty="activityRecipientId"
+              labelProperty="name"
+              simple={false}
+              required="Please select at least one grantee or non-grantee"
+              options={selectedRecipients}
+            />
+          </FormItem>
         </div>
         <div className="smart-hub--form-section">
-          <MultiSelect
-            name="collaborators"
+          <FormItem
             label="Collaborating Specialists"
-            control={control}
+            name="collaborators"
             required={false}
-            valueProperty="id"
-            labelProperty="name"
-            simple={false}
-            options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
-          />
+          >
+            <MultiSelect
+              name="collaborators"
+              control={control}
+              required={false}
+              valueProperty="id"
+              labelProperty="name"
+              simple={false}
+              options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
+            />
+          </FormItem>
         </div>
         {granteeSelected
         && (
         <div className="smart-hub--form-section">
-          <MultiSelect
-            name="programTypes"
+          <FormItem
             label="Program type(s)"
-            control={control}
-            required
-            options={programTypes.map((pt) => ({ value: pt, label: pt }))}
-          />
+            name="programTypes"
+          >
+            <MultiSelect
+              name="programTypes"
+              label="Program type(s)"
+              control={control}
+              required="Please select at least one program type"
+              options={programTypes.map((pt) => ({ value: pt, label: pt }))}
+            />
+          </FormItem>
         </div>
         )}
         <div className="smart-hub--form-section">
-          <MultiSelect
-            name="targetPopulations"
+          <FormItem
             label="Target Populations addressed. You may choose more than one."
-            control={control}
-            required
-            options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
-          />
+            name="targetPopulations"
+            required={false}
+          >
+            <MultiSelect
+              name="targetPopulations"
+              control={control}
+              required="Please select at least one target population"
+              options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
+            />
+          </FormItem>
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Reason for Activity">
         <div id="reasons" />
         <div className="smart-hub--form-section">
-          <Fieldset unstyled>
-            <legend>
-              Who requested this activity?
-              Use &quot;Regional Office&quot; for TTA not requested by grantee
-            </legend>
+          <FormItem
+            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by grantee."
+            name="requester"
+            isCheckbox
+          >
             <Radio
               id="granteeRequest"
               name="requester"
               label="Grantee"
               value="grantee"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: true })}
+              inputRef={register({ required: 'Please specify grantee or regional office' })}
             />
             <Radio
               id="requestorRegionalOffice"
@@ -172,47 +199,73 @@ const ActivitySummary = ({
               label="Regional Office"
               value="regionalOffice"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: true })}
+              inputRef={register({ required: 'Please specify grantee or regional office' })}
             />
-          </Fieldset>
+          </FormItem>
         </div>
         <div className="smart-hub--form-section">
-          <MultiSelect
+          <FormItem
+            label="Reason(s). You may choose more than one."
             name="reason"
-            label="What was the reason for this activity?"
-            control={control}
-            options={reasons.map((reason) => ({ value: reason, label: reason }))}
-          />
+          >
+            <MultiSelect
+              name="reason"
+              control={control}
+              options={reasons.map((reason) => ({ value: reason, label: reason }))}
+            />
+          </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Date and Duration">
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Activity date">
         <div id="date" />
-        <div className="smart-hub--form-section">
+        <div>
           <Grid row gap>
             <Grid col={6}>
-              <DatePicker
-                control={control}
-                maxDate={endDate}
-                name="startDate"
+              <FormItem
                 label="Start Date"
-                register={register}
-                openUp
-              />
+                name="startDate"
+              >
+                <DatePicker
+                  control={control}
+                  maxDate={endDate}
+                  name="startDate"
+                  openUp
+                />
+              </FormItem>
             </Grid>
             <Grid col={6}>
-              <DatePicker
-                control={control}
-                minDate={startDate}
-                disabled={!startDate}
-                name="endDate"
+              <FormItem
                 label="End Date"
-                register={register}
-                openUp
-              />
+                name="endDate"
+              >
+                <DatePicker
+                  control={control}
+                  minDate={startDate}
+                  disabled={!startDate}
+                  name="endDate"
+                  openUp
+                />
+              </FormItem>
             </Grid>
             <Grid col={5}>
-              <Label htmlFor="duration">Duration (round to the nearest half hour)</Label>
-              <TextInput id="duration" name="duration" type="number" inputRef={register({ required: true, valueAsNumber: true })} />
+              <FormItem
+                label="Duration"
+                name="duration"
+              >
+                <TextInput
+                  id="duration"
+                  name="duration"
+                  type="number"
+                  min={0}
+                  inputRef={
+                    register({
+                      required: 'Please enter the duration of the activity',
+                      valueAsNumber: true,
+                      min: { value: 0, message: 'Duration can not be negative' },
+                    })
+                  }
+                />
+              </FormItem>
             </Grid>
           </Grid>
         </div>
@@ -220,56 +273,82 @@ const ActivitySummary = ({
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Training or Technical Assistance">
         <div id="tta" />
         <div className="smart-hub--form-section">
-          <Fieldset unstyled>
-            <legend>What TTA was provided?</legend>
-            {renderCheckbox('ttaType', 'training', 'Training')}
-            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance')}
-          </Fieldset>
+          <FormItem
+            label="What TTA was provided"
+            name="ttaType"
+            isCheckbox
+          >
+            {renderCheckbox('ttaType', 'training', 'Training', 'Please specify the type of TTA provided')}
+            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
+          </FormItem>
         </div>
         <div className="smart-hub--form-section">
-          <Fieldset unstyled>
-            <legend>How was this activity conducted? (select at least one)</legend>
-            <div className="smart-hub--form-section">
-              <Radio
-                id="delivery-method-virtual"
-                name="deliveryMethod"
-                label="Virtual"
-                value="virtual"
-                className="smart-hub--report-checkbox"
-                inputRef={register({ required: true })}
-              />
-              <Radio
-                id="delivery-method-in-person"
-                name="deliveryMethod"
-                label="In Person"
-                value="in-person"
-                className="smart-hub--report-checkbox"
-                inputRef={register({ required: true })}
-              />
-            </div>
-          </Fieldset>
+          <FormItem
+            label="How was the activity conducted?"
+            name="deliveryMethod"
+            isCheckbox
+          >
+            <Radio
+              id="delivery-method-virtual"
+              name="deliveryMethod"
+              label="Virtual"
+              value="virtual"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Please specify how the activity was conducted' })}
+            />
+            <Radio
+              id="delivery-method-in-person"
+              name="deliveryMethod"
+              label="In Person"
+              value="in-person"
+              className="smart-hub--report-checkbox"
+              inputRef={register({ required: 'Please specify how the activity was conducted' })}
+            />
+          </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Other participants">
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Participants">
         <div id="other-participants" />
         <div className="smart-hub--form-section">
-          <MultiSelect
-            name="participants"
+          <FormItem
             label={participantsLabel}
-            control={control}
-            options={
+            name="participants"
+          >
+            <MultiSelect
+              name="participants"
+              control={control}
+              options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
-          />
+            />
+          </FormItem>
         </div>
-        <div className="smart-hub--form-section">
-          <Label htmlFor="numberOfParticipants">Number of grantee participants involved</Label>
-          <TextInput
-            id="numberOfParticipants"
+        <div>
+          <FormItem
+            label="Number of participants involved"
             name="numberOfParticipants"
-            type="number"
-            inputRef={register({ required: true, valueAsNumber: true })}
-          />
+          >
+            <Grid row gap>
+              <Grid col={5}>
+                <TextInput
+                  id="numberOfParticipants"
+                  name="numberOfParticipants"
+                  type="number"
+                  min={1}
+                  inputRef={
+                    register({
+                      required: 'Please enter the number of participants involved in the activity',
+                      valueAsNumber: true,
+                      min: {
+                        value: 1,
+                        message: 'Number of participants can not be zero or negative',
+                      },
+                    })
+                  }
+                />
+              </Grid>
+            </Grid>
+          </FormItem>
         </div>
       </Fieldset>
     </>
