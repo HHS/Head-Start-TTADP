@@ -10,6 +10,7 @@ import {
 
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
+import FormItem from '../../../components/FormItem';
 import { topics } from '../constants';
 
 const TopicsResources = ({
@@ -24,18 +25,24 @@ const TopicsResources = ({
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
         <div id="topics-covered" />
         <div className="smart-hub--form-section">
-          <MultiSelect
-            name="topics"
+          <FormItem
             label="Topic(s) covered. You may choose more than one."
-            control={control}
-            placeholder="Select a topic..."
-            options={
-                topics.map((topic) => ({ value: topic, label: topic }))
-              }
-          />
+            name="topics"
+          >
+            <MultiSelect
+              name="topics"
+              label="Topic(s) covered. You may choose more than one."
+              control={control}
+              placeholder="Select a topic..."
+              required="Please select at least one topic"
+              options={
+              topics.map((topic) => ({ value: topic, label: topic }))
+            }
+            />
+          </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Resources">
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="OHS / ECLKC resources">
         <div id="resources" />
         <div className="smart-hub--form-section">
           <Label htmlFor="resourcesUsed">
@@ -47,9 +54,11 @@ const TopicsResources = ({
             id="resourcesUsed"
             name="resourcesUsed"
             type="text"
-            inputRef={register({ required: true })}
+            inputRef={register()}
           />
         </div>
+      </Fieldset>
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Upload resources">
         <div className="smart-hub--form-section">
           <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
           <Controller
@@ -64,7 +73,7 @@ const TopicsResources = ({
       </Fieldset>
       <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
         <div id="attachments" />
-        <Label htmlFor="attachments">Upload any resources used that are not available through ECLKC</Label>
+        <Label htmlFor="attachments">Agendas, service plans, sign-in sheets, etc.</Label>
         <Controller
           name="attachments"
           defaultValue={[]}
