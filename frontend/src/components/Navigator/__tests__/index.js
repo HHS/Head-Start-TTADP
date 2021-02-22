@@ -110,7 +110,7 @@ describe('Navigator', () => {
 
   it('shows an error message if the form is not valid', async () => {
     renderNavigator('third');
-    const button = await screen.findByRole('button', { name: 'Continue' });
+    const button = await screen.findByRole('button', { name: 'Save & Continue' });
     userEvent.click(button);
     expect(await screen.findByTestId('alert')).toHaveTextContent('Please complete all required fields before submitting this report.');
   });
