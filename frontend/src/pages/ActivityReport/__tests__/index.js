@@ -67,6 +67,13 @@ describe('ActivityReport', () => {
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
   });
 
+  it('handles failures to download a report', async () => {
+    fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
+    renderActivityReport('1', 'activity-summary', true);
+    const alert = await screen.findByTestId('alert');
+    expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
   describe('last saved time', () => {
     it('is shown if history.state.showLastUpdatedTime is true', async () => {
       const data = formData();
@@ -91,7 +98,7 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeNull());
     const nonGrantee = within(information).getByLabelText('Grantee');
     fireEvent.click(nonGrantee);
-    await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeVisible());
+    await waitFor(() => expect(screen.queryByLabelText('Program type(s) (Required)')).toBeVisible());
   });
 
   it('defaults to activity summary if no page is in the url', async () => {
@@ -115,7 +122,7 @@ describe('ActivityReport', () => {
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const grantee = within(information).getByLabelText('Grantee');
       fireEvent.click(grantee);
-      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
       await reactSelectEvent.select(granteeSelectbox, ['grant']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
@@ -141,7 +148,7 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const grantee = within(information).getByLabelText('Grantee');
         fireEvent.click(grantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('grant'))).toBeVisible();
       });
@@ -151,7 +158,7 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
       });
@@ -159,41 +166,13 @@ describe('ActivityReport', () => {
 
     it('clears selection when non-grantee is selected', async () => {
       renderActivityReport('new');
-      const enabled = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+      const enabled = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
       expect(enabled).toBeDisabled();
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const grantee = within(information).getByLabelText('Grantee');
       fireEvent.click(grantee);
-      const disabled = await screen.findByRole('textbox', { name: 'Grantee name(s)' });
+      const disabled = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
       expect(disabled).not.toBeDisabled();
-    });
-  });
-
-  describe('method checkboxes', () => {
-    it('require a single selection for the form to be valid', async () => {
-      const data = formData();
-      delete data.deliveryMethod;
-      fetchMock.get('/api/activity-reports/1', data);
-
-      renderActivityReport(1);
-      expect(await screen.findByText('Save & Continue')).toBeDisabled();
-      const box = await screen.findByLabelText('Virtual');
-      fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Save & Continue')).not.toBeDisabled());
-    });
-  });
-
-  describe('tta checkboxes', () => {
-    it('requires a single selection for the form to be valid', async () => {
-      const data = formData();
-      delete data.ttaType;
-      fetchMock.get('/api/activity-reports/1', data);
-
-      renderActivityReport(1);
-      expect(await screen.findByText('Save & Continue')).toBeDisabled();
-      const box = await screen.findByLabelText('Training');
-      fireEvent.click(box);
-      await waitFor(() => expect(screen.getByText('Save & Continue')).not.toBeDisabled());
     });
   });
 });

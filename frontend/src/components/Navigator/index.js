@@ -6,9 +6,13 @@
 */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Form, Button, Grid } from '@trussworks/react-uswds';
+import {
+  Form,
+  Button,
+  Grid,
+  Alert,
+} from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
@@ -40,9 +44,7 @@ function Navigator({
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const { pageState } = formData;
-
   const page = pages.find((p) => p.path === currentPage);
-  const allComplete = _.every(pageState, (state) => state === COMPLETE);
 
   const hookForm = useForm({
     mode: 'onChange',
@@ -56,7 +58,9 @@ function Navigator({
     reset,
   } = hookForm;
 
-  const { isDirty, isValid } = formState;
+  const { isDirty, errors } = formState;
+
+  const hasErrors = Object.keys(errors).length > 0;
 
   const newNavigatorState = (completed) => {
     if (page.review) {
@@ -118,6 +122,7 @@ function Navigator({
       onNavigation: () => onUpdatePage(p.position),
       state,
       current,
+      review: p.review,
     };
   });
 
@@ -137,13 +142,13 @@ function Navigator({
           <div id="navigator-form">
             {page.review
             && page.render(
-              allComplete,
               formData,
               onFormSubmit,
               additionalData,
               onReview,
               approvingManager,
               onSaveForm,
+              navigatorPages,
               reportCreator,
             )}
             {!page.review
@@ -152,6 +157,12 @@ function Navigator({
                 <NavigatorHeader
                   label={page.label}
                 />
+                {hasErrors
+                && (
+                  <Alert type="error" slim>
+                    Please complete all required fields before submitting this report.
+                  </Alert>
+                )}
                 <Form
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
@@ -160,7 +171,7 @@ function Navigator({
                   <div className="display-flex">
                     <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
                     <Button type="button" onClick={() => { onSaveForm(false); }}>Save draft</Button>
-                    <Button className="margin-left-auto margin-right-0" type="submit" disabled={!isValid}>Save & Continue</Button>
+                    <Button className="margin-left-auto margin-right-0" type="submit">Save & Continue</Button>
                   </div>
                 </Form>
               </Container>

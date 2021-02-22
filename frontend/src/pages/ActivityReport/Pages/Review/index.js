@@ -4,7 +4,6 @@ import {
   Alert, Accordion,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
 
 import Container from '../../../../components/Container';
 import Submitter from './Submitter';
@@ -14,7 +13,6 @@ import './index.css';
 import { REPORT_STATUSES } from '../../../../Constants';
 
 const ReviewSubmit = ({
-  allComplete,
   onSubmit,
   onReview,
   reviewItems,
@@ -23,11 +21,9 @@ const ReviewSubmit = ({
   reportCreator,
   formData,
   onSaveForm,
+  pages,
 }) => {
-  const { formState } = useFormContext();
   const { additionalNotes, status } = formData;
-  const { isValid } = formState;
-  const valid = allComplete && isValid;
 
   const [submitted, updateSubmitted] = useState(status === REPORT_STATUSES.SUBMITTED);
   const [reviewed, updateReviewed] = useState(false);
@@ -75,9 +71,8 @@ const ReviewSubmit = ({
         <Submitter
           status={status}
           submitted={submitted}
-          allComplete={allComplete}
           approvers={approvers}
-          valid={valid}
+          pages={pages}
           onFormSubmit={onFormSubmit}
           formData={formData}
           onSaveForm={onSaveForm}
@@ -89,7 +84,6 @@ const ReviewSubmit = ({
           status={status}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
-          valid={valid}
           onFormReview={onFormReview}
           formData={formData}
         />
@@ -107,7 +101,6 @@ ReviewSubmit.propTypes = {
       name: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  allComplete: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
@@ -127,6 +120,11 @@ ReviewSubmit.propTypes = {
       content: PropTypes.node.isRequired,
     }),
   ).isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    review: PropTypes.bool,
+    state: PropTypes.string,
+    label: PropTypes.string,
+  })).isRequired,
 };
 
 export default ReviewSubmit;
