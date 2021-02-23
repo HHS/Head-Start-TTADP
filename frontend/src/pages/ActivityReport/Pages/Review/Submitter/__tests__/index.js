@@ -10,7 +10,7 @@ import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
-  submitted, onFormSubmit, formData, pages,
+  submitted, onFormSubmit, formData, pages, onSave,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -24,6 +24,7 @@ const RenderSubmitter = ({
         onFormSubmit={onFormSubmit}
         approvers={[{ name: 'test', id: 1 }]}
         formData={formData}
+        onSaveForm={onSave}
         pages={pages}
       />
     </FormProvider>
@@ -42,7 +43,7 @@ const incompletePages = [{
   review: false,
 }];
 
-const renderReview = (status, submitted, onFormSubmit, complete = true) => {
+const renderReview = (status, submitted, onFormSubmit, complete = true, onSave = () => {}) => {
   const formData = {
     approvingManager: { name: 'name' },
     approvingManagerId: 1,
@@ -56,6 +57,7 @@ const renderReview = (status, submitted, onFormSubmit, complete = true) => {
       submitted={submitted}
       onFormSubmit={onFormSubmit}
       formData={formData}
+      onSave={onSave}
       pages={pages}
     />,
   );
@@ -71,7 +73,7 @@ describe('Submitter review page', () => {
     it('allows the author to submit for review', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.DRAFT, false, mockSubmit);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
@@ -91,7 +93,7 @@ describe('Submitter review page', () => {
     it('fails to submit if there are pages that have not been completed', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.DRAFT, false, mockSubmit, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });
@@ -100,6 +102,14 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, true, () => {});
       const alert = await screen.findByTestId('alert');
       expect(alert.textContent).toContain('Success');
+    });
+
+    it('a draft can be saved', async () => {
+      const mockSave = jest.fn();
+      renderReview(REPORT_STATUSES.DRAFT, false, () => {}, true, mockSave);
+      const button = await screen.findByRole('button', { name: 'Save Draft' });
+      userEvent.click(button);
+      await waitFor(() => expect(mockSave).toHaveBeenCalled());
     });
   });
 
