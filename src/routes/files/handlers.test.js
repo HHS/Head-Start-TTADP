@@ -6,7 +6,7 @@ import db, {
   Permission,
 } from '../../models';
 import app from '../../app';
-import s3Uploader from '../../lib/s3Uploader';
+import s3Uploader, { deleteFileFromS3 } from '../../lib/s3Uploader';
 import * as queue from '../../services/queue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
@@ -108,6 +108,18 @@ describe('File Upload', () => {
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
       expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
+    });
+    it('deletes a file', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      const file = await File.findOne({ where: { id: fileId } });
+      await request(app)
+        .delete(`/api/files/${fileId}`)
+        .expect(200);
+      expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
+      const noFile = await File.findOne({ where: { id: fileId } });
+      expect(noFile).toBe(null);
     });
   });
 

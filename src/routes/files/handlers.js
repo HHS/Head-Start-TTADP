@@ -29,6 +29,7 @@ export const deleteHandler = async (req, res) => {
     const file = await getFileById(fileId);
     await deleteFileFromS3(file.key);
     await deleteFile(fileId);
+    res.status(200).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
   }
