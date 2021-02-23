@@ -13,7 +13,7 @@ const labelPropTypes = {
   children: PropTypes.node.isRequired,
 };
 
-function Checkbox({ label, children }) {
+function FieldSetWrapper({ label, children }) {
   return (
     <Fieldset unstyled>
       <legend>{label}</legend>
@@ -22,9 +22,9 @@ function Checkbox({ label, children }) {
   );
 }
 
-Checkbox.propTypes = labelPropTypes;
+FieldSetWrapper.propTypes = labelPropTypes;
 
-function Field({ label, children }) {
+function LabelWrapper({ label, children }) {
   return (
     <Label>
       {label}
@@ -33,10 +33,10 @@ function Field({ label, children }) {
   );
 }
 
-Field.propTypes = labelPropTypes;
+LabelWrapper.propTypes = labelPropTypes;
 
 function FormItem({
-  label, children, required, name, isCheckbox,
+  label, children, required, name, fieldSetWrapper,
 }) {
   const { formState: { errors } } = useFormContext();
   const fieldErrors = errors[name];
@@ -47,7 +47,7 @@ function FormItem({
     </>
   );
 
-  const LabelType = isCheckbox ? Checkbox : Field;
+  const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper;
 
   return (
     <FormGroup error={fieldErrors}>
@@ -67,13 +67,13 @@ FormItem.propTypes = {
   label: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
-  isCheckbox: PropTypes.bool,
+  fieldSetWrapper: PropTypes.bool,
   required: PropTypes.bool,
 };
 
 FormItem.defaultProps = {
   required: true,
-  isCheckbox: false,
+  fieldSetWrapper: false,
 };
 
 export default FormItem;

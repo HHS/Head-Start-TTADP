@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
@@ -17,11 +18,9 @@ const RenderGoal = ({ availableGoals, selectedGoals }) => {
   });
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <GoalPicker
         availableGoals={availableGoals}
-        selectedGoals={selectedGoals}
       />
       <div data-testid="valid">{ hookForm.formState.isValid ? 'true' : 'false' }</div>
     </FormProvider>
@@ -29,6 +28,35 @@ const RenderGoal = ({ availableGoals, selectedGoals }) => {
 };
 
 describe('GoalPicker', () => {
+  describe('new goals', () => {
+    beforeEach(async () => {
+      const availableGoals = [{ id: 1, name: 'label' }];
+      const selectedGoals = [];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const input = await screen.findByRole('textbox', { name: 'Create a new goal' });
+      userEvent.type(input, 'test');
+      const button = await screen.findByRole('button', { name: 'Save Goal' });
+      userEvent.click(button);
+    });
+
+    it('are shown in the display section', async () => {
+      expect(await screen.findByText(withText('Goal: test'))).toBeVisible();
+    });
+
+    it('can be unselected', async () => {
+      const goal = await screen.findByLabelText('remove goal');
+      userEvent.click(goal);
+      expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
+    });
+  });
+
   describe('selected goals', () => {
     it('can be removed', async () => {
       const availableGoals = [];
