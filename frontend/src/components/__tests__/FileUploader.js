@@ -66,11 +66,11 @@ describe('FileUploader', () => {
 
   it('files can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{id: 1, originalFileName: 'fileOne'}, {id: 2, originalFileName: 'fileTwo'}]} />);
+    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
 
-    expect(mockOnChange).toHaveBeenCalledWith([{id: 1, originalFileName: 'fileOne'}]);
+    expect(mockOnChange).toHaveBeenCalledWith([{ id: 1, originalFileName: 'fileOne' }]);
   });
   describe('getStatus tests', () => {
     it('returns the correct statuses', () => {
