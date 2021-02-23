@@ -26,9 +26,9 @@ delete:
   parameters:
     - in: path
       name: fileId
-      schema:
-        type: integer
       required: true
+      schema:
+        type: number
       description: Numeric ID of the file to delete
   responses:
     200:
