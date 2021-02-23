@@ -52,7 +52,7 @@ function Dropzone(props) {
       onChange(values);
     });
   };
-  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .zip' });
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip' });
 
   return (
     <div
@@ -146,12 +146,11 @@ const FileUploader = ({
     onChange([...files, ...newFiles]);
   };
 
-  const onFileRemoved = async(removedFileIndex) => {
-    const file = files[removedFileIndex]
+  const onFileRemoved = async (removedFileIndex) => {
+    const file = files[removedFileIndex];
     const remainingFiles = files.filter((f) => f.id !== file.id);
-    console.log(remainingFiles)
     onChange(remainingFiles);
-    await deleteFile(file.id) 
+    await deleteFile(file.id);
   };
 
   return (
