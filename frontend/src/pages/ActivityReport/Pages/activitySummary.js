@@ -91,7 +91,7 @@ const ActivitySummary = ({
           <FormItem
             label="Was this activity for a grantee or non-grantee?"
             name="activityRecipientType"
-            isCheckbox
+            fieldSetWrapper
           >
             <Radio
               id="category-grantee"
@@ -183,7 +183,7 @@ const ActivitySummary = ({
           <FormItem
             label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by grantee."
             name="requester"
-            isCheckbox
+            fieldSetWrapper
           >
             <Radio
               id="granteeRequest"
@@ -276,7 +276,7 @@ const ActivitySummary = ({
           <FormItem
             label="What TTA was provided"
             name="ttaType"
-            isCheckbox
+            fieldSetWrapper
           >
             {renderCheckbox('ttaType', 'training', 'Training', 'Please specify the type of TTA provided')}
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
@@ -286,7 +286,7 @@ const ActivitySummary = ({
           <FormItem
             label="How was the activity conducted?"
             name="deliveryMethod"
-            isCheckbox
+            fieldSetWrapper
           >
             <Radio
               id="delivery-method-virtual"
