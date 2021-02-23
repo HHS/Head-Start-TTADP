@@ -44,7 +44,7 @@ describe('Objective', () => {
       const save = await screen.findByText('Save Objective');
       expect(save).toBeVisible();
 
-      const title = await screen.findByLabelText('Objective');
+      const title = await screen.findByLabelText('Objective (Required)');
       userEvent.type(title, 'test');
 
       userEvent.click(save);

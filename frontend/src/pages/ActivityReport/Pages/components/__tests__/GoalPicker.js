@@ -51,7 +51,7 @@ describe('GoalPicker', () => {
     });
 
     it('can be unselected', async () => {
-      const goal = await screen.findByLabelText('remove goal');
+      const goal = await screen.findByLabelText('remove goal 1');
       userEvent.click(goal);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
     });
@@ -112,11 +112,11 @@ describe('GoalPicker', () => {
   });
 
   describe('goals are valid', () => {
-    it('if there is at least one goal and every goal has at least one objective that and no objectives are being edited', async () => {
+    it('if there is at least one goal and every goal has at least one objective that and all objectives have a title and ttaProvided', async () => {
       render(
         <RenderGoal
           availableGoals={[{ id: 1, name: 'label' }]}
-          selectedGoals={[{ id: 1, name: 'label', objectives: [{ edit: false }] }]}
+          selectedGoals={[{ id: 1, name: 'label', objectives: [{ ttaProvided: 'test', title: 'title', status: 'Not Started' }] }]}
         />,
       );
       const valid = await screen.findByTestId('valid');

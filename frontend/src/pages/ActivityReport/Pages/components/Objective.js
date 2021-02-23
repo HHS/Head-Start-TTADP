@@ -8,6 +8,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
+import FormItem from '../../../../components/FormItem';
 import ContextMenu from '../../../../components/ContextMenu';
 import './Objective.css';
 
@@ -30,19 +31,14 @@ const Objective = ({
     status,
   } = watch(objectPath, {});
 
-  const defaultEdit = !(title && ttaProvided && status);
-  const [showEdit, updateShowEdit] = useState(defaultEdit);
+  const defaultShowEdit = !(title && ttaProvided && status);
+  const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
   const updateEdit = (isEditing) => {
     if (isEditing || (title && ttaProvided && status)) {
+      trigger('goals');
       updateShowEdit(isEditing);
-      // FIXME This trigger causes the goals field to be validated.
-      // This is temporary while we wait for more report changes to make it
-      // to main. Without this trigger the continue button is always disabled
-      // (unless you change pages and come back to this page). In the future
-      // the continue button won't be disabled at all and the validation of
-      // this field will happen on submit, but until that happens we force
-      // the revalidation here so the form isn't annoying to use in the meantime.
+    } else {
       trigger('goals');
     }
   };
@@ -56,39 +52,53 @@ const Objective = ({
               <FontAwesomeIcon color="black" icon={faTimes} />
             </Button>
           </div>
-          <Controller
-            control={control}
+          <FormItem
+            label="Objective"
             name={`${objectPath}.title`}
-            defaultValue={title || ''}
-            render={({ value, onChange }) => (
-              <Label className="margin-top-0">
-                Objective
+            className="margin-top-0"
+          >
+            <Controller
+              rules={{
+                required: 'Please specify a title for this objective',
+              }}
+              control={control}
+              name={`${objectPath}.title`}
+              defaultValue={title || ''}
+              render={({ value, onChange }) => (
                 <TextInput
                   aria-label={`title for objective ${objectiveAriaLabel}`}
                   onChange={(e) => onChange(e.target.value)}
                   value={value}
                 />
-              </Label>
-            )}
-          />
-          <Controller
-            control={control}
+              )}
+            />
+          </FormItem>
+          <FormItem
+            label="TTA Provided"
             name={`${objectPath}.ttaProvided`}
-            defaultValue={ttaProvided || ''}
-            render={({ value, onChange }) => (
-              <Label>
-                TTA Provided
+          >
+            <Controller
+              rules={{
+                required: 'Please specify the TTA Provided for this objective',
+              }}
+              control={control}
+              name={`${objectPath}.ttaProvided`}
+              defaultValue={ttaProvided || ''}
+              render={({ value, onChange }) => (
                 <TextInput
                   aria-label={`TTA provided for objective ${objectiveAriaLabel}`}
                   onChange={(e) => onChange(e.target.value)}
                   value={value}
                 />
-              </Label>
-            )}
-          />
+              )}
+            />
+          </FormItem>
           <Grid row gap>
             <Grid col={4}>
               <Controller
+                rules={{
+                  required: true,
+                }}
                 control={control}
                 name={`${objectPath}.status`}
                 defaultValue={status || 'Not Started'}

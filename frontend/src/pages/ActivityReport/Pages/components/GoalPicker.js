@@ -21,7 +21,7 @@ const GoalPicker = ({
   availableGoals,
 }) => {
   const {
-    watch, control, setValue, trigger,
+    watch, control, setValue,
   } = useFormContext();
   const [newGoal, updateNewGoal] = useState('');
   const [newAvailableGoals, updateNewAvailableGoals] = useState([]);
@@ -31,7 +31,6 @@ const GoalPicker = ({
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
     updateNewAvailableGoals((goals) => goals.filter((goal) => goal !== id));
     setValue('goals', newGoals);
-    trigger('goals');
   };
 
   const onNewGoalChange = (e) => {
@@ -42,7 +41,6 @@ const GoalPicker = ({
     if (newGoal !== '') {
       const goal = { id: newGoal, name: newGoal };
       setValue('goals', [...selectedGoals, goal]);
-      trigger('goals');
       updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
       updateNewGoal('');
     }
@@ -66,7 +64,6 @@ const GoalPicker = ({
             valueProperty="id"
             labelProperty="name"
             simple={false}
-            required="Please select an existing goal or create a new goal"
             components={components}
             rules={{
               validate: (goals) => {
@@ -75,13 +72,13 @@ const GoalPicker = ({
                 }
 
                 const unfinishedGoals = goals.some((goal) => {
-                // Every goal must have an objective for the `goals` field has unfinished goals
+                  // Every goal must have an objective for the `goals` field has unfinished goals
                   if (goal.objectives && goal.objectives.length > 0) {
-                  // If any of the objectives for this goal are being edited the `goals` field has
-                  // unfinished goals
-
-                    const objectivesEditing = goal.objectives.some((objective) => objective.edit);
-                    if (!objectivesEditing) {
+                    // Every objective for this goal has to have a title and ttaProvided
+                    const objectivesUnfinished = goal.objectives.some(
+                      (objective) => !(objective.title && objective.ttaProvided),
+                    );
+                    if (!objectivesUnfinished) {
                       return false;
                     }
                   }
