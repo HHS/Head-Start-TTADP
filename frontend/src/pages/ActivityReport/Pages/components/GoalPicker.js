@@ -98,7 +98,6 @@ const GoalPicker = ({
 };
 
 GoalPicker.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
   availableGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
