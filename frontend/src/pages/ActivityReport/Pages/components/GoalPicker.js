@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
+import {
+  Button, Label, TextInput,
+} from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 
+import FormItem from '../../../../components/FormItem';
 import Goal from './Goal';
 import MultiSelect from '../../../../components/MultiSelect';
 import Option from './GoalOption';
@@ -13,81 +18,113 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, selectedGoals,
+  availableGoals,
 }) => {
-  const { setValue, control } = useFormContext();
+  const {
+    watch, control, setValue, trigger,
+  } = useFormContext();
+  const [newGoal, updateNewGoal] = useState('');
+  const [newAvailableGoals, updateNewAvailableGoals] = useState([]);
+  const selectedGoals = watch('goals');
+
   const onRemove = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
+    updateNewAvailableGoals((goals) => goals.filter((goal) => goal !== id));
     setValue('goals', newGoals);
+    trigger('goals');
   };
 
-  return (
-    <>
-      <div>
-        <MultiSelect
-          name="goals"
-          label="Goal(s) for this activity. select an established goal or create a new one."
-          control={control}
-          valueProperty="id"
-          labelProperty="name"
-          simple={false}
-          required={false}
-          components={components}
-          rules={{
-            validate: (goals) => {
-              if (goals.length < 1) {
-                return 'Every report must have at least one goal';
-              }
+  const onNewGoalChange = (e) => {
+    updateNewGoal(e.target.value);
+  };
 
-              const unfinishedGoals = goals.some((goal) => {
+  const addNewGoal = () => {
+    if (newGoal !== '') {
+      const goal = { id: newGoal, name: newGoal };
+      setValue('goals', [...selectedGoals, goal]);
+      trigger('goals');
+      updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
+      updateNewGoal('');
+    }
+  };
+
+  const allAvailableGoals = [...availableGoals, ...newAvailableGoals, ...selectedGoals];
+  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
+
+  return (
+    <div className="smart-hub--form-section">
+      <FormItem
+        label="You must select an established goal(s) OR create a new goal for this activity."
+        name="goals"
+        fieldSetWrapper
+      >
+        <Label>
+          Select an established goal(s)
+          <MultiSelect
+            name="goals"
+            control={control}
+            valueProperty="id"
+            labelProperty="name"
+            simple={false}
+            required="Please select an existing goal or create a new goal"
+            components={components}
+            rules={{
+              validate: (goals) => {
+                if (goals.length < 1) {
+                  return 'Every report must have at least one goal';
+                }
+
+                const unfinishedGoals = goals.some((goal) => {
                 // Every goal must have an objective for the `goals` field has unfinished goals
-                if (goal.objectives && goal.objectives.length > 0) {
+                  if (goal.objectives && goal.objectives.length > 0) {
                   // If any of the objectives for this goal are being edited the `goals` field has
                   // unfinished goals
 
-                  const objectivesEditing = goal.objectives.some((objective) => objective.edit);
-                  if (!objectivesEditing) {
-                    return false;
+                    const objectivesEditing = goal.objectives.some((objective) => objective.edit);
+                    if (!objectivesEditing) {
+                      return false;
+                    }
                   }
-                }
-                // return true, this goal is unfinished
-                return true;
-              });
-              return unfinishedGoals ? 'Every goal requires at least one objective' : true;
-            },
-          }}
-          options={availableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
-          multiSelectOptions={{
-            isClearable: false,
-            closeMenuOnSelect: false,
-            controlShouldRenderValue: false,
-            hideSelectedOptions: false,
-          }}
-        />
-      </div>
-      <div>
-        {selectedGoals.map((goal, index) => (
-          <Goal
-            key={goal.id}
-            goalIndex={index}
-            id={goal.id}
-            onRemove={onRemove}
-            name={goal.name}
+                  // return true, this goal is unfinished
+                  return true;
+                });
+                return unfinishedGoals ? 'Every goal requires at least one objective' : true;
+              },
+            }}
+            options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
+            multiSelectOptions={{
+              isClearable: false,
+              closeMenuOnSelect: false,
+              controlShouldRenderValue: false,
+              hideSelectedOptions: false,
+            }}
           />
-        ))}
-      </div>
-    </>
+        </Label>
+        <Label>
+          Create a new goal
+          <TextInput value={newGoal} onChange={onNewGoalChange} />
+        </Label>
+        <Button type="button" onClick={addNewGoal}>
+          Save Goal
+        </Button>
+        <div>
+          {selectedGoals.map((goal, index) => (
+            <Goal
+              key={goal.id}
+              goalIndex={index}
+              id={goal.id}
+              onRemove={onRemove}
+              name={goal.name}
+            />
+          ))}
+        </div>
+      </FormItem>
+    </div>
   );
 };
 
 GoalPicker.propTypes = {
   availableGoals: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.number,
-    }),
-  ).isRequired,
-  selectedGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
       value: PropTypes.number,

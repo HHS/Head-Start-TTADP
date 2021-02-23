@@ -15,11 +15,9 @@ const GoalsObjectives = ({
 }) => {
   const {
     register,
-    watch,
   } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [loading, updateLoading] = useState(true);
-  const goals = watch('goals', []);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
@@ -52,7 +50,6 @@ const GoalsObjectives = ({
           <div id="goals-and-objectives" />
           <GoalPicker
             availableGoals={availableGoals}
-            selectedGoals={goals}
           />
         </Fieldset>
         )}
