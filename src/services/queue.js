@@ -1,9 +1,37 @@
 import Queue from 'bull';
 
-const REDIS_PORT = process.env.REDIS_PORT || 6379;
-const { REDIS_HOST, REDIS_PASS } = process.env;
+const generateRedisConfig = () => {
+  if (process.env.VCAP_SERVICES) {
+    const {
+      'aws-elasticache-redis': [{
+        credentials: {
+          host,
+          port,
+          password,
+        },
+      }],
+    } = JSON.parse(process.env.VCAP_SERVICES);
+    return {
+      host,
+      port,
+      password,
+    };
+  }
+  const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
+  return {
+    host,
+    port: (process.env.REDIS_PORT || 6379),
+    password,
+  };
+};
 
-export const scanQueue = new Queue('scan', `redis://${REDIS_HOST}:${REDIS_PORT}`, { redis: { password: REDIS_PASS } });
+const {
+  host,
+  port,
+  password,
+} = generateRedisConfig();
+
+export const scanQueue = new Queue('scan', `redis://${host}:${port}`, { redis: { password } });
 
 export default async function addToScanQueue(fileKey) {
   const retries = process.env.FILE_SCAN_RETRIES || 5;
