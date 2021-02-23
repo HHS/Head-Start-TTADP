@@ -29,7 +29,7 @@ const pages = [
     label: 'first page',
     review: false,
     render: () => (
-      <Input name="first" />
+      <Input name="first" required />
     ),
   },
   {
@@ -38,7 +38,7 @@ const pages = [
     label: 'second page',
     review: false,
     render: () => (
-      <Input name="second" />
+      <Input name="second" required />
     ),
   },
   {
@@ -108,26 +108,19 @@ describe('Navigator', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
-  it('shows an error message if the form is not valid', async () => {
-    renderNavigator('third');
-    const button = await screen.findByRole('button', { name: 'Save & Continue' });
-    userEvent.click(button);
-    expect(await screen.findByTestId('alert')).toHaveTextContent('Please complete all required fields before submitting this report.');
-  });
-
   it('onBack calls onUpdatePage', async () => {
     const updatePage = jest.fn();
     renderNavigator('third', () => {}, () => {}, updatePage);
     const button = await screen.findByRole('button', { name: 'Back' });
     userEvent.click(button);
-    expect(updatePage).toHaveBeenCalledWith(2);
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
   });
 
   it('calls onSave on navigation', async () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
     renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
-    userEvent.click(screen.getByRole('button', { name: 'first page' }));
+    userEvent.click(await screen.findByRole('button', { name: 'first page' }));
     await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
