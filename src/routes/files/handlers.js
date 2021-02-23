@@ -2,8 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { File } from '../../models';
-import s3Uploader from '../../lib/s3Uploader';
-import addToScanQueue from '../../services/queue';
+import { uploadFile } from '../../lib/s3';
+import addToScanQueue from '../../services/scanQueue';
 
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
@@ -123,7 +123,7 @@ export default async function uploadHandler(req, res) {
       return;
     }
     try {
-      await s3Uploader(buffer, fileName, type);
+      await uploadFile(buffer, fileName, type);
       await updateStatus(metadata.id, fileStatuses.uploaded);
       res.status(200).send({ id: metadata.id });
     } catch (err) {

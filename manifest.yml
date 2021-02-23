@@ -2,7 +2,7 @@
 applications:
   - name: tta-smarthub-((env))
     instances: ((instances))
-    command: yarn start
+    command: yarn start:web
     buildpacks:
       - nodejs_buildpack
     env:

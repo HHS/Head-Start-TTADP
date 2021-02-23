@@ -1,8 +1,8 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const https = require('https');
-const { downloadFile } = require('./s3');
-const { File } = require('./models');
+const { downloadFile } = require('../lib/s3');
+const { File } = require('../models');
 
 /**
  * ENUM Values from the Files.status column of the DB
