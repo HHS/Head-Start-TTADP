@@ -104,7 +104,7 @@ describe('File Upload', () => {
       const file = await File.findOne({ where: { id: fileId } });
       const uuid = file.dataValues.key.slice(0, -4);
       expect(file.dataValues.id).toBe(fileId);
-      expect(file.dataValues.status).toBe('UPLOADED');
+      expect(file.dataValues.status).not.toBe(null);
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
       expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
