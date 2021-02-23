@@ -28,6 +28,7 @@ const formData = () => ({
   numberOfParticipants: '1',
   reason: ['reason 1'],
   activityRecipientType: 'grantee',
+  collaborators: [],
   participants: ['CEO / CFO / Executive'],
   programTypes: ['type 1'],
   requester: 'grantee',

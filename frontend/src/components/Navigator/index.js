@@ -4,7 +4,7 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { FormProvider, useForm } from 'react-hook-form';
 import {
@@ -43,6 +43,7 @@ function Navigator({
 }) {
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
+  const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const { pageState } = formData;
   const page = pages.find((p) => p.path === currentPage);
 
@@ -53,22 +54,27 @@ function Navigator({
 
   const {
     formState,
-    handleSubmit,
     getValues,
     reset,
+    trigger,
   } = hookForm;
 
-  const { isDirty, errors } = formState;
-
+  const { isDirty, errors, isValid } = formState;
   const hasErrors = Object.keys(errors).length > 0;
 
-  const newNavigatorState = (completed) => {
+  useEffect(() => {
+    if (showValidationErrors && !page.review) {
+      trigger();
+    }
+  }, [page.review, trigger, showValidationErrors]);
+
+  const newNavigatorState = () => {
     if (page.review) {
       return pageState;
     }
 
     const newPageState = { ...pageState };
-    if (completed) {
+    if (isValid) {
       newPageState[page.position] = COMPLETE;
     } else {
       newPageState[page.position] = isDirty ? IN_PROGRESS : pageState[page.position];
@@ -76,9 +82,11 @@ function Navigator({
     return newPageState;
   };
 
-  const onSaveForm = async (completed) => {
+  const onSaveForm = async () => {
     const { status, ...values } = getValues();
-    const data = { ...formData, ...values, pageState: newNavigatorState(completed) };
+    const data = { ...formData, ...values, pageState: newNavigatorState() };
+
+    updateFormData(data);
     try {
       const result = await onSave(data);
       if (result) {
@@ -92,21 +100,25 @@ function Navigator({
     }
   };
 
-  const onUpdatePage = (index, completed) => {
+  const saveDraft = async () => {
+    await onSaveForm();
+    if (reportId === 'new') {
+      updatePage(page.position);
+    }
+  };
+
+  const onUpdatePage = async (index) => {
     const newIndex = index === page.position ? null : index;
-    const { status, ...values } = getValues();
-    const data = { ...formData, ...values, pageState: newNavigatorState(completed) };
-    updateFormData(data);
+    await onSaveForm();
     updatePage(newIndex);
   };
 
   const onContinue = () => {
-    onSaveForm(true);
-    onUpdatePage(page.position + 1, true);
+    onUpdatePage(page.position + 1);
   };
 
   useInterval(() => {
-    onSaveForm(false);
+    saveDraft();
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -152,6 +164,7 @@ function Navigator({
               onSaveForm,
               navigatorPages,
               reportCreator,
+              updateShowValidationErrors,
             )}
             {!page.review
             && (
@@ -166,14 +179,13 @@ function Navigator({
                   </Alert>
                 )}
                 <Form
-                  onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
                     <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={() => { onSaveForm(false); }}>Save draft</Button>
-                    <Button className="margin-left-auto margin-right-0" type="submit">Save & Continue</Button>
+                    <Button type="button" onClick={() => { saveDraft(); }}>Save draft</Button>
+                    <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
                   </div>
                 </Form>
               </Container>
