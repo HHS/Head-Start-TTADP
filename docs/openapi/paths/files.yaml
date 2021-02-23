@@ -18,3 +18,18 @@ post:
           schema:
             type: object
             $ref: '../index.yaml#/components/schemas/fileResponse'
+delete:
+  tags:
+    - files
+  operationId: deleteFile
+  description: Delete a file from s3
+  parameters:
+    - in: path
+      name: fileId
+      schema:
+        type: integer
+      required: true
+      description: Numeric ID of the file to delete
+  responses:
+    200:
+      description: file was successfully deleted
