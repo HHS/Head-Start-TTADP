@@ -91,6 +91,10 @@ body {
     margin: 0 0.125in !important;
   }
 
+  .smart-hub-offset-nav {
+    margin-left: unset;
+  }
+
   .print-only {
     display: unset;
   }
