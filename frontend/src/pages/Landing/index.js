@@ -176,7 +176,7 @@ function Landing() {
               <Grid>
                 <h1 className="landing">Activity Reports</h1>
               </Grid>
-              <Grid className="smart-hub--create-new-report">
+              <Grid className="flex-align-self-center">
                 {reportAlerts && reportAlerts.length > 0 && hasReadWrite(user) && <NewReport />}
               </Grid>
             </Grid>
