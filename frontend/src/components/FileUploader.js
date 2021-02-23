@@ -148,8 +148,10 @@ const FileUploader = ({
 
   const onFileRemoved = async(removedFileIndex) => {
     const file = files[removedFileIndex]
+    const remainingFiles = files.filter((f) => f.id !== file.id);
+    console.log(remainingFiles)
+    onChange(remainingFiles);
     await deleteFile(file.id) 
-    onChange(files.filter((f) => (f.id !== file.id)));
   };
 
   return (
