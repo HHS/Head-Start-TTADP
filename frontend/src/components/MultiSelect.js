@@ -154,13 +154,13 @@ function MultiSelect({
       }}
       control={control}
       rules={{
-        ...rules,
         validate: (value) => {
           if (required && (!value || value.length === 0)) {
             return required;
           }
           return true;
         },
+        ...rules,
       }}
       name={name}
     />

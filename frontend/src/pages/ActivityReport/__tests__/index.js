@@ -158,7 +158,7 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-grantee name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
       });

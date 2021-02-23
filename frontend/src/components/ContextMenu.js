@@ -55,6 +55,7 @@ function ContextMenu({
         aria-haspopup
         onClick={() => updateShown((previous) => !previous)}
         aria-label={label}
+        type="button"
       >
         <FontAwesomeIcon color="black" icon={faEllipsisH} />
       </Button>
