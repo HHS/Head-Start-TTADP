@@ -1,17 +1,31 @@
-.background-stripe {
-  position: absolute;
-  top: 0;
-  z-index: -1;
-  left: 0;
-  width: 200px;
-  height: 100%;
-  content: "";
+.smart-hub-offset-nav {
+  margin-left: 8rem;
+}
+
+@media all and (min-width: 30em){
+  .tablet\:smart-hub-offset-nav {
+    margin-left: 11rem;
+  }
+}
+
+@media all and (min-width: 64em){
+  .desktop\:smart-hub-offset-nav {
+    margin-left: 16rem;
+  }
+}
+
+.smart-hub-bg-blue {
   background-color: #264a64;
 }
 
-header {
-  background-color: #f8f8f8;
+.smart-hub-title {
+  font-size: 1.25rem;
 }
+
+.smart-hub-cursor-pointer:hover {
+  cursor: pointer;
+}
+
 body {
   background-color: #f8f8f8;
 }
@@ -75,6 +89,10 @@ body {
   .usa-nav-container {
     padding: 0 !important;
     margin: 0 0.125in !important;
+  }
+
+  .smart-hub-offset-nav {
+    margin-left: unset;
   }
 
   .print-only {
