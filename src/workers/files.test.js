@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { processFile, fileStatuses } = require('./files');
-const { s3 } = require('./s3');
-const { File } = require('./models');
+const { s3 } = require('../lib/s3');
+const { File } = require('../models');
 
 const s3Return = {
   AcceptRanges: 'bytes',

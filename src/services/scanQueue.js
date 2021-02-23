@@ -31,14 +31,19 @@ const {
   password,
 } = generateRedisConfig();
 
-export const scanQueue = new Queue('scan', `redis://${host}:${port}`, { redis: { password } });
+const scanQueue = new Queue('scan', `redis://${host}:${port}`, { redis: { password } });
 
-export default async function addToScanQueue(fileKey) {
+const addToScanQueue = (fileKey) => {
   const retries = process.env.FILE_SCAN_RETRIES || 5;
   const delay = process.env.FILE_SCAN_BACKOFF_DELAY || 10000;
   const backOffOpts = {
     type: 'exponential',
     delay,
   };
-  await scanQueue.add(fileKey, { attempts: retries, backoff: backOffOpts });
-}
+  return scanQueue.add(fileKey, { attempts: retries, backoff: backOffOpts });
+};
+
+export {
+  scanQueue,
+};
+export default addToScanQueue;
