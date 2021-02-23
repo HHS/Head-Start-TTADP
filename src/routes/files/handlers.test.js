@@ -109,6 +109,18 @@ describe('File Upload', () => {
       expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
+    it('deletes a file', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      const file = await File.findOne({ where: { id: fileId } });
+      await request(app)
+        .delete(`/api/files/${fileId}`)
+        .expect(200);
+      expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
+      const noFile = await File.findOne({ where: { id: fileId } });
+      expect(noFile).toBe(null);
+    });
   });
 
   describe('File Upload Handlers error handling', () => {
