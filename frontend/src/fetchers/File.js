@@ -23,4 +23,4 @@ export const deleteFile = async (fileId) => {
     throw new Error(res.statusText);
   }
   return res;
-}
+};
