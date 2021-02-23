@@ -10,7 +10,6 @@
      of the activity report, they contain items.
   3. Items: these are the individual form fields for the activity report
 */
-import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import { HashLink } from 'react-router-hash-link';
 import _ from 'lodash';
@@ -41,17 +40,18 @@ const Section = ({
   const isEmpty = !items.some(({ value }) => value && value.length);
   const classes = [
     'smart-hub-review-section',
+    'margin-top-2 desktop:margin-top-0',
     isEmpty ? 'smart-hub-review-section--empty no-print' : '',
     'margin-bottom-3',
   ].filter((x) => x).join(' ');
 
   return (
     <div className={classes}>
-      <Grid row className="border-bottom padding-bottom-1 margin-bottom-105">
-        <Grid col={6}>
+      <div className="grid-row border-bottom padding-bottom-1 margin-bottom-105">
+        <div className="grid-col-12 desktop:grid-col-6">
           <b className="margin-y-1">{title}</b>
-        </Grid>
-        <Grid col={6} className="flex-align-end display-flex flex-column flex-justify-center">
+        </div>
+        <div className="grid-col-12 desktop:grid-col-6 display-flex flex-align-end flex-column flex-justify-center">
           <HashLink
             aria-label={`Edit form section "${title}"`}
             to={`${basePath}#${anchor}`}
@@ -59,8 +59,8 @@ const Section = ({
           >
             Edit
           </HashLink>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       {items.map(({ label, value, path }) => (
         <Item key={label} label={label} value={value} path={path} />
       ))}
@@ -85,18 +85,18 @@ const Item = ({ label, value, path }) => {
   const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
 
   return (
-    <Grid row className={classes}>
-      <Grid col={6}>
+    <div className={`grid-row ${classes} margin-bottom-3 desktop:margin-bottom-0`}>
+      <div className="grid-col-12 desktop:grid-col-6 font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
         {label}
-      </Grid>
-      <Grid col={6}>
+      </div>
+      <div className="grid-col-12 desktop:grid-col-6">
         {values.map((v, index) => (
-          <Grid aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="flex-align-end display-flex flex-column flex-justify-center">
+          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
             {Number.isNaN(v) ? '' : v}
-          </Grid>
+          </div>
         ))}
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   );
 };
 
