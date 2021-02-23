@@ -3,7 +3,5 @@ instances: 2
 AUTH_BASE: TKTK
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
-rds_instance: ttahub-prod
-s3_doc_upload_bucket: ttahub-document-upload-prod
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
 CLAMAV_ENDPOINT: http://clamapi-ttahub-prod.apps.internal:8080
