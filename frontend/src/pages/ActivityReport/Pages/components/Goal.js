@@ -27,7 +27,7 @@ const Goals = ({ id, name, onRemove }) => (
 );
 
 Goals.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   name: PropTypes.string.isRequired,
   onRemove: PropTypes.func.isRequired,
 };

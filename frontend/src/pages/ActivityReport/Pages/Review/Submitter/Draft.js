@@ -13,6 +13,7 @@ const Draft = ({
   submitted,
   approvers,
   onFormSubmit,
+  onSaveForm,
   incompletePages,
 }) => {
   const { watch, register, handleSubmit } = useFormContext();
@@ -73,6 +74,7 @@ const Draft = ({
           </FormItem>
         </Fieldset>
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        <Button outline type="button" onClick={() => { onSaveForm(false); }}>Save Draft</Button>
         <Button type="submit">Submit for approval</Button>
       </Form>
     </>
@@ -81,6 +83,7 @@ const Draft = ({
 
 Draft.propTypes = {
   submitted: PropTypes.bool.isRequired,
+  onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

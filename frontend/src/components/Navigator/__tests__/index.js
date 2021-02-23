@@ -67,19 +67,20 @@ const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED } };
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}) => {
+  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}) => {
     render(
       <Navigator
         reportId={1}
         submitted={false}
         formData={initialData}
-        updateFormData={() => {}}
+        updateFormData={updateForm}
         onReview={() => {}}
         approvingManager={false}
         defaultValues={{ first: '', second: '' }}
         pages={pages}
         currentPage={currentPage}
         onFormSubmit={onSubmit}
+        updatePage={updatePage}
         onSave={onSave}
       />,
     );
@@ -96,8 +97,8 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
-    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: null }, 3));
+    userEvent.click(screen.getByRole('button', { name: 'Save & Continue' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: null }));
   });
 
   it('submits data when "continuing" from the review page', async () => {
@@ -109,15 +110,25 @@ describe('Navigator', () => {
 
   it('shows an error message if the form is not valid', async () => {
     renderNavigator('third');
-    const button = await screen.findByRole('button', { name: 'Continue' });
+    const button = await screen.findByRole('button', { name: 'Save & Continue' });
     userEvent.click(button);
     expect(await screen.findByTestId('alert')).toHaveTextContent('Please complete all required fields before submitting this report.');
   });
 
+  it('onBack calls onUpdatePage', async () => {
+    const updatePage = jest.fn();
+    renderNavigator('third', () => {}, () => {}, updatePage);
+    const button = await screen.findByRole('button', { name: 'Back' });
+    userEvent.click(button);
+    expect(updatePage).toHaveBeenCalledWith(2);
+  });
+
   it('calls onSave on navigation', async () => {
-    const onSave = jest.fn();
-    renderNavigator('second', () => {}, onSave);
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
     userEvent.click(screen.getByRole('button', { name: 'first page' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ ...initialData, second: null }, 1));
+    await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 });

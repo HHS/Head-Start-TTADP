@@ -60,7 +60,7 @@ function ContextMenu({
       </Button>
       {shown
     && (
-    <div className={menuClass} style={{ backgroundColor }}>
+    <div data-testid="menu" className={menuClass} style={{ backgroundColor }}>
       <ul className="usa-list usa-list--unstyled" role="menu">
         {menuItems.map((item) => (
           <li key={item.label} role="menuitem">
