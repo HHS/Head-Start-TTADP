@@ -197,7 +197,7 @@ function ActivityReport({ match, user, location }) {
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <h1 className="new-activity-report">New activity report for Region 14</h1>
+          <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">New activity report for Region 14</h1>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
           {formData.status && (

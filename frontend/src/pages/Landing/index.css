@@ -1,7 +1,7 @@
 .landing {
   max-width: fit-content;
 }
-  
+
 .pagination ul {
   display: table-caption;
   padding-left: 15px;
@@ -65,10 +65,6 @@ h1.landing {
 
 .usa-table tr:nth-child(odd) {
   background-color:#F8F8F8;
-}
-
-.usa-section {
-  margin-left: 250px;
 }
 
 .smart-hub--table-collection {
@@ -141,10 +137,6 @@ h1.landing {
 .smart-hub--new-report-btn {
   line-height: 0.5;
   min-width: 220px;
-}
-
-.smart-hub--create-new-report {
-  padding-top: 30px;
 }
 
 thead th.ascending::after {
