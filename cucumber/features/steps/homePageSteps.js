@@ -25,10 +25,10 @@ Given('I am logged in', async () => {
   const activityReportsSelector = 'a[href$="activity-reports"]';
 
   await page.goto(scope.uri);
-  await page.waitForSelector('em'); // Page title
-  const name = await page.$eval('em', (el) => el.innerText);
+  await page.waitForSelector('.smart-hub-title'); // Page title
+  const name = await page.$eval('.smart-hub-title', (el) => el.innerText);
 
-  assert.equal(name, 'TTA Smart Hub');
+  assert.equal(name, 'Office of Head Start TTA Smart Hub');
   // Check if actually logged in. If not login
   const result = await page.$(loginLinkSelector);
 
