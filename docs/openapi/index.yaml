@@ -118,6 +118,12 @@ components:
           description: The type of the activity, Training or Technical Assistance (or both)
           items:
             type: string
+        specialistNextSteps:
+          description: List of notes/next steps that a specialists enters
+          $ref: '#/components/schema/nextStepNotes'
+        granteeNextSteps:
+          description: List of notes/next steps that are assigned to the grantee
+          $ref: '#/components/schema/nextStepNotes'
     shortActivityReport:
       type: object
       description: >
@@ -227,6 +233,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/permission'
+    nextStepNotes:
+      type: array
+      description: List of notes a grantee/specialist enters
+      items:
+        type: object
+        properties:
+          note: string
+          id: number
     goal:
       type: object
       description: A long term desire for a grant
