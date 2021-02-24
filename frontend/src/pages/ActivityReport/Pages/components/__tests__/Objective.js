@@ -88,7 +88,7 @@ describe('Objective', () => {
     it('can be removed via the context menu', async () => {
       const onRemove = jest.fn();
       const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started'
+        title: 'title', ttaProvided: 'test', status: 'Not Started',
       };
       render(<RenderObjective objective={objective} onRemove={onRemove} />);
       const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
