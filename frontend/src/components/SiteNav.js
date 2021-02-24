@@ -13,6 +13,8 @@ const navLinkClasses = [
   'padding-y-1',
   'margin-y-1',
   'font-ui-xs',
+  'border-left-05',
+  'border-transparent',
   'text-base-lightest',
   'text-no-underline',
   'smart-hub-cursor-pointer',
@@ -33,7 +35,7 @@ const SiteNav = ({
   user,
 }) => {
   const navItems = [
-    <button type="button" onClick={logout} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
+    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
       Logout
     </button>,
   ];
@@ -60,16 +62,14 @@ const SiteNav = ({
             <div className="width-full margin-bottom-2">
               <ul className="add-list-reset">
                 <li>
-                  <Link
-                    activeClassName={activeNavLinkClasses}
-                    className="display-block text-white text-bold text-no-underline padding-2 margin-y-2"
+                  <NavLink
                     to="/activity-reports"
                   >
                     <span className="padding-right-105">
                       <FontAwesomeIcon color="white" icon={faChartBar} />
                     </span>
                     Activity Reports
-                  </Link>
+                  </NavLink>
                 </li>
               </ul>
             </div>

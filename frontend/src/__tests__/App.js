@@ -28,6 +28,7 @@ describe('App', () => {
       const logout = await screen.findByText('Logout');
       fireEvent.click(logout);
       expect(await screen.findByText('HSES Login')).toBeVisible();
+      expect(await screen.findByText('Logout Successful')).toBeVisible();
     });
   });
 
