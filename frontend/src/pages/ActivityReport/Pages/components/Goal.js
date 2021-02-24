@@ -40,7 +40,7 @@ const Goals = ({
             { name }
           </p>
 
-          <div>
+          <div className="margin-left-auto">
             <Button onClick={(e) => { e.preventDefault(); removeGoal(); }} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
               <FontAwesomeIcon color="gray" icon={faTrash} />
             </Button>
