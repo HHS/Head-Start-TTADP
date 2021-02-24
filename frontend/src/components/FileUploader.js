@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button, Alert } from '@trussworks/react-uswds';
+import { Button, Alert, Modal, useModal, connectModal } from '@trussworks/react-uswds';
 import uploadFile, { deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
@@ -102,7 +102,34 @@ export const getStatus = (status) => {
   return 'Upload Failed';
 };
 
-const FileTable = ({ onFileRemoved, files }) => (
+const FileTable = ({ onFileRemoved, files }) => {
+  const { isOpen, openModal, closeModal } = useModal()
+  const deleteFileModal = ({onFileRemoved, file, index}) => {
+    const onClose = () => {
+            onFileRemoved(index);
+            closeModal();
+    }
+    return (
+    <Modal
+      title={<h2>Delete File</h2>}
+      actions={
+        <>
+          <Button type="button" primary onClick={closeModal}>
+            Cancel
+          </Button>
+          <Button type="button" secondary  onClick={onClose}>
+            Delete
+          </Button>
+        </>
+      }>
+      <p>Are you sure you want to delete {file.originalFileName}? This action cannot be undone.</p>
+    </Modal>
+  )
+    }
+
+  const ConnectedDeleteFileModal = connectModal(deleteFileModal)
+
+  return (
   <div className="files-table--container margin-top-2">
     <table className="files-table">
       <thead className="files-table--thead" bgcolor="#F8F8F8">
@@ -123,6 +150,7 @@ const FileTable = ({ onFileRemoved, files }) => (
       <tbody>
         {files.map((file, index) => (
           <tr key={file.key} id={`files-table-row-${index}`}>
+                <ConnectedDeleteFileModal onFileRemoved={onFileRemoved} file={file} index={index} isOpen={isOpen} onClose={closeModal} />
             <td className="files-table--file-name">
               {file.originalFileName}
             </td>
@@ -138,7 +166,7 @@ const FileTable = ({ onFileRemoved, files }) => (
                 className="smart-hub--file-tag-button"
                 unstyled
                 aria-label="remove file"
-                onClick={() => { onFileRemoved(index); }}
+                onClick={openModal}
               >
                 <span className="fa-sm">
                   <FontAwesomeIcon color="black" icon={faTrash} />
@@ -155,7 +183,8 @@ const FileTable = ({ onFileRemoved, files }) => (
       <p className="files-table--empty">No files uploaded</p>
     )}
   </div>
-);
+)};
+
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
   files: PropTypes.arrayOf(PropTypes.object),
