@@ -18,7 +18,7 @@
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src --runInBand",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --runInBand --coverage --reporters=default --reporters=jest-junit",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci && yarn --cwd worker test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",

@@ -6,6 +6,8 @@ import {
 } from './activityReports';
 import { REPORT_STATUSES } from '../constants';
 
+const RECIPIENT_ID = 15;
+
 const mockUser = {
   id: 1000,
   homeRegionId: 1,
@@ -19,7 +21,7 @@ const reportObject = {
   regionId: 1,
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
-  activityRecipients: [{ activityRecipientId: 100 }],
+  activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
 };
 
 describe('Activity Reports DB service', () => {
@@ -27,18 +29,18 @@ describe('Activity Reports DB service', () => {
 
   beforeAll(async () => {
     await User.create(mockUser);
-    grantee = await Grantee.create({ id: 100, name: 'grantee' });
-    await Grant.create({ id: 100, number: 1, granteeId: grantee.id });
-    await NonGrantee.create({ id: 100, name: 'nonGrantee' });
+    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee' });
+    await Grant.create({ id: RECIPIENT_ID, number: 1, granteeId: grantee.id });
+    await NonGrantee.create({ id: RECIPIENT_ID, name: 'nonGrantee' });
   });
 
   afterAll(async () => {
     await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
     await User.destroy({ where: { id: mockUser.id } });
-    await NonGrantee.destroy({ where: { id: 100 } });
-    await Grant.destroy({ where: { id: 100 } });
-    await Grantee.destroy({ where: { id: 100 } });
+    await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
+    await Grant.destroy({ where: { id: RECIPIENT_ID } });
+    await Grantee.destroy({ where: { id: RECIPIENT_ID } });
     await NextStep.destroy({ where: {} });
     db.sequelize.close();
   });
@@ -59,12 +61,12 @@ describe('Activity Reports DB service', () => {
       const report = await createOrUpdate(reportObject);
       const endARCount = await ActivityReport.count();
       expect(endARCount - beginningARCount).toBe(1);
-      expect(report.activityRecipients[0].grant.id).toBe(100);
+      expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
     });
 
     it('creates a new report with non-grantee recipient', async () => {
       const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'non-grantee' });
-      expect(report.activityRecipients[0].nonGrantee.id).toBe(100);
+      expect(report.activityRecipients[0].nonGrantee.id).toBe(RECIPIENT_ID);
     });
 
     it('handles reports with collaborators', async () => {

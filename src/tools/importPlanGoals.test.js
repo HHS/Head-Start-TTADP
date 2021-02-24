@@ -11,12 +11,12 @@ describe('Import TTA plan goals', () => {
   });
   describe('Update grants and grantees', () => {
     beforeAll(async () => {
-      await Grant.destroy({ where: { id: { [Op.gt]: 20 } }, truncate: true, cascade: true });
-      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } }, truncate: true, cascade: true });
+      await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
+      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
     });
     afterEach(async () => {
-      await Grant.destroy({ where: { id: { [Op.gt]: 20 } }, truncate: true, cascade: true });
-      await Grantee.destroy({ where: { id: { [Op.gt]: 20 }, truncate: true, cascade: true } });
+      await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
+      await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
     });
     it('should import or update grantees', async () => {
       const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: 20 } } });
@@ -234,10 +234,6 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should have Grantees Goals connection', async () => {
-    const grantees = await Grantee.findAll();
-    expect(grantees).toBeDefined();
-    expect(grantees.length).toBe(8);
-
     await importGoals('GranteeTTAPlanTest.csv');
 
     // test eager loading
