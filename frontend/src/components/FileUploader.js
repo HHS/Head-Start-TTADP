@@ -122,7 +122,7 @@ const FileTable = ({ onFileRemoved, files }) => {
           </Button>
         </>
       }>
-      <p>Are you sure you want to delete {file.originalFileName}? This action cannot be undone.</p>
+      <p>Are you sure you want to delete {file.originalFileName}?</p><p>This action cannot be undone.</p>
     </Modal>
   )
     }
