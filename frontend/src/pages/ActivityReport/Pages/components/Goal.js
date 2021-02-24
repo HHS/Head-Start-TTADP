@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -23,6 +23,14 @@ const Goals = ({
     onRemove(id);
   };
 
+  const singleObjective = fields.length === 1;
+
+  useEffect(() => {
+    if (fields.length === 0) {
+      append({ title: '', ttaProvided: '', status: '' });
+    }
+  }, [fields, append]);
+
   return (
     <div className="smart-hub--goal">
       <div className="smart-hub--goal-content">
@@ -42,6 +50,7 @@ const Goals = ({
           {fields.map((objective, objectiveIndex) => (
             <div className="margin-top-1" key={objective.id}>
               <Objective
+                showRemove={!singleObjective}
                 remove={remove}
                 id={objective.id}
                 goalIndex={goalIndex}
