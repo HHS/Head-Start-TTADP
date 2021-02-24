@@ -1,8 +1,6 @@
 ---
 applications:
   - name: tta-smarthub-((env))
-    instances: ((instances))
-    command: yarn start:web
     buildpacks:
       - nodejs_buildpack
     env:
@@ -25,3 +23,12 @@ applications:
       - ttahub-((env))
       - ttahub-redis-((env))
       - ttahub-document-upload-((env))
+    processes:
+    - type: web
+      instances: ((web_instances))
+      command: yarn start:web
+      memory: ((web_memory))
+    - type: worker
+      instances: ((worker_instances))
+      command: yarn start:worker
+      memory: ((worker_memory))
