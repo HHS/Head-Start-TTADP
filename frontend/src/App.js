@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet';
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 
 import UserContext from './UserContext';
+import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
@@ -20,7 +21,6 @@ import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
-import MainLayout from './components/MainLayout';
 import LandingLayout from './components/LandingLayout';
 
 function App() {
@@ -81,28 +81,26 @@ function App() {
           exact
           path="/"
           render={() => (
-            <MainLayout><Home /></MainLayout>
+            <Home />
           )}
         />
 
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
-            <MainLayout>
-              <ActivityReport location={location} match={match} user={user} />
-            </MainLayout>
+            <ActivityReport location={location} match={match} user={user} />
           )}
         />
 
         {admin && (
           <Route
             path="/admin/:userId?"
-            render={({ match }) => <MainLayout><Admin match={match} /></MainLayout>}
+            render={({ match }) => <Admin match={match} />}
           />
         )}
 
         <Route
-          render={() => <MainLayout><NotFound /></MainLayout>}
+          render={() => <NotFound />}
         />
 
       </Switch>
@@ -121,16 +119,18 @@ function App() {
           </a>
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
-          <Header authenticated={authenticated} admin={admin} />
-          <div className="background-stripe no-print" />
-          <section className="usa-section">
-
-            {!authenticated && (
-            <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-            )}
-            {authenticated && renderAuthenticatedRoutes()}
-
-          </section>
+          <Header />
+          <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+          <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
+            <div className="grid-col-12 margin-top-2 margin-right-2">
+              <section className="usa-section padding-top-3">
+                {!authenticated
+          && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
+                {authenticated
+          && renderAuthenticatedRoutes()}
+              </section>
+            </div>
+          </div>
         </UserContext.Provider>
       </BrowserRouter>
     </>
