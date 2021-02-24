@@ -29,6 +29,8 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'otherResources' });
+      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
+      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
       ActivityReport.belongsToMany(models.Goal, {
         through: models.ActivityReportGoal,
         foreignKey: 'activityReportId',
