@@ -37,7 +37,7 @@ const Submitter = ({
   const renderTopAlert = () => (
     <>
       {needsAction && (
-        <Alert type="error" noIcon slim className="margin-bottom-1">
+        <Alert type="error" noIcon slim className="margin-bottom-1 no-print">
           <span className="text-bold">
             { approvingManager.name }
             {' '}
@@ -48,12 +48,12 @@ const Submitter = ({
         </Alert>
       )}
       {approved && (
-        <Alert type="info" noIcon slim className="margin-bottom-1">
+        <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
           This report has been approved and is no longer editable
         </Alert>
       )}
       {submitted && (
-        <Alert type="info" noIcon slim className="margin-bottom-1">
+        <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
           <b>Report is not editable</b>
           <br />
           This report is no longer editable while it is waiting for manager approval.

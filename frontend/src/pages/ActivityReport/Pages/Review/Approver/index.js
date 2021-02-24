@@ -20,7 +20,7 @@ const Approver = ({
   const { author } = formData;
 
   const renderTopAlert = () => (
-    <Alert type="info" noIcon slim className="margin-bottom-1">
+    <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
       {review && (
         <>
           <span className="text-bold">
