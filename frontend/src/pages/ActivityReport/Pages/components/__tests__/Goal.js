@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import Goal from '../Goal';
 
 // eslint-disable-next-line react/prop-types
-const RenderGoal = ({ name, onRemove = () => {} }) => {
+const RenderGoal = ({ name, onRemove = () => {}, objectives = [] }) => {
   const hookForm = useForm({
     defaultValues: {
       goals: [
@@ -16,6 +16,7 @@ const RenderGoal = ({ name, onRemove = () => {} }) => {
           value: 1,
           label: name,
           name,
+          objectives,
         },
       ],
     },
@@ -40,11 +41,23 @@ describe('Goal', () => {
     expect(goal).toBeVisible();
   });
 
+  it('Adds an empty objective if the goal has no objectives', async () => {
+    render(<RenderGoal name="test goal" />);
+    expect(await screen.findByText('Save Objective')).toBeVisible();
+  });
+
+  it('Does not add an empty objective if the goal already has an objective', async () => {
+    render(<RenderGoal name="test goal" objectives={[{ title: '', ttaProvided: '', status: '' }]} />);
+    const allObjectives = await screen.findAllByText('Save Objective');
+    expect(allObjectives.length).toBe(1);
+  });
+
   it('can add additional objectives to the goal', async () => {
     render(<RenderGoal name="test goal" />);
     const button = await screen.findByText('Add New Objective');
     userEvent.click(button);
-    expect(await screen.findByText('Save Objective')).toBeVisible();
+    const allObjectives = await screen.findAllByText('Save Objective');
+    expect(allObjectives.length).toBe(2);
   });
 
   it('clicking remove calls "onRemove"', async () => {

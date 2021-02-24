@@ -6,7 +6,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
 
 // eslint-disable-next-line react/prop-types
-const RenderObjective = ({ objective, onRemove = () => {} }) => {
+const RenderObjective = ({ objective, onRemove = () => {}, showRemove = true }) => {
   const hookForm = useForm({
     defaultValues: {
       'goals[0].objectives[0]': objective,
@@ -20,6 +20,7 @@ const RenderObjective = ({ objective, onRemove = () => {} }) => {
         remove={onRemove}
         goalIndex={0}
         objectiveIndex={0}
+        showRemove={showRemove}
       />
     </FormProvider>
   );
@@ -51,6 +52,14 @@ describe('Objective', () => {
       expect(await screen.findByRole('button', { name: 'remove objective 1 on goal 1' })).toBeVisible();
     });
 
+    it('does not display the remove button if showRemove is false', async () => {
+      const onRemove = jest.fn();
+      render(<RenderObjective objective={{}} onRemove={onRemove} showRemove={false} />);
+      await screen.findByText('Save Objective');
+      const remove = screen.queryByRole('button', { name: 'remove objective 1 on goal 1' });
+      expect(remove).toBeNull();
+    });
+
     it('calls onRemove when the remove button is clicked', async () => {
       const onRemove = jest.fn();
       render(<RenderObjective objective={{}} onRemove={onRemove} />);
@@ -64,7 +73,7 @@ describe('Objective', () => {
   describe('in display mode', () => {
     it('displays the objective', async () => {
       const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started', edit: false,
+        title: 'title', ttaProvided: 'test', status: 'Not Started',
       };
       render(<RenderObjective objective={objective} />);
       const title = await screen.findByText('title');
@@ -79,7 +88,7 @@ describe('Objective', () => {
     it('can be removed via the context menu', async () => {
       const onRemove = jest.fn();
       const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started', edit: false,
+        title: 'title', ttaProvided: 'test', status: 'Not Started'
       };
       render(<RenderObjective objective={objective} onRemove={onRemove} />);
       const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
@@ -91,9 +100,21 @@ describe('Objective', () => {
       await waitFor(() => expect(screen.queryByText('Delete')).toBeNull());
     });
 
+    it('hides the remove button if showRemoved is false', async () => {
+      const objective = {
+        title: 'title', ttaProvided: 'test', status: 'Not Started',
+      };
+      render(<RenderObjective objective={objective} showRemove={false} />);
+      const menu = await screen.findByRole('button', { name: 'Edit objective 1 on goal 1' });
+      userEvent.click(menu);
+
+      const deleteButton = screen.queryByText('Delete');
+      expect(deleteButton).toBeNull();
+    });
+
     it('can be switched to edit mode via the context menu', async () => {
       const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started', edit: false,
+        title: 'title', ttaProvided: 'test', status: 'Not Started',
       };
       render(<RenderObjective objective={objective} />);
       const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });

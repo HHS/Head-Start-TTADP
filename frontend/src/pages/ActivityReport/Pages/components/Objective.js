@@ -19,7 +19,7 @@ const statuses = [
 ];
 
 const Objective = ({
-  objectiveIndex, goalIndex, remove,
+  objectiveIndex, goalIndex, remove, showRemove,
 }) => {
   const { watch, control, trigger } = useFormContext();
   const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
@@ -34,24 +34,50 @@ const Objective = ({
   const defaultShowEdit = !(title && ttaProvided && status);
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
+  const validateObjective = () => {
+    trigger(`${objectPath}.ttaProvided`);
+    trigger(`${objectPath}.title`);
+  };
+
   const updateEdit = (isEditing) => {
     if (isEditing || (title && ttaProvided && status)) {
-      trigger('goals');
       updateShowEdit(isEditing);
+      validateObjective();
     } else {
-      trigger('goals');
+      validateObjective();
     }
   };
+
+  const menuItems = [
+    {
+      label: 'Edit',
+      onClick: () => { updateEdit(true); },
+    },
+  ];
+
+  let contextMenuLabel;
+
+  if (showRemove) {
+    contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
+    menuItems.push({
+      label: 'Delete',
+      onClick: () => { remove(objectiveIndex); },
+    });
+  } else {
+    contextMenuLabel = `Edit objective ${objectiveAriaLabel}`;
+  }
 
   return (
     <div className="smart-hub--objective">
       {showEdit && (
         <>
+          {showRemove && (
           <div className="display-flex flex-align-end">
             <Button type="button" className="smart-hub--button__no-margin margin-left-auto" onClick={() => { remove(objectiveIndex); }} unstyled aria-label={`remove objective ${objectiveAriaLabel}`}>
               <FontAwesomeIcon color="black" icon={faTimes} />
             </Button>
           </div>
+          )}
           <FormItem
             label="Objective"
             name={`${objectPath}.title`}
@@ -135,17 +161,8 @@ const Objective = ({
           <div className="display-flex flex-align-end">
             <div className="margin-top-0 margin-left-auto">
               <ContextMenu
-                label={`Edit or delete objective ${objectiveAriaLabel}`}
-                menuItems={[
-                  {
-                    label: 'Edit',
-                    onClick: () => { updateEdit(true); },
-                  },
-                  {
-                    label: 'Delete',
-                    onClick: () => { remove(objectiveIndex); },
-                  },
-                ]}
+                label={contextMenuLabel}
+                menuItems={menuItems}
               />
             </div>
           </div>
@@ -168,6 +185,7 @@ Objective.propTypes = {
   objectiveIndex: PropTypes.number.isRequired,
   goalIndex: PropTypes.number.isRequired,
   remove: PropTypes.func.isRequired,
+  showRemove: PropTypes.bool.isRequired,
 };
 
 export default Objective;
