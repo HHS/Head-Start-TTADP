@@ -3,7 +3,7 @@
   "name": "TTA Smart Hub",
   "icons": [
     {
-      "src": "favicon.png",
+      "src": "logo64.png",
       "sizes": "64x64",
       "type": "image/png"
     },
