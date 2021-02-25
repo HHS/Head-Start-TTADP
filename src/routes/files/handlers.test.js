@@ -6,8 +6,8 @@ import db, {
   Permission,
 } from '../../models';
 import app from '../../app';
-import s3Uploader from '../../lib/s3Uploader';
-import * as queue from '../../services/queue';
+import { uploadFile } from '../../lib/s3';
+import * as queue from '../../services/scanQueue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -18,7 +18,7 @@ const request = require('supertest');
 
 const ORIGINAL_ENV = process.env;
 
-jest.mock('../../lib/s3Uploader');
+jest.mock('../../lib/s3');
 
 const mockUser = {
   id: 100,
@@ -71,7 +71,7 @@ describe('File Upload', () => {
     await ActivityReport.destroy({ where: { } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
-    db.sequelize.close();
+    await db.sequelize.close();
   });
   afterEach(() => {
     jest.clearAllMocks();
@@ -79,7 +79,7 @@ describe('File Upload', () => {
 
   describe('File Upload Handlers happy path', () => {
     beforeEach(() => {
-      s3Uploader.mockReset();
+      uploadFile.mockReset();
     });
     it('tests a file upload', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -93,7 +93,7 @@ describe('File Upload', () => {
         .expect(200)
         .then((res) => {
           fileId = res.body.id;
-          expect(s3Uploader).toHaveBeenCalled();
+          expect(uploadFile).toHaveBeenCalled();
         });
       expect(mockAddToScanQueue).toHaveBeenCalled();
     });
@@ -121,7 +121,7 @@ describe('File Upload', () => {
         .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'reportId required' })
-        .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+        .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
     it('tests a file upload without a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -132,7 +132,7 @@ describe('File Upload', () => {
         .field('reportId', report.dataValues.id)
         .field('attachmentType', 'ATTACHMENT')
         .expect(400, { error: 'file required' })
-        .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+        .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
     it('tests a file upload without a attachment', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -143,7 +143,7 @@ describe('File Upload', () => {
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'attachmentType required' })
-        .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+        .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
     it('tests a file upload with an incorrect attachment value', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -155,7 +155,7 @@ describe('File Upload', () => {
         .field('attachmentType', 'FAKE')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'incorrect attachmentType. Wanted: ATTACHMENT or RESOURCE. Got: FAKE' })
-        .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+        .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
     it('tests an unauthorized upload', async () => {
       jest.clearAllMocks();
@@ -168,7 +168,7 @@ describe('File Upload', () => {
         .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(403)
-        .then(() => expect(s3Uploader).not.toHaveBeenCalled());
+        .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
   });
 });
