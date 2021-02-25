@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
+import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
 import Container from '../../components/Container';
@@ -136,19 +137,61 @@ function renderReports(reports) {
   });
 }
 
+export function renderTotal(offset, perPage, activePage, reportsCount) {
+  const from = offset >= reportsCount ? 0 : offset + 1;
+  const offsetTo = perPage * activePage;
+  let to;
+
+  if (offsetTo > reportsCount) {
+    to = offsetTo / reportsCount > 2 ? 0 : reportsCount;
+  } else {
+    to = offsetTo;
+  }
+  return `${from}-${to} of ${reportsCount}`;
+}
+
 function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
+  const [sortConfig, setSortConfig] = React.useState({
+    sortBy: 'updatedAt',
+    direction: 'desc',
+  });
+  const [offset, setOffset] = useState(0);
+  const [perPage] = useState(10);
+  const [activePage, setActivePage] = useState(1);
+  const [reportsCount, setReportsCount] = useState(0);
+
+  const requestSort = (sortBy) => {
+    let direction = 'asc';
+    if (
+      sortConfig
+      && sortConfig.sortBy === sortBy
+      && sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setActivePage(1);
+    setOffset(0);
+    setSortConfig({ sortBy, direction });
+  };
 
   useEffect(() => {
     async function fetchReports() {
-      setIsLoaded(false);
       try {
-        const reps = await getReports();
+        const { count, rows } = await getReports(
+          sortConfig.sortBy,
+          sortConfig.direction,
+          offset,
+          perPage,
+        );
         const alerts = await getReportAlerts();
-        updateReports(reps);
+        updateReports(rows);
+        if (count) {
+          setReportsCount(count);
+        }
         updateReportAlerts(alerts);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -158,7 +201,14 @@ function Landing() {
       setIsLoaded(true);
     }
     fetchReports();
-  }, []);
+  }, [sortConfig, offset, perPage]);
+
+  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+
+  const handlePageChange = (pageNumber) => {
+    setActivePage(pageNumber);
+    setOffset((pageNumber - 1) * perPage);
+  };
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -177,7 +227,9 @@ function Landing() {
                 <h1 className="landing">Activity Reports</h1>
               </Grid>
               <Grid className="smart-hub--create-new-report">
-                {reportAlerts && reportAlerts.length > 0 && hasReadWrite(user) && <NewReport />}
+                {reportAlerts
+                  && reportAlerts.length > 0
+                  && hasReadWrite(user) && <NewReport />}
               </Grid>
             </Grid>
             <Grid row>
@@ -191,17 +243,100 @@ function Landing() {
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
                 <Table className="usa-table usa-table--borderless usa-table--striped">
-                  <caption>Activity reports</caption>
+                  <caption>
+                    Activity reports
+                    <span className="smart-hub--table-nav">
+                      <span className="smart-hub--total-count">
+                        {renderTotal(offset, perPage, activePage, reportsCount)}
+                        <Pagination
+                          hideFirstLastPages
+                          prevPageText="<Prev"
+                          nextPageText="Next>"
+                          activePage={activePage}
+                          itemsCountPerPage={perPage}
+                          totalItemsCount={reportsCount}
+                          pageRangeDisplayed={4}
+                          onChange={handlePageChange}
+                          linkClassPrev="smart-hub--link-prev"
+                          linkClassNext="smart-hub--link-next"
+                        />
+                      </span>
+                    </span>
+                  </caption>
                   <thead>
                     <tr>
-                      <th scope="col">Report ID</th>
-                      <th scope="col">Grantee</th>
-                      <th scope="col">Start date</th>
-                      <th scope="col">Creator</th>
-                      <th scope="col">Topic(s)</th>
-                      <th scope="col">Collaborator(s)</th>
-                      <th scope="col">Last saved</th>
-                      <th scope="col">Status</th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('regionId');
+                        }}
+                        className={getClassNamesFor('regionId')}
+                      >
+                        Report ID
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('activityRecipients');
+                        }}
+                        className={getClassNamesFor('activityRecipients')}
+                      >
+                        Grantee
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('startDate');
+                        }}
+                        className={getClassNamesFor('startDate')}
+                      >
+                        Start date
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('author');
+                        }}
+                        className={getClassNamesFor('author')}
+                      >
+                        Creator
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('topics');
+                        }}
+                        className={getClassNamesFor('topics')}
+                      >
+                        Topic(s)
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('collaborators');
+                        }}
+                        className={getClassNamesFor('collaborators')}
+                      >
+                        Collaborator(s)
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('updatedAt');
+                        }}
+                        className={getClassNamesFor('updatedAt')}
+                      >
+                        Last saved
+                      </th>
+                      <th
+                        scope="col"
+                        onClick={() => {
+                          requestSort('status');
+                        }}
+                        className={getClassNamesFor('status')}
+                      >
+                        Status
+                      </th>
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
