@@ -15,7 +15,6 @@ export default async function uploadFile(data) {
 }
 
 export const deleteFile = async (fileId, reportId) => {
-  console.log(reportId)
   const res = await fetch(join(fileUrl, reportId.toString(), fileId.toString()), {
     method: 'DELETE',
     credentials: 'same-origin',
