@@ -1,8 +1,6 @@
 ---
 applications:
   - name: tta-smarthub-((env))
-    instances: ((instances))
-    command: yarn start
     buildpacks:
       - nodejs_buildpack
     env:
@@ -22,5 +20,15 @@ applications:
       HSES_DATA_PASSWORD: ((HSES_DATA_PASSWORD))
       CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
     services:
-      - ((rds_instance))
-      - ((s3_doc_upload_bucket))
+      - ttahub-((env))
+      - ttahub-redis-((env))
+      - ttahub-document-upload-((env))
+    processes:
+    - type: web
+      instances: ((web_instances))
+      command: yarn start:web
+      memory: ((web_memory))
+    - type: worker
+      instances: ((worker_instances))
+      command: yarn start:worker
+      memory: ((worker_memory))

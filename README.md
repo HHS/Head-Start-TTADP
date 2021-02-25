@@ -1,6 +1,6 @@
-# Office of Head Start Training & Technical Assistance Data Platform
+# Office of Head Start Training & Technical Assistance Smart Hub
 
-Welcome to the home of the OHS TTADP.
+Welcome to the home of the OHS TTAHUB.
 
 <table>
 <tr>
@@ -75,9 +75,9 @@ You may run into some issues running the docker commands on Windows:
 | `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` | |
 | `yarn docker:db:seed` | Run all seeders located in `src/seeders` | `yarn db:seed` | |
 | `yarn docker:db:seed:undo` | Undo all seeders located in `src/seeders` | `yarn db:seed:undo` | |
-| | Install dependencies for the frontend and backend (for local development)  | `yarn deps:local` | |
-| | Starts the backend | `yarn start` |`yarn server` | |
-| | Start the frontend | `yarn client` | |
+| | Starts the backend web process | `yarn start:web` | `yarn server` | |
+| | Starts the worker process | `yarn start:worker` | `yarn worker` | |
+| | Start the frontend | | `yarn client` |
 | | Run tests for only the backend | `yarn test`| |
 | | Run tests for the backend with coverage and output results to xml files|  `yarn test:ci`| |
 | | Run `yarn test:ci` for both the frontend and backend | `yarn test:all`| |
@@ -122,7 +122,7 @@ The application is deployed to the following URLs:
 | sandbox | https://tta-smarthub-sandbox.app.cloud.gov/ |
 | dev     | https://tta-smarthub-dev.app.cloud.gov/ |
 | staging | https://tta-smarthub-staging.app.cloud.gov/ |
-| prod    | |
+| prod    | https://ttahub.ohs.acf.hhs.gov |
 
 **Sandbox Environment**
 
@@ -246,10 +246,10 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 You can run psql commands directly against a deployed database by following these directions.
 
-1. Install Cloud Foundry CLI tool
+1. Install Version 7 of the Cloud Foundry CLI tool
 
-    - On MacOS: `brew install cloudfoundry/tap/cf-cli`
-    - On other platforms: [Download and install cf][cf-install]
+    - On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
+    - On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
 
 1. Login to cloud.gov account
 
@@ -262,7 +262,7 @@ You can run psql commands directly against a deployed database by following thes
 
 	```bash
 	# Example install for macOS
-	cf install-plugin https://github.com/18F/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
+	cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
 	```
 
 1. Target the desired organization and space
