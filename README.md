@@ -68,9 +68,11 @@ You may run into some issues running the docker commands on Windows:
 |-|-|-|-|
 | `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` | `yarn deps:local` |
 | `yarn docker:start` | Starts the backend and frontend | | `yarn start:local` |
-| `yarn docker:stop` | Stops the backend and frontend | |
-| `yarn docker:test` | Runs tests for the frontend and backend | |
-| `yarn docker:lint` | Runs the linter for the frontend and backend | |
+| `yarn docker:stop` | Stops the backend and frontend | | |
+| `yarn docker:dbs:start` | Start only the supporting services | | |
+| `yarn docker:dbs:stop` | Stop only the supporting services | | |
+| `yarn docker:test` | Runs tests for the frontend and backend | | |
+| `yarn docker:lint` | Runs the linter for the frontend and backend | | |
 | `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` | |
 | `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` | |
 | `yarn docker:db:seed` | Run all seeders located in `src/seeders` | `yarn db:seed` | |
