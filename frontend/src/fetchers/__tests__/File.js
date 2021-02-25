@@ -23,6 +23,6 @@ describe('File fetcher', () => {
   });
   it('file delete throws an error if the response status isn\'t 200', async () => {
     fetchMock.deleteOnce(join(fileApiUrl, '1', '1'), 500);
-    await expect(deleteFile(1, fakeFile)).rejects.toThrow();
+    await expect(deleteFile(1, 1)).rejects.toThrow();
   });
 });
