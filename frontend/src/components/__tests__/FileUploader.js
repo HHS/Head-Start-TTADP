@@ -91,7 +91,7 @@ describe('FileUploader', () => {
       expect(got).toBe('Uploaded');
       got = getStatus('UPLOAD_FAILED');
       expect(got).toBe('Upload Failed');
-      got = getStatus('QUEUING_FAILED');
+      got = getStatus('QUEUEING_FAILED');
       expect(got).toBe('Upload Failed');
       got = getStatus('SCANNING_QUEUED');
       expect(got).toBe('Scanning');
