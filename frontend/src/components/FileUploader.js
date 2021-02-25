@@ -152,6 +152,13 @@ const FileTable = ({ onFileRemoved, files }) => {
   return (
     <div className="files-table--container margin-top-2">
       <table className="files-table">
+              <ConnectedDeleteFileModal
+                onFileRemoved={onFileRemoved}
+                file={file}
+                index={index}
+                isOpen={isOpen}
+                onClose={closeModal}
+              />
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
             <th width="50%">
@@ -170,13 +177,6 @@ const FileTable = ({ onFileRemoved, files }) => {
         <tbody>
           {files.map((file, currentIndex) => (
             <tr key={file.key} id={`files-table-row-${currentIndex}`}>
-              <ConnectedDeleteFileModal
-                onFileRemoved={onFileRemoved}
-                file={file}
-                index={index}
-                isOpen={isOpen}
-                onClose={closeModal}
-              />
               <td className="files-table--file-name">
                 {file.originalFileName}
               </td>
