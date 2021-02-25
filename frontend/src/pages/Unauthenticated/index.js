@@ -21,10 +21,10 @@ function Unauthenticated({ loggedOut, timedOut }) {
   return (
     <>
       <div className="smart-hub-dimmer position-fixed top-0 right-0 bottom-0 left-0 z-auto bg-ink opacity-50" />
-      <div role="alert" className="position-relative smart-hub-maxw-placard margin-x-auto margin-top-7 z-top bg-white border-top-2 smart-hub-border-blue-primary">
+      <div role="dialog" aria-labelledby="welcome-message" aria-describedby="login-description" className="position-relative smart-hub-maxw-placard margin-x-auto margin-top-7 z-top bg-white border-top-2 smart-hub-border-blue-primary">
         <div className="maxw-mobile margin-x-auto padding-y-7">
           <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="ECLKC Blocks Logo" className="smart-hub-logo display-block margin-x-auto" />
-          <h1 className="font-serif-xl text-center margin-4">
+          <h1 id="welcome-message" className="font-serif-xl text-center margin-4">
             Welcome to the TTA Smart Hub
           </h1>
           {loggedOut
@@ -34,7 +34,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
           </Alert>
           )}
           <div className="text-center margin-top-4">
-            <p>
+            <p id="login-description">
               You must log in with HSES in order to access the Office of Head Start TTA Smart Hub.
             </p>
             <Link referrerPolicy="same-origin" className="usa-button smart-hub-bg-blue-primary display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
