@@ -150,51 +150,57 @@ const FileTable = ({ onFileRemoved, files }) => {
   };
 
   return (
-  <div className="files-table--container margin-top-2">
-    <table className="files-table">
-      <thead className="files-table--thead" bgcolor="#F8F8F8">
-        <tr>
-          <th width="50%">
-            Name
-          </th>
-          <th width="20%">
-            Size
-          </th>
-          <th width="20%">
-            Status
-          </th>
-          <th width="10%" aria-label="remove file" />
-
-        </tr>
-      </thead>
-      <tbody>
-        {files.map((file, index) => (
-          <tr key={file.key} id={`files-table-row-${index}`}>
-                <ConnectedDeleteFileModal onFileRemoved={onFileRemoved} file={file} index={index} isOpen={isOpen} onClose={closeModal} />
-            <td className="files-table--file-name">
-              {file.originalFileName}
-            </td>
-            <td>
-              {`${(file.fileSize / 1000).toFixed(1)} KB`}
-            </td>
-            <td>
-              {getStatus(file.status)}
-            </td>
-            <td>
-              <Button
-                role="button"
-                className="smart-hub--file-tag-button"
-                unstyled
-                aria-label="remove file"
-                onClick={openModal}
-              >
-                <span className="fa-sm">
-                  <FontAwesomeIcon color="black" icon={faTrash} />
-                </span>
-              </Button>
-            </td>
+    <div className="files-table--container margin-top-2">
+      <table className="files-table">
+        <thead className="files-table--thead" bgcolor="#F8F8F8">
+          <tr>
+            <th width="50%">
+              Name
+            </th>
+            <th width="20%">
+              Size
+            </th>
+            <th width="20%">
+              Status
+            </th>
+            <th width="10%" aria-label="remove file" />
 
           </tr>
+        </thead>
+        <tbody>
+          {files.map((file, currentIndex) => (
+            <tr key={file.key} id={`files-table-row-${currentIndex}`}>
+              <ConnectedDeleteFileModal
+                onFileRemoved={onFileRemoved}
+                file={file}
+                index={index}
+                isOpen={isOpen}
+                onClose={closeModal}
+              />
+              <td className="files-table--file-name">
+                {file.originalFileName}
+              </td>
+              <td>
+                {`${(file.fileSize / 1000).toFixed(1)} KB`}
+              </td>
+              <td>
+                {getStatus(file.status)}
+              </td>
+              <td>
+                <Button
+                  role="button"
+                  className="smart-hub--file-tag-button"
+                  unstyled
+                  aria-label="remove file"
+                  onClick={() => handleDelete(currentIndex)}
+                >
+                  <span className="fa-sm">
+                    <FontAwesomeIcon color="black" icon={faTrash} />
+                  </span>
+                </Button>
+              </td>
+
+            </tr>
           ))}
         </tbody>
       </table>

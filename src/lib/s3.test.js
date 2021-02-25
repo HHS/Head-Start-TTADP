@@ -5,6 +5,7 @@ import {
   uploadFile,
   getPresignedURL,
   generateS3Config,
+  deleteFileFromS3,
 } from './s3';
 
 const oldEnv = { ...process.env };
@@ -164,7 +165,8 @@ describe('getPresignedUrl', () => {
     expect(mockGetURL).toHaveBeenCalled();
     expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
   });
-  describe('s3Uploader.deleteFileFromS3', () => {
+});
+describe('s3Uploader.deleteFileFromS3', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const anotherFakeError = Error('fake');

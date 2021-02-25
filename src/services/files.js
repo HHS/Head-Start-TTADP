@@ -1,16 +1,7 @@
 import { File } from '../models';
+import { FILE_STATUSES } from '../constants';
 
-export const fileStatuses = {
-  uploading: 'UPLOADING',
-  uploaded: 'UPLOADED',
-  uploadFailed: 'UPLOAD_FAILED',
-  queued: 'SCANNING_QUEUED',
-  queueingFailed: 'QUEUEING_FAILED',
-  scanning: 'SCANNING',
-  approved: 'APPROVED',
-  rejected: 'REJECTED',
-};
-
+const { UPLOADING } = FILE_STATUSES;
 export const deleteFile = async (id) => {
   await File.destroy({ where: { id } });
 };
@@ -39,7 +30,7 @@ export default async function createFileMetaData(
     originalFileName,
     attachmentType,
     key: s3FileName,
-    status: fileStatuses.uploading,
+    status: UPLOADING,
     fileSize,
   };
   let file;
