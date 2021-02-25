@@ -4,6 +4,7 @@ services:
     build:
       context: .
     container_name: test-backend
+    stdin_open: true
     command: bash
     user: ${CURRENT_USER:-root}
     depends_on:

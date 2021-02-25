@@ -1,7 +1,8 @@
-const axios = require('axios');
-const { processFile, fileStatuses } = require('./files');
-const { s3 } = require('../lib/s3');
-const { File } = require('../models');
+import axios from 'axios';
+import processFile from './files';
+import { s3 } from '../lib/s3';
+import { File } from '../models';
+import { FILE_STATUSES } from '../constants';
 
 const s3Return = {
   AcceptRanges: 'bytes',
@@ -41,7 +42,7 @@ describe('File Scanner tests', () => {
     expect(mockAxios).toBeCalled();
     expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toBeCalledWith(
-      { status: fileStatuses.APPROVED },
+      { status: FILE_STATUSES.APPROVED },
       { where: { id: 1 } },
     );
   });
@@ -54,7 +55,7 @@ describe('File Scanner tests', () => {
     expect(mockAxios).toBeCalled();
     expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toBeCalledWith(
-      { status: fileStatuses.REJECTED },
+      { status: FILE_STATUSES.REJECTED },
       { where: { id: 1 } },
     );
   });
