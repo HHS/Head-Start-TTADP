@@ -11,7 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
-  Button, Alert, Modal, useModal, connectModal,
+  Button, Alert, Modal, connectModal,
 } from '@trussworks/react-uswds';
 import uploadFile, { deleteFile } from '../fetchers/File';
 
@@ -81,17 +81,19 @@ Dropzone.propTypes = {
   id: PropTypes.string.isRequired,
 };
 
-const deleteFileModal = ({ onFileRemoved, files, index, closeModal }) => {
+const deleteFileModal = ({
+  onFileRemoved, files, index, closeModal,
+}) => {
   const onClose = () => {
-    onFileRemoved(index);
-    closeModal();
+    onFileRemoved(index)
+    .then(closeModal());
   };
   return (
     <Modal
       title={<h2>Delete File</h2>}
       actions={(
         <>
-          <Button type="button" primary onClick={closeModal}>
+          <Button type="button" onClick={closeModal}>
             Cancel
           </Button>
           <Button type="button" secondary onClick={onClose}>
@@ -101,7 +103,11 @@ const deleteFileModal = ({ onFileRemoved, files, index, closeModal }) => {
     )}
     >
       <p>
-        Are you sure you want to delete {files[index].originalFileName} ?
+        Are you sure you want to delete
+        {' '}
+        {files[index].originalFileName}
+        {' '}
+        ?
       </p>
       <p>This action cannot be undone.</p>
     </Modal>
@@ -114,14 +120,20 @@ const FileTable = ({ onFileRemoved, files }) => {
   const [isOpen, setIsOpen] = useState(false);
   const closeModal = () => setIsOpen(false);
 
-  const handleDelete = (index) => {
-    setIndex(index);
+  const handleDelete = (newIndex) => {
+    setIndex(newIndex);
     setIsOpen(true);
-  }
+  };
 
   return (
     <div className="files-table--container margin-top-2">
-              <ConnectedDeleteFileModal onFileRemoved={onFileRemoved} files={files} index={index} isOpen={isOpen} closeModal={closeModal} />
+      <ConnectedDeleteFileModal
+        onFileRemoved={onFileRemoved}
+        files={files}
+        index={index}
+        isOpen={isOpen}
+        closeModal={closeModal}
+      />
       <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
@@ -139,8 +151,8 @@ const FileTable = ({ onFileRemoved, files }) => {
           </tr>
         </thead>
         <tbody>
-          {files.map((file, index) => (
-            <tr key={file.key} id={`files-table-row-${index}`}>
+          {files.map((file, currentIndex) => (
+            <tr key={file.id} id={`files-table-row-${currentIndex}`}>
               <td className="files-table--file-name">
                 {file.originalFileName}
               </td>
@@ -156,7 +168,7 @@ const FileTable = ({ onFileRemoved, files }) => {
                   className="smart-hub--file-tag-button"
                   unstyled
                   aria-label="remove file"
-                  onClick={() => handleDelete(index)}
+                  onClick={() => handleDelete(currentIndex)}
                 >
                   <span className="fa-sm">
                     <FontAwesomeIcon color="black" icon={faTrash} />

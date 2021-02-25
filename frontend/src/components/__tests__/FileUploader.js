@@ -70,7 +70,17 @@ describe('FileUploader', () => {
     render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
-
+    const deleteButton = screen.getByText('Delete')
+    fireEvent.click(deleteButton)
     expect(mockOnChange).toHaveBeenCalledWith([{ id: 1, originalFileName: 'fileOne' }]);
+  });
+  it('files are not removed if cancel is pressed', () => {
+    const mockOnChange = jest.fn();
+    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
+    const fileTwo = screen.getByText('fileTwo');
+    fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
+    const cancelButton = screen.getByText('Cancel')
+    fireEvent.click(cancelButton)
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 });
