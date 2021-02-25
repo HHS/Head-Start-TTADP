@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep,
+  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
 import {
   createOrUpdate, activityReportById, possibleRecipients,
@@ -29,8 +29,11 @@ describe('Activity Reports DB service', () => {
 
   beforeAll(async () => {
     await User.create(mockUser);
-    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee' });
-    await Grant.create({ id: RECIPIENT_ID, number: 1, granteeId: grantee.id });
+    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee', regionId: 17 });
+    await Region.create({ name: 'office 17', id: 17 });
+    await Grant.create({
+      id: RECIPIENT_ID, number: 1, granteeId: grantee.id, regionId: 17,
+    });
     await NonGrantee.create({ id: RECIPIENT_ID, name: 'nonGrantee' });
   });
 
@@ -42,6 +45,7 @@ describe('Activity Reports DB service', () => {
     await Grant.destroy({ where: { id: RECIPIENT_ID } });
     await Grantee.destroy({ where: { id: RECIPIENT_ID } });
     await NextStep.destroy({ where: {} });
+    await Region.destroy({ where: { id: 17 } });
     db.sequelize.close();
   });
 
@@ -234,15 +238,15 @@ describe('Activity Reports DB service', () => {
 
   describe('possibleRecipients', () => {
     it('retrieves correct recipients in region', async () => {
-      const regions = [17];
-      const recipients = await possibleRecipients(regions);
+      const region = 17;
+      const recipients = await possibleRecipients(region);
 
       expect(recipients.grants.length).toBe(1);
     });
 
     it('retrieves no recipients in empty region ', async () => {
-      const regions = [100];
-      const recipients = await possibleRecipients(regions);
+      const region = 100;
+      const recipients = await possibleRecipients(region);
 
       expect(recipients.grants.length).toBe(0);
     });
