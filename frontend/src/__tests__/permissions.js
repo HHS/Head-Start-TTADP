@@ -1,5 +1,5 @@
 import { SCOPE_IDS } from '../Constants';
-import isAdmin, { hasReadWrite, allRegionsUserHasPermissionTo } from '../permissions';
+import isAdmin, { hasReadWrite, allRegionsUserHasPermissionTo, getRegionWithReadWrite } from '../permissions';
 
 describe('permissions', () => {
   describe('isAdmin', () => {
@@ -84,6 +84,55 @@ describe('permissions', () => {
         ],
       };
       expect(hasReadWrite(user)).toBeFalsy();
+    });
+  });
+
+  describe('getRegionWithReadWrite', () => {
+    it('returns region where user has permission', () => {
+      const user = {
+        permissions: [
+          {
+            regionId: 4,
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+          },
+          {
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+          {
+            regionId: 2,
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          },
+        ],
+      };
+
+      const region = getRegionWithReadWrite(user);
+      expect(region).toBe(2);
+    });
+
+    it('returns no region', () => {
+      const user = {
+        permissions: [
+          {
+            regionId: 4,
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+          },
+          {
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+        ],
+      };
+
+      const region = getRegionWithReadWrite(user);
+      expect(region).toBe(-1);
+    });
+
+    it('returns region because user object has no permissions', () => {
+      const user = {};
+
+      const region = getRegionWithReadWrite(user);
+      expect(region).toBe(-1);
     });
   });
 });
