@@ -106,10 +106,10 @@ export const getStatus = (status) => {
 };
 
 const deleteFileModal = ({
-  onFileRemoved, files, index, closeModal,
+  onFileRemoved, files, index, reportId, closeModal,
 }) => {
   const onClose = () => {
-    onFileRemoved(index)
+    onFileRemoved(index, reportId)
       .then(closeModal());
   };
   return (
@@ -139,7 +139,7 @@ const deleteFileModal = ({
 };
 const ConnectedDeleteFileModal = connectModal(deleteFileModal);
 
-const FileTable = ({ onFileRemoved, files }) => {
+const FileTable = ({ reportId, onFileRemoved, files }) => {
   const [index, setIndex] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const closeModal = () => setIsOpen(false);
@@ -154,6 +154,7 @@ const FileTable = ({ onFileRemoved, files }) => {
       <table className="files-table">
         <ConnectedDeleteFileModal
           onFileRemoved={onFileRemoved}
+          reportId={reportId}
           files={files}
           index={index}
           isOpen={isOpen}
@@ -213,6 +214,7 @@ const FileTable = ({ onFileRemoved, files }) => {
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
+  reportId: PropTypes.node.isRequired,
   files: PropTypes.arrayOf(PropTypes.object),
 };
 FileTable.defaultProps = {
@@ -225,17 +227,17 @@ const FileUploader = ({
     onChange([...files, ...newFiles]);
   };
 
-  const onFileRemoved = async (removedFileIndex) => {
+  const onFileRemoved = async (removedFileIndex, reportId) => {
     const file = files[removedFileIndex];
     const remainingFiles = files.filter((f) => f.id !== file.id);
     onChange(remainingFiles);
-    await deleteFile(file.id);
+    await deleteFile(file.id, reportId);
   };
 
   return (
     <>
       <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
-      <FileTable onFileRemoved={onFileRemoved} files={files} />
+      <FileTable reportId={reportId} onFileRemoved={onFileRemoved} files={files} />
 
     </>
   );
