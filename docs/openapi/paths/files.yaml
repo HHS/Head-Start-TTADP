@@ -31,5 +31,5 @@ delete:
         type: number
       description: Numeric ID of the file to delete
   responses:
-    200:
+    204:
       description: file was successfully deleted
