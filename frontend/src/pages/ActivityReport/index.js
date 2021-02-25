@@ -156,7 +156,9 @@ function ActivityReport({ match, user, location }) {
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;
     }
-    history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
+    const path = page ? page.path : 'activity-summary';
+
+    history.replace(`/activity-reports/${reportId.current}/${path}`, state);
   };
 
   const onSave = async (data) => {

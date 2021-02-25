@@ -82,6 +82,7 @@ function MultiSelect({
   simple,
   rules,
   multiSelectOptions,
+  onItemSelected,
   components: componentReplacements,
 }) {
   /*
@@ -133,7 +134,9 @@ function MultiSelect({
             id={name}
             value={values}
             onChange={(event) => {
-              if (event) {
+              if (onItemSelected) {
+                onItemSelected(event);
+              } else if (event) {
                 onChange(event, controllerOnChange);
               } else {
                 controllerOnChange([]);
@@ -192,6 +195,7 @@ MultiSelect.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   components: PropTypes.shape({}),
+  onItemSelected: PropTypes.func,
   multiSelectOptions: PropTypes.shape({
     isClearable: PropTypes.bool,
     closeMenuOnSelect: PropTypes.bool,
@@ -212,6 +216,7 @@ MultiSelect.defaultProps = {
   multiSelectOptions: {},
   components: {},
   rules: {},
+  onItemSelected: null,
 };
 
 export default MultiSelect;

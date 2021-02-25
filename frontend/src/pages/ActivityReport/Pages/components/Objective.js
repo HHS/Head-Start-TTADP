@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext, Controller } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import {
   Tag, Label, Button, TextInput, Dropdown, Grid,
 } from '@trussworks/react-uswds';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
-import FormItem from '../../../../components/FormItem';
+import ObjectiveFormItem from './ObjectiveFormItem';
 import ContextMenu from '../../../../components/ContextMenu';
 import './Objective.css';
 
@@ -19,32 +18,37 @@ const statuses = [
 ];
 
 const Objective = ({
-  objectiveIndex, goalIndex, remove, showRemove,
+  goalIndex, objectiveIndex, objective, onRemove, showRemove, onUpdate,
 }) => {
-  const { watch, control, trigger } = useFormContext();
   const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
+  const { errors, trigger } = useFormContext();
+  const isValid = !errors.goals;
 
-  const objectPath = `goals[${goalIndex}].objectives[${objectiveIndex}]`;
-  const {
-    title,
-    ttaProvided,
-    status,
-  } = watch(objectPath, {});
+  const [editableObject, updateEditableObject] = useState(objective);
+  const onChange = (e) => {
+    updateEditableObject({
+      ...editableObject,
+      [e.target.name]: e.target.value,
+    });
+  };
 
+  const { title, ttaProvided, status } = editableObject;
   const defaultShowEdit = !(title && ttaProvided && status);
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
-  const validateObjective = () => {
-    trigger(`${objectPath}.ttaProvided`);
-    trigger(`${objectPath}.title`);
-  };
-
   const updateEdit = (isEditing) => {
-    if (isEditing || (title && ttaProvided && status)) {
-      updateShowEdit(isEditing);
-      validateObjective();
+    onUpdate(editableObject);
+
+    if (isEditing) {
+      updateShowEdit(true);
+    } else if (title && ttaProvided) {
+      updateShowEdit(false);
     } else {
-      validateObjective();
+      trigger('goals');
+    }
+
+    if (!isValid) {
+      trigger('goals');
     }
   };
 
@@ -61,7 +65,7 @@ const Objective = ({
     contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
     menuItems.push({
       label: 'Delete',
-      onClick: () => { remove(objectiveIndex); },
+      onClick: onRemove,
     });
   } else {
     contextMenuLabel = `Edit objective ${objectiveAriaLabel}`;
@@ -73,81 +77,57 @@ const Objective = ({
         <>
           {showRemove && (
           <div className="display-flex flex-align-end">
-            <Button type="button" className="smart-hub--button__no-margin margin-left-auto" onClick={() => { remove(objectiveIndex); }} unstyled aria-label={`remove objective ${objectiveAriaLabel}`}>
+            <Button type="button" className="smart-hub--button__no-margin margin-left-auto" onClick={onRemove} unstyled aria-label={`remove objective ${objectiveAriaLabel}`}>
               <FontAwesomeIcon color="black" icon={faTimes} />
             </Button>
           </div>
           )}
-          <FormItem
+          <ObjectiveFormItem
+            showErrors={!isValid}
+            message="Please enter the title for this objective"
             label="Objective"
-            name={`${objectPath}.title`}
-            className="margin-top-0"
+            value={title}
           >
-            <Controller
-              rules={{
-                required: 'Please specify a title for this objective',
-              }}
-              control={control}
-              name={`${objectPath}.title`}
-              defaultValue={title || ''}
-              render={({ value, onChange }) => (
-                <TextInput
-                  aria-label={`title for objective ${objectiveAriaLabel}`}
-                  onChange={(e) => onChange(e.target.value)}
-                  value={value}
-                />
-              )}
+            <TextInput
+              name="title"
+              aria-label={`title for objective ${objectiveAriaLabel}`}
+              onChange={onChange}
+              value={title}
             />
-          </FormItem>
-          <FormItem
+          </ObjectiveFormItem>
+          <ObjectiveFormItem
+            showErrors={!isValid}
+            message="Please enter the TTA provided for this objective"
             label="TTA Provided"
-            name={`${objectPath}.ttaProvided`}
+            value={ttaProvided}
           >
-            <Controller
-              rules={{
-                required: 'Please specify the TTA Provided for this objective',
-              }}
-              control={control}
-              name={`${objectPath}.ttaProvided`}
-              defaultValue={ttaProvided || ''}
-              render={({ value, onChange }) => (
-                <TextInput
-                  aria-label={`TTA provided for objective ${objectiveAriaLabel}`}
-                  onChange={(e) => onChange(e.target.value)}
-                  value={value}
-                />
-              )}
+            <TextInput
+              name="ttaProvided"
+              aria-label={`TTA provided for objective ${objectiveAriaLabel}`}
+              onChange={onChange}
+              value={ttaProvided}
             />
-          </FormItem>
+          </ObjectiveFormItem>
           <Grid row gap>
             <Grid col={4}>
-              <Controller
-                rules={{
-                  required: true,
-                }}
-                control={control}
-                name={`${objectPath}.status`}
-                defaultValue={status || 'Not Started'}
-                render={({ value, onChange }) => (
-                  <Label>
-                    Status
-                    <Dropdown
-                      onChange={(e) => { onChange(e.target.value); }}
-                      value={value}
-                      aria-label={`Status for objective ${objectiveAriaLabel}`}
+              <Label>
+                Status
+                <Dropdown
+                  name="status"
+                  onChange={onChange}
+                  value={status}
+                  aria-label={`Status for objective ${objectiveAriaLabel}`}
+                >
+                  {statuses.map((possibleStatus) => (
+                    <option
+                      key={possibleStatus}
+                      value={possibleStatus}
                     >
-                      {statuses.map((possibleStatus) => (
-                        <option
-                          key={possibleStatus}
-                          value={possibleStatus}
-                        >
-                          {possibleStatus}
-                        </option>
-                      ))}
-                    </Dropdown>
-                  </Label>
-                )}
-              />
+                      {possibleStatus}
+                    </option>
+                  ))}
+                </Dropdown>
+              </Label>
             </Grid>
             <Grid col={8} className="display-flex flex-align-end">
               <Button outline type="button" onClick={() => { updateEdit(false); }}>Save Objective</Button>
@@ -182,9 +162,15 @@ const Objective = ({
 };
 
 Objective.propTypes = {
+  objective: PropTypes.shape({
+    title: PropTypes.string,
+    ttaProvided: PropTypes.string,
+    status: PropTypes.string,
+  }).isRequired,
   objectiveIndex: PropTypes.number.isRequired,
   goalIndex: PropTypes.number.isRequired,
-  remove: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  onUpdate: PropTypes.func.isRequired,
   showRemove: PropTypes.bool.isRequired,
 };
 

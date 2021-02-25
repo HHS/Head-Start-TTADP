@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
-import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -10,26 +9,20 @@ import Objective from './Objective';
 import './Goal.css';
 
 const Goals = ({
-  id, name, onRemove, goalIndex,
+  name, onRemoveGoal, goalIndex, objectives, onUpdateObjectives, createObjective,
 }) => {
-  const { control } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: `goals[${goalIndex}].objectives`,
-  });
-
-  const removeGoal = () => {
-    remove();
-    onRemove(id);
+  const onRemoveObjective = (index) => {
+    const newObjectives = objectives.filter((o, objectiveIndex) => index !== objectiveIndex);
+    onUpdateObjectives(newObjectives);
   };
 
-  const singleObjective = fields.length === 1;
+  const onUpdateObjective = (index, newObjective) => {
+    const newObjectives = [...objectives];
+    newObjectives[index] = newObjective;
+    onUpdateObjectives(newObjectives);
+  };
 
-  useEffect(() => {
-    if (fields.length === 0) {
-      append({ title: '', ttaProvided: '', status: '' });
-    }
-  }, [fields, append]);
+  const singleObjective = objectives.length === 1;
 
   return (
     <div className="smart-hub--goal">
@@ -41,29 +34,30 @@ const Goals = ({
           </p>
 
           <div className="margin-left-auto">
-            <Button onClick={(e) => { e.preventDefault(); removeGoal(); }} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
+            <Button type="button" onClick={onRemoveGoal} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
               <FontAwesomeIcon color="gray" icon={faTrash} />
             </Button>
           </div>
         </div>
         <div>
-          {fields.map((objective, objectiveIndex) => (
+          {objectives.map((objective, objectiveIndex) => (
             <div className="margin-top-1" key={objective.id}>
               <Objective
-                showRemove={!singleObjective}
-                remove={remove}
-                id={objective.id}
                 goalIndex={goalIndex}
                 objectiveIndex={objectiveIndex}
+                objective={objective}
+                showRemove={!singleObjective}
+                onRemove={() => onRemoveObjective(objectiveIndex)}
+                onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}
               />
             </div>
           ))}
         </div>
         <Button
           type="button"
-          onClick={() => append({
-            title: '', ttaProvided: '', status: '',
-          })}
+          onClick={() => {
+            onUpdateObjectives([...objectives, createObjective()]);
+          }}
           outline
           aria-label={`add objective to goal ${goalIndex + 1}`}
         >
@@ -76,10 +70,18 @@ const Goals = ({
 };
 
 Goals.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  objectives: PropTypes.arrayOf(PropTypes.shape({
+    title: PropTypes.string,
+    ttaProvided: PropTypes.string,
+    status: PropTypes.string,
+    new: PropTypes.bool,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  })).isRequired,
+  createObjective: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
-  onRemove: PropTypes.func.isRequired,
   goalIndex: PropTypes.number.isRequired,
+  onRemoveGoal: PropTypes.func.isRequired,
+  onUpdateObjectives: PropTypes.func.isRequired,
 };
 
 export default Goals;
