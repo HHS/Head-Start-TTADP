@@ -22,7 +22,7 @@ const isAdmin = (user) => {
  * @param {*} - user object
  * @returns {array} - An array of integers, where each integer signifies a region.
  */
-
+// FIXME: Descide if we will keep this or remove
 export const allRegionsUserHasPermissionTo = (user) => {
   const permissions = _.get(user, 'permissions');
 
