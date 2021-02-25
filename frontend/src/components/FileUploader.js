@@ -227,11 +227,11 @@ const FileUploader = ({
     onChange([...files, ...newFiles]);
   };
 
-  const onFileRemoved = async (removedFileIndex, reportId) => {
+  const onFileRemoved = async (removedFileIndex, fileReportId) => {
     const file = files[removedFileIndex];
     const remainingFiles = files.filter((f) => f.id !== file.id);
     onChange(remainingFiles);
-    await deleteFile(file.id, reportId);
+    await deleteFile(file.id, fileReportId);
   };
 
   return (
