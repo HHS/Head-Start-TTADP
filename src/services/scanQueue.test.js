@@ -1,5 +1,5 @@
 import Queue from 'bull';
-import addToScanQueue, { scanQueue } from './queue';
+import addToScanQueue, { scanQueue } from './scanQueue';
 
 jest.mock('bull');
 
