@@ -10,7 +10,9 @@ import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button, Alert, Modal, useModal, connectModal } from '@trussworks/react-uswds';
+import {
+  Button, Alert, Modal, useModal, connectModal,
+} from '@trussworks/react-uswds';
 import uploadFile, { deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
@@ -30,12 +32,13 @@ function Dropzone(props) {
       attachmentType = 'RESOURCE';
     }
     const upload = async (file) => {
+      let res;
       try {
         const data = new FormData();
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
         data.append('file', file);
-        await uploadFile(data);
+        res = await uploadFile(data);
       } catch (error) {
         setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
@@ -44,7 +47,7 @@ function Dropzone(props) {
       }
       setErrorMessage(null);
       return {
-        key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
+        id: res.id, key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
       };
     };
     const newFiles = e.map((file) => upload(file));
@@ -78,88 +81,100 @@ Dropzone.propTypes = {
   id: PropTypes.string.isRequired,
 };
 
-const FileTable = ({ onFileRemoved, files }) => {
-  const { isOpen, openModal, closeModal } = useModal()
-  const deleteFileModal = ({onFileRemoved, file, index}) => {
-    const onClose = () => {
-            onFileRemoved(index);
-            closeModal();
-    }
-    return (
+const deleteFileModal = ({ onFileRemoved, files, index, closeModal }) => {
+  const onClose = () => {
+    onFileRemoved(index);
+    closeModal();
+  };
+  return (
     <Modal
       title={<h2>Delete File</h2>}
-      actions={
+      actions={(
         <>
           <Button type="button" primary onClick={closeModal}>
             Cancel
           </Button>
-          <Button type="button" secondary  onClick={onClose}>
+          <Button type="button" secondary onClick={onClose}>
             Delete
           </Button>
         </>
-      }>
-      <p>Are you sure you want to delete {file.originalFileName}?</p><p>This action cannot be undone.</p>
+    )}
+    >
+      <p>
+        Are you sure you want to delete {files[index].originalFileName} ?
+      </p>
+      <p>This action cannot be undone.</p>
     </Modal>
-  )
-    }
+  );
+};
+const ConnectedDeleteFileModal = connectModal(deleteFileModal);
 
-  const ConnectedDeleteFileModal = connectModal(deleteFileModal)
+const FileTable = ({ onFileRemoved, files }) => {
+  const [index, setIndex] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const closeModal = () => setIsOpen(false);
+
+  const handleDelete = (index) => {
+    setIndex(index);
+    setIsOpen(true);
+  }
 
   return (
-  <div className="files-table--container margin-top-2">
-    <table className="files-table">
-      <thead className="files-table--thead" bgcolor="#F8F8F8">
-        <tr>
-          <th width="50%">
-            Name
-          </th>
-          <th width="20%">
-            Size
-          </th>
-          <th width="20%">
-            Status
-          </th>
-          <th width="10%" aria-label="remove file" />
-
-        </tr>
-      </thead>
-      <tbody>
-        {files.map((file, index) => (
-          <tr key={file.key} id={`files-table-row-${index}`}>
-                <ConnectedDeleteFileModal onFileRemoved={onFileRemoved} file={file} index={index} isOpen={isOpen} onClose={closeModal} />
-            <td className="files-table--file-name">
-              {file.originalFileName}
-            </td>
-            <td>
-              {`${(file.fileSize / 1000).toFixed(1)} KB`}
-            </td>
-            <td>
-              {file.status}
-            </td>
-            <td>
-              <Button
-                role="button"
-                className="smart-hub--file-tag-button"
-                unstyled
-                aria-label="remove file"
-                onClick={openModal}
-              >
-                <span className="fa-sm">
-                  <FontAwesomeIcon color="black" icon={faTrash} />
-                </span>
-              </Button>
-            </td>
+    <div className="files-table--container margin-top-2">
+              <ConnectedDeleteFileModal onFileRemoved={onFileRemoved} files={files} index={index} isOpen={isOpen} closeModal={closeModal} />
+      <table className="files-table">
+        <thead className="files-table--thead" bgcolor="#F8F8F8">
+          <tr>
+            <th width="50%">
+              Name
+            </th>
+            <th width="20%">
+              Size
+            </th>
+            <th width="20%">
+              Status
+            </th>
+            <th width="10%" aria-label="remove file" />
 
           </tr>
+        </thead>
+        <tbody>
+          {files.map((file, index) => (
+            <tr key={file.key} id={`files-table-row-${index}`}>
+              <td className="files-table--file-name">
+                {file.originalFileName}
+              </td>
+              <td>
+                {`${(file.fileSize / 1000).toFixed(1)} KB`}
+              </td>
+              <td>
+                {file.status}
+              </td>
+              <td>
+                <Button
+                  role="button"
+                  className="smart-hub--file-tag-button"
+                  unstyled
+                  aria-label="remove file"
+                  onClick={() => handleDelete(index)}
+                >
+                  <span className="fa-sm">
+                    <FontAwesomeIcon color="black" icon={faTrash} />
+                  </span>
+                </Button>
+              </td>
 
-        ))}
-      </tbody>
-    </table>
-    { files.length === 0 && (
+            </tr>
+
+          ))}
+        </tbody>
+      </table>
+      { files.length === 0 && (
       <p className="files-table--empty">No files uploaded</p>
-    )}
-  </div>
-)};
+      )}
+    </div>
+  );
+};
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
