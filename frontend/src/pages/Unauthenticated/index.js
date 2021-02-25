@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import {
   Link, Alert,
 } from '@trussworks/react-uswds';
-import Container from '../../components/Container';
+
+import logo1x from '../../images/eclkc-blocks-logo-78.png';
+import logo2x from '../../images/eclkc-blocks-logo-156.png';
 
 function Unauthenticated({ loggedOut, timedOut }) {
   let msg = 'You have successfully logged out of the TTA Smart Hub';
@@ -17,23 +19,43 @@ function Unauthenticated({ loggedOut, timedOut }) {
   }
 
   return (
-    <Container>
-      {loggedOut
-      && (
-      <Alert type={type} heading={heading}>
-        {msg}
-      </Alert>
-      )}
-      <h1>
-        Welcome to the TTA Smart Hub!
-      </h1>
-      <p>
-        Login via HSES to continue
-      </p>
-      <Link referrerPolicy="same-origin" className="usa-button" variant="unstyled" href="/api/login">
-        HSES Login
-      </Link>
-    </Container>
+    <>
+      <div className="smart-hub-dimmer position-fixed top-0 right-0 bottom-0 left-0 z-auto bg-ink opacity-50" />
+      <div role="alert" className="position-relative smart-hub-maxw-placard margin-x-auto margin-top-7 z-top bg-white border-top-2 smart-hub-border-blue-primary">
+        <div className="maxw-mobile margin-x-auto padding-y-7">
+          <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="ECLKC Blocks Logo" className="smart-hub-logo display-block margin-x-auto" />
+          <h1 className="font-serif-xl text-center margin-4">
+            Welcome to the TTA Smart Hub
+          </h1>
+          {loggedOut
+          && (
+          <Alert type={type} heading={heading}>
+            {msg}
+          </Alert>
+          )}
+          <div className="text-center margin-top-4">
+            <p>
+              You must log in with HSES in order to access the Office of Head Start TTA Smart Hub.
+            </p>
+            <Link referrerPolicy="same-origin" className="usa-button smart-hub-bg-blue-primary display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
+              Log In with HSES
+            </Link>
+            <div className="margin-top-9">
+              <p className="text-bold">
+                First time logging in?
+              </p>
+              <p>
+                Request permission to use the system. Please refer to
+                {' '}
+                <a href="mailto:help@email.gov">help@email.gov</a>
+                {' '}
+                for questions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
