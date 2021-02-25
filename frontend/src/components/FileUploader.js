@@ -235,7 +235,7 @@ const FileUploader = ({
   return (
     <>
       <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
-      <FileTable  onFileRemoved={onFileRemoved} files={files} />
+      <FileTable onFileRemoved={onFileRemoved} files={files} />
 
     </>
   );
