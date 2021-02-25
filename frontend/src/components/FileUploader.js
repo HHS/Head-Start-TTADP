@@ -78,7 +78,7 @@ Dropzone.propTypes = {
   id: PropTypes.string.isRequired,
 };
 
-const getStatus = (status) => {
+export const getStatus = (status) => {
   switch (status) {
     case 'UPLOADING':
       return 'Uploading';
