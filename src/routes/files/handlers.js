@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
-import s3Uploader, { deleteFileFromS3 } from '../../lib/s3Uploader';
-import addToScanQueue from '../../services/queue';
+import uploadFile, { deleteFileFromS3 } from '../../lib/s3';
+import addToScanQueue from '../../services/scanQueue';
 import createFileMetaData, {
-  updateStatus, fileStatuses, getFileById, deleteFile,
+  updateStatus, getFileById, deleteFile,
 } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
@@ -23,6 +23,13 @@ const RESOURCE = 'RESOURCE';
 const logContext = {
   namespace,
 };
+
+const {
+  UPLOADED,
+  UPLOAD_FAILED,
+  QUEUED,
+  QUEUEING_FAILED,
+} = FILE_STATUSES;
 
 export const deleteHandler = async (req, res) => {
   const { fileId } = req.params;

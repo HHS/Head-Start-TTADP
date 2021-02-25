@@ -6,7 +6,7 @@ import db, {
   Permission,
 } from '../../models';
 import app from '../../app';
-import { uploadFile } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3 } from '../../lib/s3';
 import * as queue from '../../services/scanQueue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
