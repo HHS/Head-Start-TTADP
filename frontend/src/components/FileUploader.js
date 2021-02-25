@@ -10,7 +10,9 @@ import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button, Alert, Modal, useModal, connectModal } from '@trussworks/react-uswds';
+import {
+  Button, Alert, Modal, useModal, connectModal,
+} from '@trussworks/react-uswds';
 import uploadFile, { deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
@@ -30,12 +32,13 @@ function Dropzone(props) {
       attachmentType = 'RESOURCE';
     }
     const upload = async (file) => {
+      let res;
       try {
         const data = new FormData();
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
         data.append('file', file);
-        await uploadFile(data);
+        res = await uploadFile(data);
       } catch (error) {
         setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
@@ -44,7 +47,7 @@ function Dropzone(props) {
       }
       setErrorMessage(null);
       return {
-        key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
+        id: res.id, key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
       };
     };
     const newFiles = e.map((file) => upload(file));
@@ -102,32 +105,43 @@ export const getStatus = (status) => {
   return 'Upload Failed';
 };
 
-const FileTable = ({ onFileRemoved, files }) => {
-  const { isOpen, openModal, closeModal } = useModal()
-  const deleteFileModal = ({onFileRemoved, file, index}) => {
-    const onClose = () => {
-            onFileRemoved(index);
-            closeModal();
-    }
-    return (
+const deleteFileModal = ({ onFileRemoved, files, index, closeModal }) => {
+  const onClose = () => {
+    onFileRemoved(index);
+    closeModal();
+  };
+  return (
     <Modal
       title={<h2>Delete File</h2>}
-      actions={
+      actions={(
         <>
           <Button type="button" primary onClick={closeModal}>
             Cancel
           </Button>
-          <Button type="button" secondary  onClick={onClose}>
+          <Button type="button" secondary onClick={onClose}>
             Delete
           </Button>
         </>
-      }>
-      <p>Are you sure you want to delete {file.originalFileName}?</p><p>This action cannot be undone.</p>
+    )}
+    >
+      <p>
+        Are you sure you want to delete {files[index].originalFileName} ?
+      </p>
+      <p>This action cannot be undone.</p>
     </Modal>
-  )
-    }
+  );
+};
+const ConnectedDeleteFileModal = connectModal(deleteFileModal);
 
-  const ConnectedDeleteFileModal = connectModal(deleteFileModal)
+const FileTable = ({ onFileRemoved, files }) => {
+  const [index, setIndex] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const closeModal = () => setIsOpen(false);
+
+  const handleDelete = (index) => {
+    setIndex(index);
+    setIsOpen(true);
+  }
 
   return (
   <div className="files-table--container margin-top-2">
@@ -175,15 +189,15 @@ const FileTable = ({ onFileRemoved, files }) => {
             </td>
 
           </tr>
-
-        ))}
-      </tbody>
-    </table>
-    { files.length === 0 && (
+          ))}
+        </tbody>
+      </table>
+      { files.length === 0 && (
       <p className="files-table--empty">No files uploaded</p>
-    )}
-  </div>
-)};
+      )}
+    </div>
+  );
+};
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
