@@ -36,6 +36,7 @@ const RenderReview = ({
         approvers={approvers}
         formData={formData}
         onReview={onReview}
+        onSaveForm={() => {}}
         approvingManager={approvingManager}
         pages={pages}
         reportCreator={reportCreator}
@@ -118,7 +119,7 @@ describe('ReviewSubmit', () => {
   describe('when the form is not complete', () => {
     it('an error message is shown when the report is submitted', async () => {
       renderReview(false, false);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       const error = await screen.findByTestId('errorMessage');
       expect(error).toBeVisible();
@@ -136,7 +137,7 @@ describe('ReviewSubmit', () => {
     it('the submit button calls onSubmit', async () => {
       const onSubmit = jest.fn();
       renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
       await waitFor(() => expect(onSubmit).toHaveBeenCalled());
@@ -149,7 +150,7 @@ describe('ReviewSubmit', () => {
       });
 
       renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
       const error = await screen.findByTestId('alert');
@@ -159,7 +160,7 @@ describe('ReviewSubmit', () => {
 
   it('a success modal is shown once submitted', async () => {
     renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
-    userEvent.click(await screen.findByTestId('button'));
+    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveClass('usa-alert--success');
   });
