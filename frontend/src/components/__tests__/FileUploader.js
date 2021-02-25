@@ -4,6 +4,7 @@ import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
 import * as fileFetcher from '../../fetchers/File';
+import { getStatus } from '../FileUploader';
 
 import FileUploader from '../FileUploader';
 
@@ -72,5 +73,26 @@ describe('FileUploader', () => {
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
 
     expect(mockOnChange).toHaveBeenCalledWith([file('fileOne')]);
+  });
+  describe('getStatus tests', () => {
+    it('returns the correct statuses', () =>{
+      let got;
+      got = getStatus('UPLOADING');
+      expect(got).toBe('Uploading')
+      got = getStatus('UPLOADED');
+      expect(got).toBe('Uploaded')
+      got = getStatus('UPLOAD_FAILED');
+      expect(got).toBe('Upload Failed')
+      got = getStatus('QUEUING_FAILED');
+      expect(got).toBe('Upload Failed')
+      got = getStatus('SCANNING_QUEUED');
+      expect(got).toBe('Scanning')
+      got = getStatus('SCANNING');
+      expect(got).toBe('Scanning')
+      got = getStatus('APPROVED');
+      expect(got).toBe('Approved')
+      got = getStatus('REJECTED');
+      expect(got).toBe('Rejected')
+    })
   });
 });
