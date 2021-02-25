@@ -124,4 +124,25 @@ describe('FileUploader', () => {
       expect(got).toBe('Rejected');
     });
   });
+  describe('getStatus tests', () => {
+    it('returns the correct statuses', () => {
+      let got;
+      got = getStatus('UPLOADING');
+      expect(got).toBe('Uploading');
+      got = getStatus('UPLOADED');
+      expect(got).toBe('Uploaded');
+      got = getStatus('UPLOAD_FAILED');
+      expect(got).toBe('Upload Failed');
+      got = getStatus('QUEUING_FAILED');
+      expect(got).toBe('Upload Failed');
+      got = getStatus('SCANNING_QUEUED');
+      expect(got).toBe('Scanning');
+      got = getStatus('SCANNING');
+      expect(got).toBe('Scanning');
+      got = getStatus('APPROVED');
+      expect(got).toBe('Approved');
+      got = getStatus('REJECTED');
+      expect(got).toBe('Rejected');
+    });
+  });
 });
