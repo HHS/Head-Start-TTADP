@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -6,27 +7,22 @@ import userEvent from '@testing-library/user-event';
 
 import Goal from '../Goal';
 
-// eslint-disable-next-line react/prop-types
-const RenderGoal = ({ name, onRemove = () => {}, objectives = [] }) => {
-  const hookForm = useForm({
-    defaultValues: {
-      goals: [
-        {
-          id: 1,
-          value: 1,
-          label: name,
-          name,
-          objectives,
-        },
-      ],
-    },
-  });
+const RenderGoal = ({
+  name,
+  onRemove = () => {},
+  onUpdateObjectives = () => {},
+  objectives = [],
+  createObjective = () => ({ title: '', ttaProvided: '' }),
+}) => {
+  const hookForm = useForm();
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Goal
-        id={10}
-        onRemove={onRemove}
+        objectives={objectives}
+        createObjective={createObjective}
+        onRemoveGoal={onRemove}
+        onUpdateObjectives={onUpdateObjectives}
         goalIndex={0}
         name={name}
       />
@@ -41,23 +37,12 @@ describe('Goal', () => {
     expect(goal).toBeVisible();
   });
 
-  it('Adds an empty objective if the goal has no objectives', async () => {
-    render(<RenderGoal name="test goal" />);
-    expect(await screen.findByText('Save Objective')).toBeVisible();
-  });
-
-  it('Does not add an empty objective if the goal already has an objective', async () => {
-    render(<RenderGoal name="test goal" objectives={[{ title: '', ttaProvided: '', status: '' }]} />);
-    const allObjectives = await screen.findAllByText('Save Objective');
-    expect(allObjectives.length).toBe(1);
-  });
-
   it('can add additional objectives to the goal', async () => {
-    render(<RenderGoal name="test goal" />);
+    const onUpdate = jest.fn();
+    render(<RenderGoal name="test goal" onUpdateObjectives={onUpdate} />);
     const button = await screen.findByText('Add New Objective');
     userEvent.click(button);
-    const allObjectives = await screen.findAllByText('Save Objective');
-    expect(allObjectives.length).toBe(2);
+    expect(onUpdate).toHaveBeenCalled();
   });
 
   it('clicking remove calls "onRemove"', async () => {
@@ -66,5 +51,29 @@ describe('Goal', () => {
     const button = await screen.findByRole('button', { name: 'remove goal 1' });
     userEvent.click(button);
     await waitFor(() => expect(onRemove).toHaveBeenCalled());
+  });
+
+  describe('with objectives', () => {
+    it('can be removed', async () => {
+      const onUpdate = jest.fn();
+      const objectives = [{ title: 'first', ttaProvided: '', status: 'Not Started' }, { title: 'second', ttaProvided: '', status: 'Not Started' }];
+      render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
+
+      const remove = await screen.findByRole('button', { name: 'remove objective 2 on goal 1' });
+      userEvent.click(remove);
+      expect(onUpdate).toHaveBeenCalledWith([{ title: 'first', ttaProvided: '', status: 'Not Started' }]);
+    });
+
+    it('can be updated', async () => {
+      const onUpdate = jest.fn();
+      const objectives = [{ title: 'first', ttaProvided: '', status: 'Not Started' }];
+      render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
+
+      const tta = await screen.findByRole('textbox', { name: 'TTA provided for objective 1 on goal 1' });
+      userEvent.type(tta, 'test');
+      const button = await screen.findByRole('button', { name: 'Save Objective' });
+      userEvent.click(button);
+      expect(onUpdate).toHaveBeenCalledWith([{ title: 'first', ttaProvided: 'test', status: 'Not Started' }]);
+    });
   });
 });

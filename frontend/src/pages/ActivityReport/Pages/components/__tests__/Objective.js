@@ -5,19 +5,18 @@ import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
 
-// eslint-disable-next-line react/prop-types
-const RenderObjective = ({ objective, onRemove = () => {}, showRemove = true }) => {
-  const hookForm = useForm({
-    defaultValues: {
-      'goals[0].objectives[0]': objective,
-    },
-  });
+const RenderObjective = ({
+  // eslint-disable-next-line react/prop-types
+  objective, onRemove = () => {}, showRemove = true, onUpdate = () => {},
+}) => {
+  const hookForm = useForm();
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Objective
-        id={1}
-        remove={onRemove}
+        objective={objective}
+        onRemove={onRemove}
+        onUpdate={onUpdate}
         goalIndex={0}
         objectiveIndex={0}
         showRemove={showRemove}
@@ -27,6 +26,18 @@ const RenderObjective = ({ objective, onRemove = () => {}, showRemove = true }) 
 };
 
 describe('Objective', () => {
+  it('opens in edit mode if "ttaProvided" is blank', async () => {
+    render(<RenderObjective objective={{ ttaProvided: '', title: 'title', status: 'status' }} />);
+    const save = await screen.findByText('Save Objective');
+    expect(save).toBeVisible();
+  });
+
+  it('opens in edit mode if "title" is blank', async () => {
+    render(<RenderObjective objective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
+    const save = await screen.findByText('Save Objective');
+    expect(save).toBeVisible();
+  });
+
   describe('in edit mode', () => {
     it('save does not work if "objective" and "TTA Provided" are empty', async () => {
       render(<RenderObjective objective={{}} />);
@@ -49,7 +60,7 @@ describe('Objective', () => {
       userEvent.type(title, 'test');
 
       userEvent.click(save);
-      expect(await screen.findByRole('button', { name: 'remove objective 1 on goal 1' })).toBeVisible();
+      expect(await screen.findByTestId('tag')).toBeVisible();
     });
 
     it('does not display the remove button if showRemove is false', async () => {
