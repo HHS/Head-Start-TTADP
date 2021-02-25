@@ -33,6 +33,9 @@ const {
 
 export const deleteHandler = async (req, res) => {
   const { reportId, fileId } = req.params;
+  if (!reportId || !fileId) {
+    res.status(400).send(`Delete requests must contain reportId/fileId got: ${req.path}`);
+  }
   const user = await userById(req.session.userId);
   const report = await activityReportById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
