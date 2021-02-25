@@ -11,7 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
-  Button, Alert, Modal, useModal, connectModal,
+  Button, Alert, Modal, connectModal,
 } from '@trussworks/react-uswds';
 import uploadFile, { deleteFile } from '../fetchers/File';
 
@@ -105,17 +105,19 @@ export const getStatus = (status) => {
   return 'Upload Failed';
 };
 
-const deleteFileModal = ({ onFileRemoved, files, index, closeModal }) => {
+const deleteFileModal = ({
+  onFileRemoved, files, index, closeModal,
+}) => {
   const onClose = () => {
-    onFileRemoved(index);
-    closeModal();
+    onFileRemoved(index)
+    .then(closeModal());
   };
   return (
     <Modal
       title={<h2>Delete File</h2>}
       actions={(
         <>
-          <Button type="button" primary onClick={closeModal}>
+          <Button type="button" onClick={closeModal}>
             Cancel
           </Button>
           <Button type="button" secondary onClick={onClose}>
@@ -125,7 +127,11 @@ const deleteFileModal = ({ onFileRemoved, files, index, closeModal }) => {
     )}
     >
       <p>
-        Are you sure you want to delete {files[index].originalFileName} ?
+        Are you sure you want to delete
+        {' '}
+        {files[index].originalFileName}
+        {' '}
+        ?
       </p>
       <p>This action cannot be undone.</p>
     </Modal>
@@ -138,10 +144,10 @@ const FileTable = ({ onFileRemoved, files }) => {
   const [isOpen, setIsOpen] = useState(false);
   const closeModal = () => setIsOpen(false);
 
-  const handleDelete = (index) => {
-    setIndex(index);
+  const handleDelete = (newIndex) => {
+    setIndex(newIndex);
     setIsOpen(true);
-  }
+  };
 
   return (
   <div className="files-table--container margin-top-2">

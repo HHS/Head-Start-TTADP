@@ -69,7 +69,8 @@ describe('FileUploader', () => {
     render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
-
+    const deleteButton = screen.getByText('Delete')
+    fireEvent.click(deleteButton)
     expect(mockOnChange).toHaveBeenCalledWith([{ id: 1, originalFileName: 'fileOne' }]);
   });
   describe('getStatus tests', () => {

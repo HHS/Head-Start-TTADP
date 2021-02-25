@@ -4,13 +4,13 @@ import uploadFile, { deleteFile } from '../File';
 
 const fileApiUrl = join('/', 'api', 'files');
 const fakeFile = new File(['testing'], 'test.txt');
-
+fetchMock.config.sendAsJson = true;
 describe('File fetcher', () => {
   beforeEach(() => fetchMock.reset());
   it('test that the file gets uploaded', async () => {
-    fetchMock.postOnce(fileApiUrl, 200);
+    fetchMock.postOnce(fileApiUrl, {id: 1});
     const res = await uploadFile(fakeFile);
-    expect(res.status).toBe(200);
+    expect(res.id).toBe(1);
   });
   it('test that the file gets deleted', async () => {
     fetchMock.deleteOnce(join(fileApiUrl, '1'), 200);
