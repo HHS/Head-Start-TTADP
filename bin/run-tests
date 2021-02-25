@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a options=(frontend backend worker)
+declare -a options=(frontend backend)
 declare lr=">>>>>>>>"
 declare -i exit_code=0
 
@@ -55,14 +55,6 @@ main() {
         echo
         log "Running frontend tests"
         docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
-        check_exit "$?"
-    fi
-
-    if [[ "$opt" == "worker" || -z "$opt" ]]; then
-        # Test worker
-        echo
-        log "Running worker tests"
-        docker exec test-worker bash -c "yarn --cwd worker run test:ci --detectOpenHandles"
         check_exit "$?"
     fi
 

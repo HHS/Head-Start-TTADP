@@ -29,16 +29,6 @@ import {
   reviewReport,
 } from '../../fetchers/activityReports';
 
-// All new reports will show these two goals
-const fakeGoals = [
-  {
-    name: 'This is the first fake goal. The buttons do not work.',
-  },
-  {
-    name: 'This is the second fake goal. It has text that should wrap to the next line so you can see how the goals component handles long goals.',
-  },
-];
-
 const defaultValues = {
   deliveryMethod: [],
   activityRecipientType: '',
@@ -62,7 +52,7 @@ const defaultValues = {
   topics: [],
   approvingManagerId: null,
   additionalNotes: null,
-  goals: fakeGoals,
+  goals: [],
   status: REPORT_STATUSES.DRAFT,
 };
 
@@ -172,7 +162,7 @@ function ActivityReport({ match, user, location }) {
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
-  const onSave = async (data, newIndex) => {
+  const onSave = async (data) => {
     const { activityRecipientType, activityRecipients } = data;
     let updatedReport = false;
     if (canWrite) {
@@ -180,16 +170,14 @@ function ActivityReport({ match, user, location }) {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
           const savedReport = await createReport({ ...data, regionId: regionIdToUse }, {});
           reportId.current = savedReport.id;
+          const current = pages.find((p) => p.path === currentPage);
+          updatePage(current.position);
           updatedReport = false;
         }
       } else {
         await saveReport(reportId.current, data, {});
         updatedReport = true;
       }
-    }
-
-    if (newIndex) {
-      updatePage(newIndex);
     }
     return updatedReport;
   };
@@ -211,7 +199,7 @@ function ActivityReport({ match, user, location }) {
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <h1 className="new-activity-report">New activity report for Region 14</h1>
+          <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">New activity report for Region 14</h1>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
           {formData.status && (
@@ -220,6 +208,7 @@ function ActivityReport({ match, user, location }) {
         </Grid>
       </Grid>
       <Navigator
+        updatePage={updatePage}
         reportCreator={reportCreator}
         initialLastUpdated={initialLastUpdated}
         reportId={reportId.current}

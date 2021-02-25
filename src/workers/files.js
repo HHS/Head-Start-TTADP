@@ -1,25 +1,14 @@
-const axios = require('axios');
-const FormData = require('form-data');
-const https = require('https');
-const { downloadFile } = require('./s3');
-const { File } = require('./models');
+import axios from 'axios';
+import FormData from 'form-data';
+import https from 'https';
+import { downloadFile } from '../lib/s3';
+import { File } from '../models';
+import { FILE_STATUSES } from '../constants';
 
-/**
- * ENUM Values from the Files.status column of the DB
- * @constant
- */
-const fileStatuses = {
-  UPLOADING: 'UPLOADING',
-  UPLOADED: 'UPLOADED',
-  UPLOAD_FAILED: 'UPLOAD_FAILED',
-  QUEUED: 'SCANNING_QUEUED',
-  QUEUEING_FAILED: 'QUEUEING_FAILED',
-  SCANNING: 'SCANNING',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED',
-};
-
-Object.freeze(fileStatuses);
+const {
+  APPROVED,
+  REJECTED,
+} = FILE_STATUSES;
 
 /**
  * Get's file Id from DB using the s3 key
@@ -33,7 +22,7 @@ const getIdFromKey = async (key) => {
 
 /**
  * @param {string} key - uuid with a file extension representing the s3 key of the file
- * @param {*} fileStatus - File status to be updated to. Should use fileStatuses const for statuses
+ * @param {*} fileStatus - File status to be updated to. Should use FILE_STATUSES const for statuses
  */
 const updateFileStatus = async (key, fileStatus) => {
   const fileId = await getIdFromKey(key);
@@ -56,10 +45,10 @@ const processFile = async (key) => {
     form.append('file', data.Body, { filename: key, contentType: data.ContentType });
     const agent = new https.Agent({ rejectUnauthorized: false });
     res = await axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, { httpsAgent: agent, headers: { ...form.getHeaders() } });
-    await updateFileStatus(key, fileStatuses.APPROVED);
+    await updateFileStatus(key, APPROVED);
   } catch (error) {
     if (error.response.status === 406) {
-      await updateFileStatus(key, fileStatuses.REJECTED);
+      await updateFileStatus(key, REJECTED);
       return { status: error.response.status, data: error.response.data };
     }
     throw error;
@@ -67,7 +56,4 @@ const processFile = async (key) => {
   return ({ status: res.status, data: res.data });
 };
 
-module.exports = {
-  processFile,
-  fileStatuses,
-};
+export default processFile;
