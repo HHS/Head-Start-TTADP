@@ -152,13 +152,13 @@ const FileTable = ({ onFileRemoved, files }) => {
   return (
     <div className="files-table--container margin-top-2">
       <table className="files-table">
-              <ConnectedDeleteFileModal
-                onFileRemoved={onFileRemoved}
-                file={file}
-                index={index}
-                isOpen={isOpen}
-                onClose={closeModal}
-              />
+        <ConnectedDeleteFileModal
+          onFileRemoved={onFileRemoved}
+          files={files}
+          index={index}
+          isOpen={isOpen}
+          closeModal={closeModal}
+        />
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
             <th width="50%">

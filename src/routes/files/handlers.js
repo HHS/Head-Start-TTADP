@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
-import uploadFile, { deleteFileFromS3 } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3 } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import createFileMetaData, {
   updateStatus, getFileById, deleteFile,
@@ -32,7 +32,15 @@ const {
 } = FILE_STATUSES;
 
 export const deleteHandler = async (req, res) => {
-  const { fileId } = req.params;
+  const { reportId, fileId } = req.params;
+  const user = await userById(req.session.userId);
+  const report = await activityReportById(reportId);
+  const authorization = new ActivityReportPolicy(user, report);
+
+  if (!authorization.canUpdate()) {
+    res.sendStatus(403);
+    return;
+  }
   try {
     const file = await getFileById(fileId);
     await deleteFileFromS3(file.key);
