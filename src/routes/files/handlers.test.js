@@ -116,7 +116,7 @@ describe('File Upload', () => {
       const file = await File.findOne({ where: { id: fileId } });
       await request(app)
         .delete(`/api/files/${fileId}`)
-        .expect(200);
+        .expect(204);
       expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
       const noFile = await File.findOne({ where: { id: fileId } });
       expect(noFile).toBe(null);
