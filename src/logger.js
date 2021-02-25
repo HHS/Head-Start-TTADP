@@ -1,4 +1,3 @@
-import {} from 'dotenv/config';
 import { format, transports, createLogger } from 'winston';
 import expressWinston from 'express-winston';
 import env from './env';
@@ -29,7 +28,7 @@ const logger = createLogger({
   ],
 });
 
-export const auditLogger = createLogger({
+const auditLogger = createLogger({
   level: 'info',
   format: format.combine(
     format.label({ label: 'AUDIT' }),
@@ -40,7 +39,7 @@ export const auditLogger = createLogger({
   ],
 });
 
-export const requestLogger = expressWinston.logger({
+const requestLogger = expressWinston.logger({
   transports: [
     new transports.Console(),
   ],
@@ -59,4 +58,8 @@ export const requestLogger = expressWinston.logger({
   },
 });
 
-export default logger;
+export {
+  logger,
+  auditLogger,
+  requestLogger,
+};
