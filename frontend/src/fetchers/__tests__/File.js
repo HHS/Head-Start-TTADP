@@ -8,7 +8,7 @@ fetchMock.config.sendAsJson = true;
 describe('File fetcher', () => {
   beforeEach(() => fetchMock.reset());
   it('test that the file gets uploaded', async () => {
-    fetchMock.postOnce(fileApiUrl, {id: 1});
+    fetchMock.postOnce(fileApiUrl, { id: 1 });
     const res = await uploadFile(fakeFile);
     expect(res.id).toBe(1);
   });

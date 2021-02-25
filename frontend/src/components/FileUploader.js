@@ -110,7 +110,7 @@ const deleteFileModal = ({
 }) => {
   const onClose = () => {
     onFileRemoved(index)
-    .then(closeModal());
+      .then(closeModal());
   };
   return (
     <Modal
