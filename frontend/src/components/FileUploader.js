@@ -78,6 +78,30 @@ Dropzone.propTypes = {
   id: PropTypes.string.isRequired,
 };
 
+const getStatus = (status) => {
+  switch (status) {
+    case 'UPLOADING':
+      return 'Uploading';
+    case 'UPLOADED':
+      return 'Uploaded';
+    case 'UPLOAD_FAILED':
+      return 'Upload Failed';
+    case 'SCANNING_QUEUED':
+      return 'Scanning';
+    case 'QUEUEING_FAILED':
+      return 'Upload Failed';
+    case 'SCANNING':
+      return 'Scanning';
+    case 'APPROVED':
+      return 'Approved';
+    case 'REJECTED':
+      return 'Rejected';
+    default:
+      break;
+  }
+  return 'Upload Failed';
+};
+
 const FileTable = ({ onFileRemoved, files }) => (
   <div className="files-table--container margin-top-2">
     <table className="files-table">
@@ -106,7 +130,7 @@ const FileTable = ({ onFileRemoved, files }) => (
               {`${(file.fileSize / 1000).toFixed(1)} KB`}
             </td>
             <td>
-              {file.status}
+              {getStatus(file.status)}
             </td>
             <td>
               <Button
