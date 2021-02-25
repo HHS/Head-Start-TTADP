@@ -184,7 +184,7 @@ const FileTable = ({ onFileRemoved, files }) => {
                 {`${(file.fileSize / 1000).toFixed(1)} KB`}
               </td>
               <td>
-              {getStatus(file.status)}
+                {getStatus(file.status)}
               </td>
               <td>
                 <Button
