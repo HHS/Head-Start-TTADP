@@ -2,7 +2,7 @@ import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
-import { processFile } from './workers/files';
+import processFile from './workers/files';
 
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
