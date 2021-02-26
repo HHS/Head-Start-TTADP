@@ -23,7 +23,6 @@ const RenderGoal = ({ availableGoals, selectedGoals }) => {
       <GoalPicker
         availableGoals={availableGoals}
       />
-      <div data-testid="valid">{ hookForm.formState.isValid ? 'true' : 'false' }</div>
     </FormProvider>
   );
 };
@@ -103,54 +102,6 @@ describe('GoalPicker', () => {
       const goal = await screen.findByLabelText('remove goal 1');
       userEvent.click(goal);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
-    });
-  });
-
-  describe('goals field is invalid', () => {
-    it('if there are no goals', async () => {
-      render(
-        <RenderGoal
-          availableGoals={[]}
-          selectedGoals={[]}
-        />,
-      );
-      const valid = await screen.findByTestId('valid');
-      expect(valid).toHaveTextContent('false');
-    });
-
-    it('if a goal has no objectives', async () => {
-      render(
-        <RenderGoal
-          availableGoals={[{ id: 1, name: 'label' }]}
-          selectedGoals={[{ id: 1, name: 'label', objectives: [] }]}
-        />,
-      );
-      const valid = await screen.findByTestId('valid');
-      expect(valid).toHaveTextContent('false');
-    });
-
-    it('if a goal has an objective being edited', async () => {
-      render(
-        <RenderGoal
-          availableGoals={[{ id: 1, name: 'label' }]}
-          selectedGoals={[{ id: 1, name: 'label', objectives: [{ ttaProvided: '' }] }]}
-        />,
-      );
-      const valid = await screen.findByTestId('valid');
-      expect(valid.textContent).toEqual('false');
-    });
-  });
-
-  describe('goals are valid', () => {
-    it('if there is at least one goal and every goal has at least one objective that and all objectives have a title and ttaProvided', async () => {
-      render(
-        <RenderGoal
-          availableGoals={[{ id: 1, name: 'label' }]}
-          selectedGoals={[{ id: 1, name: 'label', objectives: [{ ttaProvided: 'test', title: 'title', status: 'Not Started' }] }]}
-        />,
-      );
-      const valid = await screen.findByTestId('valid');
-      expect(valid).toHaveTextContent('true');
     });
   });
 
