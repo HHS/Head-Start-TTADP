@@ -1,9 +1,10 @@
 env: staging
-instances: 1
+web_instances: 1
+web_memory: 512M
+worker_instances: 1
+worker_memory: 512M
 AUTH_BASE: https://uat.hsesinfo.org
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-staging.app.cloud.gov
-rds_instance: ttahub-staging
-s3_doc_upload_bucket: ttahub-document-upload-staging
 TTA_SMART_HUB_URI: https://tta-smarthub-staging.app.cloud.gov
 CLAMAV_ENDPOINT: http://clamapi-ttahub-dev.apps.internal:8080

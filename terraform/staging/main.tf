@@ -71,6 +71,20 @@ resource "cloudfoundry_service_instance" "document_upload_bucket" {
 }
 
 ###
+# Redis cache
+###
+
+data "cloudfoundry_service" "elasticache" {
+  name = "aws-elasticache-redis"
+}
+
+resource "cloudfoundry_service_instance" "redis" {
+  name         = "ttahub-redis-${var.env}"
+  space        = data.cloudfoundry_space.space.id
+  service_plan = data.cloudfoundry_service.elasticache.service_plans["redis-dev"]
+}
+
+###
 # ClamAV networking
 # Connects staging app to dev rest api
 ###
