@@ -12,6 +12,7 @@ import Goal from './Goal';
 import MultiSelect from '../../../../components/MultiSelect';
 import Option from './GoalOption';
 import Input from './GoalInput';
+import { validateGoals } from './goalValidator';
 
 const components = {
   Input,
@@ -96,27 +97,7 @@ const GoalPicker = ({
             components={components}
             onItemSelected={onItemSelected}
             rules={{
-              validate: (goals) => {
-                if (goals.length < 1) {
-                  return 'Every report must have at least one goal';
-                }
-
-                const unfinishedGoals = goals.some((goal) => {
-                  // Every goal must have an objective for the `goals` field has unfinished goals
-                  if (goal.objectives && goal.objectives.length > 0) {
-                    // Every objective for this goal has to have a title and ttaProvided
-                    const objectivesUnfinished = goal.objectives.some(
-                      (objective) => !(objective.title && objective.ttaProvided),
-                    );
-                    if (!objectivesUnfinished) {
-                      return false;
-                    }
-                  }
-                  // return true, this goal is unfinished
-                  return true;
-                });
-                return unfinishedGoals ? 'Every goal requires at least one objective' : true;
-              },
+              validate: validateGoals,
             }}
             options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
             multiSelectOptions={{
