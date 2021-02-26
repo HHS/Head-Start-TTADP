@@ -1,6 +1,6 @@
 # Deployment Configuration Variable Files
 
-Files within this directory contain variables that are both public and read/substituted into the deployment manifest (manifest.yml) based on the deployment environment. For an example, see the treatment of `instances` in dev_vars.yml, prod_vars.yml, and manifest.yml.
+Files within this directory contain variables that are both public and read/substituted into the deployment manifest (manifest.yml) based on the deployment environment. For an example, see the treatment of `web_instances` in dev_vars.yml, prod_vars.yml, and manifest.yml.
 
 **Need to add a public env variable to the application that _does not change_ between envs?** You can add it directly under `env:` in manifest.yml. See `NODE_ENV` as an example.
 

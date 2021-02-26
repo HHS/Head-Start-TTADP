@@ -3,7 +3,7 @@ services:
   server:
     build:
       context: .
-    command: yarn start
+    command: yarn start:web
     user: ${CURRENT_USER:-root}
     networks:
       - smarthub
