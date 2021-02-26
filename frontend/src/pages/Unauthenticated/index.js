@@ -45,11 +45,12 @@ function Unauthenticated({ loggedOut, timedOut }) {
                 First time logging in?
               </p>
               <p>
-                Request permission to use the system. Please refer to
-                {' '}
-                <a href="mailto:help@email.gov">help@email.gov</a>
-                {' '}
-                for questions.
+                You must request permission in order to use the TTA Smart Hub.
+              </p>
+              <p>
+                <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
+                  Request Permission
+                </a>
               </p>
             </div>
           </div>
