@@ -61,10 +61,10 @@ describe('permissions', () => {
     });
 
     it('returns empty array when user has no permissions', () => {
-      const user = {}
+      const user = {};
       const regions = allRegionsUserHasPermissionTo(user);
       expect(regions).toEqual([]);
-    })
+    });
   });
 
   describe('hasReadWrite', () => {
