@@ -133,7 +133,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-6-frontend-validations"
+    default: "fix-cf7-run-task"
     type: string
 jobs:
   build_and_lint:
@@ -292,7 +292,7 @@ jobs:
       - run:
           name: Install Cloud Foundry
           command: |
-            curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github'
+            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
             sudo dpkg -i cf-cli_amd64.deb
       - when:  # sandbox: for short-term feature development, see README.md
           condition:
@@ -317,7 +317,8 @@ jobs:
                 name: Return database to neutral, then migrate and seed
                 command: |
                   cf run-task tta-smarthub-sandbox \
-                  "yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod"
+                    --command "yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod" \
+                    --name "Reset DB"
       - when:  # dev
           condition:
             and:
@@ -340,7 +341,9 @@ jobs:
             - run:
                 name: Undo database seeding, then migrate and seed
                 command: |
-                  cf run-task tta-smarthub-dev "yarn db:migrate:prod && yarn db:seed:undo:prod && yarn db:seed:prod"
+                  cf run-task tta-smarthub-dev \
+                    --command "yarn db:migrate:prod && yarn db:seed:undo:prod && yarn db:seed:prod" \
+                    --name "Reset DB"
       - when:  # staging
           condition:
             and:
@@ -363,7 +366,7 @@ jobs:
             - run:
                 name: Run database migrations
                 command: |
-                  cf run-task tta-smarthub-staging "yarn db:migrate:prod"
+                  cf run-task tta-smarthub-staging --command "yarn db:migrate:prod" --name migrate
       - when:  # prod
           condition:
             and:
@@ -386,7 +389,7 @@ jobs:
             - run:
                 name: Run database migrations
                 command: |
-                  cf run-task tta-smarthub-prod "yarn db:migrate:prod"
+                  cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
 workflows:
   build_test_deploy:
     jobs:

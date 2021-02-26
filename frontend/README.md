@@ -1,4 +1,4 @@
-# TTADP Frontend
+# TTAHUB Frontend
 
 A React frontend initialized with Create React App. Usage examples for `uswds-react` can be found [here](https://trussworks.github.io/react-uswds/).
 
