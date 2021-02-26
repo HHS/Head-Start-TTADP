@@ -1,0 +1,22 @@
+.smart-hub-sitenav-separator--after::after,
+.smart-hub-sitenav-separator--before::before
+{
+  display: block;
+  content: "";
+  width: auto;
+  margin: 0 1rem;
+}
+
+.smart-hub-sitenav-separator--after::after
+{
+  border-bottom: 1px #1b3649 solid;
+}
+
+.smart-hub-sitenav-separator--before::before
+{
+  border-top: 1px #1b3649 solid;
+}
+
+.smart-hub-sitenav-word-wrap--break {
+  word-wrap: break-word;
+}

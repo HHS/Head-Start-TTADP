@@ -5,6 +5,7 @@ import axios from 'axios';
 import cookieSession from 'cookie-session';
 import path from 'path';
 import join from 'url-join';
+import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
@@ -12,7 +13,7 @@ import updateGrantsGrantees from './lib/updateGrantsGrantees';
 
 import findOrCreateUser from './services/accessValidation';
 
-import logger, { auditLogger, requestLogger } from './logger';
+import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
 
@@ -21,7 +22,14 @@ const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content'),
+      'form-action': ["'self'"],
+    },
+  },
+}));
 
 app.use(cookieSession({
   name: 'session',

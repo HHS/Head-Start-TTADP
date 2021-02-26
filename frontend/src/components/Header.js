@@ -1,65 +1,21 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Header as UswdsHeader, PrimaryNav, Title, NavMenuButton,
-} from '@trussworks/react-uswds';
+import React from 'react';
 
-import NavLink from './NavLink';
+import logo1x from '../images/eclkc-blocks-logo-43x56.png';
+import logo2x from '../images/eclkc-blocks-logo-86x111.png';
 
-function Header({ authenticated, admin }) {
-  const [expanded, setExpanded] = useState(false);
-  const onClick = () => setExpanded((prvExpanded) => !prvExpanded);
-
-  const navItems = [
-    <NavLink exact to="/">
-      Home
-    </NavLink>,
-    <NavLink to="/activity-reports">
-      Activity Reports
-    </NavLink>,
-  ];
-
-  const adminNavItem = [
-    <NavLink to="/admin">
-      Admin
-    </NavLink>,
-  ];
-
-  const items = admin ? navItems.concat(adminNavItem) : navItems;
-
+function Header() {
   return (
-    <>
-      <div className={`usa-overlay ${expanded ? 'is-visible' : ''}`} />
-      <UswdsHeader basic>
-        <div className="usa-nav-container">
-          <div className="usa-navbar">
-            <Title>TTA Smart Hub</Title>
-            {authenticated
-            && <NavMenuButton onClick={onClick} label="Menu" />}
-          </div>
-          {authenticated
-          && (
-          <PrimaryNav
-            role="navigation"
-            items={items}
-            mobileExpanded={expanded}
-            onToggleMobileNav={onClick}
-          />
-          )}
+    <header className="smart-hub-header height-9 pin-top pin-x position-fixed z-top bg-white border-bottom border-base-lighter">
+      <div className="display-flex flex-row flex-align-start height-full">
+        <div className="flex-column flex-align-self-center margin-left-2">
+          <img src={logo1x} srcSet={`${logo2x} 2x`} width="43" height="56" alt="ECLKC Blocks Logo" className="smart-hub-logo" />
         </div>
-      </UswdsHeader>
-    </>
+        <div className="flex-column flex-align-self-center margin-left-2">
+          <p className="smart-hub-title font-family-sans text-bold margin-y-1">Office of Head Start TTA Smart Hub</p>
+        </div>
+      </div>
+    </header>
   );
 }
-
-Header.propTypes = {
-  authenticated: PropTypes.bool,
-  admin: PropTypes.bool,
-};
-
-Header.defaultProps = {
-  authenticated: false,
-  admin: false,
-};
 
 export default Header;
