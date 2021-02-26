@@ -1,4 +1,4 @@
-# TTADP Backend
+# TTAHUB Backend
 
 The backend is built using these primary tools:
 
