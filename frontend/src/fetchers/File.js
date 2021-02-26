@@ -2,7 +2,7 @@ import join from 'url-join';
 
 const fileUrl = join('/', 'api', 'files');
 
-export default async function uploadFile(data) {
+export  const uploadFile = async (data) => {
   const res = await fetch(fileUrl, {
     method: 'POST',
     credentials: 'same-origin',

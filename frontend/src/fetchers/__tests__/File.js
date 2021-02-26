@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import uploadFile, { deleteFile } from '../File';
+import { uploadFile, deleteFile } from '../File';
 
 const fileApiUrl = join('/', 'api', 'files');
 const fakeFile = new File(['testing'], 'test.txt');
