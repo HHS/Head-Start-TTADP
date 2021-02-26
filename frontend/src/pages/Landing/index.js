@@ -141,7 +141,6 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
   const offsetTo = perPage * activePage;
   let to;
-console.log(`offsetTo ${offsetTo} perPage ${perPage} activePage ${activePage} reportsCount ${reportsCount}`);
   if (offsetTo > reportsCount) {
     to = reportsCount;
   } else {
