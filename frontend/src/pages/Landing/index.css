@@ -32,6 +32,10 @@ text-decoration: none;
   width: 12%;
 }
 
+.landing .disabled {
+  display: none;
+}
+
 .pagination li.active a {
   padding: 3.5px;
   margin-left: 1.3px;
