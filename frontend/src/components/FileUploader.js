@@ -38,16 +38,16 @@ export const upload = async (file, reportId, attachmentType, setErrorMessage) =>
 };
 
 export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => {
-if (reportId === 'new') {
-  setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
-  return;
-}
-let attachmentType;
-if (id === 'attachments') {
-  attachmentType = 'ATTACHMENT';
-} else if (id === 'otherResources') {
-  attachmentType = 'RESOURCE';
-}
+  if (reportId === 'new') {
+    setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
+    return;
+  }
+  let attachmentType;
+  if (id === 'attachments') {
+    attachmentType = 'ATTACHMENT';
+  } else if (id === 'otherResources') {
+    attachmentType = 'RESOURCE';
+  }
   const newFiles = e.map((file) => upload(file, reportId, attachmentType, setErrorMessage));
   Promise.all(newFiles).then((values) => {
     onChange(values);
@@ -57,7 +57,7 @@ if (id === 'attachments') {
 function Dropzone(props) {
   const { onChange, id, reportId } = props;
   const [errorMessage, setErrorMessage] = useState();
-  const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage)
+  const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage);
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip' });
 
@@ -155,13 +155,13 @@ const FileTable = ({ onFileRemoved, files }) => {
 
   return (
     <div className="files-table--container margin-top-2">
-        <ConnectedDeleteFileModal
-          onFileRemoved={onFileRemoved}
-          files={files}
-          index={index}
-          isOpen={isOpen}
-          closeModal={closeModal}
-        />
+      <ConnectedDeleteFileModal
+        onFileRemoved={onFileRemoved}
+        files={files}
+        index={index}
+        isOpen={isOpen}
+        closeModal={closeModal}
+      />
       <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
