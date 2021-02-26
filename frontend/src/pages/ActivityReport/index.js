@@ -59,9 +59,8 @@ const defaultValues = {
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-// FIXME: default region until we have a way of changing on the frontend
 function ActivityReport({
-  match, user, location, region = 1,
+  match, user, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
@@ -83,9 +82,9 @@ function ActivityReport({
   }, [activityReportId, history]);
 
   useEffect(() => {
-    let report;
-
     const fetch = async () => {
+      let report;
+
       try {
         updateLoading(true);
         if (activityReportId !== 'new') {
@@ -242,16 +241,12 @@ function ActivityReport({
 ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
-  region: PropTypes.number,
+  region: PropTypes.number.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.string,
   }).isRequired,
-};
-
-ActivityReport.defaultProps = {
-  region: 1,
 };
 
 export default ActivityReport;

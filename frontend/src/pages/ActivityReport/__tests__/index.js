@@ -12,6 +12,11 @@ import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
+// import { getRegionWithReadWrite } from '../../../permissions';
+
+jest.mock('../../../permissions', () => ({
+  getRegionWithReadWrite: jest.fn(() => 1),
+}));
 
 const formData = () => ({
   regionId: 1,
