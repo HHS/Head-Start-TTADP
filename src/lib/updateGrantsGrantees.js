@@ -90,9 +90,6 @@ export async function processFiles() {
   }
 }
 
-// reading archives
-const zip = new AdmZip('./hses.zip');
-
 /**
  * Downloads the HSES grantee/grant zip, extracts to the "temp" directory
  * and calls processFiles to parse xml data and populate the Smart Hub db
@@ -115,6 +112,7 @@ export default async function updateGrantsGrantees() {
       await response.data.pipe(fs.createWriteStream('hses.zip'));
     }
     // extract to target path. Pass true to overwrite
+    const zip = new AdmZip('./hses.zip');
     zip.extractAllTo('./temp', true);
 
     await processFiles();
