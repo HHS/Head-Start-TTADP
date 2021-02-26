@@ -59,6 +59,12 @@ describe('permissions', () => {
       const regions = allRegionsUserHasPermissionTo(user);
       expect(regions).toEqual(expect.arrayContaining([14, 3, 4]));
     });
+
+    it('returns empty array when user has no permissions', () => {
+      const user = {}
+      const regions = allRegionsUserHasPermissionTo(user);
+      expect(regions).toEqual([]);
+    })
   });
 
   describe('hasReadWrite', () => {

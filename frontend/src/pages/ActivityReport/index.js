@@ -16,7 +16,7 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { REPORT_STATUSES } from '../../Constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import {
   submitReport,
@@ -56,12 +56,12 @@ const defaultValues = {
   status: REPORT_STATUSES.DRAFT,
 };
 
-// FIXME: default region until we have a way of changing on the frontend
-const region = 1;
+
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ match, user, location }) {
+// FIXME: default region until we have a way of changing on the frontend
+function ActivityReport({ match, user, location, region=1 }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
   const [error, updateError] = useState();
@@ -73,8 +73,6 @@ function ActivityReport({ match, user, location }) {
   const [initialLastUpdated, updateInitialLastUpdated] = useState();
   const reportId = useRef();
 
-  const regionIdToUse = region || getRegionWithReadWrite(user);
-
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
 
   useEffect(() => {
@@ -84,26 +82,29 @@ function ActivityReport({ match, user, location }) {
   }, [activityReportId, history]);
 
   useEffect(() => {
+    let report;
+
     const fetch = async () => {
       try {
         updateLoading(true);
-
-        const apiCalls = [
-          getRecipients(regionIdToUse),
-          getCollaborators(regionIdToUse),
-          getApprovers(regionIdToUse),
-        ];
-
         if (activityReportId !== 'new') {
-          apiCalls.push(getReport(activityReportId));
+          report = await getReport(activityReportId);
         } else {
-          apiCalls.push(
-            Promise.resolve({ ...defaultValues, pageState: defaultPageState, userId: user.id }),
-          );
+          report = {
+            ...defaultValues,
+            pageState: defaultPageState,
+            userId: user.id,
+            regionId: region || getRegionWithReadWrite(user),
+          };
         }
 
-        const [recipients, collaborators, approvers, report] = await Promise.all(apiCalls);
+        const apiCalls = [
+          getRecipients(report.regionId),
+          getCollaborators(report.regionId),
+          getApprovers(report.regionId),
+        ];
 
+        const [recipients, collaborators, approvers] = await Promise.all(apiCalls);
         reportId.current = activityReportId;
 
         const isCollaborator = report.collaborators
@@ -123,6 +124,11 @@ function ActivityReport({ match, user, location }) {
         updateError();
       } catch (e) {
         updateError('Unable to load activity report');
+        // If the error was caused by an invalid region, we need a way to communicate that to the
+        // component so we can redirect the user. We can do this by updating the form data
+        if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
+          updateFormData({ regionId: report.regionId });
+        }
       } finally {
         updateLoading(false);
       }
@@ -136,6 +142,12 @@ function ActivityReport({ match, user, location }) {
         loading...
       </div>
     );
+  }
+
+  // If no region was able to be found, we will re-reoute user to the main page
+  // FIXME: when re-routing user show a message explaining what happened
+  if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
+    return <Redirect to="/" />;
   }
 
   if (error) {
@@ -168,7 +180,7 @@ function ActivityReport({ match, user, location }) {
     if (canWrite) {
       if (reportId.current === 'new') {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: regionIdToUse }, {});
+          const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
           reportId.current = savedReport.id;
           const current = pages.find((p) => p.path === currentPage);
           updatePage(current.position);
