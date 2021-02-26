@@ -13,48 +13,52 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
   Button, Alert, Modal, connectModal,
 } from '@trussworks/react-uswds';
-import uploadFile, { deleteFile } from '../fetchers/File';
+import { uploadFile, deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
+
+export const upload = async (file, reportId, attachmentType, setErrorMessage) => {
+  let res;
+  try {
+    const data = new FormData();
+    data.append('reportId', reportId);
+    data.append('attachmentType', attachmentType);
+    data.append('file', file);
+    res = await uploadFile(data);
+  } catch (error) {
+    setErrorMessage(`${file.name} failed to upload`);
+    // eslint-disable-next-line no-console
+    console.log(error);
+    return null;
+  }
+  setErrorMessage(null);
+  return {
+    id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
+  };
+};
+
+export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => {
+if (reportId === 'new') {
+  setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
+  return;
+}
+let attachmentType;
+if (id === 'attachments') {
+  attachmentType = 'ATTACHMENT';
+} else if (id === 'otherResources') {
+  attachmentType = 'RESOURCE';
+}
+  const newFiles = e.map((file) => upload(file, reportId, attachmentType, setErrorMessage));
+  Promise.all(newFiles).then((values) => {
+    onChange(values);
+  });
+};
 
 function Dropzone(props) {
   const { onChange, id, reportId } = props;
   const [errorMessage, setErrorMessage] = useState();
-  const onDrop = async (e) => {
-    if (props.reportId === 'new') {
-      setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
-      return;
-    }
-    let attachmentType;
-    if (id === 'attachments') {
-      attachmentType = 'ATTACHMENT';
-    } else if (id === 'otherResources') {
-      attachmentType = 'RESOURCE';
-    }
-    const upload = async (file) => {
-      let res;
-      try {
-        const data = new FormData();
-        data.append('reportId', reportId);
-        data.append('attachmentType', attachmentType);
-        data.append('file', file);
-        res = await uploadFile(data);
-      } catch (error) {
-        setErrorMessage(`${file.name} failed to upload`);
-        // eslint-disable-next-line no-console
-        console.log(error);
-        return null;
-      }
-      setErrorMessage(null);
-      return {
-        id: res.id, key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
-      };
-    };
-    const newFiles = e.map((file) => upload(file));
-    Promise.all(newFiles).then((values) => {
-      onChange(values);
-    });
-  };
+  const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage)
+
   const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip' });
 
   return (
@@ -151,7 +155,6 @@ const FileTable = ({ onFileRemoved, files }) => {
 
   return (
     <div className="files-table--container margin-top-2">
-      <table className="files-table">
         <ConnectedDeleteFileModal
           onFileRemoved={onFileRemoved}
           files={files}
@@ -159,6 +162,7 @@ const FileTable = ({ onFileRemoved, files }) => {
           isOpen={isOpen}
           closeModal={closeModal}
         />
+      <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
             <th width="50%">
@@ -176,7 +180,7 @@ const FileTable = ({ onFileRemoved, files }) => {
         </thead>
         <tbody>
           {files.map((file, currentIndex) => (
-            <tr key={file.key} id={`files-table-row-${currentIndex}`}>
+            <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
               <td className="files-table--file-name">
                 {file.originalFileName}
               </td>
