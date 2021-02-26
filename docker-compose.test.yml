@@ -4,7 +4,8 @@ services:
     build:
       context: .
     container_name: test-backend
-    command: yarn server
+    stdin_open: true
+    command: bash
     user: ${CURRENT_USER:-root}
     depends_on:
       - test-db

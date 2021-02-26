@@ -6,9 +6,13 @@
 */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Form, Button, Grid } from '@trussworks/react-uswds';
+import {
+  Form,
+  Button,
+  Grid,
+  Alert,
+} from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
@@ -34,14 +38,13 @@ function Navigator({
   autoSaveInterval,
   approvingManager,
   reportId,
+  updatePage,
   reportCreator,
 }) {
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const { pageState } = formData;
-
   const page = pages.find((p) => p.path === currentPage);
-  const allComplete = _.every(pageState, (state) => state === COMPLETE);
 
   const hookForm = useForm({
     mode: 'onChange',
@@ -55,7 +58,9 @@ function Navigator({
     reset,
   } = hookForm;
 
-  const { isDirty, isValid } = formState;
+  const { isDirty, errors } = formState;
+
+  const hasErrors = Object.keys(errors).length > 0;
 
   const newNavigatorState = (completed) => {
     if (page.review) {
@@ -71,12 +76,11 @@ function Navigator({
     return newPageState;
   };
 
-  const onSaveForm = async (completed, index) => {
-    const data = { ...formData, ...getValues(), pageState: newNavigatorState(completed) };
-    const newIndex = index === page.position ? null : index;
+  const onSaveForm = async (completed) => {
+    const { status, ...values } = getValues();
+    const data = { ...formData, ...values, pageState: newNavigatorState(completed) };
     try {
-      updateFormData(data);
-      const result = await onSave(data, newIndex);
+      const result = await onSave(data);
       if (result) {
         updateLastSaveTime(moment());
         updateErrorMessage();
@@ -88,8 +92,17 @@ function Navigator({
     }
   };
 
+  const onUpdatePage = (index, completed) => {
+    const newIndex = index === page.position ? null : index;
+    const { status, ...values } = getValues();
+    const data = { ...formData, ...values, pageState: newNavigatorState(completed) };
+    updateFormData(data);
+    updatePage(newIndex);
+  };
+
   const onContinue = () => {
-    onSaveForm(true, page.position + 1);
+    onSaveForm(true);
+    onUpdatePage(page.position + 1, true);
   };
 
   useInterval(() => {
@@ -108,9 +121,10 @@ function Navigator({
     const state = p.review ? formData.status : stateOfPage;
     return {
       label: p.label,
-      onNavigation: () => onSaveForm(false, p.position),
+      onNavigation: () => onUpdatePage(p.position),
       state,
       current,
+      review: p.review,
     };
   });
 
@@ -130,12 +144,13 @@ function Navigator({
           <div id="navigator-form">
             {page.review
             && page.render(
-              allComplete,
               formData,
               onFormSubmit,
               additionalData,
               onReview,
               approvingManager,
+              onSaveForm,
+              navigatorPages,
               reportCreator,
             )}
             {!page.review
@@ -144,12 +159,22 @@ function Navigator({
                 <NavigatorHeader
                   label={page.label}
                 />
+                {hasErrors
+                && (
+                  <Alert type="error" slim>
+                    Please complete all required fields before submitting this report.
+                  </Alert>
+                )}
                 <Form
                   onSubmit={handleSubmit(onContinue)}
                   className="smart-hub--form-large"
                 >
                   {page.render(additionalData, formData, reportId)}
-                  <Button type="submit" disabled={!isValid}>Continue</Button>
+                  <div className="display-flex">
+                    <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                    <Button type="button" onClick={() => { onSaveForm(false); }}>Save draft</Button>
+                    <Button className="margin-left-auto margin-right-0" type="submit">Save & Continue</Button>
+                  </div>
                 </Form>
               </Container>
             )}
@@ -171,6 +196,7 @@ Navigator.propTypes = {
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
+  updatePage: PropTypes.func.isRequired,
   pages: PropTypes.arrayOf(
     PropTypes.shape({
       review: PropTypes.bool.isRequired,

@@ -234,10 +234,6 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should have Grantees Goals connection', async () => {
-    const grantees = await Grantee.findAll();
-    expect(grantees).toBeDefined();
-    expect(grantees.length).toBe(8);
-
     await importGoals('GranteeTTAPlanTest.csv');
 
     // test eager loading
