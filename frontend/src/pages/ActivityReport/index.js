@@ -56,12 +56,13 @@ const defaultValues = {
   status: REPORT_STATUSES.DRAFT,
 };
 
-
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
 // FIXME: default region until we have a way of changing on the frontend
-function ActivityReport({ match, user, location, region=1 }) {
+function ActivityReport({
+  match, user, location, region = 1,
+}) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
   const [error, updateError] = useState();
@@ -241,11 +242,16 @@ function ActivityReport({ match, user, location, region=1 }) {
 ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
+  region: PropTypes.number,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.string,
   }).isRequired,
+};
+
+ActivityReport.defaultProps = {
+  region: 1,
 };
 
 export default ActivityReport;
