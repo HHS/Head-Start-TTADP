@@ -31,16 +31,16 @@ describe('getStatus tests', () => {
 });
 
 describe('upload tests', () => {
-  const mockFile = {name: 'MockFile', size: 2000} 
-  const mockSetErrorMessage = jest.fn()
+  const mockFile = { name: 'MockFile', size: 2000 };
+  const mockSetErrorMessage = jest.fn();
   it('can upload a file and return the correct information', async () => {
-    const got = await upload(mockFile, 1, 'fakeAttachment', mockSetErrorMessage)
+    const got = await upload(mockFile, 1, 'fakeAttachment', mockSetErrorMessage);
     expect(got).toStrictEqual({
       id: 1, originalFileName: mockFile.name, fileSize: mockFile.size, status: 'UPLOADED',
-    })
+    });
     expect(mockFileUpload).toHaveBeenCalled();
     expect(mockSetErrorMessage).toHaveBeenCalledWith(null);
-  })
+  });
 });
 
 describe('FileUploader', () => {
@@ -66,7 +66,9 @@ describe('FileUploader', () => {
     },
   });
 
-  const file = (name, id) => ({ originalFileName: name, id, fileSize: 2000, status: 'Uploaded' });
+  const file = (name, id) => ({
+    originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
+  });
 
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
@@ -119,4 +121,3 @@ describe('FileUploader', () => {
     expect(mockOnChange).not.toHaveBeenCalled();
   });
 });
-
