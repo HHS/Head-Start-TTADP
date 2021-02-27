@@ -46,12 +46,14 @@ function renderReports(reports) {
       status,
     } = report;
 
-    const recipientsTitle = activityRecipients.reduce(
+    const authorName = author ? author.fullName : '';
+
+    const recipientsTitle = activityRecipients && activityRecipients.reduce(
       (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
       '',
     );
 
-    const recipients = activityRecipients.map((ar) => (
+    const recipients = activityRecipients && activityRecipients.map((ar) => (
       <Tag
         key={`${ar.name.slice(1, 3)}_${ar.id}`}
         className="smart-hub--table-collection"
@@ -60,12 +62,12 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const topicsTitle = topics.reduce(
+    const topicsTitle = topics && topics.reduce(
       (result, topic) => `${result + topic}\n`,
       '',
     );
 
-    const topicsWithTags = topics.map((topic) => (
+    const topicsWithTags = topics && topics.map((topic) => (
       <Tag
         key={topic.slice(1, 13)}
         className="smart-hub--table-collection"
@@ -74,12 +76,12 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const collaboratorsTitle = collaborators.reduce(
+    const collaboratorsTitle = collaborators && collaborators.reduce(
       (result, collaborator) => `${result + collaborator.fullName}\n`,
       '',
     );
 
-    const collaboratorsWithTags = collaborators.map((collaborator) => (
+    const collaboratorsWithTags = collaborators && collaborators.map((collaborator) => (
       <Tag
         key={collaborator.fullName.slice(1, 13)}
         className="smart-hub--table-collection"
@@ -105,8 +107,8 @@ function renderReports(reports) {
         </td>
         <td>{startDate}</td>
         <td>
-          <span className="smart-hub--ellipsis" title={author.fullName}>
-            {author.fullName}
+          <span className="smart-hub--ellipsis" title={authorName}>
+            {authorName}
           </span>
         </td>
         <td>

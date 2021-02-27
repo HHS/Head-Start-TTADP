@@ -161,6 +161,9 @@ export default (sequelize, DataTypes) => {
     sortedTopics: {
       type: DataTypes.VIRTUAL,
       get() {
+        if (!this.topics) {
+          return [];
+        }
         return this.topics.sort((a, b) => {
           if (a < b) {
             return -1;
@@ -170,12 +173,6 @@ export default (sequelize, DataTypes) => {
           }
           return 0;
         });
-      },
-    },
-    exp: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.topics.join(',');
       },
     },
   }, {

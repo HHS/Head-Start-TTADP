@@ -156,7 +156,7 @@ export async function getReport(req, res) {
  */
 export async function getReports(req, res) {
   const reportsWithCount = await activityReports(req.query);
-  if (!reportsWithCount.rows) {
+  if (!reportsWithCount) {
     res.sendStatus(404);
   } else {
     res.json(reportsWithCount);
