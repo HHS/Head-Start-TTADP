@@ -2,7 +2,7 @@ import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep,
 } from '../models';
 import {
-  createOrUpdate, activityReportById,
+  createOrUpdate, activityReportById, activityReports, activityReportAlerts,
 } from './activityReports';
 import { REPORT_STATUSES } from '../constants';
 
@@ -35,13 +35,14 @@ describe('Activity Reports DB service', () => {
   });
 
   afterAll(async () => {
+    await NextStep.destroy({ where: {} });
     await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
     await User.destroy({ where: { id: mockUser.id } });
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
     await Grant.destroy({ where: { id: RECIPIENT_ID } });
     await Grantee.destroy({ where: { id: RECIPIENT_ID } });
-    await NextStep.destroy({ where: {} });
+
     db.sequelize.close();
   });
 
@@ -229,6 +230,108 @@ describe('Activity Reports DB service', () => {
       const foundReport = await activityReportById(report.id);
       expect(foundReport.id).toBe(report.id);
       expect(foundReport.resourcesUsed).toBe('test');
+    });
+  });
+
+  describe('activityReports retrieval and sorting', () => {
+    it('retrieves reports with default sort by updatedAt', async () => {
+      const report = await ActivityReport.create(reportObject);
+
+      const { count, rows } = await activityReports({});
+      expect(rows.length).toBe(10);
+      expect(count).toBeDefined();
+      expect(rows[0].id).toBe(report.id);
+    });
+
+    it('retrieves reports sorted by author', async () => {
+      const mockUserTwo = {
+        id: 1002,
+        homeRegionId: 1,
+        name: 'a user',
+      };
+      await User.findOrCreate({
+        where: {
+          id: mockUserTwo.id,
+        },
+        defaults: mockUserTwo,
+      });
+      reportObject.userId = mockUserTwo.id;
+      await ActivityReport.create(reportObject);
+
+      const { rows } = await activityReports({
+        sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2,
+      });
+      expect(rows.length).toBe(2);
+      expect(rows[0].author.name).toBe('a user');
+    });
+
+    it('retrieves reports sorted by collaborators', async () => {
+      await ActivityReport.create(reportObject);
+
+      const { rows } = await activityReports({
+        sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12,
+      });
+      expect(rows.length).toBe(12);
+      expect(rows[0].collaborators[0].name).toBe('user');
+    });
+
+    it('retrieves reports sorted by id', async () => {
+      reportObject.regionId = 2;
+      await ActivityReport.create(reportObject);
+
+      const { rows } = await activityReports({
+        sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12,
+      });
+      expect(rows.length).toBe(12);
+      expect(rows[0].regionId).toBe(2);
+    });
+
+    it('retrieves reports sorted by activity recipients', async () => {
+      reportObject.regionId = 2;
+      await ActivityReport.create(reportObject);
+
+      const { rows } = await activityReports({
+        sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12,
+      });
+      expect(rows.length).toBe(12);
+      expect(rows[0].activityRecipients[0].activityRecipientId).toBe(RECIPIENT_ID);
+    });
+
+    it('retrieves reports sorted by sorted topics', async () => {
+      reportObject.topics = ['topic d', 'topic c'];
+      await ActivityReport.create(reportObject);
+      reportObject.topics = ['topic b', 'topic a'];
+      await ActivityReport.create(reportObject);
+
+      const { rows } = await activityReports({
+        sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12,
+      });
+      expect(rows.length).toBe(12);
+      expect(rows[0].sortedTopics[0]).toBe('topic a');
+      expect(rows[0].sortedTopics[1]).toBe('topic b');
+      expect(rows[1].sortedTopics[0]).toBe('topic c');
+      expect(rows[0].topics[0]).toBe('topic a');
+      expect(rows[0].topics[1]).toBe('topic b');
+      expect(rows[1].topics[0]).toBe('topic c');
+    });
+
+    it('retrieves myalerts', async () => {
+      const mockUserTwo = {
+        id: 1002,
+        homeRegionId: 1,
+        name: 'a user',
+      };
+      await User.findOrCreate({
+        where: {
+          id: mockUserTwo.id,
+        },
+        defaults: mockUserTwo,
+      });
+      reportObject.userId = mockUserTwo.id;
+      await ActivityReport.create(reportObject);
+
+      const result = await activityReportAlerts(mockUserTwo.id);
+      expect(result[0].userId).toBe(mockUserTwo.id);
     });
   });
 });

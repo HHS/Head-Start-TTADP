@@ -254,7 +254,7 @@ export function activityReportById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export function activityReports({
-  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 2,
+  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10,
 }) {
   let result = '';
   const orderBy = () => {
@@ -299,7 +299,6 @@ export function activityReports({
         result = [[sortBy, sortDir]];
         break;
       default:
-        result = [[sortBy, sortDir]];
         break;
     }
     return result;
@@ -336,7 +335,7 @@ export function activityReports({
           model: ActivityRecipient,
           attributes: ['id', 'name', 'activityRecipientId'],
           as: 'activityRecipients',
-          required: true,
+          required: false,
           include: [
             {
               model: Grant,
