@@ -120,10 +120,10 @@ components:
             type: string
         specialistNextSteps:
           description: List of notes/next steps that a specialists enters
-          $ref: '#/components/schema/nextStepNotes'
+          $ref: '#/components/schemas/nextStepNotes'
         granteeNextSteps:
           description: List of notes/next steps that are assigned to the grantee
-          $ref: '#/components/schema/nextStepNotes'
+          $ref: '#/components/schemas/nextStepNotes'
     shortActivityReport:
       type: object
       description: >
