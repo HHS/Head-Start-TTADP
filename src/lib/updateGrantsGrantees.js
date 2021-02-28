@@ -5,7 +5,7 @@ import axios from 'axios';
 import {
   Grantee, Grant,
 } from '../models';
-import { auditLogger } from '../logger';
+import { logger, auditLogger } from '../logger';
 
 const fs = require('mz/fs');
 /**
@@ -61,6 +61,7 @@ export async function processFiles() {
       name: g.agency_name,
     }));
 
+    logger.debug(`updateGrantsGrantees: calling bulkCreate for ${granteesForDb.length} grantees`);
     await Grantee.bulkCreate(granteesForDb,
       {
         updateOnDuplicate: ['name', 'updatedAt'],
@@ -80,6 +81,7 @@ export async function processFiles() {
       endDate: g.grant_end_date,
     }));
 
+    logger.debug(`updateGrantsGrantees: calling bulkCreate for ${grantsForDb.length} grants`);
     await Grant.bulkCreate(grantsForDb,
       {
         updateOnDuplicate: ['number', 'regionId', 'granteeId', 'status', 'startDate', 'endDate', 'updatedAt'],
@@ -97,26 +99,46 @@ export async function processFiles() {
  * Note - file download needs to happen in deployed environments
  */
 export default async function updateGrantsGrantees() {
-  try {
-    if (process.env.NODE_ENV === 'production') {
-      const response = await axios(process.env.HSES_DATA_FILE_URL, {
-        method: 'get',
-        url: process.env.HSES_DATA_FILE_URL,
-        responseType: 'stream',
-        auth: {
-          username: process.env.HSES_DATA_USERNAME,
-          password: process.env.HSES_DATA_PASSWORD,
-        },
-      });
+  logger.info('updateGrantsGrantees: starting');
+  if (process.env.NODE_ENV === 'production') {
+    logger.debug('updateGrantsGrantees: retrieving file from HSES');
+    await axios(process.env.HSES_DATA_FILE_URL, {
+      method: 'get',
+      url: process.env.HSES_DATA_FILE_URL,
+      responseType: 'stream',
+      auth: {
+        username: process.env.HSES_DATA_USERNAME,
+        password: process.env.HSES_DATA_PASSWORD,
+      },
+    }).then(({ status, data }) => {
+      logger.debug(`updateGrantsGrantees: Got file response: ${status}`);
+      const writeStream = fs.createWriteStream('hses.zip');
 
-      await response.data.pipe(fs.createWriteStream('hses.zip'));
-    }
-    // extract to target path. Pass true to overwrite
+      return new Promise((resolve, reject) => {
+        let error = null;
+        writeStream.on('error', (err) => {
+          auditLogger.error(`updateGrantsGrantees: writeStream emitted error: ${err}`);
+          error = err;
+          reject(err);
+        });
+        writeStream.on('close', () => {
+          logger.debug('updateGrantsGrantees: writeStream emitted close');
+          if (!error) {
+            resolve(true);
+          }
+        });
+        data.pipe(writeStream);
+      });
+    });
+    logger.debug('updateGrantsGrantees: wrote file from HSES');
+
     const zip = new AdmZip('./hses.zip');
+    logger.debug('updateGrantsGrantees: extracting zip file');
+    // extract to target path. Pass true to overwrite
     zip.extractAllTo('./temp', true);
+    logger.debug('updateGrantsGrantees: unzipped files');
 
     await processFiles();
-  } catch (error) {
-    auditLogger.error(error);
   }
+  logger.info('updateGrantsGrantees: processFiles completed');
 }
