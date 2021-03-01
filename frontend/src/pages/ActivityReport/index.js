@@ -168,29 +168,22 @@ function ActivityReport({
 
   const updatePage = (position) => {
     const page = pages.find((p) => p.position === position);
-    const state = {};
-    if (activityReportId === 'new' && reportId.current !== 'new') {
-      state.showLastUpdatedTime = true;
-    }
-    history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
+    history.replace(`/activity-reports/${reportId.current}/${page.path}`);
   };
 
   const onSave = async (data) => {
     const { activityRecipientType, activityRecipients } = data;
-    let updatedReport = false;
     if (canWrite) {
       if (reportId.current === 'new') {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
           const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
           reportId.current = savedReport.id;
-          updatedReport = false;
+          window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
         }
       } else {
         await saveReport(reportId.current, data, {});
-        updatedReport = true;
       }
     }
-    return updatedReport;
   };
 
   const onFormSubmit = async (data) => {
