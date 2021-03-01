@@ -1,20 +1,14 @@
 import { Op } from 'sequelize';
 import axios from 'axios';
-import AdmZip from 'adm-zip';
 import fs from 'mz/fs';
-import updateGrantsGrantees, { processFiles } from '../lib/updateGrantsGrantees';
+import updateGrantsGrantees, { processFiles } from './updateGrantsGrantees';
 import db, {
   Grantee, Grant,
 } from '../models';
 
 jest.mock('axios');
 const mockZip = jest.fn();
-jest.mock('adm-zip', () => {
-  return jest.fn().mockImplementation(() => {
-    return { extractAllTo: mockZip };
-  });
-});
-
+jest.mock('adm-zip', () => jest.fn().mockImplementation(() => ({ extractAllTo: mockZip })));
 
 describe('Update HSES data', () => {
   beforeEach(() => {
@@ -54,7 +48,7 @@ describe('Update HSES data', () => {
           cb();
         }
       });
-    const writeStream = jest.spyOn(fs, 'createWriteStream')
+    const writeStream = jest.spyOn(fs, 'createWriteStream');
     writeStream.mockReturnValue({ on });
 
     const processFunc = jest.fn();
