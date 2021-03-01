@@ -251,10 +251,10 @@ describe('Activity Reports DB service', () => {
       expect(recipients.grants.length).toBe(0);
     });
 
-    it('retrieves all recipients when not specifying region ', async () => {
+    it('retrieves all recipients when not specifying region', async () => {
+      const allRecipients = await ActivityRecipient.findAll();
       const recipients = await possibleRecipients();
-      // 11 From db being seeded + 1 that we create for this test suite = 12
-      expect(recipients.grants.length).toBe(12);
+      expect(allRecipients.length).toEqual(recipients.grants.length);
     });
   });
 });
