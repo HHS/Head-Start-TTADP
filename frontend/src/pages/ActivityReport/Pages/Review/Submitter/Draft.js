@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import {
-  Dropdown, Form, Fieldset, Textarea, Alert, Button,
+  Dropdown, Form, Fieldset, Textarea, Button,
 } from '@trussworks/react-uswds';
 
 import IncompletePages from './IncompletePages';
@@ -10,7 +10,6 @@ import { DECIMAL_BASE } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
 
 const Draft = ({
-  submitted,
   approvers,
   onFormSubmit,
   onSaveForm,
@@ -36,14 +35,6 @@ const Draft = ({
 
   return (
     <>
-      {submitted
-      && (
-      <Alert noIcon className="margin-y-4" type="success">
-        <b>Success</b>
-        <br />
-        This report was successfully submitted for approval
-      </Alert>
-      )}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
@@ -82,7 +73,6 @@ const Draft = ({
 };
 
 Draft.propTypes = {
-  submitted: PropTypes.bool.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
