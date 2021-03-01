@@ -237,7 +237,7 @@ describe('Activity Reports DB service', () => {
     it('retrieves reports with default sort by updatedAt', async () => {
       const report = await ActivityReport.create(reportObject);
 
-      const { count, rows } = await activityReports({});
+      const { count, rows } = await activityReports([1], {});
       expect(rows.length).toBe(10);
       expect(count).toBeDefined();
       expect(rows[0].id).toBe(report.id);
@@ -258,7 +258,7 @@ describe('Activity Reports DB service', () => {
       reportObject.userId = mockUserTwo.id;
       await ActivityReport.create(reportObject);
 
-      const { rows } = await activityReports({
+      const { rows } = await activityReports([1], {
         sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2,
       });
       expect(rows.length).toBe(2);
@@ -268,7 +268,7 @@ describe('Activity Reports DB service', () => {
     it('retrieves reports sorted by collaborators', async () => {
       await ActivityReport.create(reportObject);
 
-      const { rows } = await activityReports({
+      const { rows } = await activityReports([1], {
         sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12,
       });
       expect(rows.length).toBe(12);
@@ -279,7 +279,7 @@ describe('Activity Reports DB service', () => {
       reportObject.regionId = 2;
       await ActivityReport.create(reportObject);
 
-      const { rows } = await activityReports({
+      const { rows } = await activityReports([1, 2], {
         sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12,
       });
       expect(rows.length).toBe(12);
@@ -290,7 +290,7 @@ describe('Activity Reports DB service', () => {
       reportObject.regionId = 2;
       await ActivityReport.create(reportObject);
 
-      const { rows } = await activityReports({
+      const { rows } = await activityReports([1, 2], {
         sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12,
       });
       expect(rows.length).toBe(12);
@@ -303,7 +303,7 @@ describe('Activity Reports DB service', () => {
       reportObject.topics = ['topic b', 'topic a'];
       await ActivityReport.create(reportObject);
 
-      const { rows } = await activityReports({
+      const { rows } = await activityReports([1, 2], {
         sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12,
       });
       expect(rows.length).toBe(12);
