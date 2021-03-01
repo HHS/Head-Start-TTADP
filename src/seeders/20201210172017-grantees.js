@@ -31,6 +31,18 @@ const grantees = [
     id: 8,
     name: 'Agency 4, Inc.',
   },
+  {
+    id: 9,
+    name: 'Agency 1.a in region 1, Inc.',
+  },
+  {
+    id: 10,
+    name: 'Agency 1.b in region 1, Inc.',
+  },
+  {
+    id: 11,
+    name: 'Agency 2 in region 1, Inc.',
+  },
 ];
 
 module.exports = {
