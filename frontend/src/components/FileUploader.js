@@ -5,7 +5,7 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -109,14 +109,19 @@ export const getStatus = (status) => {
   return 'Upload Failed';
 };
 
-const deleteFileModal = ({
-  onFileRemoved, files, index, closeModal,
+const DeleteFileModal = ({
+  onFileRemoved, files, index, closeModal, isOpen,
 }) => {
+  const deleteModal = useRef(null);
   const onClose = () => {
     onFileRemoved(index)
       .then(closeModal());
   };
+  useEffect(() => {
+      deleteModal.current.querySelector('button').focus();
+  });
   return (
+    <div role="dialog" aria-modal="true" ref={deleteModal}>
     <Modal
       title={<h2>Delete File</h2>}
       actions={(
@@ -139,9 +144,10 @@ const deleteFileModal = ({
       </p>
       <p>This action cannot be undone.</p>
     </Modal>
+    </div>
   );
 };
-const ConnectedDeleteFileModal = connectModal(deleteFileModal);
+const ConnectedDeleteFileModal = connectModal(DeleteFileModal);
 
 const FileTable = ({ onFileRemoved, files }) => {
   const [index, setIndex] = useState(null);
