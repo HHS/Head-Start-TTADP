@@ -4,8 +4,8 @@ import _ from 'lodash';
 import { useFormContext } from 'react-hook-form';
 
 const ReviewItem = ({ label, name, path }) => {
-  const { getValues } = useFormContext();
-  const value = getValues(name);
+  const { watch } = useFormContext();
+  const value = watch(name);
   let values = value;
 
   if (!Array.isArray(value)) {
