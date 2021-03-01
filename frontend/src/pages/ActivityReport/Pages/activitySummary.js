@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
+import { isEmpty } from 'lodash';
 
 import {
   Fieldset, Radio, Grid, TextInput, Checkbox,
@@ -47,7 +48,7 @@ const ActivitySummary = ({
     value: nonGrantee.activityRecipientId,
   }));
 
-  const disableRecipients = activityRecipientType === '';
+  const disableRecipients = isEmpty(activityRecipientType);
   const nonGranteeSelected = activityRecipientType === 'non-grantee';
   const granteeSelected = activityRecipientType === 'grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;

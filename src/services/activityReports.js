@@ -75,7 +75,8 @@ async function saveReportRecipients(
     activityReportId,
   };
 
-  if (activityRecipientType === 'non-grantee') {
+  const empty = activityRecipientIds.length === 0;
+  if (!empty && activityRecipientType === 'non-grantee') {
     where[Op.or] = {
       nonGranteeId: {
         [Op.notIn]: activityRecipientIds,
@@ -84,7 +85,7 @@ async function saveReportRecipients(
         [Op.not]: null,
       },
     };
-  } else if (activityRecipientType === 'grantee') {
+  } else if (!empty && activityRecipientType === 'grantee') {
     where[Op.or] = {
       grantId: {
         [Op.notIn]: activityRecipientIds,
