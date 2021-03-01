@@ -32,17 +32,17 @@ import {
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  deliveryMethod: [],
+  deliveryMethod: null,
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
   attachments: [],
   context: '',
   collaborators: [],
-  duration: '',
+  duration: null,
   endDate: null,
   grantees: [],
-  numberOfParticipants: '',
+  numberOfParticipants: null,
   participantCategory: '',
   participants: [],
   programTypes: [],
@@ -178,9 +178,13 @@ function ActivityReport({
     if (!editable) {
       return;
     }
+    const state = {};
+    if (activityReportId === 'new' && reportId.current !== 'new') {
+      state.showLastUpdatedTime = true;
+    }
 
     const page = pages.find((p) => p.position === position);
-    history.replace(`/activity-reports/${reportId.current}/${page.path}`);
+    history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {
