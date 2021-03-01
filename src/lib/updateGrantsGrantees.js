@@ -98,47 +98,45 @@ export async function processFiles() {
  *
  * Note - file download needs to happen in deployed environments
  */
-export default async function updateGrantsGrantees() {
+export default async function updateGrantsGrantees(_processFiles = processFiles) {
   logger.info('updateGrantsGrantees: starting');
-  if (process.env.NODE_ENV === 'production') {
-    logger.debug('updateGrantsGrantees: retrieving file from HSES');
-    await axios(process.env.HSES_DATA_FILE_URL, {
-      method: 'get',
-      url: process.env.HSES_DATA_FILE_URL,
-      responseType: 'stream',
-      auth: {
-        username: process.env.HSES_DATA_USERNAME,
-        password: process.env.HSES_DATA_PASSWORD,
-      },
-    }).then(({ status, data }) => {
-      logger.debug(`updateGrantsGrantees: Got file response: ${status}`);
-      const writeStream = fs.createWriteStream('hses.zip');
+  logger.debug('updateGrantsGrantees: retrieving file from HSES');
+  await axios(process.env.HSES_DATA_FILE_URL, {
+    method: 'get',
+    url: process.env.HSES_DATA_FILE_URL,
+    responseType: 'stream',
+    auth: {
+      username: process.env.HSES_DATA_USERNAME,
+      password: process.env.HSES_DATA_PASSWORD,
+    },
+  }).then(({ status, data }) => {
+    logger.debug(`updateGrantsGrantees: Got file response: ${status}`);
+    const writeStream = fs.createWriteStream('hses.zip');
 
-      return new Promise((resolve, reject) => {
-        let error = null;
-        writeStream.on('error', (err) => {
-          auditLogger.error(`updateGrantsGrantees: writeStream emitted error: ${err}`);
-          error = err;
-          reject(err);
-        });
-        writeStream.on('close', () => {
-          logger.debug('updateGrantsGrantees: writeStream emitted close');
-          if (!error) {
-            resolve(true);
-          }
-        });
-        data.pipe(writeStream);
+    return new Promise((resolve, reject) => {
+      let error = null;
+      writeStream.on('error', (err) => {
+        auditLogger.error(`updateGrantsGrantees: writeStream emitted error: ${err}`);
+        error = err;
+        reject(err);
       });
+      writeStream.on('close', () => {
+        logger.debug('updateGrantsGrantees: writeStream emitted close');
+        if (!error) {
+          resolve(true);
+        }
+      });
+      data.pipe(writeStream);
     });
-    logger.debug('updateGrantsGrantees: wrote file from HSES');
+  });
+  logger.debug('updateGrantsGrantees: wrote file from HSES');
 
-    const zip = new AdmZip('./hses.zip');
-    logger.debug('updateGrantsGrantees: extracting zip file');
-    // extract to target path. Pass true to overwrite
-    zip.extractAllTo('./temp', true);
-    logger.debug('updateGrantsGrantees: unzipped files');
+  const zip = new AdmZip('./hses.zip');
+  logger.debug('updateGrantsGrantees: extracting zip file');
+  // extract to target path. Pass true to overwrite
+  zip.extractAllTo('./temp', true);
+  logger.debug('updateGrantsGrantees: unzipped files');
 
-    await processFiles();
-  }
+  await _processFiles();
   logger.info('updateGrantsGrantees: processFiles completed');
 }
