@@ -13,8 +13,6 @@
 
 .pagination li {
   display: inline-block;
-  /* padding-left: 5.5px;
-  padding-right: 5px; */
   margin-right: 7px;
 }
 
@@ -101,6 +99,7 @@ h1.landing {
   border-top: solid 1.5px;
   border-color: #ECEEF1;
   border-bottom: none;
+  cursor: pointer;
 }
 
 .landing .usa-table--borderless th:first-child {
