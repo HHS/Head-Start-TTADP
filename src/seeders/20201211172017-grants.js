@@ -53,6 +53,24 @@ const grants = [
     regionId: 9,
     granteeId: 8,
   },
+  {
+    id: 10,
+    number: '01HP044444',
+    regionId: 1,
+    granteeId: 9,
+  },
+  {
+    id: 11,
+    number: '01HP022222',
+    regionId: 1,
+    granteeId: 10,
+  },
+  {
+    id: 12,
+    number: '09HP01111',
+    regionId: 1,
+    granteeId: 11,
+  },
 ];
 
 module.exports = {
