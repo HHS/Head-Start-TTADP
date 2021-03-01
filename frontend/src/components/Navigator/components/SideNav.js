@@ -40,7 +40,7 @@ const tagClass = (state) => {
 function SideNav({
   pages, skipTo, skipToMessage, lastSaveTime, errorMessage,
 }) {
-  const isMobile = useMediaQuery({ maxWidth: 640 });
+  const isMobile = useMediaQuery({ maxWidth: 1023 });
   const navItems = () => pages.map((page) => (
     <li key={page.label} className="smart-hub--navigator-item">
       <Button

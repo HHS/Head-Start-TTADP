@@ -39,7 +39,7 @@ services:
   worker:
     build:
       context: .
-    command: yarn server
+    command: yarn worker
     env_file: .env
     depends_on:
       - db
@@ -48,7 +48,7 @@ services:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
     volumes:
-      - "./worker:/app:rw"
+      - ".:/app:rw"
   db:
     image: postgres:12.4
     container_name: postgres_docker

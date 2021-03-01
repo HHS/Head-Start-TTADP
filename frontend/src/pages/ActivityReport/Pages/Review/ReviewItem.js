@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
 import _ from 'lodash';
 import { useFormContext } from 'react-hook-form';
 
@@ -21,18 +20,18 @@ const ReviewItem = ({ label, name, path }) => {
   const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
 
   return (
-    <Grid row className={classes}>
-      <Grid col={6}>
+    <div className={`grid-row ${classes} margin-bottom-3 desktop:margin-bottom-0`}>
+      <div className="grid-col-12 desktop:grid-col-6 font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
         {label}
-      </Grid>
-      <Grid col={6}>
+      </div>
+      <div className="grid-col-12 desktop:grid-col-6">
         {values.map((v, index) => (
-          <Grid aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="flex-align-end display-flex flex-column flex-justify-center">
-            {v}
-          </Grid>
+          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+            {Number.isNaN(v) ? '' : v}
+          </div>
         ))}
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   );
 };
 
