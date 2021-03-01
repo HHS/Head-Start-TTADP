@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 
 import pages from './Pages';
@@ -81,7 +82,7 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
 
@@ -134,7 +135,7 @@ function ActivityReport({
       }
     };
     fetch();
-  }, [activityReportId, user.id, showLastUpdatedTime]);
+  }, [activityReportId, user, showLastUpdatedTime, region]);
 
   if (loading) {
     return (
