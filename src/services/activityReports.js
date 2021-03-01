@@ -257,6 +257,7 @@ export function activityReports(readRegions, {
   sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10,
 }) {
   let result = '';
+  const regions = readRegions || [];
   const orderBy = () => {
     switch (sortBy) {
       case 'author':
@@ -305,7 +306,7 @@ export function activityReports(readRegions, {
   };
   return ActivityReport.findAndCountAll(
     {
-      where: { regionId: readRegions },
+      where: { regionId: regions },
       attributes: [
         'id',
         'displayId',
