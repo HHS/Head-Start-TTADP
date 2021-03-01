@@ -8,7 +8,9 @@ import findOrCreateUser, {
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 
-const { SITE_ACCESS, ADMIN, READ_REPORTS, READ_WRITE_REPORTS } = SCOPES;
+const {
+  SITE_ACCESS, ADMIN, READ_REPORTS, READ_WRITE_REPORTS,
+} = SCOPES;
 
 jest.mock('../logger', () => ({
   auditLogger: {
