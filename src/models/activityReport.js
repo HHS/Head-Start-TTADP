@@ -80,7 +80,6 @@ export default (sequelize, DataTypes) => {
       get: formatDate,
     },
     activityRecipientType: {
-      allowNull: false,
       type: DataTypes.STRING,
     },
     requester: {

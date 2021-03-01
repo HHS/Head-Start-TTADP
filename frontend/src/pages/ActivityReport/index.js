@@ -32,17 +32,17 @@ import {
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  deliveryMethod: [],
+  deliveryMethod: null,
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
   attachments: [],
   context: '',
   collaborators: [],
-  duration: '',
+  duration: null,
   endDate: null,
   grantees: [],
-  numberOfParticipants: '',
+  numberOfParticipants: null,
   participantCategory: '',
   participants: [],
   programTypes: [],
@@ -178,31 +178,23 @@ function ActivityReport({
     if (!editable) {
       return;
     }
-
-    const page = pages.find((p) => p.position === position);
     const state = {};
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;
     }
+
+    const page = pages.find((p) => p.position === position);
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {
-    const { activityRecipientType, activityRecipients } = data;
-    let updatedReport = false;
     if (reportId.current === 'new') {
-      if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-        const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
-        reportId.current = savedReport.id;
-        const current = pages.find((p) => p.path === currentPage);
-        updatePage(current.position);
-        updatedReport = false;
-      }
+      const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
+      reportId.current = savedReport.id;
+      window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
       await saveReport(reportId.current, data, {});
-      updatedReport = true;
     }
-    return updatedReport;
   };
 
   const onFormSubmit = async (data) => {
