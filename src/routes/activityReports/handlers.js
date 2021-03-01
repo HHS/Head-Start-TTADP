@@ -8,6 +8,7 @@ import {
   createOrUpdate,
   review,
   activityReports,
+  setStatus,
   activityReportAlerts,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
@@ -84,6 +85,26 @@ export async function reviewReport(req, res) {
     }
 
     const savedReport = await review(report, status, managerNotes);
+    res.json(savedReport);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function resetToDraft(req, res) {
+  try {
+    const { activityReportId } = req.params;
+
+    const user = await userById(req.session.userId);
+    const report = await activityReportById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canReset()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedReport = await setStatus(report, REPORT_STATUSES.DRAFT);
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
