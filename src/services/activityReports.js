@@ -423,10 +423,22 @@ export async function createOrUpdate(newActivityReport, report) {
   return activityReportById(savedReport.id);
 }
 
-export async function possibleRecipients() {
+/*
+ * Queries the db for relevant recipients depending on the region id.
+ * If no region id is passed, then default to returning all available recipients.
+ * Note: This only affects grants and grantees. Non Grantees remain unaffected by the region id.
+ *
+ * @param {number} [regionId] - A region id to query against
+ * @returns {*} Grants and Non grantees
+ */
+
+export async function possibleRecipients(regionId) {
+  const where = regionId ? { regionId } : undefined;
+
   const grants = await Grantee.findAll({
     attributes: ['id', 'name'],
     include: [{
+      where,
       model: Grant,
       as: 'grants',
       attributes: [['id', 'activityRecipientId'], 'name', 'number'],
