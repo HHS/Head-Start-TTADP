@@ -110,7 +110,7 @@ export const getStatus = (status) => {
 };
 
 const DeleteFileModal = ({
-  onFileRemoved, files, index, closeModal, isOpen,
+  onFileRemoved, files, index, closeModal,
 }) => {
   const deleteModal = useRef(null);
   const onClose = () => {
@@ -118,35 +118,43 @@ const DeleteFileModal = ({
       .then(closeModal());
   };
   useEffect(() => {
-      deleteModal.current.querySelector('button').focus();
+    deleteModal.current.querySelector('button').focus();
   });
   return (
     <div role="dialog" aria-modal="true" ref={deleteModal}>
-    <Modal
-      title={<h2>Delete File</h2>}
-      actions={(
-        <>
-          <Button type="button" onClick={closeModal}>
-            Cancel
-          </Button>
-          <Button type="button" secondary onClick={onClose}>
-            Delete
-          </Button>
-        </>
+      <Modal
+        title={<h2>Delete File</h2>}
+        actions={(
+          <>
+            <Button type="button" onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button type="button" secondary onClick={onClose}>
+              Delete
+            </Button>
+          </>
     )}
-    >
-      <p>
-        Are you sure you want to delete
-        {' '}
-        {files[index].originalFileName}
-        {' '}
-        ?
-      </p>
-      <p>This action cannot be undone.</p>
-    </Modal>
+      >
+        <p>
+          Are you sure you want to delete
+          {' '}
+          {files[index].originalFileName}
+          {' '}
+          ?
+        </p>
+        <p>This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 };
+
+DeleteFileModal.propTypes = {
+  onFileRemoved: PropTypes.func.isRequired,
+  closeModal: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  files: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
 const ConnectedDeleteFileModal = connectModal(DeleteFileModal);
 
 const FileTable = ({ onFileRemoved, files }) => {
