@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
 import { HashLink } from 'react-router-hash-link';
 
 const Section = ({
@@ -8,17 +7,18 @@ const Section = ({
 }) => {
   const classes = [
     'smart-hub-review-section',
+    'margin-top-2 desktop:margin-top-0',
     hidePrint ? 'smart-hub-review-section--empty no-print' : '',
     'margin-bottom-3',
   ].filter((x) => x).join(' ');
 
   return (
     <div className={classes}>
-      <Grid row className="border-bottom padding-bottom-1 margin-bottom-105">
-        <Grid col={6}>
+      <div className="grid-row border-bottom padding-bottom-1 margin-bottom-105">
+        <div className="grid-col-12 desktop:grid-col-6">
           <b className="margin-y-1">{title}</b>
-        </Grid>
-        <Grid col={6} className="flex-align-end display-flex flex-column flex-justify-center">
+        </div>
+        <div className="grid-col-12 desktop:grid-col-6 display-flex flex-align-end flex-column flex-justify-center">
           <HashLink
             aria-label={`Edit form section "${title}"`}
             to={`${basePath}#${anchor}`}
@@ -26,8 +26,8 @@ const Section = ({
           >
             Edit
           </HashLink>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       {children}
     </div>
   );
