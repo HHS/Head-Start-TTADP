@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { File } from '../../models';
-import { uploadFile } from '../../lib/s3';
+import { uploadFile, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -121,9 +121,10 @@ export default async function uploadHandler(req, res) {
       return;
     }
     try {
-      await uploadFile(buffer, fileName, type);
+      const uploadedFile = await uploadFile(buffer, fileName, type);
+      const url = getPresignedURL(uploadedFile.key);
       await updateStatus(metadata.id, UPLOADED);
-      res.status(200).send({ id: metadata.id });
+      res.status(200).send({ id: metadata.id, url });
     } catch (err) {
       if (metadata) {
         await updateStatus(metadata.id, UPLOAD_FAILED);

@@ -29,13 +29,15 @@ function Dropzone(props) {
     } else if (id === 'otherResources') {
       attachmentType = 'RESOURCE';
     }
+    let url;
     const upload = async (file) => {
       try {
         const data = new FormData();
         data.append('reportId', reportId);
         data.append('attachmentType', attachmentType);
         data.append('file', file);
-        await uploadFile(data);
+        const uploadedFile = await uploadFile(data);
+        url = uploadedFile.url;
       } catch (error) {
         setErrorMessage(`${file.name} failed to upload`);
         // eslint-disable-next-line no-console
@@ -44,7 +46,7 @@ function Dropzone(props) {
       }
       setErrorMessage(null);
       return {
-        key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
+        key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url,
       };
     };
     const newFiles = e.map((file) => upload(file));

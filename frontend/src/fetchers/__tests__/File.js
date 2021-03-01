@@ -7,8 +7,11 @@ const fakeFile = new File(['testing'], 'test.txt');
 
 describe('File fetcher', () => {
   it('test that the file gets uploaded', async () => {
-    fetchMock.mock(activityReportUrl, 200);
+    fetchMock.mock(activityReportUrl, {
+      body: { id: 1 },
+      status: 200,
+    });
     const res = await uploadFile(fakeFile);
-    expect(res.status).toBe(200);
+    expect(res).toEqual({ id: 1 });
   });
 });
