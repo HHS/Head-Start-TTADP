@@ -94,13 +94,13 @@ TopicsResources.propTypes = {
 };
 
 const ReviewSection = () => {
-  const { getValues } = useFormContext();
+  const { watch } = useFormContext();
   const {
     otherResources,
     resourcesUsed,
     attachments,
     topics: formTopics,
-  } = getValues();
+  } = watch();
 
   const hasOtherResources = otherResources && otherResources.length <= 0;
   const hasAttachments = attachments && attachments.length <= 0;
@@ -132,9 +132,10 @@ const ReviewSection = () => {
         />
         {otherResources.map((file) => (
           <FileReviewItem
+            key={file.url.url}
             filename={file.originalFileName}
             url={file.url.url}
-            accepted={file.status}
+            status={file.status}
           />
         ))}
       </Section>
@@ -147,9 +148,10 @@ const ReviewSection = () => {
       >
         {attachments.map((file) => (
           <FileReviewItem
+            key={file.url.url}
             filename={file.originalFileName}
             url={file.url.url}
-            accepted={file.status}
+            status={file.status}
           />
         ))}
       </Section>
