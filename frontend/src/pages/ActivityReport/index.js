@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 
 import pages from './Pages';
@@ -16,7 +17,8 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { REPORT_STATUSES } from '../../Constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
+import { getRegionWithReadWrite } from '../../permissions';
 import {
   submitReport,
   saveReport,
@@ -55,12 +57,12 @@ const defaultValues = {
   status: REPORT_STATUSES.DRAFT,
 };
 
-// FIXME: default region until we have a way of changing on the frontend
-const region = 1;
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ match, user, location }) {
+function ActivityReport({
+  match, user, location, region,
+}) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
   const [error, updateError] = useState();
@@ -80,27 +82,30 @@ function ActivityReport({ match, user, location }) {
     history.replace();
   }, [activityReportId, history]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     const fetch = async () => {
+      let report;
+
       try {
         updateLoading(true);
-
-        const apiCalls = [
-          getRecipients(),
-          getCollaborators(region),
-          getApprovers(region),
-        ];
-
         if (activityReportId !== 'new') {
-          apiCalls.push(getReport(activityReportId));
+          report = await getReport(activityReportId);
         } else {
-          apiCalls.push(
-            Promise.resolve({ ...defaultValues, pageState: defaultPageState, userId: user.id }),
-          );
+          report = {
+            ...defaultValues,
+            pageState: defaultPageState,
+            userId: user.id,
+            regionId: region || getRegionWithReadWrite(user),
+          };
         }
 
-        const [recipients, collaborators, approvers, report] = await Promise.all(apiCalls);
+        const apiCalls = [
+          getRecipients(report.regionId),
+          getCollaborators(report.regionId),
+          getApprovers(report.regionId),
+        ];
 
+        const [recipients, collaborators, approvers] = await Promise.all(apiCalls);
         reportId.current = activityReportId;
 
         const isCollaborator = report.collaborators
@@ -120,12 +125,17 @@ function ActivityReport({ match, user, location }) {
         updateError();
       } catch (e) {
         updateError('Unable to load activity report');
+        // If the error was caused by an invalid region, we need a way to communicate that to the
+        // component so we can redirect the user. We can do this by updating the form data
+        if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
+          updateFormData({ regionId: report.regionId });
+        }
       } finally {
         updateLoading(false);
       }
     };
     fetch();
-  }, [activityReportId, user.id, showLastUpdatedTime]);
+  }, [activityReportId, user, showLastUpdatedTime, region]);
 
   if (loading) {
     return (
@@ -133,6 +143,12 @@ function ActivityReport({ match, user, location }) {
         loading...
       </div>
     );
+  }
+
+  // If no region was able to be found, we will re-reoute user to the main page
+  // FIXME: when re-routing user show a message explaining what happened
+  if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
+    return <Redirect to="/" />;
   }
 
   if (error) {
@@ -165,7 +181,7 @@ function ActivityReport({ match, user, location }) {
     if (canWrite) {
       if (reportId.current === 'new') {
         if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: region }, {});
+          const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
           reportId.current = savedReport.id;
           updatedReport = false;
         }
@@ -224,11 +240,16 @@ function ActivityReport({ match, user, location }) {
 ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
+  region: PropTypes.number,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.string,
   }).isRequired,
+};
+
+ActivityReport.defaultProps = {
+  region: undefined,
 };
 
 export default ActivityReport;
