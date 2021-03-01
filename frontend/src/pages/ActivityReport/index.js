@@ -241,12 +241,16 @@ function ActivityReport({
 ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
-  region: PropTypes.number.isRequired,
+  region: PropTypes.number,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.string,
   }).isRequired,
+};
+
+ActivityReport.defaultProps = {
+  region: undefined,
 };
 
 export default ActivityReport;
