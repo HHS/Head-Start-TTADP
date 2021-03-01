@@ -7,6 +7,8 @@ const generateRedisConfig = () => {
         credentials: {
           host,
           port,
+          // TLS needs to be set to an empty object for redis on cloud.gov
+          // eslint-disable-next-line no-empty-pattern
           redisOpts: { redis: { password, tls: {} } },
         },
       }],
