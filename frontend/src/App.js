@@ -17,11 +17,12 @@ import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
-import isAdmin from './permissions';
+import isAdmin, { hasPermissions } from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
 import LandingLayout from './components/LandingLayout';
+import RequestPermissions from './components/RequestPermissions';
 
 function App() {
   const [user, updateUser] = useState();
@@ -59,6 +60,7 @@ function App() {
     );
   }
 
+  const canAccessPages = hasPermissions(user);
   const admin = isAdmin(user);
 
   const renderAuthenticatedRoutes = () => (
@@ -126,8 +128,10 @@ function App() {
               <section className="usa-section padding-top-3">
                 {!authenticated
           && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
-                {authenticated
-          && renderAuthenticatedRoutes()}
+                {authenticated && (canAccessPages
+                  ? renderAuthenticatedRoutes()
+                  : <RequestPermissions />
+                )}
               </section>
             </div>
           </div>
