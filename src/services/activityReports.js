@@ -253,7 +253,7 @@ export function activityReportById(activityReportId) {
  * @param {*} limit - size of the slice
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
-export function activityReports({
+export function activityReports(readRegions, {
   sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10,
 }) {
   let result = '';
@@ -305,6 +305,7 @@ export function activityReports({
   };
   return ActivityReport.findAndCountAll(
     {
+      where: { regionId: readRegions },
       attributes: [
         'id',
         'displayId',

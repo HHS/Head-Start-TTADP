@@ -155,7 +155,8 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const reportsWithCount = await activityReports(req.query);
+  const { readRegions } = req.session;
+  const reportsWithCount = await activityReports(readRegions, req.query);
   if (!reportsWithCount) {
     res.sendStatus(404);
   } else {
