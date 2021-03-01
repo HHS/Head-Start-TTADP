@@ -182,6 +182,8 @@ function ActivityReport({
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;
     }
+
+    const page = pages.find((p) => p.position === position);
     const path = page ? page.path : 'activity-summary';
 
     history.replace(`/activity-reports/${reportId.current}/${path}`, state);
