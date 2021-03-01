@@ -7,16 +7,16 @@ const generateRedisConfig = () => {
         credentials: {
           host,
           port,
-          // TLS needs to be set to an empty object for redis on cloud.gov
-          // eslint-disable-next-line no-empty-pattern
-          redisOpts: { redis: { password, tls: {} } },
+          password,
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
     return {
       host,
       port,
-      redisOpts: { redis: { password } },
+      // TLS needs to be set to an empty object for redis on cloud.gov
+      // eslint-disable-next-line no-empty-pattern
+      redisOpts: { redis: { password, tls: {} } },
     };
   }
   const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
