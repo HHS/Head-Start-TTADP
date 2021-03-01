@@ -182,6 +182,11 @@ export function activityReportById(activityReportId) {
         ],
       },
       {
+        model: User,
+        as: 'author',
+        attributes: ['name'],
+      },
+      {
         model: Goal,
         as: 'goals',
         attributes: ['id', 'name'],
@@ -384,6 +389,7 @@ export async function createOrUpdate(newActivityReport, report) {
     attachments,
     otherResources,
     approvingManager,
+    author,
     granteeNextSteps,
     specialistNextSteps,
     ...updatedFields
@@ -424,6 +430,13 @@ export async function createOrUpdate(newActivityReport, report) {
   return activityReportById(savedReport.id);
 }
 
+export async function setStatus(report, status) {
+  const updatedReport = await report.update({ status }, {
+    fields: ['status'],
+  });
+  return updatedReport;
+}
+
 /*
  * Queries the db for relevant recipients depending on the region id.
  * If no region id is passed, then default to returning all available recipients.
@@ -432,7 +445,6 @@ export async function createOrUpdate(newActivityReport, report) {
  * @param {number} [regionId] - A region id to query against
  * @returns {*} Grants and Non grantees
  */
-
 export async function possibleRecipients(regionId) {
   const where = regionId ? { regionId } : undefined;
 

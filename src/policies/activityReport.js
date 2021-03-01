@@ -25,7 +25,14 @@ export default class ActivityReport {
   }
 
   canUpdate() {
-    return (this.isAuthor() || this.isCollaborator()) && this.canWriteInRegion();
+    return (this.isAuthor() || this.isCollaborator())
+      && this.canWriteInRegion()
+      && this.reportHasEditableStatus();
+  }
+
+  canReset() {
+    return (this.isAuthor || this.isCollaborator)
+      && this.activityReport.status === REPORT_STATUSES.SUBMITTED;
   }
 
   canGet() {
@@ -70,5 +77,10 @@ export default class ActivityReport {
 
   isApprovingManager() {
     return this.activityReport.approvingManagerId === this.user.id;
+  }
+
+  reportHasEditableStatus() {
+    return this.activityReport.status === REPORT_STATUSES.DRAFT
+      || this.activityReport.status === REPORT_STATUSES.NEEDS_ACTION;
   }
 }

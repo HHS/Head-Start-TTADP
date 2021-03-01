@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, Accordion,
+  Accordion,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 
-import Container from '../../../../components/Container';
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
 import './index.css';
-import { REPORT_STATUSES } from '../../../../Constants';
 
 const ReviewSubmit = ({
   onSubmit,
@@ -20,6 +18,7 @@ const ReviewSubmit = ({
   approvingManager,
   reportCreator,
   formData,
+  onResetToDraft,
   onSaveForm,
   pages,
   updateShowValidationErrors,
@@ -30,17 +29,14 @@ const ReviewSubmit = ({
     updateShowValidationErrors(true);
   }, [updateShowValidationErrors]);
 
-  const [submitted, updateSubmitted] = useState(status === REPORT_STATUSES.SUBMITTED);
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
 
   const onFormSubmit = async (data) => {
     try {
       await onSubmit(data);
-      updateSubmitted(true);
       updateError();
     } catch (e) {
-      updateSubmitted(false);
       updateError('Unable to submit report');
     }
   };
@@ -56,44 +52,49 @@ const ReviewSubmit = ({
     }
   };
 
+  const onReset = async () => {
+    try {
+      await onResetToDraft();
+      updateError();
+    } catch (e) {
+      updateError('Unable to reset Activity Report to draft');
+    }
+  };
+
   return (
     <>
       <Helmet>
         <title>Review and submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-      <Accordion bordered={false} items={reviewItems} />
-      <Container skipTopPadding className="smart-hub-review margin-top-2 padding-top-2">
-        {error && (
-        <Alert noIcon className="margin-y-4" type="error">
-          <b>Error</b>
-          <br />
-          {error}
-        </Alert>
-        )}
-        {!approvingManager
+      {!approvingManager
         && (
         <Submitter
           status={status}
-          submitted={submitted}
           approvers={approvers}
           pages={pages}
           onFormSubmit={onFormSubmit}
+          onResetToDraft={onReset}
           formData={formData}
+          error={error}
           onSaveForm={onSaveForm}
-        />
+        >
+          <Accordion bordered={false} items={reviewItems} />
+        </Submitter>
         )}
-        {approvingManager
+      {approvingManager
         && (
         <Approver
           status={status}
           reviewed={reviewed}
           additionalNotes={additionalNotes}
           onFormReview={onFormReview}
+          error={error}
           formData={formData}
-        />
+        >
+          <Accordion bordered={false} items={reviewItems} />
+        </Approver>
         )}
-      </Container>
     </>
   );
 };
@@ -109,6 +110,7 @@ ReviewSubmit.propTypes = {
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
+  onResetToDraft: PropTypes.func.isRequired,
   approvingManager: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
