@@ -88,22 +88,13 @@ function Navigator({
 
     updateFormData(data);
     try {
-      const result = await onSave(data);
-      if (result) {
-        updateLastSaveTime(moment());
-        updateErrorMessage();
-      }
+      await onSave(data);
+      updateLastSaveTime(moment());
+      updateErrorMessage();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
       updateErrorMessage('Unable to save activity report');
-    }
-  };
-
-  const saveDraft = async () => {
-    await onSaveForm();
-    if (reportId === 'new') {
-      updatePage(page.position);
     }
   };
 
@@ -118,7 +109,7 @@ function Navigator({
   };
 
   useInterval(() => {
-    saveDraft();
+    onSaveForm();
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -184,7 +175,7 @@ function Navigator({
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
                     <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={() => { saveDraft(); }}>Save draft</Button>
+                    <Button type="button" onClick={() => { onSaveForm(); }}>Save draft</Button>
                     <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
                   </div>
                 </Form>
