@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion,
@@ -21,8 +21,13 @@ const ReviewSubmit = ({
   onResetToDraft,
   onSaveForm,
   pages,
+  updateShowValidationErrors,
 }) => {
   const { additionalNotes, status } = formData;
+
+  useEffect(() => {
+    updateShowValidationErrors(true);
+  }, [updateShowValidationErrors]);
 
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
@@ -95,6 +100,7 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
+  updateShowValidationErrors: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(
     PropTypes.shape({

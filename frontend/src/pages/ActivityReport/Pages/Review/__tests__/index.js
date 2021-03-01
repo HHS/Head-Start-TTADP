@@ -41,6 +41,7 @@ const RenderReview = ({
         approvingManager={approvingManager}
         pages={pages}
         reportCreator={reportCreator}
+        updateShowValidationErrors={() => {}}
       />
     </FormProvider>
   );
