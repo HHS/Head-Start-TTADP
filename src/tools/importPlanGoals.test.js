@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import importGoals from './importPlanGoals';
 import db, {
   Role, Topic, RoleTopic, Goal, Grantee, Grant,
