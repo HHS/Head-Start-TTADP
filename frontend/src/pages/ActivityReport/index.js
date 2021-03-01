@@ -28,10 +28,11 @@ import {
   getCollaborators,
   getApprovers,
   reviewReport,
+  resetToDraft,
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  deliveryMethod: [],
+  deliveryMethod: null,
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
@@ -39,10 +40,10 @@ const defaultValues = {
   otherResources: [],
   context: '',
   collaborators: [],
-  duration: '',
+  duration: null,
   endDate: null,
   grantees: [],
-  numberOfParticipants: '',
+  numberOfParticipants: null,
   participantCategory: '',
   participants: [],
   programTypes: [],
@@ -71,7 +72,7 @@ function ActivityReport({
   const [formData, updateFormData] = useState();
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
-  const [canWrite, updateCanWrite] = useState(false);
+  const [editable, updateEditable] = useState(false);
   const [initialLastUpdated, updateInitialLastUpdated] = useState();
   const reportId = useRef();
 
@@ -112,12 +113,14 @@ function ActivityReport({
         const isCollaborator = report.collaborators
           && report.collaborators.find((u) => u.id === user.id);
         const isAuthor = report.userId === user.id;
-        const canWriteReport = isCollaborator || isAuthor;
+        const canWriteReport = (isCollaborator || isAuthor)
+          && (report.status === REPORT_STATUSES.DRAFT
+              || report.status === REPORT_STATUSES.NEEDS_ACTION);
 
         updateAdditionalData({ recipients, collaborators, approvers });
         updateFormData(report);
         updateApprovingManager(report.approvingManagerId === user.id);
-        updateCanWrite(canWriteReport);
+        updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
           updateInitialLastUpdated(moment(report.updatedAt));
@@ -160,50 +163,56 @@ function ActivityReport({
     );
   }
 
-  if (!currentPage) {
-    const defaultPage = formData.status === REPORT_STATUSES.DRAFT ? 'activity-summary' : 'review';
+  if (!editable && currentPage !== 'review') {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/${defaultPage}`} />
+      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+    );
+  }
+
+  if (!currentPage) {
+    return (
+      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 
   const updatePage = (position) => {
-    const page = pages.find((p) => p.position === position);
+    if (!editable) {
+      return;
+    }
     const state = {};
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;
     }
+
+    const page = pages.find((p) => p.position === position);
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {
-    const { activityRecipientType, activityRecipients } = data;
-    let updatedReport = false;
-    if (canWrite) {
-      if (reportId.current === 'new') {
-        if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
-          reportId.current = savedReport.id;
-          const current = pages.find((p) => p.path === currentPage);
-          updatePage(current.position);
-          updatedReport = false;
-        }
-      } else {
-        await saveReport(reportId.current, data, {});
-        updatedReport = true;
-      }
+    if (reportId.current === 'new') {
+      const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
+      reportId.current = savedReport.id;
+      window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+    } else {
+      await saveReport(reportId.current, data, {});
     }
-    return updatedReport;
   };
 
   const onFormSubmit = async (data) => {
     const report = await submitReport(reportId.current, data);
     updateFormData(report);
+    updateEditable(false);
   };
 
   const onReview = async (data) => {
     const report = await reviewReport(reportId.current, data);
     updateFormData(report);
+  };
+
+  const onResetToDraft = async () => {
+    const report = await resetToDraft(reportId.current);
+    updateFormData(report);
+    updateEditable(true);
   };
 
   const reportCreator = { name: user.name, role: user.role };
@@ -222,6 +231,7 @@ function ActivityReport({
         </Grid>
       </Grid>
       <Navigator
+        editable={editable}
         updatePage={updatePage}
         reportCreator={reportCreator}
         initialLastUpdated={initialLastUpdated}
@@ -233,6 +243,7 @@ function ActivityReport({
         pages={pages}
         onFormSubmit={onFormSubmit}
         onSave={onSave}
+        onResetToDraft={onResetToDraft}
         approvingManager={approvingManager}
         onReview={onReview}
       />

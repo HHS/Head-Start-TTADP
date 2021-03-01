@@ -32,16 +32,20 @@ const reviewPage = {
       additionalData,
       onReview,
       approvingManager,
+      onResetToDraft,
       onSaveForm,
       allPages,
       reportCreator,
+      updateShowValidationErrors,
     ) => (
       <ReviewSubmit
+        updateShowValidationErrors={updateShowValidationErrors}
         approvers={additionalData.approvers}
         onSubmit={onSubmit}
         onSaveForm={onSaveForm}
         onReview={onReview}
         approvingManager={approvingManager}
+        onResetToDraft={onResetToDraft}
         reviewItems={
           pages.map((p) => ({
             id: p.path,
