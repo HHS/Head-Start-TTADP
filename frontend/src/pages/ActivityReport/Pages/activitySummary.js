@@ -257,6 +257,7 @@ const ActivitySummary = ({
                   name="duration"
                   type="number"
                   min={0}
+                  step={0.5}
                   inputRef={
                     register({
                       required: 'Please enter the duration of the activity',
