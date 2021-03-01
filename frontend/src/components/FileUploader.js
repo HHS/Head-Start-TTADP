@@ -197,8 +197,8 @@ const FileTable = ({ onFileRemoved, files }) => {
                   unstyled
                   aria-label="remove file"
                   onClick={(e) => {
-                    e.preventDefault()
-                    handleDelete(currentIndex)
+                    e.preventDefault();
+                    handleDelete(currentIndex);
                   }}
                 >
                   <span className="fa-sm">
