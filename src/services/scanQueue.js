@@ -7,31 +7,31 @@ const generateRedisConfig = () => {
         credentials: {
           host,
           port,
-          password,
+          redisOpts: { redis: { password, tls: {} } },
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
     return {
       host,
       port,
-      password,
+      redisOpts: { redis: { password } },
     };
   }
   const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
   return {
     host,
     port: (process.env.REDIS_PORT || 6379),
-    password,
+    redisOpts: { redis: { password } },
   };
 };
 
 const {
   host,
   port,
-  password,
+  redisOpts,
 } = generateRedisConfig();
 
-const scanQueue = new Queue('scan', `redis://${host}:${port}`, { redis: { password } });
+const scanQueue = new Queue('scan', `redis://${host}:${port}`, redisOpts);
 
 const addToScanQueue = (fileKey) => {
   const retries = process.env.FILE_SCAN_RETRIES || 5;
