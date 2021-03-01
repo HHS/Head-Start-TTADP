@@ -172,14 +172,11 @@ function ActivityReport({
   };
 
   const onSave = async (data) => {
-    const { activityRecipientType, activityRecipients } = data;
     if (canWrite) {
       if (reportId.current === 'new') {
-        if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
-          reportId.current = savedReport.id;
-          window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
-        }
+        const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
+        reportId.current = savedReport.id;
+        window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
       } else {
         await saveReport(reportId.current, data, {});
       }
