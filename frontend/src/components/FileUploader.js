@@ -5,56 +5,61 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button, Alert } from '@trussworks/react-uswds';
-import uploadFile from '../fetchers/File';
+import {
+  Button, Alert, Modal, connectModal,
+} from '@trussworks/react-uswds';
+import { uploadFile, deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
+
+export const upload = async (file, reportId, attachmentType, setErrorMessage) => {
+  let res;
+  try {
+    const data = new FormData();
+    data.append('reportId', reportId);
+    data.append('attachmentType', attachmentType);
+    data.append('file', file);
+    res = await uploadFile(data);
+  } catch (error) {
+    setErrorMessage(`${file.name} failed to upload`);
+    // eslint-disable-next-line no-console
+    console.log(error);
+    return null;
+  }
+  setErrorMessage(null);
+  return {
+    id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
+  };
+};
+
+export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => {
+  if (reportId === 'new') {
+    setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
+    return;
+  }
+  let attachmentType;
+  if (id === 'attachments') {
+    attachmentType = 'ATTACHMENT';
+  } else if (id === 'otherResources') {
+    attachmentType = 'RESOURCE';
+  }
+  const newFiles = e.map((file) => upload(file, reportId, attachmentType, setErrorMessage));
+  Promise.all(newFiles).then((values) => {
+    onChange(values);
+  });
+};
 
 function Dropzone(props) {
   const { onChange, id, reportId } = props;
   const [errorMessage, setErrorMessage] = useState();
-  const onDrop = async (e) => {
-    if (props.reportId === 'new') {
-      setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
-      return;
-    }
-    let attachmentType;
-    if (id === 'attachments') {
-      attachmentType = 'ATTACHMENT';
-    } else if (id === 'otherResources') {
-      attachmentType = 'RESOURCE';
-    }
-    let url;
-    const upload = async (file) => {
-      try {
-        const data = new FormData();
-        data.append('reportId', reportId);
-        data.append('attachmentType', attachmentType);
-        data.append('file', file);
-        const uploadedFile = await uploadFile(data);
-        url = uploadedFile.url;
-      } catch (error) {
-        setErrorMessage(`${file.name} failed to upload`);
-        // eslint-disable-next-line no-console
-        console.log(error);
-        return null;
-      }
-      setErrorMessage(null);
-      return {
-        key: file.name, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url,
-      };
-    };
-    const newFiles = e.map((file) => upload(file));
-    Promise.all(newFiles).then((values) => {
-      onChange(values);
-    });
-  };
-  const { getRootProps, getInputProps } = useDropzone({ onDrop });
+  const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage);
+
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip' });
 
   return (
     <div
@@ -104,60 +109,129 @@ export const getStatus = (status) => {
   return 'Upload Failed';
 };
 
-const FileTable = ({ onFileRemoved, files }) => (
-  <div className="files-table--container margin-top-2">
-    <table className="files-table">
-      <thead className="files-table--thead" bgcolor="#F8F8F8">
-        <tr>
-          <th width="50%">
-            Name
-          </th>
-          <th width="20%">
-            Size
-          </th>
-          <th width="20%">
-            Status
-          </th>
-          <th width="10%" aria-label="remove file" />
+const DeleteFileModal = ({
+  onFileRemoved, files, index, closeModal,
+}) => {
+  const deleteModal = useRef(null);
+  const onClose = () => {
+    onFileRemoved(index)
+      .then(closeModal());
+  };
+  useEffect(() => {
+    deleteModal.current.querySelector('button').focus();
+  });
+  return (
+    <div role="dialog" aria-modal="true" ref={deleteModal}>
+      <Modal
+        title={<h2>Delete File</h2>}
+        actions={(
+          <>
+            <Button type="button" onClick={closeModal}>
+              Cancel
+            </Button>
+            <Button type="button" secondary onClick={onClose}>
+              Delete
+            </Button>
+          </>
+    )}
+      >
+        <p>
+          Are you sure you want to delete
+          {' '}
+          {files[index].originalFileName}
+          {' '}
+          ?
+        </p>
+        <p>This action cannot be undone.</p>
+      </Modal>
+    </div>
+  );
+};
 
-        </tr>
-      </thead>
-      <tbody>
-        {files.map((file, index) => (
-          <tr key={file.key} id={`files-table-row-${index}`}>
-            <td className="files-table--file-name">
-              {file.originalFileName}
-            </td>
-            <td>
-              {`${(file.fileSize / 1000).toFixed(1)} KB`}
-            </td>
-            <td>
-              {getStatus(file.status)}
-            </td>
-            <td>
-              <Button
-                role="button"
-                className="smart-hub--file-tag-button"
-                unstyled
-                aria-label="remove file"
-                onClick={() => { onFileRemoved(index); }}
-              >
-                <span className="fa-sm">
-                  <FontAwesomeIcon color="black" icon={faTrash} />
-                </span>
-              </Button>
-            </td>
+DeleteFileModal.propTypes = {
+  onFileRemoved: PropTypes.func.isRequired,
+  closeModal: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  files: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
+const ConnectedDeleteFileModal = connectModal(DeleteFileModal);
+
+const FileTable = ({ onFileRemoved, files }) => {
+  const [index, setIndex] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const closeModal = () => setIsOpen(false);
+
+  const handleDelete = (newIndex) => {
+    setIndex(newIndex);
+    setIsOpen(true);
+  };
+
+  return (
+    <div className="files-table--container margin-top-2">
+      <ConnectedDeleteFileModal
+        onFileRemoved={onFileRemoved}
+        files={files}
+        index={index}
+        isOpen={isOpen}
+        closeModal={closeModal}
+      />
+      <table className="files-table">
+        <thead className="files-table--thead" bgcolor="#F8F8F8">
+          <tr>
+            <th width="50%">
+              Name
+            </th>
+            <th width="20%">
+              Size
+            </th>
+            <th width="20%">
+              Status
+            </th>
+            <th width="10%" aria-label="remove file" />
 
           </tr>
+        </thead>
+        <tbody>
+          {files.map((file, currentIndex) => (
+            <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
+              <td className="files-table--file-name">
+                {file.originalFileName}
+              </td>
+              <td>
+                {`${(file.fileSize / 1000).toFixed(1)} KB`}
+              </td>
+              <td>
+                {getStatus(file.status)}
+              </td>
+              <td>
+                <Button
+                  role="button"
+                  className="smart-hub--file-tag-button"
+                  unstyled
+                  aria-label="remove file"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete(currentIndex);
+                  }}
+                >
+                  <span className="fa-sm">
+                    <FontAwesomeIcon color="black" icon={faTrash} />
+                  </span>
+                </Button>
+              </td>
 
-        ))}
-      </tbody>
-    </table>
-    { files.length === 0 && (
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      { files.length === 0 && (
       <p className="files-table--empty">No files uploaded</p>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
+};
+
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
   files: PropTypes.arrayOf(PropTypes.object),
@@ -172,8 +246,11 @@ const FileUploader = ({
     onChange([...files, ...newFiles]);
   };
 
-  const onFileRemoved = (removedFileIndex) => {
-    onChange(files.filter((f, index) => (index !== removedFileIndex)));
+  const onFileRemoved = async (removedFileIndex) => {
+    const file = files[removedFileIndex];
+    const remainingFiles = files.filter((f) => f.id !== file.id);
+    onChange(remainingFiles);
+    await deleteFile(file.id, reportId);
   };
 
   return (

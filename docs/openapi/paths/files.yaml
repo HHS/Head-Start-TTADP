@@ -18,3 +18,28 @@ post:
           schema:
             type: object
             $ref: '../index.yaml#/components/schemas/fileResponse'
+delete:
+  tags:
+    - files
+  operationId: deleteFile
+  description: Delete a file from s3
+  parameters:
+    - in: path
+      name: reportId
+      required: true
+      schema:
+        type: number
+      description: Numeric ID of the file to delete
+    - in: path
+      name: fileId
+      required: true
+      schema:
+        type: number
+      description: Numeric ID of the file to delete
+  responses:
+    204:
+      description: file was successfully deleted
+    400:
+      description: request did not contain reportId/fileId in the path
+    403:
+      description: User is not authorized to delete this file

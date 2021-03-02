@@ -28,8 +28,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secretpass
       POSTGRES_DB: ttasmarthub
-    ports:
-      - "6543:5432"
     networks:
       - smarthub
 networks:
