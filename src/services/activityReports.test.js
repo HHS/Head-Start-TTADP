@@ -244,7 +244,7 @@ describe('Activity Reports DB service', () => {
       expect(recipients.grants.length).toBe(1);
     });
 
-    it('retrieves no recipients in empty region ', async () => {
+    it('retrieves no recipients in empty region', async () => {
       const region = 100;
       const recipients = await possibleRecipients(region);
 
