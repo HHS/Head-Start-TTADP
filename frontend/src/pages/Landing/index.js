@@ -62,12 +62,12 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const topicsTitle = topics && topics.reduce(
+    const topicsTitle = (topics || []).reduce(
       (result, topic) => `${result + topic}\n`,
       '',
     );
 
-    const topicsWithTags = topics && topics.map((topic) => (
+    const topicsWithTags = (topics || []).map((topic) => (
       <Tag
         key={topic.slice(1, 13)}
         className="smart-hub--table-collection"

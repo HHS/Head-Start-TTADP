@@ -346,14 +346,14 @@ describe('Activity Reports DB service', () => {
       expect(recipients.grants.length).toBe(1);
     });
 
-    it('retrieves no recipients in empty region ', async () => {
+    it('retrieves no recipients in empty region', async () => {
       const region = 100;
       const recipients = await possibleRecipients(region);
 
       expect(recipients.grants.length).toBe(0);
     });
 
-    it('retrieves all recipients when not specifying region ', async () => {
+    it('retrieves all recipients when not specifying region', async () => {
       const recipients = await possibleRecipients();
       // 11 From db being seeded + 1 that we create for this test suite = 12
       expect(recipients.grants.length).toBe(12);

@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:12.20.0-browsers
+      - image: circleci/node:14.15.4-browsers
   docker-postgres-executor:
     docker:
-      - image: circleci/node:12.20.0-browsers
+      - image: circleci/node:14.15.4-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -133,7 +133,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "cm-fix-tls-for-redis"
+    default: "nodejs-update"
     type: string
 jobs:
   build_and_lint:
@@ -144,15 +144,15 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v3-yarn...
-            - v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v3-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v2-yarn-deps-
+            - v3-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v2-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v3-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
