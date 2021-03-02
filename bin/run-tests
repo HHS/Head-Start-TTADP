@@ -40,8 +40,16 @@ main() {
 
     log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
-    docker-compose -f 'docker-compose.test.yml' up -d
-    check_exit "$?"
+    if [[ $docker == "true" ]]; then
+      docker-compose -f 'docker-compose.test.yml' up -d
+      check_exit "$?"
+    else
+      docker-compose -f 'docker-compose.test.yml' up -d test-db
+      check_exit "$?"
+      IFS=: read host port <<< "$(docker-compose -f 'docker-compose.test.yml' port test-db 5432)"
+      echo "Postgres is running on port $port"
+      export POSTGRES_PORT=$port
+    fi
 
     # Let postgres initialize
     echo

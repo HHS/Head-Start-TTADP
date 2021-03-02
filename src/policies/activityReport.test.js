@@ -84,6 +84,12 @@ describe('Activity Report policies', () => {
         expect(policy.canUpdate()).toBeTruthy();
       });
 
+      it('is true if the user is the author and report status is NEEDS_ACTION', () => {
+        const report = activityReport(author.id, null, REPORT_STATUSES.NEEDS_ACTION);
+        const policy = new ActivityReport(author, report);
+        expect(policy.canUpdate()).toBeTruthy();
+      });
+
       it('is true if the user is a collaborator', () => {
         const report = activityReport(author.id, collaborator);
         const policy = new ActivityReport(collaborator, report);
@@ -101,6 +107,38 @@ describe('Activity Report policies', () => {
       const report = activityReport(otherUser.id);
       const policy = new ActivityReport(otherUser, report);
       expect(policy.canUpdate()).toBeFalsy();
+    });
+
+    it('is false if the report has been submitted', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canUpdate()).toBeFalsy();
+    });
+
+    it('is false if the report has been approved', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canUpdate()).toBeFalsy();
+    });
+  });
+
+  describe('canReset', () => {
+    it('is false for reports that have not been submitted', async () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReset()).toBeFalsy();
+    });
+
+    it('is true for the author', async () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReset()).toBeTruthy();
+    });
+
+    it('is true for collaborators', async () => {
+      const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(collaborator, report);
+      expect(policy.canReset()).toBeTruthy();
     });
   });
 

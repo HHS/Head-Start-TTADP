@@ -1,10 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
-import { File } from '../../models';
-import { uploadFile } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3 } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
-
+import createFileMetaData, {
+  updateStatus, getFileById, deleteFile,
+} from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
 import { userById } from '../../services/users';
@@ -24,40 +25,32 @@ const logContext = {
 };
 
 const {
-  UPLOADING,
   UPLOADED,
   UPLOAD_FAILED,
   QUEUED,
   QUEUEING_FAILED,
 } = FILE_STATUSES;
 
-export const createFileMetaData = async (
-  originalFileName, s3FileName, reportId, attachmentType, fileSize,
-) => {
-  const newFile = {
-    activityReportId: reportId,
-    originalFileName,
-    attachmentType,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  let file;
-  try {
-    file = await File.create(newFile);
-    return file.dataValues;
-  } catch (error) {
-    return error;
+export const deleteHandler = async (req, res) => {
+  const { reportId, fileId } = req.params;
+  if (!reportId || !fileId) {
+    res.status(400).send(`Delete requests must contain reportId/fileId got: ${req.path}`);
   }
-};
+  const user = await userById(req.session.userId);
+  const report = await activityReportById(reportId);
+  const authorization = new ActivityReportPolicy(user, report);
 
-export const updateStatus = async (fileId, fileStatus) => {
-  let file;
+  if (!authorization.canUpdate()) {
+    res.sendStatus(403);
+    return;
+  }
   try {
-    file = await File.update({ status: fileStatus }, { where: { id: fileId } });
-    return file.dataValues;
+    const file = await getFileById(fileId);
+    await deleteFileFromS3(file.key);
+    await deleteFile(fileId);
+    res.status(204).send();
   } catch (error) {
-    return error;
+    handleErrors(req, res, error, logContext);
   }
 };
 

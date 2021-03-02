@@ -28,6 +28,10 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 ## Getting Started
 
 ### Set up
+
+*Warning* when using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of
+those services are already running on your machine.
+
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.

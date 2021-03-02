@@ -12,8 +12,10 @@ import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
+import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
 const formData = () => ({
+  regionId: 1,
   deliveryMethod: 'in-person',
   ttaType: ['training'],
   duration: '1',
@@ -28,18 +30,22 @@ const formData = () => ({
   numberOfParticipants: '1',
   reason: ['reason 1'],
   activityRecipientType: 'grantee',
+  collaborators: [],
   participants: ['CEO / CFO / Executive'],
   programTypes: ['type 1'],
   requester: 'grantee',
+  status: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],
+  author: { name: 'test' },
   topics: 'first',
+  userId: 1,
   updatedAt: new Date().toISOString(),
 });
 const history = createMemoryHistory();
 
-const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null) => {
+const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
       <ActivityReport
@@ -47,7 +53,9 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
         location={{
           state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
         }}
-        user={{ id: 1, name: 'Walter Burns', role: 'Reporter' }}
+        user={{
+          id: userId, name: 'Walter Burns', role: 'Reporter', permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+        }}
       />
     </Router>,
   );
@@ -62,7 +70,7 @@ describe('ActivityReport', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/activity-recipients', recipients);
+    fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
   });
@@ -74,9 +82,27 @@ describe('ActivityReport', () => {
     expect(alert).toHaveTextContent('Unable to load activity report');
   });
 
+  describe('for read only users', () => {
+    it('redirects the user to the review page', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      renderActivityReport('1', null, null, 2);
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+    });
+  });
+
+  it('handles when region is invalid', async () => {
+    fetchMock.get('/api/activity-reports/-1', () => { throw new Error('unable to download report'); });
+
+    renderActivityReport('-1');
+    const alert = await screen.findByTestId('alert');
+    expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
   describe('last saved time', () => {
     it('is shown if history.state.showLastUpdatedTime is true', async () => {
       const data = formData();
+
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary', true);
       await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
@@ -85,6 +111,7 @@ describe('ActivityReport', () => {
 
     it('is not shown if history.state.showLastUpdatedTime is null', async () => {
       const data = formData();
+
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary');
       await screen.findByRole('group', { name: 'Who was the activity for?' });
