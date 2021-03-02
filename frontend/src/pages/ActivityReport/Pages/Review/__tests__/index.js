@@ -4,6 +4,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 
 import ReviewSubmit from '../index';
 import { REPORT_STATUSES } from '../../../../../Constants';
@@ -67,19 +69,24 @@ const renderReview = (
   approvingManagerId = null,
   complete = true,
 ) => {
+  const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
 
   render(
-    <RenderReview
-      allComplete={allComplete}
-      onSubmit={onSubmit}
-      formData={{ ...formData, status }}
-      approvingManager={approvingManager}
-      onReview={onReview}
-      approvingManagerId={approvingManagerId}
-      pages={pages}
-    />,
+    <Router history={history}>
+      <RenderReview
+        allComplete={allComplete}
+        onSubmit={onSubmit}
+        formData={{ ...formData, status }}
+        approvingManager={approvingManager}
+        onReview={onReview}
+        approvingManagerId={approvingManagerId}
+        pages={pages}
+      />
+    </Router>
   );
+
+  return history;
 };
 
 const selectLabel = 'Approving manager (Required)';
@@ -158,11 +165,11 @@ describe('ReviewSubmit', () => {
     });
   });
 
-  it('a success modal is shown once submitted', async () => {
-    renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
+  it('Once submitted, user is redirected', async () => {
+    const history = renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
     userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
-    const alert = await screen.findByTestId('alert');
-    expect(alert).toHaveClass('usa-alert--success');
+
+    expect(history.location.pathname).toBe('/activity-reports')
   });
 
   it('initializes the form with "initialData"', async () => {

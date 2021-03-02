@@ -4,6 +4,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
+
 
 import Submitter from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
@@ -50,17 +53,22 @@ const renderReview = (status, submitted, onFormSubmit, complete = true, onSave =
     status,
   };
 
+  const history = createMemoryHistory()
   const pages = complete ? completePages : incompletePages;
 
   render(
-    <RenderSubmitter
-      submitted={submitted}
-      onFormSubmit={onFormSubmit}
-      formData={formData}
-      onSave={onSave}
-      pages={pages}
-    />,
+    <Router history={history}>
+      <RenderSubmitter
+        submitted={submitted}
+        onFormSubmit={onFormSubmit}
+        formData={formData}
+        onSave={onSave}
+        pages={pages}
+      />,
+    </Router>
   );
+
+  return history;
 };
 
 describe('Submitter review page', () => {
@@ -99,9 +107,8 @@ describe('Submitter review page', () => {
     });
 
     it('displays success if the report has been submitted', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, true, () => {});
-      const alert = await screen.findByTestId('alert');
-      expect(alert.textContent).toContain('Success');
+      const history = renderReview(REPORT_STATUSES.DRAFT, true, () => {});
+      expect(history.location.pathname).toBe('/activity-reports');
     });
 
     it('a draft can be saved', async () => {

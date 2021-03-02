@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Redirect } from "react-router-dom";
+import moment from 'moment';
 
 import Review from './Review';
 import Approved from './Approved';
@@ -13,17 +15,29 @@ const Approver = ({
   const { managerNotes, additionalNotes, status } = formData;
   const review = status === REPORT_STATUSES.SUBMITTED || status === REPORT_STATUSES.NEEDS_ACTION;
   const approved = status === REPORT_STATUSES.APPROVED;
+  const time = moment().format('MM/DD/YYYY [at] h:mm a')
 
   return (
     <>
+      {/* `reviewed` will only be true after user submits the form. */}
+      {reviewed &&
+      review &&
+       <Redirect to={{pathname: '/activity-reports', state: {message: `You successfully reviewed on ${time}`}}} />
+      }
+
+      {reviewed &&
+      approved &&
+       <Redirect to={{pathname: '/activity-reports', state: {message: `You successfully approved on ${time}`}}} />
+      }
+
       {review
       && (
       <Review
-        reviewed={reviewed}
         additionalNotes={additionalNotes}
         onFormReview={onFormReview}
       />
       )}
+
       {approved
       && (
       <Approved
