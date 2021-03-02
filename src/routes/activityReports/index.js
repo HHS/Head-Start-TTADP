@@ -10,6 +10,7 @@ import {
   getActivityRecipients,
   getGoals,
   reviewReport,
+  resetToDraft,
 } from './handlers';
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.get('/alerts', getReportAlerts);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
+router.put('/:activityReportId/reset', resetToDraft);
 router.put('/:activityReportId/review', reviewReport);
 router.post('/:activityReportId/submit', submitReport);
 

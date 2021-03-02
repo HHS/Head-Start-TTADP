@@ -8,6 +8,8 @@ import fetchMock from 'fetch-mock';
 import App from '../App';
 
 describe('App', () => {
+  const loginText = 'Log In with HSES';
+
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
@@ -27,7 +29,7 @@ describe('App', () => {
     it('can log the user out when "logout" is pressed', async () => {
       const logout = await screen.findByText('Logout');
       fireEvent.click(logout);
-      expect(await screen.findByText('HSES Login')).toBeVisible();
+      expect(await screen.findByText(loginText)).toBeVisible();
       expect(await screen.findByText('Logout Successful')).toBeVisible();
     });
   });
@@ -39,7 +41,7 @@ describe('App', () => {
     });
 
     it('displays the login button', async () => {
-      expect(await screen.findByText('HSES Login')).toBeVisible();
+      expect(await screen.findByText(loginText)).toBeVisible();
     });
   });
 
@@ -50,7 +52,7 @@ describe('App', () => {
     });
 
     it('displays the login button for now. in the future this should show the "request permissions" UI', async () => {
-      expect(await screen.findByText('HSES Login')).toBeVisible();
+      expect(await screen.findByText(loginText)).toBeVisible();
     });
   });
 });
