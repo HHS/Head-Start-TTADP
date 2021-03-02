@@ -51,7 +51,7 @@ describe('ResourceSelector', () => {
 
   describe('with multiple entries', () => {
     it('allows removal of an item', async () => {
-      render(<RenderResourceSelector data={[{ value: 'first' }, { value: 'second' }]} />)
+      render(<RenderResourceSelector data={[{ value: 'first' }, { value: 'second' }]} />);
       const text = await screen.findAllByRole('textbox');
       expect(text.length).toBe(2);
       const remove = screen.queryByRole('button', { name: 'remove name 1' });
