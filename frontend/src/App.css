@@ -30,6 +30,18 @@ body {
   background-color: #f8f8f8;
 }
 
+.smart-hub-bg-blue-primary {
+  background-color: #0166ab;
+}
+
+.smart-hub-border-blue-primary {
+  border-color: #0166ab;
+}
+
+.smart-hub-maxw-placard {
+  max-width: 34.25rem;
+}
+
 .height-12 {
   height: 6.5em;
 }
