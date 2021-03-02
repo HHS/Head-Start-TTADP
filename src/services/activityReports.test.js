@@ -1,8 +1,8 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep,
+  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
 import {
-  createOrUpdate, activityReportById, activityReports, activityReportAlerts,
+  createOrUpdate, activityReportById, possibleRecipients, activityReports, activityReportAlerts,
 } from './activityReports';
 import { REPORT_STATUSES } from '../constants';
 
@@ -29,8 +29,11 @@ describe('Activity Reports DB service', () => {
 
   beforeAll(async () => {
     await User.create(mockUser);
-    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee' });
-    await Grant.create({ id: RECIPIENT_ID, number: 1, granteeId: grantee.id });
+    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee', regionId: 17 });
+    await Region.create({ name: 'office 17', id: 17 });
+    await Grant.create({
+      id: RECIPIENT_ID, number: 1, granteeId: grantee.id, regionId: 17,
+    });
     await NonGrantee.create({ id: RECIPIENT_ID, name: 'nonGrantee' });
   });
 
@@ -42,7 +45,8 @@ describe('Activity Reports DB service', () => {
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
     await Grant.destroy({ where: { id: RECIPIENT_ID } });
     await Grantee.destroy({ where: { id: RECIPIENT_ID } });
-
+    // await NextStep.destroy({ where: {} });
+    await Region.destroy({ where: { id: 17 } });
     db.sequelize.close();
   });
 
@@ -332,6 +336,28 @@ describe('Activity Reports DB service', () => {
 
       const result = await activityReportAlerts(mockUserTwo.id);
       expect(result[0].userId).toBe(mockUserTwo.id);
+    });
+  });
+
+  describe('possibleRecipients', () => {
+    it('retrieves correct recipients in region', async () => {
+      const region = 17;
+      const recipients = await possibleRecipients(region);
+
+      expect(recipients.grants.length).toBe(1);
+    });
+
+    it('retrieves no recipients in empty region ', async () => {
+      const region = 100;
+      const recipients = await possibleRecipients(region);
+
+      expect(recipients.grants.length).toBe(0);
+    });
+
+    it('retrieves all recipients when not specifying region ', async () => {
+      const recipients = await possibleRecipients();
+      // 11 From db being seeded + 1 that we create for this test suite = 12
+      expect(recipients.grants.length).toBe(12);
     });
   });
 });

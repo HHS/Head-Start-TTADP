@@ -8,6 +8,7 @@ import {
   createOrUpdate,
   review,
   activityReports,
+  setStatus,
   activityReportAlerts,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
@@ -90,6 +91,26 @@ export async function reviewReport(req, res) {
   }
 }
 
+export async function resetToDraft(req, res) {
+  try {
+    const { activityReportId } = req.params;
+
+    const user = await userById(req.session.userId);
+    const report = await activityReportById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canReset()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedReport = await setStatus(report, REPORT_STATUSES.DRAFT);
+    res.json(savedReport);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 /**
  * Flags a report as submitted for approval
  *
@@ -120,7 +141,9 @@ export async function submitReport(req, res) {
 }
 
 export async function getActivityRecipients(req, res) {
-  const activityRecipients = await possibleRecipients();
+  const { region } = req.query;
+  const targetRegion = region ? parseInt(region, DECIMAL_BASE) : undefined;
+  const activityRecipients = await possibleRecipients(targetRegion);
   res.json(activityRecipients);
 }
 
