@@ -252,9 +252,9 @@ describe('Activity Reports DB service', () => {
     });
 
     it('retrieves all recipients when not specifying region', async () => {
-      const allRecipients = await ActivityRecipient.findAll();
       const recipients = await possibleRecipients();
-      expect(allRecipients.length).toEqual(recipients.grants.length);
+      const grantees = await Grantee.findAll();
+      expect(recipients.grants.length).toBe(grantees.length);
     });
   });
 });
