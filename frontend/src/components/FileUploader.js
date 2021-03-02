@@ -59,8 +59,8 @@ function Dropzone(props) {
       {...getRootProps()}
     >
       <input {...getInputProps()} />
-      <button type="button" className="usa-button">
-        Browse files
+      <button type="button" className="usa-button usa-button--outline">
+        Upload Resources
       </button>
       {errorMessage
         && (

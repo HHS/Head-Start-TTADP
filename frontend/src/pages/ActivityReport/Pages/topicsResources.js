@@ -4,19 +4,19 @@ import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 
-import {
-  Fieldset, Label, TextInput,
-} from '@trussworks/react-uswds';
+import { Fieldset, Label } from '@trussworks/react-uswds';
 
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
+import ResourceSelector from './components/ResourceSelector';
 import { topics } from '../constants';
 
 const TopicsResources = ({
   reportId,
 }) => {
-  const { register, control } = useFormContext();
+  const { control } = useFormContext();
+
   return (
     <>
       <Helmet>
@@ -43,37 +43,38 @@ const TopicsResources = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="OHS / ECLKC resources">
-        <div id="resources" />
+        <div id="ECLKCResources" />
         <div className="smart-hub--form-section">
-          <Label htmlFor="resourcesUsed">
+          <Label>
             Resources from OHS / ECLKC
             <br />
-            Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
+            Enter the URL for OHS resource(s) used.
+            {' '}
+            <a href="https://eclkc.ohs.acf.hhs.gov/">https://eclkc.ohs.acf.hhs.gov/</a>
+            <ResourceSelector
+              name="ECLKCResourcesUsed"
+              ariaName="ECLKC Resources"
+            />
           </Label>
-          <TextInput
-            id="resourcesUsed"
-            name="resourcesUsed"
-            type="text"
-            inputRef={register()}
-          />
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Upload resources">
+      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Non-ECLKC resources">
+        <div id="nonECLKCResources" />
         <div className="smart-hub--form-section">
-          <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
-          <Controller
-            name="otherResources"
-            defaultValue={[]}
-            control={control}
-            render={({ onChange, value }) => (
-              <FileUploader files={value} onChange={onChange} reportId={reportId} id="otherResources" />
-            )}
-          />
+          <Label>
+            For non-ECLKC resources enter URL.
+            <br />
+            If no URL is available, upload document in next section.
+            <ResourceSelector
+              name="nonECLKCResourcesUsed"
+              ariaName="non-ECLKC Resources"
+            />
+          </Label>
         </div>
       </Fieldset>
-      <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
+      <Fieldset legend="Supporting attachments" className="smart-hub--report-legend smart-hub--form-section">
         <div id="attachments" />
-        <Label htmlFor="attachments">Agendas, service plans, sign-in sheets, etc.</Label>
+        <Label htmlFor="attachments">Upload resources not available online, agenda, service plans, sign-in sheets, etc.</Label>
         <Controller
           name="attachments"
           defaultValue={[]}
@@ -100,15 +101,21 @@ const sections = [
     ],
   },
   {
-    title: 'Resources',
-    anchor: 'resources',
+    title: 'OHS / ECLKC resources',
+    anchor: 'ECLKCResources',
     items: [
-      { label: 'Resources used', name: 'resourcesUsed' },
-      { label: 'Other resources', name: 'otherResources', path: 'originalFileName' },
+      { label: 'ECLKC Resources', name: 'ECLKCResources', path: 'value' },
     ],
   },
   {
-    title: 'Attachments',
+    title: 'Non-ECLKC resources',
+    anchor: 'nonECLKCResources',
+    items: [
+      { label: 'Non-ECLKC Resources', name: 'nonECLKCResources', path: 'value' },
+    ],
+  },
+  {
+    title: 'Supporting attachments',
     anchor: 'attachments',
     items: [
       { label: 'Attachments', name: 'attachments', path: 'originalFileName' },
