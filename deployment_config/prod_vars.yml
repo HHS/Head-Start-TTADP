@@ -7,4 +7,4 @@ AUTH_BASE: TKTK
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
-CLAMAV_ENDPOINT: http://clamapi-ttahub-prod.apps.internal:8080
+CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
