@@ -1,0 +1,21 @@
+put:
+  tags:
+    - activity-reports
+  summary: Reset activity report to draft
+  description: >
+    Activity reports are not editable when submitted for approval. This
+    endpoint allows a user to reset a report back to draft mode so that
+    the report can be edited.
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The report that now has a status of "draft"
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'
