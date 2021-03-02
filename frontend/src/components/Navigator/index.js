@@ -50,7 +50,7 @@ function Navigator({
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
-    mode: 'onSubmit',
+    mode: 'onChange',
     defaultValues: formData,
     shouldUnregister: false,
   });

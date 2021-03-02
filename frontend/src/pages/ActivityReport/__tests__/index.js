@@ -138,10 +138,11 @@ describe('ActivityReport', () => {
 
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
+      fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: 'Topics and resources' });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
     });
   });
 
