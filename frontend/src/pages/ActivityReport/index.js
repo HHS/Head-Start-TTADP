@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 
 import pages from './Pages';
@@ -16,7 +17,8 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { REPORT_STATUSES } from '../../Constants';
+import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
+import { getRegionWithReadWrite } from '../../permissions';
 import {
   submitReport,
   saveReport,
@@ -26,20 +28,21 @@ import {
   getCollaborators,
   getApprovers,
   reviewReport,
+  resetToDraft,
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  deliveryMethod: [],
+  deliveryMethod: null,
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
   attachments: [],
   context: '',
   collaborators: [],
-  duration: '',
+  duration: null,
   endDate: null,
   grantees: [],
-  numberOfParticipants: '',
+  numberOfParticipants: null,
   participantCategory: '',
   participants: [],
   programTypes: [],
@@ -55,12 +58,12 @@ const defaultValues = {
   status: REPORT_STATUSES.DRAFT,
 };
 
-// FIXME: default region until we have a way of changing on the frontend
-const region = 1;
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
-function ActivityReport({ match, user, location }) {
+function ActivityReport({
+  match, user, location, region,
+}) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
   const [error, updateError] = useState();
@@ -68,7 +71,7 @@ function ActivityReport({ match, user, location }) {
   const [formData, updateFormData] = useState();
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
-  const [canWrite, updateCanWrite] = useState(false);
+  const [editable, updateEditable] = useState(false);
   const [initialLastUpdated, updateInitialLastUpdated] = useState();
   const reportId = useRef();
 
@@ -80,38 +83,43 @@ function ActivityReport({ match, user, location }) {
     history.replace();
   }, [activityReportId, history]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     const fetch = async () => {
+      let report;
+
       try {
         updateLoading(true);
-
-        const apiCalls = [
-          getRecipients(),
-          getCollaborators(region),
-          getApprovers(region),
-        ];
-
         if (activityReportId !== 'new') {
-          apiCalls.push(getReport(activityReportId));
+          report = await getReport(activityReportId);
         } else {
-          apiCalls.push(
-            Promise.resolve({ ...defaultValues, pageState: defaultPageState, userId: user.id }),
-          );
+          report = {
+            ...defaultValues,
+            pageState: defaultPageState,
+            userId: user.id,
+            regionId: region || getRegionWithReadWrite(user),
+          };
         }
 
-        const [recipients, collaborators, approvers, report] = await Promise.all(apiCalls);
+        const apiCalls = [
+          getRecipients(report.regionId),
+          getCollaborators(report.regionId),
+          getApprovers(report.regionId),
+        ];
 
+        const [recipients, collaborators, approvers] = await Promise.all(apiCalls);
         reportId.current = activityReportId;
 
         const isCollaborator = report.collaborators
           && report.collaborators.find((u) => u.id === user.id);
         const isAuthor = report.userId === user.id;
-        const canWriteReport = isCollaborator || isAuthor;
+        const canWriteReport = (isCollaborator || isAuthor)
+          && (report.status === REPORT_STATUSES.DRAFT
+              || report.status === REPORT_STATUSES.NEEDS_ACTION);
 
         updateAdditionalData({ recipients, collaborators, approvers });
         updateFormData(report);
         updateApprovingManager(report.approvingManagerId === user.id);
-        updateCanWrite(canWriteReport);
+        updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
           updateInitialLastUpdated(moment(report.updatedAt));
@@ -120,12 +128,17 @@ function ActivityReport({ match, user, location }) {
         updateError();
       } catch (e) {
         updateError('Unable to load activity report');
+        // If the error was caused by an invalid region, we need a way to communicate that to the
+        // component so we can redirect the user. We can do this by updating the form data
+        if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
+          updateFormData({ regionId: report.regionId });
+        }
       } finally {
         updateLoading(false);
       }
     };
     fetch();
-  }, [activityReportId, user.id, showLastUpdatedTime]);
+  }, [activityReportId, user, showLastUpdatedTime, region]);
 
   if (loading) {
     return (
@@ -133,6 +146,12 @@ function ActivityReport({ match, user, location }) {
         loading...
       </div>
     );
+  }
+
+  // If no region was able to be found, we will re-reoute user to the main page
+  // FIXME: when re-routing user show a message explaining what happened
+  if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
+    return <Redirect to="/" />;
   }
 
   if (error) {
@@ -143,50 +162,56 @@ function ActivityReport({ match, user, location }) {
     );
   }
 
-  if (!currentPage) {
-    const defaultPage = formData.status === REPORT_STATUSES.DRAFT ? 'activity-summary' : 'review';
+  if (!editable && currentPage !== 'review') {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/${defaultPage}`} />
+      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+    );
+  }
+
+  if (!currentPage) {
+    return (
+      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 
   const updatePage = (position) => {
-    const page = pages.find((p) => p.position === position);
+    if (!editable) {
+      return;
+    }
     const state = {};
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;
     }
+
+    const page = pages.find((p) => p.position === position);
     history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {
-    const { activityRecipientType, activityRecipients } = data;
-    let updatedReport = false;
-    if (canWrite) {
-      if (reportId.current === 'new') {
-        if (activityRecipientType && activityRecipients && activityRecipients.length > 0) {
-          const savedReport = await createReport({ ...data, regionId: region }, {});
-          reportId.current = savedReport.id;
-          const current = pages.find((p) => p.path === currentPage);
-          updatePage(current.position);
-          updatedReport = false;
-        }
-      } else {
-        await saveReport(reportId.current, data, {});
-        updatedReport = true;
-      }
+    if (reportId.current === 'new') {
+      const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
+      reportId.current = savedReport.id;
+      window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+    } else {
+      await saveReport(reportId.current, data, {});
     }
-    return updatedReport;
   };
 
   const onFormSubmit = async (data) => {
     const report = await submitReport(reportId.current, data);
     updateFormData(report);
+    updateEditable(false);
   };
 
   const onReview = async (data) => {
     const report = await reviewReport(reportId.current, data);
     updateFormData(report);
+  };
+
+  const onResetToDraft = async () => {
+    const report = await resetToDraft(reportId.current);
+    updateFormData(report);
+    updateEditable(true);
   };
 
   const reportCreator = { name: user.name, role: user.role };
@@ -205,6 +230,7 @@ function ActivityReport({ match, user, location }) {
         </Grid>
       </Grid>
       <Navigator
+        editable={editable}
         updatePage={updatePage}
         reportCreator={reportCreator}
         initialLastUpdated={initialLastUpdated}
@@ -216,6 +242,7 @@ function ActivityReport({ match, user, location }) {
         pages={pages}
         onFormSubmit={onFormSubmit}
         onSave={onSave}
+        onResetToDraft={onResetToDraft}
         approvingManager={approvingManager}
         onReview={onReview}
       />
@@ -226,11 +253,16 @@ function ActivityReport({ match, user, location }) {
 ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
+  region: PropTypes.number,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.string,
   }).isRequired,
+};
+
+ActivityReport.defaultProps = {
+  region: undefined,
 };
 
 export default ActivityReport;
