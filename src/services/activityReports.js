@@ -75,7 +75,8 @@ async function saveReportRecipients(
     activityReportId,
   };
 
-  if (activityRecipientType === 'non-grantee') {
+  const empty = activityRecipientIds.length === 0;
+  if (!empty && activityRecipientType === 'non-grantee') {
     where[Op.or] = {
       nonGranteeId: {
         [Op.notIn]: activityRecipientIds,
@@ -84,7 +85,7 @@ async function saveReportRecipients(
         [Op.not]: null,
       },
     };
-  } else if (activityRecipientType === 'grantee') {
+  } else if (!empty && activityRecipientType === 'grantee') {
     where[Op.or] = {
       grantId: {
         [Op.notIn]: activityRecipientIds,
@@ -179,6 +180,11 @@ export function activityReportById(activityReportId) {
             required: false,
           },
         ],
+      },
+      {
+        model: User,
+        as: 'author',
+        attributes: ['name'],
       },
       {
         model: Goal,
@@ -479,6 +485,7 @@ export async function createOrUpdate(newActivityReport, report) {
     attachments,
     otherResources,
     approvingManager,
+    author,
     granteeNextSteps,
     specialistNextSteps,
     ...updatedFields
@@ -519,10 +526,28 @@ export async function createOrUpdate(newActivityReport, report) {
   return activityReportById(savedReport.id);
 }
 
-export async function possibleRecipients() {
+export async function setStatus(report, status) {
+  const updatedReport = await report.update({ status }, {
+    fields: ['status'],
+  });
+  return updatedReport;
+}
+
+/*
+ * Queries the db for relevant recipients depending on the region id.
+ * If no region id is passed, then default to returning all available recipients.
+ * Note: This only affects grants and grantees. Non Grantees remain unaffected by the region id.
+ *
+ * @param {number} [regionId] - A region id to query against
+ * @returns {*} Grants and Non grantees
+ */
+export async function possibleRecipients(regionId) {
+  const where = regionId ? { regionId } : undefined;
+
   const grants = await Grantee.findAll({
     attributes: ['id', 'name'],
     include: [{
+      where,
       model: Grant,
       as: 'grants',
       attributes: [['id', 'activityRecipientId'], 'name', 'number'],

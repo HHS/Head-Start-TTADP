@@ -41,8 +41,8 @@ export const getReportAlerts = async () => {
   return reports.json();
 };
 
-export const getRecipients = async () => {
-  const recipients = await get(join(activityReportUrl, 'activity-recipients'));
+export const getRecipients = async (region) => {
+  const recipients = await get(join(activityReportUrl, 'activity-recipients', `?region=${region}`));
   return recipients.json();
 };
 
@@ -63,4 +63,10 @@ export const reviewReport = async (reportId, data) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'review');
   const report = await put(url, data);
   return report.json();
+};
+
+export const resetToDraft = async (reportId) => {
+  const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'reset');
+  const response = await put(url);
+  return response.json();
 };

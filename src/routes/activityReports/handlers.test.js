@@ -6,6 +6,7 @@ import {
   getApprovers,
   submitReport,
   reviewReport,
+  resetToDraft,
   getReports,
   getReportAlerts,
 } from './handlers';
@@ -14,6 +15,7 @@ import {
   createOrUpdate,
   possibleRecipients,
   review,
+  setStatus,
   activityReports,
   activityReportAlerts,
 } from '../../services/activityReports';
@@ -26,6 +28,7 @@ jest.mock('../../services/activityReports', () => ({
   createOrUpdate: jest.fn(),
   possibleRecipients: jest.fn(),
   review: jest.fn(),
+  setStatus: jest.fn(),
   activityReports: jest.fn(),
   activityReportAlerts: jest.fn(),
 }));
@@ -296,10 +299,21 @@ describe('Activity Report handlers', () => {
   });
 
   describe('getActivityRecipients', () => {
-    it('returns recipients', async () => {
+    it('returns recipients when region query param is passed', async () => {
       const response = [{ test: 'test' }];
       possibleRecipients.mockResolvedValue(response);
-      await getActivityRecipients(mockRequest, mockResponse);
+
+      const mockRequestWithRegion = { ...mockRequest, query: { region: 14 } };
+      await getActivityRecipients(mockRequestWithRegion, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+
+    it('returns recipients when regions query param is not passed', async () => {
+      const response = [{ test: 'test' }];
+      possibleRecipients.mockResolvedValue(response);
+
+      const mockRequestWithNoRegion = { ...mockRequest, query: {} };
+      await getActivityRecipients(mockRequestWithNoRegion, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
   });
@@ -322,6 +336,31 @@ describe('Activity Report handlers', () => {
       const response = [{ name: 'name', id: 1 }];
       usersWithPermissions.mockResolvedValue(response);
       await getApprovers({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('resetToDraft', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+    };
+
+    it('returns the updated report', async () => {
+      const result = { status: 'draft' };
+      ActivityReport.mockImplementation(() => ({
+        canReset: () => true,
+      }));
+      setStatus.mockResolvedValue(result);
+      await resetToDraft(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(result);
+    });
+
+    it('handles unauthorized', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canReset: () => false,
+      }));
+      await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
