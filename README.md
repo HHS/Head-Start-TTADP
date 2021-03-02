@@ -28,10 +28,14 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 ## Getting Started
 
 ### Set up
+
+*Warning* when using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of
+those services are already running on your machine.
+
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 12.20.0 installed.
+2. Make sure you have Node 14.15.4 installed.
 3. Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed.
 4. Copy `.env.example` to `.env`.  
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
@@ -68,9 +72,11 @@ You may run into some issues running the docker commands on Windows:
 |-|-|-|-|
 | `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` | `yarn deps:local` |
 | `yarn docker:start` | Starts the backend and frontend | | `yarn start:local` |
-| `yarn docker:stop` | Stops the backend and frontend | |
-| `yarn docker:test` | Runs tests for the frontend and backend | |
-| `yarn docker:lint` | Runs the linter for the frontend and backend | |
+| `yarn docker:stop` | Stops the backend and frontend | | |
+| `yarn docker:dbs:start` | Start only the supporting services | | |
+| `yarn docker:dbs:stop` | Stop only the supporting services | | |
+| `yarn docker:test` | Runs tests for the frontend and backend | | |
+| `yarn docker:lint` | Runs the linter for the frontend and backend | | |
 | `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` | |
 | `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` | |
 | `yarn docker:db:seed` | Run all seeders located in `src/seeders` | `yarn db:seed` | |
