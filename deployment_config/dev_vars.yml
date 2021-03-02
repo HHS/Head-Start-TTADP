@@ -8,4 +8,4 @@ AUTH_BASE: https://uat.hsesinfo.org
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://tta-smarthub-dev.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-dev.app.cloud.gov
-CLAMAV_ENDPOINT: http://clamapi-ttahub-dev.apps.internal:8080
+CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
