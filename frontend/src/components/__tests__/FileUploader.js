@@ -4,10 +4,46 @@ import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
 import * as fileFetcher from '../../fetchers/File';
-import FileUploader, { getStatus } from '../FileUploader';
+import FileUploader, { getStatus, upload } from '../FileUploader';
+
+const mockFileUpload = jest.spyOn(fileFetcher, 'uploadFile').mockImplementation(async () => Promise.resolve({ id: 1 }));
+
+describe('getStatus tests', () => {
+  it('returns the correct statuses', () => {
+    let newStatus;
+    newStatus = getStatus('UPLOADING');
+    expect(newStatus).toBe('Uploading');
+    newStatus = getStatus('UPLOADED');
+    expect(newStatus).toBe('Uploaded');
+    newStatus = getStatus('UPLOAD_FAILED');
+    expect(newStatus).toBe('Upload Failed');
+    newStatus = getStatus('QUEUEING_FAILED');
+    expect(newStatus).toBe('Upload Failed');
+    newStatus = getStatus('SCANNING_QUEUED');
+    expect(newStatus).toBe('Scanning');
+    newStatus = getStatus('SCANNING');
+    expect(newStatus).toBe('Scanning');
+    newStatus = getStatus('APPROVED');
+    expect(newStatus).toBe('Approved');
+    newStatus = getStatus('REJECTED');
+    expect(newStatus).toBe('Rejected');
+  });
+});
+
+describe('upload tests', () => {
+  const mockFile = { name: 'MockFile', size: 2000 };
+  const mockSetErrorMessage = jest.fn();
+  it('can upload a file and return the correct information', async () => {
+    const got = await upload(mockFile, 1, 'fakeAttachment', mockSetErrorMessage);
+    expect(got).toStrictEqual({
+      id: 1, originalFileName: mockFile.name, fileSize: mockFile.size, status: 'UPLOADED',
+    });
+    expect(mockFileUpload).toHaveBeenCalled();
+    expect(mockSetErrorMessage).toHaveBeenCalledWith(null);
+  });
+});
 
 describe('FileUploader', () => {
-  jest.spyOn(fileFetcher, 'default').mockImplementation(() => Promise.resolve());
   const dispatchEvt = (node, type, data) => {
     const event = new Event(type, { bubbles: true });
     Object.assign(event, data);
@@ -30,11 +66,13 @@ describe('FileUploader', () => {
     },
   });
 
-  const file = (name) => ({ originalFileName: name, fileSize: 2000, status: 'Uploaded' });
+  const file = (name, id) => ({
+    originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
+  });
 
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
-    const data = mockData([file('file')]);
+    const data = mockData([file('file', 1)]);
     const ui = <FileUploader reportId="3" id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
@@ -59,38 +97,27 @@ describe('FileUploader', () => {
   });
 
   it('files are properly displayed', () => {
-    render(<FileUploader reportId="new" id="attachment" onChange={() => {}} files={[file('fileOne'), file('fileTwo')]} />);
+    render(<FileUploader reportId="new" id="attachment" onChange={() => {}} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
 
   it('files can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[file('fileOne'), file('fileTwo')]} />);
+    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
-
-    expect(mockOnChange).toHaveBeenCalledWith([file('fileOne')]);
+    const deleteButton = screen.getByText('Delete');
+    fireEvent.click(deleteButton);
+    expect(mockOnChange).toHaveBeenCalledWith([{ id: 1, originalFileName: 'fileOne' }]);
   });
-  describe('getStatus tests', () => {
-    it('returns the correct statuses', () => {
-      let got;
-      got = getStatus('UPLOADING');
-      expect(got).toBe('Uploading');
-      got = getStatus('UPLOADED');
-      expect(got).toBe('Uploaded');
-      got = getStatus('UPLOAD_FAILED');
-      expect(got).toBe('Upload Failed');
-      got = getStatus('QUEUING_FAILED');
-      expect(got).toBe('Upload Failed');
-      got = getStatus('SCANNING_QUEUED');
-      expect(got).toBe('Scanning');
-      got = getStatus('SCANNING');
-      expect(got).toBe('Scanning');
-      got = getStatus('APPROVED');
-      expect(got).toBe('Approved');
-      got = getStatus('REJECTED');
-      expect(got).toBe('Rejected');
-    });
+  it('files are not removed if cancel is pressed', () => {
+    const mockOnChange = jest.fn();
+    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
+    const fileTwo = screen.getByText('fileTwo');
+    fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
+    const cancelButton = screen.getByText('Cancel');
+    fireEvent.click(cancelButton);
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 });
