@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import IdleModal from '../IdleModal';
 
 describe('IdleModal', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     jest.useFakeTimers();
   });
 
