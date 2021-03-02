@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
 import {
-  Dropdown, Form, Label, Fieldset, Textarea, Alert, Button,
+  Dropdown, Form, Label, Fieldset, Textarea, Button,
 } from '@trussworks/react-uswds';
 
 import { managerReportStatuses } from '../../../../../Constants';

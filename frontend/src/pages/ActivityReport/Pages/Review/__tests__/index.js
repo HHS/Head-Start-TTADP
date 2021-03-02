@@ -85,7 +85,7 @@ const renderReview = (
         approvingManagerId={approvingManagerId}
         pages={pages}
       />
-    </Router>
+    </Router>,
   );
   return history;
 };
@@ -170,7 +170,7 @@ describe('ReviewSubmit', () => {
     const history = renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
     userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
 
-    expect(history.location.pathname).toBe('/activity-reports')
+    expect(history.location.pathname).toBe('/activity-reports');
   });
 
   it('initializes the form with "initialData"', async () => {
