@@ -251,7 +251,7 @@ describe('Activity Reports DB service', () => {
       expect(recipients.grants.length).toBe(0);
     });
 
-    it('retrieves all recipients when not specifying region ', async () => {
+    it('retrieves all recipients when not specifying region', async () => {
       const recipients = await possibleRecipients();
       const grantees = await Grantee.findAll();
       expect(recipients.grants.length).toBe(grantees.length);
