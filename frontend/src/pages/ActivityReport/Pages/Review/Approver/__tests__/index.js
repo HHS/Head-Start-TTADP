@@ -4,10 +4,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import Approver from '../index';
-import { REPORT_STATUSES } from '../../../../../../Constants';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import Approver from '../index';
+import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
@@ -39,7 +39,7 @@ const renderReview = (status, onFormReview, reviewed, notes = '') => {
     status,
   };
 
-  const history = createMemoryHistory()
+  const history = createMemoryHistory();
   render(
     <Router history={history}>
       <RenderApprover
@@ -48,7 +48,7 @@ const renderReview = (status, onFormReview, reviewed, notes = '') => {
         reviewed={reviewed}
         formData={formData}
       />
-    </Router>
+    </Router>,
   );
 
   return history;

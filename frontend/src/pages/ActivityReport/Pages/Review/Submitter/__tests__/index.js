@@ -7,7 +7,6 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 
-
 import Submitter from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
 
@@ -61,7 +60,7 @@ const renderReview = (
     status,
   };
 
-  const history = createMemoryHistory()
+  const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
 
   render(
@@ -73,7 +72,7 @@ const renderReview = (
         onSave={onSave}
         pages={pages}
       />
-    </Router>
+    </Router>,
   );
 
   return history;

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { Redirect } from "react-router-dom";
+import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import {
   Dropdown, Form, Fieldset, Textarea, Button,
@@ -19,6 +19,7 @@ const Draft = ({
 }) => {
   const { watch, register, handleSubmit } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
+  const [justSubmitted, updatedJustSubmitted] = useState(false);
 
   const setValue = (e) => {
     if (e === '') {
@@ -30,16 +31,16 @@ const Draft = ({
   const onSubmit = (e) => {
     if (!hasIncompletePages) {
       onFormSubmit(e);
+      updatedJustSubmitted(true);
     }
   };
   const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
-  const time = moment().format('MM/DD/YYYY [at] h:mm a')
+  const time = moment().format('MM/DD/YYYY [at] h:mm a');
 
   return (
     <>
-      {submitted
-       && <Redirect to={{pathname: '/activity-reports', state: {message: `You successfully submitted on ${time}`}}} />}
+      { justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message: `You successfully submitted on ${time}` } }} />}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
