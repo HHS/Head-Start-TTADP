@@ -17,17 +17,39 @@ check_exit() {
 
 main() {
     local opt=""
+    local docker="true"
 
-    for o in "${options[@]}"; do
-        if [[ "${1}" == "$o"  ]]; then
-            opt="$o";
-        fi
+    while [[ $# -gt 0 ]]
+    do
+      key="$1"
+      case "$key" in
+        -l|--local)
+          docker="false"
+          shift
+          ;;
+        *)
+          for o in "${options[@]}"; do
+            if [[ "$key" == "$o"  ]]; then
+                opt="$o";
+            fi
+          done
+          shift
+          ;;
+      esac
     done
 
     log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
-    docker-compose -f 'docker-compose.test.yml' up -d
-    check_exit "$?"
+    if [[ $docker == "true" ]]; then
+      docker-compose -f 'docker-compose.test.yml' up -d
+      check_exit "$?"
+    else
+      docker-compose -f 'docker-compose.test.yml' up -d test-db
+      check_exit "$?"
+      IFS=: read host port <<< "$(docker-compose -f 'docker-compose.test.yml' port test-db 5432)"
+      echo "Postgres is running on port $port"
+      export POSTGRES_PORT=$port
+    fi
 
     # Let postgres initialize
     echo
@@ -37,16 +59,27 @@ main() {
     # Migrate and seed db
     echo
     log "Migrating & seeding db"
-    docker exec test-backend bash -c "yarn db:migrate"
-    check_exit "$?"
-    docker exec test-backend bash -c "yarn db:seed;"
-    check_exit "$?"
+    if [[ $docker == "true" ]]; then
+      docker exec test-backend bash -c "yarn db:migrate"
+      check_exit "$?"
+      docker exec test-backend bash -c "yarn db:seed"
+      check_exit "$?"
+    else
+      yarn db:migrate
+      check_exit "$?"
+      yarn db:seed
+      check_exit "$?"
+    fi
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
         # Test backend
         echo
         log "Running backend tests"
-        docker exec test-backend bash -c "yarn test:ci"
+        if [[ $docker == "true" ]]; then
+          docker exec test-backend bash -c "yarn test:ci"
+        else
+          yarn test:ci
+        fi
         check_exit "$?"
     fi
 
@@ -54,7 +87,11 @@ main() {
         # Test frontend
         echo
         log "Running frontend tests"
-        docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+        if [[ $docker == "true" ]]; then
+          docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+        else
+          yarn --cwd frontend run test:ci
+        fi
         check_exit "$?"
     fi
 
