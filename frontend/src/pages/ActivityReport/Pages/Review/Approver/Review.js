@@ -10,7 +10,6 @@ import { managerReportStatuses } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
 
 const Review = ({
-  reviewed,
   additionalNotes,
   onFormReview,
 }) => {
@@ -20,14 +19,6 @@ const Review = ({
 
   return (
     <>
-      {reviewed
-        && (
-        <Alert noIcon className="margin-y-4" type="success">
-          <b>Success</b>
-          <br />
-          Your review of this report was successfully submitted
-        </Alert>
-        )}
       <h2>Review and approve report</h2>
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
@@ -60,7 +51,6 @@ const Review = ({
 };
 
 Review.propTypes = {
-  reviewed: PropTypes.bool.isRequired,
   additionalNotes: PropTypes.string.isRequired,
   onFormReview: PropTypes.func.isRequired,
 };

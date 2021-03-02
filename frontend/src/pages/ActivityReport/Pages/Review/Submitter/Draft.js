@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
+import { Redirect } from "react-router-dom";
 import { useFormContext } from 'react-hook-form';
 import {
   Dropdown, Form, Fieldset, Textarea, Alert, Button,
@@ -33,17 +35,12 @@ const Draft = ({
   };
   const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
+  const time = moment().format('MM/DD/YYYY [at] h:mm a')
 
   return (
     <>
       {submitted
-      && (
-      <Alert noIcon className="margin-y-4" type="success">
-        <b>Success</b>
-        <br />
-        This report was successfully submitted for approval
-      </Alert>
-      )}
+       && <Redirect to={{pathname: '/activity-reports', state: {message: `You successfully submitted on ${time}`}}} />}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
