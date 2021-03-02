@@ -109,6 +109,7 @@ const users = [
     id: 1,
     email: 'hermionegranger@hogwarts.com',
     hsesUserId: 1,
+    hsesUsername: 'hermionegranger@hogwarts.com',
     role: 'System Specialist',
     name: 'Hermione Granger',
     phoneNumber: '555-555-5550',
@@ -119,6 +120,7 @@ const users = [
     id: 2,
     email: 'dumbledore@hogwarts.com',
     hsesUserId: 2,
+    hsesUsername: 'dumbledore@hogwarts.com',
     role: undefined,
     name: undefined,
     phoneNumber: undefined,
@@ -128,6 +130,7 @@ const users = [
   {
     id: 3,
     email: 'harrypotter@hogwarts.com',
+    hsesUsername: 'harrypotter@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Harry Potter',
     phoneNumber: '555-555-5551',
@@ -137,6 +140,7 @@ const users = [
   {
     id: 4,
     email: 'ronweasley@hogwarts.com',
+    hsesUsername: 'ronweasley@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Ron Weasley',
     phoneNumber: '555-555-5552',
@@ -146,6 +150,7 @@ const users = [
   {
     id: 5,
     email: 'cucumber@hogwarts.com',
+    hsesUsername: 'cucumber@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Cucumber User',
     phoneNumber: '555-555-5553',
@@ -155,6 +160,7 @@ const users = [
   {
     id: 6,
     email: 'krystyna@adhocteam.us',
+    hsesUsername: 'krystyna@adhocteam.us',
     // These hses ids will likely get out of date at some point, but
     // still nice to have this shortcut while it lasts
     hsesUserId: '50153',
@@ -167,6 +173,7 @@ const users = [
   {
     id: 7,
     email: 'josh@adhocteam.us',
+    hsesUsername: 'josh@adhocteam.us',
     role: 'Grants Specialist',
     name: 'Josh',
     hsesUserId: '50154',
