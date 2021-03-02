@@ -11,7 +11,7 @@ import { createMemoryHistory } from 'history';
 
 const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
-  onFormReview, reviewed, valid, formData,
+  onFormReview, reviewed, formData,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -23,16 +23,16 @@ const RenderApprover = ({
       <Approver
         onFormReview={onFormReview}
         reviewed={reviewed}
-        valid={valid}
         formData={formData}
       />
     </FormProvider>
   );
 };
 
-const renderReview = (status, onFormReview, reviewed, valid, notes = '') => {
+const renderReview = (status, onFormReview, reviewed, notes = '') => {
   const formData = {
     approvingManager: { name: 'name' },
+    author: { name: 'user' },
     managerNotes: notes,
     additionalNotes: notes,
     approvingManagerId: '1',
@@ -46,8 +46,8 @@ const renderReview = (status, onFormReview, reviewed, valid, notes = '') => {
         status={status}
         onFormReview={onFormReview}
         reviewed={reviewed}
-        valid={valid}
-        formData={formData} />
+        formData={formData}
+      />
     </Router>
   );
 
@@ -57,7 +57,7 @@ const renderReview = (status, onFormReview, reviewed, valid, notes = '') => {
 describe('Approver review page', () => {
   describe('when the report is submitted', () => {
     it('displays the submit review component', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, false, true);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, false);
       expect(await screen.findByText('Review and approve report')).toBeVisible();
     });
 
@@ -72,7 +72,7 @@ describe('Approver review page', () => {
     });
 
     it('handles empty notes', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true, true);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true);
       const notes = await screen.findByLabelText('additionalNotes');
       expect(notes.textContent).toContain('No creator notes');
     });
@@ -80,7 +80,7 @@ describe('Approver review page', () => {
 
   describe('when the report is approved', () => {
     it('displays the approved component', async () => {
-      renderReview(REPORT_STATUSES.APPROVED, () => {}, false, true);
+      renderReview(REPORT_STATUSES.APPROVED, () => {}, false);
       expect(await screen.findByText('Report approved')).toBeVisible();
     });
   });

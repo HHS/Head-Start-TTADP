@@ -4,7 +4,7 @@ import moment from 'moment';
 import { Redirect } from "react-router-dom";
 import { useFormContext } from 'react-hook-form';
 import {
-  Dropdown, Form, Fieldset, Textarea, Alert, Button,
+  Dropdown, Form, Fieldset, Textarea, Button,
 } from '@trussworks/react-uswds';
 
 import IncompletePages from './IncompletePages';
@@ -12,7 +12,6 @@ import { DECIMAL_BASE } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
 
 const Draft = ({
-  submitted,
   approvers,
   onFormSubmit,
   onSaveForm,
@@ -79,7 +78,6 @@ const Draft = ({
 };
 
 Draft.propTypes = {
-  submitted: PropTypes.bool.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   approvers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
