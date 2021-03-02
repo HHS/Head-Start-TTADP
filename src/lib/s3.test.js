@@ -5,6 +5,7 @@ import {
   uploadFile,
   getPresignedURL,
   generateS3Config,
+  deleteFileFromS3,
 } from './s3';
 
 const oldEnv = { ...process.env };
@@ -163,5 +164,24 @@ describe('getPresignedUrl', () => {
     expect(url).toMatchObject({ url: null, error: fakeError });
     expect(mockGetURL).toHaveBeenCalled();
     expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
+  });
+});
+describe('s3Uploader.deleteFileFromS3', () => {
+  const Bucket = 'fakeBucket';
+  const Key = 'fakeKey';
+  const anotherFakeError = Error('fake');
+  it('calls deleteFileFromS3() with correct parameters', async () => {
+    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
+    const got = deleteFileFromS3(Key, Bucket);
+    await expect(got).resolves.toBe('good');
+    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+  });
+  it('throws an error if promise rejects', async () => {
+    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementationOnce(
+      () => ({ promise: () => Promise.reject(anotherFakeError) }),
+    );
+    const got = deleteFileFromS3(Key);
+    await expect(got).rejects.toBe(anotherFakeError);
+    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
   });
 });

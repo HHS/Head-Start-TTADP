@@ -14,24 +14,26 @@ const generateRedisConfig = () => {
     return {
       host,
       port,
-      password,
+      // TLS needs to be set to an empty object for redis on cloud.gov
+      // eslint-disable-next-line no-empty-pattern
+      redisOpts: { redis: { password, tls: {} } },
     };
   }
   const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
   return {
     host,
     port: (process.env.REDIS_PORT || 6379),
-    password,
+    redisOpts: { redis: { password } },
   };
 };
 
 const {
   host,
   port,
-  password,
+  redisOpts,
 } = generateRedisConfig();
 
-const scanQueue = new Queue('scan', `redis://${host}:${port}`, { redis: { password } });
+const scanQueue = new Queue('scan', `redis://${host}:${port}`, redisOpts);
 
 const addToScanQueue = (fileKey) => {
   const retries = process.env.FILE_SCAN_RETRIES || 5;

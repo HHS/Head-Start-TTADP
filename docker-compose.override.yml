@@ -1,0 +1,43 @@
+version: "3.5"
+services:
+  backend:
+    build:
+      context: .
+    command: yarn server
+    user: ${CURRENT_USER:-root}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - REDIS_HOST=redis
+    volumes:
+      - ".:/app:rw"
+  frontend:
+    build:
+      context: .
+    command: yarn start
+    user: ${CURRENT_USER:-root}
+    stdin_open: true
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./frontend:/app:rw"
+      - "./scripts:/app/scripts"
+    environment:
+      - BACKEND_PROXY=http://backend:8080
+  worker:
+    build:
+      context: .
+    command: yarn worker
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - REDIS_HOST=redis
+    volumes:
+      - ".:/app:rw"
