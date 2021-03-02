@@ -36,10 +36,12 @@ const RenderReview = ({
         approvers={approvers}
         formData={formData}
         onReview={onReview}
+        onResetToDraft={() => {}}
         onSaveForm={() => {}}
         approvingManager={approvingManager}
         pages={pages}
         reportCreator={reportCreator}
+        updateShowValidationErrors={() => {}}
       />
     </FormProvider>
   );
@@ -73,7 +75,7 @@ const renderReview = (
     <RenderReview
       allComplete={allComplete}
       onSubmit={onSubmit}
-      formData={{ ...formData, status }}
+      formData={{ ...formData, status, author: { name: 'user' } }}
       approvingManager={approvingManager}
       onReview={onReview}
       approvingManagerId={approvingManagerId}
@@ -111,8 +113,8 @@ describe('ReviewSubmit', () => {
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
       const reviewButton = await screen.findByRole('button');
       userEvent.click(reviewButton);
-      const error = await screen.findByTestId('alert');
-      expect(error).toHaveTextContent('Unable to review report');
+      const error = await screen.findByText('Unable to review report');
+      expect(error).toBeVisible();
     });
   });
 
@@ -153,16 +155,9 @@ describe('ReviewSubmit', () => {
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
-      const error = await screen.findByTestId('alert');
-      expect(error).toHaveTextContent('Unable to submit report');
+      const error = await screen.findByText('Unable to submit report');
+      expect(error).toBeVisible();
     });
-  });
-
-  it('a success modal is shown once submitted', async () => {
-    renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
-    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
-    const alert = await screen.findByTestId('alert');
-    expect(alert).toHaveClass('usa-alert--success');
   });
 
   it('initializes the form with "initialData"', async () => {
