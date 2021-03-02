@@ -247,7 +247,7 @@ export function activityReportById(activityReportId) {
  * using sequelize.literal for several associated fields based on the following
  * https://github.com/sequelize/sequelize/issues/11288
  *
- * @param {*} sortBy - field to sort by; defaut updatedAt
+ * @param {*} sortBy - field to sort by; default updatedAt
  * @param {*} sortDir - order: either ascending or descending; default desc
  * @param {*} offset - offset from the start of the total sorted results
  * @param {*} limit - size of the slice
