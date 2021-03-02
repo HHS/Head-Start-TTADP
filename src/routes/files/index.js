@@ -1,5 +1,5 @@
 import express from 'express';
-import uploadHandler from './handlers';
+import uploadHandler, { deleteHandler } from './handlers';
 
 const router = express.Router();
 
@@ -8,5 +8,6 @@ const router = express.Router();
  */
 
 router.post('/', uploadHandler);
+router.delete('/:reportId/:fileId', deleteHandler);
 
 export default router;
