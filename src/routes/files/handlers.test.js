@@ -6,7 +6,7 @@ import db, {
   Permission,
 } from '../../models';
 import app from '../../app';
-import { uploadFile } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3 } from '../../lib/s3';
 import * as queue from '../../services/scanQueue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
@@ -108,6 +108,27 @@ describe('File Upload', () => {
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
       expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
+    });
+    it('tests an unauthorized delete', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => false,
+      }));
+      await request(app)
+        .delete(`/api/files/${report.dataValues.id}/${fileId}`)
+        .expect(403)
+        .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
+    });
+    it('deletes a file', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      const file = await File.findOne({ where: { id: fileId } });
+      await request(app)
+        .delete(`/api/files/${report.dataValues.id}/${fileId}`)
+        .expect(204);
+      expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
+      const noFile = await File.findOne({ where: { id: fileId } });
+      expect(noFile).toBe(null);
     });
   });
 
