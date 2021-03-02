@@ -45,7 +45,6 @@ describe('Activity Reports DB service', () => {
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
     await Grant.destroy({ where: { id: RECIPIENT_ID } });
     await Grantee.destroy({ where: { id: RECIPIENT_ID } });
-    // await NextStep.destroy({ where: {} });
     await Region.destroy({ where: { id: 17 } });
     db.sequelize.close();
   });
