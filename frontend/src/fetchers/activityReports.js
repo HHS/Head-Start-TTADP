@@ -31,7 +31,7 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
-export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 2) => {
+export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10) => {
   const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}`);
   return reports.json();
 };
