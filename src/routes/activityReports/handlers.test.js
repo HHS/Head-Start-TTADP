@@ -245,59 +245,6 @@ describe('Activity Report handlers', () => {
     });
   });
 
-  describe('getReports', () => {
-    const request = {
-      ...mockRequest,
-      // params: { activityReportId: 1 },
-      query: { },
-    };
-
-    it('returns the reports', async () => {
-      ActivityReport.mockImplementationOnce(() => ({
-        canGet: () => true,
-      }));
-      activityReports.mockResolvedValue({ count: 1, rows: [report] });
-      userById.mockResolvedValue({
-        id: 1,
-      });
-
-      await getReports(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ count: 1, rows: [report] });
-    });
-
-    it('handles a list of reports that are not found', async () => {
-      activityReports.mockResolvedValue(null);
-      await getReports(request, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
-    });
-  });
-
-  describe('getReportAlerts', () => {
-    const request = {
-      ...mockRequest,
-      query: { },
-    };
-
-    it('returns my alerts', async () => {
-      ActivityReport.mockImplementationOnce(() => ({
-        canGet: () => true,
-      }));
-      activityReportAlerts.mockResolvedValue([report]);
-      userById.mockResolvedValue({
-        id: 1,
-      });
-
-      await getReportAlerts(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith([report]);
-    });
-
-    it('handles a list of alerts that are not found', async () => {
-      activityReportAlerts.mockResolvedValue(null);
-      await getReportAlerts(request, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
-    });
-  });
-
   describe('getActivityRecipients', () => {
     it('returns recipients when region query param is passed', async () => {
       const response = [{ test: 'test' }];
@@ -362,6 +309,52 @@ describe('Activity Report handlers', () => {
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getReports', () => {
+    const request = {
+      ...mockRequest,
+      query: { },
+    };
+
+    it('returns the reports', async () => {
+      activityReports.mockResolvedValue({ count: 1, rows: [report] });
+      userById.mockResolvedValue({
+        id: 1,
+      });
+
+      await getReports(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ count: 1, rows: [report] });
+    });
+
+    it('handles a list of reports that are not found', async () => {
+      activityReports.mockResolvedValue(null);
+      await getReports(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('getReportAlerts', () => {
+    const request = {
+      ...mockRequest,
+      query: { },
+    };
+
+    it('returns my alerts', async () => {
+      activityReportAlerts.mockResolvedValue([report]);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+
+      await getReportAlerts(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith([report]);
+    });
+
+    it('handles a list of alerts that are not found', async () => {
+      activityReportAlerts.mockResolvedValue(null);
+      await getReportAlerts(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
   });
 });
