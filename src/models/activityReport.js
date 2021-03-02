@@ -56,8 +56,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    resourcesUsed: {
-      type: DataTypes.TEXT,
+    ECLKCResourcesUsed: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+    },
+    nonECLKCResourcesUsed: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
     },
     additionalNotes: {
       type: DataTypes.TEXT,
@@ -90,6 +93,9 @@ export default (sequelize, DataTypes) => {
     },
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
+    },
+    virtualDeliveryType: {
+      type: DataTypes.STRING,
     },
     reason: {
       type: DataTypes.ARRAY(DataTypes.STRING),

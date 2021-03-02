@@ -1,13 +1,29 @@
-.smart-hub--form-section {
-  margin-top: 2rem;
+.smart-hub--form-group {
+  margin-top: 1.5rem;
 }
 
 .smart-hub--report-checkbox {
   margin-top: 1.25rem;
 }
 
+.smart-hub--form-section {
+  margin-top: 2rem;
+}
+
+.smart-hub--remove-resource {
+  margin-top: 8px !important;
+  margin-left: 4px;
+}
+
+.smart-hub--virtual-delivery-group {
+  border-left-color: #0166ab;
+  border-left-style: solid;
+  border-left-width: 4px;
+  padding-left: 10px;
+}
+
 .smart-hub--report-legend .usa-legend {
-  font-family: Merriweather;
+  font-family: 'Source Sans Pro Web';
   font-size: 17px;
   color: #21272d;
   line-height: 22px;
@@ -53,4 +69,16 @@
   border-bottom-left-radius: 4px;
   border-bottom-right-radius: 4px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+  display:inline-block;
+    font-size: 40px;
+    line-height: 50px;
+    background-color:black;
+    color:white;
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    vertical-align: bottom;
 }

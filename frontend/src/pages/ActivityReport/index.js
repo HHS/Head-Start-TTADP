@@ -48,7 +48,8 @@ const defaultValues = {
   programTypes: [],
   reason: [],
   requester: '',
-  resourcesUsed: '',
+  ECLKCResourcesUsed: [{ value: '' }],
+  nonECLKCResourcesUsed: [{ value: '' }],
   startDate: null,
   targetPopulations: [],
   topics: [],
@@ -83,6 +84,14 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
+  const unflattenResourcesUsed = (array) => {
+    if (!array) {
+      return [];
+    }
+
+    return array.map((value) => ({ value }));
+  };
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -90,7 +99,10 @@ function ActivityReport({
       try {
         updateLoading(true);
         if (activityReportId !== 'new') {
-          report = await getReport(activityReportId);
+          const fetchedReport = await getReport(activityReportId);
+          const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
+          const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
+          report = { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
         } else {
           report = {
             ...defaultValues,

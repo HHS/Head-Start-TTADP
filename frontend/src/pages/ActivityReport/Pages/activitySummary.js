@@ -33,6 +33,7 @@ const ActivitySummary = ({
   const activityRecipientType = watch('activityRecipientType');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
+  const isVirtual = watch('deliveryMethod') === 'virtual';
   const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
 
   const grants = rawGrants.map((grantee) => ({
@@ -88,7 +89,7 @@ const ActivitySummary = ({
       </Helmet>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Who was the activity for?">
         <div id="activity-for" />
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="Was this activity for a grantee or non-grantee?"
             name="activityRecipientType"
@@ -112,7 +113,7 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label={recipientLabel}
             name="activityRecipients"
@@ -129,7 +130,7 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="Collaborating Specialists"
             name="collaborators"
@@ -148,7 +149,7 @@ const ActivitySummary = ({
         </div>
         {granteeSelected
         && (
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="Program type(s)"
             name="programTypes"
@@ -163,7 +164,7 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         )}
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="Target Populations addressed. You may choose more than one."
             name="targetPopulations"
@@ -180,7 +181,7 @@ const ActivitySummary = ({
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Reason for Activity">
         <div id="reasons" />
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by grantee."
             name="requester"
@@ -204,7 +205,7 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="Reason(s). You may choose more than one."
             name="reason"
@@ -250,7 +251,7 @@ const ActivitySummary = ({
             </Grid>
             <Grid col={5}>
               <FormItem
-                label="Duration"
+                label="Duration (round to the nearest half hour)"
                 name="duration"
               >
                 <TextInput
@@ -274,7 +275,7 @@ const ActivitySummary = ({
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Training or Technical Assistance">
         <div id="tta" />
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="What TTA was provided"
             name="ttaType"
@@ -284,7 +285,7 @@ const ActivitySummary = ({
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
           </FormItem>
         </div>
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label="How was the activity conducted?"
             name="deliveryMethod"
@@ -307,11 +308,39 @@ const ActivitySummary = ({
               inputRef={register({ required: 'Please specify how the activity was conducted' })}
             />
           </FormItem>
+          <div aria-live="polite">
+            {isVirtual && (
+            <div className="smart-hub--form-group smart-hub--virtual-delivery-group">
+              <FormItem
+                label="Please specify how the virtual event was conducted."
+                name="virtualDeliveryType"
+                fieldSetWrapper
+              >
+                <Radio
+                  id="virtual-deliver-method-video"
+                  name="virtualDeliveryType"
+                  label="Video"
+                  value="video"
+                  className="smart-hub--report-checkbox"
+                  inputRef={register({ required: 'Please specify how the virtual event was conducted' })}
+                />
+                <Radio
+                  id="virtual-deliver-method-telephone"
+                  name="virtualDeliveryType"
+                  label="Telephone"
+                  value="telephone"
+                  className="smart-hub--report-checkbox"
+                  inputRef={register({ required: 'Please specify how the virtual event was conducted' })}
+                />
+              </FormItem>
+            </div>
+            )}
+          </div>
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Participants">
         <div id="other-participants" />
-        <div className="smart-hub--form-section">
+        <div className="smart-hub--form-group">
           <FormItem
             label={participantsLabel}
             name="participants"
