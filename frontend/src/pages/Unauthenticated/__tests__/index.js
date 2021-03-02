@@ -11,7 +11,7 @@ describe('Unauthenticated Page', () => {
     });
 
     test('displays welcome message', () => {
-      expect(screen.getByText('Welcome to the TTA Smart Hub!')).toBeVisible();
+      expect(screen.getByText('Welcome to the TTA Smart Hub')).toBeVisible();
     });
 
     test('does not display the logged out message', () => {
