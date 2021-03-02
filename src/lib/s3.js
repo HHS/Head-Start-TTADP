@@ -30,6 +30,14 @@ const generateS3Config = () => {
 const { bucketName, s3Config } = generateS3Config();
 const s3 = new S3(s3Config);
 
+const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
+  const params = {
+    Bucket: bucket,
+    Key: key,
+  };
+  return s3Client.deleteObject(params).promise();
+};
+
 const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   const versioningConfiguration = {
     MFADelete: 'Disabled',
@@ -94,4 +102,5 @@ export {
   uploadFile,
   generateS3Config,
   verifyVersioning,
+  deleteFileFromS3,
 };
