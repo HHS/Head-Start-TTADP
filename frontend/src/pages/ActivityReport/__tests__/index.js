@@ -12,12 +12,7 @@ import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
-import { REPORT_STATUSES } from '../../../Constants';
-// import { getRegionWithReadWrite } from '../../../permissions';
-
-jest.mock('../../../permissions', () => ({
-  getRegionWithReadWrite: jest.fn(() => 1),
-}));
+import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
 const formData = () => ({
   regionId: 1,
@@ -58,7 +53,9 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
         location={{
           state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
         }}
-        user={{ id: userId, name: 'Walter Burns', role: 'Reporter' }}
+        user={{
+          id: userId, name: 'Walter Burns', role: 'Reporter', permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+        }}
       />
     </Router>,
   );
