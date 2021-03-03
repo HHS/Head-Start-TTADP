@@ -71,24 +71,8 @@ const hasReadWrite = (user) => {
   ) !== undefined;
 };
 
-/*
- * Look in the user's permissions for any permission that is not SITE_ACCESS
- * @param {*} user - user object
- * @returns {boolean} - True if the user has any permission beyond SITE_ACCESS
- */
-const hasPermissions = (user) => {
-  if (!user) return false;
-  const { permissions = null } = user;
-  if (!permissions || permissions.length === 0) return false;
-  // Any permission other than SITE_ACCESS (without which they couldn't log in)
-  return permissions.some(
-    (p) => p.scopeId !== SCOPE_IDS.SITE_ACCESS,
-  );
-};
-
 export {
   isAdmin as default,
   getRegionWithReadWrite,
   hasReadWrite,
-  hasPermissions,
 };
