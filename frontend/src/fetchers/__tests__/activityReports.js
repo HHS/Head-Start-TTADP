@@ -1,7 +1,9 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
-import { submitReport, saveReport, reviewReport, resetToDraft } from '../activityReports';
+import {
+  submitReport, saveReport, reviewReport, resetToDraft,
+} from '../activityReports';
 
 describe('activityReports fetcher', () => {
   afterEach(() => fetchMock.restore());
