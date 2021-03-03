@@ -3,7 +3,6 @@ import {
   unfinishedGoals,
   validateGoals,
   GOALS_EMPTY,
-  GOAL_MISSING_OBJECTIVE,
   UNFINISHED_OBJECTIVES,
 } from '../goalValidator';
 
