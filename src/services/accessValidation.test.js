@@ -20,6 +20,7 @@ const mockUser = {
   phoneNumber: '555-555-554',
   hsesUserId: '47',
   email: 'test47@test.com',
+  hsesUsername: 'test47@test.com',
   homeRegionId: 1,
   permissions: [
     {
@@ -55,6 +56,7 @@ describe('accessValidation', () => {
         id: 33,
         hsesUserId: '33',
         email: 'test@test.com',
+        hsesUsername: 'test@test.com',
         homeRegionId: 3,
       };
       // Verify that the user with id 33 doesn't exist
@@ -83,6 +85,7 @@ describe('accessValidation', () => {
       const user = {
         hsesUserId: '36',
         email: 'test36@test.com',
+        hsesUsername: 'test36@test.com',
         homeRegionId: 3,
       };
       const originalLastLogin = moment().subtract(1, 'day');
@@ -99,6 +102,7 @@ describe('accessValidation', () => {
         id: 34,
         hsesUserId: '34',
         email: 'test34@test.com',
+        hsesUsername: 'test34@test.com',
         homeRegionId: 3,
       };
       // Check that the above `user` doesn't exist in the DB yet.
@@ -133,6 +137,7 @@ describe('accessValidation', () => {
       const user = {
         hsesUserId: '35',
         email: oldEmail,
+        hsesUsername: oldEmail,
       };
       // Verify that user 35 is set up as we expect
       await User.destroy({ where: { id: userId } });
@@ -157,6 +162,7 @@ describe('accessValidation', () => {
       const user = {
         hsesUserId: '33',
         email: 'invalid',
+        hsesUsername: 'username',
         homeRegionId: 3,
       };
       await User.destroy({ where: { hsesUserId: '33' } });

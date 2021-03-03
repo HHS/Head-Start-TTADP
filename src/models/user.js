@@ -48,6 +48,7 @@ export default (sequelize, DataTypes) => {
     hsesUsername: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     hsesAuthorities: {
       type: DataTypes.ARRAY(DataTypes.STRING),

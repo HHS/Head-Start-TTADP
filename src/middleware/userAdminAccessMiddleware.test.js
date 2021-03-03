@@ -31,6 +31,7 @@ describe('userAdminAccessMiddleware', () => {
     [user] = await User.findOrCreate({
       where: {
         email: 'admin@acf.hhs.gov',
+        hsesUsername: 'admin@acf.hhs.gov',
       },
     });
 
