@@ -102,8 +102,8 @@ const ReviewSection = () => {
     topics: formTopics,
   } = watch();
 
-  const hasOtherResources = otherResources && otherResources.length <= 0;
-  const hasAttachments = attachments && attachments.length <= 0;
+  const hasOtherResources = otherResources && otherResources.length > 0;
+  const hasAttachments = attachments && attachments.length > 0;
 
   return (
     <>
