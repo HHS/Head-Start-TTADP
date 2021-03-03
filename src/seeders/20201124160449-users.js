@@ -108,7 +108,7 @@ const users = [
   {
     id: 1,
     email: 'hermionegranger@hogwarts.com',
-    hsesUserId: 1,
+    hsesUserId: '1',
     hsesUsername: 'hermionegranger@hogwarts.com',
     role: 'System Specialist',
     name: 'Hermione Granger',
@@ -119,7 +119,7 @@ const users = [
   {
     id: 2,
     email: 'dumbledore@hogwarts.com',
-    hsesUserId: 2,
+    hsesUserId: '2',
     hsesUsername: 'dumbledore@hogwarts.com',
     role: undefined,
     name: undefined,
@@ -129,6 +129,7 @@ const users = [
   },
   {
     id: 3,
+    hsesUserId: '3',
     email: 'harrypotter@hogwarts.com',
     hsesUsername: 'harrypotter@hogwarts.com',
     role: 'Grants Specialist',
@@ -139,6 +140,7 @@ const users = [
   },
   {
     id: 4,
+    hsesUserId: '4',
     email: 'ronweasley@hogwarts.com',
     hsesUsername: 'ronweasley@hogwarts.com',
     role: 'Grants Specialist',
@@ -149,6 +151,7 @@ const users = [
   },
   {
     id: 5,
+    hsesUserId: '5',
     email: 'cucumber@hogwarts.com',
     hsesUsername: 'cucumber@hogwarts.com',
     role: 'Grants Specialist',
@@ -163,7 +166,7 @@ const users = [
     hsesUsername: 'krystyna@adhocteam.us',
     // These hses ids will likely get out of date at some point, but
     // still nice to have this shortcut while it lasts
-    hsesUserId: '50153',
+    hsesUserId: '50385',
     role: 'Grants Specialist',
     name: 'Krys',
     phoneNumber: '555-555-5553',

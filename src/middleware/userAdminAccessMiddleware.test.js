@@ -32,6 +32,7 @@ describe('userAdminAccessMiddleware', () => {
       where: {
         email: 'admin@acf.hhs.gov',
         hsesUsername: 'admin@acf.hhs.gov',
+        hsesUserId: 'admin@acf.hhs.gov',
       },
     });
 

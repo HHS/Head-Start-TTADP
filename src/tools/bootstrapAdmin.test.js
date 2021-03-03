@@ -9,7 +9,7 @@ describe('Bootstrap the first Admin user', () => {
   describe('when user already exists', () => {
     let user;
     beforeAll(async () => {
-      [user] = await User.findOrCreate({ where: { hsesUsername: ADMIN_USERNAME } });
+      [user] = await User.findOrCreate({ where: { hsesUsername: ADMIN_USERNAME, hsesUserId: ADMIN_USERNAME } });
     });
     afterEach(async () => {
       await Permission.destroy({ where: { userId: user.id } });

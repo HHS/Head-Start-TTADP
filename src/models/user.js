@@ -45,6 +45,7 @@ export default (sequelize, DataTypes) => {
     hsesUserId: {
       type: DataTypes.STRING,
       unique: true,
+      allowNull: false,
     },
     hsesUsername: {
       type: DataTypes.STRING,
