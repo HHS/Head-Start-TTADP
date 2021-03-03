@@ -1,5 +1,4 @@
 export const UNFINISHED_OBJECTIVES = 'Every objective must have both a title and TTA provided';
-export const GOAL_MISSING_OBJECTIVE = 'Every goal requires at least one objective';
 export const GOALS_EMPTY = 'Every report must have at least one goal';
 
 export const unfinishedObjectives = (objectives) => {
