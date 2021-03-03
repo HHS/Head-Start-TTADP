@@ -32,10 +32,10 @@ describe('upload tests', () => {
   const mockFile = { name: 'MockFile', size: 2000 };
   const mockSetErrorMessage = jest.fn();
   it('can upload a file and return the correct information', async () => {
-    const mockFileUpload = jest.spyOn(fileFetcher, 'uploadFile').mockImplementation(async () => ({ id: 1 }));
+    const mockFileUpload = jest.spyOn(fileFetcher, 'uploadFile').mockImplementation(async () => ({ id: 1, url: 'url' }));
     const got = await upload(mockFile, 1, 'fakeAttachment', mockSetErrorMessage);
     expect(got).toStrictEqual({
-      id: 1, originalFileName: mockFile.name, fileSize: mockFile.size, status: 'UPLOADED',
+      id: 1, originalFileName: mockFile.name, fileSize: mockFile.size, status: 'UPLOADED', url: 'url',
     });
     expect(mockFileUpload).toHaveBeenCalled();
     expect(mockSetErrorMessage).toHaveBeenCalledWith(null);
