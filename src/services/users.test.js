@@ -22,10 +22,12 @@ describe('Users DB service', () => {
       await User.create({
         id: 50,
         name: 'user 1',
+        hsesUsername: 'user.1',
       });
       await User.create({
         id: 51,
         name: 'user 2',
+        hsesUsername: 'user.2',
       });
     });
 
@@ -69,6 +71,7 @@ describe('Users DB service', () => {
         users.map((u) => User.create({
           id: u.id,
           name: u.id,
+          hsesUsername: u.id,
           permissions: [{
             userId: u.id,
             regionId: u.regionId,
