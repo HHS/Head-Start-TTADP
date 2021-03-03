@@ -14,13 +14,11 @@ export const unfinishedGoals = (goals) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
     // Every goal must have an objective for the `goals` field has unfinished goals
-    if (goal.objectives && goal.objectives.length > 0) {
+    if (goal.objectives) {
       const objectivesUnfinished = unfinishedObjectives(goal.objectives);
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
-    } else {
-      return GOAL_MISSING_OBJECTIVE;
     }
   }
   return false;

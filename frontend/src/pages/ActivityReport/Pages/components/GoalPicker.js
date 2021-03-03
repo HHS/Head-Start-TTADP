@@ -41,7 +41,7 @@ const GoalPicker = ({
 
   const onSaveGoal = () => {
     if (newGoal !== '') {
-      const goal = { id: uuidv4(), name: newGoal, objectives: [createObjective()] };
+      const goal = { id: uuidv4(), name: newGoal };
       setValue('goals', [...selectedGoals, goal]);
       updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
       updateNewGoal('');
@@ -59,15 +59,8 @@ const GoalPicker = ({
       const availableGoal = availableGoals.find((g) => g.id === e.value);
       const selectedGoal = selectedGoals.find((g) => g.id === e.value);
       const goal = selectedGoal || availableGoal;
-      let objectives = [createObjective()];
 
-      if (goal.objectives && goal.objectives.length > 0) {
-        objectives = goal.objectives;
-      }
-      return {
-        ...goal,
-        objectives,
-      };
+      return goal;
     });
     setValue('goals', newGoals);
   };

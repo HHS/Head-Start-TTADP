@@ -7,7 +7,7 @@ import Objective from '../Objective';
 
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  objective, onRemove = () => {}, showRemove = true, onUpdate = () => {},
+  objective, onRemove = () => {}, onUpdate = () => {},
 }) => {
   const hookForm = useForm();
   return (
@@ -19,7 +19,6 @@ const RenderObjective = ({
         onUpdate={onUpdate}
         goalIndex={0}
         objectiveIndex={0}
-        showRemove={showRemove}
       />
     </FormProvider>
   );
@@ -63,21 +62,24 @@ describe('Objective', () => {
       expect(await screen.findByTestId('tag')).toBeVisible();
     });
 
-    it('does not display the remove button if showRemove is false', async () => {
-      const onRemove = jest.fn();
-      render(<RenderObjective objective={{}} onRemove={onRemove} showRemove={false} />);
-      await screen.findByText('Save Objective');
-      const remove = screen.queryByRole('button', { name: 'remove objective 1 on goal 1' });
-      expect(remove).toBeNull();
-    });
-
-    it('calls onRemove when the remove button is clicked', async () => {
+    it('calls onRemove when the cancel button is clicked with an empty objective', async () => {
       const onRemove = jest.fn();
       render(<RenderObjective objective={{}} onRemove={onRemove} />);
-      await screen.findByText('Save Objective');
-      const remove = await screen.findByRole('button', { name: 'remove objective 1 on goal 1' });
-      userEvent.click(remove);
+      const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
+      userEvent.click(cancel);
       expect(onRemove).toHaveBeenCalled();
+    });
+
+    it('cancels any edits if the objective is not empty', async () => {
+      const onRemove = jest.fn();
+      render(<RenderObjective objective={{ title: 'title' }} onRemove={onRemove} />);
+      const text = await screen.findByLabelText('Objective (Required)');
+      userEvent.type(text, 'test');
+      const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
+      userEvent.click(cancel);
+
+      expect(await screen.findByText('title')).toBeVisible();
+      expect(onRemove).not.toHaveBeenCalled();
     });
   });
 
@@ -108,19 +110,6 @@ describe('Objective', () => {
       const deleteButton = await screen.findByText('Delete');
       userEvent.click(deleteButton);
       expect(onRemove).toHaveBeenCalled();
-      await waitFor(() => expect(screen.queryByText('Delete')).toBeNull());
-    });
-
-    it('hides the remove button if showRemoved is false', async () => {
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective objective={objective} showRemove={false} />);
-      const menu = await screen.findByRole('button', { name: 'Edit objective 1 on goal 1' });
-      userEvent.click(menu);
-
-      const deleteButton = screen.queryByText('Delete');
-      expect(deleteButton).toBeNull();
     });
 
     it('can be switched to edit mode via the context menu', async () => {
