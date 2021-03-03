@@ -1,8 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import {
-  Link, Alert,
-} from '@trussworks/react-uswds';
 
 function RequestPermissions() {
   return (
