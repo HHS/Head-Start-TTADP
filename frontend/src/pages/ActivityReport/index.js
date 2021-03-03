@@ -184,9 +184,7 @@ function ActivityReport({
     }
 
     const page = pages.find((p) => p.position === position);
-    const path = page ? page.path : 'activity-summary';
-
-    history.replace(`/activity-reports/${reportId.current}/${path}`, state);
+    history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {
