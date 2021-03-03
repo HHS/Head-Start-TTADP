@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 14.15.4 installed.
+2. Make sure you have Node 14.16.0 installed.
 3. Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed.
 4. Copy `.env.example` to `.env`.  
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
