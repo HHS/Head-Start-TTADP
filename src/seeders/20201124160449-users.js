@@ -169,7 +169,7 @@ const users = [
     email: 'josh@adhocteam.us',
     role: 'Grants Specialist',
     name: 'Josh',
-    hsesUserId: '50154',
+    hsesUserId: '50386',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
