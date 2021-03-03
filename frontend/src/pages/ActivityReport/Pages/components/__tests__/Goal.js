@@ -56,10 +56,10 @@ describe('Goal', () => {
   describe('with objectives', () => {
     it('can be removed', async () => {
       const onUpdate = jest.fn();
-      const objectives = [{ title: 'first', ttaProvided: '', status: 'Not Started' }, { title: 'second', ttaProvided: '', status: 'Not Started' }];
+      const objectives = [{ title: 'first', ttaProvided: '', status: 'Not Started' }, { title: '', ttaProvided: '', status: 'Not Started' }];
       render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
 
-      const remove = await screen.findByRole('button', { name: 'remove objective 2 on goal 1' });
+      const remove = await screen.findByRole('button', { name: 'Cancel update of objective 2 on goal 1' });
       userEvent.click(remove);
       expect(onUpdate).toHaveBeenCalledWith([{ title: 'first', ttaProvided: '', status: 'Not Started' }]);
     });
@@ -71,7 +71,7 @@ describe('Goal', () => {
 
       const tta = await screen.findByRole('textbox', { name: 'TTA provided for objective 1 on goal 1' });
       userEvent.type(tta, 'test');
-      const button = await screen.findByRole('button', { name: 'Save Objective' });
+      const button = await screen.findByRole('button', { name: 'Save objective 1 on goal 1' });
       userEvent.click(button);
       expect(onUpdate).toHaveBeenCalledWith([{ title: 'first', ttaProvided: 'test', status: 'Not Started' }]);
     });

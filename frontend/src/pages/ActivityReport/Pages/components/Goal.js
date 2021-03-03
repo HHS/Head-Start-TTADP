@@ -22,8 +22,6 @@ const Goals = ({
     onUpdateObjectives(newObjectives);
   };
 
-  const singleObjective = objectives.length === 1;
-
   return (
     <div className="smart-hub--goal">
       <div className="smart-hub--goal-content">
@@ -46,7 +44,6 @@ const Goals = ({
                 goalIndex={goalIndex}
                 objectiveIndex={objectiveIndex}
                 objective={objective}
-                showRemove={!singleObjective}
                 onRemove={() => onRemoveObjective(objectiveIndex)}
                 onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}
               />
@@ -76,12 +73,16 @@ Goals.propTypes = {
     status: PropTypes.string,
     new: PropTypes.bool,
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  })).isRequired,
+  })),
   createObjective: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
   goalIndex: PropTypes.number.isRequired,
   onRemoveGoal: PropTypes.func.isRequired,
   onUpdateObjectives: PropTypes.func.isRequired,
+};
+
+Goals.defaultProps = {
+  objectives: [],
 };
 
 export default Goals;

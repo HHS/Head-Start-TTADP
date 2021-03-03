@@ -4,8 +4,6 @@ import { useFormContext } from 'react-hook-form';
 import {
   Tag, Label, Button, TextInput, Dropdown, Grid,
 } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 import ObjectiveFormItem from './ObjectiveFormItem';
 import ContextMenu from '../../../../components/ContextMenu';
@@ -18,7 +16,7 @@ const statuses = [
 ];
 
 const Objective = ({
-  goalIndex, objectiveIndex, objective, onRemove, showRemove, onUpdate,
+  goalIndex, objectiveIndex, objective, onRemove, onUpdate,
 }) => {
   const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
   const { errors, trigger } = useFormContext();
@@ -37,12 +35,11 @@ const Objective = ({
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
   const updateEdit = (isEditing) => {
-    onUpdate(editableObject);
-
     if (isEditing) {
       updateShowEdit(true);
     } else if (title && ttaProvided) {
       updateShowEdit(false);
+      onUpdate(editableObject);
     } else {
       trigger('goals');
     }
@@ -52,38 +49,35 @@ const Objective = ({
     }
   };
 
+  const onCancel = () => {
+    if (objective.title || objective.ttaProvided) {
+      updateEditableObject(objective);
+      updateShowEdit(false);
+    } else {
+      onRemove();
+    }
+  };
+
   const menuItems = [
     {
       label: 'Edit',
       onClick: () => { updateEdit(true); },
     },
-  ];
-
-  let contextMenuLabel;
-
-  if (showRemove) {
-    contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
-    menuItems.push({
+    {
       label: 'Delete',
       onClick: onRemove,
-    });
-  } else {
-    contextMenuLabel = `Edit objective ${objectiveAriaLabel}`;
-  }
+    },
+  ];
+
+  const contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
 
   return (
     <div className="smart-hub--objective">
       {showEdit && (
         <>
-          {showRemove && (
-          <div className="display-flex flex-align-end">
-            <Button type="button" className="smart-hub--button__no-margin margin-left-auto" onClick={onRemove} unstyled aria-label={`remove objective ${objectiveAriaLabel}`}>
-              <FontAwesomeIcon color="black" icon={faTimes} />
-            </Button>
-          </div>
-          )}
           <ObjectiveFormItem
             showErrors={!isValid}
+            className="margin-top-0"
             message="Please enter the title for this objective"
             label="Objective"
             value={title}
@@ -130,7 +124,8 @@ const Objective = ({
               </Label>
             </Grid>
             <Grid col={8} className="display-flex flex-align-end">
-              <Button outline type="button" onClick={() => { updateEdit(false); }}>Save Objective</Button>
+              <Button aria-label={`Save objective ${objectiveAriaLabel}`} type="button" onClick={() => { updateEdit(false); }}>Save Objective</Button>
+              <Button aria-label={`Cancel update of objective ${objectiveAriaLabel}`} secondary type="button" onClick={() => { onCancel(); }}>Cancel</Button>
             </Grid>
           </Grid>
         </>
@@ -171,7 +166,6 @@ Objective.propTypes = {
   goalIndex: PropTypes.number.isRequired,
   onRemove: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
-  showRemove: PropTypes.bool.isRequired,
 };
 
 export default Objective;

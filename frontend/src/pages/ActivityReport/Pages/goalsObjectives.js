@@ -53,8 +53,13 @@ const GoalsObjectives = ({
 };
 
 GoalsObjectives.propTypes = {
-  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  activityRecipientType: PropTypes.string.isRequired,
+  grantIds: PropTypes.arrayOf(PropTypes.number),
+  activityRecipientType: PropTypes.string,
+};
+
+GoalsObjectives.defaultProps = {
+  activityRecipientType: '',
+  grantIds: [],
 };
 
 const sections = [
