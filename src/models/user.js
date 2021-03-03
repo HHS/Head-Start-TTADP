@@ -1,4 +1,5 @@
 import { Model } from 'sequelize';
+import isEmail from 'validator/lib/isEmail';
 
 const roles = [
   'Regional Program Manager',
@@ -60,7 +61,12 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       unique: true,
       validate: {
-        isEmail: true,
+        isEmailOrEmpty(value, next) {
+          if (!value || value === '' || isEmail(value)) {
+            return next();
+          }
+          return next('email is invalid');
+        },
       },
     },
     role: DataTypes.ENUM(roles),

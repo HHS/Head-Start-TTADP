@@ -167,7 +167,7 @@ describe('accessValidation', () => {
       };
       await User.destroy({ where: { hsesUserId: '33' } });
       await expect(findOrCreateUser(user)).rejects.toThrow();
-      expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: Validation isEmail on email failed');
+      expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:ACCESS_VALIDATION - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid');
     });
   });
 
