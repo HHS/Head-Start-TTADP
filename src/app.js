@@ -90,10 +90,12 @@ const timezone = 'America/New_York';
 
 const runJob = () => {
   try {
-    updateGrantsGrantees();
+    return updateGrantsGrantees();
   } catch (error) {
     auditLogger.error(`Error processing HSES file: ${error}`);
+    logger.error(error.stack);
   }
+  return false;
 };
 
 // Run only on one instance
