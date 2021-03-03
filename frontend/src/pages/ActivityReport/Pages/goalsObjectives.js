@@ -9,6 +9,7 @@ import { useFormContext } from 'react-hook-form';
 
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
+import { validateGoals } from './components/goalValidator';
 
 const GoalsObjectives = ({
   grantIds, activityRecipientType,
@@ -17,7 +18,6 @@ const GoalsObjectives = ({
     register,
   } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
-  const [loading, updateLoading] = useState(true);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
@@ -26,18 +26,9 @@ const GoalsObjectives = ({
         const fetchedGoals = await getGoals(grantIds);
         updateAvailableGoals(fetchedGoals);
       }
-      updateLoading(false);
     };
     fetch();
   }, [grantIds]);
-
-  if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
-  }
 
   return (
     <>
@@ -88,6 +79,7 @@ export default {
   label: 'Goals and objectives',
   path: 'goals-objectives',
   review: false,
+  isPageComplete: (formData) => validateGoals(formData.goals) === true,
   sections,
   render: (additionalData, formData) => {
     const recipients = formData.activityRecipients || [];
