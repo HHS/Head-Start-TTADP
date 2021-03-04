@@ -8,6 +8,7 @@ applications:
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
       AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
       LOG_JSON_FORMAT: "true"
+      LOG_LEVEL: ((LOG_LEVEL))
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
       NODE_ENV: production
