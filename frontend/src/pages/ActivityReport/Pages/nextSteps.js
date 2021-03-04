@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import ReviewPage from './Review/ReviewPage';
 
 const NextSteps = () => (
   <>
@@ -16,12 +17,16 @@ NextSteps.propTypes = {};
 
 const sections = [];
 
+const ReviewSection = () => (
+  <ReviewPage sections={sections} path="topics-resources" />
+);
+
 export default {
   position: 4,
   label: 'Next steps',
   path: 'next-steps',
   review: false,
-  sections,
+  reviewSection: () => <ReviewSection />,
   render: () => (
     <NextSteps />
   ),
