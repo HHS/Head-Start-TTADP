@@ -30,7 +30,11 @@ export default function findOrCreateUser(data) {
       logger.info(`Created user ${user.id} with no access permissions`);
       return user;
     }
-    return user.update({ lastLogin: sequelize.fn('NOW') }, { transaction });
+    return user.update({
+      hsesUsername: data.hsesUsername,
+      hsesAuthorities: data.hsesAuthorities,
+      lastLogin: sequelize.fn('NOW'),
+    }, { transaction });
   }).catch((error) => {
     const msg = `Error finding or creating user in database - ${error}`;
     logger.error(`${namespace} - ${msg}`);
