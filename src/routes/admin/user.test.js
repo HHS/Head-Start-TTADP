@@ -14,6 +14,8 @@ const mockUser = {
   role: null,
   phoneNumber: '555-555-554',
   hsesUserId: '49',
+  hsesUsername: 'test49@test.com',
+  hsesAuthorities: ['ROLE_FEDERAL'],
   email: 'test49@test.com',
   homeRegionId: 1,
   lastLogin: new Date('2021-02-09T15:13:00.000Z'),
@@ -134,6 +136,7 @@ describe('User route handler', () => {
       role: 'Health Specialist',
       phoneNumber: '555-555-554',
       hsesUserId: '53',
+      hsesUsername: 'test53@test.com',
       email: 'test53@test.com',
       homeRegionId: 1,
       permissions: [
