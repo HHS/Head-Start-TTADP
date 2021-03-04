@@ -71,7 +71,7 @@ describe('UserSection', () => {
   });
 
   it('the region field is cast to a number when changed', () => {
-    const userInfo = screen.getByRole('group', { name: 'User Info' });
+    const userInfo = screen.getByRole('group', { name: 'User Profile' });
     const region = within(userInfo).getByLabelText('Region');
     userEvent.selectOptions(region, '1');
     expect(within(userInfo).getByLabelText('Region')).toHaveValue('1');

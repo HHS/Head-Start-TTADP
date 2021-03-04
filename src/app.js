@@ -6,6 +6,7 @@ import cookieSession from 'cookie-session';
 import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
+import isEmail from 'validator/lib/isEmail';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
@@ -53,16 +54,30 @@ app.get(oauth2CallbackPath, async (req, res) => {
     // user will have accessToken and refreshToken
     const requestObj = user.sign({
       method: 'get',
-      url: 'https://uat.hsesinfo.org/auth/user/me',
+      url: `${process.env.AUTH_BASE}/auth/user/me`,
     });
 
     const { url } = requestObj;
-    const response = await axios.get(url, requestObj);
-    const { data } = response;
-    const { principal: { username, userId } } = data;
+    const { data } = await axios.get(url, requestObj);
+    logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
+    const {
+      name,
+      principal: {
+        username,
+        userId,
+        authorities,
+      },
+    } = data;
+    let email = null;
+    if (isEmail(username)) {
+      email = username;
+    }
 
     const dbUser = await findOrCreateUser({
-      email: username,
+      name,
+      email,
+      hsesUsername: username,
+      hsesAuthorities: authorities.map(({ authority }) => authority),
       hsesUserId: userId.toString(),
     });
 
@@ -90,10 +105,12 @@ const timezone = 'America/New_York';
 
 const runJob = () => {
   try {
-    updateGrantsGrantees();
+    return updateGrantsGrantees();
   } catch (error) {
     auditLogger.error(`Error processing HSES file: ${error}`);
+    logger.error(error.stack);
   }
+  return false;
 };
 
 // Run only on one instance

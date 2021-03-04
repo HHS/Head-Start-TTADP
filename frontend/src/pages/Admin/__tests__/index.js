@@ -132,7 +132,7 @@ describe('Admin Page', () => {
 
     it('displays an existing user', async () => {
       render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
-      const userInfo = await screen.findByRole('group', { name: 'User Info' });
+      const userInfo = await screen.findByRole('group', { name: 'User Profile' });
       expect(userInfo).toBeVisible();
     });
 
