@@ -27,6 +27,11 @@ module.exports = (sequelize, DataTypes) => {
     number: {
       type: DataTypes.STRING,
       allowNull: false,
+      /*
+        We're not setting unique true here to allow
+        bulkCreate/updateOnDuplicate to properly match rows on just the id.
+        unique: true,
+      */
     },
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
