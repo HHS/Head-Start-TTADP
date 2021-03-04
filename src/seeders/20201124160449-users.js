@@ -102,6 +102,21 @@ const permissions = [
     regionId: 1,
     scopeId: READ_WRITE_REPORTS,
   },
+  {
+    userId: 8,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 8,
+    regionId: 14,
+    scopeId: ADMIN,
+  },
+  {
+    userId: 8,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
 ];
 
 const users = [
@@ -170,7 +185,7 @@ const users = [
     role: 'Grants Specialist',
     name: 'Krys',
     phoneNumber: '555-555-5553',
-    homeRegionId: 3,
+    homeRegionId: 1,
     lastLogin: moment().toISOString(),
   },
   {
@@ -181,7 +196,18 @@ const users = [
     name: 'Josh',
     hsesUserId: '50154',
     phoneNumber: '555-555-5553',
-    homeRegionId: 3,
+    homeRegionId: 1,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 8,
+    email: 'chuck.mcandrew@adhocteam.us',
+    hsesUsername: 'chuck.mcandrew@adhocteam.us',
+    role: 'Grants Specialist',
+    name: 'Chuck',
+    hsesUserId: '50387',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 1,
     lastLogin: moment().toISOString(),
   },
 ];
