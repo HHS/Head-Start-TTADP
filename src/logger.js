@@ -19,9 +19,10 @@ const jsonFormatter = format.combine(
 );
 
 const formatter = env.bool('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter;
+const level = process.env.LOG_LEVEL || 'info';
 
 const logger = createLogger({
-  level: process.env.LOG_LEVEL,
+  level,
   format: formatter,
   transports: [
     new transports.Console(),
