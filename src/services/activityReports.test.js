@@ -12,6 +12,8 @@ const mockUser = {
   id: 1000,
   homeRegionId: 1,
   name: 'user',
+  hsesUsername: 'user',
+  hsesUserId: '1000',
 };
 
 const reportObject = {

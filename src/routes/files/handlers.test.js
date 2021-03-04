@@ -22,6 +22,8 @@ jest.mock('../../lib/s3');
 
 const mockUser = {
   id: 100,
+  hsesUserId: '100',
+  hsesUsername: 'user',
   homeRegionId: 1,
   permissions: [
     {
