@@ -54,6 +54,7 @@ function App() {
   const logout = async (timeout = false) => {
     await fetchLogout();
     updateUser();
+    updateAuthError();
     updateLoggedOut(true);
     updateTimedOut(timeout);
   };
