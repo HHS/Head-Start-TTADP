@@ -219,6 +219,11 @@ components:
           type: string
         hsesUserId:
           type: number
+        hsesUsername:
+          type: string
+        hsesAuthorities:
+          type: array
+          description: List of authorities (user types) returned from HSES
         email:
           type: string
         phoneNumber:

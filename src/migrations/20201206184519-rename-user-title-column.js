@@ -27,7 +27,7 @@ const roles = [
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    queryInterface.sequelize.transaction((t) => Promise.all([
+    await queryInterface.sequelize.transaction((t) => Promise.all([
       queryInterface.removeColumn('Users', 'title', { transaction: t }),
       queryInterface.sequelize.query('DROP TYPE public."enum_Users_title";', { transaction: t }),
       queryInterface.addColumn(
@@ -42,7 +42,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    queryInterface.sequelize.transaction((t) => Promise.all([
+    await queryInterface.sequelize.transaction((t) => Promise.all([
       queryInterface.removeColumn('Users', 'role', { transaction: t }),
       queryInterface.sequelize.query('DROP TYPE public."enum_Users_role";', { transaction: t }),
       queryInterface.addColumn(
