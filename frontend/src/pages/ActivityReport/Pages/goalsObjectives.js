@@ -18,7 +18,6 @@ const GoalsObjectives = ({
     register,
   } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
-  const [loading, updateLoading] = useState(true);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
@@ -27,25 +26,18 @@ const GoalsObjectives = ({
         const fetchedGoals = await getGoals(grantIds);
         updateAvailableGoals(fetchedGoals);
       }
-      updateLoading(false);
     };
     fetch();
   }, [grantIds]);
 
-  if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
-  }
+  const showGoals = activityRecipientType === 'grantee' && hasGrants;
 
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      {activityRecipientType === 'grantee' && hasGrants
+      {showGoals
         && (
         <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
           <div id="goals-and-objectives" />
@@ -56,7 +48,11 @@ const GoalsObjectives = ({
         )}
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
-        <Textarea id="context" name="context" inputRef={register()} />
+        <Textarea
+          id="context"
+          name="context"
+          inputRef={register()}
+        />
       </Fieldset>
     </>
   );

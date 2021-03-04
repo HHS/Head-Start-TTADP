@@ -22,7 +22,7 @@ import './DatePicker.css';
 const dateFmt = 'MM/DD/YYYY';
 
 const DateInput = ({
-  control, minDate, name, disabled, maxDate, openUp, required,
+  control, minDate, name, disabled, maxDate, openUp, required, ariaName,
 }) => {
   const hintId = `${name}-hint`;
   const [isFocused, updateFocus] = useState(false);
@@ -43,9 +43,10 @@ const DateInput = ({
           const date = value ? moment(value, dateFmt) : null;
           return (
             <div className="display-flex smart-hub--date-picker-input">
-              <button onClick={() => { updateFocus(true); }} disabled={disabled} tabIndex={-1} aria-label="open calendar" type="button" className="usa-date-picker__button margin-top-0" />
               <SingleDatePicker
                 id={name}
+                ariaLabel={`${ariaName}, month/day/year, edit text`}
+                placeholder={null}
                 focused={isFocused}
                 date={date}
                 ref={ref}
@@ -53,12 +54,23 @@ const DateInput = ({
                 numberOfMonths={1}
                 openDirection={openDirection}
                 disabled={disabled}
+                hideKeyboardShortcutsPanel
                 onDateChange={(d) => {
                   const newDate = d ? d.format(dateFmt) : d;
                   onChange(newDate);
                 }}
-                onFocusChange={({ focused }) => updateFocus(focused)}
-                hideKeyboardShortcutsPanel
+                onFocusChange={({ focused }) => {
+                  if (!focused) {
+                    updateFocus(focused);
+                  }
+                }}
+              />
+              <button
+                onClick={() => { updateFocus(true); }}
+                disabled={disabled}
+                aria-label={`${ariaName} open calendar"`}
+                type="button"
+                className="usa-date-picker__button margin-top-0"
               />
             </div>
           );
@@ -80,6 +92,7 @@ DateInput.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   name: PropTypes.string.isRequired,
+  ariaName: PropTypes.string.isRequired,
   minDate: PropTypes.string,
   maxDate: PropTypes.string,
   openUp: PropTypes.bool,
