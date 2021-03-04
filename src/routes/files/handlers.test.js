@@ -6,7 +6,7 @@ import db, {
   Permission,
 } from '../../models';
 import app from '../../app';
-import { uploadFile, deleteFileFromS3 } from '../../lib/s3';
+import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as queue from '../../services/scanQueue';
 import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../../constants';
@@ -82,11 +82,13 @@ describe('File Upload', () => {
   describe('File Upload Handlers happy path', () => {
     beforeEach(() => {
       uploadFile.mockReset();
+      getPresignedURL.mockReset();
     });
     it('tests a file upload', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
+      uploadFile.mockResolvedValue({ key: 'key' });
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
