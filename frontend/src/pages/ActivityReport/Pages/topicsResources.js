@@ -1,13 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
-
 import {
   Fieldset, Label, TextInput,
 } from '@trussworks/react-uswds';
 
+import { isUndefined } from 'lodash';
+import Section from './Review/ReviewSection';
+import ReviewItem from './Review/ReviewItem';
+import FileReviewItem from './Review/FileReviewItem';
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
@@ -91,36 +93,77 @@ TopicsResources.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
-const sections = [
-  {
-    title: 'Topics covered',
-    anchor: 'topics-resources',
-    items: [
-      { label: 'Topics', name: 'topics' },
-    ],
-  },
-  {
-    title: 'Resources',
-    anchor: 'resources',
-    items: [
-      { label: 'Resources used', name: 'resourcesUsed' },
-      { label: 'Other resources', name: 'otherResources', path: 'originalFileName' },
-    ],
-  },
-  {
-    title: 'Attachments',
-    anchor: 'attachments',
-    items: [
-      { label: 'Attachments', name: 'attachments', path: 'originalFileName' },
-    ],
-  },
-];
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    otherResources,
+    resourcesUsed,
+    attachments,
+    topics: formTopics,
+  } = watch();
+
+  const hasOtherResources = otherResources && otherResources.length > 0;
+  const hasAttachments = attachments && attachments.length > 0;
+
+  return (
+    <>
+      <Section
+        hidePrint={isUndefined(formTopics)}
+        key="Topics covered"
+        basePath="topics-resources"
+        anchor="topics-resources"
+        title="Topics covered"
+      >
+        <ReviewItem
+          label="Topics"
+          name="topics"
+        />
+      </Section>
+      <Section
+        hidePrint={!hasOtherResources && isUndefined(resourcesUsed)}
+        key="Resources"
+        basePath="resources"
+        anchor="resources"
+        title="Resources"
+      >
+        <ReviewItem
+          label="Resources used"
+          name="resourcesUsed"
+        />
+        {otherResources.map((file) => (
+          <FileReviewItem
+            key={file.url.url}
+            filename={file.originalFileName}
+            url={file.url.url}
+            status={file.status}
+          />
+        ))}
+      </Section>
+      <Section
+        hidePrint={!hasAttachments}
+        key="Attachments"
+        basePath="attachments"
+        anchor="attachments"
+        title="Attachments"
+      >
+        {attachments.map((file) => (
+          <FileReviewItem
+            key={file.url.url}
+            filename={file.originalFileName}
+            url={file.url.url}
+            status={file.status}
+          />
+        ))}
+      </Section>
+    </>
+  );
+};
 
 export default {
   position: 2,
   label: 'Topics and resources',
   path: 'topics-resources',
-  sections,
+  reviewSection: () => <ReviewSection />,
   review: false,
   render: (additionalData, formData, reportId) => (
     <TopicsResources
