@@ -35,6 +35,8 @@ const DateInput = ({
     return isBefore || isAfter;
   };
 
+  const message = isFocused ? '' : 'Navigate forward and push button to open the calendar';
+
   return (
     <>
       <div className="usa-hint font-body-2xs" id={hintId}>mm/dd/yyyy</div>
@@ -52,6 +54,7 @@ const DateInput = ({
                 ref={ref}
                 isOutsideRange={isOutsideRange}
                 numberOfMonths={1}
+                screenReaderInputMessage={message}
                 openDirection={openDirection}
                 disabled={disabled}
                 hideKeyboardShortcutsPanel
