@@ -134,6 +134,7 @@ function MultiSelect({
             components={{ ...componentReplacements, DropdownIndicator }}
             options={options}
             isDisabled={disabled}
+            tabSelectsValue={false}
             isClearable={multiSelectOptions.isClearable}
             closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect}
             controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}

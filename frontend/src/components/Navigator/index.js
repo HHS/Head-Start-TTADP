@@ -65,12 +65,6 @@ function Navigator({
   const { isDirty, errors, isValid } = formState;
   const hasErrors = Object.keys(errors).length > 0;
 
-  useEffect(() => {
-    if (showValidationErrors && !page.review) {
-      trigger();
-    }
-  }, [page.review, trigger, showValidationErrors]);
-
   const newNavigatorState = () => {
     if (page.review) {
       return pageState;
@@ -123,6 +117,14 @@ function Navigator({
   useDeepCompareEffect(() => {
     reset(formData);
   }, [currentPage, reset, formData]);
+
+  useEffect(() => {
+    if (showValidationErrors && !page.review) {
+      setTimeout(() => {
+        trigger();
+      });
+    }
+  }, [page.path, page.review, trigger, showValidationErrors]);
 
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
