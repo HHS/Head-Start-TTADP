@@ -13,7 +13,7 @@ import {
 import { REPORT_STATUSES } from '../../../../Constants';
 
 describe('SideNav', () => {
-  const renderNav = (state, onNavigation = () => {}, current = false) => {
+  const renderNav = (state, onNavigation = () => {}, current = false, errorMessage = null) => {
     const pages = [
       {
         label: 'test',
@@ -34,6 +34,7 @@ describe('SideNav', () => {
         pages={pages}
         skipTo="skip"
         skipToMessage="message"
+        errorMessage={errorMessage}
       />,
     );
   };
@@ -60,12 +61,32 @@ describe('SideNav', () => {
       expect(complete).toBeVisible();
     });
 
+    it('approved', () => {
+      renderNav(REPORT_STATUSES.APPROVED);
+      const complete = screen.getByText('Approved');
+      expect(complete).toHaveClass('smart-hub--tag-submitted');
+      expect(complete).toBeVisible();
+    });
+
+    it('needs action', () => {
+      renderNav(REPORT_STATUSES.NEEDS_ACTION);
+      const complete = screen.getByText('Needs Action');
+      expect(complete).toHaveClass('smart-hub--tag-needs-action');
+      expect(complete).toBeVisible();
+    });
+
     it('submitted', () => {
       renderNav(REPORT_STATUSES.SUBMITTED);
       const submitted = screen.getByText('Submitted');
       expect(submitted).toHaveClass('smart-hub--tag-submitted');
       expect(submitted).toBeVisible();
     });
+  });
+
+  it('displays error message', async () => {
+    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, false, 'error');
+    const alert = await screen.findByTestId('alert');
+    expect(alert).toBeVisible();
   });
 
   it('clicking a nav item calls onNavigation', () => {
