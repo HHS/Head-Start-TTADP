@@ -9,6 +9,8 @@ export const userAttributes = [
   'id',
   'name',
   'hsesUserId',
+  'hsesUsername',
+  'hsesAuthorities',
   'email',
   'phoneNumber',
   'homeRegionId',
