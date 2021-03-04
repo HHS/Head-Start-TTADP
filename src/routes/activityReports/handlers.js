@@ -195,12 +195,12 @@ export async function getReports(req, res) {
  */
 export async function getReportAlerts(req, res) {
   const { userId } = req.session;
-  const reports = await activityReportAlerts(userId);
+  const alertsWithCount = await activityReportAlerts(userId, req.query);
 
-  if (!reports) {
+  if (!alertsWithCount) {
     res.sendStatus(404);
   } else {
-    res.json(reports);
+    res.json({ alertsCount: alertsWithCount.count, alerts: alertsWithCount.rows });
   }
 }
 
