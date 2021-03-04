@@ -4,6 +4,7 @@ import { Tag, Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
+import Pagination from 'react-js-pagination';
 
 import Container from '../../components/Container';
 import NewReport from './NewReport';
@@ -51,12 +52,16 @@ function renderReports(reports) {
       </Tag>
     ));
 
+    const idKey = `my_alerts_${id}`;
+    const idLink = `/activity-reports/${id}`;
+    const statusClassName = `smart-hub--table-tag-status smart-hub--status-${status}`;
+
     return (
-      <tr key={`my_alerts_${id}`}>
+      <tr key={idKey}>
         <td>
           <Link
-            to={`/activity-reports/${id}`}
-            href={`/activity-reports/${id}`}
+            to={idLink}
+            href={idLink}
           >
             {displayId}
           </Link>
@@ -79,7 +84,7 @@ function renderReports(reports) {
         </td>
         <td>
           <Tag
-            className={`smart-hub--table-tag-status smart-hub--status-${status}`}
+            className={statusClassName}
           >
             {status === 'needs_action' ? 'Needs action' : status}
           </Tag>
@@ -89,51 +94,144 @@ function renderReports(reports) {
   });
 }
 
-function MyAlerts({ reports, newBtn }) {
+export function renderTotal(offset, perPage, activePage, reportsCount) {
+  const from = offset >= reportsCount ? 0 : offset + 1;
+  const offsetTo = perPage * activePage;
+  let to;
+  if (offsetTo > reportsCount) {
+    to = reportsCount;
+  } else {
+    to = offsetTo;
+  }
+  return `${from}-${to} of ${reportsCount}`;
+}
+
+// function MyAlerts({
+//   reports, newBtn, alertsSortConfig, alertsOffset, alertsPerPage, alertsActivePage,
+//    alertsCount, sortHandler, handlePageChange,
+// }) {
+
+function MyAlerts(props) {
+  const {
+    reports,
+    newBtn,
+    alertsSortConfig,
+    alertsOffset,
+    alertsPerPage,
+    alertsActivePage,
+    alertReportsCount,
+    sortHandler,
+    handlePageChange,
+  } = props;
+  const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
   return (
     <>
-      { reports && reports.length === 0 && (
-      <Container className="landing" padding={0}>
-        <div id="caughtUp">
-          <div><h2>You&apos;re all caught up!</h2></div>
-          { newBtn && <p id="beginNew">Would you like to begin a new activity report?</p> }
-          { newBtn && <NewReport /> }
-        </div>
-      </Container>
-      ) }
-      { reports && reports.length > 0 && (
-      <SimpleBar>
-        <Container className="landing inline-size" padding={0}>
-          <Table bordered={false}>
-            <caption className="smart-hub--table-caption">
-              My activity report alerts
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Report ID</th>
-                <th
-                  scope="col"
-                >
-                  Grantee
-                </th>
-                <th scope="col">Start date</th>
-                <th
-                  scope="col"
-                >
-                  Creator
-                </th>
-                <th scope="col">Collaborator(s)</th>
-                <th
-                  scope="col"
-                >
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>{renderReports(reports)}</tbody>
-          </Table>
+      {reports && reports.length === 0 && (
+        <Container className="landing" padding={0}>
+          <div id="caughtUp">
+            <div>
+              <h2>You&apos;re all caught up!</h2>
+            </div>
+            {newBtn && (
+              <p id="beginNew">
+                Would you like to begin a new activity report?
+              </p>
+            )}
+            {newBtn && <NewReport />}
+          </div>
         </Container>
-      </SimpleBar>
+      )}
+      {reports && reports.length > 0 && (
+        <SimpleBar>
+          <Container className="landing inline-size" padding={0}>
+            <Table bordered={false}>
+              <caption className="smart-hub--table-caption">
+                My activity report alerts
+                <span className="smart-hub--table-nav">
+                  <span className="smart-hub--total-count">
+                    {renderTotal(
+                      alertsOffset,
+                      alertsPerPage,
+                      alertsActivePage,
+                      alertReportsCount,
+                    )}
+                    <Pagination
+                      hideFirstLastPages
+                      prevPageText="<Prev"
+                      nextPageText="Next>"
+                      activePage={alertsActivePage}
+                      itemsCountPerPage={alertsPerPage}
+                      totalItemsCount={alertReportsCount}
+                      pageRangeDisplayed={4}
+                      onChange={handlePageChange}
+                      linkClassPrev="smart-hub--link-prev"
+                      linkClassNext="smart-hub--link-next"
+                    />
+                  </span>
+                </span>
+              </caption>
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    onClick={() => {
+                      sortHandler('regionId');
+                    }}
+                    className={getClassNamesFor('regionId')}
+                  >
+                    Report ID
+                  </th>
+                  <th
+                    scope="col"
+                    onClick={() => {
+                      sortHandler('activityRecipients');
+                    }}
+                    className={getClassNamesFor('activityRecipients')}
+                  >
+                    Grantee
+                  </th>
+                  <th
+                    scope="col"
+                    onClick={() => {
+                      sortHandler('startDate');
+                    }}
+                    className={getClassNamesFor('startDate')}
+                  >
+                    Start date
+                  </th>
+                  <th
+                    scope="col"
+                    onClick={() => {
+                      sortHandler('author');
+                    }}
+                    className={getClassNamesFor('author')}
+                  >
+                    Creator
+                  </th>
+                  <th
+                    scope="col"
+                    onClick={() => {
+                      sortHandler('collaborators');
+                    }}
+                    className={getClassNamesFor('collaborators')}
+                  >
+                    Collaborator(s)
+                  </th>
+                  <th
+                    scope="col"
+                    onClick={() => {
+                      sortHandler('status');
+                    }}
+                    className={getClassNamesFor('status')}
+                  >
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>{renderReports(reports)}</tbody>
+            </Table>
+          </Container>
+        </SimpleBar>
       )}
     </>
   );
@@ -142,10 +240,21 @@ function MyAlerts({ reports, newBtn }) {
 MyAlerts.propTypes = {
   reports: PropTypes.arrayOf(PropTypes.object),
   newBtn: PropTypes.bool.isRequired,
+  alertsSortConfig: PropTypes.shape({ sortBy: PropTypes.string, direction: PropTypes.string }),
+  alertsOffset: PropTypes.number,
+  alertsPerPage: PropTypes.number,
+  alertsActivePage: PropTypes.number,
+  alertReportsCount: PropTypes.number.isRequired,
+  sortHandler: PropTypes.func.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {
   reports: [],
+  alertsSortConfig: { sortBy: 'startDate', direction: 'asc' },
+  alertsOffset: 0,
+  alertsPerPage: 7,
+  alertsActivePage: 1,
 };
 
 export default MyAlerts;

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
+import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
+import orderReportsBy from '../lib/orderReportsBy';
 
 import {
   ActivityReport,
@@ -260,56 +261,56 @@ export function activityReportById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export function activityReports(readRegions, {
-  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10,
+  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE,
 }) {
-  let result = '';
+  // let result = '';
   const regions = readRegions || [];
-  const orderBy = () => {
-    switch (sortBy) {
-      case 'author':
-        result = [[
-          sequelize.literal(`authorName ${sortDir}`),
-        ]];
-        break;
-      case 'collaborators':
-        result = [[
-          sequelize.literal(`collaboratorName ${sortDir} NULLS LAST`),
-        ]];
-        break;
-      case 'topics':
-        result = [[
-          sequelize.literal(`topics ${sortDir}`),
-        ]];
-        break;
-      case 'regionId':
-        result = [[
-          'regionId',
-          sortDir,
-        ],
-        [
-          'id',
-          sortDir,
-        ]];
-        break;
-      case 'activityRecipients':
-        result = [
-          [
-            sequelize.literal(`granteeName ${sortDir}`),
-          ],
-          [
-            sequelize.literal(`nonGranteeName ${sortDir}`),
-          ]];
-        break;
-      case 'status':
-      case 'startDate':
-      case 'updatedAt':
-        result = [[sortBy, sortDir]];
-        break;
-      default:
-        break;
-    }
-    return result;
-  };
+  // const orderBy = () => {
+  //   switch (sortBy) {
+  //     case 'author':
+  //       result = [[
+  //         sequelize.literal(`authorName ${sortDir}`),
+  //       ]];
+  //       break;
+  //     case 'collaborators':
+  //       result = [[
+  //         sequelize.literal(`collaboratorName ${sortDir} NULLS LAST`),
+  //       ]];
+  //       break;
+  //     case 'topics':
+  //       result = [[
+  //         sequelize.literal(`topics ${sortDir}`),
+  //       ]];
+  //       break;
+  //     case 'regionId':
+  //       result = [[
+  //         'regionId',
+  //         sortDir,
+  //       ],
+  //       [
+  //         'id',
+  //         sortDir,
+  //       ]];
+  //       break;
+  //     case 'activityRecipients':
+  //       result = [
+  //         [
+  //           sequelize.literal(`granteeName ${sortDir}`),
+  //         ],
+  //         [
+  //           sequelize.literal(`nonGranteeName ${sortDir}`),
+  //         ]];
+  //       break;
+  //     case 'status':
+  //     case 'startDate':
+  //     case 'updatedAt':
+  //       result = [[sortBy, sortDir]];
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  //   return result;
+  // };
   return ActivityReport.findAndCountAll(
     {
       where: { regionId: regions },
@@ -377,7 +378,7 @@ export function activityReports(readRegions, {
           through: { attributes: [] },
         },
       ],
-      order: orderBy(),
+      order: orderReportsBy(sortBy, sortDir),
       offset,
       limit,
       distinct: true,
@@ -395,8 +396,10 @@ export function activityReports(readRegions, {
  * submitted.
  * @param {*} userId
  */
-export function activityReportAlerts(userId) {
-  return ActivityReport.findAll({
+export async function activityReportAlerts(userId, {
+  sortBy = 'startDate', sortDir = 'desc', offset = 0,
+}) {
+  const result = ActivityReport.findAndCountAll({
     where: {
       [Op.or]: [
         {
@@ -433,6 +436,20 @@ export function activityReportAlerts(userId) {
       'regionId',
       'userId',
       'approvingManagerId',
+      sequelize.literal(
+        '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
+      ),
+      sequelize.literal(
+        '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
+      ),
+      sequelize.literal(
+        // eslint-disable-next-line quotes
+        `(SELECT "NonGrantees".name as nonGranteeName from "NonGrantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."nonGranteeId" = "NonGrantees".id order by nonGranteeName ${sortDir} limit 1)`,
+      ),
+      sequelize.literal(
+        // eslint-disable-next-line quotes
+        `(SELECT "Grantees".name as granteeName FROM "Grantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Grantees"."id" = "Grants"."granteeId" order by granteeName ${sortDir} limit 1)`,
+      ),
     ],
     include: [
       {
@@ -470,10 +487,18 @@ export function activityReportAlerts(userId) {
         model: User,
         attributes: ['id', 'name', 'role', 'fullName'],
         as: 'collaborators',
+        duplicating: true,
         through: { attributes: [] },
       },
     ],
+    order: orderReportsBy(sortBy, sortDir),
+    offset,
+    distinct: true,
+  },
+  {
+    subQuery: false,
   });
+  return result ? { alertsCount: result.count, alerts: result.rows } : result;
 }
 
 export async function createOrUpdate(newActivityReport, report) {
