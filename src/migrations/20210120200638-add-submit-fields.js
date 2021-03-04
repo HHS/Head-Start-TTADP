@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    queryInterface.addColumn(
+    await queryInterface.addColumn(
       'ActivityReports',
       'approvingManagerId',
       {
@@ -15,6 +15,6 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    queryInterface.removeColumn('ActivityReports', 'approvingManagerId');
+    await queryInterface.removeColumn('ActivityReports', 'approvingManagerId');
   },
 };
