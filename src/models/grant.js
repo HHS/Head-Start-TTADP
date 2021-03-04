@@ -17,10 +17,16 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Grant.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: null,
+      primaryKey: true,
+      autoIncrement: false,
+    },
     number: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
