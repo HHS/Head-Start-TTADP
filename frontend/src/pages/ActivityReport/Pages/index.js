@@ -4,7 +4,6 @@ import topicsResources from './topicsResources';
 import nextSteps from './nextSteps';
 import goalsObjectives from './goalsObjectives';
 import ReviewSubmit from './Review';
-import reviewItem from './Review/reviewItem';
 
 /*
   Note these are not react nodes but objects used by the navigator to render out
@@ -48,7 +47,11 @@ const reviewPage = {
         approvingManager={approvingManager}
         onResetToDraft={onResetToDraft}
         reviewItems={
-          pages.map((p) => reviewItem(p.path, p.label, p.sections, formData))
+          pages.map((p) => ({
+            id: p.path,
+            title: p.label,
+            content: p.reviewSection(),
+          }))
         }
         formData={formData}
         pages={allPages}

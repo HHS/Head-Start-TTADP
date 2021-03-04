@@ -17,10 +17,21 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Grant.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: null,
+      primaryKey: true,
+      autoIncrement: false,
+    },
     number: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      /*
+        We're not setting unique true here to allow
+        bulkCreate/updateOnDuplicate to properly match rows on just the id.
+        unique: true,
+      */
     },
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
