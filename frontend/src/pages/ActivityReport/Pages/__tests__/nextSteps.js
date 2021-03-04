@@ -1,11 +1,10 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import nextSteps from '../nextSteps';
 
 const renderNextSteps = () => {
-  render(nextSteps.render())
+  render(nextSteps.render());
 };
 
 describe('next steps', () => {
