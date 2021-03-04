@@ -39,7 +39,9 @@ module.exports = {
   ),
 
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('Users', 'hsesAuthorities');
-    await queryInterface.removeColumn('Users', 'hsesUsername');
+    await queryInterface.sequelize.transaction(async (t) => {
+      await queryInterface.removeColumn('Users', 'hsesAuthorities', { transaction: t });
+      await queryInterface.removeColumn('Users', 'hsesUsername', { transaction: t });
+    });
   },
 };
