@@ -5,17 +5,17 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-const NavigatorHeader = ({ label }) => {
+const NavigatorHeader = ({ key, label }) => {
   useEffect(() => {
     document.getElementsByClassName('usa-step-indicator__heading-text')[0].focus();
-  });
+  }, []);
 
   return (
     <div className="usa-step-indicator__header">
       {/* <style>{`:focus{ outline: solid 1px red}`}</style> */}
       <h2 className="usa-step-indicator__heading">
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <span tabIndex="0" className="usa-step-indicator__heading-text">{label}</span>
+        <span tabIndex="0" key={key} className="usa-step-indicator__heading-text">{label}</span>
       </h2>
     </div>
   );
@@ -23,6 +23,7 @@ const NavigatorHeader = ({ label }) => {
 
 NavigatorHeader.propTypes = {
   label: PropTypes.string.isRequired,
+  key: PropTypes.string.isRequired,
 };
 
 export default NavigatorHeader;
