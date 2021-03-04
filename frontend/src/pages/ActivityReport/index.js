@@ -37,6 +37,7 @@ const defaultValues = {
   activityRecipients: [],
   activityType: [],
   attachments: [],
+  otherResources: [],
   context: '',
   collaborators: [],
   duration: null,

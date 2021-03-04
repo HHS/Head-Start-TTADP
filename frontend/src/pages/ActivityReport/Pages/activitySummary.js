@@ -8,6 +8,7 @@ import {
   Fieldset, Radio, Grid, TextInput, Checkbox,
 } from '@trussworks/react-uswds';
 
+import ReviewPage from './Review/ReviewPage';
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -462,11 +463,15 @@ const sections = [
   },
 ];
 
+const ReviewSection = () => (
+  <ReviewPage sections={sections} path="activity-summary" />
+);
+
 export default {
   position: 1,
   label: 'Activity summary',
   path: 'activity-summary',
-  sections,
+  reviewSection: () => <ReviewSection />,
   review: false,
   render: (additionalData) => {
     const { recipients, collaborators } = additionalData;

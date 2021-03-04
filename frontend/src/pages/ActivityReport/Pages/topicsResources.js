@@ -1,11 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
+import {
+  Fieldset, Label,
+} from '@trussworks/react-uswds';
 
-import { Fieldset, Label } from '@trussworks/react-uswds';
-
+import { isUndefined } from 'lodash';
+import Section from './Review/ReviewSection';
+import ReviewItem from './Review/ReviewItem';
+import FileReviewItem from './Review/FileReviewItem';
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
@@ -92,42 +96,82 @@ TopicsResources.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
-const sections = [
-  {
-    title: 'Topics covered',
-    anchor: 'topics-resources',
-    items: [
-      { label: 'Topics', name: 'topics' },
-    ],
-  },
-  {
-    title: 'OHS / ECLKC resources',
-    anchor: 'ECLKCResources',
-    items: [
-      { label: 'ECLKC Resources', name: 'ECLKCResources', path: 'value' },
-    ],
-  },
-  {
-    title: 'Non-ECLKC resources',
-    anchor: 'nonECLKCResources',
-    items: [
-      { label: 'Non-ECLKC Resources', name: 'nonECLKCResources', path: 'value' },
-    ],
-  },
-  {
-    title: 'Supporting attachments',
-    anchor: 'attachments',
-    items: [
-      { label: 'Attachments', name: 'attachments', path: 'originalFileName' },
-    ],
-  },
-];
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    nonECLKCResources,
+    ECLKCResources,
+    attachments,
+    topics: formTopics,
+  } = watch();
+
+  const hasAttachments = attachments && attachments.length > 0;
+
+  return (
+    <>
+      <Section
+        hidePrint={isUndefined(formTopics)}
+        key="Topics covered"
+        basePath="topics-resources"
+        anchor="topics-resources"
+        title="Topics covered"
+      >
+        <ReviewItem
+          label="Topics"
+          name="topics"
+        />
+      </Section>
+      <Section
+        hidePrint={isUndefined(ECLKCResources)}
+        key="OHS / ECLKC resources"
+        basePath="topics-resources"
+        anchor="ECLKCResources"
+        title="OHS / ECLKC resources"
+      >
+        <ReviewItem
+          label="ECLKC resources"
+          name="ECLKCResourcesUsed"
+          path="value"
+        />
+      </Section>
+      <Section
+        hidePrint={isUndefined(nonECLKCResources)}
+        key="Non-ECLKC resources"
+        basePath="topics-resources"
+        anchor="nonECLKCResources"
+        title="Non-ECLKC resources"
+      >
+        <ReviewItem
+          label="Non-ECLKC resources"
+          name="nonECLKCResourcesUsed"
+          path="value"
+        />
+      </Section>
+      <Section
+        hidePrint={!hasAttachments}
+        key="Attachments"
+        basePath="attachments"
+        anchor="attachments"
+        title="Attachments"
+      >
+        {attachments.map((file) => (
+          <FileReviewItem
+            key={file.url.url}
+            filename={file.originalFileName}
+            url={file.url.url}
+            status={file.status}
+          />
+        ))}
+      </Section>
+    </>
+  );
+};
 
 export default {
   position: 2,
   label: 'Topics and resources',
   path: 'topics-resources',
-  sections,
+  reviewSection: () => <ReviewSection />,
   review: false,
   render: (additionalData, formData, reportId) => (
     <TopicsResources
