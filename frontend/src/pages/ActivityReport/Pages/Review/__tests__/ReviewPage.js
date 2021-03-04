@@ -1,8 +1,10 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import accordionItem from '../reviewItem';
+import { FormProvider, useForm } from 'react-hook-form';
+import ReviewPage from '../ReviewPage';
 
 const sections = [
   {
@@ -37,13 +39,28 @@ const values = {
   object: { test: 'test' },
 };
 
-describe('AccordionItem', () => {
+const RenderReviewPage = () => {
+  const hookForm = useForm({
+    mode: 'onChange',
+    defaultValues: values,
+    shouldUnregister: false,
+  });
+  return (
+    <BrowserRouter>
+      <FormProvider {...hookForm}>
+        <ReviewPage
+          sections={sections}
+          path="id"
+        />
+      </FormProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('ReviewPage', () => {
   beforeEach(() => {
-    const item = accordionItem('id', 'title', sections, values);
     render(
-      <BrowserRouter>
-        {item.content}
-      </BrowserRouter>,
+      <RenderReviewPage />,
     );
   });
 
