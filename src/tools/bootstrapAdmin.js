@@ -4,12 +4,12 @@ import SCOPES from '../middleware/scopeConstants';
 
 const { SITE_ACCESS, ADMIN } = SCOPES;
 
-export const ADMIN_EMAIL = 'ryan.ahearn@gsa.gov';
+export const ADMIN_USERNAME = 'ryan.ahearn@gsa.gov';
 
 const bootstrapAdmin = async () => {
-  const user = await User.findOne({ where: { email: ADMIN_EMAIL } });
+  const user = await User.findOne({ where: { hsesUsername: ADMIN_USERNAME } });
   if (user === null) {
-    throw new Error(`User ${ADMIN_EMAIL} could not be found to bootstrap admin`);
+    throw new Error(`User ${ADMIN_USERNAME} could not be found to bootstrap admin`);
   }
 
   const [access, accessCreated] = await Permission.findOrCreate({
@@ -20,7 +20,7 @@ const bootstrapAdmin = async () => {
     },
   });
   if (accessCreated) {
-    auditLogger.info(`Granting SITE_ACCESS to ${ADMIN_EMAIL}`);
+    auditLogger.info(`Granting SITE_ACCESS to ${ADMIN_USERNAME}`);
   }
 
   const [admin, adminCreated] = await Permission.findOrCreate({
@@ -31,7 +31,7 @@ const bootstrapAdmin = async () => {
     },
   });
   if (adminCreated) {
-    auditLogger.warn(`Granting ADMIN to ${ADMIN_EMAIL}`);
+    auditLogger.warn(`Granting ADMIN to ${ADMIN_USERNAME}`);
   }
   return [admin, access];
 };
