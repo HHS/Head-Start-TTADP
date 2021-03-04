@@ -32,15 +32,19 @@ import {
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  deliveryMethod: null,
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
+  additionalNotes: null,
+  approvingManagerId: null,
   attachments: [],
-  context: '',
   collaborators: [],
-  duration: null,
+  context: '',
+  deliveryMethod: null,
+  duration: '',
   endDate: null,
+  goals: [],
+  granteeNextSteps: [],
   grantees: [],
   numberOfParticipants: null,
   participantCategory: '',
@@ -49,13 +53,11 @@ const defaultValues = {
   reason: [],
   requester: '',
   resourcesUsed: '',
+  specialistNextSteps: [],
   startDate: null,
+  status: REPORT_STATUSES.DRAFT,
   targetPopulations: [],
   topics: [],
-  approvingManagerId: null,
-  additionalNotes: null,
-  goals: [],
-  status: REPORT_STATUSES.DRAFT,
 };
 
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);

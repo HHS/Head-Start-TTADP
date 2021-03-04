@@ -53,7 +53,7 @@ function ContextMenu({
         className="smart-hub--context-menu-button smart-hub--button__no-margin"
         unstyled
         aria-haspopup
-        onClick={() => updateShown((previous) => !previous)}
+        onClick={(e) => { e.preventDefault(); updateShown((previous) => !previous); }}
         aria-label={label}
       >
         <FontAwesomeIcon color="black" icon={faEllipsisH} />
