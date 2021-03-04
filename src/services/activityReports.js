@@ -263,54 +263,8 @@ export function activityReportById(activityReportId) {
 export function activityReports(readRegions, {
   sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE,
 }) {
-  // let result = '';
   const regions = readRegions || [];
-  // const orderBy = () => {
-  //   switch (sortBy) {
-  //     case 'author':
-  //       result = [[
-  //         sequelize.literal(`authorName ${sortDir}`),
-  //       ]];
-  //       break;
-  //     case 'collaborators':
-  //       result = [[
-  //         sequelize.literal(`collaboratorName ${sortDir} NULLS LAST`),
-  //       ]];
-  //       break;
-  //     case 'topics':
-  //       result = [[
-  //         sequelize.literal(`topics ${sortDir}`),
-  //       ]];
-  //       break;
-  //     case 'regionId':
-  //       result = [[
-  //         'regionId',
-  //         sortDir,
-  //       ],
-  //       [
-  //         'id',
-  //         sortDir,
-  //       ]];
-  //       break;
-  //     case 'activityRecipients':
-  //       result = [
-  //         [
-  //           sequelize.literal(`granteeName ${sortDir}`),
-  //         ],
-  //         [
-  //           sequelize.literal(`nonGranteeName ${sortDir}`),
-  //         ]];
-  //       break;
-  //     case 'status':
-  //     case 'startDate':
-  //     case 'updatedAt':
-  //       result = [[sortBy, sortDir]];
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  //   return result;
-  // };
+
   return ActivityReport.findAndCountAll(
     {
       where: { regionId: regions },
@@ -396,10 +350,10 @@ export function activityReports(readRegions, {
  * submitted.
  * @param {*} userId
  */
-export async function activityReportAlerts(userId, {
+export function activityReportAlerts(userId, {
   sortBy = 'startDate', sortDir = 'desc', offset = 0,
 }) {
-  const result = ActivityReport.findAndCountAll({
+  return ActivityReport.findAndCountAll({
     where: {
       [Op.or]: [
         {
@@ -498,7 +452,6 @@ export async function activityReportAlerts(userId, {
   {
     subQuery: false,
   });
-  return result ? { alertsCount: result.count, alerts: result.rows } : result;
 }
 
 export async function createOrUpdate(newActivityReport, report) {
