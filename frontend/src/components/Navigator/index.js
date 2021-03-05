@@ -173,6 +173,7 @@ function Navigator({
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
+                  key={page.label}
                   label={page.label}
                 />
                 {hasErrors
