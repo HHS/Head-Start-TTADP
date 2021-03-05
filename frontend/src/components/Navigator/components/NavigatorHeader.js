@@ -12,7 +12,6 @@ const NavigatorHeader = ({ label }) => {
 
   return (
     <div className="usa-step-indicator__header">
-      {/* <style>{`:focus{ outline: solid 1px red}`}</style> */}
       <h2 className="usa-step-indicator__heading">
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
         <span tabIndex="0" className="usa-step-indicator__heading-text">{label}</span>
