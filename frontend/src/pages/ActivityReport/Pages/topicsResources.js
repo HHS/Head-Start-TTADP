@@ -26,9 +26,9 @@ const TopicsResources = ({
       <Helmet>
         <title>Topics and resources</title>
       </Helmet>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Topics Covered">
         <div id="topics-covered" />
-        <div className="smart-hub--form-section">
+        <div className="margin-top-4">
           <FormItem
             label="Topic(s) covered. You may choose more than one."
             name="topics"
@@ -46,9 +46,9 @@ const TopicsResources = ({
           </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="OHS / ECLKC resources">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="OHS / ECLKC resources">
         <div id="ECLKCResources" />
-        <div className="smart-hub--form-section">
+        <div className="margin-top-4">
           <Label>
             Resources from OHS / ECLKC
             <br />
@@ -62,9 +62,9 @@ const TopicsResources = ({
           </Label>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Non-ECLKC resources">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Non-ECLKC resources">
         <div id="nonECLKCResources" />
-        <div className="smart-hub--form-section">
+        <div className="margin-top-4">
           <Label>
             For non-ECLKC resources enter URL.
             <br />
@@ -76,7 +76,7 @@ const TopicsResources = ({
           </Label>
         </div>
       </Fieldset>
-      <Fieldset legend="Supporting attachments" className="smart-hub--report-legend smart-hub--form-section">
+      <Fieldset legend="Supporting attachments" className="smart-hub--report-legend margin-top-4">
         <div id="attachments" />
         <Label htmlFor="attachments">Upload resources not available online, agenda, service plans, sign-in sheets, etc.</Label>
         <Controller

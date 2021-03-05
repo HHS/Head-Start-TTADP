@@ -199,23 +199,11 @@ export function activityReportById(activityReportId) {
       {
         model: File,
         where: {
-          attachmentType: 'ATTACHMENT',
           status: {
             [Op.ne]: 'UPLOAD_FAILED',
           },
         },
         as: 'attachments',
-        required: false,
-      },
-      {
-        model: File,
-        where: {
-          attachmentType: 'RESOURCE',
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'otherResources',
         required: false,
       },
       {
@@ -387,7 +375,6 @@ export async function createOrUpdate(newActivityReport, report) {
     collaborators,
     activityRecipients,
     attachments,
-    otherResources,
     approvingManager,
     author,
     granteeNextSteps,

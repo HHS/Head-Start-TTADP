@@ -53,7 +53,7 @@ const GoalPicker = ({
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
 
   return (
-    <div className="smart-hub--form-section">
+    <div className="margin-top-4">
       <FormItem
         label="You must select an established goal(s) OR create a new goal for this activity."
         name="goals"

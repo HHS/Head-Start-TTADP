@@ -43,7 +43,7 @@ function FormItem({
   const labelWithRequiredTag = (
     <>
       {label}
-      {required && (<span className="smart-hub--form-required"> (Required)</span>)}
+      {required && (<span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>)}
     </>
   );
 
