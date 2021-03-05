@@ -90,7 +90,6 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(200)
         .then((res) => {
@@ -141,7 +140,6 @@ describe('File Upload', () => {
       }));
       await request(app)
         .post('/api/files')
-        .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'reportId required' })
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
@@ -153,31 +151,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'ATTACHMENT')
         .expect(400, { error: 'file required' })
-        .then(() => expect(uploadFile).not.toHaveBeenCalled());
-    });
-    it('tests a file upload without a attachment', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
-      await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'attachmentType required' })
-        .then(() => expect(uploadFile).not.toHaveBeenCalled());
-    });
-    it('tests a file upload with an incorrect attachment value', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
-      await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'FAKE')
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'incorrect attachmentType. Wanted: ATTACHMENT or RESOURCE. Got: FAKE' })
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
     it('tests an unauthorized upload', async () => {
@@ -188,7 +162,6 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(403)
         .then(() => expect(uploadFile).not.toHaveBeenCalled());

@@ -20,7 +20,7 @@ const Goals = ({ id, name, onRemove }) => (
     </div>
     <div className="margin-left-auto margin-top-2">
       <Button onClick={(e) => { e.preventDefault(); onRemove(id); }} unstyled className="smart-hub--button" aria-label="remove goal">
-        <FontAwesomeIcon color="gray" icon={faTrash} />
+        <FontAwesomeIcon color="black" icon={faTrash} />
       </Button>
     </div>
   </div>
