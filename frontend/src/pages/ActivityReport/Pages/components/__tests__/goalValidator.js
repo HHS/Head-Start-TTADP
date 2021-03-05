@@ -4,6 +4,7 @@ import {
   validateGoals,
   GOALS_EMPTY,
   UNFINISHED_OBJECTIVES,
+  GOAL_MISSING_OBJECTIVE,
 } from '../goalValidator';
 
 const missingTitle = {
@@ -78,6 +79,16 @@ describe('validateGoals', () => {
 
   describe('unfinishedGoals', () => {
     describe('returns invalid', () => {
+      it('if one goal has no objectives', () => {
+        const goals = [
+          { ...goalValid },
+          { ...goalNoObjectives },
+        ];
+
+        const result = unfinishedGoals(goals);
+        expect(result).toEqual(GOAL_MISSING_OBJECTIVE);
+      });
+
       it('if one objective is unfinished', () => {
         const goals = [
           { ...goalValid },
@@ -110,6 +121,16 @@ describe('validateGoals', () => {
         expect(result).toEqual(GOALS_EMPTY);
       });
 
+      it('if one goal is unfinished', () => {
+        const goals = [
+          { ...goalValid },
+          { ...goalNoObjectives },
+        ];
+
+        const result = validateGoals(goals);
+        expect(result).toEqual(GOAL_MISSING_OBJECTIVE);
+      });
+
       it('if one objective is unfinished', () => {
         const goals = [
           { ...goalValid },
@@ -126,16 +147,6 @@ describe('validateGoals', () => {
         const goals = [
           { ...goalValid },
           { ...goalValid },
-        ];
-
-        const result = validateGoals(goals);
-        expect(result).toEqual(true);
-      });
-
-      it('if one goal is has no objectives', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalNoObjectives },
         ];
 
         const result = validateGoals(goals);

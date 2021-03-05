@@ -32,6 +32,7 @@ const GoalPicker = ({
   const [newGoal, updateNewGoal] = useState('');
   const [newAvailableGoals, updateNewAvailableGoals] = useState([]);
   const selectedGoals = watch('goals');
+  const allAvailableGoals = [...availableGoals, ...newAvailableGoals, ...selectedGoals];
 
   const onRemoveGoal = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
@@ -41,7 +42,7 @@ const GoalPicker = ({
 
   const onSaveGoal = () => {
     if (newGoal !== '') {
-      const goal = { id: uuidv4(), name: newGoal };
+      const goal = { id: uuidv4(), name: newGoal, objectives: [createObjective()] };
       setValue('goals', [...selectedGoals, goal]);
       updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
       updateNewGoal('');
@@ -56,11 +57,16 @@ const GoalPicker = ({
 
   const onItemSelected = (event) => {
     const newGoals = event.map((e) => {
-      const availableGoal = availableGoals.find((g) => g.id === e.value);
-      const selectedGoal = selectedGoals.find((g) => g.id === e.value);
-      const goal = selectedGoal || availableGoal;
+      const goal = allAvailableGoals.find((g) => g.id === e.value);
+      let objectives = [createObjective()];
 
-      return goal;
+      if (goal.objectives && goal.objectives.length > 0) {
+        objectives = goal.objectives;
+      }
+      return {
+        ...goal,
+        objectives,
+      };
     });
     setValue('goals', newGoals);
   };
@@ -69,7 +75,6 @@ const GoalPicker = ({
     updateNewGoal(e.target.value);
   };
 
-  const allAvailableGoals = [...availableGoals, ...newAvailableGoals, ...selectedGoals];
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
 
   return (
@@ -95,7 +100,7 @@ const GoalPicker = ({
             options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
             multiSelectOptions={{
               isClearable: false,
-              closeMenuOnSelect: false,
+              closeMenuOnSelect: true,
               controlShouldRenderValue: false,
               hideSelectedOptions: false,
             }}

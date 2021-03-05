@@ -66,14 +66,14 @@ describe('Goal', () => {
 
     it('can be updated', async () => {
       const onUpdate = jest.fn();
-      const objectives = [{ title: 'first', ttaProvided: '', status: 'Not Started' }];
+      const objectives = [{ title: '', ttaProvided: 'test', status: 'Not Started' }];
       render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
 
-      const tta = await screen.findByRole('textbox', { name: 'TTA provided for objective 1 on goal 1' });
-      userEvent.type(tta, 'test');
+      const title = await screen.findByRole('textbox', { name: 'title for objective 1 on goal 1' });
+      userEvent.type(title, 'title');
       const button = await screen.findByRole('button', { name: 'Save objective 1 on goal 1' });
       userEvent.click(button);
-      expect(onUpdate).toHaveBeenCalledWith([{ title: 'first', ttaProvided: 'test', status: 'Not Started' }]);
+      expect(onUpdate).toHaveBeenCalledWith([{ title: 'title', ttaProvided: 'test', status: 'Not Started' }]);
     });
   });
 });

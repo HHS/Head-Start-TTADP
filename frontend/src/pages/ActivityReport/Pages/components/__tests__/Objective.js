@@ -38,6 +38,12 @@ describe('Objective', () => {
   });
 
   describe('in edit mode', () => {
+    it('focuses the title field', async () => {
+      render(<RenderObjective objective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
+      const title = await screen.findByLabelText('Objective (Required)');
+      expect(document.activeElement).toEqual(title);
+    });
+
     it('save does not work if "objective" and "TTA Provided" are empty', async () => {
       render(<RenderObjective objective={{}} />);
       const save = await screen.findByText('Save Objective');
