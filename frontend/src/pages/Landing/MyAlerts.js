@@ -4,7 +4,6 @@ import { Tag, Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
-import Pagination from 'react-js-pagination';
 
 import Container from '../../components/Container';
 import NewReport from './NewReport';
@@ -106,11 +105,6 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   return `${from}-${to} of ${reportsCount}`;
 }
 
-// function MyAlerts({
-//   reports, newBtn, alertsSortConfig, alertsOffset, alertsPerPage, alertsActivePage,
-//    alertsCount, sortHandler, handlePageChange,
-// }) {
-
 function MyAlerts(props) {
   const {
     reports,
@@ -121,7 +115,6 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
-    handlePageChange,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
   return (
@@ -155,18 +148,6 @@ function MyAlerts(props) {
                       alertsActivePage,
                       alertReportsCount,
                     )}
-                    <Pagination
-                      hideFirstLastPages
-                      prevPageText="<Prev"
-                      nextPageText="Next>"
-                      activePage={alertsActivePage}
-                      itemsCountPerPage={alertsPerPage}
-                      totalItemsCount={alertReportsCount}
-                      pageRangeDisplayed={4}
-                      onChange={handlePageChange}
-                      linkClassPrev="smart-hub--link-prev"
-                      linkClassNext="smart-hub--link-next"
-                    />
                   </span>
                 </span>
               </caption>
@@ -246,7 +227,6 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
-  handlePageChange: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {
