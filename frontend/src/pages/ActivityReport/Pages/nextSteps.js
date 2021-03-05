@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import ContextMenu from '../../../components/ContextMenu';
 import FormItem from '../../../components/FormItem';
+import ReviewPage from './Review/ReviewPage';
 
 const NoteEntry = ({
   onEntry, onCancel, name, isRequired = false, defaultValue = '',
@@ -183,11 +184,17 @@ const sections = [
   },
 ];
 
+const ReviewSection = () => (
+  <ReviewPage sections={sections} path="topics-resources" />
+);
+
 export default {
   position: 4,
   label: 'Next steps',
   path: 'next-steps',
   review: false,
-  sections,
-  render: () => <NextSteps />,
+  reviewSection: () => <ReviewSection />,
+  render: () => (
+    <NextSteps />
+  ),
 };

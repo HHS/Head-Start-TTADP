@@ -1,5 +1,5 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: (queryInterface, Sequelize) => (
     queryInterface.createTable('NonGrantees', {
       id: {
         allowNull: false,
@@ -21,10 +21,7 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW'),
       },
-    });
-  },
-
-  down: async (queryInterface) => {
-    queryInterface.dropTable('NonGrantees');
-  },
+    })
+  ),
+  down: (queryInterface) => queryInterface.dropTable('NonGrantees'),
 };

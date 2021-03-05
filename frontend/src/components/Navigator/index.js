@@ -52,6 +52,7 @@ function Navigator({
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: formData,
+    shouldUnregister: false,
   });
 
   const {
@@ -172,6 +173,7 @@ function Navigator({
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
+                  key={page.label}
                   label={page.label}
                 />
                 {hasErrors
