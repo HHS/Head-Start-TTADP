@@ -47,6 +47,7 @@ const defaultValues = {
   granteeNextSteps: [],
   grantees: [],
   numberOfParticipants: null,
+  otherResources: [],
   participantCategory: '',
   participants: [],
   programTypes: [],

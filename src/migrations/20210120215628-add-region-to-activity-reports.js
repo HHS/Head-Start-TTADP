@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    queryInterface.addColumn('ActivityReports', 'regionId', {
+    await queryInterface.addColumn('ActivityReports', 'regionId', {
       type: Sequelize.DataTypes.INTEGER,
       references: {
         model: 'Regions',
@@ -9,6 +9,6 @@ module.exports = {
     });
   },
   down: async (queryInterface) => {
-    queryInterface.removeColumn('ActivityReports', 'regionId');
+    await queryInterface.removeColumn('ActivityReports', 'regionId');
   },
 };
