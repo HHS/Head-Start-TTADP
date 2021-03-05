@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -19,8 +19,15 @@ const Objective = ({
   goalIndex, objectiveIndex, objective, onRemove, onUpdate,
 }) => {
   const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
+  const firstInput = useRef();
   const { errors, trigger } = useFormContext();
   const isValid = !errors.goals;
+
+  useEffect(() => {
+    if (firstInput.current) {
+      firstInput.current.focus();
+    }
+  }, [firstInput.current]);
 
   const [editableObject, updateEditableObject] = useState(objective);
   const onChange = (e) => {
@@ -86,6 +93,7 @@ const Objective = ({
               name="title"
               aria-label={`title for objective ${objectiveAriaLabel}`}
               onChange={onChange}
+              inputRef={firstInput}
               value={title}
             />
           </ObjectiveFormItem>
