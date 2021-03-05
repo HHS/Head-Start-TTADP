@@ -243,11 +243,6 @@ function Landing() {
     setOffset((pageNumber - 1) * perPage);
   };
 
-  const handleAlertsPageChange = (pageNumber) => {
-    setAlertsActivePage(pageNumber);
-    setAlertsOffset((pageNumber - 1) * alertsPerPage);
-  };
-
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
@@ -286,7 +281,6 @@ function Landing() {
               alertsActivePage={alertsActivePage}
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
-              handlePageChange={handleAlertsPageChange}
             />
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
