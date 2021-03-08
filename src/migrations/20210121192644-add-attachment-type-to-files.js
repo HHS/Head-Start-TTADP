@@ -9,7 +9,7 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    queryInterface.sequelize.transaction(async (t) => {
+    await queryInterface.sequelize.transaction(async (t) => {
       const query = 'DROP TYPE public."enum_Files_attachmentType";';
       await queryInterface.removeColumn('Files', 'attachmentType', { transaction: t });
       await queryInterface.sequelize.query(query, { transaction: t });
