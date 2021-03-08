@@ -36,7 +36,7 @@ const GoalPicker = ({
 
   const onRemoveGoal = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateNewAvailableGoals((goals) => goals.filter((goal) => goal !== id));
+    updateNewAvailableGoals(newGoals);
     setValue('goals', newGoals);
   };
 
