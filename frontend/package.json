@@ -36,7 +36,8 @@
     "simplebar-react": "^2.3.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
-    "uswds": "^2.9.0"
+    "uswds": "^2.9.0",
+    "uuid": "^8.3.2"
   },
   "engines": {
     "node": "14.16.0"
