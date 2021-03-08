@@ -5,31 +5,81 @@ import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
+import Objective from './Objective';
 import './Goal.css';
 
-const Goals = ({ id, name, onRemove }) => (
-  <div className="smart-hub--goal">
-    <div className="smart-hub--goal-content">
-      <p className="margin-top-0">
-        <span className="text-bold">Goal: </span>
-        { name }
-      </p>
-      <Button onClick={(e) => { e.preventDefault(); }} outline className="smart-hub--button">
-        Add new Objective
-      </Button>
+const Goals = ({
+  name, onRemoveGoal, goalIndex, objectives, onUpdateObjectives, createObjective,
+}) => {
+  const onRemoveObjective = (index) => {
+    const newObjectives = objectives.filter((o, objectiveIndex) => index !== objectiveIndex);
+    onUpdateObjectives(newObjectives);
+  };
+
+  const onUpdateObjective = (index, newObjective) => {
+    const newObjectives = [...objectives];
+    newObjectives[index] = newObjective;
+    onUpdateObjectives(newObjectives);
+  };
+  const singleObjective = objectives.length === 1;
+
+  return (
+    <div className="smart-hub--goal">
+      <div className="smart-hub--goal-content">
+        <div className="display-flex flex-align-start">
+          <p className="margin-top-0">
+            <span className="text-bold">Goal: </span>
+            { name }
+          </p>
+
+          <div className="margin-left-auto">
+            <Button type="button" onClick={onRemoveGoal} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
+              <FontAwesomeIcon color="black" icon={faTrash} />
+            </Button>
+          </div>
+        </div>
+        <div>
+          {objectives.map((objective, objectiveIndex) => (
+            <div className="margin-top-1" key={objective.id}>
+              <Objective
+                goalIndex={goalIndex}
+                objectiveIndex={objectiveIndex}
+                objective={objective}
+                onRemove={() => { if (!singleObjective) { onRemoveObjective(objectiveIndex); } }}
+                onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}
+              />
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          onClick={() => {
+            onUpdateObjectives([...objectives, createObjective()]);
+          }}
+          outline
+          aria-label={`add objective to goal ${goalIndex + 1}`}
+        >
+          Add New Objective
+        </Button>
+      </div>
+
     </div>
-    <div className="margin-left-auto margin-top-2">
-      <Button onClick={(e) => { e.preventDefault(); onRemove(id); }} unstyled className="smart-hub--button" aria-label="remove goal">
-        <FontAwesomeIcon color="black" icon={faTrash} />
-      </Button>
-    </div>
-  </div>
-);
+  );
+};
 
 Goals.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  objectives: PropTypes.arrayOf(PropTypes.shape({
+    title: PropTypes.string,
+    ttaProvided: PropTypes.string,
+    status: PropTypes.string,
+    new: PropTypes.bool,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  })).isRequired,
+  createObjective: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
-  onRemove: PropTypes.func.isRequired,
+  goalIndex: PropTypes.number.isRequired,
+  onRemoveGoal: PropTypes.func.isRequired,
+  onUpdateObjectives: PropTypes.func.isRequired,
 };
 
 export default Goals;
