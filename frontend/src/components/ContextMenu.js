@@ -56,6 +56,7 @@ function ContextMenu({
         onClick={(e) => { e.preventDefault(); updateShown((previous) => !previous); }}
         aria-label={label}
         data-testid="menu-button"
+        type="button"
       >
         <FontAwesomeIcon color="black" icon={faEllipsisH} />
       </Button>

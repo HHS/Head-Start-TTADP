@@ -51,8 +51,9 @@ describe('App', () => {
       render(<App />);
     });
 
-    it('displays the login button for now. in the future this should show the "request permissions" UI', async () => {
-      expect(await screen.findByText(loginText)).toBeVisible();
+    it('displays the "request permissions" page', async () => {
+      expect(await screen.findByText('You need permission to access the TTA Smart Hub.')).toBeVisible();
+      expect(await screen.findByText('Request Permission')).toBeVisible();
     });
   });
 });
