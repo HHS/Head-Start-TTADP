@@ -13,7 +13,6 @@ import userEvent from '@testing-library/user-event';
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
-import { REPORT_STATUSES } from '../../../Constants';
 
 jest.mock('../../../permissions', () => ({
   getRegionWithReadWrite: jest.fn(() => 1),

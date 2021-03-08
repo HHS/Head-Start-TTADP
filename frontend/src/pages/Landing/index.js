@@ -153,7 +153,6 @@ function Landing() {
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
   const [showAlert, updateShowAlert] = useState(true);
-  const history = useHistory();
 
   useEffect(() => {
     async function fetchReports() {
