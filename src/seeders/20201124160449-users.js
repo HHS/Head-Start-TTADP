@@ -102,13 +102,29 @@ const permissions = [
     regionId: 1,
     scopeId: READ_WRITE_REPORTS,
   },
+  {
+    userId: 8,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 8,
+    regionId: 14,
+    scopeId: ADMIN,
+  },
+  {
+    userId: 8,
+    regionId: 1,
+    scopeId: READ_WRITE_REPORTS,
+  },
 ];
 
 const users = [
   {
     id: 1,
     email: 'hermionegranger@hogwarts.com',
-    hsesUserId: 1,
+    hsesUserId: '1',
+    hsesUsername: 'hermionegranger@hogwarts.com',
     role: 'System Specialist',
     name: 'Hermione Granger',
     phoneNumber: '555-555-5550',
@@ -118,7 +134,8 @@ const users = [
   {
     id: 2,
     email: 'dumbledore@hogwarts.com',
-    hsesUserId: 2,
+    hsesUserId: '2',
+    hsesUsername: 'dumbledore@hogwarts.com',
     role: undefined,
     name: undefined,
     phoneNumber: undefined,
@@ -127,7 +144,9 @@ const users = [
   },
   {
     id: 3,
+    hsesUserId: '3',
     email: 'harrypotter@hogwarts.com',
+    hsesUsername: 'harrypotter@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Harry Potter',
     phoneNumber: '555-555-5551',
@@ -136,7 +155,9 @@ const users = [
   },
   {
     id: 4,
+    hsesUserId: '4',
     email: 'ronweasley@hogwarts.com',
+    hsesUsername: 'ronweasley@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Ron Weasley',
     phoneNumber: '555-555-5552',
@@ -145,7 +166,9 @@ const users = [
   },
   {
     id: 5,
+    hsesUserId: '5',
     email: 'cucumber@hogwarts.com',
+    hsesUsername: 'cucumber@hogwarts.com',
     role: 'Grants Specialist',
     name: 'Cucumber User',
     phoneNumber: '555-555-5553',
@@ -155,23 +178,36 @@ const users = [
   {
     id: 6,
     email: 'krystyna@adhocteam.us',
+    hsesUsername: 'krystyna@adhocteam.us',
     // These hses ids will likely get out of date at some point, but
     // still nice to have this shortcut while it lasts
-    hsesUserId: '50153',
+    hsesUserId: '50385',
     role: 'Grants Specialist',
     name: 'Krys',
     phoneNumber: '555-555-5553',
-    homeRegionId: 3,
+    homeRegionId: 1,
     lastLogin: moment().toISOString(),
   },
   {
     id: 7,
     email: 'josh@adhocteam.us',
+    hsesUsername: 'josh@adhocteam.us',
     role: 'Grants Specialist',
     name: 'Josh',
     hsesUserId: '50154',
     phoneNumber: '555-555-5553',
-    homeRegionId: 3,
+    homeRegionId: 1,
+    lastLogin: moment().toISOString(),
+  },
+  {
+    id: 8,
+    email: 'chuck.mcandrew@adhocteam.us',
+    hsesUsername: 'chuck.mcandrew@adhocteam.us',
+    role: 'Grants Specialist',
+    name: 'Chuck',
+    hsesUserId: '50387',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 1,
     lastLogin: moment().toISOString(),
   },
 ];
