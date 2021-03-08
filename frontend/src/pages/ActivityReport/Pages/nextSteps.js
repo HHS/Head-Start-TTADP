@@ -108,7 +108,7 @@ const NoteEntries = ({ name, humanName }) => {
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
         <ul className="usa-list--unstyled">
           {notes.map((item, index) => (
-            <li key={item.note} className="grid-row flex-row">
+            <li key={item.note} className="grid-row flex-row border-bottom padding-top-2 padding-bottom-2" style={{ borderColor: '#f0f0f0' }}>
               <div className="grid-col flex-12">
                 {item.note}
               </div>
