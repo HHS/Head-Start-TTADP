@@ -18,32 +18,50 @@ function UserInfo({ user, onUserChange }) {
     lastLogin = moment(lastLogin).format('lll Z');
   }
   return (
-    <Fieldset className="margin-bottom-2" legend="User Info">
-      <Grid row gap>
-        <Grid col={12}>
-          <Label htmlFor="input-email-name">Email</Label>
-          <TextInput readOnly disabled id="input-email-name" type="text" name="email" value={user.email || ''} />
+    <>
+      <Fieldset className="margin-bottom-2" legend="User Profile">
+        <Grid row gap>
+          <Grid col={12}>
+            <Label htmlFor="input-email-name">Email</Label>
+            <TextInput id="input-email-name" type="text" name="email" value={user.email || ''} onChange={onUserChange} />
+          </Grid>
+          <Grid col={12}>
+            <Label htmlFor="input-full-name">Full Name</Label>
+            <TextInput id="input-full-name" type="text" name="name" value={user.name || ''} onChange={onUserChange} />
+          </Grid>
         </Grid>
-        <Grid col={12}>
-          <Label htmlFor="input-full-name">Full Name</Label>
-          <TextInput id="input-full-name" type="text" name="name" value={user.name || ''} onChange={onUserChange} />
+        <Grid row gap>
+          <Grid col={6}>
+            <RegionDropdown id="user-region" name="homeRegionId" value={user.homeRegionId || undefined} onChange={onUserChange} includeCentralOffice />
+          </Grid>
+          <Grid col={6}>
+            <JobTitleDropdown id="role" name="role" value={user.role || undefined} onChange={onUserChange} />
+          </Grid>
         </Grid>
-      </Grid>
-      <Grid row gap>
-        <Grid col={6}>
-          <RegionDropdown id="user-region" name="homeRegionId" value={user.homeRegionId || undefined} onChange={onUserChange} includeCentralOffice />
+      </Fieldset>
+      <Fieldset className="margin-bottom-2" legend="User Information">
+        <Grid row gap>
+          <Grid col={12}>
+            <dl>
+              <dt className="text-bold">HSES ID</dt>
+              <dd className="margin-bottom-1">{user.hsesUserId || ''}</dd>
+              <dt className="text-bold">HSES Username</dt>
+              <dd className="margin-bottom-1" data-testid="hses-username">{user.hsesUsername || ''}</dd>
+              <dt className="text-bold">HSES Authorities</dt>
+              <dd className="margin-bottom-1">
+                <ul>
+                  {(user.hsesAuthorities || []).map((a) => (
+                    <li key={a}>{a}</li>
+                  ))}
+                </ul>
+              </dd>
+              <dt className="text-bold">Last Login</dt>
+              <dd data-testid="last-login">{lastLogin}</dd>
+            </dl>
+          </Grid>
         </Grid>
-        <Grid col={6}>
-          <JobTitleDropdown id="role" name="role" value={user.role || undefined} onChange={onUserChange} />
-        </Grid>
-      </Grid>
-      <Grid row gap>
-        <Grid col={12}>
-          <Label htmlFor="input-last-login">Last Login</Label>
-          <TextInput readOnly disabled id="input-last-login" type="text" name="lastLogin" value={lastLogin} />
-        </Grid>
-      </Grid>
-    </Fieldset>
+      </Fieldset>
+    </>
   );
 }
 
@@ -54,6 +72,8 @@ UserInfo.propTypes = {
     homeRegionId: PropTypes.number,
     role: PropTypes.string,
     hsesUserId: PropTypes.string,
+    hsesUsername: PropTypes.string,
+    hsesAuthorities: PropTypes.arrayOf(PropTypes.string),
     phoneNumber: PropTypes.string,
     lastLogin: PropTypes.string,
   }).isRequired,

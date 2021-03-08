@@ -6,9 +6,13 @@ import {
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form';
+import { isUndefined } from 'lodash';
 
+import ReviewItem from './Review/ReviewItem';
+import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
+import { validateGoals } from './components/goalValidator';
 
 const GoalsObjectives = ({
   grantIds, activityRecipientType,
@@ -17,7 +21,6 @@ const GoalsObjectives = ({
     register,
   } = useFormContext();
   const [availableGoals, updateAvailableGoals] = useState([]);
-  const [loading, updateLoading] = useState(true);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
@@ -26,18 +29,9 @@ const GoalsObjectives = ({
         const fetchedGoals = await getGoals(grantIds);
         updateAvailableGoals(fetchedGoals);
       }
-      updateLoading(false);
     };
     fetch();
   }, [grantIds]);
-
-  if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
-  }
 
   return (
     <>
@@ -62,33 +56,92 @@ const GoalsObjectives = ({
 };
 
 GoalsObjectives.propTypes = {
-  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  activityRecipientType: PropTypes.string.isRequired,
+  grantIds: PropTypes.arrayOf(PropTypes.number),
+  activityRecipientType: PropTypes.string,
 };
 
-const sections = [
-  {
-    title: 'Goals and objectives',
-    anchor: 'goals-and-objectives',
-    items: [
-      { label: 'Goals', name: 'goals', path: 'name' },
-    ],
-  },
-  {
-    title: 'Context',
-    anchor: 'context',
-    items: [
-      { label: 'Context', name: 'context' },
-    ],
-  },
-];
+GoalsObjectives.defaultProps = {
+  activityRecipientType: '',
+  grantIds: [],
+};
+
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    context,
+    goals,
+  } = watch();
+
+  return (
+    <>
+      <Section
+        hidePrint={isUndefined(context)}
+        key="context"
+        basePath="goals-objectives"
+        anchor="context"
+        title="Context"
+      >
+        <ReviewItem
+          label="Context"
+          name="context"
+        />
+      </Section>
+      <Section
+        hidePrint={isUndefined(goals)}
+        key="Goals"
+        basePath="goals-objectives"
+        anchor="goals-and-objectives"
+        title="Goals"
+      >
+        {goals.map((goal) => {
+          const objectives = goal.objectives || [];
+          return (
+            <div key={goal.id}>
+              <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
+                <span>
+                  <span className="text-bold">Goal:</span>
+                  {' '}
+                  {goal.name}
+                </span>
+                <div className="padding-left-2 margin-top-2">
+                  <>
+                    {objectives.map((objective) => (
+                      <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
+                        <div>
+                          <span className="text-bold">Objective:</span>
+                          {' '}
+                          {objective.title}
+                        </div>
+                        <div>
+                          <span className="text-bold">TTA Provided:</span>
+                          {' '}
+                          {objective.ttaProvided}
+                        </div>
+                        <div>
+                          <span className="text-bold">Status:</span>
+                          {' '}
+                          {objective.status}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </Section>
+    </>
+  );
+};
 
 export default {
   position: 3,
   label: 'Goals and objectives',
   path: 'goals-objectives',
   review: false,
-  sections,
+  isPageComplete: (formData) => validateGoals(formData.goals) === true,
+  reviewSection: () => <ReviewSection />,
   render: (additionalData, formData) => {
     const recipients = formData.activityRecipients || [];
     const { activityRecipientType } = formData;

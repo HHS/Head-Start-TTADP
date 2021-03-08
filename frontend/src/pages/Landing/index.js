@@ -19,8 +19,9 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
+import ContextMenu from '../../components/ContextMenu';
 
-function renderReports(reports) {
+function renderReports(reports, history) {
   const emptyReport = {
     id: '',
     displayId: '',
@@ -62,12 +63,12 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const topicsTitle = topics.reduce(
+    const topicsTitle = (topics || []).reduce(
       (result, topic) => `${result + topic}\n`,
       '',
     );
 
-    const topicsWithTags = topics.map((topic) => (
+    const topicsWithTags = (topics || []).map((topic) => (
       <Tag
         key={topic.slice(1, 13)}
         className="smart-hub--table-collection"
@@ -90,12 +91,20 @@ function renderReports(reports) {
       </Tag>
     ));
 
+    const menuItems = [
+      {
+        label: 'Edit',
+        onClick: () => { history.push(`/activity-reports/${id}`); },
+      },
+    ];
+    const contextMenuLabel = `Edit activity report ${displayId}`;
+
     return (
       <tr key={`landing_${id}`}>
         <th scope="row">
           <Link
-            to={`/activity-reports/${id}/activity-summary`}
-            href={`/activity-reports/${id}/activity-summary`}
+            to={`/activity-reports/${id}`}
+            href={`/activity-reports/${id}`}
           >
             {displayId}
           </Link>
@@ -130,9 +139,7 @@ function renderReports(reports) {
           </Tag>
         </td>
         <td>
-          <button type="button" className="smart-hub--dotdotdot">
-            ...
-          </button>
+          <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
         </td>
       </tr>
     );
@@ -140,6 +147,7 @@ function renderReports(reports) {
 }
 
 function Landing() {
+  const history = useHistory();
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
@@ -231,7 +239,7 @@ function Landing() {
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
-                  <tbody>{renderReports(reports)}</tbody>
+                  <tbody>{renderReports(reports, history)}</tbody>
                 </Table>
               </Container>
             </SimpleBar>

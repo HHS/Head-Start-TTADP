@@ -12,6 +12,7 @@ import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
+import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 import { REPORT_STATUSES } from '../../../Constants';
 
 jest.mock('../../../permissions', () => ({
@@ -57,7 +58,9 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
         location={{
           state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
         }}
-        user={{ id: userId, name: 'Walter Burns', role: 'Reporter' }}
+        user={{
+          id: userId, name: 'Walter Burns', role: 'Reporter', permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+        }}
       />
     </Router>,
   );
@@ -137,10 +140,11 @@ describe('ActivityReport', () => {
 
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
+      fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: 'Topics and resources' });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
     });
   });
 
@@ -187,7 +191,7 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-grantee name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
       });
