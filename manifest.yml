@@ -37,5 +37,4 @@ applications:
     buildpacks:
       - staticfile_buildpack
     root: maintenance_page
-    force_https: "true"
-    
+    memory: 64M 
