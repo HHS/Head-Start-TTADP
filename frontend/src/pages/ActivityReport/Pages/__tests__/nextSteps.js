@@ -73,7 +73,7 @@ describe('next steps', () => {
     expect(await screen.findByText('help capture pikachu')).toBeVisible();
 
     // And menu's are seen
-    const menus = await screen.findAllByTestId('menu-button');
+    const menus = await screen.findAllByTitle('ellipsis');
     expect(menus).toHaveLength(2);
   });
 
@@ -84,7 +84,7 @@ describe('next steps', () => {
       [{ note: 'bulbasaur', id: 2 }],
     );
     // When the user deletes everything
-    const menus = await screen.findAllByTestId('menu-button');
+    const menus = await screen.findAllByTitle('ellipsis');
 
     userEvent.click(menus[0]);
     let deleteBtn = await screen.findByText('Delete');
@@ -106,7 +106,7 @@ describe('next steps', () => {
     );
 
     // When the users edits an item
-    const menu = await screen.findByTestId('menu-button');
+    const menu = await screen.findByTitle('ellipsis');
     userEvent.click(menu);
     const editBtn = await screen.findByText('Edit');
     userEvent.click(editBtn);
