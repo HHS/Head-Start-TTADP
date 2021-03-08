@@ -12,6 +12,8 @@ const mockUser = {
   id: 1000,
   homeRegionId: 1,
   name: 'user',
+  hsesUsername: 'user',
+  hsesUserId: '1000',
 };
 
 const reportObject = {
@@ -355,8 +357,8 @@ describe('Activity Reports DB service', () => {
 
     it('retrieves all recipients when not specifying region', async () => {
       const recipients = await possibleRecipients();
-      // 11 From db being seeded + 1 that we create for this test suite = 12
-      expect(recipients.grants.length).toBe(12);
+      const grantees = await Grantee.findAll();
+      expect(recipients.grants.length).toBe(grantees.length);
     });
   });
 });

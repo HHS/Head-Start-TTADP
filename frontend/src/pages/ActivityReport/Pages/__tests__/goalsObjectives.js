@@ -5,6 +5,8 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
+import { Router } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
 
 import goalsObjectives from '../goalsObjectives';
 
@@ -40,6 +42,21 @@ const renderGoals = (grantIds, activityRecipientType, initialData, goals = []) =
   );
 };
 
+// eslint-disable-next-line react/prop-types
+const RenderReview = ({ goals }) => {
+  const history = createMemoryHistory();
+  const hookForm = useForm({
+    defaultValues: { goals },
+  });
+  return (
+    <Router history={history}>
+      <FormProvider {...hookForm}>
+        {goalsObjectives.reviewSection()}
+      </FormProvider>
+    </Router>
+  );
+};
+
 describe('goals objectives', () => {
   afterEach(() => fetchMock.restore());
   describe('when activity recipient type is "grantee"', () => {
@@ -61,6 +78,27 @@ describe('goals objectives', () => {
       renderGoals([1], 'nonGrantee', {});
       await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+    });
+  });
+
+  describe('review page', () => {
+    it('displays goals with no objectives', async () => {
+      render(<RenderReview goals={[{ id: 1, name: 'goal' }]} />);
+      const goal = await screen.findByText('goal');
+      expect(goal).toBeVisible();
+    });
+
+    it('displays goals with objectives', async () => {
+      render(<RenderReview goals={[{
+        id: 1,
+        name: 'goal',
+        objectives: [{
+          id: 1, title: 'title', ttaProvided: 'ttaProvided', status: 'Not Started',
+        }],
+      }]}
+      />);
+      const objective = await screen.findByText('title');
+      expect(objective).toBeVisible();
     });
   });
 });
