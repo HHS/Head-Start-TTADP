@@ -10,6 +10,10 @@ describe('UserInfo', () => {
       render(<UserInfo user={{}} onUserChange={() => {}} />);
     });
 
+    test('has a blank hsesUsername', () => {
+      expect(screen.getByTestId('hses-username')).toHaveTextContent('');
+    });
+
     test('has a blank email', async () => {
       expect(screen.getByLabelText('Email')).toHaveValue('');
     });
@@ -27,7 +31,7 @@ describe('UserInfo', () => {
     });
 
     test('has a blank last login', async () => {
-      expect(screen.getByLabelText('Last Login')).toHaveValue('');
+      expect(screen.getByTestId('last-login')).toHaveTextContent('');
     });
   });
 
@@ -35,10 +39,11 @@ describe('UserInfo', () => {
     beforeEach(() => {
       const user = {
         email: 'email',
+        hsesUsername: 'username',
         name: 'first last',
         homeRegionId: 1,
         role: 'Grantee Specialist',
-        lastLogin: '2021-02-09T11:15:00Z',
+        lastLogin: '2021-02-09T16:15:00Z',
       };
 
       render(<UserInfo user={user} onUserChange={() => {}} />);
@@ -46,6 +51,10 @@ describe('UserInfo', () => {
 
     test('has correct email', async () => {
       expect(screen.getByLabelText('Email')).toHaveValue('email');
+    });
+
+    test('has correct username', () => {
+      expect(screen.getByTestId('hses-username')).toHaveTextContent('username');
     });
 
     test('has correct fullName', () => {
@@ -61,7 +70,7 @@ describe('UserInfo', () => {
     });
 
     test('has correct lastLogin', () => {
-      expect(screen.getByLabelText('Last Login')).toHaveValue('Feb 9, 2021 11:15 AM +00:00');
+      expect(screen.getByTestId('last-login')).toHaveTextContent('Feb 9, 2021 11:15 AM -05:00');
     });
   });
 });

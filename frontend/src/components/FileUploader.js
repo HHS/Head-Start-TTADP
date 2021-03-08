@@ -33,7 +33,7 @@ export const upload = async (file, reportId, attachmentType, setErrorMessage) =>
   }
   setErrorMessage(null);
   return {
-    id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED',
+    id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
   };
 };
 
