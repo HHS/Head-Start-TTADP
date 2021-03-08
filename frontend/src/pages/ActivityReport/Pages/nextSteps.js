@@ -34,9 +34,9 @@ const NoteEntry = ({
       name={name}
       label="What have you agreed to do next?"
     >
-      <TextInput name={name} onChange={onUpdate} />
-      <Button outline disabled={!(input && input.trim())} onClick={onSubmit}>Save Next Step</Button>
-      {!isRequired && <Button secondary onClick={onCancel}>Cancel</Button>}
+      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} />
+      <Button outline disabled={!(input && input.trim())} onClick={onSubmit} data-testid={`${name}-button`}>Save Next Step</Button>
+      {!isRequired && <Button secondary onClick={onCancel} data-testid={`${name}-cancel-button`}>Cancel</Button>}
     </FormItem>
   );
 };
@@ -45,13 +45,18 @@ NoteEntry.propTypes = {
   onEntry: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
-  defaultValue: PropTypes.string.isRequired,
-  isRequired: PropTypes.bool.isRequired,
+  defaultValue: PropTypes.string,
+  isRequired: PropTypes.bool,
+};
+
+NoteEntry.defaultProps = {
+  isRequired: false,
+  defaultValue: '',
 };
 
 const NoteEntries = ({ name, humanName }) => {
   const { register, control, setValue } = useFormContext();
-  const notes = useWatch({ name, control, defaultValue: [] });
+  const notes = useWatch({ name, control });
 
   const [showPrompt, updateShowPrompt] = useState(false);
   const [targetIndex, updateTargetIndex] = useState(-1);
