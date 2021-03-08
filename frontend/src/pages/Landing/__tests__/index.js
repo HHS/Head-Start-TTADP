@@ -148,9 +148,11 @@ describe('Landing Page', () => {
   });
 
   test('displays the options buttons', async () => {
-    const optionButtons = await screen.findAllByRole('button', /.../i);
+    const optionButtons = await screen.findAllByRole('button', {
+      name: /edit activity report r14-ar-2/i,
+    });
 
-    expect(optionButtons.length).toBe(2);
+    expect(optionButtons.length).toBe(1);
   });
 
   test('displays the new activity report button', async () => {
@@ -183,9 +185,7 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking status column header will sort by status', async () => {
-    const statusColumnHeader = await screen.findByRole('columnheader', {
-      name: /status/i,
-    });
+    const statusColumnHeader = await screen.findByText(/status/i);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts', []);
     fetchMock.get(
@@ -208,9 +208,8 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Last saved column header will sort by updatedAt', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /last saved/i,
-    });
+    const columnHeader = await screen.findByText(/last saved/i);
+
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=asc&offset=0&limit=10',
       { count: 2, rows: activityReportsSorted },
@@ -222,9 +221,8 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Collaborators column header will sort by collaborators', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /collaborator\(s\)/i,
-    });
+    const columnHeader = await screen.findByText(/collaborator\(s\)/i);
+
     fetchMock.get(
       '/api/activity-reports?sortBy=collaborators&sortDir=asc&offset=0&limit=10',
       { count: 2, rows: activityReportsSorted },
@@ -236,9 +234,7 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Topics column header will sort by topics', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /topic\(s\)/i,
-    });
+    const columnHeader = await screen.findByText(/topic\(s\)/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=topics&sortDir=asc&offset=0&limit=10',
@@ -251,9 +247,7 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Creator column header will sort by author', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /creator/i,
-    });
+    const columnHeader = await screen.findByText(/creator/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=author&sortDir=asc&offset=0&limit=10',
@@ -266,9 +260,7 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Start date column header will sort by start date', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /start date/i,
-    });
+    const columnHeader = await screen.findByText(/start date/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=startDate&sortDir=asc&offset=0&limit=10',
@@ -281,8 +273,8 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Grantee column header will sort by grantee', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /grantee/i,
+    const columnHeader = await screen.findByRole('button', {
+      name: /grantee\. activate to sort ascending/i,
     });
 
     fetchMock.get(
@@ -295,9 +287,7 @@ describe('Landing Page sorting', () => {
   });
 
   it('clicking Report id column header will sort by region and id', async () => {
-    const columnHeader = await screen.findByRole('columnheader', {
-      name: /report id/i,
-    });
+    const columnHeader = await screen.findByText(/report id/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=regionId&sortDir=asc&offset=0&limit=10',
