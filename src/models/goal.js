@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
       Goal.belongsToMany(models.Grantee, { through: models.GrantGoal, foreignKey: 'goalId', as: 'grantees' });
       Goal.belongsToMany(models.Grant, { through: models.GrantGoal, foreignKey: 'goalId', as: 'grants' });
+      Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
     }
   }
   Goal.init({
