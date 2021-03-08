@@ -80,7 +80,9 @@ function MultiSelect({
   labelProperty,
   valueProperty,
   simple,
+  rules,
   multiSelectOptions,
+  onItemSelected,
   components: componentReplacements,
 }) {
   /*
@@ -95,7 +97,11 @@ function MultiSelect({
         value: v, label: v,
       }));
     }
-    return value.map((item) => ({ label: item[labelProperty], value: item[valueProperty] }));
+    return value.map((item) => ({
+      ...item,
+      label: item[labelProperty],
+      value: item[valueProperty],
+    }));
   };
 
   /*
@@ -109,7 +115,11 @@ function MultiSelect({
       controllerOnChange(event.map((v) => v.value));
     } else {
       controllerOnChange(
-        event.map((item) => ({ [labelProperty]: item.label, [valueProperty]: item.value })),
+        event.map((item) => ({
+          ...item,
+          [labelProperty]: item.label,
+          [valueProperty]: item.value,
+        })),
       );
     }
   };
@@ -124,7 +134,9 @@ function MultiSelect({
             id={name}
             value={values}
             onChange={(event) => {
-              if (event) {
+              if (onItemSelected) {
+                onItemSelected(event);
+              } else if (event) {
                 onChange(event, controllerOnChange);
               } else {
                 controllerOnChange([]);
@@ -151,6 +163,7 @@ function MultiSelect({
           }
           return true;
         },
+        ...rules,
       }}
       name={name}
     />
@@ -182,6 +195,7 @@ MultiSelect.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   components: PropTypes.shape({}),
+  onItemSelected: PropTypes.func,
   multiSelectOptions: PropTypes.shape({
     isClearable: PropTypes.bool,
     closeMenuOnSelect: PropTypes.bool,
@@ -189,6 +203,7 @@ MultiSelect.propTypes = {
     hideSelectedOptions: PropTypes.bool,
   }),
   disabled: PropTypes.bool,
+  rules: PropTypes.shape({}),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
 };
 
@@ -200,6 +215,8 @@ MultiSelect.defaultProps = {
   valueProperty: 'value',
   multiSelectOptions: {},
   components: {},
+  rules: {},
+  onItemSelected: null,
 };
 
 export default MultiSelect;
