@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from 'react';
 import {
   Tag, Table, Alert, Grid,
@@ -206,6 +207,40 @@ function Landing() {
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
+  const renderColumnHeader = (displayName, name) => {
+    const sortClassName = getClassNamesFor(name);
+    let fullAriaSort;
+    switch (sortClassName) {
+      case 'asc':
+        fullAriaSort = 'ascending';
+        break;
+      case 'desc':
+        fullAriaSort = 'descending';
+        break;
+      default:
+        fullAriaSort = 'none';
+        break;
+    }
+    return (
+      <th scope="col" aria-sort={fullAriaSort}>
+        <a
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            requestSort(name);
+          }}
+          onKeyPress={() => requestSort(name)}
+          className={sortClassName}
+          aria-label={`${displayName}. Activate to sort ${
+            sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
+        >
+          {displayName}
+        </a>
+      </th>
+    );
+  };
+
   const handlePageChange = (pageNumber) => {
     setActivePage(pageNumber);
     setOffset((pageNumber - 1) * perPage);
@@ -244,8 +279,9 @@ function Landing() {
                 <Table className="usa-table usa-table--borderless usa-table--striped">
                   <caption>
                     Activity reports
+                    <p id="arTblDesc">with sorting and pagination</p>
                     <span className="smart-hub--table-nav">
-                      <span className="smart-hub--total-count">
+                      <span className="smart-hub--total-count" aria-label={`Page ${activePage}, displaying rows ${renderTotal(offset, perPage, activePage, reportsCount)}`}>
                         {renderTotal(offset, perPage, activePage, reportsCount)}
                         <Pagination
                           hideFirstLastPages
@@ -264,78 +300,14 @@ function Landing() {
                   </caption>
                   <thead>
                     <tr>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('regionId');
-                        }}
-                        className={getClassNamesFor('regionId')}
-                      >
-                        Report ID
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('activityRecipients');
-                        }}
-                        className={getClassNamesFor('activityRecipients')}
-                      >
-                        Grantee
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('startDate');
-                        }}
-                        className={getClassNamesFor('startDate')}
-                      >
-                        Start date
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('author');
-                        }}
-                        className={getClassNamesFor('author')}
-                      >
-                        Creator
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('topics');
-                        }}
-                        className={getClassNamesFor('topics')}
-                      >
-                        Topic(s)
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('collaborators');
-                        }}
-                        className={getClassNamesFor('collaborators')}
-                      >
-                        Collaborator(s)
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('updatedAt');
-                        }}
-                        className={getClassNamesFor('updatedAt')}
-                      >
-                        Last saved
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('status');
-                        }}
-                        className={getClassNamesFor('status')}
-                      >
-                        Status
-                      </th>
+                      {renderColumnHeader('Report ID', 'regionId')}
+                      {renderColumnHeader('Grantee', 'activityRecipients')}
+                      {renderColumnHeader('Start date', 'startDate')}
+                      {renderColumnHeader('Creator', 'author')}
+                      {renderColumnHeader('Topic(s)', 'topics')}
+                      {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                      {renderColumnHeader('Last saved', 'updatedAt')}
+                      {renderColumnHeader('Status', 'status')}
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>

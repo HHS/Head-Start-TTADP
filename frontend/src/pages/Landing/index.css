@@ -51,12 +51,14 @@ div.smart-hub--total-count {
 .smart-hub--link-next {
   text-decoration-line: underline !important;
   color: #0166AB !important;
+  margin-left: 12px;
 }
 
 .smart-hub--link-prev {
   text-decoration-line: underline !important;
   color: #0166AB !important;
   padding-left: 20px;
+  margin-right: 12px;
 }
 
 .smart-hub--link-pagination {
@@ -69,7 +71,8 @@ div.smart-hub--total-count {
   font-size: 16px;
   font-weight: 500;
   margin-right:25px;
-  margin-top: 9px;
+  margin-top: 5px;
+  margin-bottom: -10px;
 }
 
 h1.landing {
@@ -85,7 +88,7 @@ h1.landing {
 }
 
 .landing .usa-table caption {
-  font-size: 23px;
+  font-size: 21px;
   font-weight: 900;
   padding: 14px 0px 17px 20px;
   margin-bottom: -0.25rem;
@@ -210,16 +213,24 @@ h1.landing {
   padding-top: 30px;
 }
 
-thead th.asc::after {
+thead th > .asc::after {
   content: "▲";
   display: inline-block;
   margin-left: 0.25em;
 }
 
-thead th.desc::after {
+thead th > .desc::after {
   content: "▼";
   display: inline-block;
   margin-left: 0.25em;
+}
+
+a.asc {
+  outline: none !important;
+}
+
+a.desc {
+  outline: none !important;
 }
 
 .landing .usa-alert {
@@ -246,4 +257,13 @@ thead th.desc::after {
 
 #beginNew {
   padding-bottom: 15px;
+}
+
+#arTblDesc {
+  position:absolute;
+  left:-10000px;
+  top:auto;
+  width:1px;
+  height:1px;
+  overflow:hidden;
 }
