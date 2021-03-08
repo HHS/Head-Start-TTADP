@@ -58,6 +58,7 @@ const DateInput = ({
                   onChange(newDate);
                 }}
                 onFocusChange={({ focused }) => updateFocus(focused)}
+                hideKeyboardShortcutsPanel
               />
             </div>
           );

@@ -4,7 +4,7 @@ import {
   Tag, Table, Alert, Grid,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 import Pagination from 'react-js-pagination';
@@ -18,8 +18,9 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
+import ContextMenu from '../../components/ContextMenu';
 
-function renderReports(reports) {
+function renderReports(reports, history) {
   const emptyReport = {
     id: '',
     displayId: '',
@@ -91,12 +92,20 @@ function renderReports(reports) {
       </Tag>
     ));
 
+    const menuItems = [
+      {
+        label: 'Edit',
+        onClick: () => { history.push(`/activity-reports/${id}`); },
+      },
+    ];
+    const contextMenuLabel = `Edit activity report ${displayId}`;
+
     return (
       <tr key={`landing_${id}`}>
         <th scope="row">
           <Link
-            to={`/activity-reports/${id}/activity-summary`}
-            href={`/activity-reports/${id}/activity-summary`}
+            to={`/activity-reports/${id}`}
+            href={`/activity-reports/${id}`}
           >
             {displayId}
           </Link>
@@ -131,9 +140,7 @@ function renderReports(reports) {
           </Tag>
         </td>
         <td>
-          <button type="button" className="smart-hub--dotdotdot">
-            ...
-          </button>
+          <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
         </td>
       </tr>
     );
@@ -153,6 +160,7 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
 }
 
 function Landing() {
+  const history = useHistory();
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
@@ -311,7 +319,7 @@ function Landing() {
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
-                  <tbody>{renderReports(reports)}</tbody>
+                  <tbody>{renderReports(reports, history)}</tbody>
                 </Table>
               </Container>
             </SimpleBar>
