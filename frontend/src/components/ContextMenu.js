@@ -55,10 +55,9 @@ function ContextMenu({
         aria-haspopup
         onClick={(e) => { e.preventDefault(); updateShown((previous) => !previous); }}
         aria-label={label}
-        data-testid="menu-button"
         type="button"
       >
-        <FontAwesomeIcon color="black" icon={faEllipsisH} />
+        <FontAwesomeIcon color="black" icon={faEllipsisH} title="ellipsis" />
       </Button>
       {shown
     && (
