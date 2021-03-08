@@ -88,7 +88,7 @@ describe('Landing Page', () => {
     expect(reportIdLink).toBeVisible();
     expect(reportIdLink.closest('a')).toHaveAttribute(
       'href',
-      '/activity-reports/1/activity-summary',
+      '/activity-reports/1',
     );
   });
 

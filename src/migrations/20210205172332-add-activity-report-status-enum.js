@@ -7,7 +7,7 @@ const statuses = [
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    queryInterface.changeColumn(
+    await queryInterface.changeColumn(
       'ActivityReports',
       'status',
       {
@@ -17,7 +17,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    queryInterface.sequelize.transaction((t) => Promise.all([
+    await queryInterface.sequelize.transaction((t) => Promise.all([
       queryInterface.changeColumn(
         'ActivityReports',
         'status',

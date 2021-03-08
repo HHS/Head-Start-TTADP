@@ -21,6 +21,7 @@ describe('authMiddleware', () => {
     id: 63,
     name: 'Auth Middleware',
     hsesUserId: '63',
+    hsesUsername: 'auth.middleware',
     permissions: [{
       userId: 63,
       regionId: 14,
