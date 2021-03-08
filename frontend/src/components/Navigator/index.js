@@ -70,11 +70,16 @@ function Navigator({
       return pageState;
     }
 
+    const currentPageState = pageState[page.position];
+    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
+
     const newPageState = { ...pageState };
-    if (isValid) {
+    if (isComplete) {
       newPageState[page.position] = COMPLETE;
+    } else if (currentPageState === COMPLETE) {
+      newPageState[page.position] = IN_PROGRESS;
     } else {
-      newPageState[page.position] = isDirty ? IN_PROGRESS : pageState[page.position];
+      newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
     }
     return newPageState;
   };
@@ -99,9 +104,10 @@ function Navigator({
   };
 
   const onUpdatePage = async (index) => {
-    const newIndex = index === page.position ? null : index;
     await onSaveForm();
-    updatePage(newIndex);
+    if (index !== page.position) {
+      updatePage(index);
+    }
   };
 
   const onContinue = () => {
@@ -137,7 +143,9 @@ function Navigator({
     const state = p.review ? formData.status : stateOfPage;
     return {
       label: p.label,
-      onNavigation: () => onUpdatePage(p.position),
+      onNavigation: () => {
+        onUpdatePage(p.position);
+      },
       state,
       current,
       review: p.review,
@@ -175,6 +183,7 @@ function Navigator({
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
+                  key={page.label}
                   label={page.label}
                 />
                 {hasErrors
