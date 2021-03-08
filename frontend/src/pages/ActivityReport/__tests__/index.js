@@ -135,10 +135,11 @@ describe('ActivityReport', () => {
 
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
+      fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: 'Topics and resources Not Started' });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
     });
   });
 
@@ -185,7 +186,7 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const nonGrantee = within(information).getByLabelText('Non-Grantee');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-grantee name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
       });
