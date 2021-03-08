@@ -111,17 +111,12 @@ h1.landing {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
-  width: 210px;
+  width: 200px;
   vertical-align: middle;
 }
 
-.smart-hub--dotdotdot {
-  font-size: 25px;
-  font-weight: bold;
-  border: none;
-  background: transparent;
-  padding-bottom: 15px;
-  line-height: 0.75;
+.usa-button.smart-hub--button__no-margin {
+  margin-left: 0px;
 }
 
 .smart-hub--plus {
