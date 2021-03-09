@@ -7,7 +7,6 @@ import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
 import processFile from './workers/files';
 
-require('newrelic');
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 // Number of jobs per worker. Can be adjusted if clamav is getting bogged down
