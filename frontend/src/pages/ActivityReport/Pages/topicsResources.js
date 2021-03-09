@@ -150,7 +150,7 @@ const ReviewSection = () => {
       <Section
         hidePrint={!hasAttachments}
         key="Attachments"
-        basePath="attachments"
+        basePath="topics-resources"
         anchor="attachments"
         title="Attachments"
       >
