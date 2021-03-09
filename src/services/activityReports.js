@@ -151,7 +151,7 @@ export async function review(report, status, managerNotes) {
 
 export function activityReportById(activityReportId) {
   return ActivityReport.findOne({
-    attributes: { exclude: ['legacyId'] },
+    attributes: { exclude: ['imported', 'legacyId'] },
     where: {
       id: {
         [Op.eq]: activityReportId,
