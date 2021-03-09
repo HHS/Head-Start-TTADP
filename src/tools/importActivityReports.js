@@ -101,13 +101,20 @@ function normalizeKey(k) {
   return value;
 }
 
+function getValue(data, key) {
+  if (({}).hasOwnProperty.call(data, key)) {
+    return data[key];
+  }
+  return null;
+}
+
 function normalizeData(row) {
-  const dataMap = new Map();
+  const data = Object.create(null);
   Object.entries(row).forEach(([key, value]) => {
     const lookupKey = normalizeKey(key);
-    dataMap.set(lookupKey, value);
+    data[lookupKey] = value;
   });
-  return dataMap;
+  return data;
 }
 
 function coerceDuration(value) {
@@ -156,48 +163,49 @@ export default async function importActivityReports(file) {
   for await (const row of csvFile) {
     const data = normalizeData(row);
 
-    const reportId = coerceReportId(data.get('reportid'));
+    const reportId = coerceReportId(getValue(data, 'reportid'));
     // Ignore rows with no reportid
     if (reportId) {
-      const granteeActivity = data.get('grantee-activity');
+      const granteeActivity = getValue(data, 'grantee-activity');
       const activityRecipientType = granteeActivity ? 'grantee' : 'non-grantee';
 
       // Coerce values into appropriate data type
-      const status = coerceStatus(data.get('manager-approval'));
-      const duration = coerceDuration(data.get('duration'));
-      const programTypes = coerceToArray(data.get('program-types'));
-      const targetPopulations = coerceToArray(data.get('target-populations'));
-      const reason = coerceToArray(data.get('reason/s'));
-      const participants = coerceToArray(data.get('grantee-participants'))
-        .concat(coerceToArray(data.get('non-grantee-participants')));
-      const topics = coerceToArray(data.get('topics'));
-      const ttaType = coerceToArray(data.get('t-ta'));
-      const startDate = coerceDate(data.get('start-date'));
-      const endDate = coerceDate(data.get('end-date'));
+      const status = coerceStatus(getValue(data, 'manager-approval'));
+      const duration = coerceDuration(getValue(data, 'duration'));
+      const programTypes = coerceToArray(getValue(data, 'program-types'));
+      const targetPopulations = coerceToArray(getValue(data, 'target-populations'));
+      const reason = coerceToArray(getValue(data, 'reason/s'));
+      const participants = coerceToArray(getValue(data, 'grantee-participants'))
+        .concat(coerceToArray(getValue(data, 'non-grantee-participants')));
+      const topics = coerceToArray(getValue(data, 'topics'));
+      const ttaType = coerceToArray(getValue(data, 't-ta'));
+      const startDate = coerceDate(getValue(data, 'start-date'));
+      const endDate = coerceDate(getValue(data, 'end-date'));
 
       const ar = ActivityReport.build({
+        imported: data, // Store all the data in `imported` for later reuse
         legacyId: reportId,
         regionId: fileRegion,
-        deliveryMethod: data.get('format'),
+        deliveryMethod: getValue(data, 'format'),
         // approvingManagerId: ,
-        // resourcesUsed: data.get('resources-used'), // FIXME: Data model likely to change, per adhocteam#205
+        // resourcesUsed: getValue(data, 'resources-used'), // FIXME: Data model likely to change, per adhocteam#205
         duration,
         startDate,
         endDate,
         activityRecipientType,
-        requester: data.get('source-of-request'),
+        requester: getValue(data, 'source-of-request'),
         programTypes, // Array of strings
         targetPopulations, // Array of strings
         reason, // Array of strings
-        numberOfParticipants: data.get('number-of-participants'),
+        numberOfParticipants: getValue(data, 'number-of-participants'),
         participants, // Array of strings
         topics, // Array of strings
-        context: data.get('context-for-this-activity'),
-        managerNotes: data.get('additional-notes-for-this-activity'),
+        context: getValue(data, 'context-for-this-activity'),
+        managerNotes: getValue(data, 'additional-notes-for-this-activity'),
         status, // Enum restriction: REPORT_STATUSES
         ttaType, // Array of strings
-        createdAt: data.get('created'), // DATE
-        updatedAt: data.get('modified'), // DATE
+        createdAt: getValue(data, 'created'), // DATE
+        updatedAt: getValue(data, 'modified'), // DATE
       });
       recordResults.push(ar);
     }
