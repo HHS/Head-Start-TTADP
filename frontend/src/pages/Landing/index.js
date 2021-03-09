@@ -170,7 +170,7 @@ function Landing() {
     direction: 'desc',
   });
   const [offset, setOffset] = useState(0);
-  const [perPage] = useState(10);
+  const [perPage] = useState(2);
   const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
 
@@ -286,7 +286,7 @@ function Landing() {
             <MyAlerts reports={reportAlerts} newBtn={hasReadWrite(user)} />
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
-                <span className="smart-hub--table-nav">
+                <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
                   <span
                     className="smart-hub--total-count"
                     aria-label={`Page ${activePage}, displaying rows ${renderTotal(
