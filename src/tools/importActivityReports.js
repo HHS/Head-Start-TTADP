@@ -5,6 +5,7 @@ import parse from 'csv-parse/lib/sync';
 import {
   ActivityReport,
 } from '../models';
+import { REPORT_STATUSES } from '../constants';
 
 /*
 ## Import Notes
@@ -108,6 +109,32 @@ function normalizeData(row) {
   return dataMap;
 }
 
+function coerceDuration(value) {
+  if (!value) return null;
+  const match = /\d+(\.\d+)?/g.exec(value);
+  if (match) {
+    return match[0].trim();
+  }
+  return null;
+}
+
+function coerceToArray(value) {
+  if (!value) return [];
+  return value.split('\n');
+}
+
+function coerceStatus(value) {
+  if (!value) return null;
+  const status = value.toLowerCase()
+    .trim()
+    .replace(/\s/g, '_');
+  const statusMatch = Object.values(REPORT_STATUSES).includes(status);
+  if (statusMatch) {
+    return status;
+  }
+  return null;
+}
+
 export default async function importActivityReports(file) {
   const csvFile = readCsv(file);
   const regionMatch = file.match(/R(\d+)/);
@@ -116,43 +143,49 @@ export default async function importActivityReports(file) {
   const recordResults = [];
   for (const row of csvFile) {
     const data = normalizeData(row);
+
     const reportId = data.get('reportid');
-    // if (reportId) {
-    //   console.log('Report ID: ', data.get('reportid'))
-    //   console.log('TTA Type : ', data.get('t-ta'))
-    // }
+    // Ignore rows with no reportid
+    if (reportId) {
+      const granteeActivity = data.get('grantee-activity');
+      const activityRecipientType = granteeActivity ? 'grantee' : 'non-grantee';
 
-    const skipValidations = ['status'];
+      // Coerce values into appropriate data type
+      const status = coerceStatus(data.get('manager-approval'));
+      const duration = coerceDuration(data.get('duration'));
+      const programTypes = coerceToArray(data.get('program-types'));
+      const targetPopulations = coerceToArray(data.get('target-populations'));
+      const reason = coerceToArray(data.get('reason/s'));
+      const participants = coerceToArray(data.get('grantee-participants'))
+        .concat(coerceToArray(data.get('non-grantee-participants')));
+      const topics = coerceToArray(data.get('topics'));
+      const ttaType = coerceToArray(data.get('t-ta'));
 
-    const granteeParticipants = data.get('grantee-participants');
-    // const nonGranteeParticipants = data.get('non-grantee-participants');
-    const activityRecipientType = granteeParticipants ? 'Grantee' : 'Non-Grantee';
-
-    const ar = ActivityReport.build({
-      legacyId: reportId,
-      regionId: fileRegion,
-      deliveryMethod: data.get('format'),
-      // approvingManagerId: ,
-      // resourcesUsed: data.get('resources-used'), // FIXME: Data model likely to change, per adhocteam#205
-      duration: data.get('duration'),
-      startDate: data.get('start-date'),
-      endDate: data.get('end-data'),
-      activityRecipientType: activityRecipientType,
-      requester: data.get('source-of-request'),
-      programTypes: data.get('program-types'), // Array of strings
-      targetPopulations: data.get('targetPopulations'), // Array of strings
-      reason: data.get('reason/s'), // Array of strings
-      numberOfParticipants: data.get('number-of-participants'),
-      participants: data.get('grantee-participants'), // Array of strings
-      topics: data.get('topics'), // Array of strings
-      context: data.get('context-for-this-activity'),
-      managerNotes: data.get('additional-notes-for-this-activity'),
-      status: data.get('manager-approval'), // enum restrictions?
-      ttaType: data.get('t-ta'), // Array of strings
-      createdAt: data.get('created'), // DATE
-      updatedAt: data.get('modified'), // DATE
-    });
-    recordResults.push(ar);
-    console.log(ar.validate({ skip: skipValidations }));
+      const ar = ActivityReport.build({
+        legacyId: reportId,
+        regionId: fileRegion,
+        deliveryMethod: data.get('format'),
+        // approvingManagerId: ,
+        // resourcesUsed: data.get('resources-used'), // FIXME: Data model likely to change, per adhocteam#205
+        duration,
+        startDate: data.get('start-date'),
+        endDate: data.get('end-date'),
+        activityRecipientType,
+        requester: data.get('source-of-request'),
+        programTypes, // Array of strings
+        targetPopulations, // Array of strings
+        reason, // Array of strings
+        numberOfParticipants: data.get('number-of-participants'),
+        participants, // Array of strings
+        topics, // Array of strings
+        context: data.get('context-for-this-activity'),
+        managerNotes: data.get('additional-notes-for-this-activity'),
+        status, // Enum restriction: REPORT_STATUSES
+        ttaType, // Array of strings
+        createdAt: data.get('created'), // DATE
+        updatedAt: data.get('modified'), // DATE
+      });
+      recordResults.push(ar);
+    }
   }
 }
