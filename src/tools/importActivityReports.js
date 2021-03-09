@@ -141,16 +141,22 @@ function coerceDate(value) {
   return moment(value, 'MM/DD/YY');
 }
 
+function coerceReportId(value, region) {
+  if (!value) return null;
+  // R14 is a test region, and shouldn't be used in actual reportIds
+  return value.replace(/R14/, `R${region}`);
+}
+
 export default async function importActivityReports(file) {
   const csvFile = readCsv(file);
   const regionMatch = file.match(/R(\d+)/);
   const fileRegion = regionMatch ? regionMatch[1] : null;
 
   const recordResults = [];
-  for (const row of csvFile) {
+  for await (const row of csvFile) {
     const data = normalizeData(row);
 
-    const reportId = data.get('reportid');
+    const reportId = coerceReportId(data.get('reportid'));
     // Ignore rows with no reportid
     if (reportId) {
       const granteeActivity = data.get('grantee-activity');
