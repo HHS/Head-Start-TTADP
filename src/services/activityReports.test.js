@@ -253,6 +253,8 @@ describe('Activity Reports DB service', () => {
         id: 1002,
         homeRegionId: 1,
         name: 'a user',
+        hsesUsername: 'user',
+        hsesUserId: '1002',
       };
       await User.findOrCreate({
         where: {
