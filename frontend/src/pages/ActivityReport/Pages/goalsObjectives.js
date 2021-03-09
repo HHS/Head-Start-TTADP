@@ -40,14 +40,14 @@ const GoalsObjectives = ({
       </Helmet>
       {activityRecipientType === 'grantee' && hasGrants
         && (
-        <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Goals and objectives">
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
           <div id="goals-and-objectives" />
           <GoalPicker
             availableGoals={availableGoals}
           />
         </Fieldset>
         )}
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Context">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
         <Textarea id="context" name="context" inputRef={register()} />
       </Fieldset>
