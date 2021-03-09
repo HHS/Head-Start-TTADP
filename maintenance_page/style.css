@@ -45,10 +45,11 @@ main {
     padding: 10px;
 }
 
-main span {
+main h1 {
     font-size: 30px;
     font-family: Merriweather, serif;
     line-height: 39px;
+    margin-bottom: 0;
 }
 
 main img {
