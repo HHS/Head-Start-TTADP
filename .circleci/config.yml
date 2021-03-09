@@ -133,7 +133,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "grantee-import-bugfix"
+    default: "js-283-frontend-updates"
     type: string
 jobs:
   build_and_lint:

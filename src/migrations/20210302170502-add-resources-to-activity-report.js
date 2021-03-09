@@ -5,13 +5,13 @@ module.exports = {
         queryInterface.addColumn('ActivityReports',
           'nonECLKCResourcesUsed',
           {
-            type: Sequelize.ARRAY(Sequelize.STRING),
+            type: Sequelize.ARRAY(Sequelize.TEXT),
           }, { transaction }),
         queryInterface.removeColumn('ActivityReports', 'resourcesUsed', { transaction }),
         queryInterface.addColumn('ActivityReports',
           'ECLKCResourcesUsed',
           {
-            type: Sequelize.ARRAY(Sequelize.STRING),
+            type: Sequelize.ARRAY(Sequelize.TEXT),
           }, { transaction }),
       ]);
     });
