@@ -170,7 +170,7 @@ function Landing() {
     direction: 'desc',
   });
   const [offset, setOffset] = useState(0);
-  const [perPage] = useState(2);
+  const [perPage] = useState(10);
   const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
 
