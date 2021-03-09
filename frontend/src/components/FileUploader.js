@@ -17,12 +17,11 @@ import { uploadFile, deleteFile } from '../fetchers/File';
 
 import './FileUploader.css';
 
-export const upload = async (file, reportId, attachmentType, setErrorMessage) => {
+export const upload = async (file, reportId, setErrorMessage) => {
   let res;
   try {
     const data = new FormData();
     data.append('reportId', reportId);
-    data.append('attachmentType', attachmentType);
     data.append('file', file);
     res = await uploadFile(data);
   } catch (error) {
@@ -42,13 +41,7 @@ export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => 
     setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
     return;
   }
-  let attachmentType;
-  if (id === 'attachments') {
-    attachmentType = 'ATTACHMENT';
-  } else if (id === 'otherResources') {
-    attachmentType = 'RESOURCE';
-  }
-  const newFiles = e.map((file) => upload(file, reportId, attachmentType, setErrorMessage));
+  const newFiles = e.map((file) => upload(file, reportId, setErrorMessage));
   Promise.all(newFiles).then((values) => {
     onChange(values);
   });
@@ -66,8 +59,8 @@ function Dropzone(props) {
       {...getRootProps()}
     >
       <input {...getInputProps()} />
-      <button type="button" className="usa-button">
-        Browse files
+      <button type="button" className="usa-button usa-button--outline">
+        Upload Resources
       </button>
       {errorMessage
         && (
