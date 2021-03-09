@@ -11,6 +11,6 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('Users', 'legacyId');
+    await queryInterface.removeColumn('ActivityReports', 'legacyId');
   },
 };
