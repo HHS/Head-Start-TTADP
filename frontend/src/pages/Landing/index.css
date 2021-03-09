@@ -70,8 +70,9 @@ div.smart-hub--total-count {
   float: right;
   font-size: 16px;
   font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
   margin-right: 20px;
-  margin-top: 25px;
+  margin-top: 27px;
   margin-bottom: -90px;
 }
 
