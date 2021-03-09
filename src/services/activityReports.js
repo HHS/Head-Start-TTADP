@@ -199,23 +199,11 @@ export function activityReportById(activityReportId) {
       {
         model: File,
         where: {
-          attachmentType: 'ATTACHMENT',
           status: {
             [Op.ne]: 'UPLOAD_FAILED',
           },
         },
         as: 'attachments',
-        required: false,
-      },
-      {
-        model: File,
-        where: {
-          attachmentType: 'RESOURCE',
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'otherResources',
         required: false,
       },
       {
@@ -387,13 +375,22 @@ export async function createOrUpdate(newActivityReport, report) {
     collaborators,
     activityRecipients,
     attachments,
-    otherResources,
     approvingManager,
     author,
     granteeNextSteps,
     specialistNextSteps,
-    ...updatedFields
+    ...allFields
   } = newActivityReport;
+
+  const ECLKCResourcesUsed = allFields.ECLKCResourcesUsed
+    ? allFields.ECLKCResourcesUsed.map((item) => item.value)
+    : [];
+
+  const nonECLKCResourcesUsed = allFields.nonECLKCResourcesUsed
+    ? allFields.nonECLKCResourcesUsed.map((item) => item.value)
+    : [];
+
+  const updatedFields = { ...allFields, ECLKCResourcesUsed, nonECLKCResourcesUsed };
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);
