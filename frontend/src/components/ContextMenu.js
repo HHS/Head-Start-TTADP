@@ -53,7 +53,7 @@ function ContextMenu({
         className="smart-hub--context-menu-button smart-hub--button__no-margin"
         unstyled
         aria-haspopup
-        onClick={(e) => { e.preventDefault(); updateShown((previous) => !previous); }}
+        onClick={() => { updateShown((previous) => !previous); }}
         aria-label={label}
         type="button"
       >

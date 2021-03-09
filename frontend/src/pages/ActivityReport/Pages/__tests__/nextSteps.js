@@ -112,12 +112,12 @@ describe('next steps', () => {
     userEvent.click(editBtn);
 
     const input = await screen.findByTestId(SPECIALIST_INPUT);
-    userEvent.type(input, 'shrek');
+    userEvent.type(input, ' is a pokemon');
     const submitBtn = await screen.findByTestId(SPECIALIST_BUTTON);
     userEvent.click(submitBtn);
 
     // The he sees the item updated
-    const item = await screen.findByText('shrek');
+    const item = await screen.findByText('pikachu is a pokemon');
     expect(item).toBeTruthy();
   });
 
