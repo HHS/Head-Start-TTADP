@@ -27,18 +27,18 @@ const RenderTopicsResourcesReview = ({ data }) => {
 
 describe('Topics & resources', () => {
   const data = {
-    otherResources: [{ originalFileName: 'other', url: { url: 'http://localhost/other' }, status: 'APPROVED' }],
     attachments: [{ originalFileName: 'attachment', url: { url: 'http://localhost/attachment' }, status: 'APPROVED' }],
-    resourcesUsed: 'resources',
+    ECLKCResourcesUsed: [{ value: 'eclkc' }],
+    nonECLKCResourcesUsed: [{ value: 'nonEclkc' }],
     topics: 'topics',
   };
 
   describe('review page', () => {
     it('displays attachments and other resources', async () => {
       render(<RenderTopicsResourcesReview data={data} />);
-      expect(await screen.findByText('other')).toBeVisible();
+      expect(await screen.findByText('eclkc')).toBeVisible();
       expect(await screen.findByText('attachment')).toBeVisible();
-      expect(await screen.findByText('resources')).toBeVisible();
+      expect(await screen.findByText('nonEclkc')).toBeVisible();
       expect(await screen.findByText('topics')).toBeVisible();
     });
   });
