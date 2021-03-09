@@ -40,19 +40,6 @@ function Unauthenticated({ loggedOut, timedOut }) {
             <Link referrerPolicy="same-origin" className="usa-button smart-hub-bg-blue-primary display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
               Log In with HSES
             </Link>
-            <div className="margin-top-9">
-              <p className="text-bold">
-                First time logging in?
-              </p>
-              <p>
-                You must request permission in order to use the TTA Smart Hub.
-              </p>
-              <p>
-                <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
-                  Request Permission
-                </a>
-              </p>
-            </div>
           </div>
         </div>
       </div>
