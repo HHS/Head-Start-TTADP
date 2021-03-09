@@ -271,7 +271,9 @@ function Landing() {
                 <h1 className="landing">Activity Reports</h1>
               </Grid>
               <Grid className="flex-align-self-center">
-                {reportAlerts && reportAlerts.length > 0 && hasReadWrite(user) && <NewReport />}
+                {reportAlerts
+                  && reportAlerts.length > 0
+                  && hasReadWrite(user) && <NewReport />}
               </Grid>
             </Grid>
             <Grid row>
@@ -284,27 +286,36 @@ function Landing() {
             <MyAlerts reports={reportAlerts} newBtn={hasReadWrite(user)} />
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
+                <span className="smart-hub--table-nav">
+                  <span
+                    className="smart-hub--total-count"
+                    aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                      offset,
+                      perPage,
+                      activePage,
+                      reportsCount,
+                    )}`}
+                  >
+                    {renderTotal(offset, perPage, activePage, reportsCount)}
+                    <Pagination
+                      hideFirstLastPages
+                      prevPageText="<Prev"
+                      nextPageText="Next>"
+                      activePage={activePage}
+                      itemsCountPerPage={perPage}
+                      totalItemsCount={reportsCount}
+                      pageRangeDisplayed={4}
+                      onChange={handlePageChange}
+                      linkClassPrev="smart-hub--link-prev"
+                      linkClassNext="smart-hub--link-next"
+                      tabIndex={0}
+                    />
+                  </span>
+                </span>
                 <Table className="usa-table usa-table--borderless usa-table--striped">
                   <caption>
                     Activity reports
                     <p id="arTblDesc">with sorting and pagination</p>
-                    <span className="smart-hub--table-nav">
-                      <span className="smart-hub--total-count" aria-label={`Page ${activePage}, displaying rows ${renderTotal(offset, perPage, activePage, reportsCount)}`}>
-                        {renderTotal(offset, perPage, activePage, reportsCount)}
-                        <Pagination
-                          hideFirstLastPages
-                          prevPageText="<Prev"
-                          nextPageText="Next>"
-                          activePage={activePage}
-                          itemsCountPerPage={perPage}
-                          totalItemsCount={reportsCount}
-                          pageRangeDisplayed={4}
-                          onChange={handlePageChange}
-                          linkClassPrev="smart-hub--link-prev"
-                          linkClassNext="smart-hub--link-next"
-                        />
-                      </span>
-                    </span>
                   </caption>
                   <thead>
                     <tr>
