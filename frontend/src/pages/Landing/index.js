@@ -176,7 +176,28 @@ function Landing() {
     return <div>Loading...</div>;
   }
 
+  let msg;
   const message = history.location.state && history.location.state.message;
+  if (message) {
+    msg = (
+      <div>
+        You successfully
+        {' '}
+        {message.status}
+        {' '}
+        report
+        {' '}
+        <Link to={`/activity-reports/${message.reportId}`}>
+          {message.displayId}
+        </Link>
+        {' '}
+        on
+        {' '}
+        {message.time}
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -200,9 +221,9 @@ function Landing() {
                     <FontAwesomeIcon color="black" icon={faTimesCircle} />
                   </span>
                 </Button>
-)}
+              )}
             >
-              {message}
+              {msg}
             </Alert>
             )}
             <Grid row gap>
