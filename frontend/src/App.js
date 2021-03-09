@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
+import { HTTPError } from './fetchers';
 
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
@@ -22,9 +23,11 @@ import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
 import LandingLayout from './components/LandingLayout';
+import RequestPermissions from './components/RequestPermissions';
 
 function App() {
   const [user, updateUser] = useState();
+  const [authError, updateAuthError] = useState();
   const [loading, updateLoading] = useState(true);
   const [loggedOut, updateLoggedOut] = useState(false);
   const authenticated = user !== undefined;
@@ -35,8 +38,12 @@ function App() {
       try {
         const u = await fetchUser();
         updateUser(u);
+        updateAuthError();
       } catch (e) {
         updateUser();
+        if (e instanceof HTTPError && e.status === 403) {
+          updateAuthError(e.status);
+        }
       } finally {
         updateLoading(false);
       }
@@ -47,6 +54,7 @@ function App() {
   const logout = async (timeout = false) => {
     await fetchLogout();
     updateUser();
+    updateAuthError();
     updateLoggedOut(true);
     updateTimedOut(timeout);
   };
@@ -124,10 +132,11 @@ function App() {
           <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
             <div className="grid-col-12 margin-top-2 margin-right-2">
               <section className="usa-section padding-top-3">
-                {!authenticated
-          && <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />}
-                {authenticated
-          && renderAuthenticatedRoutes()}
+                {!authenticated && (authError === 403
+                  ? <RequestPermissions />
+                  : <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                )}
+                {authenticated && renderAuthenticatedRoutes()}
               </section>
             </div>
           </div>
