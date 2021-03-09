@@ -27,7 +27,7 @@ const Objective = ({
     if (firstInput.current) {
       firstInput.current.focus();
     }
-  }, [firstInput.current]);
+  }, []);
 
   const [editableObject, updateEditableObject] = useState(objective);
   const onChange = (e) => {

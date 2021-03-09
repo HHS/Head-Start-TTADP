@@ -264,6 +264,7 @@ const ActivitySummary = ({
                     register({
                       required: 'Please enter the duration of the activity',
                       valueAsNumber: true,
+                      pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
                       min: { value: 0, message: 'Duration can not be negative' },
                     })
                   }
