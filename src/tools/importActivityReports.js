@@ -2,6 +2,7 @@
 /* eslint-disable no-loop-func */
 import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
+import moment from 'moment';
 import {
   ActivityReport,
 } from '../models';
@@ -135,6 +136,11 @@ function coerceStatus(value) {
   return null;
 }
 
+function coerceDate(value) {
+  if (!value) return null;
+  return moment(value, 'MM/DD/YY');
+}
+
 export default async function importActivityReports(file) {
   const csvFile = readCsv(file);
   const regionMatch = file.match(/R(\d+)/);
@@ -160,6 +166,8 @@ export default async function importActivityReports(file) {
         .concat(coerceToArray(data.get('non-grantee-participants')));
       const topics = coerceToArray(data.get('topics'));
       const ttaType = coerceToArray(data.get('t-ta'));
+      const startDate = coerceDate(data.get('start-date'));
+      const endDate = coerceDate(data.get('end-date'));
 
       const ar = ActivityReport.build({
         legacyId: reportId,
@@ -168,8 +176,8 @@ export default async function importActivityReports(file) {
         // approvingManagerId: ,
         // resourcesUsed: data.get('resources-used'), // FIXME: Data model likely to change, per adhocteam#205
         duration,
-        startDate: data.get('start-date'),
-        endDate: data.get('end-date'),
+        startDate,
+        endDate,
         activityRecipientType,
         requester: data.get('source-of-request'),
         programTypes, // Array of strings
