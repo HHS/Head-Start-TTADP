@@ -167,6 +167,10 @@ export default (sequelize, DataTypes) => {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
     },
+    imported: {
+      type: DataTypes.JSONB,
+      comment: 'Storage for raw values from smartsheet CSV imports',
+    },
   }, {
     sequelize,
     modelName: 'ActivityReport',
