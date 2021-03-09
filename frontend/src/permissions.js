@@ -51,7 +51,7 @@ export const allRegionsUserHasPermissionTo = (user) => {
  * @returns {number} - region id if the user has read/write access for a region, -1 otherwise
  */
 
-export const getRegionWithReadWrite = (user) => {
+const getRegionWithReadWrite = (user) => {
   const { permissions } = user;
   if (!permissions) return -1;
 
@@ -64,11 +64,15 @@ export const getRegionWithReadWrite = (user) => {
  * @param {*} user - user object
  * @returns {boolean} - True if the user has re/write access for a region, false otherwise
  */
-export const hasReadWrite = (user) => {
+const hasReadWrite = (user) => {
   const { permissions } = user;
   return permissions && permissions.find(
     (p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
   ) !== undefined;
 };
 
-export default isAdmin;
+export {
+  isAdmin as default,
+  getRegionWithReadWrite,
+  hasReadWrite,
+};
