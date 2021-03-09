@@ -16,8 +16,7 @@ const NoteEntry = ({
 }) => {
   const [input, updateInput] = useState(defaultValue);
 
-  const onSubmit = (event) => {
-    event.preventDefault();
+  const onSubmit = () => {
     updateInput('');
     onEntry(input.trim());
   };
@@ -34,9 +33,9 @@ const NoteEntry = ({
       name={name}
       label="What have you agreed to do next?"
     >
-      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} />
-      <Button outline disabled={!(input && input.trim())} onClick={onSubmit} data-testid={`${name}-button`}>Save Next Step</Button>
-      {!isRequired && <Button secondary onClick={onCancel} data-testid={`${name}-cancel-button`}>Cancel</Button>}
+      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} defaultValue={input} />
+      <Button outline disabled={!(input && input.trim())} onClick={onSubmit} data-testid={`${name}-button`} type="button">Save Next Step</Button>
+      {!isRequired && <Button secondary onClick={onCancel} type="button" data-testid={`${name}-cancel-button`}>Cancel</Button>}
     </FormItem>
   );
 };
@@ -55,14 +54,16 @@ NoteEntry.defaultProps = {
 };
 
 const NoteEntries = ({ name, humanName }) => {
-  const { register, control, setValue } = useFormContext();
+  const {
+    register, control, setValue, trigger,
+  } = useFormContext();
   const notes = useWatch({ name, control });
 
   const [showPrompt, updateShowPrompt] = useState(false);
   const [targetIndex, updateTargetIndex] = useState(-1);
 
   useEffect(() => {
-    register({ name }, { validate: (allNotes) => allNotes.length !== 0 });
+    register({ name }, { validate: (allNotes) => (allNotes.length !== 0 ? true : `${humanName} requires at least one step`) });
   });
 
   const onEntry = (note, index, noteId) => {
@@ -70,17 +71,20 @@ const NoteEntries = ({ name, humanName }) => {
     newNotes[index] = { note, id: noteId };
     setValue(name, newNotes);
     updateShowPrompt(false);
+    trigger(name);
   };
 
   const onEdit = (index) => {
     updateShowPrompt(true);
     updateTargetIndex(index);
+    trigger(name);
   };
 
   const onDelete = (index) => {
     const newNotes = notes.filter((item, itemIndex) => itemIndex !== index);
     setValue(name, newNotes);
     updateShowPrompt(false);
+    trigger(name);
   };
 
   const onCancel = () => {
@@ -103,6 +107,7 @@ const NoteEntries = ({ name, humanName }) => {
 
   const targetId = notes[targetIndex] ? notes[targetIndex].id : undefined;
   const defaultValue = notes[targetIndex] ? notes[targetIndex].note : undefined;
+
   return (
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
@@ -129,7 +134,7 @@ const NoteEntries = ({ name, humanName }) => {
         </ul>
 
         {showPrompt ? (
-          <div className="border-left-05 border-blue padding-left-2 smart-hub-border-blue-primary">
+          <div className="border-left-05 border-blue padding-left-2 margin-top-2 smart-hub-border-blue-primary">
             <NoteEntry
               onEntry={(value) => onEntry(value, targetIndex, targetId)}
               isRequired={false}
@@ -190,7 +195,7 @@ const sections = [
 ];
 
 const ReviewSection = () => (
-  <ReviewPage sections={sections} path="topics-resources" />
+  <ReviewPage sections={sections} path="next-steps" />
 );
 
 export default {
