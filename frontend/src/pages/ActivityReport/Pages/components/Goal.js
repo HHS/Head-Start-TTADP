@@ -34,7 +34,7 @@ const Goals = ({
 
           <div className="margin-left-auto">
             <Button type="button" onClick={onRemoveGoal} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
-              <FontAwesomeIcon color="gray" icon={faTrash} />
+              <FontAwesomeIcon color="black" icon={faTrash} />
             </Button>
           </div>
         </div>

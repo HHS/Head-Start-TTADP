@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 import {
-  Fieldset, Label, TextInput,
+  Fieldset, Label,
 } from '@trussworks/react-uswds';
 
 import { isUndefined } from 'lodash';
@@ -13,20 +13,22 @@ import FileReviewItem from './Review/FileReviewItem';
 import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
+import ResourceSelector from './components/ResourceSelector';
 import { topics } from '../constants';
 
 const TopicsResources = ({
   reportId,
 }) => {
-  const { register, control } = useFormContext();
+  const { control } = useFormContext();
+
   return (
     <>
       <Helmet>
         <title>Topics and resources</title>
       </Helmet>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Topics Covered">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Topics Covered">
         <div id="topics-covered" />
-        <div className="smart-hub--form-section">
+        <div className="margin-top-4">
           <FormItem
             label="Topic(s) covered. You may choose more than one."
             name="topics"
@@ -44,38 +46,39 @@ const TopicsResources = ({
           </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="OHS / ECLKC resources">
-        <div id="resources" />
-        <div className="smart-hub--form-section">
-          <Label htmlFor="resourcesUsed">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="OHS / ECLKC resources">
+        <div id="ECLKCResources" />
+        <div className="margin-top-4">
+          <Label>
             Resources from OHS / ECLKC
             <br />
-            Enter the URL for OHS resource(s) used. https://eclkc.ohs.acf.hhs.gov/
+            Enter the URL for OHS resource(s) used.
+            {' '}
+            <a href="https://eclkc.ohs.acf.hhs.gov/">https://eclkc.ohs.acf.hhs.gov/</a>
+            <ResourceSelector
+              name="ECLKCResourcesUsed"
+              ariaName="ECLKC Resources"
+            />
           </Label>
-          <TextInput
-            id="resourcesUsed"
-            name="resourcesUsed"
-            type="text"
-            inputRef={register()}
-          />
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Upload resources">
-        <div className="smart-hub--form-section">
-          <Label htmlFor="otherResources">Upload any resources used that are not available through ECLKC</Label>
-          <Controller
-            name="otherResources"
-            defaultValue={[]}
-            control={control}
-            render={({ onChange, value }) => (
-              <FileUploader files={value} onChange={onChange} reportId={reportId} id="otherResources" />
-            )}
-          />
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Non-ECLKC resources">
+        <div id="nonECLKCResources" />
+        <div className="margin-top-4">
+          <Label>
+            For non-ECLKC resources enter URL.
+            <br />
+            If no URL is available, upload document in next section.
+            <ResourceSelector
+              name="nonECLKCResourcesUsed"
+              ariaName="non-ECLKC Resources"
+            />
+          </Label>
         </div>
       </Fieldset>
-      <Fieldset legend="Attachments" className="smart-hub--report-legend smart-hub--form-section">
+      <Fieldset legend="Supporting attachments" className="smart-hub--report-legend margin-top-4">
         <div id="attachments" />
-        <Label htmlFor="attachments">Agendas, service plans, sign-in sheets, etc.</Label>
+        <Label htmlFor="attachments">Upload resources not available online, agenda, service plans, sign-in sheets, etc.</Label>
         <Controller
           name="attachments"
           defaultValue={[]}
@@ -96,13 +99,12 @@ TopicsResources.propTypes = {
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    otherResources,
-    resourcesUsed,
+    nonECLKCResources,
+    ECLKCResources,
     attachments,
     topics: formTopics,
   } = watch();
 
-  const hasOtherResources = otherResources && otherResources.length > 0;
   const hasAttachments = attachments && attachments.length > 0;
 
   return (
@@ -120,29 +122,35 @@ const ReviewSection = () => {
         />
       </Section>
       <Section
-        hidePrint={!hasOtherResources && isUndefined(resourcesUsed)}
-        key="Resources"
-        basePath="resources"
-        anchor="resources"
-        title="Resources"
+        hidePrint={isUndefined(ECLKCResources)}
+        key="OHS / ECLKC resources"
+        basePath="topics-resources"
+        anchor="ECLKCResources"
+        title="OHS / ECLKC resources"
       >
         <ReviewItem
-          label="Resources used"
-          name="resourcesUsed"
+          label="ECLKC resources"
+          name="ECLKCResourcesUsed"
+          path="value"
         />
-        {otherResources.map((file) => (
-          <FileReviewItem
-            key={file.url.url}
-            filename={file.originalFileName}
-            url={file.url.url}
-            status={file.status}
-          />
-        ))}
+      </Section>
+      <Section
+        hidePrint={isUndefined(nonECLKCResources)}
+        key="Non-ECLKC resources"
+        basePath="topics-resources"
+        anchor="nonECLKCResources"
+        title="Non-ECLKC resources"
+      >
+        <ReviewItem
+          label="Non-ECLKC resources"
+          name="nonECLKCResourcesUsed"
+          path="value"
+        />
       </Section>
       <Section
         hidePrint={!hasAttachments}
         key="Attachments"
-        basePath="attachments"
+        basePath="topics-resources"
         anchor="attachments"
         title="Attachments"
       >
