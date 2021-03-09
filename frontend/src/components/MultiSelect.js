@@ -56,6 +56,9 @@ const styles = {
     ...provided,
     borderColor: '#565c65',
     backgroundColor: 'white',
+    // IE 11 does not take minHeight into account when centering elements vertically.
+    // Setting heigth = minHeight forces the input element in ie 11 to be centered vertically
+    height: provided.minHeight,
     borderRadius: '0',
     '&:hover': {
       borderColor: '#565c65',
