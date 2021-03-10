@@ -28,8 +28,7 @@ const NoteEntry = ({
 
   return (
     <FormItem
-      required
-      fieldSetWrapper
+      required={isRequired}
       name={name}
       label="What have you agreed to do next?"
     >
