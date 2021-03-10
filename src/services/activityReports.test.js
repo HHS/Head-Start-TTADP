@@ -2,7 +2,12 @@ import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
 import {
-  createOrUpdate, activityReportById, possibleRecipients, review, activityReports, activityReportAlerts,
+  createOrUpdate,
+  activityReportById,
+  possibleRecipients,
+  review,
+  activityReports,
+  activityReportAlerts,
 } from './activityReports';
 import { copyGoalsToGrants } from './goals';
 import { REPORT_STATUSES } from '../constants';
