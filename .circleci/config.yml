@@ -331,6 +331,19 @@ jobs:
                   cf run-task tta-smarthub-sandbox \
                     --command "yarn db:migrate:prod" \
                     --name "Reset DB"
+            - run:
+                name: Notify New Relic
+                command: |
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.sandbox_new_relic_app_id >>/deployments.json" \
+                  -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
+                  -H "Content-Type: application/json" \
+                  -d \
+                  "{
+                    \"deployment\": {
+                      \"revision\": \"<< parameters.revision >>\",
+                      \"description\": \"Sandbox Successfully Deployed\"
+                    }
+                  }"
       - when:  # dev
           condition:
             and:
@@ -356,6 +369,19 @@ jobs:
                   cf run-task tta-smarthub-dev \
                     --command "yarn db:migrate:prod" \
                     --name "Reset DB"
+            - run:
+                name: Notify New Relic
+                command: |
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.dev_new_relic_app_id >>/deployments.json" \
+                  -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
+                  -H "Content-Type: application/json" \
+                  -d \
+                  "{
+                    \"deployment\": {
+                      \"revision\": \"<< parameters.revision >>\",
+                      \"description\": \"Dev Successfully Deployed\"
+                    }
+                  }"
       - when:  # staging
           condition:
             and:
@@ -379,6 +405,19 @@ jobs:
                 name: Run database migrations
                 command: |
                   cf run-task tta-smarthub-staging --command "yarn db:migrate:prod" --name migrate
+            - run:
+                name: Notify New Relic
+                command: |
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.staging_new_relic_app_id >>/deployments.json" \
+                  -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
+                  -H "Content-Type: application/json" \
+                  -d \
+                  "{
+                    \"deployment\": {
+                      \"revision\": \"<< parameters.revision >>\",
+                      \"description\": \"Staging Successfully Deployed\"
+                    }
+                  }"
       - when:  # prod
           condition:
             and:
@@ -402,6 +441,20 @@ jobs:
                 name: Run database migrations
                 command: |
                   cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
+            ## Leaving this commented out until we have an app id for prod
+            # - run:
+            #     name: Notify New Relic
+            #     command: |
+            #       curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.prod_new_relic_app_id >>/deployments.json" \
+            #       -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
+            #       -H "Content-Type: application/json" \
+            #       -d \
+            #       "{
+            #         \"deployment\": {
+            #           \"revision\": \"<< parameters.revision >>\",
+            #           \"description\": \"Prod Successfully Deployed\"
+            #         }
+            #       }"
 workflows:
   build_test_deploy:
     jobs:
