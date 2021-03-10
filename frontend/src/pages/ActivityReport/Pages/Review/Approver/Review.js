@@ -38,7 +38,7 @@ const Review = ({
         </p>
       </div>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-        <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
           <Label htmlFor="managerNotes">Manager notes</Label>
           <Textarea inputRef={register} id="managerNotes" name="managerNotes" className={textAreaClass} />
         </Fieldset>
