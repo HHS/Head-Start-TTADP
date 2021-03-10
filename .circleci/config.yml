@@ -381,7 +381,7 @@ jobs:
                 cloudgov_password: CLOUDGOV_PROD_PASSWORD
                 cloudgov_space: CLOUDGOV_PROD_SPACE
                 deploy_config_file: deployment_config/prod_vars.yml
-                new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
+                new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
                 hses_data_file_url: PROD_HSES_DATA_FILE_URL
                 hses_data_username: PROD_HSES_DATA_USERNAME
