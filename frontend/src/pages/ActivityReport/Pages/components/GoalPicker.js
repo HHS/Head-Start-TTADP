@@ -98,6 +98,7 @@ const GoalPicker = ({
               validate: validateGoals,
             }}
             options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
+            singleRowInput
             multiSelectOptions={{
               isClearable: false,
               closeMenuOnSelect: true,
