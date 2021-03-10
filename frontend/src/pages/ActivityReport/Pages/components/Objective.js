@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
   Tag, Label, Button, TextInput, Dropdown, Grid,
 } from '@trussworks/react-uswds';
