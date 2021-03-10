@@ -52,9 +52,11 @@ export default (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
+      allowNull: true,
     },
     lastUpdatedById: {
       type: DataTypes.INTEGER,
+      allowNull: true,
     },
     approvingManagerId: {
       type: DataTypes.INTEGER,
