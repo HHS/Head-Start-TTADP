@@ -46,7 +46,7 @@ const Input = ({
   }
 
   return (
-    <div css={getStyles('input', { theme, ...props })}>
+    <>
       <AutosizeInput
         className={cx({ input: true }, className)}
         inputRef={innerRef}
@@ -55,7 +55,7 @@ const Input = ({
         {...props}
       />
       {message}
-    </div>
+    </>
   );
 };
 
