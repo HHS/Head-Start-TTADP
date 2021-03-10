@@ -83,16 +83,6 @@ const permissions = [
     scopeId: ADMIN,
   },
   {
-    userId: 7,
-    scopeId: SITE_ACCESS,
-    regionId: 14,
-  },
-  {
-    userId: 7,
-    regionId: 14,
-    scopeId: ADMIN,
-  },
-  {
     userId: 6,
     regionId: 1,
     scopeId: READ_WRITE_REPORTS,
