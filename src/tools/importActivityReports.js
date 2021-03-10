@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
 import { readFileSync } from 'fs';
+import path from 'path';
 import parse from 'csv-parse/lib/sync';
 import moment from 'moment';
 import {
@@ -40,7 +41,7 @@ import { REPORT_STATUSES } from '../constants';
 - non-grantee:
 - non-grantee-activity:
 - non-grantee-participants:
-- non-ohs-resources:
+- non-ohs-resources: 'nonECLKCResourcesUsed'
 - number-of-participants:
 - objective-1.1:
 - objective-1.1-status:
@@ -66,22 +67,33 @@ import { REPORT_STATUSES } from '../constants';
 - topics:
 - tta-provided-and-grantee-progress-made:
 
-const relationalFieldMap = new Map([
-  ['created-by', 'author'],
-  ['modified-by', 'lastUpdatedBy'],
-  ['manager', 'approvingManager'],
-  [null, 'activityRecipients'], // FIXME: "Grantee Name"?
-  [null, 'collaborators'], // FIXME: "Other specialists"? Those are names/emails, many with '.org' addresses
-  [null, 'region'], // NOTE: Take number from reportID and/or sheet name. R14 should be remapped
-  [null, 'attachments'], // FIXME: How to get attachments from smarthub?
-  ['non-ohs-resources', 'otherResources'],
-  ['specialist-follow-up-tasks-&-objectives', 'specialistNextSteps'],
-  ['grantee-follow-up-tasks-&-objectives', 'granteeNextSteps'],
-  ['goal-1', 'goals'],
-  ['goal-2', 'goals'],
-]);
+## Relational Fields
+
+### Fields that would map to Users
+- created-by: 'author'
+- modified-by: 'lastUpdatedBy'
+- manager: 'approvingManager'
+- null: 'collaborators' // NOTE: "Other specialists"?
+// NOTE: "Grantee Name", but maybe also "Non-Grantee Activity"
+- grantee-name: 'activityRecipients'
+
+### Other relational fields
+- null: 'regionId' // NOTE: Take number from sheet name. R14 should be remapped
+- null: 'attachments' // FIXME: How to get attachments from smarthub?
+- 'specialist-follow-up-tasks-&-objectives': 'specialistNextSteps'
+- 'grantee-follow-up-tasks-&-objectives': 'granteeNextSteps'
+- 'goal-1': 'goals'
+- 'goal-2': 'goals'
 
  */
+
+const wordSeperatorRE = /-?\s+-?/g;
+const columnCleanupRE = /(\s?\(.*\)|:|')+/g;
+const decimalRE = /^\d+(\.\d*)?$/;
+const invalidRegionRE = /R14/;
+const regionRE = /^R(?<regionId>\d{1,2})/i; // Used against filepaths
+const mdyDateRE = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})$/;
+const mdyFormat = 'MM/DD/YYYY';
 
 function readCsv(file) {
   const csv = readFileSync(file);
@@ -92,9 +104,9 @@ function readCsv(file) {
 function normalizeKey(k) {
   let value = k.trim();
   // Remove parentheticals, colons
-  value = value.replace(/(\s?\(.*\)|:|')+/g, '');
+  value = value.replace(columnCleanupRE, '');
   // Replace spaces or spaces plus hyphens with single hyphens
-  value = value.replace(/-?\s+-?/g, '-');
+  value = value.replace(wordSeperatorRE, '-');
   // lowercase values
   value = value.toLowerCase();
 
@@ -119,7 +131,7 @@ function normalizeData(row) {
 
 function coerceDuration(value) {
   if (!value) return null;
-  const match = /\d+(\.\d+)?/g.exec(value);
+  const match = value.trim().match(decimalRE);
   if (match) {
     return match[0].trim();
   }
@@ -128,7 +140,7 @@ function coerceDuration(value) {
 
 function coerceToArray(value) {
   if (!value) return [];
-  return value.split('\n');
+  return value.split('\n').filter((x) => x);
 }
 
 function coerceStatus(value) {
@@ -145,25 +157,39 @@ function coerceStatus(value) {
 
 function coerceDate(value) {
   if (!value) return null;
-  return moment(value, 'MM/DD/YY');
+  let fmt;
+  if (mdyDateRE.test(value.trim())) {
+    fmt = mdyFormat;
+  }
+  return moment(value, fmt);
+}
+
+function coerceInt(value) {
+  if (!value) return null;
+  if (decimalRE.test(value)) {
+    return parseInt(value, 10);
+  }
+  return null;
 }
 
 function coerceReportId(value, region) {
   if (!value) return null;
   // R14 is a test region, and shouldn't be used in actual reportIds
-  return value.replace(/R14/, `R${region}`);
+  return value.replace(invalidRegionRE, `R${region}`);
 }
 
 export default async function importActivityReports(file) {
   const csvFile = readCsv(file);
-  const regionMatch = file.match(/R(\d+)/);
-  const fileRegion = regionMatch ? regionMatch[1] : null;
+  const { name: fileName } = path.parse(file);
+  const regionMatch = regionRE.exec(fileName);
+  const { groups: { regionId: fileRegion } } = regionMatch;
+  const fileRegionId = coerceInt(fileRegion);
 
-  const recordResults = [];
+  const activityReportRecords = [];
   for await (const row of csvFile) {
     const data = normalizeData(row);
 
-    const reportId = coerceReportId(getValue(data, 'reportid'));
+    const reportId = coerceReportId(getValue(data, 'reportid'), fileRegionId);
     // Ignore rows with no reportid
     if (reportId) {
       const granteeActivity = getValue(data, 'grantee-activity');
@@ -172,6 +198,8 @@ export default async function importActivityReports(file) {
       // Coerce values into appropriate data type
       const status = coerceStatus(getValue(data, 'manager-approval'));
       const duration = coerceDuration(getValue(data, 'duration'));
+      const numberOfParticipants = coerceInt(getValue(data, 'number-of-participants'));
+
       const programTypes = coerceToArray(getValue(data, 'program-types'));
       const targetPopulations = coerceToArray(getValue(data, 'target-populations'));
       const reason = coerceToArray(getValue(data, 'reason/s'));
@@ -179,25 +207,26 @@ export default async function importActivityReports(file) {
         .concat(coerceToArray(getValue(data, 'non-grantee-participants')));
       const topics = coerceToArray(getValue(data, 'topics'));
       const ttaType = coerceToArray(getValue(data, 't-ta'));
+
       const startDate = coerceDate(getValue(data, 'start-date'));
       const endDate = coerceDate(getValue(data, 'end-date'));
 
-      const ar = ActivityReport.build({
+      const arRecord = {
         imported: data, // Store all the data in `imported` for later reuse
         legacyId: reportId,
-        regionId: fileRegion,
+        regionId: fileRegionId,
         deliveryMethod: getValue(data, 'format'),
-        // approvingManagerId: ,
-        // resourcesUsed: getValue(data, 'resources-used'), // FIXME: Data model likely to change, per adhocteam#205
-        duration,
+        ECLKCResourcesUsed: coerceToArray(getValue(data, 'resources-used')),
+        nonECLKCResourcesUsed: coerceToArray(getValue(data, 'non-ohs-resources')),
+        duration, // Decimal
         startDate,
         endDate,
         activityRecipientType,
-        requester: getValue(data, 'source-of-request'),
+        requester: getValue(data, 'source-of-request'), // 'Grantee' or 'Regional Office'
         programTypes, // Array of strings
         targetPopulations, // Array of strings
         reason, // Array of strings
-        numberOfParticipants: getValue(data, 'number-of-participants'),
+        numberOfParticipants, // Integer
         participants, // Array of strings
         topics, // Array of strings
         context: getValue(data, 'context-for-this-activity'),
@@ -206,8 +235,10 @@ export default async function importActivityReports(file) {
         ttaType, // Array of strings
         createdAt: getValue(data, 'created'), // DATE
         updatedAt: getValue(data, 'modified'), // DATE
-      });
-      recordResults.push(ar);
+      };
+      activityReportRecords.push(arRecord);
     }
   }
+
+  ActivityReport.bulkCreate(activityReportRecords, { validate: false });
 }
