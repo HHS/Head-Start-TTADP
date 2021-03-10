@@ -28,7 +28,6 @@ export default (sequelize, DataTypes) => {
       });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
-      ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'otherResources' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
       ActivityReport.belongsToMany(models.Goal, {
@@ -43,8 +42,13 @@ export default (sequelize, DataTypes) => {
     displayId: {
       type: DataTypes.VIRTUAL,
       get() {
+        if (this.legacyId) return this.legacyId;
         return `R${this.regionId.toString().padStart(2, '0')}-AR-${this.id}`;
       },
+    },
+    legacyId: {
+      comment: 'Legacy identifier taken from smartsheet ReportID. Some ids adjusted to match their region.',
+      type: DataTypes.STRING,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -56,8 +60,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    resourcesUsed: {
-      type: DataTypes.TEXT,
+    ECLKCResourcesUsed: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+    },
+    nonECLKCResourcesUsed: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
     },
     additionalNotes: {
       type: DataTypes.TEXT,
@@ -90,6 +97,9 @@ export default (sequelize, DataTypes) => {
     },
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
+    },
+    virtualDeliveryType: {
+      type: DataTypes.STRING,
     },
     reason: {
       type: DataTypes.ARRAY(DataTypes.STRING),
@@ -155,6 +165,23 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         return moment(this.updatedAt).format('MM/DD/YYYY');
+      },
+    },
+    sortedTopics: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.topics) {
+          return [];
+        }
+        return this.topics.sort((a, b) => {
+          if (a < b) {
+            return -1;
+          }
+          if (a > b) {
+            return 1;
+          }
+          return 0;
+        });
       },
     },
   }, {

@@ -38,10 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       ),
       allowNull: false,
     },
-    attachmentType: {
-      type: DataTypes.ENUM('ATTACHMENT', 'RESOURCE'),
-      allowNull: false,
-    },
     // File size in bytes
     fileSize: {
       type: DataTypes.INTEGER,
