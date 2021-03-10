@@ -1,0 +1,446 @@
+version: 2.1
+orbs:
+  node: circleci/node@4.1.0
+executors:
+  docker-executor:
+    # for docker you must specify an image to use for the primary container
+    docker:
+      - image: circleci/node:14.16.0-browsers
+  docker-postgres-executor:
+    docker:
+      - image: circleci/node:14.16.0-browsers
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+      - image: circleci/postgres:12.4-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
+  machine-executor:
+    machine:
+      image: circleci/classic:latest
+commands:
+  create_combined_yarnlock:
+    description: "Concatenate all yarn.json files into single file.
+      File is used as checksum source for part of caching key."
+    parameters:
+      filename:
+        type: string
+        default: "combined-yarnlock.txt"
+    steps:
+      - run:
+          name: Combine package-lock.json files to single file
+          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+  cf_deploy:
+    description: "Login to cloud foundry space with service account credentials
+      and push application using deployment configuration file."
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
+      auth_client_id:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client id, a required application variable"
+        type: env_var_name
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client secret, a required application variable"
+        type: env_var_name
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+      deploy_config_file:
+        description: "Path to deployment configuration file"
+        type: string
+      session_secret:
+        description: "Name of CircleCi project environment variable that
+          holds session secret, a required application variable"
+        type: env_var_name
+      new_relic_license:
+        description: "Name of CircleCI project environment variable that
+          holds the New Relic License key, a required application variable"
+        type: env_var_name
+      hses_data_file_url:
+        description: "Url to download HSES grants and grantee data from"
+        type: env_var_name
+      hses_data_username:
+        description: "Username used to access the HSES grants and grantee data"
+        type: env_var_name
+      hses_data_password:
+        description: "Password used to access the HSES grants and grantee data"
+        type: env_var_name
+    steps:
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Push application with deployment vars
+          command: |
+            cf push --vars-file << parameters.deploy_config_file >> \
+              --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
+              --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
+              --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
+              --var SESSION_SECRET=${<< parameters.session_secret >>} \
+              --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
+              --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
+              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>}
+parameters:
+  cg_org:
+    description: "Cloud Foundry cloud.gov organization name"
+    default: "hhs-acf-ohs-tta"
+    type: string
+  cg_api:
+    description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
+    default: "https://api.fr.cloud.gov"
+    type: string
+  prod_git_url:
+    description: "URL of github repo that will deploy to prod"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  staging_git_url:
+    description: "URL of github repo that will deploy to staging"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  dev_git_url:
+    description: "URL of github repo that will deploy to dev"
+    default: "https://github.com/adhocteam/Head-Start-TTADP"
+    type: string
+  prod_git_branch:
+    description: "Name of github branch that will deploy to prod"
+    default: "production"
+    type: string
+  staging_git_branch:
+    description: "Name of github branch that will deploy to staging"
+    default: "main"
+    type: string
+  dev_git_branch:
+    description: "Name of github branch that will deploy to dev"
+    default: "main"
+    type: string
+  sandbox_git_branch:  # change to feature branch to test deployment
+    default: "js-283-frontend-updates"
+    type: string
+jobs:
+  build_and_lint:
+    executor: docker-executor
+    steps:
+      - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version e.g. v4-yarn...
+            - v4-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v4-yarn-deps-
+      - run: yarn deps
+      - save_cache:
+          paths:
+            - node_modules
+            - frontend/node_modules
+          key: v4-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  test_backend:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Run seeders
+          command: yarn db:seed:ci
+      - run:
+          name: Test backend
+          command: yarn test:ci
+      - store_test_results:
+          path: reports/
+      - store_artifacts:
+          path: coverage/
+  test_frontend:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Test frontend
+          command: yarn --cwd frontend run test:ci --maxWorkers=50%
+      - store_test_results:
+          path: frontend/reports/
+      - store_artifacts:
+          path: frontend/coverage/
+  cucumber_test:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server
+      - run:
+          name: Run cucumber
+          command: |
+            yarn cucumber:ci
+      - store_artifacts:
+          path: reports/
+  dynamic_security_scan:
+    executor: machine-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start up local server
+          command: ./bin/prod-style-server
+      - run:
+          name: Pull OWASP ZAP docker image
+          command: docker pull owasp/zap2docker-weekly
+      - run:
+          name: Make reports directory group writeable
+          command: chmod g+w reports
+      - run:
+          name: Run OWASP ZAP
+          command: ./bin/run-owasp-scan
+      - store_artifacts:
+          path: reports/owasp_report.html
+  accessibility_scan:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Build
+          command: yarn build
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Start server
+          command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
+          background: true
+      - run:
+          name: Run axe
+          command: |
+            sleep 5
+            yarn axe:ci
+      - store_artifacts:
+          path: reports/
+  deploy:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run:
+          name: Build frontend assets
+          command: yarn --cwd frontend run build
+      - run:
+          name: Install Cloud Foundry
+          command: |
+            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
+            sudo dpkg -i cf-cli_amd64.deb
+      - when:  # sandbox: for short-term feature development, see README.md
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
+          steps:
+            - cf_deploy:
+                app_name: tta-smarthub-sandbox
+                auth_client_id: SANDBOX_AUTH_CLIENT_ID
+                auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
+                cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
+                cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
+                cloudgov_space: CLOUDGOV_SANDBOX_SPACE
+                deploy_config_file: deployment_config/sandbox_vars.yml
+                new_relic_license: NEW_RELIC_LICENSE_KEY
+                session_secret: SANDBOX_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Migrate database
+                command: |
+                  cf run-task tta-smarthub-sandbox \
+                    --command "yarn db:migrate:prod" \
+                    --name "Reset DB"
+      - when:  # dev
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
+          steps:
+            - cf_deploy:
+                app_name: tta-smarthub-dev
+                auth_client_id: DEV_AUTH_CLIENT_ID
+                auth_client_secret: DEV_AUTH_CLIENT_SECRET
+                cloudgov_username: CLOUDGOV_DEV_USERNAME
+                cloudgov_password: CLOUDGOV_DEV_PASSWORD
+                cloudgov_space: CLOUDGOV_DEV_SPACE
+                deploy_config_file: deployment_config/dev_vars.yml
+                new_relic_license: NEW_RELIC_LICENSE_KEY
+                session_secret: DEV_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Migrate database
+                command: |
+                  cf run-task tta-smarthub-dev \
+                    --command "yarn db:migrate:prod" \
+                    --name "Reset DB"
+      - when:  # staging
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+          steps:
+            - cf_deploy:
+                app_name: tta-smarthub-staging
+                auth_client_id: STAGING_AUTH_CLIENT_ID
+                auth_client_secret: STAGING_AUTH_CLIENT_SECRET
+                cloudgov_username: CLOUDGOV_STAGING_USERNAME
+                cloudgov_password: CLOUDGOV_STAGING_PASSWORD
+                cloudgov_space: CLOUDGOV_STAGING_SPACE
+                deploy_config_file: deployment_config/staging_vars.yml
+                new_relic_license: NEW_RELIC_LICENSE_KEY
+                session_secret: STAGING_SESSION_SECRET
+                hses_data_file_url: HSES_DATA_FILE_URL
+                hses_data_username: HSES_DATA_USERNAME
+                hses_data_password: HSES_DATA_PASSWORD
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-staging --command "yarn db:migrate:prod" --name migrate
+      - when:  # prod
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+          steps:
+            - cf_deploy:
+                app_name: tta-smarthub-prod
+                auth_client_id: PROD_AUTH_CLIENT_ID
+                auth_client_secret: PROD_AUTH_CLIENT_SECRET
+                cloudgov_username: CLOUDGOV_PROD_USERNAME
+                cloudgov_password: CLOUDGOV_PROD_PASSWORD
+                cloudgov_space: CLOUDGOV_PROD_SPACE
+                deploy_config_file: deployment_config/prod_vars.yml
+                new_relic_license: NEW_RELIC_LICENSE_KEY
+                session_secret: PROD_SESSION_SECRET
+                hses_data_file_url: PROD_HSES_DATA_FILE_URL
+                hses_data_username: PROD_HSES_DATA_USERNAME
+                hses_data_password: PROD_HSES_DATA_PASSWORD
+            - run:
+                name: Run database migrations
+                command: |
+                  cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
+workflows:
+  build_test_deploy:
+    jobs:
+      - build_and_lint
+      - test_backend:
+          requires:
+            - build_and_lint
+      - test_frontend:
+          requires:
+            - build_and_lint
+      - cucumber_test:
+          requires:
+            - build_and_lint
+      - dynamic_security_scan:
+          requires:
+            - build_and_lint
+      - accessibility_scan:
+          requires:
+            - build_and_lint
+      - deploy:
+          requires:
+            - test_backend
+            - test_frontend
+            - cucumber_test
+            - dynamic_security_scan
+            - accessibility_scan
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.sandbox_git_branch >>
+                - << pipeline.parameters.dev_git_branch >>
+                - << pipeline.parameters.staging_git_branch >>
+                - << pipeline.parameters.prod_git_branch >>
+  daily_scan:
+    triggers:
+      - schedule:
+          cron: "0 13 * * 1-5"
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.dev_git_branch >>
+                - << pipeline.parameters.staging_git_branch >>
+                - << pipeline.parameters.prod_git_branch >>
+    jobs:
+      - build_and_lint
+      - test_backend:
+          requires:
+            - build_and_lint
+      - test_frontend:
+          requires:
+            - build_and_lint
+      - dynamic_security_scan:
+          requires:
+            - build_and_lint

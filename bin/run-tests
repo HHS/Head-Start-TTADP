@@ -1,0 +1,114 @@
+#!/bin/bash
+
+declare -a options=(frontend backend)
+declare lr=">>>>>>>>"
+declare -i exit_code=0
+
+log() {
+    echo "$lr $*"
+}
+
+check_exit() {
+    if [[ "$1" -ne 0 ]]; then
+        echo "$lr last docker-compose command failed"
+        ((exit_code++))
+    fi
+}
+
+main() {
+    local opt=""
+    local docker="true"
+
+    while [[ $# -gt 0 ]]
+    do
+      key="$1"
+      case "$key" in
+        -l|--local)
+          docker="false"
+          shift
+          ;;
+        *)
+          for o in "${options[@]}"; do
+            if [[ "$key" == "$o"  ]]; then
+                opt="$o";
+            fi
+          done
+          shift
+          ;;
+      esac
+    done
+
+    log "Running tests in using test config 'docker-compose.test.yml'"
+    # Start containers
+    if [[ $docker == "true" ]]; then
+      docker-compose -f 'docker-compose.test.yml' up -d
+      check_exit "$?"
+    else
+      docker-compose -f 'docker-compose.test.yml' up -d test-db
+      check_exit "$?"
+      IFS=: read host port <<< "$(docker-compose -f 'docker-compose.test.yml' port test-db 5432)"
+      echo "Postgres is running on port $port"
+      export POSTGRES_PORT=$port
+    fi
+
+    # Let postgres initialize
+    echo
+    log "Giving postgres a few seconds to start up..."
+    sleep 5
+
+    # Migrate and seed db
+    echo
+    log "Migrating & seeding db"
+    if [[ $docker == "true" ]]; then
+      docker exec test-backend bash -c "yarn db:migrate"
+      check_exit "$?"
+      docker exec test-backend bash -c "yarn db:seed"
+      check_exit "$?"
+    else
+      yarn db:migrate
+      check_exit "$?"
+      yarn db:seed
+      check_exit "$?"
+    fi
+
+    if [[ "$opt" == "backend" || -z "$opt" ]]; then
+        # Test backend
+        echo
+        log "Running backend tests"
+        if [[ $docker == "true" ]]; then
+          docker exec test-backend bash -c "yarn test:ci"
+        else
+          yarn test:ci
+        fi
+        check_exit "$?"
+    fi
+
+    if [[ "$opt" == "frontend" || -z "$opt" ]]; then
+        # Test frontend
+        echo
+        log "Running frontend tests"
+        if [[ $docker == "true" ]]; then
+          docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+        else
+          yarn --cwd frontend run test:ci
+        fi
+        check_exit "$?"
+    fi
+
+    # Cleanup
+    echo
+    log "Cleaning up test containers"
+    docker-compose \
+        -f 'docker-compose.test.yml' \
+        down --volumes
+    check_exit "$?"
+
+    if [[ $exit_code -ne 0 ]]; then
+        echo
+        log "Errors occurred during script execution"
+    fi
+
+    exit "$exit_code"
+}
+
+main "$@"

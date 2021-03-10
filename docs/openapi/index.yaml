@@ -1,0 +1,264 @@
+openapi: 3.0.2
+tags:
+  - name: status
+info:
+  version: 0.0.1
+  title: TTADP
+  contact:
+    email: josh@adhocteam.us
+servers:
+  - url: http://localhost:8080
+  - url: http://backend:8080
+  - url: https://tta-smarthub-sandbox.app.cloud.gov
+  - url: https://tta-smarthub-dev.app.cloud.gov
+  - url: https://tta-smarthub-staging.app.cloud.gov
+paths:
+  $ref: "./paths/index.yaml"
+components:
+  schemas:
+    activityReport:
+      type: object
+      description: >
+        This object represents a report on an activity that a specialist has completed
+        with 1 to many grants or non-grantees
+      properties:
+        id:
+          type: number
+        displayId:
+          type: string
+          description: >
+            A human readable report ID, of the form `R[Region]-AR-[ID]`. A report with
+            the ID of 20 in region 8 would have a displayId of `R08-AR-20`
+        userId:
+          type: number
+          description: The id of the author of the report
+        lastUpdatedById:
+          type: number
+          description: The id of the last user to update the report
+        resourcesUsed:
+          type: string
+          description: A list of URLs used in the activity
+        additionalNotes:
+          type: string
+          description: >
+            Any additional info user's wish to convey about the report that is not
+            captured elsewhere
+        numberOfParticipants:
+          type: number
+          description: The number of people present at the activity
+        deliveryMethod:
+          type: string
+          description: How the activity was connected, virtual vs in person
+        duration:
+          type: number
+          description: How long the activity took to complete, in hours
+        endDate:
+          type: string
+        startDate:
+          type: string
+        activityRecipientType:
+          type: string
+          description: The recipient type for the report, grant or non-grantee
+        requester:
+          type: string
+          description: Who requested the TTA, grantee or regional office
+        programTypes:
+          type: array
+          description: The type of grantee program, Head Start, Early Head Start, etc...
+          items:
+            type: string
+        targetPopulations:
+          type: array
+          description: The target of the activity report
+          items:
+            type: string
+        reason:
+          type: array
+          description: Why the activity was conducted
+          items:
+            type: string
+        context:
+          type: string
+          description: Additional context an author can provide for a report
+        participants:
+          type: array
+          description: The roles of the people attending the TTA
+          items:
+            type: string
+        topics:
+          type: array
+          description: Topics covered during the TTA
+          items:
+            type: string
+        approvingManager:
+          $ref: '#/components/schemas/user'
+        pageState:
+          type: object
+          enum: ['Not Started', 'In progress', 'Completed']
+          description: The state of each page of the form
+          properties:
+            1:
+              type: string
+            2:
+              type: string
+            3:
+              type: string
+            4:
+              type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - submitted
+            - approved
+            - needs_action
+          description: The current state of the report
+        ttaType:
+          type: array
+          description: The type of the activity, Training or Technical Assistance (or both)
+          items:
+            type: string
+        specialistNextSteps:
+          description: List of notes/next steps that a specialists enters
+          $ref: '#/components/schemas/nextStepNotes'
+        granteeNextSteps:
+          description: List of notes/next steps that are assigned to the grantee
+          $ref: '#/components/schemas/nextStepNotes'
+    shortActivityReport:
+      type: object
+      description: >
+        This object represents a shorter version of a report on an activity that a specialist has completed
+        with 1 to many grants or non-grantees
+      properties:
+        id:
+          type: number
+        regionId:
+          type: number
+          description: Home region id of the activity report user
+        startDate:
+          type: string
+        lastSaved:
+          type: string
+        topics:
+          type: array
+          description: Topics covered during the TTA
+          items:
+            type: string
+        activityRecipients:
+          type: array
+          description: Activity recipients - grantees or non-grantees
+          items:
+            type: object
+        collaborators:
+          type: array
+          description: Collaborating user names
+          items:
+            type: object
+        status:
+          type: string
+          enum: ['approved', 'draft', 'submitted']
+          description: The current state of the report
+    selectableUser:
+      type: object
+      description: >
+        Users with only their id and name, ready to be placed in a select box on the frontend without
+        further modification
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+    activityRecipient:
+      type: object
+      description: A grant or non-grantee that can be added to an activity report
+      properties:
+        activityRecipientId:
+          type: number
+        name:
+          type: string
+    fileUpload:
+      type: object
+      properties:
+        reportId:
+          type: number
+          description: "id of the Activity report the file is associated with"
+        file:
+          type: string
+          format: binary
+          description: "File to be uploaded"
+      required:
+      - attachmentType
+      - reportId
+      - File
+    fileResponse:
+      type: object
+      description: ID of file created
+      properties:
+        id:
+          type: number
+    permission:
+      type: object
+      description: A combination of region, scope and user allowing that user to perform an action in a region
+      properties:
+        userId:
+          type: number
+        scopeId:
+          type: number
+        regionId:
+          type: number
+    user:
+      type: object
+      description: A TTA Smart Hub user
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        hsesUserId:
+          type: number
+        hsesUsername:
+          type: string
+        hsesAuthorities:
+          type: array
+          description: List of authorities (user types) returned from HSES
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        homeRegionId:
+          type: number
+        title:
+          type: string
+        lastLogin:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/permission'
+    nextStepNotes:
+      type: array
+      description: List of notes a grantee/specialist enters
+      items:
+        type: object
+        properties:
+          note: string
+          id: number
+    goal:
+      type: object
+      description: A long term desire for a grant
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+          description: The aim or purpose of the goal
+        status:
+          type: string
+          description: The state of the goal. Currently unused
+        timeframe:
+          type: string
+          description: >
+            The expected completion date of the goal. These are pulled in from HSES and are not currently used
+        isFromSmartsheetTtaPlan:
+          type: boolean
+          description: Flag indicating the origin of the goal, smartsheet or smarthub

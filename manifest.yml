@@ -1,0 +1,39 @@
+---
+applications:
+  - name: tta-smarthub-((env))
+    buildpacks:
+      - nodejs_buildpack
+    env:
+      AUTH_BASE: ((AUTH_BASE))
+      AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
+      AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
+      LOG_JSON_FORMAT: "true"
+      LOG_LEVEL: ((LOG_LEVEL))
+      NEW_RELIC_APP_NAME: tta-smarthub-((env))
+      NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
+      NODE_ENV: production
+      # Soon to be removed in favor of TTA_SMART_HUB_URI
+      REDIRECT_URI_HOST: ((REDIRECT_URI_HOST))
+      SESSION_SECRET: ((SESSION_SECRET))
+      TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
+      HSES_DATA_FILE_URL: ((HSES_DATA_FILE_URL))
+      HSES_DATA_USERNAME: ((HSES_DATA_USERNAME))
+      HSES_DATA_PASSWORD: ((HSES_DATA_PASSWORD))
+      CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
+    services:
+      - ttahub-((env))
+      - ttahub-redis-((env))
+      - ttahub-document-upload-((env))
+    processes:
+    - type: web
+      instances: ((web_instances))
+      command: yarn start:web
+      memory: ((web_memory))
+    - type: worker
+      instances: ((worker_instances))
+      command: yarn start:worker
+      memory: ((worker_memory))
+  - name: tta-smarthub-maintenance-page-((env))
+    buildpacks:
+      - staticfile_buildpack
+    memory: 64M 

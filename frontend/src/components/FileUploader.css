@@ -1,0 +1,45 @@
+.smart-hub--file-tag {
+  text-transform: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  max-width: 200px;
+  width: fit-content;
+  border-radius: 5px;
+}
+
+.smart-hub--file-tag-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 5px;
+}
+
+.usa-form .smart-hub--file-tag-button {
+  margin: 0;
+}
+
+.fa-stack {
+  width: 1em;
+}
+
+.files-table {
+  width: 100%;
+  border-collapse: collapse;
+  /* border: 1px solid #979797; */
+}
+
+.files-table--thead th, .files-table td {
+  padding: .5rem;
+  text-align: left;
+  font-size: .9rem;
+}
+.files-table--container {
+  border: solid 1px #979797;
+  min-height: 8rem;
+}
+
+.files-table--empty {
+  text-align: center;
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+
+# Format any *.tf files that were cached/staged
+files=$(git diff --cached --name-only)
+for f in $files
+do
+  if [ -e "$f" ] && [[ $f == *.tf ]]; then
+    printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
+    terraform fmt $f
+    git add $f
+  fi
+done

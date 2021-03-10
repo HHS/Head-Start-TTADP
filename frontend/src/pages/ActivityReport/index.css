@@ -1,0 +1,77 @@
+
+.smart-hub--report-checkbox {
+  margin-top: 1.25rem;
+}
+
+.smart-hub--remove-resource {
+  margin-top: 8px !important;
+  margin-left: 4px;
+}
+
+.smart-hub--virtual-delivery-group {
+  border-left-color: #0166ab;
+  border-left-style: solid;
+  border-left-width: 4px;
+  padding-left: 10px;
+}
+
+.smart-hub--report-legend .usa-legend {
+  font-family: 'Source Sans Pro Web';
+  font-size: 17px;
+  color: #21272d;
+  line-height: 22px;
+  height: 16px;
+  font-weight: 700;
+}
+
+.usa-label {
+  font-size: 1rem;
+}
+
+.smart-hub--form-large {
+  max-width: 500px;
+}
+
+.usa-label {
+  max-width: 500px;
+}
+
+.usa-accordion__button {
+  background-color: white;
+  height: 64px;
+  padding-right: 40px;
+  padding-left: 40px;
+  background-position-x: calc(100% - 40px), calc(100% - 40px);
+}
+
+.usa-accordion__button[aria-expanded=false] {
+  border-radius: 4px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.usa-accordion__button[aria-expanded=true] {
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+  box-shadow: 0 -6px 8px 0px rgba(0, 0, 0, 0.1);
+}
+
+.usa-accordion__content {
+  padding-top: 0px;
+  padding-right: 40px;
+  padding-left: 40px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+  display:inline-block;
+    font-size: 40px;
+    line-height: 50px;
+    background-color:black;
+    color:white;
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    vertical-align: bottom;
+}

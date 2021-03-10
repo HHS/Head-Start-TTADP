@@ -1,0 +1,13 @@
+get:
+  tags:
+    - user
+  operationId: getUser
+  description: Get the currently logged in user
+  responses:
+    200:
+      description: Current user
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '../index.yaml#/components/schemas/user'

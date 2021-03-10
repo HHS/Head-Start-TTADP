@@ -1,0 +1,46 @@
+put:
+  tags:
+    - activity-reports
+  summary: Review an activity report
+  description: >
+    An approving manager reviews an activity report to determine if it requires
+    any additional updates. If the report needs updates the manager sets the status to
+    'Needs Action', otherwise to 'Approved'
+  requestBody:
+    description: The status and any manager notes
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              description: The status of the report after review
+              enum:
+                - approved
+                - needs_action
+            managerNotes:
+              type: string
+              description: Any notes the manager needs to relay to the author/collaborators of the report
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The new status of the activity report
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - approved
+                  - needs_action
+              managerNotes:
+                type: string
