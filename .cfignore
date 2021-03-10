@@ -1,0 +1,8 @@
+docs/
+cucumber/
+deployment_config/
+frontend/
+src/
+terraform/
+hses.zip
+temp/

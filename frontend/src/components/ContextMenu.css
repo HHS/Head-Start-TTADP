@@ -1,0 +1,25 @@
+.smart-hub--context-menu-button {
+  display: block;
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+  color: black;
+}
+
+.smart-hub--context-menu-button:hover {
+  text-decoration: none;
+  color: black;
+}
+
+.smart-hub--context-menu {
+  position: absolute;
+  z-index: 1;
+}
+
+.smart-hub--context-menu__left {
+  transform:translateX(-75%);
+}
+
+.smart-hub--context-menu-item-label {
+  padding: 12px 24px 12px 12px;
+}

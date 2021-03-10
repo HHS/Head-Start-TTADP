@@ -1,0 +1,14 @@
+get:
+  tags:
+    - admin
+  operationId: getUsers
+  description: Gets users from the database.
+  responses:
+    200:
+      description: Successfully retrieve all users
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../index.yaml#/components/schemas/user'

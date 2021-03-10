@@ -1,0 +1,34 @@
+version: "3.2"
+services:
+  server:
+    build:
+      context: .
+    command: yarn start:web
+    user: ${CURRENT_USER:-root}
+    networks:
+      - smarthub
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: postgres_docker
+      NODE_ENV: production
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: secretpass
+      POSTGRES_DB: ttasmarthub
+      DATABASE_URL: postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
+      SESSION_SECRET: notasecret
+    volumes:
+      - ".:/app:rw"
+  db:
+    image: postgres:12.4
+    container_name: postgres_docker
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpass
+      POSTGRES_DB: ttasmarthub
+    networks:
+      - smarthub
+networks:
+  smarthub:

@@ -1,0 +1,21 @@
+get:
+  tags:
+    - activity-reports
+  summary: Potential activity report approvers
+  parameters:
+    - in: query
+      name: region
+      schema:
+        type: integer
+      description: The region id of the approvers
+  operationId: getApprovers
+  description: Gets all approvers for any region the current user has write permissions
+  responses:
+    200:
+      description: All approvers for any region the user has write permissions
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../index.yaml#/components/schemas/selectableUser'

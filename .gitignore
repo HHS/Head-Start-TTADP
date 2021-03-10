@@ -1,1 +1,27 @@
+# Test related
+coverage
+junit.xml
+reports
+yarn-error.log
+docs/circleci/test_report.md
+
+# Ignore /doc => /docs symbolic link created for adr-tools
+/doc
+
+# Build related
+build/
+frontend/build
+node_modules
+
+# Terraform
+**/.terraform.lock.hcl
+**/.terraform/*
+
+# transient deploy configs
+/terraform/transient
+/deployment_config/transient_vars.yml
+
+# Secrets
 .DS_Store
+.env
+**/*secrets.auto.tfvars

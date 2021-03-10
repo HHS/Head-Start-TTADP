@@ -1,0 +1,30 @@
+get:
+  tags:
+    - activity-reports
+  description: Gets activity reports from the database.
+  responses:
+    200:
+      description: Successfully retrieved activity reports
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '../../index.yaml#/components/schemas/shortActivityReport'
+post:
+  tags:
+    - activity-reports
+  summary: Create a new activity report
+  requestBody:
+    description: A new activity report
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../index.yaml#/components/schemas/activityReport'
+  responses:
+    200:
+      description: Successfully created activity report
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'
