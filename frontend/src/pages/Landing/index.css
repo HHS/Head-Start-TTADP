@@ -1,22 +1,85 @@
 .landing {
   max-width: fit-content;
+  font-family: 'Merriweather', serif;
 }
-
-.pagination ul {
-  display: table-caption;
-  padding-left: 15px;
-  padding-right: 15px;
+  
+.pagination {
+  float: right;
+  white-space: nowrap;
+  margin-top: -9px;
+  margin-bottom: 0px;
+  padding-left: 20px;
 }
 
 .pagination li {
   display: inline-block;
-  padding-left: 5px;
-  padding-right: 5px;
+  margin-right: 7px;
+}
+
+.pagination li a {
+color: #3C4146;
+text-align: center;
+margin-top: -5px;
+text-decoration: none;
+}
+
+.pagination li.active {
+  background-image: url(../../images/blue-circle.png);
+  background-repeat: no-repeat;
+  background-position: center center;
+  padding: 10px;
+}
+
+.landing .disabled {
+  display: none;
+}
+
+.pagination li.active a {
+  padding: 3.5px;
+  margin-left: 1.3px;
+  font-weight: bold;
+  color: white;
+  outline: none;
+}
+
+div.smart-hub--total-count {
+  background-color: #ebe6e6;
+  align-self: center;
+  display: inline;
+}
+
+.smart-hub--link-next {
+  text-decoration-line: underline !important;
+  color: #0166AB !important;
+  margin-left: 12px;
+}
+
+.smart-hub--link-prev {
+  text-decoration-line: underline !important;
+  color: #0166AB !important;
+  padding-left: 20px;
+  margin-right: 12px;
+}
+
+.smart-hub--link-pagination {
+  text-decoration: none;
+  padding: 2px;
+}
+
+.landing .smart-hub--table-nav {
+  float: right;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  margin-right: 20px;
+  margin-top: 27px;
+  margin-bottom: -90px;
 }
 
 h1.landing {
   font-size: 45px;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Merriweather', serif;
+  font-weight: 700;
   white-space: nowrap;
   margin-right: 30px;
 }
@@ -26,9 +89,11 @@ h1.landing {
 }
 
 .landing .usa-table caption {
-  font-size: 19px;
+  font-size: 21px;
+  font-weight: 900;
   padding: 14px 0px 17px 20px;
   margin-bottom: -0.25rem;
+  margin-top: 1px;
 }
 
 .landing .usa-table thead th {
@@ -38,6 +103,7 @@ h1.landing {
   border-top: solid 1.5px;
   border-color: #ECEEF1;
   border-bottom: none;
+  cursor: pointer;
 }
 
 .landing .usa-table--borderless th:first-child {
@@ -61,6 +127,11 @@ h1.landing {
 .landing .usa-button {
   margin-left: 45px;
   vertical-align: middle;
+}
+
+.landing .usa-alert .usa-alert--error {
+  margin-bottom: 20px;
+  background-color: #148439;
 }
 
 .usa-table tr:nth-child(odd) {
@@ -134,16 +205,28 @@ h1.landing {
   min-width: 220px;
 }
 
-thead th.ascending::after {
+.smart-hub--create-new-report {
+  padding-top: 30px;
+}
+
+thead th > .asc::after {
   content: "▲";
   display: inline-block;
   margin-left: 0.25em;
 }
 
-thead th.descending::after {
+thead th > .desc::after {
   content: "▼";
   display: inline-block;
   margin-left: 0.25em;
+}
+
+a.asc {
+  outline: none !important;
+}
+
+a.desc {
+  outline: none !important;
 }
 
 .landing .usa-alert {
@@ -170,4 +253,13 @@ thead th.descending::after {
 
 #beginNew {
   padding-bottom: 15px;
+}
+
+#arTblDesc {
+  position:absolute;
+  left:-10000px;
+  top:auto;
+  width:1px;
+  height:1px;
+  overflow:hidden;
 }
