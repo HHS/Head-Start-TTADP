@@ -7,21 +7,6 @@ environment=prod
 ## It will then map the maintenance route to the app so we still have access to it.
 ## On leaving maintenance mode, it will return the primary route to the app and delete the maintenance route
 
-# Sandbox routes
-sandboxmaintenanceroute=tta-smarthub-sandbox-maintenance
-sandboxroute=tta-smarthub-sandbox
-
-# Dev routes
-devmaintenanceroute=tta-smarthub-dev-maintenance
-devroute=tta-smarthub-dev
-
-# Staging routes
-stagingmaintenanceroute=tta-smarthub-staging-maintenance
-stagingroute=tta-smarthub-staging
-
-# Prod routes
-prodmaintenanceroute=tta-smarthub-prod
-prodroute=ttahub
 
 # display usage information
 help() {
@@ -68,25 +53,13 @@ if [[ $version != "7" ]]; then
     exit 1
 fi
 
-route=
-maintenanceroute=
+route=tta-smarthub-$environment
 domain=app.cloud.gov
 
-case $environment in
-    sandbox)    route=$sandboxroute
-                maintenanceroute=$sandboxmaintenanceroute
-                ;;
-    dev)        route=$devroute
-                maintenanceroute=$devmaintenanceroute
-                ;;
-    staging)    route=$stagingroute
-                maintenanceroute=$stagingmaintenanceroute
-                ;;
-    prod)       route=$prodroute
-                maintenanceroute=$prodmaintenanceroute
-                domain=ohs.acf.hhs.gov
-                ;;
-esac
+if [[ $environment ==  "prod" ]]; then
+    route=ttahub
+    domain=ohs.acf.hhs.gov
+fi
 
 # try targeting the correct space and capture the exit status
 cf target -o hhs-acf-ohs-tta -s ttahub-$environment > /dev/null
@@ -100,15 +73,13 @@ fi
 
 # Put site into maintenance mode
 if [[ $maintenance == "on" ]]; then
-    cf map-route tta-smarthub-$environment app.cloud.gov -n $maintenanceroute
     cf map-route tta-smarthub-maintenance-page-$environment $domain -n $route
     cf unmap-route tta-smarthub-$environment $domain -n $route
-    echo "The $environment environment is in maintenance mode and can be reached at https://$maintenanceroute.app.cloud.gov"
+    echo "The $environment environment is in maintenance mode"
 fi
 
 # Bring site out of maintenance mode
 if [[ $maintenance == "off" ]]; then
-    cf unmap-route tta-smarthub-$environment app.cloud.gov -n $maintenanceroute
     cf map-route tta-smarthub-$environment $domain -n $route
     cf unmap-route tta-smarthub-maintenance-page-$environment $domain -n $route
     echo "The $environment environment is out of maintenance mode and can be reached at https://$route.$domain"
