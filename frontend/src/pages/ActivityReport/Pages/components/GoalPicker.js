@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Label, TextInput,
 } from '@trussworks/react-uswds';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { v4 as uuidv4 } from 'uuid';
 
 import FormItem from '../../../../components/FormItem';
