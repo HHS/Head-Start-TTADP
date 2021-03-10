@@ -42,8 +42,13 @@ export default (sequelize, DataTypes) => {
     displayId: {
       type: DataTypes.VIRTUAL,
       get() {
+        if (this.legacyId) return this.legacyId;
         return `R${this.regionId.toString().padStart(2, '0')}-AR-${this.id}`;
       },
+    },
+    legacyId: {
+      comment: 'Legacy identifier taken from smartsheet ReportID. Some ids adjusted to match their region.',
+      type: DataTypes.STRING,
     },
     userId: {
       type: DataTypes.INTEGER,
