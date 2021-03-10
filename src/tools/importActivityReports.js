@@ -59,7 +59,7 @@ import { REPORT_STATUSES } from '../constants';
 - reason/s:
 - reportid:
 - resources-used:
-- source-of-request: ???
+- source-of-request: 'requester'
 - specialist-follow-up-tasks-&-objectives:
 - start-date:
 - t-ta:
@@ -189,6 +189,8 @@ export default async function importActivityReports(file) {
   for await (const row of csvFile) {
     const data = normalizeData(row);
 
+    console.log(Object.keys(data));
+
     const reportId = coerceReportId(getValue(data, 'reportid'), fileRegionId);
     // Ignore rows with no reportid
     if (reportId) {
@@ -200,7 +202,7 @@ export default async function importActivityReports(file) {
       const duration = coerceDuration(getValue(data, 'duration'));
       const numberOfParticipants = coerceInt(getValue(data, 'number-of-participants'));
 
-      const programTypes = coerceToArray(getValue(data, 'program-types'));
+      const programTypes = coerceToArray(getValue(data, 'program-type')); // FIXME: Check this key
       const targetPopulations = coerceToArray(getValue(data, 'target-populations'));
       const reason = coerceToArray(getValue(data, 'reason/s'));
       const participants = coerceToArray(getValue(data, 'grantee-participants'))
@@ -215,7 +217,7 @@ export default async function importActivityReports(file) {
         imported: data, // Store all the data in `imported` for later reuse
         legacyId: reportId,
         regionId: fileRegionId,
-        deliveryMethod: getValue(data, 'format'),
+        deliveryMethod: getValue(data, 'format'), // FIXME: Check records like 'R01-AR-000135'
         ECLKCResourcesUsed: coerceToArray(getValue(data, 'resources-used')),
         nonECLKCResourcesUsed: coerceToArray(getValue(data, 'non-ohs-resources')),
         duration, // Decimal
@@ -230,7 +232,8 @@ export default async function importActivityReports(file) {
         participants, // Array of strings
         topics, // Array of strings
         context: getValue(data, 'context-for-this-activity'),
-        managerNotes: getValue(data, 'additional-notes-for-this-activity'),
+        // managerNotes: ??? // TODO: Are these smartsheet comments (which appear in a separate sheet and don't get converted)
+        additionalNotes: getValue(data, 'additional-notes-for-this-activity'),
         status, // Enum restriction: REPORT_STATUSES
         ttaType, // Array of strings
         createdAt: getValue(data, 'created'), // DATE
