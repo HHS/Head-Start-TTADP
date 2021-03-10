@@ -357,7 +357,7 @@ export function activityReports(readRegions, {
       include: [
         {
           model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId'],
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
           as: 'activityRecipients',
           required: false,
           include: [
