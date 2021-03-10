@@ -43,7 +43,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         if (this.legacyId) return this.legacyId;
-        return `R${this.regionId.toString().padStart(2, '0')}-AR-${this.id}`;
+        const { regionId } = this;
+        const regionPrefix = !regionId ? '???' : `R${this.regionId.toString().padStart(2, '0')}`;
+        return `${regionPrefix}-AR-${this.id}`;
       },
     },
     legacyId: {
