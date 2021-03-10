@@ -237,48 +237,144 @@ export function activityReportById(activityReportId) {
     ],
   });
 }
-
-export function activityReports() {
-  return ActivityReport.findAll({
-    attributes: ['id', 'displayId', 'startDate', 'lastSaved', 'topics', 'status', 'regionId'],
-    include: [
-      {
-        model: ActivityRecipient,
-        attributes: ['id', 'name', 'activityRecipientId'],
-        as: 'activityRecipients',
-        required: false,
-        include: [
-          {
-            model: Grant,
-            attributes: ['id', 'number'],
-            as: 'grant',
-            required: false,
-            include: [{
-              model: Grantee,
-              as: 'grantee',
-              attributes: ['name'],
-            }],
-          },
-          {
-            model: NonGrantee,
-            as: 'nonGrantee',
-            required: false,
-          },
+/**
+ * Retrieves activity reports in sorted slices
+ * using sequelize.literal for several associated fields based on the following
+ * https://github.com/sequelize/sequelize/issues/11288
+ *
+ * @param {*} sortBy - field to sort by; default updatedAt
+ * @param {*} sortDir - order: either ascending or descending; default desc
+ * @param {*} offset - offset from the start of the total sorted results
+ * @param {*} limit - size of the slice
+ * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
+ */
+export function activityReports(readRegions, {
+  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10,
+}) {
+  let result = '';
+  const regions = readRegions || [];
+  const orderBy = () => {
+    switch (sortBy) {
+      case 'author':
+        result = [[
+          sequelize.literal(`authorName ${sortDir}`),
+        ]];
+        break;
+      case 'collaborators':
+        result = [[
+          sequelize.literal(`collaboratorName ${sortDir} NULLS LAST`),
+        ]];
+        break;
+      case 'topics':
+        result = [[
+          sequelize.literal(`topics ${sortDir}`),
+        ]];
+        break;
+      case 'regionId':
+        result = [[
+          'regionId',
+          sortDir,
         ],
-      },
-      {
-        model: User,
-        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
-        as: 'author',
-      },
-      {
-        model: User,
-        attributes: ['id', 'name', 'role', 'fullName'],
-        as: 'collaborators',
-        through: { attributes: [] },
-      },
-    ],
-  });
+        [
+          'id',
+          sortDir,
+        ]];
+        break;
+      case 'activityRecipients':
+        result = [
+          [
+            sequelize.literal(`granteeName ${sortDir}`),
+          ],
+          [
+            sequelize.literal(`nonGranteeName ${sortDir}`),
+          ]];
+        break;
+      case 'status':
+      case 'startDate':
+      case 'updatedAt':
+        result = [[sortBy, sortDir]];
+        break;
+      default:
+        break;
+    }
+    return result;
+  };
+  return ActivityReport.findAndCountAll(
+    {
+      where: { regionId: regions },
+      attributes: [
+        'id',
+        'displayId',
+        'startDate',
+        'lastSaved',
+        'topics',
+        'status',
+        'regionId',
+        'updatedAt',
+        'sortedTopics',
+        sequelize.literal(
+          '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
+        ),
+        sequelize.literal(
+          '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
+        ),
+        sequelize.literal(
+          // eslint-disable-next-line quotes
+          `(SELECT "NonGrantees".name as nonGranteeName from "NonGrantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."nonGranteeId" = "NonGrantees".id order by nonGranteeName ${sortDir} limit 1)`,
+        ),
+        sequelize.literal(
+          // eslint-disable-next-line quotes
+          `(SELECT "Grantees".name as granteeName FROM "Grantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Grantees"."id" = "Grants"."granteeId" order by granteeName ${sortDir} limit 1)`,
+        ),
+      ],
+      include: [
+        {
+          model: ActivityRecipient,
+          attributes: ['id', 'name', 'activityRecipientId'],
+          as: 'activityRecipients',
+          required: false,
+          include: [
+            {
+              model: Grant,
+              attributes: ['id', 'number'],
+              as: 'grant',
+              required: false,
+              include: [
+                {
+                  model: Grantee,
+                  as: 'grantee',
+                  attributes: ['name'],
+                },
+              ],
+            },
+            {
+              model: NonGrantee,
+              as: 'nonGrantee',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: User,
+          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          as: 'author',
+        },
+        {
+          model: User,
+          attributes: ['id', 'name', 'role', 'fullName'],
+          as: 'collaborators',
+          through: { attributes: [] },
+        },
+      ],
+      order: orderBy(),
+      offset,
+      limit,
+      distinct: true,
+    },
+    {
+      subQuery: false,
+    },
+  );
 }
 /**
  * Retrieves alerts based on the following logic:

@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { User, Permission, sequelize } from '../models';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
@@ -67,6 +68,26 @@ export async function validateUserAuthForAdmin(userId) {
     return userPermission !== null;
   } catch (error) {
     logger.error(`${JSON.stringify({ ...logContext })} - ADMIN Access error - ${error}`);
+    throw error;
+  }
+}
+
+export async function getUserReadRegions(userId) {
+  try {
+    const readRegions = await Permission.findAll({
+      attributes: ['regionId'],
+      where: {
+        userId,
+        [Op.or]: [
+          { scopeId: SCOPES.READ_WRITE_REPORTS },
+          { scopeId: SCOPES.READ_REPORTS },
+          { scopeId: SCOPES.APPROVE_REPORTS },
+        ],
+      },
+    });
+    return readRegions ? readRegions.map((p) => p.regionId) : [];
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
     throw error;
   }
 }
