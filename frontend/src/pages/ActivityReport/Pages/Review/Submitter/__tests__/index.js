@@ -114,8 +114,12 @@ describe('Submitter review page', () => {
     });
 
     it('displays success if the report has been submitted', async () => {
-      const history = renderReview(REPORT_STATUSES.DRAFT, true, () => {});
-      expect(history.location.pathname).toBe('/activity-reports');
+      const mockSubmit = jest.fn();
+      const history = renderReview(REPORT_STATUSES.DRAFT, mockSubmit, true);
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
+
+      userEvent.click(button);
+      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
     });
 
     it('can be saved', async () => {
@@ -136,7 +140,7 @@ describe('Submitter review page', () => {
 
   describe('when the report has been submitted', () => {
     it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, true, () => {});
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true);
       const allAlerts = await screen.findAllByTestId('alert');
       const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
       expect(successAlert).toBeVisible();
