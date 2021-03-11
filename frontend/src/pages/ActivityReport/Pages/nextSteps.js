@@ -119,7 +119,7 @@ const NoteEntries = ({ name, humanName }) => {
 
               <div className="grid-col" style={{ marginTop: '0px' }}>
                 <ContextMenu
-                  label="Menu"
+                  label="Actions menu"
                   menuItems={
                     [
                       { label: 'Edit', onClick: (e) => { e.preventDefault(); onEdit(index); } },

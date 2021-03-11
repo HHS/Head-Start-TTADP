@@ -55,7 +55,6 @@ const defaultValues = {
   programTypes: [],
   reason: [],
   requester: '',
-  resourcesUsed: '',
   specialistNextSteps: [],
   startDate: null,
   status: REPORT_STATUSES.DRAFT,
