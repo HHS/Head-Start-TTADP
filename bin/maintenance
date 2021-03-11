@@ -1,6 +1,6 @@
 #! /bin/bash
 
-maintenance=false
+maintenance=off
 environment=prod
 
 ## On entering maintenance mode, this script will unmap the environments primary route and map it to that environments maintenance page.
