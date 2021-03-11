@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 maintenance=
 environment=
@@ -62,8 +62,7 @@ route=tta-smarthub-$environment
 domain=app.cloud.gov
 
 if [[ $environment ==  "prod" ]]; then
-    route=ttahub
-    domain=ohs.acf.hhs.gov
+    domain=ttahub.ohs.acf.hhs.gov
 fi
 
 # try targeting the correct space and capture the exit status
@@ -78,14 +77,24 @@ fi
 
 # Put site into maintenance mode
 if [[ $maintenance == "on" ]]; then
-    cf map-route tta-smarthub-maintenance-page-$environment $domain -n $route
-    cf unmap-route tta-smarthub-$environment $domain -n $route
+    if [[ $environment == "prod" ]]; then
+        cf map-route tta-smarthub-maintenance-page-$environment $domain
+        cf unmap-route tta-smarthub-$environment $domain
+    else
+        cf map-route tta-smarthub-maintenance-page-$environment $domain -n $route
+        cf unmap-route tta-smarthub-$environment $domain -n $route
+    fi
     echo "The $environment environment is in maintenance mode"
 fi
 
 # Bring site out of maintenance mode
 if [[ $maintenance == "off" ]]; then
-    cf map-route tta-smarthub-$environment $domain -n $route
-    cf unmap-route tta-smarthub-maintenance-page-$environment $domain -n $route
+    if [[ $environment == "prod" ]]; then
+        cf map-route tta-smarthub-$environment $domain
+        cf unmap-route tta-smarthub-maintenance-page-$environment $domain
+    else
+        cf map-route tta-smarthub-$environment $domain -n $route
+        cf unmap-route tta-smarthub-maintenance-page-$environment $domain -n $route
+    fi
     echo "The $environment environment is out of maintenance mode and can be reached at https://$route.$domain"
 fi
