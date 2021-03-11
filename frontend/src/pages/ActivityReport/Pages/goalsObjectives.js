@@ -35,12 +35,14 @@ const GoalsObjectives = () => {
     fetch();
   }, [grantIds]);
 
+  const showGoals = recipientGrantee && hasGrants;
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      {recipientGrantee && hasGrants
+      {showGoals
         && (
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
           <div id="goals-and-objectives" />
@@ -51,7 +53,11 @@ const GoalsObjectives = () => {
         )}
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
-        <Textarea id="context" name="context" inputRef={register()} />
+        <Textarea
+          id="context"
+          name="context"
+          inputRef={register()}
+        />
       </Fieldset>
     </>
   );
