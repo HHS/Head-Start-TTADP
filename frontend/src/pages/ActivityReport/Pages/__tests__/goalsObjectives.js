@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
@@ -14,18 +14,18 @@ const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
   // eslint-disable-next-line react/prop-types
-  grantIds, activityRecipientType, initialData,
+  grantIds, activityRecipientType,
 }) => {
+  // eslint-disable-next-line react/prop-types
+  const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
+  const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { goals: [], ...initialData },
+    defaultValues: { goals: [], ...data },
   });
-  // eslint-disable-next-line react/prop-types
-  const activityRecipients = grantIds.map((id) => ({ activityRecipientId: id }));
-  const data = { ...initialData, activityRecipientType, activityRecipients };
   return (
     <FormProvider {...hookForm}>
-      {goalsObjectives.render({}, data)}
+      {goalsObjectives.render()}
     </FormProvider>
   );
 };
@@ -61,13 +61,13 @@ describe('goals objectives', () => {
   afterEach(() => fetchMock.restore());
   describe('when activity recipient type is "grantee"', () => {
     it('the display goals section is displayed', async () => {
-      renderGoals([1], 'grantee', {});
+      renderGoals([1], 'grantee');
       await screen.findByText('Context');
       expect(await screen.findByText('Goals and objectives')).toBeVisible();
     });
 
     it('the display goals section does not show if no grants are selected', async () => {
-      renderGoals([], 'grantee', {});
+      renderGoals([], 'grantee');
       await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
     });
@@ -75,7 +75,7 @@ describe('goals objectives', () => {
 
   describe('when activity recipient type is not "grantee"', () => {
     it('the display goals section is not displayed', async () => {
-      renderGoals([1], 'nonGrantee', {});
+      renderGoals([1], 'nonGrantee');
       await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
     });
