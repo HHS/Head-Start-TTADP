@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
@@ -117,6 +118,41 @@ function MyAlerts(props) {
     sortHandler,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
+
+  const renderColumnHeader = (displayName, name) => {
+    const sortClassName = getClassNamesFor(name);
+    let fullAriaSort;
+    switch (sortClassName) {
+      case 'asc':
+        fullAriaSort = 'ascending';
+        break;
+      case 'desc':
+        fullAriaSort = 'descending';
+        break;
+      default:
+        fullAriaSort = 'none';
+        break;
+    }
+    return (
+      <th scope="col" aria-sort={fullAriaSort}>
+        <a
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            sortHandler(name);
+          }}
+          onKeyPress={() => sortHandler(name)}
+          className={sortClassName}
+          aria-label={`${displayName}. Activate to sort ${
+            sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
+        >
+          {displayName}
+        </a>
+      </th>
+    );
+  };
+
   return (
     <>
       {reports && reports.length === 0 && (
@@ -137,76 +173,36 @@ function MyAlerts(props) {
       {reports && reports.length > 0 && (
         <SimpleBar>
           <Container className="landing inline-size" padding={0}>
+            <span
+              id="alertsTotalCount"
+              aria-label={`Displaying rows ${renderTotal(
+                alertsOffset,
+                alertsPerPage,
+                alertsActivePage,
+                alertReportsCount,
+              )}`}
+            >
+              {renderTotal(
+                alertsOffset,
+                alertsPerPage,
+                alertsActivePage,
+                alertReportsCount,
+              )}
+            </span>
+
             <Table bordered={false}>
               <caption className="smart-hub--table-caption">
                 My activity report alerts
-                <span className="smart-hub--table-nav">
-                  <span className="smart-hub--total-count">
-                    {renderTotal(
-                      alertsOffset,
-                      alertsPerPage,
-                      alertsActivePage,
-                      alertReportsCount,
-                    )}
-                  </span>
-                </span>
+                <p id="arTblDesc">with sorting</p>
               </caption>
               <thead>
                 <tr>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      sortHandler('regionId');
-                    }}
-                    className={getClassNamesFor('regionId')}
-                  >
-                    Report ID
-                  </th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      sortHandler('activityRecipients');
-                    }}
-                    className={getClassNamesFor('activityRecipients')}
-                  >
-                    Grantee
-                  </th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      sortHandler('startDate');
-                    }}
-                    className={getClassNamesFor('startDate')}
-                  >
-                    Start date
-                  </th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      sortHandler('author');
-                    }}
-                    className={getClassNamesFor('author')}
-                  >
-                    Creator
-                  </th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      sortHandler('collaborators');
-                    }}
-                    className={getClassNamesFor('collaborators')}
-                  >
-                    Collaborator(s)
-                  </th>
-                  <th
-                    scope="col"
-                    onClick={() => {
-                      sortHandler('status');
-                    }}
-                    className={getClassNamesFor('status')}
-                  >
-                    Status
-                  </th>
+                  {renderColumnHeader('Report ID', 'regionId')}
+                  {renderColumnHeader('Grantee', 'activityRecipients')}
+                  {renderColumnHeader('Start date', 'startDate')}
+                  {renderColumnHeader('Creator', 'author')}
+                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                  {renderColumnHeader('Status', 'status')}
                 </tr>
               </thead>
               <tbody>{renderReports(reports)}</tbody>
