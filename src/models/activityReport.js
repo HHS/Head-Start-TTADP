@@ -1,4 +1,5 @@
 import { Model } from 'sequelize';
+import { uniqBy } from 'lodash';
 import moment from 'moment';
 import { REPORT_STATUSES } from '../constants';
 
@@ -30,11 +31,11 @@ export default (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
-      ActivityReport.belongsToMany(models.Goal, {
-        through: models.ActivityReportGoal,
+      ActivityReport.belongsToMany(models.Objective, {
+        through: models.ActivityReportObjective,
         foreignKey: 'activityReportId',
-        otherKey: 'goalId',
-        as: 'goals',
+        otherKey: 'objectiveId',
+        as: 'objectives',
       });
     }
   }
@@ -165,6 +166,13 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
     },
+    goals: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const objectives = this.objectives || [];
+        return uniqBy(objectives.map((o) => o.goal), 'id');
+      },
+    },
     lastSaved: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -174,6 +182,23 @@ export default (sequelize, DataTypes) => {
     imported: {
       type: DataTypes.JSONB,
       comment: 'Storage for raw values from smartsheet CSV imports',
+    },
+    sortedTopics: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.topics) {
+          return [];
+        }
+        return this.topics.sort((a, b) => {
+          if (a < b) {
+            return -1;
+          }
+          if (a > b) {
+            return 1;
+          }
+          return 0;
+        });
+      },
     },
   }, {
     sequelize,

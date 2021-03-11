@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from 'react';
 import {
   Tag, Table, Alert, Grid,
@@ -6,6 +7,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
+import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
 import Container from '../../components/Container';
@@ -46,12 +48,14 @@ function renderReports(reports, history) {
       status,
     } = report;
 
-    const recipientsTitle = activityRecipients.reduce(
+    const authorName = author ? author.fullName : '';
+
+    const recipientsTitle = activityRecipients && activityRecipients.reduce(
       (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
       '',
     );
 
-    const recipients = activityRecipients.map((ar) => (
+    const recipients = activityRecipients && activityRecipients.map((ar) => (
       <Tag
         key={`${ar.name.slice(1, 3)}_${ar.id}`}
         className="smart-hub--table-collection"
@@ -74,12 +78,12 @@ function renderReports(reports, history) {
       </Tag>
     ));
 
-    const collaboratorsTitle = collaborators.reduce(
+    const collaboratorsTitle = collaborators && collaborators.reduce(
       (result, collaborator) => `${result + collaborator.fullName}\n`,
       '',
     );
 
-    const collaboratorsWithTags = collaborators.map((collaborator) => (
+    const collaboratorsWithTags = collaborators && collaborators.map((collaborator) => (
       <Tag
         key={collaborator.fullName.slice(1, 13)}
         className="smart-hub--table-collection"
@@ -113,8 +117,8 @@ function renderReports(reports, history) {
         </td>
         <td>{startDate}</td>
         <td>
-          <span className="smart-hub--ellipsis" title={author.fullName}>
-            {author.fullName}
+          <span className="smart-hub--ellipsis" title={authorName}>
+            {authorName}
           </span>
         </td>
         <td>
@@ -143,20 +147,61 @@ function renderReports(reports, history) {
   });
 }
 
+export function renderTotal(offset, perPage, activePage, reportsCount) {
+  const from = offset >= reportsCount ? 0 : offset + 1;
+  const offsetTo = perPage * activePage;
+  let to;
+  if (offsetTo > reportsCount) {
+    to = reportsCount;
+  } else {
+    to = offsetTo;
+  }
+  return `${from}-${to} of ${reportsCount}`;
+}
+
 function Landing() {
   const history = useHistory();
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
+  const [sortConfig, setSortConfig] = React.useState({
+    sortBy: 'updatedAt',
+    direction: 'desc',
+  });
+  const [offset, setOffset] = useState(0);
+  const [perPage] = useState(10);
+  const [activePage, setActivePage] = useState(1);
+  const [reportsCount, setReportsCount] = useState(0);
+
+  const requestSort = (sortBy) => {
+    let direction = 'asc';
+    if (
+      sortConfig
+      && sortConfig.sortBy === sortBy
+      && sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setActivePage(1);
+    setOffset(0);
+    setSortConfig({ sortBy, direction });
+  };
 
   useEffect(() => {
     async function fetchReports() {
-      setIsLoaded(false);
       try {
-        const reps = await getReports();
+        const { count, rows } = await getReports(
+          sortConfig.sortBy,
+          sortConfig.direction,
+          offset,
+          perPage,
+        );
         const alerts = await getReportAlerts();
-        updateReports(reps);
+        updateReports(rows);
+        if (count) {
+          setReportsCount(count);
+        }
         updateReportAlerts(alerts);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -166,7 +211,48 @@ function Landing() {
       setIsLoaded(true);
     }
     fetchReports();
-  }, []);
+  }, [sortConfig, offset, perPage]);
+
+  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+
+  const renderColumnHeader = (displayName, name) => {
+    const sortClassName = getClassNamesFor(name);
+    let fullAriaSort;
+    switch (sortClassName) {
+      case 'asc':
+        fullAriaSort = 'ascending';
+        break;
+      case 'desc':
+        fullAriaSort = 'descending';
+        break;
+      default:
+        fullAriaSort = 'none';
+        break;
+    }
+    return (
+      <th scope="col" aria-sort={fullAriaSort}>
+        <a
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            requestSort(name);
+          }}
+          onKeyPress={() => requestSort(name)}
+          className={sortClassName}
+          aria-label={`${displayName}. Activate to sort ${
+            sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
+        >
+          {displayName}
+        </a>
+      </th>
+    );
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setActivePage(pageNumber);
+    setOffset((pageNumber - 1) * perPage);
+  };
 
   if (!isLoaded) {
     return <div>Loading...</div>;
@@ -185,7 +271,9 @@ function Landing() {
                 <h1 className="landing">Activity Reports</h1>
               </Grid>
               <Grid className="flex-align-self-center">
-                {reportAlerts && reportAlerts.length > 0 && hasReadWrite(user) && <NewReport />}
+                {reportAlerts
+                  && reportAlerts.length > 0
+                  && hasReadWrite(user) && <NewReport />}
               </Grid>
             </Grid>
             <Grid row>
@@ -198,18 +286,47 @@ function Landing() {
             <MyAlerts reports={reportAlerts} newBtn={hasReadWrite(user)} />
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
+                <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
+                  <span
+                    className="smart-hub--total-count"
+                    aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                      offset,
+                      perPage,
+                      activePage,
+                      reportsCount,
+                    )}`}
+                  >
+                    {renderTotal(offset, perPage, activePage, reportsCount)}
+                    <Pagination
+                      hideFirstLastPages
+                      prevPageText="<Prev"
+                      nextPageText="Next>"
+                      activePage={activePage}
+                      itemsCountPerPage={perPage}
+                      totalItemsCount={reportsCount}
+                      pageRangeDisplayed={4}
+                      onChange={handlePageChange}
+                      linkClassPrev="smart-hub--link-prev"
+                      linkClassNext="smart-hub--link-next"
+                      tabIndex={0}
+                    />
+                  </span>
+                </span>
                 <Table className="usa-table usa-table--borderless usa-table--striped">
-                  <caption>Activity reports</caption>
+                  <caption>
+                    Activity reports
+                    <p id="arTblDesc">with sorting and pagination</p>
+                  </caption>
                   <thead>
                     <tr>
-                      <th scope="col">Report ID</th>
-                      <th scope="col">Grantee</th>
-                      <th scope="col">Start date</th>
-                      <th scope="col">Creator</th>
-                      <th scope="col">Topic(s)</th>
-                      <th scope="col">Collaborator(s)</th>
-                      <th scope="col">Last saved</th>
-                      <th scope="col">Status</th>
+                      {renderColumnHeader('Report ID', 'regionId')}
+                      {renderColumnHeader('Grantee', 'activityRecipients')}
+                      {renderColumnHeader('Start date', 'startDate')}
+                      {renderColumnHeader('Creator', 'author')}
+                      {renderColumnHeader('Topic(s)', 'topics')}
+                      {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                      {renderColumnHeader('Last saved', 'updatedAt')}
+                      {renderColumnHeader('Status', 'status')}
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
