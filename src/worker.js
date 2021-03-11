@@ -1,3 +1,6 @@
+/* eslint-disable import/first */
+require('newrelic');
+
 import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
