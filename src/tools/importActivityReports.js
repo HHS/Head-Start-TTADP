@@ -196,15 +196,15 @@ export default async function importActivityReports(file) {
   const { groups: { regionId: fileRegion } } = regionMatch;
   const fileRegionId = coerceInt(fileRegion);
 
-  const activityReportRecords = [];
+  // const activityReportRecords = [];
   for await (const row of csvFile) {
     const data = normalizeData(row);
 
     // console.log(Object.keys(data));
 
-    const reportId = coerceReportId(getValue(data, 'reportId'), fileRegionId);
+    const legacyId = coerceReportId(getValue(data, 'reportId'), fileRegionId);
     // Ignore rows with no reportid
-    if (reportId) {
+    if (legacyId) {
       const granteeActivity = getValue(data, 'granteeActivity');
       const activityRecipientType = granteeActivity ? 'grantee' : 'nonGrantee';
 
@@ -226,7 +226,7 @@ export default async function importActivityReports(file) {
 
       const arRecord = {
         imported: data, // Store all the data in `imported` for later reuse
-        legacyId: reportId,
+        legacyId,
         regionId: fileRegionId,
         deliveryMethod: getValue(data, 'format'), // FIXME: Check records like 'R01-AR-000135'
         ECLKCResourcesUsed: coerceToArray(getValue(data, 'resourcesUsed')),
@@ -243,19 +243,21 @@ export default async function importActivityReports(file) {
         participants, // Array of strings
         topics, // Array of strings
         context: getValue(data, 'contextForThisActivity'),
-        // managerNotes: ??? // TODO: Are these smartsheet comments (which appear in a separate sheet and don't get converted)
+        // TODO: Are 'managerNotes' the smartsheet comments (which are a separate sheet in Excel)
+        // managerNotes: ???
         additionalNotes: getValue(data, 'additionalNotesForThisActivity'),
         status, // Enum restriction: REPORT_STATUSES
         ttaType, // Array of strings
         createdAt: getValue(data, 'created'), // DATE
         updatedAt: getValue(data, 'modified'), // DATE
       };
-      activityReportRecords.push(arRecord);
+      // Ideally this would be an upsert, but sequelize v5 upsert doesn't return the instance?!?
+      const [instance, created] = await ActivityReport.findOrCreate(
+        { where: { legacyId }, defaults: arRecord },
+      );
+      // console.log(`${instance.id} | ${instance.legacyId || ''} | New? ${created}`);
     } else {
       console.warn('ActivityReport with no reportId, skipping');
     }
   }
-
-  ActivityReport.bulkCreate(activityReportRecords, { validate: false });
-  // console.log(activityReportRecords);
 }

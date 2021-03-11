@@ -52,6 +52,7 @@ export default (sequelize, DataTypes) => {
     legacyId: {
       comment: 'Legacy identifier taken from smartsheet ReportID. Some ids adjusted to match their region.',
       type: DataTypes.STRING,
+      unique: true,
     },
     userId: {
       type: DataTypes.INTEGER,
