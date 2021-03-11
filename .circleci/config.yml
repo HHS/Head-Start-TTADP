@@ -334,13 +334,13 @@ jobs:
             - run:
                 name: Notify New Relic
                 command: |
-                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.sandbox_new_relic_app_id >>/deployments.json" \
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< pipeline.parameters.sandbox_new_relic_app_id >>/deployments.json" \
                   -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
                   -H "Content-Type: application/json" \
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< parameters.revision >>\",
+                      \"revision\": \"<< pipeline.parameters.revision >>\",
                       \"description\": \"Sandbox Successfully Deployed\"
                     }
                   }"
@@ -372,13 +372,13 @@ jobs:
             - run:
                 name: Notify New Relic
                 command: |
-                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.dev_new_relic_app_id >>/deployments.json" \
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< pipeline.parameters.dev_new_relic_app_id >>/deployments.json" \
                   -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
                   -H "Content-Type: application/json" \
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< parameters.revision >>\",
+                      \"revision\": \"<< pipeline.parameters.revision >>\",
                       \"description\": \"Dev Successfully Deployed\"
                     }
                   }"
@@ -408,13 +408,13 @@ jobs:
             - run:
                 name: Notify New Relic
                 command: |
-                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.staging_new_relic_app_id >>/deployments.json" \
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< pipeline.parameters.staging_new_relic_app_id >>/deployments.json" \
                   -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
                   -H "Content-Type: application/json" \
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< parameters.revision >>\",
+                      \"revision\": \"<< pipeline.parameters.revision >>\",
                       \"description\": \"Staging Successfully Deployed\"
                     }
                   }"
@@ -441,17 +441,16 @@ jobs:
                 name: Run database migrations
                 command: |
                   cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
-            # Leaving this commented out until we have an app id for prod
             - run:
                 name: Notify New Relic
                 command: |
-                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.prod_new_relic_app_id >>/deployments.json" \
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< pipeline.parameters.prod_new_relic_app_id >>/deployments.json" \
                   -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
                   -H "Content-Type: application/json" \
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< parameters.revision >>\",
+                      \"revision\": \"<< pipeline.parameters.revision >>\",
                       \"description\": \"Prod Successfully Deployed\"
                     }
                   }"
