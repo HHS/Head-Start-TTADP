@@ -2,9 +2,19 @@ import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
 import {
-  createOrUpdate, activityReportById, possibleRecipients, activityReports, activityReportAlerts,
+  createOrUpdate,
+  activityReportById,
+  possibleRecipients,
+  review,
+  activityReports,
+  activityReportAlerts,
 } from './activityReports';
+import { copyGoalsToGrants } from './goals';
 import { REPORT_STATUSES } from '../constants';
+
+jest.mock('./goals', () => ({
+  copyGoalsToGrants: jest.fn(),
+}));
 
 const RECIPIENT_ID = 15;
 
@@ -24,6 +34,25 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
+};
+
+const submittedReport = {
+  ...reportObject,
+  activityRecipients: [{ grantId: 1 }],
+  status: REPORT_STATUSES.SUBMITTED,
+  approvingManagerId: 1,
+  numberOfParticipants: 1,
+  deliveryMethod: 'method',
+  duration: 0,
+  endDate: '2000-01-01T12:00:00Z',
+  startDate: '2000-01-01T12:00:00Z',
+  requester: 'requester',
+  programTypes: ['type'],
+  targetPopulations: ['pop'],
+  reason: ['reason'],
+  participants: ['participants'],
+  topics: ['topics'],
+  ttaType: ['type'],
 };
 
 describe('Activity Reports DB service', () => {
@@ -53,6 +82,30 @@ describe('Activity Reports DB service', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('review', () => {
+    it('can set the report as needs action', async () => {
+      const report = await ActivityReport.create(submittedReport);
+      const savedReport = await review(report, REPORT_STATUSES.NEEDS_ACTION, 'notes');
+      expect(savedReport.status).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+    });
+
+    describe('when setting the report to approved', () => {
+      it('does not copy goals if the report is for non-grantees', async () => {
+        const report = await ActivityReport.create({ ...submittedReport, activityRecipientType: 'non-grantee' });
+        const savedReport = await review(report, REPORT_STATUSES.APPROVED, 'notes');
+        expect(savedReport.status).toEqual(REPORT_STATUSES.APPROVED);
+        expect(copyGoalsToGrants).not.toHaveBeenCalled();
+      });
+
+      it('copies goals if the report is for grantees', async () => {
+        const report = await ActivityReport.create(submittedReport, { include: [{ model: ActivityRecipient, as: 'activityRecipients' }] });
+        const savedReport = await review(report, REPORT_STATUSES.APPROVED, 'notes');
+        expect(savedReport.status).toEqual(REPORT_STATUSES.APPROVED);
+        expect(copyGoalsToGrants).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('createOrUpdate', () => {
