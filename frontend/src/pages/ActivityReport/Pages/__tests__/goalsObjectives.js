@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';

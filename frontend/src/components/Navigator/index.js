@@ -6,7 +6,7 @@
 */
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import {
   Form,
   Button,
