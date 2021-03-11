@@ -47,14 +47,14 @@ commands:
       - run:
           name: Notify New Relic
           command: |
-            curl -X POST "https://api.newrelic.com/v2/applications/<< pipeline.parameters.new_relic_app_id >>/deployments.json" \
-            -H "X-Api-Key: << pipeline.parameters.new_relic_api_key >>" -i \
+            curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.new_relic_app_id >>/deployments.json" \
+            -H "X-Api-Key: << parameters.new_relic_api_key >>" -i \
             -H "Content-Type: application/json" \
             -d \
             "{
               \"deployment\": {
                 \"revision\": \"<< pipeline.git.revision >>\",
-                \"description\": \"<< pipeline.parameters.env_name >> Successfully Deployed\"
+                \"description\": \"<< parameters.env_name >> Successfully Deployed\"
               }
             }"
       
