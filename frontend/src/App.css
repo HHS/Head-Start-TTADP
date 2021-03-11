@@ -1,3 +1,7 @@
+.usa-skipnav:focus {
+  z-index: 999999;
+}
+
 .smart-hub-offset-nav {
   margin-left: 8rem;
 }

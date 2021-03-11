@@ -7,7 +7,7 @@
     with the tab key. Since the open button has tabindex of -1
     we won't run into an issue of focus moving "backwards"
   */
-  flex-direction: row-reverse;
+  /* flex-direction: row-reverse; */
   width: fit-content;
 }
 
