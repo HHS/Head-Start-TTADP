@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import { act } from 'react-dom/test-utils';
-import { useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form/dist/index.ie11';
 import userEvent from '@testing-library/user-event';
 import { Label } from '@trussworks/react-uswds';
 
