@@ -169,6 +169,14 @@ export async function review(report, status, managerNotes) {
   return updatedReport;
 }
 
+export function legacyReport(legacyId) {
+  return ActivityReport.findOne({
+    where: {
+      legacyId,
+    },
+  });
+}
+
 export function activityReportById(activityReportId) {
   return ActivityReport.findOne({
     attributes: { exclude: ['imported', 'legacyId'] },
