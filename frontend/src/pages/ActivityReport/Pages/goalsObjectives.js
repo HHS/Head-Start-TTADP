@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
   Fieldset, Label, Textarea,
@@ -14,18 +13,21 @@ import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 
-const GoalsObjectives = ({
-  grantIds, activityRecipientType,
-}) => {
+const GoalsObjectives = () => {
   const {
-    register,
+    register, watch,
   } = useFormContext();
+  const recipients = watch('activityRecipients');
+  const activityRecipientType = watch('activityRecipientType');
+  const recipientGrantee = activityRecipientType === 'grantee';
+  const grantIds = recipientGrantee ? recipients.map((r) => r.activityRecipientId) : [];
+
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
-      if (activityRecipientType === 'grantee' && hasGrants) {
+      if (recipientGrantee && hasGrants) {
         const fetchedGoals = await getGoals(grantIds);
         updateAvailableGoals(fetchedGoals);
       }
@@ -38,7 +40,7 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      {activityRecipientType === 'grantee' && hasGrants
+      {recipientGrantee && hasGrants
         && (
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
           <div id="goals-and-objectives" />
@@ -55,15 +57,7 @@ const GoalsObjectives = ({
   );
 };
 
-GoalsObjectives.propTypes = {
-  grantIds: PropTypes.arrayOf(PropTypes.number),
-  activityRecipientType: PropTypes.string,
-};
-
-GoalsObjectives.defaultProps = {
-  activityRecipientType: '',
-  grantIds: [],
-};
+GoalsObjectives.propTypes = {};
 
 const ReviewSection = () => {
   const { watch } = useFormContext();
@@ -140,17 +134,9 @@ export default {
   label: 'Goals and objectives',
   path: 'goals-objectives',
   review: false,
-  isPageComplete: (formData) => validateGoals(formData.goals) === true,
+  isPageComplete: (formData) => formData.activityRecipientType !== 'grantee' || validateGoals(formData.goals) === true,
   reviewSection: () => <ReviewSection />,
-  render: (additionalData, formData) => {
-    const recipients = formData.activityRecipients || [];
-    const { activityRecipientType } = formData;
-    const grantIds = recipients.map((r) => r.activityRecipientId);
-    return (
-      <GoalsObjectives
-        activityRecipientType={activityRecipientType}
-        grantIds={grantIds}
-      />
-    );
-  },
+  render: () => (
+    <GoalsObjectives />
+  ),
 };
