@@ -1,0 +1,91 @@
+#! /bin/bash
+
+maintenance=
+environment=
+
+## On entering maintenance mode, this script will unmap the environments primary route and map it to that environments maintenance page.
+## It will then map the maintenance route to the app so we still have access to it.
+## On leaving maintenance mode, it will return the primary route to the app and delete the maintenance route
+
+
+# display usage information
+help() {
+    echo "Usage: maintenance [options...]"
+    echo "  -m, --maintenance-mode  boolean value that controls whether maintenance mode is turned on or off. Default is off"
+    echo "  -e, --environment       specifies which environment the script is run on. Options are prod, staging, dev, or sandbox. Default is prod"
+    echo "  -h, --help              show this help text"
+}
+
+if [[ $# < 4 ]]; then
+    help
+    exit 1
+fi
+
+# Check feature flags and validate input
+while [ "$1" != "" ]; do
+    case  $1 in
+        --maintenance-mode | -m)    shift
+                                    if [[ "$1" != "on" && "$1" != "off" ]]; then
+                                        echo "$1 is not a valid value"
+                                        help
+                                        exit 1
+                                    fi
+                                    maintenance=$1
+                                    ;;
+        --environment | -e)         shift
+                                    if [[ "$1" != "prod" && "$1" != "staging" && "$1" != "dev" && "$1" != "sandbox" ]]; then
+                                        echo "$1 is not a valid value"
+                                        help
+                                        exit 1
+                                    fi
+                                    environment=$1
+                                    ;;
+        --help | -h)                help
+                                    exit 0
+                                    ;;
+        *)                          help
+                                    exit 1
+                                    ;;
+    esac
+    shift
+done
+
+# Check the cf-cli v7 is available
+version=$(cf version | cut -d " " -f 3 | cut -d "." -f 1)
+if [[ $version != "7" ]]; then
+    echo "Cloud Foundry CLI v7 not found. Please install it to continue"
+    echo "https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide"
+    exit 1
+fi
+
+route=tta-smarthub-$environment
+domain=app.cloud.gov
+
+if [[ $environment ==  "prod" ]]; then
+    route=ttahub
+    domain=ohs.acf.hhs.gov
+fi
+
+# try targeting the correct space and capture the exit status
+cf target -o hhs-acf-ohs-tta -s ttahub-$environment > /dev/null
+
+status=$?
+# if cf target failed then login
+
+if [[ $status != 0 ]]; then
+    cf login -a api.fr.cloud.gov -o hhs-acf-ohs-tta -s ttahub-$environment --sso
+fi
+
+# Put site into maintenance mode
+if [[ $maintenance == "on" ]]; then
+    cf map-route tta-smarthub-maintenance-page-$environment $domain -n $route
+    cf unmap-route tta-smarthub-$environment $domain -n $route
+    echo "The $environment environment is in maintenance mode"
+fi
+
+# Bring site out of maintenance mode
+if [[ $maintenance == "off" ]]; then
+    cf map-route tta-smarthub-$environment $domain -n $route
+    cf unmap-route tta-smarthub-maintenance-page-$environment $domain -n $route
+    echo "The $environment environment is out of maintenance mode and can be reached at https://$route.$domain"
+fi
