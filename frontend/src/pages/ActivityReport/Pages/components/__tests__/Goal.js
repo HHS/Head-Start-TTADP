@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import userEvent from '@testing-library/user-event';
 
 import Goal from '../Goal';
