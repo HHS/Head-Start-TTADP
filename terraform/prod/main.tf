@@ -85,6 +85,43 @@ resource "cloudfoundry_service_instance" "redis" {
 }
 
 ###
+# Route mapping
+# The following lines should be commented out for the initial `terraform apply`
+# run to bootstrap the application.
+# Run them after the ttahub app has been deployed and after
+# `cf create-private-domain hhs-acf-ohs-tta ttahub.ohs.acf.hhs.gov`
+# has been run manually by an Org Manager
+###
+
+data "cloudfoundry_domain" "url" {
+  name = var.prod_url
+}
+
+data "cloudfoundry_app" "ttahub" {
+  name_or_id = "tta-smarthub-${var.env}"
+  space      = data.cloudfoundry_space.space.id
+}
+
+resource "cloudfoundry_route" "production_route" {
+  domain = data.cloudfoundry_domain.url.id
+  space  = data.cloudfoundry_space.space.id
+  target {
+    app = data.cloudfoundry_app.ttahub.id
+  }
+}
+
+data "cloudfoundry_service" "external_domain" {
+  name = "external-domain"
+}
+
+resource "cloudfoundry_service_instance" "production_domain" {
+  name         = "domain-${var.env}"
+  space        = data.cloudfoundry_space.space.id
+  service_plan = data.cloudfoundry_service.external_domain.service_plans["domain"]
+  json_params  = "{\"domains\": \"${var.prod_url}\"}"
+}
+
+###
 # ClamAV networking
 # The following lines should be commented out for the initial `terraform apply`
 # run to bootstrap the application.
@@ -93,11 +130,6 @@ resource "cloudfoundry_service_instance" "redis" {
 
 data "cloudfoundry_app" "clamav_api" {
   name_or_id = var.clamav_api_app_name
-  space      = data.cloudfoundry_space.space.id
-}
-
-data "cloudfoundry_app" "ttahub" {
-  name_or_id = "tta-smarthub-${var.env}"
   space      = data.cloudfoundry_space.space.id
 }
 
