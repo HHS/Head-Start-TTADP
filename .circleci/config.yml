@@ -340,7 +340,7 @@ jobs:
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< pipeline.parameters.revision >>\",
+                      \"revision\": \"<< pipeline.git.revision >>\",
                       \"description\": \"Sandbox Successfully Deployed\"
                     }
                   }"
@@ -378,7 +378,7 @@ jobs:
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< pipeline.parameters.revision >>\",
+                      \"revision\": \"<< pipeline.git.revision >>\",
                       \"description\": \"Dev Successfully Deployed\"
                     }
                   }"
@@ -414,7 +414,7 @@ jobs:
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< pipeline.parameters.revision >>\",
+                      \"revision\": \"<< pipeline.git.revision >>\",
                       \"description\": \"Staging Successfully Deployed\"
                     }
                   }"
@@ -450,7 +450,7 @@ jobs:
                   -d \
                   "{
                     \"deployment\": {
-                      \"revision\": \"<< pipeline.parameters.revision >>\",
+                      \"revision\": \"<< pipeline.git.revision >>\",
                       \"description\": \"Prod Successfully Deployed\"
                     }
                   }"
