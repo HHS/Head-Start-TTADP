@@ -23,7 +23,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
-import { Controller } from 'react-hook-form';
+import { Controller } from 'react-hook-form/dist/index.ie11';
 
 import arrowBoth from '../images/arrow-both.svg';
 
@@ -34,43 +34,6 @@ const DropdownIndicator = (props) => (
   </components.DropdownIndicator>
 );
 
-const styles = {
-  container: (provided, state) => {
-    // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-    return {
-      ...provided,
-      outline,
-    };
-  },
-  groupHeading: (provided) => ({
-    ...provided,
-    fontWeight: 'bold',
-    fontFamily: 'SourceSansPro',
-    textTransform: 'capitalize',
-    fontSize: '14px',
-    color: '#21272d',
-    lineHeight: '22px',
-  }),
-  control: (provided, state) => ({
-    ...provided,
-    borderColor: '#565c65',
-    backgroundColor: 'white',
-    borderRadius: '0',
-    '&:hover': {
-      borderColor: '#565c65',
-    },
-    // Match uswds disabled style
-    opacity: state.isDisabled ? '0.7' : '1',
-  }),
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    // The arrow dropdown icon is too far to the right, this pushes it back to the left
-    marginRight: '4px',
-  }),
-  indicatorSeparator: () => ({ display: 'none' }),
-};
-
 function MultiSelect({
   name,
   options,
@@ -80,9 +43,50 @@ function MultiSelect({
   labelProperty,
   valueProperty,
   simple,
+  rules,
   multiSelectOptions,
+  onItemSelected,
+  singleRowInput,
   components: componentReplacements,
 }) {
+  const styles = {
+    container: (provided, state) => {
+      // To match the focus indicator provided by uswds
+      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+      return {
+        ...provided,
+        outline,
+      };
+    },
+    groupHeading: (provided) => ({
+      ...provided,
+      fontWeight: 'bold',
+      fontFamily: 'SourceSansPro',
+      textTransform: 'capitalize',
+      fontSize: '14px',
+      color: '#21272d',
+      lineHeight: '22px',
+    }),
+    control: (provided, state) => ({
+      height: singleRowInput ? '38px' : '',
+      ...provided,
+      borderColor: '#565c65',
+      backgroundColor: 'white',
+      borderRadius: '0',
+      '&:hover': {
+        borderColor: '#565c65',
+      },
+      // Match uswds disabled style
+      opacity: state.isDisabled ? '0.7' : '1',
+    }),
+    indicatorsContainer: (provided) => ({
+      ...provided,
+      // The arrow dropdown icon is too far to the right, this pushes it back to the left
+      marginRight: '4px',
+    }),
+    indicatorSeparator: () => ({ display: 'none' }),
+  };
+
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
    * of objects
@@ -95,7 +99,11 @@ function MultiSelect({
         value: v, label: v,
       }));
     }
-    return value.map((item) => ({ label: item[labelProperty], value: item[valueProperty] }));
+    return value.map((item) => ({
+      ...item,
+      label: item[labelProperty],
+      value: item[valueProperty],
+    }));
   };
 
   /*
@@ -109,7 +117,11 @@ function MultiSelect({
       controllerOnChange(event.map((v) => v.value));
     } else {
       controllerOnChange(
-        event.map((item) => ({ [labelProperty]: item.label, [valueProperty]: item.value })),
+        event.map((item) => ({
+          ...item,
+          [labelProperty]: item.label,
+          [valueProperty]: item.value,
+        })),
       );
     }
   };
@@ -124,7 +136,9 @@ function MultiSelect({
             id={name}
             value={values}
             onChange={(event) => {
-              if (event) {
+              if (onItemSelected) {
+                onItemSelected(event);
+              } else if (event) {
                 onChange(event, controllerOnChange);
               } else {
                 controllerOnChange([]);
@@ -151,6 +165,7 @@ function MultiSelect({
           }
           return true;
         },
+        ...rules,
       }}
       name={name}
     />
@@ -182,6 +197,8 @@ MultiSelect.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   components: PropTypes.shape({}),
+  onItemSelected: PropTypes.func,
+  singleRowInput: PropTypes.bool,
   multiSelectOptions: PropTypes.shape({
     isClearable: PropTypes.bool,
     closeMenuOnSelect: PropTypes.bool,
@@ -189,17 +206,21 @@ MultiSelect.propTypes = {
     hideSelectedOptions: PropTypes.bool,
   }),
   disabled: PropTypes.bool,
+  rules: PropTypes.shape({}),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
 };
 
 MultiSelect.defaultProps = {
   disabled: false,
+  singleRowInput: false,
   required: 'Please select at least one item',
   simple: true,
   labelProperty: 'label',
   valueProperty: 'value',
   multiSelectOptions: {},
   components: {},
+  rules: {},
+  onItemSelected: null,
 };
 
 export default MultiSelect;

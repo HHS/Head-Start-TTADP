@@ -22,13 +22,11 @@ export default async function createFileMetaData(
   originalFileName,
   s3FileName,
   reportId,
-  attachmentType,
   fileSize,
 ) {
   const newFile = {
     activityReportId: reportId,
     originalFileName,
-    attachmentType,
     key: s3FileName,
     status: UPLOADING,
     fileSize,

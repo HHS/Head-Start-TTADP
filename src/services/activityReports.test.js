@@ -22,7 +22,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
-  resourcesUsed: 'test',
+  ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
 };
 
@@ -58,8 +58,8 @@ describe('Activity Reports DB service', () => {
   describe('createOrUpdate', () => {
     it('updates an already saved report', async () => {
       const report = await ActivityReport.create(reportObject);
-      const newReport = await createOrUpdate({ resourcesUsed: 'updated' }, report);
-      expect(newReport.resourcesUsed).toBe('updated');
+      const newReport = await createOrUpdate({ ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
+      expect(newReport.ECLKCResourcesUsed).toEqual(['updated']);
     });
 
     it('creates a new report', async () => {
@@ -234,7 +234,7 @@ describe('Activity Reports DB service', () => {
 
       const foundReport = await activityReportById(report.id);
       expect(foundReport.id).toBe(report.id);
-      expect(foundReport.resourcesUsed).toBe('test');
+      expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
     });
   });
 
@@ -253,6 +253,8 @@ describe('Activity Reports DB service', () => {
         id: 1002,
         homeRegionId: 1,
         name: 'a user',
+        hsesUsername: 'user',
+        hsesUserId: '1002',
       };
       await User.findOrCreate({
         where: {

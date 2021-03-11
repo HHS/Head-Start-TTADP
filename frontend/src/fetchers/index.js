@@ -1,9 +1,22 @@
+export class HTTPError extends Error {
+  constructor(statusCode, message, ...params) {
+    super(message, ...params);
+    this.name = 'HTTPError';
+    this.status = statusCode;
+    this.statusText = message;
+  }
+}
+
 export const get = async (url) => {
   const res = await fetch(url, {
     credentials: 'same-origin',
+    headers: {
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    },
   });
   if (!res.ok) {
-    throw new Error(res.statusText);
+    throw new HTTPError(res.status, res.statusText);
   }
   return res;
 };

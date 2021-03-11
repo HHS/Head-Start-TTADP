@@ -1,9 +1,10 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from 'react';
 import {
   Tag, Table, Alert, Grid,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 import Pagination from 'react-js-pagination';
@@ -18,8 +19,9 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
+import ContextMenu from '../../components/ContextMenu';
 
-function renderReports(reports) {
+function renderReports(reports, history) {
   const emptyReport = {
     id: '',
     displayId: '',
@@ -91,12 +93,20 @@ function renderReports(reports) {
       </Tag>
     ));
 
+    const menuItems = [
+      {
+        label: 'Edit',
+        onClick: () => { history.push(`/activity-reports/${id}`); },
+      },
+    ];
+    const contextMenuLabel = `Edit activity report ${displayId}`;
+
     return (
       <tr key={`landing_${id}`}>
         <th scope="row">
           <Link
-            to={`/activity-reports/${id}/activity-summary`}
-            href={`/activity-reports/${id}/activity-summary`}
+            to={`/activity-reports/${id}`}
+            href={`/activity-reports/${id}`}
           >
             {displayId}
           </Link>
@@ -131,9 +141,7 @@ function renderReports(reports) {
           </Tag>
         </td>
         <td>
-          <button type="button" className="smart-hub--dotdotdot">
-            ...
-          </button>
+          <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
         </td>
       </tr>
     );
@@ -153,6 +161,7 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
 }
 
 function Landing() {
+  const history = useHistory();
   const [isLoaded, setIsLoaded] = useState(false);
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
@@ -238,6 +247,40 @@ function Landing() {
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
+  const renderColumnHeader = (displayName, name) => {
+    const sortClassName = getClassNamesFor(name);
+    let fullAriaSort;
+    switch (sortClassName) {
+      case 'asc':
+        fullAriaSort = 'ascending';
+        break;
+      case 'desc':
+        fullAriaSort = 'descending';
+        break;
+      default:
+        fullAriaSort = 'none';
+        break;
+    }
+    return (
+      <th scope="col" aria-sort={fullAriaSort}>
+        <a
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            requestSort(name);
+          }}
+          onKeyPress={() => requestSort(name)}
+          className={sortClassName}
+          aria-label={`${displayName}. Activate to sort ${
+            sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
+        >
+          {displayName}
+        </a>
+      </th>
+    );
+  };
+
   const handlePageChange = (pageNumber) => {
     setActivePage(pageNumber);
     setOffset((pageNumber - 1) * perPage);
@@ -284,105 +327,51 @@ function Landing() {
             />
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
+                <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
+                  <span
+                    className="smart-hub--total-count"
+                    aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                      offset,
+                      perPage,
+                      activePage,
+                      reportsCount,
+                    )}`}
+                  >
+                    {renderTotal(offset, perPage, activePage, reportsCount)}
+                    <Pagination
+                      hideFirstLastPages
+                      prevPageText="<Prev"
+                      nextPageText="Next>"
+                      activePage={activePage}
+                      itemsCountPerPage={perPage}
+                      totalItemsCount={reportsCount}
+                      pageRangeDisplayed={4}
+                      onChange={handlePageChange}
+                      linkClassPrev="smart-hub--link-prev"
+                      linkClassNext="smart-hub--link-next"
+                      tabIndex={0}
+                    />
+                  </span>
+                </span>
                 <Table className="usa-table usa-table--borderless usa-table--striped">
                   <caption>
                     Activity reports
-                    <span className="smart-hub--table-nav">
-                      <span className="smart-hub--total-count">
-                        {renderTotal(offset, perPage, activePage, reportsCount)}
-                        <Pagination
-                          hideFirstLastPages
-                          prevPageText="<Prev"
-                          nextPageText="Next>"
-                          activePage={activePage}
-                          itemsCountPerPage={perPage}
-                          totalItemsCount={reportsCount}
-                          pageRangeDisplayed={4}
-                          onChange={handlePageChange}
-                          linkClassPrev="smart-hub--link-prev"
-                          linkClassNext="smart-hub--link-next"
-                        />
-                      </span>
-                    </span>
+                    <p id="arTblDesc">with sorting and pagination</p>
                   </caption>
                   <thead>
                     <tr>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('regionId');
-                        }}
-                        className={getClassNamesFor('regionId')}
-                      >
-                        Report ID
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('activityRecipients');
-                        }}
-                        className={getClassNamesFor('activityRecipients')}
-                      >
-                        Grantee
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('startDate');
-                        }}
-                        className={getClassNamesFor('startDate')}
-                      >
-                        Start date
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('author');
-                        }}
-                        className={getClassNamesFor('author')}
-                      >
-                        Creator
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('topics');
-                        }}
-                        className={getClassNamesFor('topics')}
-                      >
-                        Topic(s)
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('collaborators');
-                        }}
-                        className={getClassNamesFor('collaborators')}
-                      >
-                        Collaborator(s)
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('updatedAt');
-                        }}
-                        className={getClassNamesFor('updatedAt')}
-                      >
-                        Last saved
-                      </th>
-                      <th
-                        scope="col"
-                        onClick={() => {
-                          requestSort('status');
-                        }}
-                        className={getClassNamesFor('status')}
-                      >
-                        Status
-                      </th>
+                      {renderColumnHeader('Report ID', 'regionId')}
+                      {renderColumnHeader('Grantee', 'activityRecipients')}
+                      {renderColumnHeader('Start date', 'startDate')}
+                      {renderColumnHeader('Creator', 'author')}
+                      {renderColumnHeader('Topic(s)', 'topics')}
+                      {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                      {renderColumnHeader('Last saved', 'updatedAt')}
+                      {renderColumnHeader('Status', 'status')}
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
-                  <tbody>{renderReports(reports)}</tbody>
+                  <tbody>{renderReports(reports, history)}</tbody>
                 </Table>
               </Container>
             </SimpleBar>
