@@ -167,6 +167,23 @@ export default (sequelize, DataTypes) => {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
     },
+    sortedTopics: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.topics) {
+          return [];
+        }
+        return this.topics.sort((a, b) => {
+          if (a < b) {
+            return -1;
+          }
+          if (a > b) {
+            return 1;
+          }
+          return 0;
+        });
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReport',

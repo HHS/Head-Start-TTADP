@@ -200,7 +200,7 @@ function ActivityReport({
     }
 
     const page = pages.find((p) => p.position === position);
-    history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
+    history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {
