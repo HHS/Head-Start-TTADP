@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isEmpty } from 'lodash';
 
 import {
@@ -265,6 +265,7 @@ const ActivitySummary = ({
                     register({
                       required: 'Please enter the duration of the activity',
                       valueAsNumber: true,
+                      pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
                       min: { value: 0, message: 'Duration can not be negative' },
                     })
                   }

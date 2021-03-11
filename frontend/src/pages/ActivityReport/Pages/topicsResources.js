@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form/dist/index.ie11';
 import { Helmet } from 'react-helmet';
 import {
   Fieldset, Label,

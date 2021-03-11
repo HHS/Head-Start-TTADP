@@ -1,10 +1,16 @@
 import moment from 'moment';
 import db, { User, Permission, sequelize } from '../models';
-import findOrCreateUser, { validateUserAuthForAccess, validateUserAuthForAdmin } from './accessValidation';
+import findOrCreateUser, {
+  validateUserAuthForAccess,
+  validateUserAuthForAdmin,
+  getUserReadRegions,
+} from './accessValidation';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 
-const { SITE_ACCESS, ADMIN } = SCOPES;
+const {
+  SITE_ACCESS, ADMIN, READ_REPORTS, READ_WRITE_REPORTS,
+} = SCOPES;
 
 jest.mock('../logger', () => ({
   auditLogger: {
@@ -219,6 +225,45 @@ describe('accessValidation', () => {
 
     it('Throws on error', async () => {
       await expect(validateUserAuthForAdmin(undefined)).rejects.toThrow();
+    });
+  });
+
+  describe('getUserReadRegions', () => {
+    it('returns an array of regions user has permissions to', async () => {
+      await setupUser(mockUser);
+      await Permission.create({
+        scopeId: READ_REPORTS,
+        userId: mockUser.id,
+        regionId: 14,
+      });
+      await Permission.create({
+        scopeId: READ_WRITE_REPORTS,
+        userId: mockUser.id,
+        regionId: 13,
+      });
+
+      const regions = await getUserReadRegions(mockUser.id);
+
+      expect(regions[0]).toBe(14);
+      expect(regions[1]).toBe(13);
+    });
+
+    it('returns an empty array if user has no permissions', async () => {
+      await setupUser(mockUser);
+
+      const regions = await getUserReadRegions(mockUser.id);
+      expect(regions.length).toBe(0);
+    });
+
+    it('returns an empty array if a user does not exist in database', async () => {
+      await User.destroy({ where: { id: mockUser.id } });
+
+      const regions = await getUserReadRegions(mockUser.id);
+      expect(regions.length).toBe(0);
+    });
+
+    it('Throws on error', async () => {
+      await expect(getUserReadRegions(undefined)).rejects.toThrow();
     });
   });
 });
