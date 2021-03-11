@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
   Dropdown, Form, Fieldset, Textarea, Button,
 } from '@trussworks/react-uswds';
@@ -56,7 +56,7 @@ const Draft = ({
       { justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
-        <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Additional Notes">
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Additional Notes">
           <FormItem
             label="Creator notes"
             name="additionalNotes"
@@ -65,7 +65,7 @@ const Draft = ({
             <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
           </FormItem>
         </Fieldset>
-        <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend="Review and submit report">
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
           <p className="margin-top-4">
             Submitting this form for approval means that you will no longer be in draft
             mode. Please review all information in each section before submitting to your

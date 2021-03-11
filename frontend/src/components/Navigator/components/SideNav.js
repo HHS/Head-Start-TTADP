@@ -48,7 +48,6 @@ function SideNav({
         unstyled
         className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
         role="button"
-        aria-label={page.label}
       >
         <span className="margin-left-2">{page.label}</span>
         <span className="margin-left-auto margin-right-2">
@@ -79,8 +78,8 @@ function SideNav({
         )}
       {lastSaveTime && !errorMessage
         && (
-        <Alert aria-live="polite" type="success" slim noIcon className="smart-hub--save-alert">
-          This report was automatically saved on
+        <Alert aria-atomic aria-live="polite" type="success" slim noIcon className="smart-hub--save-alert">
+          This report was last saved on
           {' '}
           {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
         </Alert>

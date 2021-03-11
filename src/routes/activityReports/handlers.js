@@ -178,11 +178,12 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const reports = await activityReports();
-  if (!reports) {
+  const { readRegions } = req.session;
+  const reportsWithCount = await activityReports(readRegions, req.query);
+  if (!reportsWithCount) {
     res.sendStatus(404);
   } else {
-    res.json(reports);
+    res.json(reportsWithCount);
   }
 }
 

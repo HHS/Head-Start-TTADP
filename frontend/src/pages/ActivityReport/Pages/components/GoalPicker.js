@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Label, TextInput,
 } from '@trussworks/react-uswds';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { v4 as uuidv4 } from 'uuid';
 
 import FormItem from '../../../../components/FormItem';
@@ -36,7 +36,7 @@ const GoalPicker = ({
 
   const onRemoveGoal = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateNewAvailableGoals((goals) => goals.filter((goal) => goal !== id));
+    updateNewAvailableGoals(newGoals);
     setValue('goals', newGoals);
   };
 
@@ -78,7 +78,7 @@ const GoalPicker = ({
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
 
   return (
-    <div className="smart-hub--form-section">
+    <div className="margin-top-4">
       <FormItem
         label="You must select an established goal(s) OR create a new goal for this activity."
         name="goals"
@@ -98,6 +98,7 @@ const GoalPicker = ({
               validate: validateGoals,
             }}
             options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
+            singleRowInput
             multiSelectOptions={{
               isClearable: false,
               closeMenuOnSelect: true,

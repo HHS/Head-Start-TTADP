@@ -24,10 +24,10 @@ export default (sequelize, DataTypes) => {
     activityRecipientId: {
       type: DataTypes.VIRTUAL,
       get() {
-        if (this.grant) {
-          return this.grant.id;
+        if (this.grantId) {
+          return this.grantId;
         }
-        return this.nonGrantee.id;
+        return this.nonGranteeId;
       },
     },
     name: {
