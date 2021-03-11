@@ -14,7 +14,12 @@ import {
   Goal,
   User,
   NextStep,
+  Objective,
 } from '../models';
+
+import {
+  saveGoalsForReport, copyGoalsToGrants,
+} from './goals';
 
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
   const newCollaborators = collaborators.map((collaborator) => ({
@@ -139,13 +144,28 @@ async function create(report, transaction) {
 }
 
 export async function review(report, status, managerNotes) {
-  const updatedReport = await report.update({
-    status,
-    managerNotes,
-  },
-  {
-    fields: ['status', 'managerNotes'],
+  let updatedReport;
+  await sequelize.transaction(async (transaction) => {
+    updatedReport = await report.update({
+      status,
+      managerNotes,
+    },
+    {
+      fields: ['status', 'managerNotes'],
+      transaction,
+    });
+
+    if (status === REPORT_STATUSES.APPROVED) {
+      if (report.activityRecipientType === 'grantee') {
+        await copyGoalsToGrants(
+          report.goals,
+          report.activityRecipients.map((recipient) => recipient.activityRecipientId),
+          transaction,
+        );
+      }
+    }
   });
+
   return updatedReport;
 }
 
@@ -160,7 +180,7 @@ export function activityReportById(activityReportId) {
     include: [
       {
         model: ActivityRecipient,
-        attributes: ['id', 'name', 'activityRecipientId'],
+        attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
         as: 'activityRecipients',
         required: false,
         include: [
@@ -183,14 +203,21 @@ export function activityReportById(activityReportId) {
         ],
       },
       {
+        model: Objective,
+        as: 'objectives',
+        include: [{
+          model: Goal,
+          as: 'goal',
+          include: [{
+            model: Objective,
+            as: 'objectives',
+          }],
+        }],
+      },
+      {
         model: User,
         as: 'author',
         attributes: ['name'],
-      },
-      {
-        model: Goal,
-        as: 'goals',
-        attributes: ['id', 'name'],
       },
       {
         model: User,
@@ -330,7 +357,7 @@ export function activityReports(readRegions, {
       include: [
         {
           model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId'],
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
           as: 'activityRecipients',
           required: false,
           include: [
@@ -469,6 +496,7 @@ export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
     goals,
+    objectives,
     collaborators,
     activityRecipients,
     attachments,
@@ -519,6 +547,10 @@ export async function createOrUpdate(newActivityReport, report) {
     if (specialistNextSteps) {
       const { id } = savedReport;
       await saveNotes(id, specialistNextSteps, false, transaction);
+    }
+
+    if (goals) {
+      await saveGoalsForReport(goals, savedReport, transaction);
     }
   });
   return activityReportById(savedReport.id);

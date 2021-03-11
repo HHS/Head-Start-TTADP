@@ -50,3 +50,9 @@ variable "clamav_api_app_name" {
   description = "app name for clamav api server"
   default     = "clamav-api-ttahub-prod"
 }
+
+variable "prod_url" {
+  type        = string
+  description = "Production URL endpoint"
+  default     = "ttahub.ohs.acf.hhs.gov"
+}
