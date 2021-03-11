@@ -6,7 +6,7 @@
 */
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import {
   Form,
   Button,
@@ -46,7 +46,6 @@ function Navigator({
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
-  const { pageState } = formData;
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
@@ -54,6 +53,7 @@ function Navigator({
     defaultValues: formData,
     shouldUnregister: false,
   });
+  const pageState = hookForm.watch('pageState');
 
   const {
     formState,
