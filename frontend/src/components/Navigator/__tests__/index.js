@@ -5,7 +5,7 @@ import {
   render, screen, waitFor, within,
 } from '@testing-library/react';
 
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
 
