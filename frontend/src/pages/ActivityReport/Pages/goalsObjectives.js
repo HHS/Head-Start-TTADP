@@ -4,7 +4,7 @@ import {
   Fieldset, Label, Textarea,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
 
 import ReviewItem from './Review/ReviewItem';
