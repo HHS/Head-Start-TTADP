@@ -10,6 +10,7 @@ import {
   activityReports,
   setStatus,
   activityReportAlerts,
+  legacyReport,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -22,6 +23,16 @@ const namespace = 'SERVICE:ACTIVITY_REPORTS';
 const logContext = {
   namespace,
 };
+
+export async function getLegacyReport(req, res) {
+  try {
+    const { legacyReportId } = req.params;
+    const report = await legacyReport(legacyReportId);
+    res.json(report);
+  } catch (error) {
+    handleErrors(req, res, error, logContext);
+  }
+}
 
 /**
  * Gets all goals for any number of grants for use in an activity report
