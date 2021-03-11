@@ -122,8 +122,8 @@ const NoteEntries = ({ name, humanName }) => {
                   label="Actions menu"
                   menuItems={
                     [
-                      { label: 'Edit', onClick: (e) => { e.preventDefault(); onEdit(index); } },
-                      { label: 'Delete', onClick: (e) => { e.preventDefault(); onDelete(index); } },
+                      { label: 'Edit', onClick: () => { onEdit(index); } },
+                      { label: 'Delete', onClick: () => { onDelete(index); } },
                     ]
                   }
                 />

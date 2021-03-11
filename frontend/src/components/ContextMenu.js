@@ -66,7 +66,7 @@ function ContextMenu({
       <ul className="usa-list usa-list--unstyled" role="menu">
         {menuItems.map((item) => (
           <li key={item.label} role="menuitem">
-            <Button type="button" onClick={item.onClick} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
+            <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
               <div className="smart-hub--context-menu-item-label">
                 {item.label}
               </div>
