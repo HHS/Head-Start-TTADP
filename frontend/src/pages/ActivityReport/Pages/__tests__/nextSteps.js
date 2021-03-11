@@ -73,10 +73,9 @@ describe('next steps', () => {
     expect(await screen.findByText('help capture pikachu')).toBeVisible();
 
     // And menu's are seen
-    const menus = await screen.findAllByTitle('ellipsis');
+    const menus = await screen.findAllByTestId('ellipsis-button');
     expect(menus).toHaveLength(2);
   });
-
   it('Can delete items', async () => {
     // Given some items already as notes
     renderNextSteps(
@@ -84,7 +83,7 @@ describe('next steps', () => {
       [{ note: 'bulbasaur', id: 2 }],
     );
     // When the user deletes everything
-    const menus = await screen.findAllByTitle('ellipsis');
+    const menus = await screen.findAllByTestId('ellipsis-button');
 
     userEvent.click(menus[0]);
     let deleteBtn = await screen.findByText('Delete');
@@ -106,7 +105,7 @@ describe('next steps', () => {
     );
 
     // When the users edits an item
-    const menu = await screen.findByTitle('ellipsis');
+    const menu = await screen.findByTestId('ellipsis-button');
     userEvent.click(menu);
     const editBtn = await screen.findByText('Edit');
     userEvent.click(editBtn);
