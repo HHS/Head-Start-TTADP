@@ -5,7 +5,7 @@ import {
   render, screen, waitFor, within,
 } from '@testing-library/react';
 
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
 
@@ -91,7 +91,7 @@ describe('Navigator', () => {
     renderNavigator();
     const firstInput = screen.getByTestId('first');
     userEvent.click(firstInput);
-    const first = await screen.findByRole('button', { name: 'first page' });
+    const first = await screen.findByRole('button', { name: 'first page In Progress' });
     await waitFor(() => expect(within(first).getByText('In Progress')).toBeVisible());
   });
 
@@ -121,7 +121,7 @@ describe('Navigator', () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
     renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
-    userEvent.click(await screen.findByRole('button', { name: 'first page' }));
+    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
     await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });

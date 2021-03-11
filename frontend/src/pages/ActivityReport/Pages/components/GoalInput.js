@@ -33,7 +33,11 @@ const Input = ({
   const selectedGoals = selectProps.value.length;
   let message;
 
-  if (selectedGoals === 0) {
+  const { value } = props;
+
+  if (value !== '') {
+    message = '';
+  } else if (selectedGoals === 0) {
     message = 'Select goal(s)';
   } else if (selectedGoals === 1) {
     message = '1 goal selected';
@@ -42,7 +46,7 @@ const Input = ({
   }
 
   return (
-    <div css={getStyles('input', { theme, ...props })}>
+    <>
       <AutosizeInput
         className={cx({ input: true }, className)}
         inputRef={innerRef}
@@ -51,7 +55,7 @@ const Input = ({
         {...props}
       />
       {message}
-    </div>
+    </>
   );
 };
 

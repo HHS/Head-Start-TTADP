@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
   Dropdown, Form, Fieldset, Textarea, Button,
 } from '@trussworks/react-uswds';
