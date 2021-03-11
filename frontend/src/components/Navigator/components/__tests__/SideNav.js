@@ -99,7 +99,7 @@ describe('SideNav', () => {
 
   it('the currently selected page has the current class', () => {
     renderNav(REPORT_STATUSES.SUBMITTED, () => {}, true);
-    const submitted = screen.getByRole('button', { name: 'test' });
+    const submitted = screen.getByRole('button', { name: 'test Submitted' });
     expect(submitted).toHaveClass('smart-hub--navigator-link-active');
   });
 });

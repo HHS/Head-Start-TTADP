@@ -237,6 +237,7 @@ const ActivitySummary = ({
                 name="startDate"
               >
                 <DatePicker
+                  ariaName="Start Date (Required)"
                   control={control}
                   maxDate={endDate}
                   name="startDate"
@@ -250,6 +251,7 @@ const ActivitySummary = ({
                 name="endDate"
               >
                 <DatePicker
+                  ariaName="End Date (required)"
                   control={control}
                   minDate={startDate}
                   disabled={!startDate}
@@ -260,7 +262,7 @@ const ActivitySummary = ({
             </Grid>
             <Grid col={5}>
               <FormItem
-                label="Duration (round to the nearest half hour)"
+                label="Duration in hours (round to the nearest half hour)"
                 name="duration"
               >
                 <TextInput
