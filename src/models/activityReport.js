@@ -41,10 +41,10 @@ export default (sequelize, DataTypes) => {
   }
   ActivityReport.init({
     displayId: {
-      type: DataTypes.VIRTUAL,
+      type: DataTypes.VIRTUAL(DataTypes.STRING, ['legacyId', 'regionId', 'id']),
       get() {
-        if (this.legacyId) return this.legacyId;
-        const { regionId } = this;
+        const { legacyId, regionId } = this;
+        if (legacyId) return legacyId.toString();
         const regionPrefix = !regionId ? '???' : `R${this.regionId.toString().padStart(2, '0')}`;
         return `${regionPrefix}-AR-${this.id}`;
       },
