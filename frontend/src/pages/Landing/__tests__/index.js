@@ -398,9 +398,8 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Status', async () => {
-    const statusColumnHeaders = await screen.findAllByRole('columnheader', {
-      name: /status/i,
-    });
+    const statusColumnHeaders = await screen.findAllByText(/status/i);
+
     expect(statusColumnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=asc&offset=0&limit=7',
@@ -423,9 +422,8 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Report ID', async () => {
-    const columnHeaders = await screen.findAllByRole('columnheader', {
-      name: /report id/i,
-    });
+    const columnHeaders = await screen.findAllByText(/report id/i);
+
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=7',
@@ -441,8 +439,8 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Grantee', async () => {
-    const columnHeaders = await screen.findAllByRole('columnheader', {
-      name: /grantee/i,
+    const columnHeaders = await screen.findAllByRole('button', {
+      name: /grantee\. activate to sort ascending/i,
     });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
@@ -460,9 +458,8 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Start date', async () => {
-    const columnHeaders = await screen.findAllByRole('columnheader', {
-      name: /start date/i,
-    });
+    const columnHeaders = await screen.findAllByText(/start date/i);
+
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=7',
@@ -479,9 +476,8 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Creator', async () => {
-    const columnHeaders = await screen.findAllByRole('columnheader', {
-      name: /creator/i,
-    });
+    const columnHeaders = await screen.findAllByText(/creator/i);
+
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=7',
@@ -498,9 +494,7 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Collaborator(s)', async () => {
-    const columnHeaders = await screen.findAllByRole('columnheader', {
-      name: /collaborator\(s\)/i,
-    });
+    const columnHeaders = await screen.findAllByText(/collaborator\(s\)/i);
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=7',
