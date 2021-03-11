@@ -80,9 +80,11 @@ describe('File Upload', () => {
   });
 
   describe('File Upload Handlers happy path', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       uploadFile.mockReset();
       getPresignedURL.mockReset();
+    });
+    it('tests a file upload', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
@@ -94,16 +96,9 @@ describe('File Upload', () => {
         .expect(200)
         .then((res) => {
           fileId = res.body.id;
+          expect(uploadFile).toHaveBeenCalled();
         });
-    });
-    it('tests a file upload', async () => {
-      expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
-    });
-    it('checks the metadata was uploaded to the database', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
       const file = await File.findOne({ where: { id: fileId } });
       const uuid = file.dataValues.key.slice(0, -4);
       expect(file.dataValues.id).toBe(fileId);
@@ -117,7 +112,7 @@ describe('File Upload', () => {
         canUpdate: () => false,
       }));
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/${fileId}`)
+        .delete(`/api/files/${report.dataValues.id}/1`)
         .expect(403)
         .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
     });
@@ -125,12 +120,18 @@ describe('File Upload', () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
-      const file = await File.findOne({ where: { id: fileId } });
+      const file = await File.create({
+        activityReportId: report.dataValues.id,
+        originalFileName: 'name',
+        key: 'key',
+        status: 'UPLOADING',
+        fileSize: 0,
+      });
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/${fileId}`)
+        .delete(`/api/files/${report.dataValues.id}/${file.id}`)
         .expect(204);
       expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
-      const noFile = await File.findOne({ where: { id: fileId } });
+      const noFile = await File.findOne({ where: { id: file.id } });
       expect(noFile).toBe(null);
     });
   });
