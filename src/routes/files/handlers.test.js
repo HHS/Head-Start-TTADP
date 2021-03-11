@@ -80,9 +80,11 @@ describe('File Upload', () => {
   });
 
   describe('File Upload Handlers happy path', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       uploadFile.mockReset();
       getPresignedURL.mockReset();
+    });
+    it('tests a file upload', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
@@ -94,6 +96,7 @@ describe('File Upload', () => {
         .expect(200)
         .then((res) => {
           fileId = res.body.id;
+          expect(uploadFile).toHaveBeenCalled();
         });
       expect(mockAddToScanQueue).toHaveBeenCalled();
       const file = await File.findOne({ where: { id: fileId } });
