@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
+/* eslint-disable no-console */
 import { readFileSync } from 'fs';
 import path from 'path';
 import parse from 'csv-parse/lib/sync';
@@ -16,62 +17,57 @@ import { REPORT_STATUSES } from '../constants';
 
 ## SS Field Notes
 
-- additional-notes-for-this-activity:
-- cdi-grantee-name: Empty/Unused?
-- context-for-this-activity:
-- created:
-- created-by:
-- duration:
-- end-date:
-- format:
-- goal-1:
-- goal-2:
-- grantee-follow-up-tasks-&-objectives:
-- grantee-name:
-- grantee-participants:
-- grantees-learning-level-goal-1:
-- grantees-learning-level-goal-2:
-- grantees-learning-level-goal2: R5 has a typo
-- manager:
-- manager-approval:
-- modified:
-- modified-by:
-- multi-grantee-activities:
-- multi-program-activities:
-- non-grantee:
-- non-grantee-activity:
-- non-grantee-participants:
-- non-ohs-resources: 'nonECLKCResourcesUsed'
-- number-of-participants:
-- objective-1.1:
-- objective-1.1-status:
-- objective-1.2-status:
-- objective-2.1:
-- objective-2.1-status:
-- objective-2.2:
-- objective-2.2-status:
-- objectve-1.2:
-- other-specialists:
-- other-topics:
-- override-created-by : Only exists in R5
-- participants : Only exists in R6
-- program-type:
-- reason/s:
-- reportid:
-- resources-used:
-- source-of-request: 'requester'
-- specialist-follow-up-tasks-&-objectives:
-- start-date:
-- t-ta:
-- target-populations:
-- topics:
-- tta-provided-and-grantee-progress-made:
+- reportId
+- granteeName // activityRecipients
+- cdiGranteeName // Empty/Unused?
+- multiGranteeActivities
+- programType
+- nonGranteeActivity
+- sourceOfRequest
+- reasons
+- tTa
+- topics
+- otherTopics
+- granteeParticipants
+- nonGranteeParticipants
+- numberOfParticipants
+- startDate
+- endDate
+- duration
+- otherSpecialists // 'collaborators'?
+- targetPopulations
+- resourcesUsed
+- nonOhsResources
+- goal1
+- granteesLearningLevelGoal1
+- objective11
+- objective11Status
+- objective12
+- objective12Status
+- goal2
+- granteesLearningLevelGoal2
+- objective21
+- objective21Status
+- objective22
+- objective22Status
+- ttaProvidedAndGranteeProgressMade
+- granteeFollowUpTasksObjectives
+- specialistFollowUpTasksObjectives
+- format
+- additionalNotesForThisActivity
+- manager
+- managerApproval
+- created
+- createdBy
+- overrideCreatedBy
+- modified
+- modifiedBy
 
 ## Relational Fields
 
 ### Fields that would map to Users
-- created-by: 'author'
-- modified-by: 'lastUpdatedBy'
+- createdBy: 'author'
+- modifiedBy: 'lastUpdatedBy'
 - manager: 'approvingManager'
 - null: 'collaborators' // NOTE: "Other specialists"?
 // NOTE: "Grantee Name", but maybe also "Non-Grantee Activity"
@@ -80,15 +76,13 @@ import { REPORT_STATUSES } from '../constants';
 ### Other relational fields
 - null: 'regionId' // NOTE: Take number from sheet name. R14 should be remapped
 - null: 'attachments' // FIXME: How to get attachments from smarthub?
-- 'specialist-follow-up-tasks-&-objectives': 'specialistNextSteps'
-- 'grantee-follow-up-tasks-&-objectives': 'granteeNextSteps'
-- 'goal-1': 'goals'
-- 'goal-2': 'goals'
-
+- 'specialistFollowUpTasksObjectives': 'specialistNextSteps'
+- 'granteeFollowUpTasksObjectives': 'granteeNextSteps'
+- 'goal1': 'goals'
+- 'goal2': 'goals'
  */
 
-const wordSeperatorRE = /-?\s+-?/g;
-const columnCleanupRE = /(\s?\(.*\)|:|')+/g;
+const columnCleanupRE = /(\s?\(.*\)|:|\.|\/|&|')+/g;
 const decimalRE = /^\d+(\.\d*)?$/;
 const invalidRegionRE = /R14/;
 const regionRE = /^R(?<regionId>\d{1,2})/i; // Used against filepaths
@@ -100,15 +94,31 @@ function readCsv(file) {
   return parse(csv, { skipEmptyLines: true, columns: true });
 }
 
+// helper for mapping to camelCase
+const hyphensToSpaces = (x) => (x === '-' ? ' ' : x);
+
+// Map to camelCase. will not respect acronyms, other unusual capitalization
+function mapToCamelCase(char, index, word) {
+  if (index === 0) return char.toLowerCase();
+  if (char === ' ') return '';
+  const prevChar = word[index - 1];
+  if (prevChar === ' ') return char.toUpperCase();
+  return char.toLowerCase();
+}
+
 // Headers need to be uniform across sheets if we are to import
+// NOTE: Doing this once per file would be an enchancement
 function normalizeKey(k) {
   let value = k.trim();
-  // Remove parentheticals, colons
-  value = value.replace(columnCleanupRE, '');
-  // Replace spaces or spaces plus hyphens with single hyphens
-  value = value.replace(wordSeperatorRE, '-');
-  // lowercase values
-  value = value.toLowerCase();
+  // Manual fix for reportID
+  if (value.toLowerCase() === 'reportid') return 'reportId';
+  // Remove parentheticals, other non-alphanumeric chars
+  value = value.replace(columnCleanupRE, '').trim();
+  // Replace hyphens with spaces, then map to camelCase
+  value = value.split('')
+    .map(hyphensToSpaces)
+    .map(mapToCamelCase)
+    .join('');
 
   return value;
 }
@@ -189,59 +199,62 @@ export default async function importActivityReports(file) {
   for await (const row of csvFile) {
     const data = normalizeData(row);
 
-    console.log(Object.keys(data));
+    // console.log(Object.keys(data));
 
-    const reportId = coerceReportId(getValue(data, 'reportid'), fileRegionId);
+    const reportId = coerceReportId(getValue(data, 'reportId'), fileRegionId);
     // Ignore rows with no reportid
     if (reportId) {
-      const granteeActivity = getValue(data, 'grantee-activity');
-      const activityRecipientType = granteeActivity ? 'grantee' : 'non-grantee';
+      const granteeActivity = getValue(data, 'granteeActivity');
+      const activityRecipientType = granteeActivity ? 'grantee' : 'nonGrantee';
 
       // Coerce values into appropriate data type
-      const status = coerceStatus(getValue(data, 'manager-approval'));
+      const status = coerceStatus(getValue(data, 'managerApproval'));
       const duration = coerceDuration(getValue(data, 'duration'));
-      const numberOfParticipants = coerceInt(getValue(data, 'number-of-participants'));
+      const numberOfParticipants = coerceInt(getValue(data, 'numberOfParticipants'));
 
-      const programTypes = coerceToArray(getValue(data, 'program-type')); // FIXME: Check this key
-      const targetPopulations = coerceToArray(getValue(data, 'target-populations'));
-      const reason = coerceToArray(getValue(data, 'reason/s'));
-      const participants = coerceToArray(getValue(data, 'grantee-participants'))
-        .concat(coerceToArray(getValue(data, 'non-grantee-participants')));
+      const programTypes = coerceToArray(getValue(data, 'programType')); // FIXME: Check this key
+      const targetPopulations = coerceToArray(getValue(data, 'targetPopulations'));
+      const reason = coerceToArray(getValue(data, 'reasons'));
+      const participants = coerceToArray(getValue(data, 'granteeParticipants'))
+        .concat(coerceToArray(getValue(data, 'nonGranteeParticipants')));
       const topics = coerceToArray(getValue(data, 'topics'));
-      const ttaType = coerceToArray(getValue(data, 't-ta'));
+      const ttaType = coerceToArray(getValue(data, 'tTa'));
 
-      const startDate = coerceDate(getValue(data, 'start-date'));
-      const endDate = coerceDate(getValue(data, 'end-date'));
+      const startDate = coerceDate(getValue(data, 'startDate'));
+      const endDate = coerceDate(getValue(data, 'endDate'));
 
       const arRecord = {
         imported: data, // Store all the data in `imported` for later reuse
         legacyId: reportId,
         regionId: fileRegionId,
         deliveryMethod: getValue(data, 'format'), // FIXME: Check records like 'R01-AR-000135'
-        ECLKCResourcesUsed: coerceToArray(getValue(data, 'resources-used')),
-        nonECLKCResourcesUsed: coerceToArray(getValue(data, 'non-ohs-resources')),
+        ECLKCResourcesUsed: coerceToArray(getValue(data, 'resourcesUsed')),
+        nonECLKCResourcesUsed: coerceToArray(getValue(data, 'nonOhsResources')),
         duration, // Decimal
         startDate,
         endDate,
         activityRecipientType,
-        requester: getValue(data, 'source-of-request'), // 'Grantee' or 'Regional Office'
+        requester: getValue(data, 'sourceOfRequest'), // 'Grantee' or 'Regional Office'
         programTypes, // Array of strings
         targetPopulations, // Array of strings
         reason, // Array of strings
         numberOfParticipants, // Integer
         participants, // Array of strings
         topics, // Array of strings
-        context: getValue(data, 'context-for-this-activity'),
+        context: getValue(data, 'contextForThisActivity'),
         // managerNotes: ??? // TODO: Are these smartsheet comments (which appear in a separate sheet and don't get converted)
-        additionalNotes: getValue(data, 'additional-notes-for-this-activity'),
+        additionalNotes: getValue(data, 'additionalNotesForThisActivity'),
         status, // Enum restriction: REPORT_STATUSES
         ttaType, // Array of strings
         createdAt: getValue(data, 'created'), // DATE
         updatedAt: getValue(data, 'modified'), // DATE
       };
       activityReportRecords.push(arRecord);
+    } else {
+      console.warn('ActivityReport with no reportId, skipping');
     }
   }
 
   ActivityReport.bulkCreate(activityReportRecords, { validate: false });
+  // console.log(activityReportRecords);
 }
