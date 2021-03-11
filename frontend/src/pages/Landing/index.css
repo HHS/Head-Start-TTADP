@@ -76,6 +76,15 @@ div.smart-hub--total-count {
   margin-bottom: -90px;
 }
 
+#alertsTotalCount {
+  position: absolute;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  margin-top: 27px;
+  margin-left: 900px;
+}
+
 h1.landing {
   font-size: 45px;
   font-family: 'Merriweather', serif;
