@@ -1763,10 +1763,10 @@
   dependencies:
     "@babel/runtime" "^7.12.5"
 
-"@trussworks/react-uswds@^1.12.2":
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-1.13.0.tgz#52ef0beeaae6a3692aea777dc3539a5edf9e517b"
-  integrity sha512-g9RNupEc9Hm3It4DX1aorTLX0W5twJK+f3pFvBdKch63w4gL8qgocjNmKiW5LUYxGW7WWtoE4bNY8p0A+4qwWQ==
+"@trussworks/react-uswds@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-1.11.0.tgz#f5f01247038792e8fec40c828e32bc78bcc04c95"
+  integrity sha512-wIFzLM/1aJ0enyt42YFcJRSlEALfRU2qPaVK5955mHmP083l9o2CrnmJDK7La8ebrNxtyhhgrx76K3PwFgRCjQ==
 
 "@types/anymatch@*":
   version "1.3.1"

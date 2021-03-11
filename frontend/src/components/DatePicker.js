@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { SingleDatePicker } from 'react-dates';
 import { OPEN_UP, OPEN_DOWN } from 'react-dates/constants';
-import { Controller } from 'react-hook-form';
+import { Controller } from 'react-hook-form/dist/index.ie11';
 import moment from 'moment';
 
 import './DatePicker.css';
