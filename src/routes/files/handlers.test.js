@@ -95,9 +95,6 @@ describe('File Upload', () => {
         .then((res) => {
           fileId = res.body.id;
         });
-    });
-    it('tests a file upload', async () => {
-      expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
       const file = await File.findOne({ where: { id: fileId } });
       const uuid = file.dataValues.key.slice(0, -4);
