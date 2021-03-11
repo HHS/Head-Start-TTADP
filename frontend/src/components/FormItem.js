@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import {
   Label, FormGroup, ErrorMessage, Fieldset,
@@ -44,7 +44,7 @@ function FormItem({
   const labelWithRequiredTag = (
     <>
       {label}
-      {required && (<span className="smart-hub--form-required"> (Required)</span>)}
+      {required && (<span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>)}
     </>
   );
 

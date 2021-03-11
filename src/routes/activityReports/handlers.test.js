@@ -7,9 +7,17 @@ import {
   submitReport,
   reviewReport,
   resetToDraft,
+  getReports,
+  getReportAlerts,
 } from './handlers';
 import {
-  activityReportById, createOrUpdate, possibleRecipients, review, setStatus,
+  activityReportById,
+  createOrUpdate,
+  possibleRecipients,
+  review,
+  setStatus,
+  activityReports,
+  activityReportAlerts,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
@@ -21,6 +29,8 @@ jest.mock('../../services/activityReports', () => ({
   possibleRecipients: jest.fn(),
   review: jest.fn(),
   setStatus: jest.fn(),
+  activityReports: jest.fn(),
+  activityReportAlerts: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -299,6 +309,52 @@ describe('Activity Report handlers', () => {
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getReports', () => {
+    const request = {
+      ...mockRequest,
+      query: { },
+    };
+
+    it('returns the reports', async () => {
+      activityReports.mockResolvedValue({ count: 1, rows: [report] });
+      userById.mockResolvedValue({
+        id: 1,
+      });
+
+      await getReports(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ count: 1, rows: [report] });
+    });
+
+    it('handles a list of reports that are not found', async () => {
+      activityReports.mockResolvedValue(null);
+      await getReports(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('getReportAlerts', () => {
+    const request = {
+      ...mockRequest,
+      query: { },
+    };
+
+    it('returns my alerts', async () => {
+      activityReportAlerts.mockResolvedValue([report]);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+
+      await getReportAlerts(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith([report]);
+    });
+
+    it('handles a list of alerts that are not found', async () => {
+      activityReportAlerts.mockResolvedValue(null);
+      await getReportAlerts(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
   });
 });

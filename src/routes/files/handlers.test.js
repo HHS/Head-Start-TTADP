@@ -92,7 +92,6 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(200)
         .then((res) => {
@@ -100,11 +99,6 @@ describe('File Upload', () => {
           expect(uploadFile).toHaveBeenCalled();
         });
       expect(mockAddToScanQueue).toHaveBeenCalled();
-    });
-    it('checks the metadata was uploaded to the database', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
       const file = await File.findOne({ where: { id: fileId } });
       const uuid = file.dataValues.key.slice(0, -4);
       expect(file.dataValues.id).toBe(fileId);
@@ -118,7 +112,7 @@ describe('File Upload', () => {
         canUpdate: () => false,
       }));
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/${fileId}`)
+        .delete(`/api/files/${report.dataValues.id}/1`)
         .expect(403)
         .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
     });
@@ -126,12 +120,18 @@ describe('File Upload', () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
-      const file = await File.findOne({ where: { id: fileId } });
+      const file = await File.create({
+        activityReportId: report.dataValues.id,
+        originalFileName: 'name',
+        key: 'key',
+        status: 'UPLOADING',
+        fileSize: 0,
+      });
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/${fileId}`)
+        .delete(`/api/files/${report.dataValues.id}/${file.id}`)
         .expect(204);
       expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
-      const noFile = await File.findOne({ where: { id: fileId } });
+      const noFile = await File.findOne({ where: { id: file.id } });
       expect(noFile).toBe(null);
     });
   });
@@ -143,7 +143,6 @@ describe('File Upload', () => {
       }));
       await request(app)
         .post('/api/files')
-        .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'reportId required' })
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
@@ -155,31 +154,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'ATTACHMENT')
         .expect(400, { error: 'file required' })
-        .then(() => expect(uploadFile).not.toHaveBeenCalled());
-    });
-    it('tests a file upload without a attachment', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
-      await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'attachmentType required' })
-        .then(() => expect(uploadFile).not.toHaveBeenCalled());
-    });
-    it('tests a file upload with an incorrect attachment value', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
-      await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'FAKE')
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'incorrect attachmentType. Wanted: ATTACHMENT or RESOURCE. Got: FAKE' })
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
     it('tests an unauthorized upload', async () => {
@@ -190,7 +165,6 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .field('attachmentType', 'ATTACHMENT')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(403)
         .then(() => expect(uploadFile).not.toHaveBeenCalled());

@@ -23,7 +23,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
-import { Controller } from 'react-hook-form';
+import { Controller } from 'react-hook-form/dist/index.ie11';
 
 import arrowBoth from '../images/arrow-both.svg';
 
@@ -33,43 +33,6 @@ const DropdownIndicator = (props) => (
     <img alt="" style={{ width: '8px' }} src={arrowBoth} />
   </components.DropdownIndicator>
 );
-
-const styles = {
-  container: (provided, state) => {
-    // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-    return {
-      ...provided,
-      outline,
-    };
-  },
-  groupHeading: (provided) => ({
-    ...provided,
-    fontWeight: 'bold',
-    fontFamily: 'SourceSansPro',
-    textTransform: 'capitalize',
-    fontSize: '14px',
-    color: '#21272d',
-    lineHeight: '22px',
-  }),
-  control: (provided, state) => ({
-    ...provided,
-    borderColor: '#565c65',
-    backgroundColor: 'white',
-    borderRadius: '0',
-    '&:hover': {
-      borderColor: '#565c65',
-    },
-    // Match uswds disabled style
-    opacity: state.isDisabled ? '0.7' : '1',
-  }),
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    // The arrow dropdown icon is too far to the right, this pushes it back to the left
-    marginRight: '4px',
-  }),
-  indicatorSeparator: () => ({ display: 'none' }),
-};
 
 function MultiSelect({
   name,
@@ -83,8 +46,47 @@ function MultiSelect({
   rules,
   multiSelectOptions,
   onItemSelected,
+  singleRowInput,
   components: componentReplacements,
 }) {
+  const styles = {
+    container: (provided, state) => {
+      // To match the focus indicator provided by uswds
+      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+      return {
+        ...provided,
+        outline,
+      };
+    },
+    groupHeading: (provided) => ({
+      ...provided,
+      fontWeight: 'bold',
+      fontFamily: 'SourceSansPro',
+      textTransform: 'capitalize',
+      fontSize: '14px',
+      color: '#21272d',
+      lineHeight: '22px',
+    }),
+    control: (provided, state) => ({
+      height: singleRowInput ? '38px' : '',
+      ...provided,
+      borderColor: '#565c65',
+      backgroundColor: 'white',
+      borderRadius: '0',
+      '&:hover': {
+        borderColor: '#565c65',
+      },
+      // Match uswds disabled style
+      opacity: state.isDisabled ? '0.7' : '1',
+    }),
+    indicatorsContainer: (provided) => ({
+      ...provided,
+      // The arrow dropdown icon is too far to the right, this pushes it back to the left
+      marginRight: '4px',
+    }),
+    indicatorSeparator: () => ({ display: 'none' }),
+  };
+
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
    * of objects
@@ -146,6 +148,7 @@ function MultiSelect({
             components={{ ...componentReplacements, DropdownIndicator }}
             options={options}
             isDisabled={disabled}
+            tabSelectsValue={false}
             isClearable={multiSelectOptions.isClearable}
             closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect}
             controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
@@ -196,6 +199,7 @@ MultiSelect.propTypes = {
   control: PropTypes.object.isRequired,
   components: PropTypes.shape({}),
   onItemSelected: PropTypes.func,
+  singleRowInput: PropTypes.bool,
   multiSelectOptions: PropTypes.shape({
     isClearable: PropTypes.bool,
     closeMenuOnSelect: PropTypes.bool,
@@ -209,6 +213,7 @@ MultiSelect.propTypes = {
 
 MultiSelect.defaultProps = {
   disabled: false,
+  singleRowInput: false,
   required: 'Please select at least one item',
   simple: true,
   labelProperty: 'label',

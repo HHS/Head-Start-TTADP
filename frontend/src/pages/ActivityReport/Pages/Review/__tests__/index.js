@@ -3,9 +3,9 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { FormProvider, useForm } from 'react-hook-form';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 
 import ReviewSubmit from '../index';
 import { REPORT_STATUSES } from '../../../../../Constants';

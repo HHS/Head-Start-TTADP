@@ -133,7 +133,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "grantee-import-bugfix"
+    default: "cm-363-record-deployments"
     type: string
 jobs:
   build_and_lint:
@@ -314,10 +314,10 @@ jobs:
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
             - run:
-                name: Return database to neutral, then migrate and seed
+                name: Migrate database
                 command: |
                   cf run-task tta-smarthub-sandbox \
-                    --command "yarn db:migrate:undo:prod && yarn db:migrate:prod && yarn db:seed:prod" \
+                    --command "yarn db:migrate:prod" \
                     --name "Reset DB"
       - when:  # dev
           condition:
@@ -339,10 +339,10 @@ jobs:
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
             - run:
-                name: Undo database seeding, then migrate and seed
+                name: Migrate database
                 command: |
                   cf run-task tta-smarthub-dev \
-                    --command "yarn db:migrate:prod && yarn db:seed:undo:prod && yarn db:seed:prod" \
+                    --command "yarn db:migrate:prod" \
                     --name "Reset DB"
       - when:  # staging
           condition:
@@ -381,7 +381,7 @@ jobs:
                 cloudgov_password: CLOUDGOV_PROD_PASSWORD
                 cloudgov_space: CLOUDGOV_PROD_SPACE
                 deploy_config_file: deployment_config/prod_vars.yml
-                new_relic_license: PROD_NEW_RELIC_LICENSE_KEY
+                new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
                 hses_data_file_url: PROD_HSES_DATA_FILE_URL
                 hses_data_username: PROD_HSES_DATA_USERNAME
