@@ -135,14 +135,14 @@ parameters:
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "js-283-frontend-updates"
     type: string
-  prod_new_relic_app_id: # unknown until we have a prod deploy
-    # default: ""
+  prod_new_relic_app_id:
+    default: "877570491"
     type: string
   staging_new_relic_app_id:
     default: "868729138"
     type: string
   dev_new_relic_app_id:
-    default: "864410070"
+    default: "867221900"
     type: string
   sandbox_new_relic_app_id:
     default: "867346799"
@@ -441,20 +441,20 @@ jobs:
                 name: Run database migrations
                 command: |
                   cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
-            ## Leaving this commented out until we have an app id for prod
-            # - run:
-            #     name: Notify New Relic
-            #     command: |
-            #       curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.prod_new_relic_app_id >>/deployments.json" \
-            #       -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
-            #       -H "Content-Type: application/json" \
-            #       -d \
-            #       "{
-            #         \"deployment\": {
-            #           \"revision\": \"<< parameters.revision >>\",
-            #           \"description\": \"Prod Successfully Deployed\"
-            #         }
-            #       }"
+            # Leaving this commented out until we have an app id for prod
+            - run:
+                name: Notify New Relic
+                command: |
+                  curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.prod_new_relic_app_id >>/deployments.json" \
+                  -H "X-Api-Key: $NEW_RELIC_LICENSE_KEY" -i \
+                  -H "Content-Type: application/json" \
+                  -d \
+                  "{
+                    \"deployment\": {
+                      \"revision\": \"<< parameters.revision >>\",
+                      \"description\": \"Prod Successfully Deployed\"
+                    }
+                  }"
 workflows:
   build_test_deploy:
     jobs:
