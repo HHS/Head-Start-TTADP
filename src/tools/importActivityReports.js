@@ -37,6 +37,7 @@ import { REPORT_STATUSES } from '../constants';
 - otherSpecialists // 'collaborators'?
 - targetPopulations
 - resourcesUsed
+- contextForThisActivity
 - nonOhsResources
 - goal1
 - granteesLearningLevelGoal1
@@ -71,7 +72,7 @@ import { REPORT_STATUSES } from '../constants';
 - manager: 'approvingManager'
 - null: 'collaborators' // NOTE: "Other specialists"?
 // NOTE: "Grantee Name", but maybe also "Non-Grantee Activity"
-- grantee-name: 'activityRecipients'
+- granteeName: 'activityRecipients'
 
 ### Other relational fields
 - null: 'regionId' // NOTE: Take number from sheet name. R14 should be remapped
