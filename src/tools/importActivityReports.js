@@ -7,6 +7,8 @@ import parse from 'csv-parse/lib/sync';
 import moment from 'moment';
 import {
   ActivityReport,
+  ActivityRecipient,
+  Grant,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -87,6 +89,7 @@ const columnCleanupRE = /(\s?\(.*\)|:|\.|\/|&|')+/g;
 const decimalRE = /^\d+(\.\d*)?$/;
 const invalidRegionRE = /R14/;
 const regionRE = /^R(?<regionId>\d{1,2})/i; // Used against filepaths
+const grantNumRE = /\|\s+(?<grantNumber>[0-9A-Z]+)\n/g;
 const mdyDateRE = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})$/;
 const mdyFormat = 'MM/DD/YYYY';
 
@@ -189,6 +192,18 @@ function coerceReportId(value, region) {
   return value.replace(invalidRegionRE, `R${region}`);
 }
 
+function parseGrantNumbers(value) {
+  const matchIter = value.matchAll(grantNumRE);
+  const results = [];
+  for (const m of matchIter) {
+    const { groups: { grantNumber } } = m;
+    if (grantNumber) {
+      results.push(grantNumber);
+    }
+  }
+  return results;
+}
+
 export default async function importActivityReports(file) {
   const csvFile = readCsv(file);
   const { name: fileName } = path.parse(file);
@@ -252,10 +267,21 @@ export default async function importActivityReports(file) {
         updatedAt: getValue(data, 'modified'), // DATE
       };
       // Ideally this would be an upsert, but sequelize v5 upsert doesn't return the instance?!?
-      const [instance, created] = await ActivityReport.findOrCreate(
+      const [ar] = await ActivityReport.findOrCreate(
         { where: { legacyId }, defaults: arRecord },
       );
       // console.log(`${instance.id} | ${instance.legacyId || ''} | New? ${created}`);
+
+      // ActivityRecipients: connect Grants to ActivityReports
+      const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
+      for await (const n of grantNumbers) {
+        const grant = await Grant.findOne({ where: { number: n } });
+        if (grant) {
+          ActivityRecipient.findOrCreate(
+            { where: { activityReportId: ar.id, grantId: grant.id } },
+          );
+        }
+      }
     } else {
       console.warn('ActivityReport with no reportId, skipping');
     }
