@@ -1,7 +1,7 @@
 #! /bin/bash
 
-maintenance=off
-environment=prod
+maintenance=
+environment=
 
 ## On entering maintenance mode, this script will unmap the environments primary route and map it to that environments maintenance page.
 ## It will then map the maintenance route to the app so we still have access to it.
@@ -15,6 +15,11 @@ help() {
     echo "  -e, --environment       specifies which environment the script is run on. Options are prod, staging, dev, or sandbox. Default is prod"
     echo "  -h, --help              show this help text"
 }
+
+if [[ $# < 4 ]]; then
+    help
+    exit 1
+fi
 
 # Check feature flags and validate input
 while [ "$1" != "" ]; do
