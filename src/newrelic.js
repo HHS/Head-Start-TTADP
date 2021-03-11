@@ -80,4 +80,10 @@ exports.config = {
       'response.headers.x*',
     ],
   },
+  error_collector: {
+    expected_status_codes: [
+      '401',
+      '403',
+    ],
+  },
 };
