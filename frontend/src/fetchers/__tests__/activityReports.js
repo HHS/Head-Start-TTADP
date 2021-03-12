@@ -12,7 +12,7 @@ describe('activityReports fetcher', () => {
     it('returns the report', async () => {
       const expected = { id: 1 };
       fetchMock.get(join('api', 'activity-reports', 'legacy', '1'), expected);
-      const report = await legacyReportById(1);
+      const report = await legacyReportById('1');
       expect(report).toEqual(expected);
     });
   });
