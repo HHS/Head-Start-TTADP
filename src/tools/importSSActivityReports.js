@@ -1,17 +1,29 @@
-import { statSync } from 'fs';
+import {} from 'dotenv/config';
+import { option } from 'yargs';
 import importActivityReports from './importActivityReports';
+import { logger } from '../logger';
 
-const args = process.argv.slice(2);
+const { argv } = option('file', {
+  alias: 'f',
+  description: 'Input .csv file',
+  type: 'string',
+}).option('region', {
+  description: 'grant\'s region',
+  type: 'number',
+})
+  .help()
+  .alias('help', 'h');
 
-if (!args.length) {
-  console.error('You must specify csv files to import');
-} else {
-  const files = args.filter((a) => a.endsWith('.csv'));
+const { file, region } = argv;
 
-  files.forEach((f) => {
-    const fStats = statSync(f);
-    if (fStats.isFile()) {
-      importActivityReports(f);
-    }
-  });
+if (!file) {
+  logger.error('File not provided to importSSActivityReports');
+  process.exit(1);
 }
+
+if (!region) {
+  logger.error('Region not provided to importSSActivityReports');
+  process.exit(1);
+}
+
+importActivityReports(file, region);
