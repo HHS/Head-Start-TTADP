@@ -1,6 +1,6 @@
+import { readFileSync } from 'fs';
 import importGoals from './importPlanGoals';
 import { downloadFile } from '../lib/s3';
-import { readFileSync } from 'fs';
 import db, {
   Role, Topic, RoleTopic, Goal, Grantee, Grant,
 } from '../models';
@@ -318,5 +318,5 @@ describe('Import TTA plan goals', () => {
     const allGoals2 = await Goal.findAll();
     expect(allGoals2).toBeDefined();
     expect(allGoals2.length).toBe(12);
-  })
+  });
 });

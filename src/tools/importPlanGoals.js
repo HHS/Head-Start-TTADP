@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import { downloadFile } from '../lib/s3';
 import parse from 'csv-parse/lib/sync';
+import { downloadFile } from '../lib/s3';
 import {
   Role, Topic, RoleTopic, Goal, TopicGoal, Grant, GrantGoal,
 } from '../models';
