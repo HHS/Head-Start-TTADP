@@ -42,11 +42,11 @@ function LegacyReport({ match }) {
 
   const tableEntries = entries.filter((item) => item.value).map(({ field, display, value }) => (
     <tr key={field}>
-      <td>
+      <td className="text-top">
         {display}
       </td>
       <td>
-        {value}
+        {value.split('\n').map((string) => <div className="margin-top-05">{string}</div>)}
       </td>
     </tr>
   ));
