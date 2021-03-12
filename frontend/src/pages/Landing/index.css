@@ -113,7 +113,8 @@ h1.landing {
   border-color: #ECEEF1;
   border-bottom: none;
   cursor: pointer;
-  min-width: 110px;
+  min-width: 90px;
+  padding-right: 0px;
 }
 
 .landing .usa-table--borderless th:first-child {
