@@ -1,5 +1,7 @@
+import {} from 'dotenv/config';
 import { option } from 'yargs';
 import importGoals from './importPlanGoals';
+import { logger } from '../logger';
 
 const { argv } = option('file', {
   alias: 'f',
@@ -13,21 +15,16 @@ const { argv } = option('file', {
   .help()
   .alias('help', 'h');
 
-const defaultInputFile = './GranteeTTAPlan.csv';
-const defaultRegion = 14;
+const { file, region } = argv;
 
-let file;
-let region;
-if (argv.file) {
-  file = argv.file;
-} else {
-  file = defaultInputFile;
+if (!file) {
+  logger.error("File not provided to importTTAPlanGoals");
+  process.exit(1);
 }
 
-if (argv.region) {
-  region = argv.region;
-} else {
-  region = defaultRegion;
+if (!region) {
+  logger.error("Region not provided to importTTAPlanGoals");
+  process.exit(1);
 }
 
 importGoals(file, region);
