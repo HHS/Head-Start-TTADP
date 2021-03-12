@@ -360,7 +360,7 @@ jobs:
                     --name "Reset DB"
             - notify_new_relic:
                 env_name: sandbox
-                new_relic_app_id: sandbox_new_relic_app_id
+                new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
       - when:  # dev
           condition:
@@ -389,7 +389,7 @@ jobs:
                     --name "Reset DB"
             - notify_new_relic:
                 env_name: dev
-                new_relic_app_id: dev_new_relic_app_id
+                new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
       - when:  # staging
           condition:
@@ -416,7 +416,7 @@ jobs:
                   cf run-task tta-smarthub-staging --command "yarn db:migrate:prod" --name migrate
             - notify_new_relic:
                 env_name: staging
-                new_relic_app_id: staging_new_relic_app_id
+                new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
       - when:  # prod
           condition:
@@ -443,7 +443,7 @@ jobs:
                   cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
             - notify_new_relic:
                 env_name: prod
-                new_relic_app_id: prod_new_relic_app_id
+                new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
 workflows:
   build_test_deploy:
