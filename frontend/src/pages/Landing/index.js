@@ -238,7 +238,7 @@ function Landing() {
             requestSort(name);
           }}
           onKeyPress={() => requestSort(name)}
-          className={sortClassName}
+          className={`sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
