@@ -62,7 +62,6 @@ function renderReports(reports) {
         <td>
           <Link
             to={idLink}
-            href={idLink}
           >
             {displayId}
           </Link>

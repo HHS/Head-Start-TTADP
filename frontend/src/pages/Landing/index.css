@@ -83,6 +83,7 @@ div.smart-hub--total-count {
   font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
   margin-top: 27px;
   margin-left: 900px;
+  display: none;
 }
 
 h1.landing {
