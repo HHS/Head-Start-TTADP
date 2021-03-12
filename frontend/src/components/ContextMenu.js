@@ -53,9 +53,10 @@ function ContextMenu({
         className="smart-hub--context-menu-button smart-hub--button__no-margin"
         unstyled
         aria-haspopup
-        onClick={() => updateShown((previous) => !previous)}
+        onClick={() => { updateShown((previous) => !previous); }}
         aria-label={label}
         type="button"
+        data-testid="ellipsis-button"
       >
         <FontAwesomeIcon color="black" icon={faEllipsisH} />
       </Button>
@@ -65,7 +66,7 @@ function ContextMenu({
       <ul className="usa-list usa-list--unstyled" role="menu">
         {menuItems.map((item) => (
           <li key={item.label} role="menuitem">
-            <Button type="button" onClick={item.onClick} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
+            <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
               <div className="smart-hub--context-menu-item-label">
                 {item.label}
               </div>
