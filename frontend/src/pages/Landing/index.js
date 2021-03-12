@@ -108,7 +108,6 @@ function renderReports(reports, history) {
         <th scope="row">
           <Link
             to={linkTarget}
-            href={linkTarget}
           >
             {displayId}
           </Link>
