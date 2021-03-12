@@ -13,7 +13,7 @@ describe('Import Activity Reports', () => {
     downloadFile.mockReset();
   });
   afterAll(async () => {
-    await ActivityReport.destro({ where: {} });
+    await ActivityReport.destroy({ where: {} });
     await ActivityRecipient.destroy({ where: {} });
     await db.sequelize.close();
   });
