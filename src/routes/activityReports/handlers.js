@@ -28,6 +28,17 @@ export async function getLegacyReport(req, res) {
   try {
     const { legacyReportId } = req.params;
     const report = await legacyReport(legacyReportId);
+    if (!report) {
+      res.sendStatus(404);
+      return;
+    }
+    const user = await userById(req.session.userId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canViewLegacy()) {
+      res.sendStatus(403);
+      return;
+    }
     res.json(report);
   } catch (error) {
     handleErrors(req, res, error, logContext);
