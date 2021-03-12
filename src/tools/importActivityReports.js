@@ -267,20 +267,27 @@ export default async function importActivityReports(file) {
         updatedAt: getValue(data, 'modified'), // DATE
       };
       // Ideally this would be an upsert, but sequelize v5 upsert doesn't return the instance?!?
-      const [ar] = await ActivityReport.findOrCreate(
-        { where: { legacyId }, defaults: arRecord },
-      );
-      // console.log(`${instance.id} | ${instance.legacyId || ''} | New? ${created}`);
+      try {
+        // Imported ARs won't pass `checkRequiredForSubmission`,
+        // because `approvingManagerId`, `requester`, etc. may be null
+        // so we build, then save without validating;
+        const [ar] = await ActivityReport.findOrBuild(
+          { where: { legacyId }, defaults: arRecord },
+        );
+        ar.save({ validate: false });
 
-      // ActivityRecipients: connect Grants to ActivityReports
-      const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
-      for await (const n of grantNumbers) {
-        const grant = await Grant.findOne({ where: { number: n } });
-        if (grant) {
-          ActivityRecipient.findOrCreate(
-            { where: { activityReportId: ar.id, grantId: grant.id } },
-          );
+        // ActivityRecipients: connect Grants to ActivityReports
+        const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
+        for await (const n of grantNumbers) {
+          const grant = await Grant.findOne({ where: { number: n } });
+          if (grant) {
+            ActivityRecipient.findOrCreate(
+              { where: { activityReportId: ar.id, grantId: grant.id } },
+            );
+          }
         }
+      } catch (e) {
+        console.error(e);
       }
     } else {
       console.warn('ActivityReport with no reportId, skipping');
