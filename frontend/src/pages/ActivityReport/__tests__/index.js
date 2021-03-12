@@ -14,10 +14,6 @@ import { withText } from '../../../testHelpers';
 import ActivityReport from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
-jest.mock('../../../permissions', () => ({
-  getRegionWithReadWrite: jest.fn(() => 1),
-}));
-
 const formData = () => ({
   regionId: 1,
   deliveryMethod: 'in-person',
