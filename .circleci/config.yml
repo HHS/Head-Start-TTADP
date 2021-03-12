@@ -361,7 +361,7 @@ jobs:
             - notify_new_relic:
                 env_name: sandbox
                 new_relic_app_id: sandbox_new_relic_app_id
-                new_relic_api_key: NEW_RELIC_LICENSE_KEY
+                new_relic_api_key: $NEW_RELIC_LICENSE_KEY
       - when:  # dev
           condition:
             and:
@@ -390,7 +390,7 @@ jobs:
             - notify_new_relic:
                 env_name: dev
                 new_relic_app_id: dev_new_relic_app_id
-                new_relic_api_key: NEW_RELIC_LICENSE_KEY
+                new_relic_api_key: $NEW_RELIC_LICENSE_KEY
       - when:  # staging
           condition:
             and:
@@ -417,7 +417,7 @@ jobs:
             - notify_new_relic:
                 env_name: staging
                 new_relic_app_id: staging_new_relic_app_id
-                new_relic_api_key: NEW_RELIC_LICENSE_KEY
+                new_relic_api_key: $NEW_RELIC_LICENSE_KEY
       - when:  # prod
           condition:
             and:
@@ -444,7 +444,7 @@ jobs:
             - notify_new_relic:
                 env_name: prod
                 new_relic_app_id: prod_new_relic_app_id
-                new_relic_api_key: NEW_RELIC_LICENSE_KEY
+                new_relic_api_key: $NEW_RELIC_LICENSE_KEY
 workflows:
   build_test_deploy:
     jobs:
