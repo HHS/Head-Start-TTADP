@@ -31,6 +31,33 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+  notify_new_relic:
+    description: "Notify new relic of a deploy"
+    parameters:
+      env_name:
+        description: "Name of the environment. Ex. sandbox, dev, staging, prod"
+        type: string
+      new_relic_app_id:
+        description: "App ID used in New Relic"
+        type: string
+      new_relic_api_key:
+        description: "API key from New Relic"
+        type: string
+    steps:
+      - run:
+          name: Notify New Relic
+          command: |
+            curl -X POST "https://api.newrelic.com/v2/applications/<< parameters.new_relic_app_id >>/deployments.json" \
+            -H "X-Api-Key: << parameters.new_relic_api_key >>" -i \
+            -H "Content-Type: application/json" \
+            -d \
+            "{
+              \"deployment\": {
+                \"revision\": \"<< pipeline.git.revision >>\",
+                \"description\": \"<< parameters.env_name >> Successfully Deployed\"
+              }
+            }"
+      
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -134,6 +161,18 @@ parameters:
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "cm-363-record-deployments"
+    type: string
+  prod_new_relic_app_id:
+    default: "877570491"
+    type: string
+  staging_new_relic_app_id:
+    default: "868729138"
+    type: string
+  dev_new_relic_app_id:
+    default: "867221900"
+    type: string
+  sandbox_new_relic_app_id:
+    default: "867346799"
     type: string
 jobs:
   build_and_lint:
@@ -319,6 +358,10 @@ jobs:
                   cf run-task tta-smarthub-sandbox \
                     --command "yarn db:migrate:prod" \
                     --name "Reset DB"
+            - notify_new_relic:
+                env_name: sandbox
+                new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
+                new_relic_api_key: $NEW_RELIC_REST_API_KEY
       - when:  # dev
           condition:
             and:
@@ -344,6 +387,10 @@ jobs:
                   cf run-task tta-smarthub-dev \
                     --command "yarn db:migrate:prod" \
                     --name "Reset DB"
+            - notify_new_relic:
+                env_name: dev
+                new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
+                new_relic_api_key: $NEW_RELIC_REST_API_KEY
       - when:  # staging
           condition:
             and:
@@ -367,6 +414,10 @@ jobs:
                 name: Run database migrations
                 command: |
                   cf run-task tta-smarthub-staging --command "yarn db:migrate:prod" --name migrate
+            - notify_new_relic:
+                env_name: staging
+                new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
+                new_relic_api_key: $NEW_RELIC_REST_API_KEY
       - when:  # prod
           condition:
             and:
@@ -390,6 +441,10 @@ jobs:
                 name: Run database migrations
                 command: |
                   cf run-task tta-smarthub-prod --command "yarn db:migrate:prod" --name migrate
+            - notify_new_relic:
+                env_name: prod
+                new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
+                new_relic_api_key: $NEW_RELIC_REST_API_KEY
 workflows:
   build_test_deploy:
     jobs:
