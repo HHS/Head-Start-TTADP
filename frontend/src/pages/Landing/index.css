@@ -76,6 +76,16 @@ div.smart-hub--total-count {
   margin-bottom: -90px;
 }
 
+#alertsTotalCount {
+  position: absolute;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  margin-top: 27px;
+  margin-left: 900px;
+  display: none;
+}
+
 h1.landing {
   font-size: 45px;
   font-family: 'Merriweather', serif;
@@ -104,6 +114,8 @@ h1.landing {
   border-color: #ECEEF1;
   border-bottom: none;
   cursor: pointer;
+  min-width: 90px;
+  padding-right: 0px;
 }
 
 .landing .usa-table--borderless th:first-child {
