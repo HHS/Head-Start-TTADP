@@ -429,9 +429,6 @@ export function activityReportAlerts(userId) {
                 {
                   status: { [Op.ne]: REPORT_STATUSES.APPROVED },
                 },
-                {
-                  status: { [Op.ne]: REPORT_STATUSES.SUBMITTED },
-                },
               ],
             },
             {
