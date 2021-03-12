@@ -1,18 +1,28 @@
+import { readFileSync } from 'fs';
 import importGoals from './importPlanGoals';
+import { downloadFile } from '../lib/s3';
 import db, {
   Role, Topic, RoleTopic, Goal, Grantee, Grant,
 } from '../models';
 
+jest.mock('../lib/s3');
+
 describe('Import TTA plan goals', () => {
-  afterAll(() => {
-    db.sequelize.close();
+  beforeEach(() => {
+    downloadFile.mockReset();
+  });
+  afterAll(async () => {
+    await db.sequelize.close();
   });
   it('should import Roles table', async () => {
+    const fileName = 'GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
     await Role.destroy({ where: {} });
     const rolesBefore = await Role.findAll();
 
     expect(rolesBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTest.csv');
+    await importGoals(fileName, 14);
 
     const roles = await Role.findAll({
       attributes: ['id', 'name', 'fullName'],
@@ -59,11 +69,14 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should import Topics table', async () => {
+    const fileName = 'GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
     await Topic.destroy({ where: {} });
     const topicsBefore = await Topic.findAll();
 
     expect(topicsBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTest.csv');
+    await importGoals(fileName, 14);
 
     const topics = await Topic.findAll();
     expect(topics).toBeDefined();
@@ -104,11 +117,14 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should import Goals table', async () => {
+    const fileName = 'GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
     await Goal.destroy({ where: {} });
     const goalsBefore = await Goal.findAll();
 
     expect(goalsBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTest.csv');
+    await importGoals(fileName, 14);
 
     const allGoals = await Goal.findAll();
     expect(allGoals).toBeDefined();
@@ -166,7 +182,10 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should have Grantees Goals connection', async () => {
-    await importGoals('GranteeTTAPlanTest.csv');
+    const fileName = 'GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+    await importGoals(fileName, 14);
 
     // test eager loading
     const grantee = await Grantee.findOne({
@@ -188,12 +207,15 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should import RoleTopics table', async () => {
+    const fileName = 'GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
     await Topic.destroy({ where: {} });
 
     const roleTopicsBefore = await RoleTopic.findAll();
 
     expect(roleTopicsBefore.length).toBe(0);
-    await importGoals('GranteeTTAPlanTest.csv', 14);
+    await importGoals(fileName, 14);
 
     const roleTopics = await RoleTopic.findAll();
     expect(roleTopics).toBeDefined();
@@ -201,10 +223,13 @@ describe('Import TTA plan goals', () => {
   });
 
   it('should import goals from another region', async () => {
+    const fileName = 'R9GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
     const goalsBefore = await Goal.findAll();
 
     expect(goalsBefore.length).toBe(12);
-    await importGoals('R9GranteeTTAPlanTest.csv', 9);
+    await importGoals(fileName, 9);
 
     const allGoals = await Goal.findAll();
     expect(allGoals).toBeDefined();
@@ -272,5 +297,26 @@ describe('Import TTA plan goals', () => {
       }],
     });
     expect(goalWithTopic.topics[0].roles[0].fullName).toBe('Grantee Specialist');
+  });
+
+  it('is idempotent', async () => {
+    const fileName = 'GranteeTTAPlanTest.csv';
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+    await Goal.destroy({ where: {} });
+    const goalsBefore = await Goal.findAll();
+
+    expect(goalsBefore.length).toBe(0);
+    await importGoals(fileName, 14);
+
+    const allGoals = await Goal.findAll();
+    expect(allGoals).toBeDefined();
+    expect(allGoals.length).toBe(12);
+
+    await importGoals(fileName, 14);
+
+    const allGoals2 = await Goal.findAll();
+    expect(allGoals2).toBeDefined();
+    expect(allGoals2.length).toBe(12);
   });
 });
