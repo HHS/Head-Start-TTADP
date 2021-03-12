@@ -1,10 +1,9 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-/* eslint-disable no-console */
-import { readFileSync } from 'fs';
-import path from 'path';
 import parse from 'csv-parse/lib/sync';
 import moment from 'moment';
+import { logger } from '../logger';
+import { downloadFile } from '../lib/s3';
 import {
   ActivityReport,
   ActivityRecipient,
@@ -88,13 +87,12 @@ import { REPORT_STATUSES } from '../constants';
 const columnCleanupRE = /(\s?\(.*\)|:|\.|\/|&|')+/g;
 const decimalRE = /^\d+(\.\d*)?$/;
 const invalidRegionRE = /R14/;
-const regionRE = /^R(?<regionId>\d{1,2})/i; // Used against filepaths
 const grantNumRE = /\|\s+(?<grantNumber>[0-9A-Z]+)\n/g;
 const mdyDateRE = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})$/;
 const mdyFormat = 'MM/DD/YYYY';
 
-function readCsv(file) {
-  const csv = readFileSync(file);
+async function readCsv(file) {
+  const { Body: csv } = await downloadFile(file);
   return parse(csv, { skipEmptyLines: true, columns: true });
 }
 
@@ -204,20 +202,25 @@ function parseGrantNumbers(value) {
   return results;
 }
 
-export default async function importActivityReports(file) {
-  const csvFile = readCsv(file);
-  const { name: fileName } = path.parse(file);
-  const regionMatch = regionRE.exec(fileName);
-  const { groups: { regionId: fileRegion } } = regionMatch;
-  const fileRegionId = coerceInt(fileRegion);
+export default async function importActivityReports(fileKey, region) {
+  let csvFile;
+  try {
+    csvFile = await readCsv(fileKey);
+  } catch (e) {
+    logger.error(`key: '${fileKey}'`);
+    logger.error(e);
+    process.exit(1);
+  }
+
+  const regionId = region;
 
   // const activityReportRecords = [];
   for await (const row of csvFile) {
     const data = normalizeData(row);
 
-    // console.log(Object.keys(data));
+    // logger.log(Object.keys(data));
 
-    const legacyId = coerceReportId(getValue(data, 'reportId'), fileRegionId);
+    const legacyId = coerceReportId(getValue(data, 'reportId'), regionId);
     // Ignore rows with no reportid
     if (legacyId) {
       const granteeActivity = getValue(data, 'granteeActivity');
@@ -242,7 +245,7 @@ export default async function importActivityReports(file) {
       const arRecord = {
         imported: data, // Store all the data in `imported` for later reuse
         legacyId,
-        regionId: fileRegionId,
+        regionId,
         deliveryMethod: getValue(data, 'format'), // FIXME: Check records like 'R01-AR-000135'
         ECLKCResourcesUsed: coerceToArray(getValue(data, 'resourcesUsed')),
         nonECLKCResourcesUsed: coerceToArray(getValue(data, 'nonOhsResources')),
@@ -287,10 +290,10 @@ export default async function importActivityReports(file) {
           }
         }
       } catch (e) {
-        console.error(e);
+        logger.error(e);
       }
     } else {
-      console.warn('ActivityReport with no reportId, skipping');
+      logger.warn('ActivityReport with no reportId, skipping');
     }
   }
 }
