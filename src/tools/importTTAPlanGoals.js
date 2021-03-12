@@ -18,12 +18,12 @@ const { argv } = option('file', {
 const { file, region } = argv;
 
 if (!file) {
-  logger.error("File not provided to importTTAPlanGoals");
+  logger.error('File not provided to importTTAPlanGoals');
   process.exit(1);
 }
 
 if (!region) {
-  logger.error("Region not provided to importTTAPlanGoals");
+  logger.error('Region not provided to importTTAPlanGoals');
   process.exit(1);
 }
 
