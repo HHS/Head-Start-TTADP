@@ -26,7 +26,7 @@ describe('Landing Page', () => {
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 2, rows: activityReports },
     );
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
     const user = {
       name: 'test@test.com',
@@ -170,7 +170,7 @@ describe('Landing Page sorting', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -192,7 +192,7 @@ describe('Landing Page sorting', () => {
   it('clicking status column header will sort by status', async () => {
     const statusColumnHeader = await screen.findByText(/status/i);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=status&sortDir=asc&offset=0&limit=10',
@@ -326,7 +326,7 @@ describe('Landing Page sorting', () => {
       name: /go to page number 1/i,
     });
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -344,7 +344,7 @@ describe('Landing Page sorting', () => {
       name: /go to page number 1/i,
     });
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -380,7 +380,7 @@ describe('My alerts sorting', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 0, rows: [] });
@@ -402,7 +402,7 @@ describe('My alerts sorting', () => {
 
     expect(statusColumnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=asc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -413,7 +413,7 @@ describe('My alerts sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/draft/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/needs action/i));
 
-    fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=desc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
 
     fireEvent.click(statusColumnHeaders[0]);
@@ -426,7 +426,7 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -444,7 +444,7 @@ describe('My alerts sorting', () => {
     });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -462,7 +462,7 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -480,7 +480,7 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -497,7 +497,7 @@ describe('My alerts sorting', () => {
     const columnHeaders = await screen.findAllByText(/collaborator\(s\)/i);
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -515,7 +515,7 @@ describe('Landing Page error', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=7',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
   });
 
