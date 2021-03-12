@@ -27,6 +27,14 @@ const mockUser = {
   hsesUserId: '1000',
 };
 
+const mockUserTwo = {
+  id: 1002,
+  homeRegionId: 1,
+  name: 'a user',
+  hsesUserId: 50,
+  hsesUsername: 'Rex',
+};
+
 const reportObject = {
   activityRecipientType: 'grantee',
   status: REPORT_STATUSES.DRAFT,
@@ -73,7 +81,7 @@ describe('Activity Reports DB service', () => {
     await NextStep.destroy({ where: {} });
     await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
-    await User.destroy({ where: { id: mockUser.id } });
+    await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
     await Grant.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
     await Grantee.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
@@ -296,14 +304,6 @@ describe('Activity Reports DB service', () => {
     let latestReport;
     let firstGrant;
 
-    const mockUserTwo = {
-      id: 1002,
-      homeRegionId: 1,
-      name: 'a user',
-      hsesUsername: 'user',
-      hsesUserId: '1002',
-    };
-
     beforeAll(async () => {
       const topicsOne = ['topic d', 'topic c'];
       const topicsTwo = ['topic b', 'topic a'];
@@ -412,14 +412,6 @@ describe('Activity Reports DB service', () => {
     });
 
     it('retrieves myalerts', async () => {
-      const mockUserTwo = {
-        id: 1002,
-        homeRegionId: 1,
-        name: 'a user',
-        hsesUserId: 50,
-        hsesUsername: 'Rex',
-      };
-
       await User.findOrCreate({
         where: {
           id: mockUserTwo.id,
@@ -430,8 +422,8 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create(reportObject);
 
       const { count, rows } = await activityReportAlerts(mockUserTwo.id, {});
-      expect(count).toBe(7);
-      expect(rows.length).toBe(7);
+      expect(count).toBe(5);
+      expect(rows.length).toBe(5);
       expect(rows[0].userId).toBe(mockUserTwo.id);
     });
   });
