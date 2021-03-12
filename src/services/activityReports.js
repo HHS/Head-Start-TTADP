@@ -169,7 +169,7 @@ export async function review(report, status, managerNotes) {
   return updatedReport;
 }
 
-export function legacyReport(legacyId) {
+export function activityReportByLegacyId(legacyId) {
   return ActivityReport.findOne({
     where: {
       legacyId,

@@ -10,7 +10,7 @@ import {
   activityReports,
   setStatus,
   activityReportAlerts,
-  legacyReport,
+  activityReportByLegacyId,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -27,7 +27,7 @@ const logContext = {
 export async function getLegacyReport(req, res) {
   try {
     const { legacyReportId } = req.params;
-    const report = await legacyReport(legacyReportId);
+    const report = await activityReportByLegacyId(legacyReportId);
     if (!report) {
       res.sendStatus(404);
       return;
