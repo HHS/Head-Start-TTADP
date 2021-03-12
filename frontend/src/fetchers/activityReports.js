@@ -6,7 +6,7 @@ const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
 
 export const legacyReportById = async (legacyId) => {
-  const res = await get(join(activityReportUrl, 'legacy', legacyId));
+  const res = await get(join(activityReportUrl, 'legacy', legacyId.toString(DECIMAL_BASE)));
   return res.json();
 };
 
