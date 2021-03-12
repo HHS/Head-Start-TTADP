@@ -347,6 +347,7 @@ export function activityReports(readRegions, {
         'regionId',
         'updatedAt',
         'sortedTopics',
+        'legacyId',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),

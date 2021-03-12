@@ -25,7 +25,7 @@ router.get('/approvers', getApprovers);
 router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
 router.get('/alerts', getReportAlerts);
-router.get('/legacyReports/:legacyReportId', getLegacyReport);
+router.get('/legacy/:legacyReportId', getLegacyReport);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
