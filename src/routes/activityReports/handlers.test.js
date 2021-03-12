@@ -376,13 +376,13 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns my alerts', async () => {
-      activityReportAlerts.mockResolvedValue([report]);
+      activityReportAlerts.mockResolvedValue({ count: 1, rows: [report] });
       userById.mockResolvedValue({
         id: 1,
       });
 
       await getReportAlerts(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith([report]);
+      expect(mockResponse.json).toHaveBeenCalledWith({ alertsCount: 1, alerts: [report] });
     });
 
     it('handles a list of alerts that are not found', async () => {

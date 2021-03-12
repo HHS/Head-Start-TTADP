@@ -78,3 +78,6 @@ export const REPORT_STATUSES = {
   NEEDS_ACTION: 'needs_action',
   APPROVED: 'approved',
 };
+
+export const REPORTS_PER_PAGE = 10;
+export const ALERTS_PER_PAGE = 10;
