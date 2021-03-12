@@ -328,7 +328,7 @@ export function activityReports(readRegions, {
   };
   return ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions },
+      where: { regionId: regions, status: REPORT_STATUSES.APPROVED },
       attributes: [
         'id',
         'displayId',
