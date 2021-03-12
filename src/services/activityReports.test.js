@@ -380,6 +380,8 @@ describe('Activity Reports DB service', () => {
         id: 1002,
         homeRegionId: 1,
         name: 'a user',
+        hsesUserId: 50,
+        hsesUsername: 'Rex',
       };
       await User.findOrCreate({
         where: {
@@ -390,8 +392,10 @@ describe('Activity Reports DB service', () => {
       reportObject.userId = mockUserTwo.id;
       await ActivityReport.create(reportObject);
 
-      const result = await activityReportAlerts(mockUserTwo.id);
-      expect(result[0].userId).toBe(mockUserTwo.id);
+      const { count, rows } = await activityReportAlerts(mockUserTwo.id, {});
+      expect(count).toBe(7);
+      expect(rows.length).toBe(7);
+      expect(rows[0].userId).toBe(mockUserTwo.id);
     });
   });
 
