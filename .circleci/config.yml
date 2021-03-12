@@ -160,7 +160,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "cm-363-record-deployments"
+    default: "cm-370-downloading-files-does-not-work"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
