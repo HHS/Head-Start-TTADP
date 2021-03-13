@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isEmpty } from 'lodash';
 
 import {
@@ -19,6 +19,7 @@ import {
   targetPopulations,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
+import { NOT_STARTED } from '../../../components/Navigator/constants';
 
 const ActivitySummary = ({
   recipients,
@@ -34,6 +35,7 @@ const ActivitySummary = ({
   const activityRecipientType = watch('activityRecipientType');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
+  const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
 
@@ -64,6 +66,12 @@ const ActivitySummary = ({
       setValue('activityRecipients', []);
       setValue('participants', []);
       setValue('programTypes', []);
+      // Goals and objectives (page 3) has required fields when the recipient
+      // type is grantee, so we need to make sure that page is set as "not started"
+      // when recipient type is changed and we need to clear out any previously
+      // selected goals
+      setValue('goals', []);
+      setValue('pageState', { ...pageState, 3: NOT_STARTED });
       previousActivityRecipientType.current = activityRecipientType;
     }
   }, [activityRecipientType, setValue]);
@@ -229,6 +237,7 @@ const ActivitySummary = ({
                 name="startDate"
               >
                 <DatePicker
+                  ariaName="Start Date (Required)"
                   control={control}
                   maxDate={endDate}
                   name="startDate"
@@ -242,6 +251,7 @@ const ActivitySummary = ({
                 name="endDate"
               >
                 <DatePicker
+                  ariaName="End Date (required)"
                   control={control}
                   minDate={startDate}
                   disabled={!startDate}
@@ -252,7 +262,7 @@ const ActivitySummary = ({
             </Grid>
             <Grid col={5}>
               <FormItem
-                label="Duration (round to the nearest half hour)"
+                label="Duration in hours (round to the nearest half hour)"
                 name="duration"
               >
                 <TextInput
@@ -265,6 +275,7 @@ const ActivitySummary = ({
                     register({
                       required: 'Please enter the duration of the activity',
                       valueAsNumber: true,
+                      pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
                       min: { value: 0, message: 'Duration can not be negative' },
                     })
                   }

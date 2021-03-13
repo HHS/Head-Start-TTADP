@@ -32,32 +32,34 @@ import {
 } from '../../fetchers/activityReports';
 
 const defaultValues = {
-  deliveryMethod: null,
+  ECLKCResourcesUsed: [{ value: '' }],
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
+  additionalNotes: null,
+  approvingManagerId: null,
   attachments: [],
-  otherResources: [],
-  context: '',
   collaborators: [],
-  duration: null,
+  context: '',
+  deliveryMethod: null,
+  duration: '',
   endDate: null,
+  goals: [],
+  granteeNextSteps: [],
   grantees: [],
+  nonECLKCResourcesUsed: [{ value: '' }],
   numberOfParticipants: null,
+  otherResources: [],
   participantCategory: '',
   participants: [],
   programTypes: [],
   reason: [],
   requester: '',
-  ECLKCResourcesUsed: [{ value: '' }],
-  nonECLKCResourcesUsed: [{ value: '' }],
+  specialistNextSteps: [],
   startDate: null,
+  status: REPORT_STATUSES.DRAFT,
   targetPopulations: [],
   topics: [],
-  approvingManagerId: null,
-  additionalNotes: null,
-  goals: [],
-  status: REPORT_STATUSES.DRAFT,
 };
 
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -197,7 +199,7 @@ function ActivityReport({
     }
 
     const page = pages.find((p) => p.position === position);
-    history.replace(`/activity-reports/${reportId.current}/${page.path}`, state);
+    history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
   };
 
   const onSave = async (data) => {

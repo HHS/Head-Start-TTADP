@@ -51,9 +51,10 @@ data "cloudfoundry_service" "rds" {
 }
 
 resource "cloudfoundry_service_instance" "database" {
-  name         = "ttahub-${var.env}"
-  space        = data.cloudfoundry_space.space.id
-  service_plan = data.cloudfoundry_service.rds.service_plans["micro-psql"]
+  name             = "ttahub-${var.env}"
+  space            = data.cloudfoundry_space.space.id
+  service_plan     = data.cloudfoundry_service.rds.service_plans["micro-psql"]
+  recursive_delete = true
 }
 
 ###
@@ -65,9 +66,10 @@ data "cloudfoundry_service" "s3" {
 }
 
 resource "cloudfoundry_service_instance" "document_upload_bucket" {
-  name         = "ttahub-document-upload-${var.env}"
-  space        = data.cloudfoundry_space.space.id
-  service_plan = data.cloudfoundry_service.s3.service_plans["basic"]
+  name             = "ttahub-document-upload-${var.env}"
+  space            = data.cloudfoundry_space.space.id
+  service_plan     = data.cloudfoundry_service.s3.service_plans["basic"]
+  recursive_delete = true
 }
 
 ###
@@ -79,9 +81,10 @@ data "cloudfoundry_service" "elasticache" {
 }
 
 resource "cloudfoundry_service_instance" "redis" {
-  name         = "ttahub-redis-${var.env}"
-  space        = data.cloudfoundry_space.space.id
-  service_plan = data.cloudfoundry_service.elasticache.service_plans["redis-dev"]
+  name             = "ttahub-redis-${var.env}"
+  space            = data.cloudfoundry_space.space.id
+  service_plan     = data.cloudfoundry_service.elasticache.service_plans["redis-dev"]
+  recursive_delete = true
 }
 
 ###

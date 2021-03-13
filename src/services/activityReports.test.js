@@ -2,11 +2,22 @@ import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
 import {
-  createOrUpdate, activityReportById, possibleRecipients, activityReports, activityReportAlerts,
+  createOrUpdate,
+  activityReportById,
+  possibleRecipients,
+  review,
+  activityReports,
+  activityReportAlerts,
 } from './activityReports';
+import { copyGoalsToGrants } from './goals';
 import { REPORT_STATUSES } from '../constants';
 
+jest.mock('./goals', () => ({
+  copyGoalsToGrants: jest.fn(),
+}));
+
 const RECIPIENT_ID = 15;
+const GRANTEE_ID = 16;
 
 const mockUser = {
   id: 1000,
@@ -14,6 +25,14 @@ const mockUser = {
   name: 'user',
   hsesUsername: 'user',
   hsesUserId: '1000',
+};
+
+const mockUserTwo = {
+  id: 1002,
+  homeRegionId: 1,
+  name: 'a user',
+  hsesUserId: 50,
+  hsesUsername: 'Rex',
 };
 
 const reportObject = {
@@ -24,6 +43,25 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
+};
+
+const submittedReport = {
+  ...reportObject,
+  activityRecipients: [{ grantId: 1 }],
+  status: REPORT_STATUSES.SUBMITTED,
+  approvingManagerId: 1,
+  numberOfParticipants: 1,
+  deliveryMethod: 'method',
+  duration: 0,
+  endDate: '2000-01-01T12:00:00Z',
+  startDate: '2000-01-01T12:00:00Z',
+  requester: 'requester',
+  programTypes: ['type'],
+  targetPopulations: ['pop'],
+  reason: ['reason'],
+  participants: ['participants'],
+  topics: ['topics'],
+  ttaType: ['type'],
 };
 
 describe('Activity Reports DB service', () => {
@@ -43,16 +81,40 @@ describe('Activity Reports DB service', () => {
     await NextStep.destroy({ where: {} });
     await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
-    await User.destroy({ where: { id: mockUser.id } });
+    await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
-    await Grant.destroy({ where: { id: RECIPIENT_ID } });
-    await Grantee.destroy({ where: { id: RECIPIENT_ID } });
+    await Grant.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
+    await Grantee.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
     await Region.destroy({ where: { id: 17 } });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('review', () => {
+    it('can set the report as needs action', async () => {
+      const report = await ActivityReport.create(submittedReport);
+      const savedReport = await review(report, REPORT_STATUSES.NEEDS_ACTION, 'notes');
+      expect(savedReport.status).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+    });
+
+    describe('when setting the report to approved', () => {
+      it('does not copy goals if the report is for non-grantees', async () => {
+        const report = await ActivityReport.create({ ...submittedReport, activityRecipientType: 'non-grantee' });
+        const savedReport = await review(report, REPORT_STATUSES.APPROVED, 'notes');
+        expect(savedReport.status).toEqual(REPORT_STATUSES.APPROVED);
+        expect(copyGoalsToGrants).not.toHaveBeenCalled();
+      });
+
+      it('copies goals if the report is for grantees', async () => {
+        const report = await ActivityReport.create(submittedReport, { include: [{ model: ActivityRecipient, as: 'activityRecipients' }] });
+        const savedReport = await review(report, REPORT_STATUSES.APPROVED, 'notes');
+        expect(savedReport.status).toEqual(REPORT_STATUSES.APPROVED);
+        expect(copyGoalsToGrants).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('createOrUpdate', () => {
@@ -239,31 +301,63 @@ describe('Activity Reports DB service', () => {
   });
 
   describe('activityReports retrieval and sorting', () => {
-    it('retrieves reports with default sort by updatedAt', async () => {
-      const report = await ActivityReport.create(reportObject);
+    let latestReport;
+    let firstGrant;
 
-      const { count, rows } = await activityReports([1], {});
-      expect(rows.length).toBe(10);
-      expect(count).toBeDefined();
-      expect(rows[0].id).toBe(report.id);
-    });
+    beforeAll(async () => {
+      const topicsOne = ['topic d', 'topic c'];
+      const topicsTwo = ['topic b', 'topic a'];
+      const firstGrantee = await Grantee.create({ id: GRANTEE_ID, name: 'aaaa' });
+      firstGrant = await Grant.create({ id: GRANTEE_ID, number: 'anumber', granteeId: firstGrantee.id });
 
-    it('retrieves reports sorted by author', async () => {
-      const mockUserTwo = {
-        id: 1002,
-        homeRegionId: 1,
-        name: 'a user',
-        hsesUsername: 'user',
-        hsesUserId: '1002',
-      };
       await User.findOrCreate({
         where: {
           id: mockUserTwo.id,
         },
         defaults: mockUserTwo,
       });
+      await ActivityReport.create({
+        ...submittedReport,
+        status: REPORT_STATUSES.APPROVED,
+        userId: mockUserTwo.id,
+        topics: topicsOne,
+      });
+      await createOrUpdate({
+        ...submittedReport,
+        status: REPORT_STATUSES.APPROVED,
+        collaborators: [{ id: mockUser.id }],
+      });
+      await ActivityReport.create({
+        ...submittedReport,
+        status: REPORT_STATUSES.APPROVED,
+        regionId: 2,
+      });
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        activityRecipients: [{ grantId: firstGrant.id }],
+        status: REPORT_STATUSES.APPROVED,
+        topics: topicsTwo,
+      });
+      await ActivityRecipient.create({
+        activityReportId: report.id,
+        grantId: firstGrant.id,
+      });
+      latestReport = await ActivityReport.create({
+        ...submittedReport,
+        status: REPORT_STATUSES.APPROVED,
+        updatedAt: '1900-01-01T12:00:00Z',
+      });
+    });
+
+    it('retrieves reports with default sort by updatedAt', async () => {
+      const { count, rows } = await activityReports([1], {});
+      expect(rows.length).toBe(6);
+      expect(count).toBeDefined();
+      expect(rows[0].id).toBe(latestReport.id);
+    });
+
+    it('retrieves reports sorted by author', async () => {
       reportObject.userId = mockUserTwo.id;
-      await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports([1], {
         sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2,
@@ -278,7 +372,7 @@ describe('Activity Reports DB service', () => {
       const { rows } = await activityReports([1], {
         sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12,
       });
-      expect(rows.length).toBe(12);
+      expect(rows.length).toBe(6);
       expect(rows[0].collaborators[0].name).toBe('user');
     });
 
@@ -289,31 +383,26 @@ describe('Activity Reports DB service', () => {
       const { rows } = await activityReports([1, 2], {
         sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12,
       });
-      expect(rows.length).toBe(12);
+      expect(rows.length).toBe(7);
       expect(rows[0].regionId).toBe(2);
     });
 
     it('retrieves reports sorted by activity recipients', async () => {
-      reportObject.regionId = 2;
-      await ActivityReport.create(reportObject);
-
       const { rows } = await activityReports([1, 2], {
         sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12,
       });
-      expect(rows.length).toBe(12);
-      expect(rows[0].activityRecipients[0].activityRecipientId).toBe(RECIPIENT_ID);
+      expect(rows.length).toBe(7);
+      expect(rows[0].activityRecipients[0].grantId).toBe(firstGrant.id);
     });
 
     it('retrieves reports sorted by sorted topics', async () => {
-      reportObject.topics = ['topic d', 'topic c'];
       await ActivityReport.create(reportObject);
-      reportObject.topics = ['topic b', 'topic a'];
       await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports([1, 2], {
         sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12,
       });
-      expect(rows.length).toBe(12);
+      expect(rows.length).toBe(7);
       expect(rows[0].sortedTopics[0]).toBe('topic a');
       expect(rows[0].sortedTopics[1]).toBe('topic b');
       expect(rows[1].sortedTopics[0]).toBe('topic c');
@@ -323,11 +412,6 @@ describe('Activity Reports DB service', () => {
     });
 
     it('retrieves myalerts', async () => {
-      const mockUserTwo = {
-        id: 1002,
-        homeRegionId: 1,
-        name: 'a user',
-      };
       await User.findOrCreate({
         where: {
           id: mockUserTwo.id,
@@ -337,8 +421,10 @@ describe('Activity Reports DB service', () => {
       reportObject.userId = mockUserTwo.id;
       await ActivityReport.create(reportObject);
 
-      const result = await activityReportAlerts(mockUserTwo.id);
-      expect(result[0].userId).toBe(mockUserTwo.id);
+      const { count, rows } = await activityReportAlerts(mockUserTwo.id, {});
+      expect(count).toBe(5);
+      expect(rows.length).toBe(5);
+      expect(rows[0].userId).toBe(mockUserTwo.id);
     });
   });
 
