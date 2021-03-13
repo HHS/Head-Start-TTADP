@@ -290,6 +290,32 @@ You can run psql commands directly against a deployed database by following thes
 	On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
 	This indicates you are in an open psql session, the command-line interface to PostgreSQL.
 
+**Using Maintenance Mode**
+
+if you need to put the application into maintenance mode, you can run the maintenance script located at `bin/maintenance`.
+
+This script require that you have [Cloud Foundry's CLI v7](https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide) installed to run.
+
+The script takes two flags
+- \-m | \-\-maintenance\-mode controls whether the script takes the app into maintenance mode or out of it.
+  - Options are "on" or "off
+  - Default is "off"
+- \-e | \-\-environment controls which environment you are targeting.
+  - Options are "sandbox", "dev", "staging", and "prod"
+  - Default is "prod"
+
+Ex. 
+```
+# Puts the dev environment into maintenance mode
+./bin/maintenance -e dev -m on
+
+# Takes prod out of maintenance mode
+./bin/maintenance
+```
+
+If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode.
+
+
 <!-- Links -->
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
