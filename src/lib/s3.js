@@ -9,6 +9,7 @@ const generateS3Config = () => {
       s3Config: {
         accessKeyId: credentials.access_key_id,
         endpoint: credentials.fips_endpoint,
+        region: credentials.region,
         secretAccessKey: credentials.secret_access_key,
         signatureVersion: 'v4',
         s3ForcePathStyle: true,

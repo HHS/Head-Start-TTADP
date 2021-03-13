@@ -1,6 +1,6 @@
 import join from 'url-join';
 import { get, put, post } from './index';
-import { DECIMAL_BASE } from '../Constants';
+import { DECIMAL_BASE, REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
@@ -31,13 +31,13 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
-export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = 10) => {
+export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE) => {
   const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}`);
   return reports.json();
 };
 
-export const getReportAlerts = async () => {
-  const reports = await get(activityReportAlertUrl);
+export const getReportAlerts = async (sortBy = 'startDate', sortDir = 'asc', offset = 0, limit = ALERTS_PER_PAGE) => {
+  const reports = await get(`${activityReportAlertUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}`);
   return reports.json();
 };
 

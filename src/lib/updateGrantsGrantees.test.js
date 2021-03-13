@@ -89,18 +89,17 @@ describe('Update grants and grantees', () => {
 
     const grants = await Grant.findAll({ where: { granteeId: 1335 } });
     expect(grants).toBeDefined();
-    expect(grants.length).toBe(3);
+    expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
+    const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: 20 } } });
+    expect(totalGrants.length).toBe(10);
   });
 
-  it('should exclude grantees with only inactive grants', async () => {
+  it('should not exclude grantees with only inactive grants', async () => {
     await processFiles();
-    let grantee = await Grantee.findOne({ where: { id: 119 } });
-    expect(grantee).toBeNull();
-    // Same grantee, but with a different id and having an active grant
-    grantee = await Grantee.findOne({ where: { id: 7709 } });
-    expect(grantee.name).toBe('Multi ID Agency');
+    const grantee = await Grantee.findOne({ where: { id: 119 } });
+    expect(grantee).not.toBeNull();
   });
 
   it('should update an existing grantee if it exists in smarthub', async () => {
@@ -114,14 +113,10 @@ describe('Update grants and grantees', () => {
   });
 
   it('should update an existing grant if it exists in smarthub', async () => {
-    await processFiles();
-    let grant = await Grant.findOne({ where: { id: 5151 } });
-    expect(grant).toBeNull();
-
     await Grantee.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
     const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', granteeId: 119 } });
     await processFiles();
-    grant = await Grant.findOne({ where: { id: 5151 } });
+    const grant = await Grant.findOne({ where: { id: 5151 } });
     expect(grant).not.toBeNull();
     expect(grant.updatedAt).not.toEqual(dbGrant.updatedAt);
     expect(grant.number).toBe('90CI4444');
