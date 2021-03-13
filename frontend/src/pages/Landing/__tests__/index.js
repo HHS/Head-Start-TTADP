@@ -26,7 +26,8 @@ describe('Landing Page', () => {
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 2, rows: activityReports },
     );
-    fetchMock.get('/api/activity-reports/alerts', []);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 0, alerts: [] });
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -118,6 +119,9 @@ describe('Landing Page', () => {
     });
 
     expect(topics).toBeVisible();
+    expect(topics.firstChild).toHaveClass('smart-hub--ellipsis');
+    expect(topics.firstChild.firstChild).toHaveClass('usa-tag smart-hub--table-collection');
+    expect(topics.firstChild).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support');
   });
 
   test('displays the correct collaborators', async () => {
@@ -166,7 +170,8 @@ describe('Landing Page sorting', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/alerts', []);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 2, rows: activityReports },
@@ -187,7 +192,8 @@ describe('Landing Page sorting', () => {
   it('clicking status column header will sort by status', async () => {
     const statusColumnHeader = await screen.findByText(/status/i);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts', []);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=status&sortDir=asc&offset=0&limit=10',
       { count: 2, rows: activityReportsSorted },
@@ -320,7 +326,8 @@ describe('Landing Page sorting', () => {
       name: /go to page number 1/i,
     });
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts', []);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 2, rows: activityReportsSorted },
@@ -337,7 +344,8 @@ describe('Landing Page sorting', () => {
       name: /go to page number 1/i,
     });
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts', []);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 0, alerts: [] });
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 17, rows: generateXFakeReports(10) },
@@ -368,11 +376,147 @@ describe('Landing Page sorting', () => {
   });
 });
 
+describe('My alerts sorting', () => {
+  afterEach(() => fetchMock.restore());
+
+  beforeEach(() => {
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReports });
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] });
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderLanding(user);
+  });
+
+  it('is enabled for Status', async () => {
+    const statusColumnHeaders = await screen.findAllByText(/status/i);
+
+    expect(statusColumnHeaders.length).toBe(2);
+    fetchMock.reset();
+    fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=asc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReports });
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+
+    fireEvent.click(statusColumnHeaders[0]);
+    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/needs action/i));
+
+    fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReportsSorted });
+
+    fireEvent.click(statusColumnHeaders[0]);
+    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/draft/i));
+  });
+
+  it('is enabled for Report ID', async () => {
+    const columnHeaders = await screen.findAllByText(/report id/i);
+
+    expect(columnHeaders.length).toBe(2);
+    fetchMock.reset();
+    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReports });
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+
+    fireEvent.click(columnHeaders[0]);
+    await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/r14-ar-1/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/r14-ar-2/i));
+  });
+
+  it('is enabled for Grantee', async () => {
+    const columnHeaders = await screen.findAllByRole('button', {
+      name: /grantee\. activate to sort ascending/i,
+    });
+    expect(columnHeaders.length).toBe(2);
+    fetchMock.reset();
+    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReports });
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+
+    fireEvent.click(columnHeaders[0]);
+
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(/Johnston-RomagueraJohnston-RomagueraGrantee Name/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/qris system/i));
+  });
+
+  it('is enabled for Start date', async () => {
+    const columnHeaders = await screen.findAllByText(/start date/i);
+
+    expect(columnHeaders.length).toBe(2);
+    fetchMock.reset();
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReportsSorted });
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+
+    fireEvent.click(columnHeaders[0]);
+
+    await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/02\/01\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/02\/08\/2021/i));
+  });
+
+  it('is enabled for Creator', async () => {
+    const columnHeaders = await screen.findAllByText(/creator/i);
+
+    expect(columnHeaders.length).toBe(2);
+    fetchMock.reset();
+    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReportsSorted });
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+
+    fireEvent.click(columnHeaders[0]);
+
+    await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/kiwi, gs/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/kiwi, ttac/i));
+  });
+
+  it('is enabled for Collaborator(s)', async () => {
+    const columnHeaders = await screen.findAllByText(/collaborator\(s\)/i);
+    expect(columnHeaders.length).toBe(2);
+    fetchMock.reset();
+    fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10',
+      { alertsCount: 2, alerts: activityReportsSorted });
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+
+    fireEvent.click(columnHeaders[0]);
+
+    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(/cucumber user, gshermione granger, ss/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/orange, gshermione granger, ss/i));
+  });
+});
+
 describe('Landing Page error', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get('/api/activity-reports/alerts', []);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { alertsCount: 0, alerts: [] });
   });
 
   it('handles errors by displaying an error message', async () => {
