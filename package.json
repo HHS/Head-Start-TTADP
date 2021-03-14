@@ -60,7 +60,9 @@
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
     "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
-    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js"
+    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js",
+    "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantGranteesCLI.js --skipdownload",
+    "import:hses": "node ./build/server/tools/importGrantGranteesCLI.js"
   },
   "repository": {
     "type": "git",
