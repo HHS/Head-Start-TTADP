@@ -22,9 +22,6 @@ const fs = require('mz/fs');
  *
  */
 export async function processFiles() {
-  const granteesForDb = [];
-  const grantsForDb = [];
-
   try {
     const grantAgencyData = await fs.readFile('./temp/grant_agency.xml');
     const json = toJson(grantAgencyData);
@@ -41,7 +38,7 @@ export async function processFiles() {
     // filter out delegates by matching to the non-delegates
     // eslint-disable-next-line max-len
     const granteesNonDelegates = agency.agencies.agency.filter((a) => grantGrantees.some((gg) => gg.agency_id === a.agency_id));
-    granteesNonDelegates.forEach((g) => granteesForDb.push({
+    const granteesForDb = granteesNonDelegates.map((g) => ({
       id: parseInt(g.agency_id, 10),
       name: g.agency_name,
     }));
@@ -56,15 +53,20 @@ export async function processFiles() {
     const grantData = await fs.readFile('./temp/grant_award.xml');
     const grant = JSON.parse(toJson(grantData));
 
-    grant.grant_awards.grant_award.forEach((g) => grantsForDb.push({
-      id: parseInt(g.grant_award_id, 10),
-      number: g.grant_number,
-      regionId: parseInt(g.region_id, 10),
-      granteeId: parseInt(g.agency_id, 10),
-      status: g.grant_status,
-      startDate: g.grant_start_date,
-      endDate: g.grant_end_date,
-    }));
+    const grantsForDb = grant.grant_awards.grant_award.map((g) => {
+      let { grant_start_date: startDate, grant_end_date: endDate } = g;
+      if (typeof startDate === 'object') { startDate = null; }
+      if (typeof endDate === 'object') { endDate = null; }
+      return {
+        id: parseInt(g.grant_award_id, 10),
+        number: g.grant_number,
+        regionId: parseInt(g.region_id, 10),
+        granteeId: parseInt(g.agency_id, 10),
+        status: g.grant_status,
+        startDate,
+        endDate,
+      };
+    });
 
     logger.debug(`updateGrantsGrantees: calling bulkCreate for ${grantsForDb.length} grants`);
     await Grant.bulkCreate(grantsForDb,
