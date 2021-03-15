@@ -9,8 +9,9 @@ import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as queue from '../../services/scanQueue';
 import SCOPES from '../../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../../constants';
+import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
+import * as Files from '../../services/files';
 
 jest.mock('../../policies/activityReport');
 
@@ -116,6 +117,15 @@ describe('File Upload', () => {
         .expect(403)
         .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
     });
+    it('tests an improper delete', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      await request(app)
+        .delete(`/api/files/${report.dataValues.id}/`)
+        .expect(400)
+        .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
+    });
     it('deletes a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
@@ -145,7 +155,9 @@ describe('File Upload', () => {
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'reportId required' })
-        .then(() => expect(uploadFile).not.toHaveBeenCalled());
+        .then(() => {
+          expect(uploadFile).not.toHaveBeenCalled();
+        });
     });
     it('tests a file upload without a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -155,7 +167,9 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .expect(400, { error: 'file required' })
-        .then(() => expect(uploadFile).not.toHaveBeenCalled());
+        .then(() => {
+          expect(uploadFile).not.toHaveBeenCalled();
+        });
     });
     it('tests an unauthorized upload', async () => {
       jest.clearAllMocks();
@@ -168,6 +182,56 @@ describe('File Upload', () => {
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(403)
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
+    });
+    it('tests an incorrect file type', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      uploadFile.mockResolvedValue({ key: 'key' });
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/test.txt`)
+        .expect(400)
+        .then((res) => {
+          expect(res.text).toBe('Could not determine file type');
+        });
+    });
+    it('tests a queuing failure', async () => {
+      const updateStatus = jest.spyOn(Files, 'updateStatus');
+      mockAddToScanQueue.mockImplementationOnce(() => Promise.reject());
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      uploadFile.mockResolvedValue({ key: 'key' });
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(200)
+        .then(() => {
+          expect(uploadFile).toHaveBeenCalled();
+          expect(mockAddToScanQueue).toHaveBeenCalled();
+          expect(updateStatus)
+            .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.QUEUEING_FAILED);
+        });
+    });
+    it('tests an upload failure', async () => {
+      const updateStatus = jest.spyOn(Files, 'updateStatus');
+      uploadFile.mockImplementationOnce(() => Promise.reject());
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+      }));
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(500)
+        .then(async () => {
+          expect(uploadFile).toHaveBeenCalled();
+          expect(updateStatus)
+            .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
+        });
     });
   });
 });
