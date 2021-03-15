@@ -24,6 +24,7 @@ import {
 } from './constants';
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
+import DismissingComponentWrapper from '../DismissingComponentWrapper';
 
 function Navigator({
   editable,
@@ -45,6 +46,7 @@ function Navigator({
 }) {
   const [errorMessage, updateErrorMessage] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const page = pages.find((p) => p.path === currentPage);
 
@@ -198,10 +200,22 @@ function Navigator({
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
                     <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={() => { onSaveForm(); }}>Save draft</Button>
+                    <Button type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
                     <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
                   </div>
                 </Form>
+                <DismissingComponentWrapper
+                  shown={showSavedDraft}
+                  updateShown={updateShowSavedDraft}
+                >
+                  {lastSaveTime && (
+                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
+                    Draft saved on
+                    {' '}
+                    {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+                  </Alert>
+                  )}
+                </DismissingComponentWrapper>
               </Container>
             )}
           </div>
