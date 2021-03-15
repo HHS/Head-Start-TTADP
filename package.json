@@ -20,7 +20,7 @@
     "server:debug": "nodemon src/index.js --exec babel-node --inspect",
     "client": "yarn --cwd frontend start",
     "test": "jest src --runInBand",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit --forceExit",
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -60,7 +60,9 @@
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
     "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
-    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js"
+    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js",
+    "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantGranteesCLI.js --skipdownload",
+    "import:hses": "node ./build/server/tools/importGrantGranteesCLI.js"
   },
   "repository": {
     "type": "git",
