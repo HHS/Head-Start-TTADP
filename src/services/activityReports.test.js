@@ -8,6 +8,7 @@ import {
   review,
   activityReports,
   activityReportAlerts,
+  activityReportByLegacyId,
 } from './activityReports';
 import { copyGoalsToGrants } from './goals';
 import { REPORT_STATUSES } from '../constants';
@@ -287,6 +288,14 @@ describe('Activity Reports DB service', () => {
       expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
       expect(updatedReport.specialistNextSteps.map((n) => n.id))
         .toEqual(expect.arrayContaining(specialistsIds));
+    });
+  });
+
+  describe('activityReportByLegacyId', () => {
+    it('returns the report with the legacyId', async () => {
+      const report = await ActivityReport.create({ ...reportObject, legacyId: 'legacy' });
+      const found = await activityReportByLegacyId('legacy');
+      expect(found.id).toBe(report.id);
     });
   });
 
