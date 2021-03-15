@@ -12,12 +12,7 @@ const {
   SITE_ACCESS, ADMIN, READ_REPORTS, READ_WRITE_REPORTS,
 } = SCOPES;
 
-jest.mock('../logger', () => ({
-  auditLogger: {
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-}));
+jest.mock('../logger');
 
 const mockUser = {
   id: 47,
