@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment-timezone';
+import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
   Dropdown, Form, Fieldset, Textarea, Button,
@@ -14,9 +16,12 @@ const Draft = ({
   onFormSubmit,
   onSaveForm,
   incompletePages,
+  reportId,
+  displayId,
 }) => {
   const { watch, register, handleSubmit } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
+  const [justSubmitted, updatedJustSubmitted] = useState(false);
 
   const setValue = (e) => {
     if (e === '') {
@@ -28,13 +33,27 @@ const Draft = ({
   const onSubmit = (e) => {
     if (!hasIncompletePages) {
       onFormSubmit(e);
+      updatedJustSubmitted(true);
     }
   };
   const watchTextValue = watch('additionalNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
+  // NOTE: This is only an estimate of which timezone the user is in.
+  // Not guaranteed to be 100% correct but is "good enough"
+  // https://momentjs.com/timezone/docs/#/using-timezones/guessing-user-timezone/
+  const timezone = moment.tz.guess();
+  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const message = {
+    time,
+    reportId,
+    displayId,
+    status: 'submitted',
+  };
+
   return (
     <>
+      { justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Additional Notes">
@@ -80,6 +99,8 @@ Draft.propTypes = {
   })).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reportId: PropTypes.number.isRequired,
+  displayId: PropTypes.string.isRequired,
 };
 
 export default Draft;

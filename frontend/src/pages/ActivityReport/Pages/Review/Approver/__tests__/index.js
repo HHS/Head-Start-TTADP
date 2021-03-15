@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import Approver from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
@@ -36,14 +38,20 @@ const renderReview = (status, onFormReview, reviewed, notes = '') => {
     approvingManagerId: '1',
     status,
   };
+
+  const history = createMemoryHistory();
   render(
-    <RenderApprover
-      status={status}
-      onFormReview={onFormReview}
-      reviewed={reviewed}
-      formData={formData}
-    />,
+    <Router history={history}>
+      <RenderApprover
+        status={status}
+        onFormReview={onFormReview}
+        reviewed={reviewed}
+        formData={formData}
+      />
+    </Router>,
   );
+
+  return history;
 };
 
 describe('Approver review page', () => {
@@ -53,17 +61,14 @@ describe('Approver review page', () => {
       expect(await screen.findByText('Review and approve report')).toBeVisible();
     });
 
-    it('allows the approver to submit a review', async () => {
+    it('allows the approver to submit a review and redirects them after', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true);
+      const history = renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true, true);
       const dropdown = await screen.findByTestId('dropdown');
       userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      const alerts = await screen.findAllByTestId('alert');
-      const success = alerts.find((alert) => alert.textContent.includes('Success'));
-      expect(success).toBeVisible();
-      expect(mockSubmit).toHaveBeenCalled();
+      expect(history.location.pathname).toBe('/activity-reports');
     });
 
     it('handles empty notes', async () => {

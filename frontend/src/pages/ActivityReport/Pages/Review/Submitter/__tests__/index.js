@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
 
 import Submitter from '../index';
@@ -58,17 +60,22 @@ const renderReview = (
     status,
   };
 
+  const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
 
   render(
-    <RenderSubmitter
-      onFormSubmit={onFormSubmit}
-      formData={formData}
-      onResetToDraft={resetToDraft}
-      onSave={onSave}
-      pages={pages}
-    />,
+    <Router history={history}>
+      <RenderSubmitter
+        onFormSubmit={onFormSubmit}
+        formData={formData}
+        onResetToDraft={resetToDraft}
+        onSave={onSave}
+        pages={pages}
+      />
+    </Router>,
   );
+
+  return history;
 };
 
 describe('Submitter review page', () => {
@@ -106,6 +113,15 @@ describe('Submitter review page', () => {
       await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });
 
+    it('displays success if the report has been submitted', async () => {
+      const mockSubmit = jest.fn();
+      const history = renderReview(REPORT_STATUSES.DRAFT, mockSubmit, true);
+      const button = await screen.findByRole('button', { name: 'Submit for approval' });
+
+      userEvent.click(button);
+      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
+    });
+
     it('can be saved', async () => {
       const mockSave = jest.fn();
       renderReview(REPORT_STATUSES.DRAFT, () => {}, true, mockSave);
@@ -124,7 +140,7 @@ describe('Submitter review page', () => {
 
   describe('when the report has been submitted', () => {
     it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, true, () => {});
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true);
       const allAlerts = await screen.findAllByTestId('alert');
       const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
       expect(successAlert).toBeVisible();
