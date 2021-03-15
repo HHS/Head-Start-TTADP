@@ -109,7 +109,7 @@ function renderReports(reports, history) {
 
     return (
       <tr key={`landing_${id}`}>
-        <th scope="row">
+        <th scope="row" className="smart-hub--blue">
           <Link
             to={linkTarget}
           >
@@ -325,7 +325,7 @@ function Landing() {
       </Helmet>
       <UserContext.Consumer>
         {({ user }) => (
-          <div className="margin-left-3">
+          <>
             {showAlert && message && (
             <Alert
               type="success"
@@ -374,7 +374,7 @@ function Landing() {
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
             />
-            <SimpleBar>
+            <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
                 <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
                   <span
@@ -424,7 +424,7 @@ function Landing() {
                 </Table>
               </Container>
             </SimpleBar>
-          </div>
+          </>
         )}
       </UserContext.Consumer>
     </>
