@@ -488,18 +488,22 @@ export async function createOrUpdate(newActivityReport, report) {
     author,
     granteeNextSteps,
     specialistNextSteps,
+    ECLKCResourcesUsed,
+    nonECLKCResourcesUsed,
     ...allFields
   } = newActivityReport;
 
-  const ECLKCResourcesUsed = allFields.ECLKCResourcesUsed
-    ? allFields.ECLKCResourcesUsed.map((item) => item.value)
-    : [];
+  const resources = {};
 
-  const nonECLKCResourcesUsed = allFields.nonECLKCResourcesUsed
-    ? allFields.nonECLKCResourcesUsed.map((item) => item.value)
-    : [];
+  if (ECLKCResourcesUsed) {
+    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.map((item) => item.value);
+  }
 
-  const updatedFields = { ...allFields, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+  if (nonECLKCResourcesUsed) {
+    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.map((item) => item.value);
+  }
+
+  const updatedFields = { ...allFields, ...resources };
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);
