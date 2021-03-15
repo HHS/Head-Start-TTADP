@@ -18,6 +18,7 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
+import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
 import ContextMenu from '../../components/ContextMenu';
 
 function renderReports(reports, history) {
@@ -108,7 +109,6 @@ function renderReports(reports, history) {
         <th scope="row">
           <Link
             to={linkTarget}
-            href={linkTarget}
           >
             {displayId}
           </Link>
@@ -173,9 +173,18 @@ function Landing() {
     direction: 'desc',
   });
   const [offset, setOffset] = useState(0);
-  const [perPage] = useState(10);
+  const [perPage] = useState(REPORTS_PER_PAGE);
   const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
+
+  const [alertsSortConfig, setAlertsSortConfig] = React.useState({
+    sortBy: 'startDate',
+    direction: 'desc',
+  });
+  const [alertsOffset, setAlertsOffset] = useState(0);
+  const [alertsPerPage] = useState(ALERTS_PER_PAGE);
+  const [alertsActivePage, setAlertsActivePage] = useState(1);
+  const [alertReportsCount, setAlertReportsCount] = useState(0);
 
   const requestSort = (sortBy) => {
     let direction = 'asc';
@@ -191,6 +200,20 @@ function Landing() {
     setSortConfig({ sortBy, direction });
   };
 
+  const requestAlertsSort = (sortBy) => {
+    let direction = 'asc';
+    if (
+      alertsSortConfig
+      && alertsSortConfig.sortBy === sortBy
+      && alertsSortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setAlertsActivePage(1);
+    setAlertsOffset(0);
+    setAlertsSortConfig({ sortBy, direction });
+  };
+
   useEffect(() => {
     async function fetchReports() {
       try {
@@ -200,12 +223,20 @@ function Landing() {
           offset,
           perPage,
         );
-        const alerts = await getReportAlerts();
+        const { alertsCount, alerts } = await getReportAlerts(
+          alertsSortConfig.sortBy,
+          alertsSortConfig.direction,
+          alertsOffset,
+          alertsPerPage,
+        );
         updateReports(rows);
         if (count) {
           setReportsCount(count);
         }
         updateReportAlerts(alerts);
+        if (alertsCount) {
+          setAlertReportsCount(alertsCount);
+        }
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -214,7 +245,7 @@ function Landing() {
       setIsLoaded(true);
     }
     fetchReports();
-  }, [sortConfig, offset, perPage]);
+  }, [sortConfig, offset, perPage, alertsSortConfig, alertsOffset, alertsPerPage]);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -241,7 +272,7 @@ function Landing() {
             requestSort(name);
           }}
           onKeyPress={() => requestSort(name)}
-          className={sortClassName}
+          className={`sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
@@ -286,7 +317,16 @@ function Landing() {
                 </Alert>
               )}
             </Grid>
-            <MyAlerts reports={reportAlerts} newBtn={hasReadWrite(user)} />
+            <MyAlerts
+              reports={reportAlerts}
+              newBtn={hasReadWrite(user)}
+              alertsSortConfig={alertsSortConfig}
+              alertsOffset={alertsOffset}
+              alertsPerPage={alertsPerPage}
+              alertsActivePage={alertsActivePage}
+              alertReportsCount={alertReportsCount}
+              sortHandler={requestAlertsSort}
+            />
             <SimpleBar>
               <Container className="landing inline-size" padding={0}>
                 <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">

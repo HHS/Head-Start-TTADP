@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import { readFileSync } from 'fs';
 import parse from 'csv-parse/lib/sync';
+import { downloadFile } from '../lib/s3';
 import {
   Role, Topic, RoleTopic, Goal, TopicGoal, Grant, GrantGoal,
 } from '../models';
@@ -25,9 +25,9 @@ const hubRoles = [
   { name: 'SS', fullName: 'System Specialist' },
 ];
 
-function parseCsv(file) {
+async function parseCsv(fileKey) {
   let grantees = {};
-  const csv = readFileSync(file);
+  const { Body: csv } = await downloadFile(fileKey);
   [...grantees] = parse(csv, {
     skipEmptyLines: true,
     columns: true,
@@ -59,9 +59,9 @@ async function prePopulateRoles() {
  * ...
  * (Total 5 goals. Some of them could be empty)
  */
-export default async function importGoals(file, region) {
-  const grantees = parseCsv(file);
-  const regionId = region || 14; // default to region 14
+export default async function importGoals(fileKey, region) {
+  const grantees = await parseCsv(fileKey);
+  const regionId = region;
   try {
     const cleanRoleTopics = [];
     const cleanGrantGoals = [];
