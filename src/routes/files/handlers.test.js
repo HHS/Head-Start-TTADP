@@ -70,8 +70,8 @@ describe('File Upload', () => {
     process.env.CURRENT_USER_ID = 100;
   });
   afterAll(async () => {
-    await File.destroy({ where: {} });
-    await ActivityReport.destroy({ where: { } });
+    await File.destroy({ where: { activityReportId: report.dataValues.id } });
+    await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
     await db.sequelize.close();

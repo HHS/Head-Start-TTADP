@@ -1,12 +1,42 @@
 import app from '../app';
+import SCOPES from '../middleware/scopeConstants';
+import {
+  User,
+  Permission,
+} from '../models';
 
 const request = require('supertest');
 
+const mockUser = {
+  id: 110,
+  hsesUserId: '100',
+  hsesUsername: 'user',
+  homeRegionId: 1,
+  permissions: [
+    {
+      userId: 110,
+      regionId: 5,
+      scopeId: SCOPES.READ_WRITE_REPORTS,
+    },
+    {
+      userId: 110,
+      regionId: 6,
+      scopeId: SCOPES.READ_WRITE_REPORTS,
+    },
+    {
+      userId: 110,
+      regionId: 14,
+      scopeId: SCOPES.SITE_ACCESS,
+    },
+  ],
+};
+
 describe('apiDirectory tests', () => {
   beforeAll(async () => {
+    await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
-    process.env.CURRENT_USER_ID = 100;
+    process.env.CURRENT_USER_ID = 110;
   });
   it('tests the hello route', async () => {
     await request(app)
