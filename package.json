@@ -62,7 +62,9 @@
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
     "import:reports": "node ./build/server/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
-    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js"
+    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js",
+    "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantGranteesCLI.js --skipdownload",
+    "import:hses": "node ./build/server/tools/importGrantGranteesCLI.js"
   },
   "repository": {
     "type": "git",
