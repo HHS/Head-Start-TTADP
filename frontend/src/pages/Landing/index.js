@@ -1,10 +1,13 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from 'react';
 import {
-  Tag, Table, Alert, Grid,
+  Tag, Table, Alert, Grid, Button,
 } from '@trussworks/react-uswds';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
+
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 import Pagination from 'react-js-pagination';
@@ -165,6 +168,7 @@ function Landing() {
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
+  const [showAlert, updateShowAlert] = useState(true);
   const [sortConfig, setSortConfig] = React.useState({
     sortBy: 'updatedAt',
     direction: 'desc',
@@ -289,6 +293,28 @@ function Landing() {
     return <div>Loading...</div>;
   }
 
+  let msg;
+  const message = history.location.state && history.location.state.message;
+  if (message) {
+    msg = (
+      <div>
+        You successfully
+        {' '}
+        {message.status}
+        {' '}
+        report
+        {' '}
+        <Link to={`/activity-reports/${message.reportId}`}>
+          {message.displayId}
+        </Link>
+        {' '}
+        on
+        {' '}
+        {message.time}
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -297,6 +323,26 @@ function Landing() {
       <UserContext.Consumer>
         {({ user }) => (
           <>
+            {showAlert && message && (
+            <Alert
+              type="success"
+              noIcon
+              cta={(
+                <Button
+                  role="button"
+                  unstyled
+                  aria-label="dissmiss alert"
+                  onClick={() => updateShowAlert(false)}
+                >
+                  <span className="fa-sm">
+                    <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                  </span>
+                </Button>
+              )}
+            >
+              {msg}
+            </Alert>
+            )}
             <Grid row gap>
               <Grid>
                 <h1 className="landing">Activity Reports</h1>
