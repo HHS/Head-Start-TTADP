@@ -49,6 +49,16 @@ describe('ResourceSelector', () => {
     });
   });
 
+  describe('when enter is pressed', () => {
+    it('adds a new resource', async () => {
+      render(<RenderResourceSelector data={[{ value: '' }]} />);
+      const textBox = await screen.findByTestId('textInput');
+      userEvent.type(textBox, 'test{enter}');
+      const text = await screen.findAllByRole('textbox');
+      expect(text.length).toBe(2);
+    });
+  });
+
   describe('with multiple entries', () => {
     it('allows removal of an item', async () => {
       render(<RenderResourceSelector data={[{ value: 'first' }, { value: 'second' }]} />);
