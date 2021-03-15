@@ -84,7 +84,7 @@ export default async function importGoals(fileKey, region) {
 
     for await (const el of grantees) {
       let currentGrants = [];
-      let currentGoals = [];
+      const currentGoals = [];
       let currentGoalName = '';
       let currentGoalNum = 0;
 
@@ -100,8 +100,12 @@ export default async function importGoals(fileKey, region) {
               currentGoalName = '';
             }
             if (currentGoalName !== '') { // Ignore empty goals
+              // eslint-disable-next-line prefer-destructuring
               currentGoalNum = goalColumn[1];
-              currentGoals[currentGoalNum] = { ...currentGoals[currentGoalNum], name: currentGoalName };
+              currentGoals[currentGoalNum] = {
+                ...currentGoals[currentGoalNum],
+                name: currentGoalName,
+              };
             }
           } else if (currentGoalName !== '') {
             // column will be either "topics", "timeframe" or "status"
@@ -143,7 +147,10 @@ export default async function importGoals(fileKey, region) {
             } else {
               // it's either "timeframe" or "status"
               // both "timeframe" and "status" column names will be reused as goal's object keys
-              currentGoals[currentGoalNum] = { ...currentGoals[currentGoalNum], [column]: el[key].trim() };
+              currentGoals[currentGoalNum] = {
+                ...currentGoals[currentGoalNum],
+                [column]: el[key].trim(),
+              };
             }
           }
         }
