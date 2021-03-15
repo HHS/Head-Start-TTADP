@@ -325,7 +325,7 @@ function Landing() {
       </Helmet>
       <UserContext.Consumer>
         {({ user }) => (
-          <div className="margin-left-3">
+          <>
             {showAlert && message && (
             <Alert
               type="success"
@@ -424,7 +424,7 @@ function Landing() {
                 </Table>
               </Container>
             </SimpleBar>
-          </div>
+          </>
         )}
       </UserContext.Consumer>
     </>
