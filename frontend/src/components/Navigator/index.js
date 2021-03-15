@@ -74,8 +74,8 @@ function Navigator({
 
     const currentPageState = pageState[page.position];
     const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
-
     const newPageState = { ...pageState };
+
     if (isComplete) {
       newPageState[page.position] = COMPLETE;
     } else if (currentPageState === COMPLETE) {
@@ -109,6 +109,7 @@ function Navigator({
     await onSaveForm();
     if (index !== page.position) {
       updatePage(index);
+      updateShowSavedDraft(false);
     }
   };
 

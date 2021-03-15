@@ -256,6 +256,7 @@ function ActivityReport({
         </Grid>
       </Grid>
       <Navigator
+        key={currentPage}
         editable={editable}
         updatePage={updatePage}
         reportCreator={reportCreator}
