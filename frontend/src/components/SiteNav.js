@@ -22,7 +22,7 @@ const navLinkClasses = [
   'hover:text-no-underline',
 ].join(' ');
 
-const activeNavLinkClasses = 'border-left-05 border-white';
+const activeNavLinkClasses = 'border-left-05 border-white text-bold';
 
 const NavLink = (props) => (
   <Link activeClassName={activeNavLinkClasses} className={navLinkClasses} {...props} />
@@ -54,12 +54,12 @@ const SiteNav = ({
         <>
           <div className="width-full smart-hub-sitenav-separator--after">
             <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
-              <p className="text-bold margin-y-105">{ user.name }</p>
-              <p className="font-sans-3xs margin-y-105">{ user.email }</p>
+              <p className="text-bold margin-top-5">{ user.name }</p>
+              <p className="font-sans-3xs margin-bottom-5">{ user.email }</p>
             </div>
           </div>
           <nav>
-            <div className="width-full margin-bottom-2">
+            <div className="width-full margin-bottom-2 margin-top-6">
               <ul className="add-list-reset">
                 <li>
                   <NavLink
@@ -73,8 +73,8 @@ const SiteNav = ({
                 </li>
               </ul>
             </div>
-            <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before">
-              <ul className="add-list-reset padding-top-2 text-base-lightest">
+            <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
+              <ul className="add-list-reset padding-top-5 text-base-lightest">
                 {items.map((item, i) => (<li key={`smart-hub-nav__item-${i}`}>{item}</li>))}
               </ul>
             </div>
