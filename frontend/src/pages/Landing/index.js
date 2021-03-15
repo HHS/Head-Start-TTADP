@@ -325,10 +325,11 @@ function Landing() {
       </Helmet>
       <UserContext.Consumer>
         {({ user }) => (
-          <>
+          <div className="margin-left-3">
             {showAlert && message && (
             <Alert
               type="success"
+              role="alert"
               noIcon
               cta={(
                 <Button
@@ -358,9 +359,9 @@ function Landing() {
             </Grid>
             <Grid row>
               {error && (
-                <Alert type="error" role="alert">
-                  {error}
-                </Alert>
+              <Alert type="error" role="alert">
+                {error}
+              </Alert>
               )}
             </Grid>
             <MyAlerts
@@ -423,7 +424,7 @@ function Landing() {
                 </Table>
               </Container>
             </SimpleBar>
-          </>
+          </div>
         )}
       </UserContext.Consumer>
     </>
