@@ -46,6 +46,7 @@ const author = user(true, false, 1);
 const collaborator = user(true, false, 2);
 const manager = user(true, false, 3);
 const otherUser = user(false, true, 4);
+const canNotReadRegion = user(false, false, 5);
 
 describe('Activity Report policies', () => {
   describe('canReview', () => {
@@ -139,6 +140,20 @@ describe('Activity Report policies', () => {
       const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
       const policy = new ActivityReport(collaborator, report);
       expect(policy.canReset()).toBeTruthy();
+    });
+  });
+
+  describe('canViewLegacy', () => {
+    it('is true if the user can view the region', () => {
+      const report = activityReport(author.id);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canViewLegacy()).toBeTruthy();
+    });
+
+    it('is false if the user can not view the region', () => {
+      const report = activityReport(author.id);
+      const policy = new ActivityReport(canNotReadRegion, report);
+      expect(policy.canViewLegacy()).toBeFalsy();
     });
   });
 

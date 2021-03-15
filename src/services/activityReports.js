@@ -170,9 +170,17 @@ export async function review(report, status, managerNotes) {
   return updatedReport;
 }
 
+export function activityReportByLegacyId(legacyId) {
+  return ActivityReport.findOne({
+    where: {
+      legacyId,
+    },
+  });
+}
+
 export function activityReportById(activityReportId) {
   return ActivityReport.findOne({
-    attributes: { exclude: ['legacyId'] },
+    attributes: { exclude: ['imported', 'legacyId'] },
     where: {
       id: {
         [Op.eq]: activityReportId,
@@ -294,6 +302,7 @@ export function activityReports(readRegions, {
         'regionId',
         'updatedAt',
         'sortedTopics',
+        'legacyId',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),
@@ -479,18 +488,22 @@ export async function createOrUpdate(newActivityReport, report) {
     author,
     granteeNextSteps,
     specialistNextSteps,
+    ECLKCResourcesUsed,
+    nonECLKCResourcesUsed,
     ...allFields
   } = newActivityReport;
 
-  const ECLKCResourcesUsed = allFields.ECLKCResourcesUsed
-    ? allFields.ECLKCResourcesUsed.map((item) => item.value)
-    : [];
+  const resources = {};
 
-  const nonECLKCResourcesUsed = allFields.nonECLKCResourcesUsed
-    ? allFields.nonECLKCResourcesUsed.map((item) => item.value)
-    : [];
+  if (ECLKCResourcesUsed) {
+    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.map((item) => item.value);
+  }
 
-  const updatedFields = { ...allFields, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+  if (nonECLKCResourcesUsed) {
+    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.map((item) => item.value);
+  }
+
+  const updatedFields = { ...allFields, ...resources };
   await sequelize.transaction(async (transaction) => {
     if (report) {
       savedReport = await update(updatedFields, report, transaction);
