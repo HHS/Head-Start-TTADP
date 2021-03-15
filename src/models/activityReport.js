@@ -41,21 +41,26 @@ export default (sequelize, DataTypes) => {
   }
   ActivityReport.init({
     displayId: {
-      type: DataTypes.VIRTUAL,
+      type: DataTypes.VIRTUAL(DataTypes.STRING, ['legacyId', 'regionId', 'id']),
       get() {
-        if (this.legacyId) return this.legacyId;
-        return `R${this.regionId.toString().padStart(2, '0')}-AR-${this.id}`;
+        const { legacyId, regionId } = this;
+        if (legacyId) return legacyId.toString();
+        const regionPrefix = !regionId ? '???' : `R${this.regionId.toString().padStart(2, '0')}`;
+        return `${regionPrefix}-AR-${this.id}`;
       },
     },
     legacyId: {
       comment: 'Legacy identifier taken from smartsheet ReportID. Some ids adjusted to match their region.',
       type: DataTypes.STRING,
+      unique: true,
     },
     userId: {
       type: DataTypes.INTEGER,
+      allowNull: true,
     },
     lastUpdatedById: {
       type: DataTypes.INTEGER,
+      allowNull: true,
     },
     approvingManagerId: {
       type: DataTypes.INTEGER,
@@ -174,6 +179,10 @@ export default (sequelize, DataTypes) => {
       get() {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
+    },
+    imported: {
+      type: DataTypes.JSONB,
+      comment: 'Storage for raw values from smartsheet CSV imports',
     },
     sortedTopics: {
       type: DataTypes.VIRTUAL,
