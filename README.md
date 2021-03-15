@@ -299,18 +299,13 @@ This script require that you have [Cloud Foundry's CLI v7](https://github.com/cl
 The script takes two flags
 - \-m | \-\-maintenance\-mode controls whether the script takes the app into maintenance mode or out of it.
   - Options are "on" or "off
-  - Default is "off"
 - \-e | \-\-environment controls which environment you are targeting.
   - Options are "sandbox", "dev", "staging", and "prod"
-  - Default is "prod"
 
 Ex. 
 ```
 # Puts the dev environment into maintenance mode
 ./bin/maintenance -e dev -m on
-
-# Takes prod out of maintenance mode
-./bin/maintenance
 ```
 
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode.
