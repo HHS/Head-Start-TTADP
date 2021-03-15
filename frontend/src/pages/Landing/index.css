@@ -76,6 +76,16 @@ div.smart-hub--total-count {
   margin-bottom: -90px;
 }
 
+#alertsTotalCount {
+  position: absolute;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  margin-top: 27px;
+  margin-left: 900px;
+  display: none;
+}
+
 h1.landing {
   font-size: 45px;
   font-family: 'Merriweather', serif;
@@ -104,6 +114,8 @@ h1.landing {
   border-color: #ECEEF1;
   border-bottom: none;
   cursor: pointer;
+  min-width: 90px;
+  padding-right: 0px;
 }
 
 .landing .usa-table--borderless th:first-child {
@@ -212,17 +224,28 @@ h1.landing {
 .smart-hub--create-new-report {
   padding-top: 30px;
 }
-
-thead th > .asc::after {
-  content: "▲";
+thead th > .sortable{
+  position: relative;
+}
+thead th > .sortable::after{
+  content: "";
+  background-image: url(../../images/sort_both.png);
+  background-repeat:no-repeat;
+  background-position: center bottom;
   display: inline-block;
-  margin-left: 0.25em;
+  position: absolute;
+  right: -15px;
+  top: -2px;
+  width: 10px;
+  height: 20px;
 }
 
-thead th > .desc::after {
-  content: "▼";
-  display: inline-block;
-  margin-left: 0.25em;
+thead th > .sortable.asc::after {
+  background-image: url(../../images/sort_asc.png);
+}
+
+thead th > .sortable.desc::after {
+  background-image: url(../../images/sort_desc.png);
 }
 
 a.asc {

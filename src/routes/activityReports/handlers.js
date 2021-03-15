@@ -10,7 +10,7 @@ import {
   activityReports,
   setStatus,
   activityReportAlerts,
-  legacyReport,
+  activityReportByLegacyId,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -27,7 +27,7 @@ const logContext = {
 export async function getLegacyReport(req, res) {
   try {
     const { legacyReportId } = req.params;
-    const report = await legacyReport(legacyReportId);
+    const report = await activityReportByLegacyId(legacyReportId);
     if (!report) {
       res.sendStatus(404);
       return;
@@ -217,12 +217,12 @@ export async function getReports(req, res) {
  */
 export async function getReportAlerts(req, res) {
   const { userId } = req.session;
-  const reports = await activityReportAlerts(userId);
+  const alertsWithCount = await activityReportAlerts(userId, req.query);
 
-  if (!reports) {
+  if (!alertsWithCount) {
     res.sendStatus(404);
   } else {
-    res.json(reports);
+    res.json({ alertsCount: alertsWithCount.count, alerts: alertsWithCount.rows });
   }
 }
 

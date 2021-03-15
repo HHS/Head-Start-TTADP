@@ -7,13 +7,29 @@ import { MemoryRouter } from 'react-router';
 
 import MyAlerts from '../MyAlerts';
 import activityReports from '../mocks';
+import { ALERTS_PER_PAGE } from '../../../Constants';
 
 describe('My Alerts', () => {
   beforeEach(() => {
     const newBtn = true;
+    const alertsSortConfig = { sortBy: 'startDate', direction: 'desc' };
+    const alertsOffset = 0;
+    const alertsPerPage = ALERTS_PER_PAGE;
+    const alertsActivePage = 1;
+    const alertReportsCount = 10;
+    const requestAlertsSort = jest.fn();
     render(
       <MemoryRouter>
-        <MyAlerts reports={activityReports} newBtn={newBtn} />
+        <MyAlerts
+          reports={activityReports}
+          newBtn={newBtn}
+          alertsSortConfig={alertsSortConfig}
+          alertsOffset={alertsOffset}
+          alertsPerPage={alertsPerPage}
+          alertsActivePage={alertsActivePage}
+          alertReportsCount={alertReportsCount}
+          sortHandler={requestAlertsSort}
+        />
       </MemoryRouter>,
     );
   });

@@ -9,6 +9,7 @@ import {
   resetToDraft,
   getReports,
   getReportAlerts,
+  getLegacyReport,
 } from './handlers';
 import {
   activityReportById,
@@ -18,6 +19,7 @@ import {
   setStatus,
   activityReports,
   activityReportAlerts,
+  activityReportByLegacyId,
 } from '../../services/activityReports';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
@@ -31,6 +33,7 @@ jest.mock('../../services/activityReports', () => ({
   setStatus: jest.fn(),
   activityReports: jest.fn(),
   activityReportAlerts: jest.fn(),
+  activityReportByLegacyId: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -64,6 +67,37 @@ const report = {
 describe('Activity Report handlers', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('activityReportByLegacyId', () => {
+    const request = {
+      ...mockRequest,
+      params: { legacyReportId: 1 },
+    };
+
+    it('returns a report', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canViewLegacy: () => true,
+      }));
+      activityReportByLegacyId.mockResolvedValue({ id: 1 });
+      await getLegacyReport(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ id: 1 });
+    });
+
+    it('handles report not being found', async () => {
+      activityReportByLegacyId.mockResolvedValue(null);
+      await getLegacyReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('handles unauthorized', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canViewLegacy: () => false,
+      }));
+      activityReportByLegacyId.mockResolvedValue({ region: 1 });
+      await getLegacyReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
   });
 
   describe('reviewReport', () => {
@@ -342,13 +376,13 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns my alerts', async () => {
-      activityReportAlerts.mockResolvedValue([report]);
+      activityReportAlerts.mockResolvedValue({ count: 1, rows: [report] });
       userById.mockResolvedValue({
         id: 1,
       });
 
       await getReportAlerts(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith([report]);
+      expect(mockResponse.json).toHaveBeenCalledWith({ alertsCount: 1, alerts: [report] });
     });
 
     it('handles a list of alerts that are not found', async () => {

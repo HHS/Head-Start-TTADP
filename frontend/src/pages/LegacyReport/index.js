@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Table } from '@trussworks/react-uswds';
+import { Alert, Table } from '@trussworks/react-uswds';
 import { map } from 'lodash';
 
 import Container from '../../components/Container';
@@ -12,12 +12,19 @@ function LegacyReport({ match }) {
   const { params: { legacyId } } = match;
   const [legacyReport, updateLegacyReport] = useState();
   const [loading, updateLoading] = useState(true);
+  const [error, updateError] = useState(false);
 
   useEffect(() => {
     const fetchReport = async () => {
-      const report = await legacyReportById(legacyId);
-      updateLegacyReport(report);
-      updateLoading(false);
+      try {
+        const report = await legacyReportById(legacyId);
+        updateLegacyReport(report);
+        updateError(false);
+      } catch (e) {
+        updateError('Unable to load activity report');
+      } finally {
+        updateLoading(false);
+      }
     };
     fetchReport();
   }, [legacyId]);
@@ -27,6 +34,14 @@ function LegacyReport({ match }) {
       <div>
         loading...
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert type="error">
+        {error}
+      </Alert>
     );
   }
 
@@ -46,7 +61,7 @@ function LegacyReport({ match }) {
         {display}
       </td>
       <td>
-        {value.split('\n').map((string) => <div className="margin-top-05">{string}</div>)}
+        {value.split('\n').map((string) => <div key={string} className="margin-top-05">{string}</div>)}
       </td>
     </tr>
   ));
