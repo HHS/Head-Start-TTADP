@@ -87,7 +87,7 @@ import { REPORT_STATUSES } from '../constants';
 const columnCleanupRE = /(\s?\(.*\)|:|\.|\/|&|')+/g;
 const decimalRE = /^\d+(\.\d*)?$/;
 const invalidRegionRE = /R14/;
-const grantNumRE = /\|\s+(?<grantNumber>[0-9A-Z]+)\n/g;
+const grantNumRE = /\|\s+(?<grantNumber>[0-9A-Z]+)(\n|$)/g;
 const mdyDateRE = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})$/;
 const mdyFormat = 'MM/DD/YYYY';
 
