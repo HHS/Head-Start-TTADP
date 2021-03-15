@@ -24,6 +24,8 @@ const Submitter = ({
     managerNotes,
     additionalNotes,
     status,
+    id,
+    displayId,
   } = formData;
   const draft = status === REPORT_STATUSES.DRAFT;
   const submitted = status === REPORT_STATUSES.SUBMITTED;
@@ -86,6 +88,8 @@ const Submitter = ({
           incompletePages={incompletePages}
           approvers={approvers}
           onFormSubmit={onFormSubmit}
+          reportId={id}
+          displayId={displayId}
         />
         )}
         {submitted
@@ -94,6 +98,8 @@ const Submitter = ({
             additionalNotes={additionalNotes}
             approvingManager={approvingManager}
             resetToDraft={resetToDraft}
+            reportId={id}
+            displayId={displayId}
           />
         )}
         {needsAction
@@ -140,6 +146,8 @@ Submitter.propTypes = {
     managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
     status: PropTypes.string,
+    id: PropTypes.number,
+    displayId: PropTypes.string,
   }).isRequired,
 };
 
