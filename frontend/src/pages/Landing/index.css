@@ -180,7 +180,11 @@ h1.landing {
 }
 
 .smart-hub--status- {
-  background: #f8f8f8;
+  display: none;
+}
+
+.smart-hub--status-null {
+  display: none;
 }
 
 .smart-hub--table-tag-status {

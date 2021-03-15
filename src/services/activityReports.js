@@ -170,9 +170,17 @@ export async function review(report, status, managerNotes) {
   return updatedReport;
 }
 
+export function activityReportByLegacyId(legacyId) {
+  return ActivityReport.findOne({
+    where: {
+      legacyId,
+    },
+  });
+}
+
 export function activityReportById(activityReportId) {
   return ActivityReport.findOne({
-    attributes: { exclude: ['legacyId'] },
+    attributes: { exclude: ['imported', 'legacyId'] },
     where: {
       id: {
         [Op.eq]: activityReportId,
@@ -294,6 +302,7 @@ export function activityReports(readRegions, {
         'regionId',
         'updatedAt',
         'sortedTopics',
+        'legacyId',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),

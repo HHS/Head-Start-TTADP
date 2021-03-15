@@ -2,11 +2,20 @@ import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
 import {
-  submitReport, saveReport, reviewReport, resetToDraft,
+  submitReport, saveReport, reviewReport, resetToDraft, legacyReportById,
 } from '../activityReports';
 
 describe('activityReports fetcher', () => {
   afterEach(() => fetchMock.restore());
+
+  describe('legacyReportById', () => {
+    it('returns the report', async () => {
+      const expected = { id: 1 };
+      fetchMock.get(join('api', 'activity-reports', 'legacy', '1'), expected);
+      const report = await legacyReportById('1');
+      expect(report).toEqual(expected);
+    });
+  });
 
   describe('submitReport', () => {
     it('returns the report', async () => {
