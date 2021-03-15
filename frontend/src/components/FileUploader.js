@@ -199,7 +199,7 @@ const FileTable = ({ onFileRemoved, files }) => {
               </td>
               <td>
                 <Button
-                  role="button"
+                  type="button"
                   className="smart-hub--file-tag-button"
                   unstyled
                   aria-label="remove file"
