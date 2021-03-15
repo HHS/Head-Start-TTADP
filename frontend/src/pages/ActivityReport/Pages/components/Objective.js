@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
-  Tag, Label, Button, TextInput, Dropdown, Grid,
+  Tag, Label, Button, TextInput, Dropdown, Grid, Textarea,
 } from '@trussworks/react-uswds';
 
 import ObjectiveFormItem from './ObjectiveFormItem';
@@ -103,7 +103,8 @@ const Objective = ({
             label="TTA Provided"
             value={ttaProvided}
           >
-            <TextInput
+            <Textarea
+              className="smart-hub--text-area__resize-vertical"
               name="ttaProvided"
               aria-label={`TTA provided for objective ${objectiveAriaLabel}`}
               onChange={onChange}
