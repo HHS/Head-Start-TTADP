@@ -145,7 +145,7 @@ const NoteEntries = ({ name, humanName }) => {
           </div>
         )
           : (
-            <Button unstyled onClick={() => onEdit(notes.length)}>
+            <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
               <FontAwesomeIcon icon={faPlusCircle} />
               <span className="padding-left-05">Add New Follow Up</span>
             </Button>

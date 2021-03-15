@@ -95,6 +95,12 @@ function ActivityReport({
     return array.map((value) => ({ value }));
   };
 
+  const convertReportToFormData = (fetchedReport) => {
+    const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
+    const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
+    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+  };
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -103,9 +109,7 @@ function ActivityReport({
         updateLoading(true);
         if (activityReportId !== 'new') {
           const fetchedReport = await getReport(activityReportId);
-          const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
-          const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-          report = { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+          report = convertReportToFormData(fetchedReport);
         } else {
           report = {
             ...defaultValues,
@@ -213,18 +217,21 @@ function ActivityReport({
   };
 
   const onFormSubmit = async (data) => {
-    const report = await submitReport(reportId.current, data);
+    const fetchedReport = await submitReport(reportId.current, data);
+    const report = convertReportToFormData(fetchedReport);
     updateFormData(report);
     updateEditable(false);
   };
 
   const onReview = async (data) => {
-    const report = await reviewReport(reportId.current, data);
+    const fetchedReport = await reviewReport(reportId.current, data);
+    const report = convertReportToFormData(fetchedReport);
     updateFormData(report);
   };
 
   const onResetToDraft = async () => {
-    const report = await resetToDraft(reportId.current);
+    const fetchedReport = await resetToDraft(reportId.current);
+    const report = convertReportToFormData(fetchedReport);
     updateFormData(report);
     updateEditable(true);
   };
