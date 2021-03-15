@@ -41,6 +41,19 @@ async function prePopulateRoles() {
       updateOnDuplicate: ['updatedAt'],
     });
 }
+
+const grantNumRE = /\s(?<grantNumber>[0-9]{2}[A-Z]{2}[0-9]+)(?:[,\s]|$)/g;
+const parseGrantNumbers = (value) => {
+  const matchIter = value.matchAll(grantNumRE);
+  const results = [];
+  for (const { groups: { grantNumber } } of matchIter) {
+    if (grantNumber) {
+      results.push(grantNumber);
+    }
+  }
+  return results;
+};
+
 /**
  * Processes data from .csv inserting the data during the processing as well as
  * creating data arrays for associations and then inserting them to the database
@@ -66,32 +79,31 @@ export default async function importGoals(fileKey, region) {
     const cleanRoleTopics = [];
     const cleanGrantGoals = [];
     const cleanTopicGoals = [];
-    const currentGoals = [];
 
     await prePopulateRoles();
 
     for await (const el of grantees) {
-      let currentGranteeId;
-      let grants;
       let currentGrants = [];
-      let currentGoalName;
-      let currentGoal = {};
+      let currentGoals = [];
+      let currentGoalName = '';
+      let currentGoalNum = 0;
 
       for await (const key of Object.keys(el)) {
         if (key && (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))) {
-          grants = el[key] ? el[key].split('|')[1].trim() : 'Unknown Grant';
-          currentGrants = grants.split(',');
+          currentGrants = parseGrantNumbers(el[key]);
         } else if (key && key.startsWith('Goal')) {
           const goalColumn = key.split(' ');
           let column;
           if (goalColumn.length === 2) { // Column name is "Goal X" representing goal's name
             currentGoalName = el[key].trim();
-            if (currentGoalName !== '') { // Ignore empty goals
-              currentGoal = { name: currentGoalName }; // change to dbGoal
-              const goalNum = goalColumn[1];
-              currentGoals[goalNum] = { ...currentGoals[goalNum], ...currentGoal };
+            if (currentGoalName.match(/(no goals?|none)( identified)? at this time\.?/i)) {
+              currentGoalName = '';
             }
-          } else {
+            if (currentGoalName !== '') { // Ignore empty goals
+              currentGoalNum = goalColumn[1];
+              currentGoals[currentGoalNum] = { ...currentGoals[currentGoalNum], name: currentGoalName };
+            }
+          } else if (currentGoalName !== '') {
             // column will be either "topics", "timeframe" or "status"
             column = goalColumn[2].toLowerCase();
             if (column === 'topics') {
@@ -124,16 +136,14 @@ export default async function importGoals(fileKey, region) {
                   }
                   // Add topic to junction with goal
                   cleanTopicGoals.push(
-                    { topicId, goalName: currentGoal.name },
+                    { topicId, goalName: currentGoalName },
                   ); // we don't have goal's id at this point yet
                 }
               }
-            } else // it's either "timeframe" or "status"
-            // both "timeframe" and "status" column names will be reused as goal's object keys
-            if (currentGoalName !== '') {
-              currentGoal[column] = el[key].trim();
-              const goalNum = goalColumn[1].slice(0, 1); // represents a goal number from 1 to 5
-              currentGoals[goalNum] = { ...currentGoals[goalNum], ...currentGoal };
+            } else {
+              // it's either "timeframe" or "status"
+              // both "timeframe" and "status" column names will be reused as goal's object keys
+              currentGoals[currentGoalNum] = { ...currentGoals[currentGoalNum], [column]: el[key].trim() };
             }
           }
         }
@@ -142,12 +152,14 @@ export default async function importGoals(fileKey, region) {
       // after each row
       let goalId;
       let grantId;
+      let currentGranteeId;
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
-          const [dbGoal] = await Goal.findOrCreate(
-            { where: { ...goal, isFromSmartsheetTtaPlan: true } },
-          );
+          const [dbGoal] = await Goal.findOrCreate({
+            where: { name: goal.name, isFromSmartsheetTtaPlan: true },
+            defaults: goal,
+          });
           goalId = dbGoal.id;
           // add goal id to cleanTopicGoals
           cleanTopicGoals.forEach((tp) => {
