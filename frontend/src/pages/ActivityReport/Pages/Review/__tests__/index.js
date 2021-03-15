@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 
 import ReviewSubmit from '../index';
@@ -69,19 +71,23 @@ const renderReview = (
   approvingManagerId = null,
   complete = true,
 ) => {
+  const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
 
   render(
-    <RenderReview
-      allComplete={allComplete}
-      onSubmit={onSubmit}
-      formData={{ ...formData, status, author: { name: 'user' } }}
-      approvingManager={approvingManager}
-      onReview={onReview}
-      approvingManagerId={approvingManagerId}
-      pages={pages}
-    />,
+    <Router history={history}>
+      <RenderReview
+        allComplete={allComplete}
+        onSubmit={onSubmit}
+        formData={{ ...formData, status, author: { name: 'user' } }}
+        approvingManager={approvingManager}
+        onReview={onReview}
+        approvingManagerId={approvingManagerId}
+        pages={pages}
+      />
+    </Router>,
   );
+  return history;
 };
 
 const selectLabel = 'Approving manager (Required)';
@@ -158,6 +164,13 @@ describe('ReviewSubmit', () => {
       const error = await screen.findByText('Unable to submit report');
       expect(error).toBeVisible();
     });
+  });
+
+  it('Once submitted, user is redirected', async () => {
+    const history = renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
+    userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
+
+    await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
   });
 
   it('initializes the form with "initialData"', async () => {

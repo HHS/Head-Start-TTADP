@@ -1,5 +1,5 @@
 import db, {
-  User, Permission, sequelize,
+  User, Permission,
 } from '../../models';
 import getUsers, {
   getUser, deleteUser, createUser, updateUser,
@@ -59,18 +59,17 @@ describe('User route handler', () => {
   });
   afterAll(async () => {
     await User.destroy({ where: { id: 49 } });
-    await User.destroy({ where: { id: 50 } });
+    await User.destroy({ where: { id: 55 } });
     await User.destroy({ where: { id: 52 } });
     await User.destroy({ where: { id: 53 } });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
 
   it('Returns a user by id', async () => {
-    await sequelize.transaction((transaction) => User.create(mockUser,
+    await User.create(mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],
-        transaction,
-      }));
+      });
     const user = await User.findOne({ where: { id: mockUser.id } });
 
     expect(user).not.toBeNull();
@@ -84,17 +83,16 @@ describe('User route handler', () => {
 
   it('Returns users', async () => {
     mockRequest.path = '/api/user';
-    mockUser.id = 50;
-    mockUser.hsesUserId = '50';
-    mockUser.email = 'test50@test.com';
+    mockUser.id = 55;
+    mockUser.hsesUserId = '55';
+    mockUser.email = 'test55@test.com';
     mockUser.permissions[0].userId = mockUser.id;
     mockUser.permissions[1].userId = mockUser.id;
 
-    await sequelize.transaction((transaction) => User.create(mockUser,
+    await User.create(mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],
-        transaction,
-      }));
+      });
 
     // Verify that once the user exists, it will be retrieved
     await getUsers(mockRequest, mockResponse);
