@@ -13,21 +13,20 @@
 
 .pagination li {
   display: inline-block;
-  margin-right: 7px;
 }
 
 .pagination li a {
 color: #3C4146;
 text-align: center;
-margin-top: -5px;
 text-decoration: none;
+margin: 9px;
 }
 
 .pagination li.active {
   background-image: url(../../images/blue-circle.png);
   background-repeat: no-repeat;
   background-position: center center;
-  padding: 10px;
+  padding: 10px 0px 10px 0px;
 }
 
 .landing .disabled {
@@ -35,8 +34,6 @@ text-decoration: none;
 }
 
 .pagination li.active a {
-  padding: 3.5px;
-  margin-left: 1.3px;
   font-weight: bold;
   color: white;
   outline: none;
@@ -87,7 +84,7 @@ div.smart-hub--total-count {
 }
 
 h1.landing {
-  font-size: 45px;
+  font-size: 40px;
   font-family: 'Merriweather', serif;
   font-weight: 700;
   white-space: nowrap;
@@ -95,19 +92,18 @@ h1.landing {
 }
 
 .landing .usa-table {
-  line-height: 2;
+  line-height: 2.5;
 }
 
 .landing .usa-table caption {
   font-size: 21px;
   font-weight: 900;
-  padding: 14px 0px 17px 20px;
+  padding: 8px 0px 17px 20px;
   margin-bottom: -0.25rem;
   margin-top: 1px;
 }
 
 .landing .usa-table thead th {
-  font-size: 13px;
   white-space: nowrap;
   background-color: white;
   border-top: solid 1.5px;
@@ -134,6 +130,11 @@ h1.landing {
   white-space: nowrap;
   background-color: transparent;
   border-style: none;
+  color: black;
+}
+
+.smart-hub--blue a {
+  color: #3C72AE;
 }
 
 .landing .usa-button {
@@ -198,7 +199,7 @@ h1.landing {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
-  width: 200px;
+  width: 180px;
   vertical-align: middle;
 }
 
@@ -219,6 +220,7 @@ h1.landing {
 .smart-hub--new-report-btn {
   line-height: 0.5;
   min-width: 220px;
+  background-color: #0166ab;
 }
 
 .smart-hub--create-new-report {
