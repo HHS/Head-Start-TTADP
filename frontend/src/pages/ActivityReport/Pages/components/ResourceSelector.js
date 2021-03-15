@@ -43,7 +43,7 @@ const ResourceSelector = ({ name, ariaName }) => {
             }}
           />
           {canDelete && (
-          <Button onClick={() => remove(index)} aria-label={`remove ${ariaName} ${index + 1}`} className="smart-hub--remove-resource" unstyled type="button">
+          <Button onClick={() => remove(index)} aria-label={`remove ${ariaName} ${index + 1}`} className="smart-hub--remove-resource padding-left-2" unstyled type="button">
             <FontAwesomeIcon color="black" icon={faTrash} />
           </Button>
           )}
