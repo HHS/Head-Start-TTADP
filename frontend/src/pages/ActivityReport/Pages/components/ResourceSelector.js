@@ -18,6 +18,15 @@ const ResourceSelector = ({ name, ariaName }) => {
 
   const canDelete = fields.length > 1;
 
+  const onAddNewResource = () => {
+    const allValues = getValues();
+    const fieldArray = allValues[name] || [];
+    const canAdd = fieldArray.every((field) => field.value !== '');
+    if (canAdd) {
+      append({ value: '' });
+    }
+  };
+
   return (
     <>
       {fields.map((item, index) => (
@@ -27,6 +36,11 @@ const ResourceSelector = ({ name, ariaName }) => {
             type="text"
             defaultValue={item.value}
             inputRef={register()}
+            onKeyUp={(e) => {
+              if (e.key === 'Enter') {
+                onAddNewResource();
+              }
+            }}
           />
           {canDelete && (
           <Button onClick={() => remove(index)} aria-label={`remove ${ariaName} ${index + 1}`} className="smart-hub--remove-resource" unstyled type="button">
@@ -38,14 +52,7 @@ const ResourceSelector = ({ name, ariaName }) => {
       <Button
         unstyled
         type="button"
-        onClick={() => {
-          const allValues = getValues();
-          const fieldArray = allValues[name] || [];
-          const canAdd = fieldArray.every((field) => field.value !== '');
-          if (canAdd) {
-            append({ value: '' });
-          }
-        }}
+        onClick={onAddNewResource}
       >
         <span className="fa-layers fa-fw">
           <FontAwesomeIcon color="#0166ab" size="lg" icon={faCircle} />
