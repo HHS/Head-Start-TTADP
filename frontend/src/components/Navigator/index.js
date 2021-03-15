@@ -30,7 +30,6 @@ function Navigator({
   editable,
   formData,
   updateFormData,
-  initialLastUpdated,
   pages,
   onFormSubmit,
   onReview,
@@ -43,11 +42,13 @@ function Navigator({
   reportId,
   updatePage,
   reportCreator,
+  lastSaveTime,
+  updateLastSaveTime,
+  showValidationErrors,
+  updateShowValidationErrors,
 }) {
   const [errorMessage, updateErrorMessage] = useState();
-  const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
-  const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
@@ -234,7 +235,10 @@ Navigator.propTypes = {
     pageState: PropTypes.shape({}),
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
-  initialLastUpdated: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(moment),
+  updateLastSaveTime: PropTypes.func.isRequired,
+  showValidationErrors: PropTypes.bool.isRequired,
+  updateShowValidationErrors: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
@@ -262,7 +266,7 @@ Navigator.propTypes = {
 Navigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
-  initialLastUpdated: null,
+  lastSaveTime: null,
   reportCreator: {
     name: null,
     role: null,
