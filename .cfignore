@@ -6,3 +6,4 @@ src/
 terraform/
 hses.zip
 temp/
+.tmp/
