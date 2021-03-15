@@ -50,6 +50,7 @@ function renderReports(reports, history) {
       collaborators,
       lastSaved,
       status,
+      legacyId,
     } = report;
 
     const authorName = author ? author.fullName : '';
@@ -104,11 +105,13 @@ function renderReports(reports, history) {
     ];
     const contextMenuLabel = `Edit activity report ${displayId}`;
 
+    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
+
     return (
       <tr key={`landing_${id}`}>
-        <th scope="row">
+        <th scope="row" className="smart-hub--blue">
           <Link
-            to={`/activity-reports/${id}`}
+            to={linkTarget}
           >
             {displayId}
           </Link>
@@ -326,6 +329,7 @@ function Landing() {
             {showAlert && message && (
             <Alert
               type="success"
+              role="alert"
               noIcon
               cta={(
                 <Button
@@ -355,9 +359,9 @@ function Landing() {
             </Grid>
             <Grid row>
               {error && (
-                <Alert type="error" role="alert">
-                  {error}
-                </Alert>
+              <Alert type="error" role="alert">
+                {error}
+              </Alert>
               )}
             </Grid>
             <MyAlerts
@@ -370,7 +374,7 @@ function Landing() {
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
             />
-            <SimpleBar>
+            <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
                 <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
                   <span

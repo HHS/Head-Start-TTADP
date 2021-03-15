@@ -2,8 +2,8 @@ import bootstrapAdmin, { ADMIN_USERNAME } from './bootstrapAdmin';
 import db, { User, Permission } from '../models';
 
 describe('Bootstrap the first Admin user', () => {
-  afterAll(() => {
-    db.sequelize.close();
+  afterAll(async () => {
+    await db.sequelize.close();
   });
 
   describe('when user already exists', () => {

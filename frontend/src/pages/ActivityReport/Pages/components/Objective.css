@@ -13,3 +13,7 @@
 .usa-form .smart-hub--button__no-margin {
   margin-top: 0;
 }
+
+.smart-hub--text-area__resize-vertical {
+  resize: vertical;
+}
