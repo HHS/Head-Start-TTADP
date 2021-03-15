@@ -109,7 +109,7 @@ function renderReports(reports, history) {
 
     return (
       <tr key={`landing_${id}`}>
-        <th scope="row">
+        <th scope="row" className="smart-hub--blue">
           <Link
             to={linkTarget}
           >
@@ -373,7 +373,7 @@ function Landing() {
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
             />
-            <SimpleBar>
+            <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
                 <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
                   <span
