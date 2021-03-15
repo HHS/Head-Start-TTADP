@@ -274,10 +274,12 @@ export default async function importActivityReports(fileKey, region) {
         // Imported ARs won't pass `checkRequiredForSubmission`,
         // because `approvingManagerId`, `requester`, etc. may be null
         // so we build, then save without validating;
-        const [ar] = await ActivityReport.findOrBuild(
+        const [ar, built] = await ActivityReport.findOrBuild(
           { where: { legacyId }, defaults: arRecord },
         );
-        ar.save({ validate: false });
+        if (built) {
+          await ar.save({ validate: false });
+        }
 
         // ActivityRecipients: connect Grants to ActivityReports
         const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
