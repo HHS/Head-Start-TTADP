@@ -32,7 +32,7 @@ const mockUserTwo = {
   id: 1002,
   homeRegionId: 1,
   name: 'a user',
-  hsesUserId: 50,
+  hsesUserId: 1002,
   hsesUsername: 'Rex',
 };
 
