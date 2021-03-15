@@ -87,7 +87,7 @@ import { REPORT_STATUSES } from '../constants';
 const columnCleanupRE = /(\s?\(.*\)|:|\.|\/|&|')+/g;
 const decimalRE = /^\d+(\.\d*)?$/;
 const invalidRegionRE = /R14/;
-const grantNumRE = /\|\s+(?<grantNumber>[0-9A-Z]+)\n/g;
+const grantNumRE = /\|\s+(?<grantNumber>[0-9A-Z]+)(\n|$)/g;
 const mdyDateRE = /^\d{1,2}\/\d{1,2}\/(\d{2}|\d{4})$/;
 const mdyFormat = 'MM/DD/YYYY';
 
@@ -274,10 +274,12 @@ export default async function importActivityReports(fileKey, region) {
         // Imported ARs won't pass `checkRequiredForSubmission`,
         // because `approvingManagerId`, `requester`, etc. may be null
         // so we build, then save without validating;
-        const [ar] = await ActivityReport.findOrBuild(
+        const [ar, built] = await ActivityReport.findOrBuild(
           { where: { legacyId }, defaults: arRecord },
         );
-        ar.save({ validate: false });
+        if (built) {
+          await ar.save({ validate: false });
+        }
 
         // ActivityRecipients: connect Grants to ActivityReports
         const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
