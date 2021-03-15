@@ -5,6 +5,11 @@ import { DECIMAL_BASE, REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
 
+export const legacyReportById = async (legacyId) => {
+  const res = await get(join(activityReportUrl, 'legacy', legacyId));
+  return res.json();
+};
+
 export const getApprovers = async (region) => {
   const res = await get(join(activityReportUrl, 'approvers', `?region=${region}`));
   return res.json();

@@ -50,6 +50,7 @@ function renderReports(reports, history) {
       collaborators,
       lastSaved,
       status,
+      legacyId,
     } = report;
 
     const authorName = author ? author.fullName : '';
@@ -104,11 +105,13 @@ function renderReports(reports, history) {
     ];
     const contextMenuLabel = `Edit activity report ${displayId}`;
 
+    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
+
     return (
       <tr key={`landing_${id}`}>
         <th scope="row">
           <Link
-            to={`/activity-reports/${id}`}
+            to={linkTarget}
           >
             {displayId}
           </Link>
