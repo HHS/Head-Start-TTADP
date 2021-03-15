@@ -23,4 +23,11 @@ describe('apiDirectory tests', () => {
         expect(res.statusCode).toBe(404);
       });
   });
+  it('tests the logout route', async () => {
+    await request(app)
+      .get('/api/logout')
+      .then((res) => {
+        expect(res.statusCode).toBe(204);
+      });
+  });
 });
