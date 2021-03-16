@@ -79,9 +79,12 @@ describe('Activity Reports DB service', () => {
   });
 
   afterAll(async () => {
-    await NextStep.destroy({ where: {} });
-    await ActivityRecipient.destroy({ where: {} });
-    await ActivityReport.destroy({ where: {} });
+    const reports = await ActivityReport
+      .findAll({ where: { userId: [mockUser.id, mockUserTwo.id] } });
+    const ids = reports.map((report) => report.id);
+    await NextStep.destroy({ where: { activityReportId: ids } });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
     await Grant.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
