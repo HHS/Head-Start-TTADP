@@ -24,12 +24,12 @@ import {
 } from './constants';
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
+import DismissingComponentWrapper from '../DismissingComponentWrapper';
 
 function Navigator({
   editable,
   formData,
   updateFormData,
-  initialLastUpdated,
   pages,
   onFormSubmit,
   onReview,
@@ -42,10 +42,13 @@ function Navigator({
   reportId,
   updatePage,
   reportCreator,
+  lastSaveTime,
+  updateLastSaveTime,
+  showValidationErrors,
+  updateShowValidationErrors,
 }) {
   const [errorMessage, updateErrorMessage] = useState();
-  const [lastSaveTime, updateLastSaveTime] = useState(initialLastUpdated);
-  const [showValidationErrors, updateShowValidationErrors] = useState(false);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
@@ -72,8 +75,8 @@ function Navigator({
 
     const currentPageState = pageState[page.position];
     const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
-
     const newPageState = { ...pageState };
+
     if (isComplete) {
       newPageState[page.position] = COMPLETE;
     } else if (currentPageState === COMPLETE) {
@@ -107,6 +110,7 @@ function Navigator({
     await onSaveForm();
     if (index !== page.position) {
       updatePage(index);
+      updateShowSavedDraft(false);
     }
   };
 
@@ -198,10 +202,22 @@ function Navigator({
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
                     <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={() => { onSaveForm(); }}>Save draft</Button>
+                    <Button type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
                     <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
                   </div>
                 </Form>
+                <DismissingComponentWrapper
+                  shown={showSavedDraft}
+                  updateShown={updateShowSavedDraft}
+                >
+                  {lastSaveTime && (
+                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
+                    Draft saved on
+                    {' '}
+                    {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+                  </Alert>
+                  )}
+                </DismissingComponentWrapper>
               </Container>
             )}
           </div>
@@ -219,7 +235,10 @@ Navigator.propTypes = {
     pageState: PropTypes.shape({}),
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
-  initialLastUpdated: PropTypes.instanceOf(moment),
+  lastSaveTime: PropTypes.instanceOf(moment),
+  updateLastSaveTime: PropTypes.func.isRequired,
+  showValidationErrors: PropTypes.bool.isRequired,
+  updateShowValidationErrors: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
@@ -247,7 +266,7 @@ Navigator.propTypes = {
 Navigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
-  initialLastUpdated: null,
+  lastSaveTime: null,
   reportCreator: {
     name: null,
     role: null,
