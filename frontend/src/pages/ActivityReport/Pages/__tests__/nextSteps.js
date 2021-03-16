@@ -7,12 +7,12 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 
 import nextSteps from '../nextSteps';
 
-const SPECIALIST_NEXT_STEPS = 'Specialist next steps';
+const SPECIALIST_NEXT_STEPS = 'Specialist Next Steps';
 const SPECIALIST_INPUT = 'specialistNextSteps-input';
 const SPECIALIST_BUTTON = 'specialistNextSteps-button';
 const SPECIALIST_CANCEL_BUTTON = 'specialistNextSteps-cancel-button';
 
-const GRANTEE_NEXT_STEPS = 'What has the grantee agreed to do next';
+const GRANTEE_NEXT_STEPS = 'Grantees Next Steps';
 const GRANTEE_INPUT = 'granteeNextSteps-input';
 const GRANTEE_BUTTON = 'granteeNextSteps-button';
 const GRANTEE_CANCEL_BUTTON = 'granteeNextSteps-cancel-button';
