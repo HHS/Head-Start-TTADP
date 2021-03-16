@@ -12,7 +12,7 @@ import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
 import updateGrantsGrantees from './lib/updateGrantsGrantees';
 
-import findOrCreateUser, { getUserReadRegions } from './services/accessValidation';
+import findOrCreateUser from './services/accessValidation';
 
 import { logger, auditLogger, requestLogger } from './logger';
 

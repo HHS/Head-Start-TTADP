@@ -1,7 +1,7 @@
 import {} from 'dotenv/config';
 import ClientOAuth2 from 'client-oauth2';
 import { auditLogger } from '../logger';
-import { validateUserAuthForAccess, getUserReadRegions } from '../services/accessValidation';
+import { validateUserAuthForAccess } from '../services/accessValidation';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
