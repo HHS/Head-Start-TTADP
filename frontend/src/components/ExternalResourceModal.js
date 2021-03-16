@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Modal, Alert, useModal, connectModal,
@@ -42,6 +42,8 @@ const ExternalLink = ({ to, children }) => {
   if (!isValidURL(to)) {
     return to;
   }
+
+  const modalRef = useRef(null);
   const { isOpen, openModal, closeModal } = useModal();
 
   const onEscape = useCallback((event) => {
@@ -56,6 +58,13 @@ const ExternalLink = ({ to, children }) => {
       document.removeEventListener('keydown', onEscape, false);
     };
   }, [onEscape]);
+
+  useEffect(() => {
+    const button = modalRef.current.querySelector('button');
+    if (button) {
+      button.focus();
+    }
+  });
 
   const onClick = () => {
     closeModal();
@@ -73,7 +82,9 @@ const ExternalLink = ({ to, children }) => {
 
   return (
     <>
-      <ConnectModal isOpen={isOpen} onClose={closeModal} />
+      <div ref={modalRef}>
+        <ConnectModal isOpen={isOpen} onClose={closeModal} />
+      </div>
       <a href={to} onClick={onLinkClick}>
         {children}
         {' '}
