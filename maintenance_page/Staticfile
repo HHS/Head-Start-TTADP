@@ -1,0 +1,2 @@
+root: www
+location_include: includes/*.conf
