@@ -73,7 +73,7 @@ describe('Activity Reports DB service', () => {
     grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee', regionId: 17 });
     await Region.create({ name: 'office 17', id: 17 });
     await Grant.create({
-      id: RECIPIENT_ID, number: 1, granteeId: grantee.id, regionId: 17,
+      id: RECIPIENT_ID, number: 1, granteeId: grantee.id, regionId: 17, status: 'Active',
     });
     await NonGrantee.create({ id: RECIPIENT_ID, name: 'nonGrantee' });
   });
@@ -458,8 +458,7 @@ describe('Activity Reports DB service', () => {
 
     it('retrieves all recipients when not specifying region', async () => {
       const recipients = await possibleRecipients();
-      const grantees = await Grantee.findAll();
-      expect(recipients.grants.length).toBe(grantees.length);
+      expect(recipients.grants.length).toBe(11);
     });
   });
 });
