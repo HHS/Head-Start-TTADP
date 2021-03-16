@@ -27,7 +27,7 @@ const sections = [
       {
         label: 'link',
         name: 'link',
-      }
+      },
     ],
   },
   {
@@ -41,7 +41,7 @@ const values = {
   array: ['one', 'two'],
   single: 'value',
   object: { test: 'test' },
-  link: 'https://www.google.com/awesome'
+  link: 'https://www.google.com/awesome',
 };
 
 const RenderReviewPage = () => {
