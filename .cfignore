@@ -3,6 +3,7 @@ cucumber/
 deployment_config/
 frontend/
 src/
+maintenance_page/
 terraform/
 hses.zip
 temp/
