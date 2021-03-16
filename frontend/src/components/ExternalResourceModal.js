@@ -82,7 +82,7 @@ const ExternalLink = ({ to, children }) => {
 
   return (
     <>
-      <div ref={modalRef}>
+      <div ref={modalRef} aria-modal="true" role="dialog">
         <ConnectModal isOpen={isOpen} onClose={closeModal} />
       </div>
       <a href={to} onClick={onLinkClick}>
