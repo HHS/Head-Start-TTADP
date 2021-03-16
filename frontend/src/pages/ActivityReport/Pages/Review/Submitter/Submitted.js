@@ -5,6 +5,16 @@ import {
   Alert, Button,
 } from '@trussworks/react-uswds';
 
+const NotEditableAlert = () => (
+  <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
+    <b>Report is not editable</b>
+    <br />
+    This report is no longer editable while it is waiting for manager approval.
+    If you wish to update this report click &quot;Reset to Draft&quot; to
+    move the report back to draft mode.
+  </Alert>
+);
+
 const Submitted = ({
   additionalNotes,
   approvingManager,
@@ -31,6 +41,7 @@ const Submitted = ({
       {' '}
     </p>
     <Button type="button" onClick={resetToDraft}>Reset to Draft</Button>
+    <NotEditableAlert />
   </>
 );
 

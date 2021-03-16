@@ -99,11 +99,11 @@ function renderReports(reports, history) {
 
     const menuItems = [
       {
-        label: 'Edit',
+        label: 'View',
         onClick: () => { history.push(`/activity-reports/${id}`); },
       },
     ];
-    const contextMenuLabel = `Edit activity report ${displayId}`;
+    const contextMenuLabel = `View activity report ${displayId}`;
 
     const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
 
