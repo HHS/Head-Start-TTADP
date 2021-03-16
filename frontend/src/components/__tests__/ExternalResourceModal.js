@@ -57,7 +57,11 @@ describe('External Resources', () => {
     const modal = await screen.findByTestId('modal');
     expect(modal).toBeVisible();
 
-    // Then they can close the modal via the escape key
+    // Then they try to close with delete key
+    userEvent.type(modal, '{del}', { skipClick: true });
+    expect(screen.queryByTestId('modal')).toBeTruthy();
+
+    // And they can close the modal via the escape key
     userEvent.type(modal, '{esc}', { skipClick: true });
     expect(screen.queryByTestId('modal')).not.toBeTruthy();
   });
