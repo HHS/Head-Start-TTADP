@@ -82,7 +82,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
     });
 
     req.session.userId = dbUser.id;
-    req.session.readRegions = await getUserReadRegions(dbUser.id);
     auditLogger.info(`User ${dbUser.id} logged in`);
 
     logger.debug(`referrer path: ${req.session.referrerPath}`);
