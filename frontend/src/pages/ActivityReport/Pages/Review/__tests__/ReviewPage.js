@@ -24,6 +24,10 @@ const sections = [
         name: 'object',
         path: 'test',
       },
+      {
+        label: 'link',
+        name: 'link',
+      }
     ],
   },
   {
@@ -37,6 +41,7 @@ const values = {
   array: ['one', 'two'],
   single: 'value',
   object: { test: 'test' },
+  link: 'https://www.google.com/awesome'
 };
 
 const RenderReviewPage = () => {
@@ -86,6 +91,11 @@ describe('ReviewPage', () => {
   it('displays string values', async () => {
     const value = await screen.findByLabelText('single value 1');
     expect(value).toHaveTextContent('value');
+  });
+
+  it('displays link values', async () => {
+    const value = await screen.findByLabelText('link 1');
+    expect(value).toHaveTextContent('https://www.google.com/awesome');
   });
 
   it('displays an objects value (via method call)', async () => {
