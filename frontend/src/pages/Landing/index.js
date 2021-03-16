@@ -97,15 +97,14 @@ function renderReports(reports, history) {
       </Tag>
     ));
 
+    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
     const menuItems = [
       {
         label: 'View',
-        onClick: () => { history.push(`/activity-reports/${id}`); },
+        onClick: () => { history.push(linkTarget); },
       },
     ];
     const contextMenuLabel = `View activity report ${displayId}`;
-
-    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
 
     return (
       <tr key={`landing_${id}`}>
