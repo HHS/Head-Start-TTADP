@@ -65,7 +65,6 @@ describe('File Upload', () => {
   beforeAll(async () => {
     user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     report = await ActivityReport.create(reportObject);
-    console.log(report);
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
     process.env.CURRENT_USER_ID = '2046';
