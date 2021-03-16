@@ -98,7 +98,9 @@
   },
   "jest": {
     "testPathIgnorePatterns": [
-      "<rootDir>/frontend/"
+      "<rootDir>/frontend/",
+      "<rootDir>/src/setupProxy.js",
+      "<rootDir>/src/index.js"
     ],
     "coverageThreshold": {
       "global": {
