@@ -83,25 +83,23 @@ describe('External Resources', () => {
 
   it('shows normal non-hyperlink text with non-url', async () => {
     // Given a normal chunk of text
-    render(<ExternalLink to="hakuna matata">The mighty lion sleeps tonight</ExternalLink>)
+    render(<ExternalLink to="hakuna matata">The mighty lion sleeps tonight</ExternalLink>);
 
     // When the user tries to click it
     const text = await screen.findByText('hakuna matata');
-    userEvent.click(text)
+    userEvent.click(text);
 
     // Then nothing will happen b/c its plain text
     expect(screen.queryByTestId('modal')).not.toBeTruthy();
   });
-
 });
-
 
 // For mocking `process.env`, I got it from https://stackoverflow.com/a/48042799
 describe('utility functions', () => {
   const OLD_ENV = process.env;
 
   beforeEach(() => {
-    jest.resetModules() // it clears the cache
+    jest.resetModules(); // it clears the cache
     process.env = { ...OLD_ENV };
   });
 
@@ -109,12 +107,11 @@ describe('utility functions', () => {
     process.env = OLD_ENV;
   });
 
-
   it('utility function correctly assumes NON-external URLs', () => {
-    process.env.TTA_SMART_HUB_URI = "https://shrek.com";
+    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
 
     // Given a url
-    const url = join("https://fiona.com", "some-internal", "url");
+    const url = join('https://fiona.com', 'some-internal', 'url');
 
     // When we check if it's external
     // Then we see it is not
@@ -122,13 +119,13 @@ describe('utility functions', () => {
   });
 
   it('utility function correctly assumes external URLs', () => {
-    process.env.TTA_SMART_HUB_URI = "https://shrek.com";
+    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
 
     // Given a url
-    const url = join(process.env.TTA_SMART_HUB_URI, "some-internal", "url");
+    const url = join(process.env.TTA_SMART_HUB_URI, 'some-internal', 'url');
 
     // When we check if it's external
     // Then we see it is not
     expect(isExternalURL(url)).not.toBeTruthy();
   });
-})
+});
