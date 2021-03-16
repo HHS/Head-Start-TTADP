@@ -76,7 +76,8 @@ function ActivityReport({
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
   const [editable, updateEditable] = useState(false);
-  const [initialLastUpdated, updateInitialLastUpdated] = useState();
+  const [lastSaveTime, updateLastSaveTime] = useState();
+  const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -141,7 +142,7 @@ function ActivityReport({
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateInitialLastUpdated(moment(report.updatedAt));
+          updateLastSaveTime(moment(report.updatedAt));
         }
 
         updateError();
@@ -256,10 +257,14 @@ function ActivityReport({
         </Grid>
       </Grid>
       <Navigator
+        key={currentPage}
         editable={editable}
         updatePage={updatePage}
         reportCreator={reportCreator}
-        initialLastUpdated={initialLastUpdated}
+        showValidationErrors={showValidationErrors}
+        updateShowValidationErrors={updateShowValidationErrors}
+        lastSaveTime={lastSaveTime}
+        updateLastSaveTime={updateLastSaveTime}
         reportId={reportId.current}
         currentPage={currentPage}
         additionalData={initialAdditionalData}
