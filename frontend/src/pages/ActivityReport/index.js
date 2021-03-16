@@ -76,7 +76,8 @@ function ActivityReport({
   const [initialAdditionalData, updateAdditionalData] = useState({});
   const [approvingManager, updateApprovingManager] = useState(false);
   const [editable, updateEditable] = useState(false);
-  const [initialLastUpdated, updateInitialLastUpdated] = useState();
+  const [lastSaveTime, updateLastSaveTime] = useState();
+  const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -95,6 +96,12 @@ function ActivityReport({
     return array.map((value) => ({ value }));
   };
 
+  const convertReportToFormData = (fetchedReport) => {
+    const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
+    const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
+    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+  };
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -103,9 +110,7 @@ function ActivityReport({
         updateLoading(true);
         if (activityReportId !== 'new') {
           const fetchedReport = await getReport(activityReportId);
-          const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
-          const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-          report = { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+          report = convertReportToFormData(fetchedReport);
         } else {
           report = {
             ...defaultValues,
@@ -137,7 +142,7 @@ function ActivityReport({
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateInitialLastUpdated(moment(report.updatedAt));
+          updateLastSaveTime(moment(report.updatedAt));
         }
 
         updateError();
@@ -213,18 +218,21 @@ function ActivityReport({
   };
 
   const onFormSubmit = async (data) => {
-    const report = await submitReport(reportId.current, data);
+    const fetchedReport = await submitReport(reportId.current, data);
+    const report = convertReportToFormData(fetchedReport);
     updateFormData(report);
     updateEditable(false);
   };
 
   const onReview = async (data) => {
-    const report = await reviewReport(reportId.current, data);
+    const fetchedReport = await reviewReport(reportId.current, data);
+    const report = convertReportToFormData(fetchedReport);
     updateFormData(report);
   };
 
   const onResetToDraft = async () => {
-    const report = await resetToDraft(reportId.current);
+    const fetchedReport = await resetToDraft(reportId.current);
+    const report = convertReportToFormData(fetchedReport);
     updateFormData(report);
     updateEditable(true);
   };
@@ -236,7 +244,11 @@ function ActivityReport({
       <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">New activity report for Region 14</h1>
+          <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">
+            Activity report for Region
+            {' '}
+            {formData.regionId}
+          </h1>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
           {formData.status && (
@@ -245,10 +257,14 @@ function ActivityReport({
         </Grid>
       </Grid>
       <Navigator
+        key={currentPage}
         editable={editable}
         updatePage={updatePage}
         reportCreator={reportCreator}
-        initialLastUpdated={initialLastUpdated}
+        showValidationErrors={showValidationErrors}
+        updateShowValidationErrors={updateShowValidationErrors}
+        lastSaveTime={lastSaveTime}
+        updateLastSaveTime={updateLastSaveTime}
         reportId={reportId.current}
         currentPage={currentPage}
         additionalData={initialAdditionalData}

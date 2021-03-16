@@ -18,6 +18,7 @@ import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
+import LegacyReport from './pages/LegacyReport';
 import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
@@ -78,13 +79,20 @@ function App() {
       />
       <Switch>
         <Route
+          path="/activity-reports/legacy/:legacyId"
+          render={({ match }) => (
+            <LegacyReport
+              match={match}
+            />
+          )}
+        />
+        <Route
           exact
           path="/activity-reports"
           render={({ match }) => (
             <LandingLayout><Landing match={match} /></LandingLayout>
           )}
         />
-
         <Route
           exact
           path="/"
@@ -92,7 +100,6 @@ function App() {
             <Home />
           )}
         />
-
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
@@ -130,7 +137,7 @@ function App() {
           <Header />
           <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
           <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
-            <div className="grid-col-12 margin-top-2 margin-right-2">
+            <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
               <section className="usa-section padding-top-3">
                 {!authenticated && (authError === 403
                   ? <RequestPermissions />
