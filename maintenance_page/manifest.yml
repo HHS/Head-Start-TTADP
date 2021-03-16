@@ -1,0 +1,6 @@
+---
+applications:
+  - name: tta-smarthub-maintenance-page-((env))
+    buildpacks:
+      - staticfile_buildpack
+    memory: 64M
