@@ -35,6 +35,10 @@ export default class ActivityReport {
       && this.activityReport.status === REPORT_STATUSES.SUBMITTED;
   }
 
+  canViewLegacy() {
+    return this.canReadInRegion();
+  }
+
   canGet() {
     const { status } = this.activityReport;
     const canReadUnapproved = this.isAuthor() || this.isCollaborator() || this.isApprovingManager();

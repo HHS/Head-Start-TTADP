@@ -62,18 +62,20 @@ const ActivitySummary = ({
   const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
 
   useEffect(() => {
-    if (previousActivityRecipientType.current !== activityRecipientType) {
-      setValue('activityRecipients', []);
-      setValue('participants', []);
-      setValue('programTypes', []);
+    if (previousActivityRecipientType.current !== activityRecipientType
+      && previousActivityRecipientType.current !== ''
+      && previousActivityRecipientType.current !== null) {
+      setValue('activityRecipients', [], { shouldValidate: true });
+      setValue('participants', [], { shouldValidate: true });
+      setValue('programTypes', [], { shouldValidate: true });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is grantee, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
       // selected goals
       setValue('goals', []);
       setValue('pageState', { ...pageState, 3: NOT_STARTED });
-      previousActivityRecipientType.current = activityRecipientType;
     }
+    previousActivityRecipientType.current = activityRecipientType;
   }, [activityRecipientType, setValue]);
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
