@@ -147,7 +147,7 @@ h1.landing {
   background-color: #148439;
 }
 
-.landing > .smart-hub--context-menu-button:hover {
+.landing .smart-hub--context-menu-button {
   max-width: 20px;
   padding: 2px;
 }
