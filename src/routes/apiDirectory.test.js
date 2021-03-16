@@ -9,7 +9,7 @@ const request = require('supertest');
 
 const mockUser = {
   id: 110,
-  hsesUserId: '100',
+  hsesUserId: '110',
   hsesUsername: 'user',
   homeRegionId: 1,
   permissions: [
