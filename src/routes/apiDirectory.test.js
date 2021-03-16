@@ -1,6 +1,6 @@
 import app from '../app';
 import SCOPES from '../middleware/scopeConstants';
-import {
+import db, {
   User,
   Permission,
 } from '../models';
@@ -38,6 +38,10 @@ describe('apiDirectory tests', () => {
     process.env.BYPASS_AUTH = 'true';
     process.env.CURRENT_USER_ID = 110;
   });
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
+
   it('tests the hello route', async () => {
     await request(app)
       .get('/api/hello')
