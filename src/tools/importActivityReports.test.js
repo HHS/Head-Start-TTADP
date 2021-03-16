@@ -13,8 +13,6 @@ describe('Import Activity Reports', () => {
   beforeEach(() => {
     downloadFile.mockReset();
   });
-  beforeAll(async () => {
-  });
   afterAll(async () => {
     await ActivityRecipient.destroy({ where: {} });
     await ActivityReport.destroy({ where: {} });
