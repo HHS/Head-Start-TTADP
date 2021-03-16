@@ -100,10 +100,6 @@
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/"
     ],
-    "coveragePathIgnorePatterns": [
-      "<rootDir>/src/setupProxy.js",
-      "<rootDir>/src/index.js"
-    ],
     "coverageThreshold": {
       "global": {
         "statements": 90,
