@@ -81,11 +81,10 @@ describe('Activity Reports DB service', () => {
   afterAll(async () => {
     const reports = await ActivityReport
       .findAll({ where: { userId: [mockUser.id, mockUserTwo.id] } });
-    await reports.forEach(async (report) => {
-      await NextStep.destroy({ where: { activityReportId: report.id } });
-      await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
-      await ActivityReport.destroy({ where: { id: report.id } });
-    });
+    const ids = reports.map((report) => report.id);
+    await NextStep.destroy({ where: { activityReportId: ids } });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
     await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
     await Grant.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
