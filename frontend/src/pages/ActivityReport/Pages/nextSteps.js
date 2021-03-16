@@ -52,7 +52,7 @@ NoteEntry.defaultProps = {
   defaultValue: '',
 };
 
-const NoteEntries = ({ name, humanName }) => {
+const NoteEntries = ({ name, humanName, title }) => {
   const {
     register, control, setValue, trigger,
   } = useFormContext();
@@ -92,7 +92,7 @@ const NoteEntries = ({ name, humanName }) => {
 
   if (notes.length === 0) {
     return (
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend={title}>
         <NoteEntry
           onEntry={(value) => onEntry(value, 0)}
           isRequired
@@ -109,7 +109,7 @@ const NoteEntries = ({ name, humanName }) => {
 
   return (
     <>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend={title}>
         <ul className="usa-list--unstyled">
           {notes.map((item, index) => (
             <li key={item.note} className="grid-row flex-row border-bottom padding-top-2 padding-bottom-2" style={{ borderColor: '#f0f0f0' }}>
@@ -147,7 +147,7 @@ const NoteEntries = ({ name, humanName }) => {
           : (
             <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
               <FontAwesomeIcon icon={faPlusCircle} />
-              <span className="padding-left-05">Add New Follow Up</span>
+              <span className="padding-left-05">Add New Next Step</span>
             </Button>
           )}
 
@@ -159,6 +159,7 @@ const NoteEntries = ({ name, humanName }) => {
 NoteEntries.propTypes = {
   name: PropTypes.string.isRequired,
   humanName: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
 };
 
 const NextSteps = () => (
@@ -168,10 +169,10 @@ const NextSteps = () => (
     </Helmet>
 
     <div className="padding-bottom-205">
-      <NoteEntries name="specialistNextSteps" humanName="Specialist" />
+      <NoteEntries name="specialistNextSteps" humanName="Specialist" title="Specialist next steps" />
     </div>
 
-    <NoteEntries name="granteeNextSteps" humanName="Grantees" />
+    <NoteEntries name="granteeNextSteps" humanName="Grantees" title="What has the grantee agreed to do next" />
 
   </>
 );
@@ -181,14 +182,14 @@ const sections = [
     title: 'Specialist next steps',
     anchor: 'specialist-next-steps',
     items: [
-      { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
+      { label: 'Add New Next Step', name: 'specialistNextSteps', path: 'note' },
     ],
   },
   {
     title: 'Grantee next steps',
     anchor: 'grantee-next-steps',
     items: [
-      { label: 'What have you agreed to do next?', name: 'granteeNextSteps', path: 'note' },
+      { label: 'What has the grantee agreed to do next', name: 'granteeNextSteps', path: 'note' },
     ],
   },
 ];

@@ -7,12 +7,12 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 
 import nextSteps from '../nextSteps';
 
-const SPECIALIST_NEXT_STEPS = 'Specialist Next Steps';
+const SPECIALIST_NEXT_STEPS = 'Specialist next steps';
 const SPECIALIST_INPUT = 'specialistNextSteps-input';
 const SPECIALIST_BUTTON = 'specialistNextSteps-button';
 const SPECIALIST_CANCEL_BUTTON = 'specialistNextSteps-cancel-button';
 
-const GRANTEE_NEXT_STEPS = 'Grantees Next Steps';
+const GRANTEE_NEXT_STEPS = 'What has the grantee agreed to do next';
 const GRANTEE_INPUT = 'granteeNextSteps-input';
 const GRANTEE_BUTTON = 'granteeNextSteps-button';
 const GRANTEE_CANCEL_BUTTON = 'granteeNextSteps-cancel-button';
@@ -125,7 +125,7 @@ describe('next steps', () => {
     renderNextSteps(
       [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
     );
-    const newEntry = await screen.findByText('Add New Follow Up');
+    const newEntry = await screen.findByText('Add New Next Step');
     userEvent.click(newEntry);
 
     // When the user presses cancel to change their mind
@@ -143,7 +143,7 @@ describe('next steps', () => {
       [],
       [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
     );
-    const newEntry = await screen.findByText('Add New Follow Up');
+    const newEntry = await screen.findByText('Add New Next Step');
     userEvent.click(newEntry);
 
     // When the user presses cancel to change their mind
