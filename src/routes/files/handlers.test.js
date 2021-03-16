@@ -22,23 +22,23 @@ const ORIGINAL_ENV = process.env;
 jest.mock('../../lib/s3');
 
 const mockUser = {
-  id: 100,
-  hsesUserId: '100',
-  hsesUsername: 'user',
+  id: 2046,
+  hsesUserId: '2046',
+  hsesUsername: '2046',
   homeRegionId: 1,
   permissions: [
     {
-      userId: 100,
+      userId: 2046,
       regionId: 5,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
     {
-      userId: 100,
+      userId: 2046,
       regionId: 6,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
     {
-      userId: 100,
+      userId: 2046,
       regionId: 14,
       scopeId: SCOPES.SITE_ACCESS,
     },
@@ -65,9 +65,10 @@ describe('File Upload', () => {
   beforeAll(async () => {
     user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     report = await ActivityReport.create(reportObject);
+    console.log(report);
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
-    process.env.CURRENT_USER_ID = 100;
+    process.env.CURRENT_USER_ID = '2046';
   });
   afterAll(async () => {
     await File.destroy({ where: { activityReportId: report.dataValues.id } });
