@@ -107,43 +107,50 @@ const NoteEntries = ({ name, humanName }) => {
   const targetId = notes[targetIndex] ? notes[targetIndex].id : undefined;
   const defaultValue = notes[targetIndex] ? notes[targetIndex].note : undefined;
 
+  const prompt = (
+    <div className="border-left-05 border-blue padding-left-2 margin-top-2 smart-hub-border-blue-primary">
+      <NoteEntry
+        onEntry={(value) => onEntry(value, targetIndex, targetId)}
+        isRequired={false}
+        onCancel={onCancel}
+        name={name}
+        humanName={humanName}
+        defaultValue={defaultValue}
+      />
+    </div>
+  );
+
   return (
     <>
       <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
         <ul className="usa-list--unstyled">
-          {notes.map((item, index) => (
-            <li key={item.note} className="grid-row flex-row border-bottom padding-top-2 padding-bottom-2" style={{ borderColor: '#f0f0f0' }}>
-              <div className="grid-col flex-12">
-                {item.note}
-              </div>
+          {notes.map((item, index) => {
+            if (showPrompt && (index === targetIndex)) {
+              return prompt;
+            }
+            return (
+              <li key={item.note} className="grid-row flex-row border-bottom padding-top-2 padding-bottom-2" style={{ borderColor: '#f0f0f0' }}>
+                <div className="grid-col flex-12">
+                  {item.note}
+                </div>
 
-              <div className="grid-col" style={{ marginTop: '0px' }}>
-                <ContextMenu
-                  label="Actions menu"
-                  menuItems={
-                    [
-                      { label: 'Edit', onClick: () => { onEdit(index); } },
-                      { label: 'Delete', onClick: () => { onDelete(index); } },
-                    ]
-                  }
-                />
-              </div>
-            </li>
-          ))}
+                <div className="grid-col" style={{ marginTop: '0px' }}>
+                  <ContextMenu
+                    label="Actions menu"
+                    menuItems={
+                      [
+                        { label: 'Edit', onClick: () => { onEdit(index); } },
+                        { label: 'Delete', onClick: () => { onDelete(index); } },
+                      ]
+                    }
+                  />
+                </div>
+              </li>
+            );
+          })}
         </ul>
 
-        {showPrompt ? (
-          <div className="border-left-05 border-blue padding-left-2 margin-top-2 smart-hub-border-blue-primary">
-            <NoteEntry
-              onEntry={(value) => onEntry(value, targetIndex, targetId)}
-              isRequired={false}
-              onCancel={onCancel}
-              name={name}
-              humanName={humanName}
-              defaultValue={defaultValue}
-            />
-          </div>
-        )
+        {showPrompt && targetIndex >= notes.length ? prompt
           : (
             <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
               <FontAwesomeIcon icon={faPlusCircle} />
