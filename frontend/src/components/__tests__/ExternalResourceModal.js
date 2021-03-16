@@ -4,8 +4,10 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import join from 'url-join';
 
 import { ExternalLink } from '../ExternalResourceModal';
+import { isExternalURL } from '../../utils';
 
 let windowSpy;
 
@@ -78,4 +80,55 @@ describe('External Resources', () => {
     // And a new tab has been opened
     expect(windowSpy).toHaveBeenCalledWith('https://www.google.com', '_blank');
   });
+
+  it('shows normal non-hyperlink text with non-url', async () => {
+    // Given a normal chunk of text
+    render(<ExternalLink to="hakuna matata">The mighty lion sleeps tonight</ExternalLink>)
+
+    // When the user tries to click it
+    const text = await screen.findByText('hakuna matata');
+    userEvent.click(text)
+
+    // Then nothing will happen b/c its plain text
+    expect(screen.queryByTestId('modal')).not.toBeTruthy();
+  });
+
 });
+
+
+// For mocking `process.env`, I got it from https://stackoverflow.com/a/48042799
+describe('utility functions', () => {
+  const OLD_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules() // it clears the cache
+    process.env = { ...OLD_ENV };
+  });
+
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+
+  it('utility function correctly assumes NON-external URLs', () => {
+    process.env.TTA_SMART_HUB_URI = "https://shrek.com";
+
+    // Given a url
+    const url = join("https://fiona.com", "some-internal", "url");
+
+    // When we check if it's external
+    // Then we see it is not
+    expect(isExternalURL(url)).toBeTruthy();
+  });
+
+  it('utility function correctly assumes external URLs', () => {
+    process.env.TTA_SMART_HUB_URI = "https://shrek.com";
+
+    // Given a url
+    const url = join(process.env.TTA_SMART_HUB_URI, "some-internal", "url");
+
+    // When we check if it's external
+    // Then we see it is not
+    expect(isExternalURL(url)).not.toBeTruthy();
+  });
+})
