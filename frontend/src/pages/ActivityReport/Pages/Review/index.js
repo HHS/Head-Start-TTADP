@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet';
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
+import { REPORT_STATUSES } from '../../../../Constants';
 import './index.css';
 
 const ReviewSubmit = ({
@@ -61,6 +62,12 @@ const ReviewSubmit = ({
     }
   };
 
+  const editing = status === REPORT_STATUSES.DRAFT || status === REPORT_STATUSES.NEEDS_ACTION;
+  const items = editing ? reviewItems : reviewItems.map((ri) => ({
+    ...ri,
+    expanded: true,
+  }));
+
   return (
     <>
       <Helmet>
@@ -79,7 +86,7 @@ const ReviewSubmit = ({
           error={error}
           onSaveForm={onSaveForm}
         >
-          <Accordion bordered={false} items={reviewItems} />
+          <Accordion bordered={false} items={items} />
         </Submitter>
         )}
       {approvingManager
@@ -92,7 +99,7 @@ const ReviewSubmit = ({
           error={error}
           formData={formData}
         >
-          <Accordion bordered={false} items={reviewItems} />
+          <Accordion bordered={false} items={items} />
         </Approver>
         )}
     </>

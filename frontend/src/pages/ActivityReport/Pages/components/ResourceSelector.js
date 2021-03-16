@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 
-import { Button, TextInput } from '@trussworks/react-uswds';
+import { Button, Textarea } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
@@ -31,16 +31,12 @@ const ResourceSelector = ({ name, ariaName }) => {
     <>
       {fields.map((item, index) => (
         <div key={item.id} className="display-flex flex-align-center">
-          <TextInput
+          <Textarea
+            className="maxh-10 smart-hub--text-area__resize-vertical"
             name={`${name}[${index}].value`}
             type="text"
             defaultValue={item.value}
             inputRef={register()}
-            onKeyUp={(e) => {
-              if (e.key === 'Enter') {
-                onAddNewResource();
-              }
-            }}
           />
           {canDelete && (
           <Button onClick={() => remove(index)} aria-label={`remove ${ariaName} ${index + 1}`} className="smart-hub--remove-resource padding-left-2" unstyled type="button">

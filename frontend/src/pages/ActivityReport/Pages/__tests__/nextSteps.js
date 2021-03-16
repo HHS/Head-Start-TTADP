@@ -125,7 +125,7 @@ describe('next steps', () => {
     renderNextSteps(
       [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
     );
-    const newEntry = await screen.findByText('Add New Follow Up');
+    const newEntry = await screen.findByText('Add New Next Step');
     userEvent.click(newEntry);
 
     // When the user presses cancel to change their mind
@@ -143,7 +143,7 @@ describe('next steps', () => {
       [],
       [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
     );
-    const newEntry = await screen.findByText('Add New Follow Up');
+    const newEntry = await screen.findByText('Add New Next Step');
     userEvent.click(newEntry);
 
     // When the user presses cancel to change their mind
