@@ -57,7 +57,6 @@ commands:
                 \"description\": \"<< parameters.env_name >> Successfully Deployed\"
               }
             }"
-      
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -118,7 +117,8 @@ commands:
       - run:
           name: Push application with deployment vars
           command: |
-            cf push --vars-file << parameters.deploy_config_file >> \
+            cf push --strategy rolling \
+              --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
@@ -126,6 +126,10 @@ commands:
               --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
               --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>}
+      - run:
+          name: Push maintenance application
+          command: |
+            cd maintenance_page && cf push --vars-file ../<<parameters.deploy_config_file >>
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -160,7 +164,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-338-383-frontend-tweaks"
+    default: "cm-393-read-regions-permissions"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
