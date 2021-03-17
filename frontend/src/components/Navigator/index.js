@@ -46,8 +46,9 @@ function Navigator({
   updateLastSaveTime,
   showValidationErrors,
   updateShowValidationErrors,
+  errorMessage,
+  updateErrorMessage,
 }) {
-  const [errorMessage, updateErrorMessage] = useState();
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = pages.find((p) => p.path === currentPage);
 
@@ -235,6 +236,8 @@ Navigator.propTypes = {
     pageState: PropTypes.shape({}),
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
+  errorMessage: PropTypes.string,
+  updateErrorMessage: PropTypes.func.isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
   updateLastSaveTime: PropTypes.func.isRequired,
   showValidationErrors: PropTypes.bool.isRequired,
@@ -267,6 +270,7 @@ Navigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
+  errorMessage: '',
   reportCreator: {
     name: null,
     role: null,

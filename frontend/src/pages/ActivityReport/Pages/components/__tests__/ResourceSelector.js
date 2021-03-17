@@ -29,7 +29,7 @@ describe('ResourceSelector', () => {
     render(<RenderResourceSelector data={[{ value: 'test' }]} />);
     const addResource = await screen.findByRole('button', { name: 'Add New Resource' });
     userEvent.click(addResource);
-    const text = await screen.findAllByRole('textbox');
+    const text = await screen.findAllByTestId('textarea');
     expect(text.length).toBe(2);
   });
 
@@ -37,7 +37,7 @@ describe('ResourceSelector', () => {
     render(<RenderResourceSelector data={[{ value: '' }]} />);
     const addResource = await screen.findByRole('button');
     userEvent.click(addResource);
-    const text = await screen.findAllByRole('textbox');
+    const text = await screen.findAllByTestId('textarea');
     expect(text.length).toBe(1);
   });
 
@@ -49,24 +49,14 @@ describe('ResourceSelector', () => {
     });
   });
 
-  describe('when enter is pressed', () => {
-    it('adds a new resource', async () => {
-      render(<RenderResourceSelector data={[{ value: '' }]} />);
-      const textBox = await screen.findByTestId('textInput');
-      userEvent.type(textBox, 'test{enter}');
-      const text = await screen.findAllByRole('textbox');
-      expect(text.length).toBe(2);
-    });
-  });
-
   describe('with multiple entries', () => {
     it('allows removal of an item', async () => {
       render(<RenderResourceSelector data={[{ value: 'first' }, { value: 'second' }]} />);
-      const text = await screen.findAllByRole('textbox');
+      const text = await screen.findAllByTestId('textarea');
       expect(text.length).toBe(2);
       const remove = screen.queryByRole('button', { name: 'remove name 1' });
       userEvent.click(remove);
-      const newText = await screen.findAllByRole('textbox');
+      const newText = await screen.findAllByTestId('textarea');
       expect(newText.length).toBe(1);
     });
   });

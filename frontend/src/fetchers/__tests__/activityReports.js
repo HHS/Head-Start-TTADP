@@ -2,11 +2,47 @@ import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
 import {
-  submitReport, saveReport, reviewReport, resetToDraft, legacyReportById,
+  submitReport,
+  saveReport,
+  reviewReport,
+  resetToDraft,
+  legacyReportById,
+  getReports,
+  getReportAlerts,
 } from '../activityReports';
 
 describe('activityReports fetcher', () => {
   afterEach(() => fetchMock.restore());
+
+  describe('getReports', () => {
+    it('defaults query params', async () => {
+      const query = {
+        sortBy: 'updatedAt',
+        sortDir: 'desc',
+        offset: 0,
+        limit: 10,
+      };
+
+      fetchMock.get(join('api', 'activity-reports'), [], { query });
+      await getReports();
+      expect(fetchMock.called()).toBeTruthy();
+    });
+  });
+
+  describe('getReportAlerts', () => {
+    it('defaults query params', async () => {
+      const query = {
+        sortBy: 'startDate',
+        sortDir: 'asc',
+        offset: 0,
+        limit: 10,
+      };
+
+      fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
+      await getReportAlerts();
+      expect(fetchMock.called()).toBeTruthy();
+    });
+  });
 
   describe('legacyReportById', () => {
     it('returns the report', async () => {

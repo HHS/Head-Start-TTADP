@@ -153,7 +153,7 @@ describe('Landing Page', () => {
 
   test('displays the options buttons', async () => {
     const optionButtons = await screen.findAllByRole('button', {
-      name: /edit activity report r14-ar-2/i,
+      name: /view activity report r14-ar-2/i,
     });
 
     expect(optionButtons.length).toBe(1);
