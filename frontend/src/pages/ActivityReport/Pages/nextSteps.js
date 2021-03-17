@@ -12,7 +12,7 @@ import FormItem from '../../../components/FormItem';
 import ReviewPage from './Review/ReviewPage';
 
 const NoteEntry = ({
-  onEntry, onCancel, name, isRequired = false, defaultValue = '',
+  onEntry, onCancel, name, isRequired = false, defaultValue = '', label,
 }) => {
   const [input, updateInput] = useState(defaultValue);
 
@@ -30,7 +30,7 @@ const NoteEntry = ({
     <FormItem
       required={isRequired}
       name={name}
-      label="What have you agreed to do next?"
+      label={label}
     >
       <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} defaultValue={input} />
       <Button outline disabled={!(input && input.trim())} onClick={onSubmit} data-testid={`${name}-button`} type="button">Save Next Step</Button>
@@ -43,6 +43,7 @@ NoteEntry.propTypes = {
   onEntry: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   name: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
   defaultValue: PropTypes.string,
   isRequired: PropTypes.bool,
 };
@@ -52,7 +53,7 @@ NoteEntry.defaultProps = {
   defaultValue: '',
 };
 
-const NoteEntries = ({ name, humanName }) => {
+const NoteEntries = ({ name, humanName, label }) => {
   const {
     register, control, setValue, trigger,
   } = useFormContext();
@@ -92,13 +93,14 @@ const NoteEntries = ({ name, humanName }) => {
 
   if (notes.length === 0) {
     return (
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend={`${humanName} Next Steps`}>
         <NoteEntry
           onEntry={(value) => onEntry(value, 0)}
           isRequired
           name={name}
           onCancel={onCancel}
           humanName={humanName}
+          label={label}
         />
       </Fieldset>
     );
@@ -116,13 +118,14 @@ const NoteEntries = ({ name, humanName }) => {
         name={name}
         humanName={humanName}
         defaultValue={defaultValue}
+        label={label}
       />
     </div>
   );
 
   return (
     <>
-      <Fieldset className="smart-hub--report-legend smart-hub--form-section" legend={`${humanName} Next Steps`}>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend={`${humanName} Next Steps`}>
         <ul className="usa-list--unstyled">
           {notes.map((item, index) => {
             if (showPrompt && (index === targetIndex)) {
@@ -150,13 +153,14 @@ const NoteEntries = ({ name, humanName }) => {
           })}
         </ul>
 
-        {showPrompt && targetIndex >= notes.length ? prompt
-          : (
-            <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
-              <FontAwesomeIcon icon={faPlusCircle} />
-              <span className="padding-left-05">Add New Follow Up</span>
-            </Button>
-          )}
+        {showPrompt && targetIndex >= notes.length ?
+         prompt
+         : (
+           <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
+             <FontAwesomeIcon icon={faPlusCircle} />
+             <span className="padding-left-05">Add New Next Step</span>
+           </Button>
+         )}
 
       </Fieldset>
     </>
@@ -166,6 +170,7 @@ const NoteEntries = ({ name, humanName }) => {
 NoteEntries.propTypes = {
   name: PropTypes.string.isRequired,
   humanName: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
 };
 
 const NextSteps = () => (
@@ -175,10 +180,10 @@ const NextSteps = () => (
     </Helmet>
 
     <div className="padding-bottom-205">
-      <NoteEntries name="specialistNextSteps" humanName="Specialist" />
+      <NoteEntries name="specialistNextSteps" humanName="Specialist" label="What have you agreed to do next?" />
     </div>
 
-    <NoteEntries name="granteeNextSteps" humanName="Grantees" />
+    <NoteEntries name="granteeNextSteps" humanName="Grantees" label="What has the grantee agreed to do next?" />
 
   </>
 );
@@ -195,7 +200,7 @@ const sections = [
     title: 'Grantee next steps',
     anchor: 'grantee-next-steps',
     items: [
-      { label: 'What have you agreed to do next?', name: 'granteeNextSteps', path: 'note' },
+      { label: 'What has the grantee agreed to do next?', name: 'granteeNextSteps', path: 'note' },
     ],
   },
 ];

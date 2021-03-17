@@ -143,10 +143,14 @@
     "react-select-event": "^5.1.0"
   },
   "jest": {
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/setupProxy.js"
+    ],
     "coverageThreshold": {
       "global": {
         "statements": 90,
-        "functions": 89,
+        "functions": 90,
         "branches": 90,
         "lines": 90
       }

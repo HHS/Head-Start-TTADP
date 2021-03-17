@@ -4,7 +4,7 @@
 */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
+import _, { startCase } from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
@@ -78,6 +78,7 @@ function ActivityReport({
   const [editable, updateEditable] = useState(false);
   const [lastSaveTime, updateLastSaveTime] = useState();
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
+  const [errorMessage, updateErrorMessage] = useState();
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -238,6 +239,7 @@ function ActivityReport({
   };
 
   const reportCreator = { name: user.name, role: user.role };
+  const tagClass = formData.status === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
   return (
     <div className="smart-hub-activity-report">
@@ -252,7 +254,7 @@ function ActivityReport({
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
           {formData.status && (
-            <div className="smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold">{formData.status}</div>
+            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.status)}</div>
           )}
         </Grid>
       </Grid>
@@ -276,6 +278,8 @@ function ActivityReport({
         onResetToDraft={onResetToDraft}
         approvingManager={approvingManager}
         onReview={onReview}
+        errorMessage={errorMessage}
+        updateErrorMessage={updateErrorMessage}
       />
     </div>
   );
