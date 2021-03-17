@@ -13,12 +13,12 @@ const ExternalResourceModal = ({ onOpen, onClose }) => (
     title={<h3>External Resources Disclaimer</h3>}
     actions={(
       <>
-        <Button type="button" onClick={onOpen}>
-          View External Resource
+        <Button type="button" onClick={onClose}>
+          Cancel
         </Button>
 
-        <Button type="button" secondary onClick={onClose}>
-          Cancel
+        <Button type="button" secondary onClick={onOpen}>
+          View External Resource
         </Button>
       </>
     )}
