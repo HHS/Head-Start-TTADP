@@ -15,6 +15,7 @@ import {
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
+import { getUserReadRegions } from '../../services/accessValidation';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -200,7 +201,7 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const { readRegions } = req.session;
+  const readRegions = await getUserReadRegions(req.session.userId);
   const reportsWithCount = await activityReports(readRegions, req.query);
   if (!reportsWithCount) {
     res.sendStatus(404);
