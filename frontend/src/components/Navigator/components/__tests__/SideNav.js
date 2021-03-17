@@ -64,7 +64,7 @@ describe('SideNav', () => {
     it('approved', () => {
       renderNav(REPORT_STATUSES.APPROVED);
       const complete = screen.getByText('Approved');
-      expect(complete).toHaveClass('smart-hub--tag-submitted');
+      expect(complete).toHaveClass('smart-hub--tag-approved');
       expect(complete).toBeVisible();
     });
 
