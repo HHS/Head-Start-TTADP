@@ -8,6 +8,6 @@ const router = express.Router();
  */
 
 router.post('/', uploadHandler);
-router.delete('/:reportId/:fileId', deleteHandler);
+router.delete('/:reportId?/:fileId?', deleteHandler);
 
 export default router;

@@ -33,7 +33,3 @@ applications:
       instances: ((worker_instances))
       command: yarn start:worker
       memory: ((worker_memory))
-  - name: tta-smarthub-maintenance-page-((env))
-    buildpacks:
-      - staticfile_buildpack
-    memory: 64M 
