@@ -105,6 +105,11 @@ body {
     width: 100%;
   }
 
+  .print\:grid-col-6 {
+    flex: 0 1 auto;
+    width: 50%;
+  }
+
   .usa-header {
     background: #fff !important;
   }

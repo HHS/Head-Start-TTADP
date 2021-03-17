@@ -75,3 +75,12 @@
     text-align: center;
     vertical-align: bottom;
 }
+
+.smart-hub--tag-approved {
+  background-color: #f0fcf4;
+  color: #148439
+}
+
+.smart-hub--text-area__resize-vertical {
+  resize: vertical;
+}

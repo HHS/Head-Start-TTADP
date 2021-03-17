@@ -147,6 +147,10 @@ h1.landing {
   background-color: #148439;
 }
 
+.landing .smart-hub--context-menu-button {
+  padding: 2px;
+}
+
 .usa-table tr:nth-child(odd) {
   background-color:#F8F8F8;
 }
@@ -199,7 +203,7 @@ h1.landing {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
-  width: 180px;
+  width: 173.5px;
   vertical-align: middle;
 }
 
