@@ -83,6 +83,7 @@ describe('Navigator', () => {
         onFormSubmit={onSubmit}
         updatePage={updatePage}
         onSave={onSave}
+        updateErrorMessage={() => {}}
       />,
     );
   };
