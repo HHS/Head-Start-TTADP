@@ -29,7 +29,7 @@ const tagClass = (state) => {
     case REPORT_STATUSES.SUBMITTED:
       return 'smart-hub--tag-submitted';
     case REPORT_STATUSES.APPROVED:
-      return 'smart-hub--tag-submitted';
+      return 'smart-hub--tag-approved';
     case REPORT_STATUSES.NEEDS_ACTION:
       return 'smart-hub--tag-needs-action';
     default:
