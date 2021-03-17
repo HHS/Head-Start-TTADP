@@ -21,10 +21,10 @@ const ReviewItem = ({ label, name, path }) => {
 
   return (
     <div className={`grid-row ${classes} margin-bottom-3 desktop:margin-bottom-0`}>
-      <div className="grid-col-12 desktop:grid-col-6 font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
+      <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
         {label}
       </div>
-      <div className="grid-col-12 desktop:grid-col-6">
+      <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {values.map((v, index) => (
           <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
             {Number.isNaN(v) ? '' : v}
