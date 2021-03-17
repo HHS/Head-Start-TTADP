@@ -132,7 +132,7 @@ const NoteEntries = ({ name, humanName, label }) => {
               return prompt;
             }
             return (
-              <li key={item.note} className="grid-row flex-row border-bottom padding-top-2 padding-bottom-2" style={{ borderColor: '#f0f0f0' }}>
+              <li key={item.note + index.toString()} className="grid-row flex-row border-bottom padding-top-2 padding-bottom-2" style={{ borderColor: '#f0f0f0' }}>
                 <div className="grid-col flex-12">
                   {item.note}
                 </div>
