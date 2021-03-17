@@ -153,14 +153,14 @@ const NoteEntries = ({ name, humanName, label }) => {
           })}
         </ul>
 
-        {showPrompt && targetIndex >= notes.length ?
-         prompt
-         : (
-           <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
-             <FontAwesomeIcon icon={faPlusCircle} />
-             <span className="padding-left-05">Add New Next Step</span>
-           </Button>
-         )}
+        {showPrompt && targetIndex >= notes.length
+          ? prompt
+          : (
+            <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
+              <FontAwesomeIcon icon={faPlusCircle} />
+              <span className="padding-left-05">Add New Next Step</span>
+            </Button>
+          )}
 
       </Fieldset>
     </>
