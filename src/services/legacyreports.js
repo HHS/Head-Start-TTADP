@@ -44,15 +44,15 @@ export const reconcileAuthors = async (report) => {
   }
 };
 
-export const reconcileCollaborators = async (reportId, otherSpecialists) => {
+export const reconcileCollaborators = async (report, otherSpecialists) => {
   for (const specialist of otherSpecialists) {
     try {
       const user = await userByEmail(specialist);
       if (user) {
         const [, created] = await ActivityReportCollaborator
-          .findOrCreate({ where: { activityReportId: reportId, userId: user.id } });
+          .findOrCreate({ where: { activityReportId: report.id, userId: user.id } });
         if (created) {
-          logger.info(`Added ${specialist} as a collaborator on Report ${reportId}`);
+          logger.info(`Added ${specialist} as a collaborator on Report ${report.displayId}`);
         }
       }
     } catch (err) {
@@ -75,7 +75,7 @@ export default async function reconcileLegacyReports() {
         .findAll({ where: { activityReportId: report.id } });
       const otherSpecialists = report.imported.otherSpecialists.split(',').filter((j) => j !== '').map((i) => i.toLowerCase().trim());
       if (otherSpecialists.length !== collaborators.length) {
-        await reconcileCollaborators(report.id, otherSpecialists);
+        await reconcileCollaborators(report, otherSpecialists);
       }
     }
   }
