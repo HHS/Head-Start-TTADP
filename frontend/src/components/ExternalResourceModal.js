@@ -5,6 +5,7 @@ import {
 } from '@trussworks/react-uswds';
 
 import { isValidURL } from '../utils';
+import { GOVERMENT_HOSTNAME_EXTENSION } from '../Constants';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -43,6 +44,9 @@ const ExternalLink = ({ to, children }) => {
     return to;
   }
 
+  const url = new URL(to);
+  const isInternalGovermentLink = url.host.endsWith(GOVERMENT_HOSTNAME_EXTENSION);
+
   const modalRef = useRef(null);
   const { isOpen, openModal, closeModal } = useModal();
 
@@ -73,7 +77,11 @@ const ExternalLink = ({ to, children }) => {
 
   const onLinkClick = (e) => {
     e.preventDefault();
-    openModal();
+    if (isInternalGovermentLink) {
+      window.open(to, '_blank');
+    } else {
+      openModal();
+    }
   };
 
   const ConnectModal = connectModal(() => (

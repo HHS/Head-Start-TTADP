@@ -1,5 +1,3 @@
-import { GOVERMENT_HOSTNAME_EXTENSION } from './Constants';
-
 /**
  * Given a potential url, verify that it is a valid url
  */
@@ -18,9 +16,13 @@ export const isValidURL = (url) => {
  * Definition of external is anything not matching the host name.
  */
 export const isExternalURL = (url) => {
-  if (url.endsWith(GOVERMENT_HOSTNAME_EXTENSION)) {
-    return true;
+  const newUrl = new URL(url);
+  let currentHost;
+  if (process.env.NODE_ENV === 'development') {
+    currentHost = new URL(process.env.REACT_APP_TTA_SMART_HUB_URI);
+  } else {
+    currentHost = new URL(process.env.TTA_SMART_HUB_URI);
   }
 
-  return !url.startsWith(process.env.TTA_SMART_HUB_URI);
+  return !(newUrl.host === currentHost.host);
 };

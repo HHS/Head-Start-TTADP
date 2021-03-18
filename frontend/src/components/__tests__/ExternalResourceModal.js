@@ -86,6 +86,24 @@ describe('External Resources', () => {
     expect(windowSpy).toHaveBeenCalledWith('https://www.google.com', '_blank');
   });
 
+  it('shows internal goverment link when ok is pressed', async () => {
+    windowSpy.mockReturnValue();
+    const url = `https://shrek${GOVERMENT_HOSTNAME_EXTENSION}`;
+
+    // Given an external link
+    render(<ExternalLink to={url}>something</ExternalLink>);
+    const link = await screen.findByText('something');
+
+    // When the users clicks it
+    userEvent.click(link);
+
+    // Then we see no modal
+    expect(screen.queryByTestId('modal')).not.toBeTruthy();
+
+    // And a new tab has been opened
+    expect(windowSpy).toHaveBeenCalledWith(url, '_blank');
+  });
+
   it('shows normal non-hyperlink text with non-url', async () => {
     // Given a normal chunk of text
     render(<ExternalLink to="hakuna matata">The mighty lion sleeps tonight</ExternalLink>);
@@ -112,18 +130,18 @@ describe('utility functions', () => {
     process.env = OLD_ENV;
   });
 
-  it('utility function correctly assumes NON-external URLs', () => {
+  it('utility function correctly assumes external URLs', () => {
     process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
 
     // Given a url
     const url = join('https://fiona.com', 'some-internal', 'url');
 
     // When we check if it's external
-    // Then we see it is not
+    // Then we see it is
     expect(isExternalURL(url)).toBeTruthy();
   });
 
-  it('utility function correctly assumes external URLs', () => {
+  it('utility function correctly assumes NON-external URLs', () => {
     process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
 
     // Given a url
@@ -131,7 +149,7 @@ describe('utility functions', () => {
 
     // When we check if it's external
     // Then we see it is not
-    expect(isExternalURL(url)).not.toBeTruthy();
+    expect(isExternalURL(url)).toBeFalsy();
   });
 
   it('utility function correctly validates internal urls', () => {
@@ -147,7 +165,7 @@ describe('utility functions', () => {
   it('utility function correctly validates other govemernt urls', () => {
     process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
 
-    const urls = ['shrek', 'fiona', 'donkey'];
+    const urls = ['https://shrek', 'https://www.fiona', 'http://donkey'];
 
     // Given an internal url
     urls.forEach((url) => {

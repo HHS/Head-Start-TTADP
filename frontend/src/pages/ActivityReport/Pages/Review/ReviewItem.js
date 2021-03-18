@@ -29,7 +29,9 @@ const ReviewItem = ({ label, name, path }) => {
     if (isExternalURL(v)) {
       return <ExternalLink to={v}>{v}</ExternalLink>;
     }
-    return <Link to={v}>{v}</Link>;
+
+    const localLink = new URL(v);
+    return <Link to={localLink.pathname}>{v}</Link>;
   });
 
   const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
