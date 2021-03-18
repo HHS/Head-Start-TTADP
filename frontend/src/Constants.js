@@ -81,3 +81,4 @@ export const REPORT_STATUSES = {
 
 export const REPORTS_PER_PAGE = 10;
 export const ALERTS_PER_PAGE = 10;
+export const GOVERMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';

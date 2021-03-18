@@ -7,7 +7,8 @@ import userEvent from '@testing-library/user-event';
 import join from 'url-join';
 
 import { ExternalLink } from '../ExternalResourceModal';
-import { isExternalURL } from '../../utils';
+import { isExternalURL, isValidURL } from '../../utils';
+import { GOVERMENT_HOSTNAME_EXTENSION } from '../../Constants';
 
 let windowSpy;
 
@@ -131,5 +132,29 @@ describe('utility functions', () => {
     // When we check if it's external
     // Then we see it is not
     expect(isExternalURL(url)).not.toBeTruthy();
+  });
+
+  it('utility function correctly validates internal urls', () => {
+    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
+    // Given an internal url
+    const internal = join(process.env.TTA_SMART_HUB_URI, 'some-internal', 'url');
+
+    // When we check if its valid
+    // Then we see it is
+    expect(isValidURL(internal)).toBeTruthy();
+  });
+
+  it('utility function correctly validates other govemernt urls', () => {
+    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
+
+    const urls = ['shrek', 'fiona', 'donkey'];
+
+    // Given an internal url
+    urls.forEach((url) => {
+      const internal = join(`${url}${GOVERMENT_HOSTNAME_EXTENSION}`, 'some-internal', 'url');
+      // When we check if its valid
+      // Then we see it is
+      expect(isExternalURL(internal)).toBeTruthy();
+    });
   });
 });
