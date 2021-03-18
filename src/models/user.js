@@ -1,5 +1,5 @@
 import { Model } from 'sequelize';
-// import isEmail from 'validator/lib/isEmail';
+import isEmail from 'validator/lib/isEmail';
 
 const roles = [
   'Regional Program Manager',
