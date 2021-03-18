@@ -65,7 +65,8 @@
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
     "import:goals": "node ./build/server/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantGranteesCLI.js --skipdownload",
-    "import:hses": "node ./build/server/tools/importGrantGranteesCLI.js"
+    "import:hses": "node ./build/server/tools/importGrantGranteesCLI.js",
+    "reconcile:legacy": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js"
   },
   "repository": {
     "type": "git",
