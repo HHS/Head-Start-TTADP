@@ -75,11 +75,12 @@ describe('Admin Page', () => {
     });
 
     describe('with no user selected', () => {
-      beforeEach(() => {
+      const renderAdmin = () => {
         render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
-      });
+      };
 
       it('user list is filterable by name', async () => {
+        renderAdmin();
         const filter = await screen.findByLabelText('Filter Users');
         userEvent.type(filter, 'Harry');
         const sideNav = screen.getByTestId('sidenav');
@@ -89,6 +90,7 @@ describe('Admin Page', () => {
       });
 
       it('User list is filterable by email', async () => {
+        renderAdmin();
         const filter = await screen.findByLabelText('Filter Users');
         userEvent.type(filter, '@hogwarts.com');
         const sideNav = screen.getByTestId('sidenav');
@@ -97,6 +99,7 @@ describe('Admin Page', () => {
       });
 
       it('user filtering is case-insentive', async () => {
+        renderAdmin();
         const filter = await screen.findByLabelText('Filter Users');
         userEvent.type(filter, 'harry');
         const sideNav = screen.getByTestId('sidenav');
@@ -106,6 +109,7 @@ describe('Admin Page', () => {
       });
 
       it('user list is filterable by users to lock', async () => {
+        renderAdmin();
         const radio = await screen.findByRole('radio', { name: 'Show users to lock' });
         userEvent.click(radio);
         const sideNav = screen.getByTestId('sidenav');
@@ -115,6 +119,7 @@ describe('Admin Page', () => {
       });
 
       it('user list is filterable by users to disable', async () => {
+        renderAdmin();
         const radio = await screen.findByRole('radio', { name: 'Show users to disable' });
         userEvent.click(radio);
         const sideNav = screen.getByTestId('sidenav');
@@ -124,6 +129,7 @@ describe('Admin Page', () => {
       });
 
       it('allows a user to be selected', async () => {
+        renderAdmin();
         const button = await screen.findByText('Harry Potter');
         userEvent.click(button);
         expect(history.location.pathname).toBe('/admin/3');
