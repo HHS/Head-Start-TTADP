@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 
 import { ExternalLink } from '../../../../components/ExternalResourceModal';
-import { isValidURL, isExternalURL } from '../../../../utils';
+import { isValidURL, isExternalURL, isInternalGovernmentLink } from '../../../../utils';
 
 const ReviewItem = ({ label, name, path }) => {
   const { watch } = useFormContext();
@@ -26,7 +26,7 @@ const ReviewItem = ({ label, name, path }) => {
       return v;
     }
 
-    if (isExternalURL(v)) {
+    if (isExternalURL(v) || isInternalGovernmentLink(v)) {
       return <ExternalLink to={v}>{v}</ExternalLink>;
     }
 

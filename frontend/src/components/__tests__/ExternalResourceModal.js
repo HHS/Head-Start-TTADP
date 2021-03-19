@@ -8,7 +8,7 @@ import join from 'url-join';
 
 import { ExternalLink } from '../ExternalResourceModal';
 import { isExternalURL, isValidURL } from '../../utils';
-import { GOVERMENT_HOSTNAME_EXTENSION } from '../../Constants';
+import { GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
 
 let windowSpy;
 
@@ -88,7 +88,7 @@ describe('External Resources', () => {
 
   it('shows internal goverment link when ok is pressed', async () => {
     windowSpy.mockReturnValue();
-    const url = `https://shrek${GOVERMENT_HOSTNAME_EXTENSION}`;
+    const url = `https://shrek${GOVERNMENT_HOSTNAME_EXTENSION}`;
 
     // Given an external link
     render(<ExternalLink to={url}>something</ExternalLink>);
@@ -169,10 +169,10 @@ describe('utility functions', () => {
 
     // Given an internal url
     urls.forEach((url) => {
-      const internal = join(`${url}${GOVERMENT_HOSTNAME_EXTENSION}`, 'some-internal', 'url');
+      const internal = join(`${url}${GOVERNMENT_HOSTNAME_EXTENSION}`, 'some-internal', 'url');
       // When we check if its valid
       // Then we see it is
-      expect(isExternalURL(internal)).toBeTruthy();
+      expect(isExternalURL(internal)).not.toBeTruthy();
     });
   });
 });
