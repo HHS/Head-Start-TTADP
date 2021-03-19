@@ -12,15 +12,32 @@ const getLegacyReports = async () => {
       legacyId: {
         [Op.ne]: null,
       },
-      userId: {
-        [Op.eq]: null,
-      },
+      [Op.or]: [
+        {
+          userId: {
+            [Op.eq]: null,
+          },
+        },
+        {
+          approvingManagerId: {
+            [Op.eq]: null,
+          },
+        },
+        {
+          imported: {
+            otherSpecialists: {
+              [Op.ne]: '',
+            },
+          },
+        },
+      ],
+
     },
   });
   return reports;
 };
 
-const reconcileApprovingManagers = async (report) => {
+export const reconcileApprovingManagers = async (report) => {
   try {
     const user = await userByEmail(report.imported.manager);
     if (user) {
