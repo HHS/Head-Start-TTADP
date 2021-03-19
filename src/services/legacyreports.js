@@ -1,6 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
-
 import { Op } from 'sequelize';
 import { userByEmail } from './users';
 import { ActivityReport, ActivityReportCollaborator } from '../models';
@@ -61,39 +58,52 @@ export const reconcileAuthors = async (report) => {
   }
 };
 
-export const reconcileCollaborators = async (report, otherSpecialists) => {
-  for (const specialist of otherSpecialists) {
-    try {
-      const user = await userByEmail(specialist);
-      if (user) {
-        const [, created] = await ActivityReportCollaborator
-          .findOrCreate({ where: { activityReportId: report.id, userId: user.id } });
-        if (created) {
-          logger.info(`Added ${specialist} as a collaborator on Report ${report.displayId}`);
+export const reconcileCollaborators = async (report) => {
+  try {
+    const collaborators = await ActivityReportCollaborator
+      .findAll({ where: { activityReportId: report.id } });
+    const otherSpecialists = report.imported.otherSpecialists.split(',').filter((j) => j !== '').map((i) => i.toLowerCase().trim());
+    if (otherSpecialists.length !== collaborators.length) {
+      const users = [];
+      otherSpecialists.forEach((specialist) => {
+        users.push(userByEmail(specialist));
+      });
+      const userArray = await Promise.all(users);
+      const pendingCollaborators = [];
+      userArray.forEach((user) => {
+        if (user) {
+          pendingCollaborators.push(ActivityReportCollaborator
+            .findOrCreate({ where: { activityReportId: report.id, userId: user.id } }));
         }
+      });
+      const newCollaborators = await Promise.all(pendingCollaborators);
+      const numberOfNewCollaborators = newCollaborators.filter((c) => c[1]).length
+      if (numberOfNewCollaborators > 0) {
+        logger.info(`Added ${numberOfNewCollaborators} collaborator for report ${report.displayId}`);
       }
-    } catch (err) {
-      logger.error(err);
     }
+  } catch (err) {
+    logger.error(err);
   }
 };
 
 export default async function reconcileLegacyReports() {
   const reports = await getLegacyReports();
-  for (const report of reports) {
-    if (!report.userId) {
-      reconcileAuthors(report);
-    }
-    if (!report.approvingManagerId) {
-      reconcileApprovingManagers(report);
-    }
-    if (report.imported.otherSpecialists !== '') {
-      const collaborators = await ActivityReportCollaborator
-        .findAll({ where: { activityReportId: report.id } });
-      const otherSpecialists = report.imported.otherSpecialists.split(',').filter((j) => j !== '').map((i) => i.toLowerCase().trim());
-      if (otherSpecialists.length !== collaborators.length) {
-        await reconcileCollaborators(report, otherSpecialists);
+  const updates = [];
+  try {
+    reports.forEach((report) => {
+      if (!report.userId) {
+        updates.push(reconcileAuthors(report));
       }
-    }
+      if (!report.approvingManagerId) {
+        updates.push(reconcileApprovingManagers(report));
+      }
+      if (report.imported.otherSpecialists !== '') {
+        updates.push(reconcileCollaborators(report));
+      }
+    });
+    await Promise.all(updates);
+  } catch (err) {
+    logger.error(err);
   }
 }
