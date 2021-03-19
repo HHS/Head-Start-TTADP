@@ -11,7 +11,6 @@ import { isExternalURL, isValidURL } from '../../utils';
 import { GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
 
 let windowSpy;
-
 describe('External Resources', () => {
   beforeEach(() => {
     windowSpy = jest.spyOn(window, 'open');
@@ -119,20 +118,22 @@ describe('External Resources', () => {
 
 // For mocking `process.env`, I got it from https://stackoverflow.com/a/48042799
 describe('utility functions', () => {
-  const OLD_ENV = process.env;
+  const OLD_WINDOW = global.window;
 
   beforeEach(() => {
     jest.resetModules(); // it clears the cache
-    process.env = { ...OLD_ENV };
+    delete global.window.location;
+    global.window = Object.create(window);
+    global.window.location = {
+      host: 'government.gov',
+    };
   });
 
   afterAll(() => {
-    process.env = OLD_ENV;
+    global.window.location = OLD_WINDOW;
   });
 
   it('utility function correctly assumes external URLs', () => {
-    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
-
     // Given a url
     const url = join('https://fiona.com', 'some-internal', 'url');
 
@@ -142,10 +143,8 @@ describe('utility functions', () => {
   });
 
   it('utility function correctly assumes NON-external URLs', () => {
-    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
-
     // Given a url
-    const url = join(process.env.TTA_SMART_HUB_URI, 'some-internal', 'url');
+    const url = join('http://government.gov', 'some-internal', 'url');
 
     // When we check if it's external
     // Then we see it is not
@@ -153,9 +152,8 @@ describe('utility functions', () => {
   });
 
   it('utility function correctly validates internal urls', () => {
-    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
     // Given an internal url
-    const internal = join(process.env.TTA_SMART_HUB_URI, 'some-internal', 'url');
+    const internal = join('http://government.gov', 'some-internal', 'url');
 
     // When we check if its valid
     // Then we see it is
@@ -163,8 +161,6 @@ describe('utility functions', () => {
   });
 
   it('utility function correctly validates other govemernt urls', () => {
-    process.env.TTA_SMART_HUB_URI = 'https://shrek.com';
-
     const urls = ['https://shrek', 'https://www.fiona', 'http://donkey'];
 
     // Given an internal url
