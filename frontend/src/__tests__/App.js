@@ -15,11 +15,12 @@ describe('App', () => {
   const logoutUrl = join('api', 'logout');
 
   describe('when authenticated', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       const user = { name: 'name' };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
       render(<App />);
+      await screen.findByText('Activity Reports');
     });
 
     it('displays the logout button', async () => {
@@ -35,23 +36,17 @@ describe('App', () => {
   });
 
   describe('when unauthenticated', () => {
-    beforeEach(() => {
+    it('displays the login button', async () => {
       fetchMock.get(userUrl, 401);
       render(<App />);
-    });
-
-    it('displays the login button', async () => {
       expect(await screen.findByText(loginText)).toBeVisible();
     });
   });
 
   describe('when user is locked', () => {
-    beforeEach(() => {
+    it('displays the "request permissions" page', async () => {
       fetchMock.get(userUrl, 403);
       render(<App />);
-    });
-
-    it('displays the "request permissions" page', async () => {
       expect(await screen.findByText('You need permission to access the TTA Smart Hub.')).toBeVisible();
       expect(await screen.findByText('Request Permission')).toBeVisible();
     });
