@@ -9,6 +9,9 @@ const getLegacyReports = async () => {
       legacyId: {
         [Op.ne]: null,
       },
+      imported: {
+        [Op.ne]: null,
+      },
       [Op.or]: [
         {
           userId: {
