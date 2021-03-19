@@ -9,7 +9,12 @@ const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
   objective, onRemove = () => {}, onUpdate = () => {},
 }) => {
-  const hookForm = useForm();
+  const hookForm = useForm({
+    defaultValues: { goals: [] },
+  });
+
+  hookForm.register('goals');
+
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
@@ -130,6 +135,7 @@ describe('Objective', () => {
       userEvent.click(edit);
       const save = await screen.findByText('Save Objective');
       expect(save).toBeVisible();
+      await screen.findByText('Cancel');
     });
   });
 });
