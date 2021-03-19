@@ -3,7 +3,7 @@ import db, {
 } from '../models';
 
 import {
-  usersWithPermissions, userById,
+  usersWithPermissions, userById, userByEmail,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -41,6 +41,37 @@ describe('Users DB service', () => {
       const user = await userById(50);
       expect(user.id).toBe(50);
       expect(user.name).toBe('user 1');
+    });
+  });
+  describe('userByEmail', () => {
+    beforeEach(async () => {
+      await User.create({
+        id: 50,
+        name: 'user 1',
+        email: 'user1@test.gov',
+        hsesUsername: 'user.1',
+        hsesUserId: '50',
+      });
+      await User.create({
+        id: 51,
+        name: 'user 2',
+        email: 'user2@test.gov',
+        hsesUsername: 'user.2',
+        hsesUserId: '51',
+      });
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: [50, 51] } });
+    });
+
+    it('retrieves the correct user', async () => {
+      const user = await userByEmail('user1@test.gov');
+      expect(user.id).toBe(50);
+    });
+    it('retrieves the correct user if case differs', async () => {
+      const user = await userByEmail('User2@Test.Gov');
+      expect(user.id).toBe(51);
     });
   });
 
