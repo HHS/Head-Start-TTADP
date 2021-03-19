@@ -37,6 +37,7 @@ describe('DatePicker', () => {
           label="label"
           name="picker"
           disabled={disabled}
+          ariaName="datepicker"
         />
       </form>
     );
