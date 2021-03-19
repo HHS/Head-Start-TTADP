@@ -77,7 +77,7 @@ export const reconcileCollaborators = async (report) => {
         }
       });
       const newCollaborators = await Promise.all(pendingCollaborators);
-      const numberOfNewCollaborators = newCollaborators.filter((c) => c[1]).length
+      const numberOfNewCollaborators = newCollaborators.filter((c) => c[1]).length;
       if (numberOfNewCollaborators > 0) {
         logger.info(`Added ${numberOfNewCollaborators} collaborator for report ${report.displayId}`);
       }
