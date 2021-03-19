@@ -4,8 +4,7 @@ import {
   Button, Modal, Alert, useModal, connectModal,
 } from '@trussworks/react-uswds';
 
-import { isValidURL } from '../utils';
-import { GOVERMENT_HOSTNAME_EXTENSION } from '../Constants';
+import { isValidURL, isInternalGovernmentLink } from '../utils';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -44,9 +43,6 @@ const ExternalLink = ({ to, children }) => {
     return to;
   }
 
-  const url = new URL(to);
-  const isInternalGovermentLink = url.host.endsWith(GOVERMENT_HOSTNAME_EXTENSION);
-
   const modalRef = useRef(null);
   const { isOpen, openModal, closeModal } = useModal();
 
@@ -77,7 +73,7 @@ const ExternalLink = ({ to, children }) => {
 
   const onLinkClick = (e) => {
     e.preventDefault();
-    if (isInternalGovermentLink) {
+    if (isInternalGovernmentLink(to)) {
       window.open(to, '_blank');
     } else {
       openModal();
