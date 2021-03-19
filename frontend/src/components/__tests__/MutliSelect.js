@@ -16,9 +16,9 @@ const options = [
 
 describe('MultiSelect', () => {
   // eslint-disable-next-line react/prop-types
-  const TestMultiSelect = ({ onSubmit, defaultValues }) => {
+  const TestMultiSelect = ({ onSubmit }) => {
     const { control, handleSubmit } = useForm({
-      defaultValues,
+      defaultValues: { name: [] },
       mode: 'all',
     });
 

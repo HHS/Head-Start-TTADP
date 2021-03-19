@@ -32,6 +32,7 @@ function ContextMenu({
     document.addEventListener('keydown', onEscape, false);
     return () => {
       document.removeEventListener('keydown', onEscape, false);
+      updateShown(false);
     };
   }, [onEscape]);
 

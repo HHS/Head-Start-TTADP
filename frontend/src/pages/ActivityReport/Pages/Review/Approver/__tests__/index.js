@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router';
@@ -24,7 +26,11 @@ const RenderApprover = ({
         onFormReview={onFormReview}
         reviewed={reviewed}
         formData={formData}
-      />
+      >
+        <div>
+          test
+        </div>
+      </Approver>
     </FormProvider>
   );
 };
@@ -63,12 +69,12 @@ describe('Approver review page', () => {
 
     it('allows the approver to submit a review and redirects them after', async () => {
       const mockSubmit = jest.fn();
-      const history = renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true, true);
+      const history = renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true);
       const dropdown = await screen.findByTestId('dropdown');
       userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      expect(history.location.pathname).toBe('/activity-reports');
+      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
     });
 
     it('handles empty notes', async () => {
