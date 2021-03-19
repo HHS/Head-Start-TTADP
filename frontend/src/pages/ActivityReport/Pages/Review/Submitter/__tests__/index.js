@@ -58,6 +58,8 @@ const renderReview = (
     approvingManager: { name: 'name' },
     approvingManagerId: 1,
     status,
+    displayId: '1',
+    id: 1,
   };
 
   const history = createMemoryHistory();
@@ -148,7 +150,7 @@ describe('Submitter review page', () => {
 
     it('the reset to draft button works', async () => {
       const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, false, true, () => {}, onReset);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true, () => {}, onReset);
       const button = await screen.findByRole('button', { name: 'Reset to Draft' });
       userEvent.click(button);
       await waitFor(() => expect(onReset).toHaveBeenCalled());
