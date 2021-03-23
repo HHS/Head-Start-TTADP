@@ -4,6 +4,11 @@ import { ActivityReport, ActivityReportCollaborator } from '../models';
 import { logger } from '../logger';
 
 const getLegacyReports = async () => {
+  // returns all legacy reports that either:
+  // 1. are missing an author
+  // 2. are missing an approving manager
+  // 3. have colloborators in the imported field
+  // These are the only reports that might need reconciliation
   const reports = await ActivityReport.findAll({
     where: {
       legacyId: {
@@ -37,6 +42,9 @@ const getLegacyReports = async () => {
   return reports;
 };
 
+// Checks a report to see if the email address listed in the imported.manager field
+// belongs to any user. If it does, it updates the report with that user.id in the
+// approvingManager column
 export const reconcileApprovingManagers = async (report) => {
   try {
     const user = await userByEmail(report.imported.manager);
@@ -49,6 +57,9 @@ export const reconcileApprovingManagers = async (report) => {
   }
 };
 
+// Checks a report to see if the email address listed in the imported.createdBy field
+// belongs to any user. If it does, it updates the report with that user.id in the
+// userId column
 export const reconcileAuthors = async (report) => {
   try {
     const user = await userByEmail(report.imported.createdBy);
@@ -61,6 +72,11 @@ export const reconcileAuthors = async (report) => {
   }
 };
 
+// First checks if the number of collaborators is different than the number of
+// entries in the imported.otherSpecialists field. If not, then no reconciliation is needed.
+// If there is a difference, it tries to find users matching the email addresses in the
+// otherSpecialists field. It then uses findorCreate to add collaborators that haven't yet
+// been added.
 export const reconcileCollaborators = async (report) => {
   try {
     const collaborators = await ActivityReportCollaborator
@@ -98,20 +114,26 @@ export const reconcileCollaborators = async (report) => {
 };
 
 export default async function reconcileLegacyReports() {
+  // Get all reports that might need reconciliation
   const reports = await getLegacyReports();
+  // Array to help promises from reports that are getting reconciled
   const updates = [];
   try {
     reports.forEach((report) => {
+      // if there is no author, try to reconcile the author
       if (!report.userId) {
         updates.push(reconcileAuthors(report));
       }
+      // if there is no approving manager, try to reconcile the approving manager
       if (!report.approvingManagerId) {
         updates.push(reconcileApprovingManagers(report));
       }
+      // if the report has collaborators, check if collaborators need reconcilliation.
       if (report.imported.otherSpecialists !== '') {
         updates.push(reconcileCollaborators(report));
       }
     });
+    // let all promises resolve
     await Promise.all(updates);
   } catch (err) {
     logger.error(err);
