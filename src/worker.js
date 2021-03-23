@@ -1,9 +1,10 @@
 /* eslint-disable import/first */
-require('newrelic');
+// require('newrelic');
 
 import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
+import reconcileLegacyReports, { reconciliationQueue } from './services/legacyreports';
 import { scanQueue } from './services/scanQueue';
 import processFile from './workers/files';
 
@@ -23,6 +24,19 @@ function start() {
     }
   });
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
+
+  reconciliationQueue.on('failed', (job, error) => auditLogger
+    .error(`${job.data.key}: Legacy report reconciliation failed with error ${error}`));
+  reconciliationQueue.on('completed', () => logger
+    .info('Legacy report reconciliation completed successfully'));
+  reconciliationQueue.process('legacyReports', async (job) => {
+    logger.info(`starting ${job}`);
+    try {
+      await reconcileLegacyReports();
+    } catch (e) {
+      auditLogger.error(e);
+    }
+  });
 }
 
 // spawn workers and start them
