@@ -79,7 +79,9 @@ const renderReview = (
       <RenderReview
         allComplete={allComplete}
         onSubmit={onSubmit}
-        formData={{ ...formData, status, author: { name: 'user' } }}
+        formData={{
+          ...formData, status, author: { name: 'user' }, id: 1, displayId: '1',
+        }}
         approvingManager={approvingManager}
         onReview={onReview}
         approvingManagerId={approvingManagerId}

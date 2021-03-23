@@ -1,7 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
+import { Link } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
+
+import { ExternalLink } from '../../../../components/ExternalResourceModal';
+import { isValidURL, isExternalURL, isInternalGovernmentLink } from '../../../../utils';
 
 const ReviewItem = ({ label, name, path }) => {
   const { watch } = useFormContext();
@@ -15,6 +19,20 @@ const ReviewItem = ({ label, name, path }) => {
   if (path) {
     values = values.map((v) => _.get(v, path));
   }
+
+  values = values.map((v) => {
+    // If not a valid url, then its most likely just text, so leave it as is
+    if (!isValidURL(v)) {
+      return v;
+    }
+
+    if (isExternalURL(v) || isInternalGovernmentLink(v)) {
+      return <ExternalLink to={v}>{v}</ExternalLink>;
+    }
+
+    const localLink = new URL(v);
+    return <Link to={localLink.pathname}>{v}</Link>;
+  });
 
   const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
   const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');

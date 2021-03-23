@@ -84,6 +84,10 @@ describe('Navigator', () => {
         updatePage={updatePage}
         onSave={onSave}
         updateErrorMessage={() => {}}
+        onResetToDraft={() => {}}
+        updateLastSaveTime={() => {}}
+        showValidationErrors={false}
+        updateShowValidationErrors={() => {}}
       />,
     );
   };
