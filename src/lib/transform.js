@@ -17,11 +17,11 @@ function transformSimpleValue(instance, field) {
 
 /*
  * @param {ActivityReport} ActivityReport instance
- * @returns {Promise<object>} author email
+ * @returns {Promise<object>} author name
  */
-async function transformAuthorEmail(report) {
-  const authorRecord = await report.getAuthor();
-  const author = authorRecord ? authorRecord.get('email') : '';
+async function transformAuthor(report) {
+  const authorRecord = await report.get('author');
+  const author = authorRecord ? authorRecord.get('name') : '';
   return { author };
 }
 
@@ -29,8 +29,8 @@ async function transformAuthorEmail(report) {
  * @param {ActivityReport} ActivityReport instance
  * @returns {Promise<object>} approving manager name
  */
-async function transformApprovingManagerName(report) {
-  const managerRecord = await report.getApprovingManager();
+async function transformApprovingManager(report) {
+  const managerRecord = await report.get('approvingManager');
   const approvingManager = managerRecord ? managerRecord.get('name') : '';
   return { approvingManager };
 }
@@ -40,7 +40,7 @@ async function transformApprovingManagerName(report) {
  * @returns {Promise<object>} Name of user who last updated report
  */
 async function transformLastUpdatedBy(report) {
-  const lastUpdatedByRecord = await report.getLastUpdatedBy();
+  const lastUpdatedByRecord = await report.get('lastUpdatedBy');
   const lastUpdatedBy = lastUpdatedByRecord ? lastUpdatedByRecord.get('name') : '';
   return { lastUpdatedBy };
 }
@@ -59,17 +59,15 @@ function sortObjectives(a, b) {
 }
 
 /*
- * Transform goals and objectives into a format suitable for a CSV
- * @param {ActivityReport} ActivityReport instance
- * @returns {Promise<object>} Object with key-values for goals and objectives
+ * Create an object with goals and objectives. Used by transformGoalsAndObjectives
+ * @param {Array<Objectives>} objectiveRecords
  */
-async function transformGoalsAndObjectives(report) {
-  const objectiveRecords = await report.get('objectives');
+function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 1;
   let goalNum = 0;
 
-  const goalsAndObjectives = objectiveRecords.reduce((accum, objective) => {
+  return objectiveRecords.reduce((accum, objective) => {
     const {
       goal, title, status, ttaProvided,
     } = objective;
@@ -107,19 +105,33 @@ async function transformGoalsAndObjectives(report) {
 
     return accum;
   }, {});
+}
 
-  return goalsAndObjectives;
+/*
+ * Transform goals and objectives into a format suitable for a CSV
+ * @param {ActivityReport} ActivityReport instance
+ * @returns {Promise<object>} Object with key-values for goals and objectives
+ */
+async function transformGoalsAndObjectives(report) {
+  let obj = {};
+  const objectiveRecords = await report.get('objectives');
+  if (objectiveRecords) {
+    obj = makeGoalsAndObjectivesObject(objectiveRecords);
+  }
+  return obj;
 }
 
 function transformManyModel(field, prop) {
   async function transformer(instance) {
-    const records = await instance.get(field);
-    const value = records.map((r) => (r[prop] || '')).join('\n');
     const obj = {};
-    Object.defineProperty(obj, field, {
-      value,
-      enumerable: true,
-    });
+    const records = await instance.get(field);
+    if (records) {
+      const value = records.map((r) => (r[prop] || '')).join('\n');
+      Object.defineProperty(obj, field, {
+        value,
+        enumerable: true,
+      });
+    }
     return Promise.resolve(obj);
   }
   return transformer;
@@ -137,13 +149,10 @@ async function transformCollaborators(report) {
   return { collaborators };
 }
 
-// 'attachments\n' +
-// 'specialistNextSteps\n' +
-// 'granteeNextSteps\n' +
 const arBuilders = [
   'displayId',
-  transformAuthorEmail,
-  transformApprovingManagerName,
+  transformAuthor,
+  transformApprovingManager,
   transformLastUpdatedBy,
   'requester',
   transformCollaborators,
@@ -164,6 +173,7 @@ const arBuilders = [
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
+  transformManyModel('attachments', 'originalFileName'),
   transformGoalsAndObjectives,
   transformManyModel('granteeNextSteps', 'note'),
   transformManyModel('specialistNextSteps', 'note'),
@@ -178,7 +188,7 @@ async function activityReportToCsvRecord(report) {
     if (typeof x === 'function') {
       return x(report);
     }
-    if (typeof x === 'string') {
+    if (typeof x === 'string' && ({}).hasOwnProperty.call(report.dataValues, x)) {
       return transformSimpleValue(report, x);
     }
     return {};
@@ -189,5 +199,5 @@ async function activityReportToCsvRecord(report) {
 }
 
 export {
-  activityReportToCsvRecord,
+  activityReportToCsvRecord as default,
 };
