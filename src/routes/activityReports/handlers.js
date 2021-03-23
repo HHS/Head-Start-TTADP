@@ -34,7 +34,7 @@ export async function updateLegacyFields(req, res) {
       res.sendStatus(404);
       return;
     }
-    const user = await userById(req.session.userId);
+    // no authorization here because the entire route is only available to admins
     const imported = { ...report.imported, ...req.body };
     logger.debug(`Saving new data: ${JSON.stringify(imported, null, 2)}`);
 

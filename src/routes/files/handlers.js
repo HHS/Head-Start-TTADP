@@ -96,8 +96,7 @@ export default async function uploadHandler(req, res) {
         size,
       );
     } catch (err) {
-      await handleErrors(req, res, err, logContext);
-      return;
+      return handleErrors(req, res, err, logContext);
     }
     try {
       const uploadedFile = await uploadFile(buffer, fileName, type);
@@ -108,17 +107,14 @@ export default async function uploadHandler(req, res) {
       if (metadata) {
         await updateStatus(metadata.id, UPLOAD_FAILED);
       }
-      await handleErrors(req, res, err, logContext);
-      return;
+      return handleErrors(req, res, err, logContext);
     }
     try {
       await addToScanQueue({ key: metadata.key });
-      await updateStatus(metadata.id, QUEUED);
+      return updateStatus(metadata.id, QUEUED);
     } catch (err) {
-      if (metadata) {
-        await updateStatus(metadata.id, QUEUEING_FAILED);
-        auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
-      }
+      auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+      return updateStatus(metadata.id, QUEUEING_FAILED);
     }
   });
 }

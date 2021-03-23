@@ -7,11 +7,10 @@ import db, {
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as queue from '../../services/scanQueue';
-import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import * as Files from '../../services/files';
-import { validateUserAuthForAdmin, validateUserAuthForAccess } from '../../services/accessValidation';
+import { validateUserAuthForAdmin } from '../../services/accessValidation';
 
 jest.mock('../../policies/activityReport');
 jest.mock('../../services/accessValidation', () => ({
@@ -161,7 +160,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'reportId required' })
+        .expect(400, { error: 'reportId required' });
       await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {
