@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import { userByEmail } from './users';
 import { ActivityReport, ActivityReportCollaborator } from '../models';
-import { logger } from '../logger';
+import { auditLogger, logger } from '../logger';
+import newQueue from '../lib/queue';
 
 /*
 * Returns all legacy reports that either:
@@ -121,28 +122,52 @@ export const reconcileCollaborators = async (report) => {
 };
 
 export default async function reconcileLegacyReports() {
+  logger.info('Starting legacy report reconciliation');
   // Get all reports that might need reconciliation
   const reports = await getLegacyReports();
+  logger.info(`found ${reports.length} reports that may need reconciliation`);
   // Array to help promises from reports that are getting reconciled
-  const updates = [];
-  try {
-    reports.forEach((report) => {
-      // if there is no author, try to reconcile the author
-      if (!report.userId) {
-        updates.push(reconcileAuthors(report));
-      }
-      // if there is no approving manager, try to reconcile the approving manager
-      if (!report.approvingManagerId) {
-        updates.push(reconcileApprovingManagers(report));
-      }
-      // if the report has collaborators, check if collaborators need reconcilliation.
-      if (report.imported.otherSpecialists !== '') {
-        updates.push(reconcileCollaborators(report));
-      }
-    });
-    // let all promises resolve
-    await Promise.all(updates);
-  } catch (err) {
-    logger.error(err);
+  if (reports) {
+    const updates = [];
+    try {
+      reports.forEach((report) => {
+        // if there is no author, try to reconcile the author
+        if (!report.userId) {
+          updates.push(reconcileAuthors(report));
+        }
+        // if there is no approving manager, try to reconcile the approving manager
+        if (!report.approvingManagerId) {
+          updates.push(reconcileApprovingManagers(report));
+        }
+        // if the report has collaborators, check if collaborators need reconcilliation.
+        if (report.imported.otherSpecialists !== '') {
+          updates.push(reconcileCollaborators(report));
+        }
+      });
+      // let all promises resolve
+      await Promise.all(updates);
+    } catch (err) {
+      logger.error(err);
+    }
   }
+  return 'done';
 }
+
+export const reconciliationQueue = newQueue('reconcile');
+
+// Checks if this job is already queued and adds it if it isn't
+const populateReconciliationQueue = async () => {
+  try {
+    const depth = await reconciliationQueue.count();
+    if (depth < 1) {
+      // To test, uncomment the following line and comment out the one below.
+      // that will make it run every minute instead of every day at 2 am.
+      // await reconciliationQueue.add('legacyReports', {}, { repeat: { cron: '* * * * *' } });
+      await reconciliationQueue.add('legacyReports', {}, { repeat: { cron: '0 2 * * *' } });
+    }
+  } catch (e) {
+    auditLogger.error(e);
+  }
+};
+
+populateReconciliationQueue();
