@@ -585,3 +585,68 @@ export async function possibleRecipients(regionId) {
   });
   return { grants, nonGrantees };
 }
+
+/**
+ * Fetches ActivityReports for downloading
+ * using sequelize.literal for several associated fields based on the following
+ * https://github.com/sequelize/sequelize/issues/11288
+ *
+ * @param {*} sortBy - field to sort by; default updatedAt
+ * @param {*} sortDir - order: either ascending or descending; default desc
+ * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
+ */
+export async function getDownloadableActivityReports(readRegions, {
+  sortBy = 'updatedAt', sortDir = 'desc',
+}) {
+  const regions = readRegions || [];
+
+  // TODO: What limits? multiple `id`s. Filters?
+  const result = await ActivityReport.findAndCountAll(
+    {
+      where: { regionId: regions, imported: null },
+      attributes: { exclude: ['imported', 'legacyId'] },
+      include: [
+        {
+          model: ActivityRecipient,
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
+          as: 'activityRecipients',
+          required: false,
+          include: [
+            {
+              model: Grant,
+              attributes: ['id', 'number'],
+              as: 'grant',
+              required: false,
+              include: [
+                {
+                  model: Grantee,
+                  as: 'grantee',
+                  attributes: ['name'],
+                },
+              ],
+            },
+            {
+              model: NonGrantee,
+              as: 'nonGrantee',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: User,
+          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          as: 'author',
+        },
+        {
+          model: User,
+          attributes: ['id', 'name', 'role', 'fullName'],
+          as: 'collaborators',
+          through: { attributes: [] },
+        },
+      ],
+      order: orderReportsBy(sortBy, sortDir),
+      distinct: true,
+    },
+  );
+  return result;
+}

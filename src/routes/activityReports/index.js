@@ -12,6 +12,7 @@ import {
   reviewReport,
   resetToDraft,
   getLegacyReport,
+  downloadReports,
 } from './handlers';
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
 router.get('/alerts', getReportAlerts);
 router.get('/legacy/:legacyReportId', getLegacyReport);
+router.get('/download', downloadReports);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
