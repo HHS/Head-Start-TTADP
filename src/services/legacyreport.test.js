@@ -94,7 +94,7 @@ describe('reconcile legacy reports', () => {
     await User.destroy({
       where: { id: [mockUser1.id, mockUser2.id, mockUser3.id, mockManager.id] },
     });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
   it('adds an author if there is one', async () => {
     await reconcileAuthors(mockReport1);

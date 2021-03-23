@@ -65,7 +65,11 @@ export const reconcileCollaborators = async (report) => {
   try {
     const collaborators = await ActivityReportCollaborator
       .findAll({ where: { activityReportId: report.id } });
-    const otherSpecialists = report.imported.otherSpecialists.split(',').filter((j) => j !== '').map((i) => i.toLowerCase().trim());
+    // In legacy reports, specialists are in a single column seperated by commas.
+    // First, get a list of other specialists and split on commas eliminating any blanks.
+    const splitOtherSpecialists = report.imported.otherSpecialists.split(',').filter((j) => j !== '');
+    // Next we map the other specialists to lower case and trim whitespace to standardize them.
+    const otherSpecialists = splitOtherSpecialists.map((i) => i.toLowerCase().trim());
     if (otherSpecialists.length !== collaborators.length) {
       const users = [];
       otherSpecialists.forEach((specialist) => {
@@ -80,6 +84,9 @@ export const reconcileCollaborators = async (report) => {
         }
       });
       const newCollaborators = await Promise.all(pendingCollaborators);
+      // findOrCreate returns an array with the second value being a boolean
+      // which is true if a new object is created. This counts the number of objects where
+      // c[1] is true
       const numberOfNewCollaborators = newCollaborators.filter((c) => c[1]).length;
       if (numberOfNewCollaborators > 0) {
         logger.info(`Added ${numberOfNewCollaborators} collaborator for report ${report.displayId}`);
