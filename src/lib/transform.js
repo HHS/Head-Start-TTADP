@@ -111,19 +111,19 @@ async function transformGoalsAndObjectives(report) {
   return goalsAndObjectives;
 }
 
-// function transformManyModel(field, prop) {
-//   async function transformer(instance) {
-//     const records = await instance.get(field);
-//     const value = records.map((r) => (({}).hasOwnProperty.call(r, prop) ? r[prop] : '')).join('\n');
-//     const obj = {};
-//     Object.defineProperty(obj, field, {
-//       value,
-//       enumerable: true,
-//     });
-//     return Promise.resolve(obj);
-//   }
-//   return transformer;
-// }
+function transformManyModel(field, prop) {
+  async function transformer(instance) {
+    const records = await instance.get(field);
+    const value = records.map((r) => (r[prop] || '')).join('\n');
+    const obj = {};
+    Object.defineProperty(obj, field, {
+      value,
+      enumerable: true,
+    });
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
 
 async function transformActivityRecipients(report) {
   const records = await report.get('activityRecipients');
@@ -165,8 +165,8 @@ const arBuilders = [
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
   transformGoalsAndObjectives,
-  // transformManyModel('granteeNextSteps', 'note'),
-  // transformManyModel('specialistNextSteps', 'note'),
+  transformManyModel('granteeNextSteps', 'note'),
+  transformManyModel('specialistNextSteps', 'note'),
   'context',
   'managerNotes',
   'additionalNotes',
