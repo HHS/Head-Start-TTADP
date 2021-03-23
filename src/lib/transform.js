@@ -16,33 +16,28 @@ function transformSimpleValue(instance, field) {
 }
 
 /*
- * @param {ActivityReport} ActivityReport instance
- * @returns {Promise<object>} author name
+ * Generates a function that can transform values of a related model
+ * @param {string} field The field of the related model
+ * @param {string} key The key on the related model to transform
+ * @returns {function} A function that will perform the transformation
  */
-async function transformAuthor(report) {
-  const authorRecord = await report.get('author');
-  const author = authorRecord ? authorRecord.get('name') : '';
-  return { author };
-}
-
-/*
- * @param {ActivityReport} ActivityReport instance
- * @returns {Promise<object>} approving manager name
- */
-async function transformApprovingManager(report) {
-  const managerRecord = await report.get('approvingManager');
-  const approvingManager = managerRecord ? managerRecord.get('name') : '';
-  return { approvingManager };
-}
-
-/*
- * @param {ActivityReport} ActivityReport instance
- * @returns {Promise<object>} Name of user who last updated report
- */
-async function transformLastUpdatedBy(report) {
-  const lastUpdatedByRecord = await report.get('lastUpdatedBy');
-  const lastUpdatedBy = lastUpdatedByRecord ? lastUpdatedByRecord.get('name') : '';
-  return { lastUpdatedBy };
+function transformRelatedModel(field, prop) {
+  async function transformer(instance) {
+    const obj = {};
+    let records = await instance.get(field);
+    if (records) {
+      if (!Array.isArray(records)) {
+        records = [records];
+      }
+      const value = records.map((r) => (r[prop] || '')).join('\n');
+      Object.defineProperty(obj, field, {
+        value,
+        enumerable: true,
+      });
+    }
+    return Promise.resolve(obj);
+  }
+  return transformer;
 }
 
 /*
@@ -121,41 +116,13 @@ async function transformGoalsAndObjectives(report) {
   return obj;
 }
 
-function transformManyModel(field, prop) {
-  async function transformer(instance) {
-    const obj = {};
-    const records = await instance.get(field);
-    if (records) {
-      const value = records.map((r) => (r[prop] || '')).join('\n');
-      Object.defineProperty(obj, field, {
-        value,
-        enumerable: true,
-      });
-    }
-    return Promise.resolve(obj);
-  }
-  return transformer;
-}
-
-async function transformActivityRecipients(report) {
-  const records = await report.get('activityRecipients');
-  const activityRecipients = records.map((r) => r.name || '').join('\n');
-  return { activityRecipients };
-}
-
-async function transformCollaborators(report) {
-  const records = await report.get('collaborators');
-  const collaborators = records.map((r) => r.name || '').join('\n');
-  return { collaborators };
-}
-
 const arBuilders = [
   'displayId',
-  transformAuthor,
-  transformApprovingManager,
-  transformLastUpdatedBy,
+  transformRelatedModel('author', 'name'),
+  transformRelatedModel('approvingManager', 'name'),
+  transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
-  transformCollaborators,
+  transformRelatedModel('collaborators', 'name'),
   'programTypes',
   'targetPopulations',
   'virtualDeliveryType',
@@ -169,14 +136,14 @@ const arBuilders = [
   'duration',
   'endDate',
   'startDate',
-  transformActivityRecipients,
+  transformRelatedModel('activityRecipients', 'name'),
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
-  transformManyModel('attachments', 'originalFileName'),
+  transformRelatedModel('attachments', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformManyModel('granteeNextSteps', 'note'),
-  transformManyModel('specialistNextSteps', 'note'),
+  transformRelatedModel('granteeNextSteps', 'note'),
+  transformRelatedModel('specialistNextSteps', 'note'),
   'context',
   'managerNotes',
   'additionalNotes',
