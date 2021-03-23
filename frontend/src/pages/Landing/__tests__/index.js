@@ -21,7 +21,7 @@ const renderLanding = (user) => {
 };
 
 describe('Landing Page', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
       { count: 2, rows: activityReports },
@@ -39,6 +39,7 @@ describe('Landing Page', () => {
     };
 
     renderLanding(user);
+    await screen.findByText('Activity Reports');
   });
   afterEach(() => fetchMock.restore());
 
@@ -169,7 +170,7 @@ describe('Landing Page', () => {
 describe('Landing Page sorting', () => {
   afterEach(() => fetchMock.restore());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 0, alerts: [] });
     fetchMock.get(
@@ -187,6 +188,7 @@ describe('Landing Page sorting', () => {
     };
 
     renderLanding(user);
+    await screen.findByText('Activity Reports');
   });
 
   it('clicking status column header will sort by status', async () => {
@@ -379,7 +381,7 @@ describe('Landing Page sorting', () => {
 describe('My alerts sorting', () => {
   afterEach(() => fetchMock.restore());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
@@ -395,6 +397,7 @@ describe('My alerts sorting', () => {
     };
 
     renderLanding(user);
+    await screen.findByText('Activity Reports');
   });
 
   it('is enabled for Status', async () => {
