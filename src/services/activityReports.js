@@ -604,7 +604,7 @@ export async function getDownloadableActivityReports(readRegions, {
   const result = await ActivityReport.findAndCountAll(
     {
       where: { regionId: regions, imported: null },
-      attributes: { exclude: ['imported', 'legacyId'] },
+      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
       include: [
         {
           model: ActivityRecipient,
@@ -633,6 +633,28 @@ export async function getDownloadableActivityReports(readRegions, {
           ],
         },
         {
+          model: Objective,
+          as: 'objectives',
+          include: [{
+            model: Goal,
+            as: 'goal',
+            include: [{
+              model: Objective,
+              as: 'objectives',
+            }],
+          }],
+        },
+        {
+          model: File,
+          where: {
+            status: {
+              [Op.ne]: 'UPLOAD_FAILED',
+            },
+          },
+          as: 'attachments',
+          required: false,
+        },
+        {
           model: User,
           attributes: ['name', 'role', 'fullName', 'homeRegionId'],
           as: 'author',
@@ -642,6 +664,28 @@ export async function getDownloadableActivityReports(readRegions, {
           attributes: ['id', 'name', 'role', 'fullName'],
           as: 'collaborators',
           through: { attributes: [] },
+        },
+        {
+          model: NextStep,
+          where: {
+            noteType: {
+              [Op.eq]: 'SPECIALIST',
+            },
+          },
+          attributes: ['note', 'id'],
+          as: 'specialistNextSteps',
+          required: false,
+        },
+        {
+          model: NextStep,
+          where: {
+            noteType: {
+              [Op.eq]: 'GRANTEE',
+            },
+          },
+          attributes: ['note', 'id'],
+          as: 'granteeNextSteps',
+          required: false,
         },
       ],
       order: orderReportsBy(sortBy, sortDir),

@@ -188,7 +188,7 @@ async function activityReportToCsvRecord(report) {
     if (typeof x === 'function') {
       return x(report);
     }
-    if (typeof x === 'string' && ({}).hasOwnProperty.call(report.dataValues, x)) {
+    if (typeof x === 'string') {
       return transformSimpleValue(report, x);
     }
     return {};
