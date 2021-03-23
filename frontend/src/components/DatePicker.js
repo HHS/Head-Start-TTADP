@@ -61,6 +61,8 @@ const DateInput = ({
                 onDateChange={(d) => {
                   const newDate = d ? d.format(dateFmt) : d;
                   onChange(newDate);
+                  const input = document.getElementById(name);
+                  if (input) input.focus();
                 }}
                 onFocusChange={({ focused }) => {
                   if (!focused) {
