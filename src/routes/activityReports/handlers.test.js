@@ -105,24 +105,18 @@ describe('Activity Report handlers', () => {
   });
 
   describe('updateLegacyFields', () => {
-    const discussions = [{
-      comments: [{
-        text: 'My comment',
-        author: 'smartsheet.user@tta.com',
-        timestamp: '2021-03-22T12:30:00Z',
-      }],
-    }];
+    const comments = 'smartsheet.user@tta.com: My comment';
     const request = {
       ...mockRequest,
       params: { legacyReportId: 1 },
-      body: { discussions },
+      body: { comments },
     };
 
-    it('updates the import data with the discussion', async () => {
+    it('updates the import data with the comments', async () => {
       activityReportByLegacyId.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       await updateLegacyFields(request, mockResponse);
-      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { discussions } }, report);
+      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { comments } }, report);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
     });
 
