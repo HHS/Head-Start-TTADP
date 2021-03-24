@@ -596,11 +596,12 @@ export async function getDownloadableActivityReports(readRegions, {
   report = [],
 }) {
   const regions = readRegions || [];
-  const reportIds = Array.isArray(report) ? report : [report];
+  // Create a Set to ensure unique ordered values
+  const reportIds = Array.isArray(report) ? new Set(report) : new Set([report]);
 
   const result = await ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions, imported: null, id: { [Op.in]: reportIds } },
+      where: { regionId: regions, imported: null, id: { [Op.in]: [...reportIds] } },
       attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
       include: [
         {
@@ -688,5 +689,14 @@ export async function getDownloadableActivityReports(readRegions, {
       distinct: true,
     },
   );
+  // Hack together manual sort until we can figure out how to do custom SQL
+  const sortedRows = [];
+  reportIds.forEach((id) => {
+    const match = result.rows.find((el) => el.id.toString() === id);
+    if (match) {
+      sortedRows.push(match);
+    }
+  });
+  result.rows = sortedRows;
   return result;
 }
