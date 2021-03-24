@@ -116,8 +116,6 @@ describe('reconcile legacy reports', () => {
   it('tests the reconciliation process', async () => {
     await reconcileLegacyReports();
     mockReport2 = await ActivityReport.findOne({ where: { id: mockReport2.id } });
-    /* eslint-disable-next-line no-console */
-    console.log(mockReport2);
     expect(mockReport2.userId).toBe(user2.id);
     expect(mockReport2.approvingManagerId).toBe(manager.id);
     const collaborators = await ActivityReportCollaborator.findAll({
