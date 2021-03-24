@@ -36,10 +36,11 @@ describe('UserInfo', () => {
   });
 
   describe('with a full user object', () => {
+    let user;
     beforeEach(() => {
-      const user = {
+      user = {
         id: 8192,
-        email: 'email',
+        email: 'user8192@test.gov',
         hsesUsername: 'User8192',
         hsesUserId: '8192',
         name: 'User8192',
@@ -52,27 +53,27 @@ describe('UserInfo', () => {
     });
 
     test('has correct email', async () => {
-      expect(screen.getByLabelText('Email')).toHaveValue('email');
+      expect(screen.getByLabelText('Email')).toHaveValue(user.email);
     });
 
     test('has correct username', () => {
-      expect(screen.getByTestId('hses-username')).toHaveTextContent('User8192');
+      expect(screen.getByTestId('hses-username')).toHaveTextContent(user.hsesUsername);
     });
 
     test('has correct fullName', () => {
-      expect(screen.getByLabelText('Full Name')).toHaveValue('first last');
+      expect(screen.getByLabelText('Full Name')).toHaveValue(user.name);
     });
 
     test('has correct region', () => {
-      expect(screen.getByLabelText('Region')).toHaveValue('1');
+      expect(screen.getByLabelText('Region')).toHaveValue(user.homeRegionId);
     });
 
     test('has correct jobTitle', () => {
-      expect(screen.getByLabelText('Role')).toHaveValue('Grantee Specialist');
+      expect(screen.getByLabelText('Role')).toHaveValue(user.role);
     });
 
     test('has correct lastLogin', () => {
-      expect(screen.getByTestId('last-login')).toHaveTextContent('Feb 9, 2021 11:15 AM -05:00');
+      expect(screen.getByTestId('last-login')).toHaveTextContent(user.lastLogin);
     });
   });
 });
