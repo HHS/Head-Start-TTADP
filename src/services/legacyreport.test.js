@@ -37,7 +37,7 @@ const user1 = {
   id: 4096,
   homeRegionId: 1,
   name: 'user',
-  hsesUsername: 'user',
+  hsesUsername: 'user4096',
   hsesUserId: '4096',
   email: 'user4096@test.gov',
 };
@@ -46,7 +46,7 @@ const user2 = {
   id: 4097,
   homeRegionId: 1,
   name: 'user2',
-  hsesUsername: 'user2',
+  hsesUsername: 'user4097',
   hsesUserId: '4097',
   email: 'user4097@test.gov',
 };
@@ -55,7 +55,7 @@ const user3 = {
   id: 4098,
   homeRegionId: 1,
   name: 'user3',
-  hsesUsername: 'user3',
+  hsesUsername: 'user4098',
   hsesUserId: '4098',
   email: 'user4098@test.gov',
 };
@@ -64,7 +64,7 @@ const manager = {
   id: 4099,
   homeRegionId: 1,
   name: 'manager',
-  hsesUsername: 'manager',
+  hsesUsername: 'manager4099',
   hsesUserId: '4099',
   email: 'manager4099@test.gov',
 };

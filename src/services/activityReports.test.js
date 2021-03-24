@@ -24,7 +24,7 @@ const mockUser = {
   id: 1000,
   homeRegionId: 1,
   name: 'user',
-  hsesUsername: 'user',
+  hsesUsername: 'user1000',
   hsesUserId: '1000',
 };
 
