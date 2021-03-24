@@ -116,7 +116,7 @@ async function transformGoalsAndObjectives(report) {
   return obj;
 }
 
-const arBuilders = [
+const arTransformers = [
   'displayId',
   transformRelatedModel('author', 'name'),
   transformRelatedModel('approvingManager', 'name'),
@@ -150,7 +150,7 @@ const arBuilders = [
   'lastSaved',
 ];
 
-async function activityReportToCsvRecord(report) {
+async function activityReportToCsvRecord(report, transformers = arTransformers) {
   const callFunctionOrValueGetter = (x) => {
     if (typeof x === 'function') {
       return x(report);
@@ -160,11 +160,13 @@ async function activityReportToCsvRecord(report) {
     }
     return {};
   };
-  const recordObjects = await Promise.all(arBuilders.map(callFunctionOrValueGetter));
+  const recordObjects = await Promise.all(transformers.map(callFunctionOrValueGetter));
   const record = recordObjects.reduce((obj, value) => Object.assign(obj, value), {});
   return record;
 }
 
 export {
-  activityReportToCsvRecord as default,
+  activityReportToCsvRecord,
+  arTransformers,
+  makeGoalsAndObjectivesObject,
 };
