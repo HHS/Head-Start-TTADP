@@ -18,7 +18,7 @@ import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
-import activityReportToCsvRecord from '../../lib/transform';
+import { activityReportToCsvRecord } from '../../lib/transform';
 
 const { APPROVE_REPORTS } = SCOPES;
 
