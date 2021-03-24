@@ -6,6 +6,7 @@ import reconcileLegacyReports,
 } from './legacyreports';
 import db, { User, ActivityReport, ActivityReportCollaborator } from '../models';
 import { REPORT_STATUSES } from '../constants';
+import { activityReportByLegacyId } from './activityReports';
 
 const report1 = {
   activityRecipientType: 'grantee',
@@ -98,13 +99,13 @@ describe('reconcile legacy reports', () => {
   });
   it('adds an author if there is one', async () => {
     await reconcileAuthors(mockReport1);
-    mockReport1 = await ActivityReport.findOne({ where: { id: mockReport1.id } });
-    expect(mockReport1.userId).toBe(mockUser1.id);
+    const ret = await activityReportByLegacyId(report1.legacyId);
+    expect(ret.userId).toBe(mockUser1.id);
   });
   it('adds an approvingManager if there is one', async () => {
     await reconcileApprovingManagers(mockReport1);
-    mockReport1 = await ActivityReport.findOne({ where: { id: mockReport1.id } });
-    expect(mockReport1.approvingManagerId).toBe(manager.id);
+    const ret = await activityReportByLegacyId(report1.legacyId);
+    expect(ret.approvingManagerId).toBe(manager.id);
   });
   it('adds collaborators', async () => {
     await reconcileCollaborators(mockReport1);
@@ -115,7 +116,7 @@ describe('reconcile legacy reports', () => {
   });
   it('tests the reconciliation process', async () => {
     await reconcileLegacyReports();
-    const ret = await ActivityReport.findOne({ where: { legacyId: report2.legacyId } });
+    const ret = await activityReportByLegacyId(report2.legacyId);
     expect(ret.userId).toBe(user2.id);
     expect(ret.approvingManagerId).toBe(manager.id);
     const collaborators = await ActivityReportCollaborator.findAll({
