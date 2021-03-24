@@ -21,12 +21,13 @@ describe('Users DB service', () => {
     beforeEach(async () => {
       await User.create({
         id: 50,
-        name: 'user 1',
+        name: 'user 50',
         hsesUsername: 'user50',
+        hsesUserId: '50',
       });
       await User.create({
         id: 51,
-        name: 'user 2',
+        name: 'user 51',
         hsesUsername: 'user51',
         hsesUserId: '51',
       });

@@ -38,9 +38,11 @@ describe('UserInfo', () => {
   describe('with a full user object', () => {
     beforeEach(() => {
       const user = {
+        id: 8192,
         email: 'email',
-        hsesUsername: 'User1',
-        name: 'first last',
+        hsesUsername: 'User8192',
+        hsesUserId: '8192',
+        name: 'User8192',
         homeRegionId: 1,
         role: 'Grantee Specialist',
         lastLogin: '2021-02-09T16:15:00Z',
