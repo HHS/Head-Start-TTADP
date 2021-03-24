@@ -115,11 +115,11 @@ describe('reconcile legacy reports', () => {
   });
   it('tests the reconciliation process', async () => {
     await reconcileLegacyReports();
-    mockReport2 = await ActivityReport.findOne({ where: { id: mockReport2.id } });
-    expect(mockReport2.userId).toBe(user2.id);
-    expect(mockReport2.approvingManagerId).toBe(manager.id);
+    const ret = await ActivityReport.findOne({ where: { id: mockReport2.id } });
+    expect(ret.userId).toBe(user2.id);
+    expect(ret.approvingManagerId).toBe(manager.id);
     const collaborators = await ActivityReportCollaborator.findAll({
-      where: { activityReportId: mockReport2.id },
+      where: { activityReportId: ret.id },
     });
     expect(collaborators.length).toBe(1);
   });
