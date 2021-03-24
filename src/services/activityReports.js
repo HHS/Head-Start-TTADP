@@ -588,22 +588,19 @@ export async function possibleRecipients(regionId) {
 
 /**
  * Fetches ActivityReports for downloading
- * using sequelize.literal for several associated fields based on the following
- * https://github.com/sequelize/sequelize/issues/11288
  *
- * @param {*} sortBy - field to sort by; default updatedAt
- * @param {*} sortDir - order: either ascending or descending; default desc
+ * @param {Array<int>} report - array of report ids
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export async function getDownloadableActivityReports(readRegions, {
-  sortBy = 'updatedAt', sortDir = 'desc',
+  report = [],
 }) {
   const regions = readRegions || [];
+  const reportIds = Array.isArray(report) ? report : [report];
 
-  // TODO: What limits? multiple `id`s. Filters?
   const result = await ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions, imported: null },
+      where: { regionId: regions, imported: null, id: { [Op.in]: reportIds } },
       attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
       include: [
         {
@@ -688,7 +685,6 @@ export async function getDownloadableActivityReports(readRegions, {
           required: false,
         },
       ],
-      order: orderReportsBy(sortBy, sortDir),
       distinct: true,
     },
   );
