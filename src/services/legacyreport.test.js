@@ -118,6 +118,8 @@ describe('reconcile legacy reports', () => {
     const ret = await ActivityReport.findOne({ where: { id: mockReport2.id } });
     /* eslint-disable-next-line no-console */
     console.log(mockReport2);
+    /* eslint-disable-next-line no-console */
+    console.log(ret);
     expect(ret.userId).toBe(user2.id);
     expect(ret.approvingManagerId).toBe(manager.id);
     const collaborators = await ActivityReportCollaborator.findAll({
