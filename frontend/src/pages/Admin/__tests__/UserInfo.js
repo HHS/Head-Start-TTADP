@@ -56,7 +56,7 @@ describe('UserInfo', () => {
     });
 
     test('has correct username', () => {
-      expect(screen.getByTestId('hses-username')).toHaveTextContent('username');
+      expect(screen.getByTestId('hses-username')).toHaveTextContent('User8192');
     });
 
     test('has correct fullName', () => {
