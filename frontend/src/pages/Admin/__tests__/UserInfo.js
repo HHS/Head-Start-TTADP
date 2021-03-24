@@ -39,7 +39,7 @@ describe('UserInfo', () => {
     beforeEach(() => {
       const user = {
         email: 'email',
-        hsesUsername: 'username',
+        hsesUsername: 'User1',
         name: 'first last',
         homeRegionId: 1,
         role: 'Grantee Specialist',
