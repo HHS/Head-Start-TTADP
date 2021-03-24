@@ -40,7 +40,7 @@ describe('Users DB service', () => {
     it('retrieves the correct user', async () => {
       const user = await userById(50);
       expect(user.id).toBe(50);
-      expect(user.name).toBe('user 1');
+      expect(user.name).toBe('user 50');
     });
   });
   describe('userByEmail', () => {
