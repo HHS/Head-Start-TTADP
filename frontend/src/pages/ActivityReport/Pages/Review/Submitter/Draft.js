@@ -4,12 +4,13 @@ import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
-  Dropdown, Form, Fieldset, Textarea, Button,
+  Dropdown, Form, Fieldset, Button,
 } from '@trussworks/react-uswds';
 
 import IncompletePages from './IncompletePages';
 import { DECIMAL_BASE } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
+import RichEditor from '../../../../../components/RichEditor';
 
 const Draft = ({
   approvers,
@@ -19,7 +20,9 @@ const Draft = ({
   reportId,
   displayId,
 }) => {
-  const { watch, register, handleSubmit } = useFormContext();
+  const {
+    watch, register, handleSubmit,
+  } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
 
@@ -62,7 +65,9 @@ const Draft = ({
             name="additionalNotes"
             required={false}
           >
-            <Textarea inputRef={register} id="additionalNotes" name="additionalNotes" className={textAreaClass} />
+            <div className={`margin-top-1 ${textAreaClass}`}>
+              <RichEditor name="additionalNotes" id="additionalNotes" />
+            </div>
           </FormItem>
         </Fieldset>
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
