@@ -129,10 +129,10 @@ describe('Activity Reports DB service', () => {
     });
 
     it('creates a new report', async () => {
-      const beginningARCount = await ActivityReport.count();
+      const beginningARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
       const report = await createOrUpdate(reportObject);
-      const endARCount = await ActivityReport.count();
-      expect(endARCount - beginningARCount).toBe(1);
+      const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
+      expect(endARCount.length - beginningARCount.length).toBe(1);
       expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
     });
 
