@@ -598,7 +598,7 @@ export async function getDownloadableActivityReports(readRegions, {
   const regions = readRegions || [];
   // Create a Set to ensure unique ordered values
   const reportSet = Array.isArray(report) ? new Set(report) : new Set([report]);
-  const reportIds = [...reportSet].filter((i) => Number.isInteger(i));
+  const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
 
   const result = await ActivityReport.findAndCountAll(
     {
