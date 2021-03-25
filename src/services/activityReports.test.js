@@ -9,6 +9,7 @@ import {
   activityReports,
   activityReportAlerts,
   activityReportByLegacyId,
+  getDownloadableActivityReports,
 } from './activityReports';
 import { copyGoalsToGrants } from './goals';
 import { REPORT_STATUSES } from '../constants';
@@ -458,6 +459,70 @@ describe('Activity Reports DB service', () => {
     it('retrieves all recipients when not specifying region', async () => {
       const recipients = await possibleRecipients();
       expect(recipients.grants.length).toBe(11);
+    });
+  });
+
+  describe('getDownloadableActivityReports', () => {
+    beforeAll(async () => {
+      await User.findOrCreate({
+        where: {
+          id: mockUser.id,
+        },
+        defaults: mockUser,
+      });
+      await User.findOrCreate({
+        where: {
+          id: mockUserTwo.id,
+        },
+        defaults: mockUserTwo,
+      });
+    });
+
+    it('returns report when passed a single report id', async () => {
+      const mockReport = {
+        ...submittedReport,
+      };
+      const report = await ActivityReport.create(mockReport);
+      const result = await getDownloadableActivityReports([1], { report: report.id });
+      const { rows } = result;
+
+      expect(rows.length).toEqual(1);
+      expect(rows[0].id).toEqual(report.id);
+    });
+
+    it('excludes legacy reports', async () => {
+      const mockLegacyReport = {
+        ...reportObject,
+        imported: { foo: 'bar' },
+        legacyId: 'R14-AR-123456',
+      };
+      const legacyReport = await ActivityReport.create(mockLegacyReport);
+
+      const mockReport = {
+        ...submittedReport,
+      };
+      const report = await ActivityReport.create(mockReport);
+
+      const result = await getDownloadableActivityReports([1],
+        { report: [report.id, legacyReport.id] });
+      const { rows } = result;
+
+      expect(rows.length).toEqual(1);
+      expect(rows[0].id).not.toEqual(legacyReport.id);
+    });
+
+    it('ignores invalid report ids', async () => {
+      const mockReport = {
+        ...submittedReport,
+      };
+      const report = await ActivityReport.create(mockReport);
+
+      const result = await getDownloadableActivityReports([1],
+        { report: [report.id, 'invalidIdentifier'] });
+      const { rows } = result;
+
+      expect(rows.length).toEqual(1);
+      expect(rows[0].id).toEqual(report.id);
     });
   });
 });
