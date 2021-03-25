@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Fieldset, Label, Textarea,
-} from '@trussworks/react-uswds';
+import { Fieldset, Label } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
+import { Editor } from 'react-draft-wysiwyg';
+import { getEditorState } from '../../../utils';
 
-import ReviewItem from './Review/ReviewItem';
+import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
+import RichEditor from '../../../components/RichEditor';
 
 const GoalsObjectives = () => {
-  const {
-    register, watch,
-  } = useFormContext();
+  const { watch } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const recipientGrantee = activityRecipientType === 'grantee';
@@ -53,11 +52,9 @@ const GoalsObjectives = () => {
         )}
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
-        <Textarea
-          id="context"
-          name="context"
-          inputRef={register()}
-        />
+        <div className="margin-top-1">
+          <RichEditor name="context" id="context" />
+        </div>
       </Fieldset>
     </>
   );
@@ -81,7 +78,7 @@ const ReviewSection = () => {
         anchor="context"
         title="Context"
       >
-        <ReviewItem
+        <HtmlReviewItem
           label="Context"
           name="context"
         />
@@ -113,14 +110,18 @@ const ReviewSection = () => {
                           {objective.title}
                         </div>
                         <div>
-                          <span className="text-bold">TTA Provided:</span>
-                          {' '}
-                          {objective.ttaProvided}
-                        </div>
-                        <div>
                           <span className="text-bold">Status:</span>
                           {' '}
                           {objective.status}
+                        </div>
+                        <div>
+                          <span className="text-bold">TTA Provided:</span>
+                          {' '}
+                          <Editor
+                            readOnly
+                            toolbarHidden
+                            defaultEditorState={getEditorState(objective.ttaProvided)}
+                          />
                         </div>
                       </div>
                     ))}

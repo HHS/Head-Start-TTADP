@@ -209,6 +209,7 @@ function ActivityReport({
   };
 
   const onSave = async (data) => {
+    console.log(data);
     if (reportId.current === 'new') {
       const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
       reportId.current = savedReport.id;
