@@ -375,7 +375,7 @@ describe('Activity Reports DB service', () => {
         sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2,
       });
       expect(rows.length).toBe(2);
-      expect(rows[0].author.name).toBe('user1002');
+      expect(rows[0].author.name).toBe('user1000');
     });
 
     it('retrieves reports sorted by collaborators', async () => {
