@@ -308,7 +308,7 @@ export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
     const reportsWithCount = await getDownloadableActivityReports(readRegions, req.query);
-    const { format = 'json' } = req.query;
+    const { format = 'json' } = req.query || {};
 
     if (!reportsWithCount) {
       res.sendStatus(404);

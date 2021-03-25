@@ -3,7 +3,7 @@
  * @returns {function} Function that will return a simple value wrapped in a Promise
  */
 function transformSimpleValue(instance, field) {
-  let value = instance.get(field);
+  let value = instance[field];
   if (value && Array.isArray(value)) {
     value = value.join('\n');
   }
@@ -24,7 +24,7 @@ function transformSimpleValue(instance, field) {
 function transformRelatedModel(field, prop) {
   async function transformer(instance) {
     const obj = {};
-    let records = await instance.get(field);
+    let records = await instance[field];
     if (records) {
       if (!Array.isArray(records)) {
         records = [records];
@@ -66,7 +66,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     const {
       goal, title, status, ttaProvided,
     } = objective;
-    const goalName = goal.get('name') || null;
+    const goalName = goal.name || null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
@@ -76,7 +76,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         enumerable: true,
       });
       Object.defineProperty(accum, `goal-${goalNum}-status`, {
-        value: goal.get('status'),
+        value: goal.status,
         enumerable: true,
       });
       objectiveNum = 1;
@@ -109,7 +109,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
  */
 async function transformGoalsAndObjectives(report) {
   let obj = {};
-  const objectiveRecords = await report.get('objectives');
+  const objectiveRecords = await report.objectives;
   if (objectiveRecords) {
     obj = makeGoalsAndObjectivesObject(objectiveRecords);
   }
