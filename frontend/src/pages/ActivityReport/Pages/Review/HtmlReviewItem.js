@@ -25,7 +25,7 @@ const HtmlReviewItem = ({ label, name, path }) => {
   }
 
   values = values.map((v) => {
-    const { contentBlocks, entityMap } = htmlToDraft(v);
+    const { contentBlocks, entityMap } = htmlToDraft(v || '');
     const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
     const defaultEditorState = EditorState.createWithContent(contentState);
     return (

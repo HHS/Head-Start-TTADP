@@ -51,7 +51,7 @@ export const isExternalURL = (url) => {
  */
 
 export const getEditorState = (name) => {
-  const { contentBlocks, entityMap } = htmlToDraft(name);
+  const { contentBlocks, entityMap } = htmlToDraft(name || '');
   const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
   return EditorState.createWithContent(contentState);
 };
