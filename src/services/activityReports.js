@@ -687,16 +687,8 @@ export async function getDownloadableActivityReports(readRegions, {
         },
       ],
       distinct: true,
+      order: [['id', 'DESC']],
     },
   );
-  // Hack together manual sort until we can figure out how to do custom SQL
-  const sortedRows = [];
-  reportIds.forEach((id) => {
-    const match = result.rows.find((el) => el.id.toString() === id);
-    if (match) {
-      sortedRows.push(match);
-    }
-  });
-  result.rows = sortedRows;
   return result;
 }
