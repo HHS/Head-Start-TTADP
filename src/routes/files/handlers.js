@@ -9,6 +9,7 @@ import createFileMetaData, {
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
 import { userById } from '../../services/users';
+import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
 
@@ -53,10 +54,10 @@ export const deleteHandler = async (req, res) => {
 
 export default async function uploadHandler(req, res) {
   const form = new multiparty.Form();
-  form.parse(req, async (error, fields, files) => {
+  await form.parse(req, async (error, fields, files) => {
     const { reportId } = fields;
     if (error) {
-      res.status(500).send(error);
+      return res.status(500).send(error);
     }
     let buffer;
     let metadata;
@@ -67,29 +68,25 @@ export default async function uploadHandler(req, res) {
     const report = await activityReportById(reportId);
     const authorization = new ActivityReportPolicy(user, report);
 
-    if (!authorization.canUpdate()) {
-      res.sendStatus(403);
-      return;
+    if (!(authorization.canUpdate() || (await validateUserAuthForAdmin(req.session.userId)))) {
+      return res.sendStatus(403);
     }
 
     try {
       if (!files.file) {
-        res.status(400).send({ error: 'file required' });
-        return;
+        return res.status(400).send({ error: 'file required' });
       }
       const { path, originalFilename, size } = files.file[0];
       if (!size) {
-        res.status(400).send({ error: 'fileSize required' });
+        return res.status(400).send({ error: 'fileSize required' });
       }
       if (!reportId) {
-        res.status(400).send({ error: 'reportId required' });
-        return;
+        return res.status(400).send({ error: 'reportId required' });
       }
       buffer = fs.readFileSync(path);
       type = await fileType.fromFile(path);
       if (!type) {
-        res.status(400).send('Could not determine file type');
-        return;
+        return res.status(400).send('Could not determine file type');
       }
       fileName = `${uuidv4()}.${type.ext}`;
       metadata = await createFileMetaData(
@@ -99,8 +96,7 @@ export default async function uploadHandler(req, res) {
         size,
       );
     } catch (err) {
-      await handleErrors(req, res, err, logContext);
-      return;
+      return handleErrors(req, res, err, logContext);
     }
     try {
       const uploadedFile = await uploadFile(buffer, fileName, type);
@@ -111,17 +107,14 @@ export default async function uploadHandler(req, res) {
       if (metadata) {
         await updateStatus(metadata.id, UPLOAD_FAILED);
       }
-      await handleErrors(req, res, err, logContext);
-      return;
+      return handleErrors(req, res, err, logContext);
     }
     try {
       await addToScanQueue({ key: metadata.key });
-      await updateStatus(metadata.id, QUEUED);
+      return updateStatus(metadata.id, QUEUED);
     } catch (err) {
-      if (metadata) {
-        await updateStatus(metadata.id, QUEUEING_FAILED);
-        auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
-      }
+      auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+      return updateStatus(metadata.id, QUEUEING_FAILED);
     }
   });
 }
