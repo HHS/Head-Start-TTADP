@@ -47,7 +47,12 @@ const processFile = async (key) => {
     form.append('name', key);
     form.append('file', data.Body, { filename: key, contentType: data.ContentType });
     const agent = new https.Agent({ rejectUnauthorized: false });
-    res = await axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, { httpsAgent: agent, headers: { ...form.getHeaders() } });
+    res = await axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, {
+      httpsAgent: agent,
+      headers: { ...form.getHeaders() },
+      // maxBodyLength: 30MB - matches MAX_FILE_SIZE on clamav application
+      maxBodyLength: 31457280,
+    });
     await updateFileStatus(key, APPROVED);
   } catch (error) {
     if (error.response && error.response.status === 406) {
