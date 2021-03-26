@@ -21,14 +21,14 @@ describe('Users DB service', () => {
     beforeEach(async () => {
       await User.create({
         id: 54,
-        name: 'user 1',
-        hsesUsername: 'user.1',
+        name: 'user 54',
+        hsesUsername: 'user.54',
         hsesUserId: '54',
       });
       await User.create({
         id: 55,
-        name: 'user 2',
-        hsesUsername: 'user.2',
+        name: 'user 55',
+        hsesUsername: 'user.55',
         hsesUserId: '55',
       });
     });
@@ -40,7 +40,7 @@ describe('Users DB service', () => {
     it('retrieves the correct user', async () => {
       const user = await userById(54);
       expect(user.id).toBe(54);
-      expect(user.name).toBe('user 1');
+      expect(user.name).toBe('user 54');
     });
   });
   describe('userByEmail', () => {
@@ -49,14 +49,14 @@ describe('Users DB service', () => {
         id: 50,
         name: 'user 50',
         email: 'user50@test.gov',
-        hsesUsername: 'user.50',
+        hsesUsername: 'user50',
         hsesUserId: '50',
       });
       await User.create({
         id: 51,
         name: 'user 51',
         email: 'user51@test.gov',
-        hsesUsername: 'user.51',
+        hsesUsername: 'user51',
         hsesUserId: '51',
       });
     });
