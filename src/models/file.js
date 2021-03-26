@@ -33,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
         'QUEUEING_FAILED',
         'SCANNING_QUEUED',
         'SCANNING',
+        'SCANNING_FAILED',
         'APPROVED',
         'REJECTED',
       ),

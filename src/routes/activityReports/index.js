@@ -12,7 +12,9 @@ import {
   reviewReport,
   resetToDraft,
   getLegacyReport,
+  updateLegacyFields,
 } from './handlers';
+import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 
 const router = express.Router();
 
@@ -26,6 +28,7 @@ router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
 router.get('/alerts', getReportAlerts);
 router.get('/legacy/:legacyReportId', getLegacyReport);
+router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, updateLegacyFields);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
