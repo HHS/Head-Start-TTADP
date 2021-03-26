@@ -163,7 +163,7 @@ describe('accessValidation', () => {
       const user = {
         hsesUserId: '33',
         email: 'invalid',
-        hsesUsername: 'username',
+        hsesUsername: 'user33',
         homeRegionId: 3,
       };
       await User.destroy({ where: { hsesUserId: '33' } });

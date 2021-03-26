@@ -10,7 +10,7 @@ const request = require('supertest');
 const mockUser = {
   id: 110,
   hsesUserId: '110',
-  hsesUsername: 'user',
+  hsesUsername: 'user110',
   homeRegionId: 1,
   permissions: [
     {
@@ -39,7 +39,7 @@ describe('apiDirectory tests', () => {
     process.env.CURRENT_USER_ID = 110;
   });
   afterAll(async () => {
-    await User.delete({ where: { id: mockUser.id } });
+    await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();
   });
 

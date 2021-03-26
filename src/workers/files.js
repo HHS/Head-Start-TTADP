@@ -6,6 +6,8 @@ import { File } from '../models';
 import { FILE_STATUSES } from '../constants';
 
 const {
+  SCANNING,
+  SCANNING_FAILED,
   APPROVED,
   REJECTED,
 } = FILE_STATUSES;
@@ -39,6 +41,7 @@ const updateFileStatus = async (key, fileStatus) => {
 const processFile = async (key) => {
   let res;
   try {
+    await updateFileStatus(key, SCANNING);
     const data = await downloadFile(key);
     const form = new FormData();
     form.append('name', key);
@@ -47,10 +50,11 @@ const processFile = async (key) => {
     res = await axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, { httpsAgent: agent, headers: { ...form.getHeaders() } });
     await updateFileStatus(key, APPROVED);
   } catch (error) {
-    if (error.response.status === 406) {
+    if (error.response && error.response.status === 406) {
       await updateFileStatus(key, REJECTED);
       return { status: error.response.status, data: error.response.data };
     }
+    await updateFileStatus(key, SCANNING_FAILED);
     throw error;
   }
   return ({ status: res.status, data: res.data });
