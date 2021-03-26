@@ -32,6 +32,15 @@ export async function userById(userId) {
   });
 }
 
+export async function userByEmail(email) {
+  return User.findOne({
+    attributes: ['id'],
+    where: {
+      email: { [Op.iLike]: email },
+    },
+  });
+}
+
 export async function usersWithPermissions(regions, scopes) {
   return User.findAll({
     attributes: ['id', 'name'],

@@ -3,7 +3,7 @@ import db, {
 } from '../models';
 
 import {
-  usersWithPermissions, userById,
+  usersWithPermissions, userById, userByEmail,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -13,22 +13,50 @@ describe('Users DB service', () => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
-    db.sequelize.close();
+  afterAll(async () => {
+    await db.sequelize.close();
   });
 
   describe('userById', () => {
     beforeEach(async () => {
       await User.create({
+        id: 54,
+        name: 'user 54',
+        hsesUsername: 'user.54',
+        hsesUserId: '54',
+      });
+      await User.create({
+        id: 55,
+        name: 'user 55',
+        hsesUsername: 'user.55',
+        hsesUserId: '55',
+      });
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: [54, 55] } });
+    });
+
+    it('retrieves the correct user', async () => {
+      const user = await userById(54);
+      expect(user.id).toBe(54);
+      expect(user.name).toBe('user 54');
+    });
+  });
+  describe('userByEmail', () => {
+    beforeEach(async () => {
+      await User.create({
         id: 50,
-        name: 'user 1',
-        hsesUsername: 'user.1',
+        name: 'user 50',
+        email: 'user50@test.gov',
+        hsesUsername: 'user50',
         hsesUserId: '50',
       });
       await User.create({
         id: 51,
-        name: 'user 2',
-        hsesUsername: 'user.2',
+        name: 'user 51',
+        email: 'user51@test.gov',
+        hsesUsername: 'user51',
         hsesUserId: '51',
       });
     });
@@ -38,9 +66,12 @@ describe('Users DB service', () => {
     });
 
     it('retrieves the correct user', async () => {
-      const user = await userById(50);
+      const user = await userByEmail('user50@test.gov');
       expect(user.id).toBe(50);
-      expect(user.name).toBe('user 1');
+    });
+    it('retrieves the correct user if case differs', async () => {
+      const user = await userByEmail('User51@Test.Gov');
+      expect(user.id).toBe(51);
     });
   });
 
