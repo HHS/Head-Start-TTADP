@@ -13,34 +13,34 @@ describe('Users DB service', () => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
-    db.sequelize.close();
+  afterAll(async () => {
+    await db.sequelize.close();
   });
 
   describe('userById', () => {
     beforeEach(async () => {
       await User.create({
-        id: 50,
-        name: 'user 50',
-        hsesUsername: 'user50',
-        hsesUserId: '50',
+        id: 54,
+        name: 'user 54',
+        hsesUsername: 'user.54',
+        hsesUserId: '54',
       });
       await User.create({
-        id: 51,
-        name: 'user 51',
-        hsesUsername: 'user51',
-        hsesUserId: '51',
+        id: 55,
+        name: 'user 55',
+        hsesUsername: 'user.55',
+        hsesUserId: '55',
       });
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51] } });
+      await User.destroy({ where: { id: [54, 55] } });
     });
 
     it('retrieves the correct user', async () => {
-      const user = await userById(50);
-      expect(user.id).toBe(50);
-      expect(user.name).toBe('user 50');
+      const user = await userById(54);
+      expect(user.id).toBe(54);
+      expect(user.name).toBe('user 54');
     });
   });
   describe('userByEmail', () => {
