@@ -144,5 +144,6 @@ export default async function reconcileLegacyReports() {
     await Promise.all(updates);
   } catch (err) {
     logger.error(err);
+    throw err;
   }
 }
