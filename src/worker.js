@@ -1,5 +1,5 @@
 /* eslint-disable import/first */
-// require('newrelic');
+require('newrelic');
 
 import {} from 'dotenv/config';
 import throng from 'throng';
@@ -31,11 +31,7 @@ function start() {
     .info('Legacy report reconciliation completed successfully'));
   reconciliationQueue.process('legacyReports', async (job) => {
     logger.info(`starting ${job}`);
-    try {
-      await reconcileLegacyReports();
-    } catch (e) {
-      auditLogger.error(e);
-    }
+    await reconcileLegacyReports();
   });
 }
 
