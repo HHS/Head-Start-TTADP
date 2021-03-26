@@ -23,15 +23,15 @@ const GRANTEE_ID = 16;
 const mockUser = {
   id: 1000,
   homeRegionId: 1,
-  name: 'user',
-  hsesUsername: 'user',
+  name: 'user1000',
+  hsesUsername: 'user1000',
   hsesUserId: '1000',
 };
 
 const mockUserTwo = {
   id: 1002,
   homeRegionId: 1,
-  name: 'a user',
+  name: 'user1002',
   hsesUserId: 1002,
   hsesUsername: 'Rex',
 };
@@ -129,10 +129,10 @@ describe('Activity Reports DB service', () => {
     });
 
     it('creates a new report', async () => {
-      const beginningARCount = await ActivityReport.count();
+      const beginningARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
       const report = await createOrUpdate(reportObject);
-      const endARCount = await ActivityReport.count();
-      expect(endARCount - beginningARCount).toBe(1);
+      const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
+      expect(endARCount.length - beginningARCount.length).toBe(1);
       expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
     });
 
@@ -147,7 +147,7 @@ describe('Activity Reports DB service', () => {
         collaborators: [{ id: mockUser.id }],
       });
       expect(report.collaborators.length).toBe(1);
-      expect(report.collaborators[0].name).toBe('user');
+      expect(report.collaborators[0].name).toBe('user1000');
     });
 
     it('handles notes being created', async () => {
@@ -375,7 +375,7 @@ describe('Activity Reports DB service', () => {
         sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2,
       });
       expect(rows.length).toBe(2);
-      expect(rows[0].author.name).toBe('a user');
+      expect(rows[0].author.name).toBe('user1000');
     });
 
     it('retrieves reports sorted by collaborators', async () => {
@@ -385,7 +385,7 @@ describe('Activity Reports DB service', () => {
         sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12,
       });
       expect(rows.length).toBe(6);
-      expect(rows[0].collaborators[0].name).toBe('user');
+      expect(rows[0].collaborators[0].name).toBe('user1000');
     });
 
     it('retrieves reports sorted by id', async () => {
