@@ -19,6 +19,7 @@ import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { activityReportToCsvRecord } from '../../lib/transform';
+import { logger } from '../../logger';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -27,6 +28,25 @@ const namespace = 'SERVICE:ACTIVITY_REPORTS';
 const logContext = {
   namespace,
 };
+
+export async function updateLegacyFields(req, res) {
+  try {
+    const { legacyReportId } = req.params;
+    const report = await activityReportByLegacyId(legacyReportId);
+    if (!report) {
+      res.sendStatus(404);
+      return;
+    }
+    // no authorization here because the entire route is only available to admins
+    const imported = { ...report.imported, ...req.body };
+    logger.debug(`Saving new data: ${JSON.stringify(imported, null, 2)}`);
+
+    const savedReport = await createOrUpdate({ imported }, report);
+    res.json(savedReport);
+  } catch (error) {
+    handleErrors(req, res, error, logContext);
+  }
+}
 
 export async function getLegacyReport(req, res) {
   try {
