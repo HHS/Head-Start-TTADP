@@ -187,7 +187,8 @@ function coerceInt(value) {
 function coerceReportId(value, region) {
   if (!value) return null;
   // R14 is a test region, and shouldn't be used in actual reportIds
-  return value.replace(invalidRegionRE, `R${region}`);
+  const paddedRegion = `${region}`.padStart(2, '0');
+  return value.replace(invalidRegionRE, `R${paddedRegion}`);
 }
 
 function parseGrantNumbers(value) {

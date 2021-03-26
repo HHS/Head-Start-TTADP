@@ -6,6 +6,8 @@ import { File } from '../models';
 import { FILE_STATUSES } from '../constants';
 
 const {
+  SCANNING,
+  SCANNING_FAILED,
   APPROVED,
   REJECTED,
 } = FILE_STATUSES;
@@ -39,18 +41,25 @@ const updateFileStatus = async (key, fileStatus) => {
 const processFile = async (key) => {
   let res;
   try {
+    await updateFileStatus(key, SCANNING);
     const data = await downloadFile(key);
     const form = new FormData();
     form.append('name', key);
     form.append('file', data.Body, { filename: key, contentType: data.ContentType });
     const agent = new https.Agent({ rejectUnauthorized: false });
-    res = await axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, { httpsAgent: agent, headers: { ...form.getHeaders() } });
+    res = await axios.post(`${process.env.CLAMAV_ENDPOINT}/scan`, form, {
+      httpsAgent: agent,
+      headers: { ...form.getHeaders() },
+      // maxBodyLength: 30MB - matches MAX_FILE_SIZE on clamav application
+      maxBodyLength: 31457280,
+    });
     await updateFileStatus(key, APPROVED);
   } catch (error) {
-    if (error.response.status === 406) {
+    if (error.response && error.response.status === 406) {
       await updateFileStatus(key, REJECTED);
       return { status: error.response.status, data: error.response.data };
     }
+    await updateFileStatus(key, SCANNING_FAILED);
     throw error;
   }
   return ({ status: res.status, data: res.data });
