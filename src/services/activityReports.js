@@ -175,6 +175,18 @@ export function activityReportByLegacyId(legacyId) {
     where: {
       legacyId,
     },
+    include: [
+      {
+        model: File,
+        where: {
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
+        },
+        as: 'attachments',
+        required: false,
+      },
+    ],
   });
 }
 

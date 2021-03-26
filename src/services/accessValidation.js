@@ -65,7 +65,12 @@ export async function validateUserAuthForAdmin(userId) {
         scopeId: ADMIN,
       },
     });
-    return userPermission !== null;
+    if (userPermission !== null) {
+      logger.info(`User ${userId} successfully checked ADMIN access`);
+      return true;
+    }
+    logger.warn(`User ${userId} unsuccessfully checked ADMIN access`);
+    return false;
   } catch (error) {
     logger.error(`${JSON.stringify({ ...logContext })} - ADMIN Access error - ${error}`);
     throw error;

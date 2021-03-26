@@ -3,17 +3,20 @@ import db, {
   File,
   ActivityReport,
   User,
-  Permission,
 } from '../../models';
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as queue from '../../services/scanQueue';
-import SCOPES from '../../middleware/scopeConstants';
 import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import * as Files from '../../services/files';
+import { validateUserAuthForAdmin } from '../../services/accessValidation';
 
 jest.mock('../../policies/activityReport');
+jest.mock('../../services/accessValidation', () => ({
+  validateUserAuthForAdmin: jest.fn().mockResolvedValue(false),
+  validateUserAuthForAccess: jest.fn().mockResolvedValue(true),
+}));
 
 const request = require('supertest');
 
@@ -26,23 +29,6 @@ const mockUser = {
   hsesUserId: '2046',
   hsesUsername: '2046',
   homeRegionId: 1,
-  permissions: [
-    {
-      userId: 2046,
-      regionId: 5,
-      scopeId: SCOPES.READ_WRITE_REPORTS,
-    },
-    {
-      userId: 2046,
-      regionId: 6,
-      scopeId: SCOPES.READ_WRITE_REPORTS,
-    },
-    {
-      userId: 2046,
-      regionId: 14,
-      scopeId: SCOPES.SITE_ACCESS,
-    },
-  ],
 };
 
 const mockSession = jest.fn();
@@ -63,7 +49,7 @@ describe('File Upload', () => {
   let report;
   let fileId;
   beforeAll(async () => {
-    user = await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
+    user = await User.create(mockUser);
     report = await ActivityReport.create(reportObject);
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
@@ -76,7 +62,7 @@ describe('File Upload', () => {
     process.env = ORIGINAL_ENV; // restore original env
     await db.sequelize.close();
   });
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
@@ -90,15 +76,35 @@ describe('File Upload', () => {
         canUpdate: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
-      await request(app)
+      const response = await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200)
-        .then((res) => {
-          fileId = res.body.id;
-          expect(uploadFile).toHaveBeenCalled();
-        });
+        .expect(200);
+      fileId = response.body.id;
+      expect(uploadFile).toHaveBeenCalled();
+      expect(mockAddToScanQueue).toHaveBeenCalled();
+      const file = await File.findOne({ where: { id: fileId } });
+      const uuid = file.dataValues.key.slice(0, -4);
+      expect(file.dataValues.id).toBe(fileId);
+      expect(file.dataValues.status).not.toBe(null);
+      expect(file.dataValues.originalFileName).toBe('testfile.pdf');
+      expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
+      expect(validate(uuid)).toBe(true);
+    });
+    it('allows an admin to upload a file', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => false,
+      }));
+      validateUserAuthForAdmin.mockResolvedValue(true);
+      uploadFile.mockResolvedValue({ key: 'key' });
+      const response = await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(200);
+      fileId = response.body.id;
+      expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
       const file = await File.findOne({ where: { id: fileId } });
       const uuid = file.dataValues.key.slice(0, -4);
@@ -154,10 +160,8 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'reportId required' })
-        .then(() => {
-          expect(uploadFile).not.toHaveBeenCalled();
-        });
+        .expect(400, { error: 'reportId required' });
+      await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -172,7 +176,7 @@ describe('File Upload', () => {
         });
     });
     it('tests an unauthorized upload', async () => {
-      jest.clearAllMocks();
+      validateUserAuthForAdmin.mockResolvedValue(false);
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => false,
       }));

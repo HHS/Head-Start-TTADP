@@ -40,6 +40,7 @@ const reportFields = {
   additionalNotesForThisActivity: 'Additional notes for this activity',
   manager: 'Manager',
   managerApproval: 'Manager approval',
+  comments: 'Comments',
   created: 'Time Created',
   createdBy: 'Created By',
   modified: 'Time Modified',
