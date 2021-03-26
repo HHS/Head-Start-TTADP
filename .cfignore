@@ -4,6 +4,7 @@ deployment_config/
 frontend/
 src/
 maintenance_page/
+smartsheet_scripts/
 terraform/
 hses.zip
 temp/
