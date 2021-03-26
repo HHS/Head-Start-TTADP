@@ -5,6 +5,7 @@ import { Alert, Table } from '@trussworks/react-uswds';
 import { map } from 'lodash';
 
 import Container from '../../components/Container';
+import FileReviewItem from '../ActivityReport/Pages/Review/FileReviewItem';
 import { legacyReportById } from '../../fetchers/activityReports';
 import reportColumns from './reportColumns';
 
@@ -45,7 +46,7 @@ function LegacyReport({ match }) {
     );
   }
 
-  const { imported } = legacyReport;
+  const { imported, attachments } = legacyReport;
   const entries = map(reportColumns, (display, field) => {
     const value = imported[field];
     return {
@@ -57,9 +58,9 @@ function LegacyReport({ match }) {
 
   const tableEntries = entries.filter((item) => item.value).map(({ field, display, value }) => (
     <tr key={field}>
-      <td className="text-top">
+      <th scope="row" className="text-top">
         {display}
-      </td>
+      </th>
       <td>
         {value.split('\n').map((string) => <div key={string} className="margin-top-05">{string}</div>)}
       </td>
@@ -90,6 +91,27 @@ function LegacyReport({ match }) {
           </thead>
           <tbody>
             {tableEntries}
+            {attachments && attachments.length > 0
+              && (
+              <tr>
+                <th scope="row" className="text-top">Attachments</th>
+                <td>
+                  {attachments.map(({
+                    id,
+                    originalFileName,
+                    url: { url },
+                    status,
+                  }) => (
+                    <FileReviewItem
+                      key={id}
+                      filename={originalFileName}
+                      url={url}
+                      status={status}
+                    />
+                  ))}
+                </td>
+              </tr>
+              )}
           </tbody>
         </Table>
       </Container>
