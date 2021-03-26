@@ -10,6 +10,7 @@ import {
   getReports,
   getReportAlerts,
   getLegacyReport,
+  updateLegacyFields,
 } from './handlers';
 import {
   activityReportById,
@@ -21,6 +22,7 @@ import {
   activityReportAlerts,
   activityReportByLegacyId,
 } from '../../services/activityReports';
+import { getUserReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
@@ -35,6 +37,8 @@ jest.mock('../../services/activityReports', () => ({
   activityReportAlerts: jest.fn(),
   activityReportByLegacyId: jest.fn(),
 }));
+
+jest.mock('../../services/accessValidation');
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -69,7 +73,7 @@ describe('Activity Report handlers', () => {
     jest.clearAllMocks();
   });
 
-  describe('activityReportByLegacyId', () => {
+  describe('getLegacyReport', () => {
     const request = {
       ...mockRequest,
       params: { legacyReportId: 1 },
@@ -97,6 +101,29 @@ describe('Activity Report handlers', () => {
       activityReportByLegacyId.mockResolvedValue({ region: 1 });
       await getLegacyReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('updateLegacyFields', () => {
+    const comments = 'smartsheet.user@tta.com: My comment';
+    const request = {
+      ...mockRequest,
+      params: { legacyReportId: 1 },
+      body: { comments },
+    };
+
+    it('updates the import data with the comments', async () => {
+      activityReportByLegacyId.mockResolvedValue(report);
+      createOrUpdate.mockResolvedValue(report);
+      await updateLegacyFields(request, mockResponse);
+      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { comments } }, report);
+      expect(mockResponse.json).toHaveBeenCalledWith(report);
+    });
+
+    it('handles a report not being found', async () => {
+      activityReportByLegacyId.mockResolvedValue(null);
+      await updateLegacyFields(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
   });
 
@@ -354,9 +381,7 @@ describe('Activity Report handlers', () => {
 
     it('returns the reports', async () => {
       activityReports.mockResolvedValue({ count: 1, rows: [report] });
-      userById.mockResolvedValue({
-        id: 1,
-      });
+      getUserReadRegions.mockResolvedValue([1]);
 
       await getReports(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith({ count: 1, rows: [report] });
@@ -364,6 +389,8 @@ describe('Activity Report handlers', () => {
 
     it('handles a list of reports that are not found', async () => {
       activityReports.mockResolvedValue(null);
+      getUserReadRegions.mockResolvedValue([1]);
+
       await getReports(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
@@ -377,10 +404,6 @@ describe('Activity Report handlers', () => {
 
     it('returns my alerts', async () => {
       activityReportAlerts.mockResolvedValue({ count: 1, rows: [report] });
-      userById.mockResolvedValue({
-        id: 1,
-      });
-
       await getReportAlerts(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith({ alertsCount: 1, alerts: [report] });
     });
