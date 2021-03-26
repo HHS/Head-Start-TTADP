@@ -6,6 +6,7 @@ import reconcileLegacyReports,
 } from './legacyreports';
 import db, { User, ActivityReport, ActivityReportCollaborator } from '../models';
 import { REPORT_STATUSES } from '../constants';
+import { activityReportByLegacyId } from './activityReports';
 
 const report1 = {
   activityRecipientType: 'grantee',
@@ -36,8 +37,8 @@ const report2 = {
 const user1 = {
   id: 4096,
   homeRegionId: 1,
-  name: 'user',
-  hsesUsername: 'user',
+  name: 'user4096',
+  hsesUsername: 'user4096',
   hsesUserId: '4096',
   email: 'user4096@test.gov',
 };
@@ -45,8 +46,8 @@ const user1 = {
 const user2 = {
   id: 4097,
   homeRegionId: 1,
-  name: 'user2',
-  hsesUsername: 'user2',
+  name: 'user4097',
+  hsesUsername: 'user4097',
   hsesUserId: '4097',
   email: 'user4097@test.gov',
 };
@@ -54,8 +55,8 @@ const user2 = {
 const user3 = {
   id: 4098,
   homeRegionId: 1,
-  name: 'user3',
-  hsesUsername: 'user3',
+  name: 'user4098',
+  hsesUsername: 'user4098',
   hsesUserId: '4098',
   email: 'user4098@test.gov',
 };
@@ -63,8 +64,8 @@ const user3 = {
 const manager = {
   id: 4099,
   homeRegionId: 1,
-  name: 'manager',
-  hsesUsername: 'manager',
+  name: 'manager4099',
+  hsesUsername: 'manager4099',
   hsesUserId: '4099',
   email: 'manager4099@test.gov',
 };
@@ -98,13 +99,13 @@ describe('reconcile legacy reports', () => {
   });
   it('adds an author if there is one', async () => {
     await reconcileAuthors(mockReport1);
-    mockReport1 = await ActivityReport.findOne({ where: { id: mockReport1.id } });
-    expect(mockReport1.userId).toBe(mockUser1.id);
+    const ret = await activityReportByLegacyId(report1.legacyId);
+    expect(ret.userId).toBe(mockUser1.id);
   });
   it('adds an approvingManager if there is one', async () => {
     await reconcileApprovingManagers(mockReport1);
-    mockReport1 = await ActivityReport.findOne({ where: { id: mockReport1.id } });
-    expect(mockReport1.approvingManagerId).toBe(manager.id);
+    const ret = await activityReportByLegacyId(report1.legacyId);
+    expect(ret.approvingManagerId).toBe(manager.id);
   });
   it('adds collaborators', async () => {
     await reconcileCollaborators(mockReport1);
@@ -115,11 +116,11 @@ describe('reconcile legacy reports', () => {
   });
   it('tests the reconciliation process', async () => {
     await reconcileLegacyReports();
-    mockReport2 = await ActivityReport.findOne({ where: { id: mockReport2.id } });
-    expect(mockReport2.userId).toBe(user2.id);
-    expect(mockReport2.approvingManagerId).toBe(manager.id);
+    const ret = await activityReportByLegacyId(report2.legacyId);
+    expect(ret.userId).toBe(user2.id);
+    expect(ret.approvingManagerId).toBe(manager.id);
     const collaborators = await ActivityReportCollaborator.findAll({
-      where: { activityReportId: mockReport2.id },
+      where: { activityReportId: ret.id },
     });
     expect(collaborators.length).toBe(1);
   });
