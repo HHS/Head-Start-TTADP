@@ -34,6 +34,8 @@ services:
     image: ajilaag/clamav-rest
     ports:
       - "9443:9443"
+    environment:
+      - MAX_FILE_SIZE=30M
   redis:
     image: redis:5.0.6-alpine
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
