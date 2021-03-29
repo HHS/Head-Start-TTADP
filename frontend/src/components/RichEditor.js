@@ -42,6 +42,7 @@ const RichEditor = ({
 
       return (
         <Editor
+          spellCheck
           defaultEditorState={defaultEditorState}
           onChange={onInternalChange}
           ariaLabel={ariaLabel}
