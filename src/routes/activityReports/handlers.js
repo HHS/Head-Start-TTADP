@@ -17,6 +17,7 @@ import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { logger } from '../../logger';
+import { managerApprovalRequested } from '../../lib/mailer';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -177,6 +178,9 @@ export async function submitReport(req, res) {
     }
 
     const savedReport = await createOrUpdate(newReport, report);
+    if (process.env.SENDNOTIFICATIONS) {
+      managerApprovalRequested(savedReport);
+    }
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

@@ -16,6 +16,8 @@ const defaultTransport = createTransport({
   },
 });
 
+const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
+
 export const changesRequestedByManager = (report, transport = defaultTransport) => {
   const {
     id,
@@ -34,7 +36,7 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
     transport,
   });
   return email.send({
-    template: path.resolve(process.cwd(), '..', 'email_templates', 'changes_requested_by_manager'),
+    template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
     message: {
       to: [author.email, ...collabArray],
     },
@@ -47,4 +49,31 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
   });
 };
 
+export const managerApprovalRequested = (report, transport = defaultTransport) => {
+  const {
+    id,
+    author,
+    displayId,
+    approvingManager,
+  } = report;
+  const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+  const email = new Email({
+    message: {
+      from: FROMEMAILADDRESS,
+    },
+    send: true,
+    transport,
+  });
+  return email.send({
+    template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
+    message: {
+      to: [approvingManager.email],
+    },
+    locals: {
+      author: author.name,
+      reportPath,
+      displayId,
+    },
+  });
+};
 export default defaultTransport;
