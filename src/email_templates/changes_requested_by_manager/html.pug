@@ -1,4 +1,7 @@
-p #{managerName} has requested changed to report <a href="#{reportpath}">#{reportDisplayName}</a>
+p 
+  | #{managerName} has requested changed to report 
+  a(href=reportPath) #{displayId} 
+  |
 if comments
-    p #{managerName} left the following comments
-    p #{comments}
+  p #{managerName} left the following comments:
+  blockquote #{comments}
