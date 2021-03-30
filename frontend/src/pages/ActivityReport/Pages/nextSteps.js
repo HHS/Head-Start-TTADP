@@ -158,7 +158,14 @@ const NoteEntries = ({ name, humanName, label }) => {
           : (
             <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
               <FontAwesomeIcon icon={faPlusCircle} />
-              <span className="padding-left-05">Add New Next Step</span>
+              <span className="padding-left-05">
+                Add New
+                {' '}
+                <span className="usa-sr-only">
+                  {humanName}
+                </span>
+                Next Step
+              </span>
             </Button>
           )}
 
@@ -183,7 +190,7 @@ const NextSteps = () => (
       <NoteEntries name="specialistNextSteps" humanName="Specialist" label="What have you agreed to do next?" />
     </div>
 
-    <NoteEntries name="granteeNextSteps" humanName="Grantees" label="What has the grantee agreed to do next?" />
+    <NoteEntries name="granteeNextSteps" humanName="Grantee's" label="What has the grantee agreed to do next?" />
 
   </>
 );
