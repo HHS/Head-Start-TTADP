@@ -46,6 +46,7 @@ const RichEditor = ({
           defaultEditorState={defaultEditorState}
           onChange={onInternalChange}
           ariaLabel={ariaLabel}
+          tabIndex="0"
           editorStyle={{ border: '1px solid #565c65', height: '10rem' }}
           toolbar={{
             options: ['inline', 'blockType', 'list'],
