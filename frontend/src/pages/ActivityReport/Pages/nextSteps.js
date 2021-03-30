@@ -159,12 +159,12 @@ const NoteEntries = ({ name, humanName, label }) => {
             <Button type="button" unstyled onClick={() => onEdit(notes.length)}>
               <FontAwesomeIcon icon={faPlusCircle} />
               <span className="padding-left-05">
-                Add New Next
+                Add New
                 {' '}
                 <span className="usa-sr-only">
                   {humanName}
                 </span>
-                Step
+                Next Step
               </span>
             </Button>
           )}
