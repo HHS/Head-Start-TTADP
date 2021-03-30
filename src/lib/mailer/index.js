@@ -1,6 +1,7 @@
 import { createTransport } from 'nodemailer';
 import Email from 'email-templates';
 import * as path from 'path';
+import { logger } from '../../logger';
 
 const {
   SMTPHOST, SMTPPORT, SMTPUSER, SMTPPASS, SMTPSECURE, FROMEMAILADDRESS, SENDNOTIFICATIONS,
@@ -56,32 +57,36 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
 
 export const managerApprovalRequested = (report, transport = defaultTransport) => {
   if (SENDNOTIFICATIONS) {
-    const {
-      id,
-      author,
-      displayId,
-      approvingManager,
-    } = report;
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
-    const email = new Email({
-      message: {
-        from: FROMEMAILADDRESS,
-      },
-      // Uncomment the following line to send email in non-production envs
-      // send: true,
-      transport,
-    });
-    return email.send({
-      template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
-      message: {
-        to: [approvingManager.email],
-      },
-      locals: {
-        author: author.name,
-        reportPath,
+    try {
+      const {
+        id,
+        author,
         displayId,
-      },
-    });
+        approvingManager,
+      } = report;
+      const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+      const email = new Email({
+        message: {
+          from: FROMEMAILADDRESS,
+        },
+        // Uncomment the following line to send email in non-production envs
+        // send: true,
+        transport,
+      });
+      return email.send({
+        template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
+        message: {
+          to: [approvingManager.email],
+        },
+        locals: {
+          author: author.name,
+          reportPath,
+          displayId,
+        },
+      });
+    } catch (err) {
+      logger.error(err);
+    }
   }
   return null;
 };

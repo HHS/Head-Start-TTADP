@@ -26,6 +26,7 @@ import { getUserReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
+import db, { User as UserModel } from '../../models';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
@@ -61,16 +62,38 @@ const mockRequest = {
     userId: 1,
   },
 };
+const mockManager = {
+  id: 1843,
+  hsesUserId: '1843',
+  hsesUsername: 'user1843',
+  homeRegionId: 1,
+  email: 'mockManager1843@test.gov',
+};
+const mockUser = {
+  id: 1844,
+  hsesUserId: '1844',
+  hsesUsername: 'user1844',
+  homeRegionId: 1,
+  email: 'mockManager1844@test.gov',
+};
 
 const report = {
   id: 1,
   resourcesUsed: 'resources',
-  userId: 1,
+  userId: mockUser.id,
 };
 
 describe('Activity Report handlers', () => {
+  beforeAll(async () => {
+    await UserModel.create(mockManager);
+    await UserModel.create(mockUser);
+  });
   afterEach(() => {
     jest.clearAllMocks();
+  });
+  afterAll(async () => {
+    await UserModel.destroy({ where: { id: [mockUser.id, mockManager.id] } });
+    await db.sequelize.close();
   });
 
   describe('getLegacyReport', () => {
@@ -141,7 +164,7 @@ describe('Activity Report handlers', () => {
       activityReportById.mockResolvedValue({ status: 'Approved' });
       review.mockResolvedValue({ status: 'Approved' });
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await reviewReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith({ status: 'Approved' });
@@ -158,10 +181,12 @@ describe('Activity Report handlers', () => {
   });
 
   describe('submitReport', () => {
+    beforeAll(async () => {
+    });
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { approvingManagerId: 1, additionalNotes: 'notes' },
+      body: { approvingManagerId: mockManager.id, additionalNotes: 'notes' },
     };
 
     it('returns the report', async () => {
@@ -170,7 +195,7 @@ describe('Activity Report handlers', () => {
       }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -182,7 +207,7 @@ describe('Activity Report handlers', () => {
       }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -202,7 +227,7 @@ describe('Activity Report handlers', () => {
       }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await createReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -219,7 +244,7 @@ describe('Activity Report handlers', () => {
         canCreate: () => false,
       }));
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await createReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -240,7 +265,7 @@ describe('Activity Report handlers', () => {
       activityReportById.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -252,7 +277,7 @@ describe('Activity Report handlers', () => {
         canUpdate: () => false,
       }));
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -283,7 +308,7 @@ describe('Activity Report handlers', () => {
       }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
 
       await getReport(request, mockResponse);
