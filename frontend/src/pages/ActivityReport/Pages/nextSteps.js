@@ -190,7 +190,7 @@ const NextSteps = () => (
       <NoteEntries name="specialistNextSteps" humanName="Specialist" label="What have you agreed to do next?" />
     </div>
 
-    <NoteEntries name="granteeNextSteps" humanName="Grantees" label="What has the grantee agreed to do next?" />
+    <NoteEntries name="granteeNextSteps" humanName="Grantee's" label="What has the grantee agreed to do next?" />
 
   </>
 );
