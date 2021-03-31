@@ -597,3 +597,111 @@ export async function possibleRecipients(regionId) {
   });
   return { grants, nonGrantees };
 }
+
+/**
+ * Fetches ActivityReports for downloading
+ *
+ * @param {Array<int>} report - array of report ids
+ * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
+ */
+export async function getDownloadableActivityReports(readRegions, {
+  report = [],
+}) {
+  const regions = readRegions || [];
+  // Create a Set to ensure unique ordered values
+  const reportSet = Array.isArray(report) ? new Set(report) : new Set([report]);
+  const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
+
+  const result = await ActivityReport.findAndCountAll(
+    {
+      where: { regionId: regions, imported: null, id: { [Op.in]: reportIds } },
+      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
+      include: [
+        {
+          model: ActivityRecipient,
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
+          as: 'activityRecipients',
+          required: false,
+          include: [
+            {
+              model: Grant,
+              attributes: ['id', 'number'],
+              as: 'grant',
+              required: false,
+              include: [
+                {
+                  model: Grantee,
+                  as: 'grantee',
+                  attributes: ['name'],
+                },
+              ],
+            },
+            {
+              model: NonGrantee,
+              as: 'nonGrantee',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: Objective,
+          as: 'objectives',
+          include: [{
+            model: Goal,
+            as: 'goal',
+            include: [{
+              model: Objective,
+              as: 'objectives',
+            }],
+          }],
+        },
+        {
+          model: File,
+          where: {
+            status: {
+              [Op.ne]: 'UPLOAD_FAILED',
+            },
+          },
+          as: 'attachments',
+          required: false,
+        },
+        {
+          model: User,
+          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          as: 'author',
+        },
+        {
+          model: User,
+          attributes: ['id', 'name', 'role', 'fullName'],
+          as: 'collaborators',
+          through: { attributes: [] },
+        },
+        {
+          model: NextStep,
+          where: {
+            noteType: {
+              [Op.eq]: 'SPECIALIST',
+            },
+          },
+          attributes: ['note', 'id'],
+          as: 'specialistNextSteps',
+          required: false,
+        },
+        {
+          model: NextStep,
+          where: {
+            noteType: {
+              [Op.eq]: 'GRANTEE',
+            },
+          },
+          attributes: ['note', 'id'],
+          as: 'granteeNextSteps',
+          required: false,
+        },
+      ],
+      distinct: true,
+      order: [['id', 'DESC']],
+    },
+  );
+  return result;
+}
