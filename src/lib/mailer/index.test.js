@@ -31,7 +31,13 @@ const mockReport = {
 const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(mockReport.id));
 const jsonTransport = createTransport({ jsonTransport: true });
 
+const oldEnv = process.env;
+process.env.FROMADDRESS = 'fake@test.gov';
+
 describe('mailer tests', () => {
+  afterAll(() => {
+    process.env = oldEnv;
+  });
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {
       const email = await changesRequestedByManager(mockReport, jsonTransport, true);
