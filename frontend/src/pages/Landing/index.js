@@ -14,7 +14,7 @@ import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
 import Container from '../../components/Container';
-import { getReports, getReportAlerts } from '../../fetchers/activityReports';
+import { getReports, getReportAlerts, getReportsDownloadURL } from '../../fetchers/activityReports';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
@@ -104,6 +104,15 @@ function renderReports(reports, history) {
         onClick: () => { history.push(linkTarget); },
       },
     ];
+
+    if (!legacyId) {
+      const downloadMenuItem = {
+        label: 'Download',
+        onClick: () => { document.location = getReportsDownloadURL([id]); },
+      };
+      menuItems.push(downloadMenuItem);
+    }
+
     const contextMenuLabel = `View activity report ${displayId}`;
 
     return (
