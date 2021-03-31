@@ -32,7 +32,7 @@ const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', 
 const jsonTransport = createTransport({ jsonTransport: true });
 
 const oldEnv = process.env;
-process.env.FROMADDRESS = 'fake@test.gov';
+process.env.FROMEMAILADDRESS = 'fake@test.gov';
 
 describe('mailer tests', () => {
   afterAll(() => {
