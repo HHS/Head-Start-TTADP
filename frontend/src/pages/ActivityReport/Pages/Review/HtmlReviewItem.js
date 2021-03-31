@@ -2,8 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import htmlToDraft from 'html-to-draftjs';
-import { EditorState, ContentState } from 'draft-js';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../utils';
 

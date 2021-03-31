@@ -1,5 +1,4 @@
 /* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -176,9 +175,9 @@ describe('ReviewSubmit', () => {
     await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
   });
 
-  // it('initializes the form with "initialData"', async () => {
-  //   renderReview(true, false, REPORT_STATUSES.DRAFT, { additionalNotes: 'test' });
-  //   const textBox = await screen.findByLabelText('Creator notes');
-  //   await waitFor(() => expect(textBox).toHaveValue('test'));
-  // });
+  it('initializes the form with "initialData"', async () => {
+    renderReview(true, false, REPORT_STATUSES.DRAFT, { }, () => {}, () => {}, 1);
+    const selectBox = await screen.findByLabelText('Approving manager (Required)');
+    await waitFor(() => expect(selectBox).toHaveValue('1'));
+  });
 });
