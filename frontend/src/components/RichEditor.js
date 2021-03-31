@@ -7,6 +7,8 @@ import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
+import { getEditorState } from '../utils';
+
 const EMPTY_VALUE_TO_PACIFY_WARNINGS = '';
 
 /**
@@ -29,9 +31,7 @@ const RichEditor = ({
     render={({ onChange, value }) => {
       let defaultEditorState;
       if (defaultValue || value) {
-        const { contentBlocks, entityMap } = htmlToDraft(defaultValue || value);
-        const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
-        defaultEditorState = EditorState.createWithContent(contentState);
+        defaultEditorState = getEditorState(defaultValue || value)
       }
 
       const onInternalChange = (currentContentState) => {

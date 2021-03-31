@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
 import { Editor } from 'react-draft-wysiwyg';
+import { getEditorState } from '../../../../utils';
 
 /**
  * A near identical copy of `ReviewItem` but specifically for the Rich Editor.
@@ -25,9 +26,7 @@ const HtmlReviewItem = ({ label, name, path }) => {
   }
 
   values = values.map((v) => {
-    const { contentBlocks, entityMap } = htmlToDraft(v || '');
-    const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
-    const defaultEditorState = EditorState.createWithContent(contentState);
+    const defaultEditorState = getEditorState(v || '');
     return (
       <Editor
         readOnly
