@@ -19,44 +19,53 @@ const defaultTransport = createTransport({
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
-export const changesRequestedByManager = (report, transport = defaultTransport) => {
-  if (SENDNOTIFICATIONS) {
-    const {
-      id,
-      author,
-      displayId,
-      approvingManager,
-      collaborators,
-      managerNotes,
-    } = report;
-    const collabArray = collaborators.map((c) => c.email);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
-    const email = new Email({
-      message: {
-        from: FROMEMAILADDRESS,
-      },
-      // Uncomment the following line to send email in non-production envs
-      // send: true,
-      transport,
-    });
-    return email.send({
-      template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
-      message: {
-        to: [author.email, ...collabArray],
-      },
-      locals: {
-        managerName: approvingManager.name,
-        reportPath,
+export const changesRequestedByManager = (
+  report, transport = defaultTransport, sendNotifications = SENDNOTIFICATIONS,
+) => {
+  if (sendNotifications) {
+    try {
+      const {
+        id,
+        author,
         displayId,
-        comments: managerNotes,
-      },
-    });
+        approvingManager,
+        collaborators,
+        managerNotes,
+      } = report;
+      const collabArray = collaborators.map((c) => c.email);
+      const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+      const email = new Email({
+        message: {
+          from: FROMEMAILADDRESS,
+        },
+        // Uncomment the following line to send email in non-production envs
+        // send: true,
+        transport,
+      });
+      return email.send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
+        message: {
+          to: [author.email, ...collabArray],
+        },
+        locals: {
+          managerName: approvingManager.name,
+          reportPath,
+          displayId,
+          comments: managerNotes,
+        },
+      });
+    } catch (err) {
+      logger.error(err);
+    }
   }
-  return null;
+  // return a promise so that returns are consistent
+  return Promise.resolve(null);
 };
 
-export const managerApprovalRequested = (report, transport = defaultTransport) => {
-  if (SENDNOTIFICATIONS) {
+export const managerApprovalRequested = (
+  report, transport = defaultTransport, sendNotifications = SENDNOTIFICATIONS,
+) => {
+  if (sendNotifications) {
     try {
       const {
         id,
@@ -88,6 +97,6 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
       logger.error(err);
     }
   }
-  return null;
+  return Promise.resolve(null);
 };
 export default defaultTransport;
