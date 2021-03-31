@@ -40,6 +40,7 @@ describe('mailer tests', () => {
   });
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {
+      process.env.SENDNOTIFICATIONS = true;
       const email = await changesRequestedByManager(mockReport, jsonTransport, true);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([
@@ -54,11 +55,13 @@ describe('mailer tests', () => {
       expect(message.text).toContain(mockReport.managerNotes);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
-      await expect(changesRequestedByManager(mockReport, jsonTransport, false)).resolves.toBeNull();
+      process.env.SENDNOTIFICATIONS = false;
+      await expect(changesRequestedByManager(mockReport, jsonTransport)).resolves.toBeNull();
     });
   });
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
+      process.env.SENDNOTIFICATIONS = true;
       const email = await managerApprovalRequested(mockReport, jsonTransport, true);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
@@ -69,7 +72,8 @@ describe('mailer tests', () => {
       );
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
-      await expect(managerApprovalRequested(mockReport, jsonTransport, false))
+      process.env.SENDNOTIFICATIONS = false;
+      await expect(managerApprovalRequested(mockReport, jsonTransport))
         .resolves.toBeNull();
     });
   });

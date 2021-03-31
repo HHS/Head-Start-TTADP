@@ -4,7 +4,7 @@ import * as path from 'path';
 import { logger } from '../../logger';
 
 const {
-  SMTPHOST, SMTPPORT, SMTPUSER, SMTPPASS, SMTPSECURE, FROMEMAILADDRESS, SENDNOTIFICATIONS,
+  SMTPHOST, SMTPPORT, SMTPUSER, SMTPPASS, SMTPSECURE,
 } = process.env;
 
 const defaultTransport = createTransport({
@@ -19,10 +19,10 @@ const defaultTransport = createTransport({
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
-export const changesRequestedByManager = (
-  report, transport = defaultTransport, sendNotifications = SENDNOTIFICATIONS,
-) => {
-  if (sendNotifications) {
+export const changesRequestedByManager = (report, transport = defaultTransport) => {
+// Set these inside the function to allow easier testing
+  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
+  if (SENDNOTIFICATIONS === 'true') {
     try {
       const {
         id,
@@ -62,10 +62,10 @@ export const changesRequestedByManager = (
   return Promise.resolve(null);
 };
 
-export const managerApprovalRequested = (
-  report, transport = defaultTransport, sendNotifications = SENDNOTIFICATIONS,
-) => {
-  if (sendNotifications) {
+export const managerApprovalRequested = (report, transport = defaultTransport) => {
+// Set these inside the function to allow easier testing
+  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
+  if (SENDNOTIFICATIONS === 'true') {
     try {
       const {
         id,
