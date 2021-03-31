@@ -12,7 +12,7 @@ const SPECIALIST_INPUT = 'specialistNextSteps-input';
 const SPECIALIST_BUTTON = 'specialistNextSteps-button';
 const SPECIALIST_CANCEL_BUTTON = 'specialistNextSteps-cancel-button';
 
-const GRANTEE_NEXT_STEPS = 'Grantees Next Steps';
+const GRANTEE_NEXT_STEPS = "Grantee's Next Steps";
 const GRANTEE_INPUT = 'granteeNextSteps-input';
 const GRANTEE_BUTTON = 'granteeNextSteps-button';
 const GRANTEE_CANCEL_BUTTON = 'granteeNextSteps-cancel-button';
