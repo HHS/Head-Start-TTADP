@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import { Controller } from 'react-hook-form/dist/index.ie11';
 import { Editor } from 'react-draft-wysiwyg';
 import draftToHtml from 'draftjs-to-html';
-import htmlToDraft from 'html-to-draftjs';
-import { EditorState, ContentState } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 import { getEditorState } from '../utils';
@@ -31,7 +29,7 @@ const RichEditor = ({
     render={({ onChange, value }) => {
       let defaultEditorState;
       if (defaultValue || value) {
-        defaultEditorState = getEditorState(defaultValue || value)
+        defaultEditorState = getEditorState(defaultValue || value);
       }
 
       const onInternalChange = (currentContentState) => {
