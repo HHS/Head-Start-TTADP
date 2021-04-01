@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from 'react';
 import {
-  Tag, Table, Alert, Grid, Button,
+  Tag, Table, Alert, Grid, Button, Checkbox,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -24,7 +24,7 @@ import { hasReadWrite } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
 import ContextMenu from '../../components/ContextMenu';
 
-function renderReports(reports, history) {
+function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
     id: '',
     displayId: '',
@@ -115,8 +115,14 @@ function renderReports(reports, history) {
 
     const contextMenuLabel = `View activity report ${displayId}`;
 
+    const selectId = `report-${id}`;
+    const isChecked = reportCheckboxes[id] || false;
+
     return (
       <tr key={`landing_${id}`}>
+        <td>
+          <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
+        </td>
         <th scope="row" className="smart-hub--blue">
           <Link
             to={linkTarget}
@@ -198,6 +204,33 @@ function Landing() {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
 
+  const [reportCheckboxes, setReportCheckboxes] = useState({});
+
+  const makeReportCheckboxes = (reportsArr, checked) => (
+    reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
+  );
+
+  // The all-reports checkbox can select/deselect all visible reports
+  const handleSelectAll = (event) => {
+    const { target: { checked = null } = {} } = event;
+
+    if (checked === true) {
+      setReportCheckboxes(makeReportCheckboxes(reports, true));
+      // Effect of making all checkboxes selected
+    } else {
+      setReportCheckboxes(makeReportCheckboxes(reports, false));
+    }
+  };
+
+  const handleReportSelect = (event) => {
+    const { target: { checked = null, value = null } = {} } = event;
+    if (checked === true) {
+      setReportCheckboxes({ ...reportCheckboxes, [value]: true });
+    } else {
+      setReportCheckboxes({ ...reportCheckboxes, [value]: false });
+    }
+  };
+
   const requestSort = (sortBy) => {
     let direction = 'asc';
     if (
@@ -258,6 +291,11 @@ function Landing() {
     }
     fetchReports();
   }, [sortConfig, offset, perPage, alertsSortConfig, alertsOffset, alertsPerPage]);
+
+  // When reports are updated, make sure all checkboxes are unchecked
+  useEffect(() => {
+    setReportCheckboxes(makeReportCheckboxes(reports, false));
+  }, [reports]);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -417,6 +455,9 @@ function Landing() {
                   </caption>
                   <thead>
                     <tr>
+                      <th aria-label="Select">
+                        <Checkbox id="all-reports" label="" onInput={handleSelectAll} aria-label="Select or deselect all reports" />
+                      </th>
                       {renderColumnHeader('Report ID', 'regionId')}
                       {renderColumnHeader('Grantee', 'activityRecipients')}
                       {renderColumnHeader('Start date', 'startDate')}
@@ -428,7 +469,9 @@ function Landing() {
                       <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
-                  <tbody>{renderReports(reports, history)}</tbody>
+                  <tbody>
+                    {renderReports(reports, history, reportCheckboxes, handleReportSelect)}
+                  </tbody>
                 </Table>
               </Container>
             </SimpleBar>
