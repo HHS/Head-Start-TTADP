@@ -1,6 +1,8 @@
 import { createTransport } from 'nodemailer';
 import * as path from 'path';
-import { managerApprovalRequested, changesRequestedByManager, reportApproved } from '.';
+import {
+  notifyCollaborator, managerApprovalRequested, changesRequestedByManager, reportApproved,
+} from '.';
 
 const mockManager = {
   name: 'Mock Manager',
@@ -82,7 +84,7 @@ describe('mailer tests', () => {
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
       process.env.SENDNOTIFICATIONS = true;
-      const email = await managerApprovalRequested(mockReport, jsonTransport, true);
+      const email = await managerApprovalRequested(mockReport, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
@@ -95,6 +97,25 @@ describe('mailer tests', () => {
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
       process.env.SENDNOTIFICATIONS = false;
       await expect(managerApprovalRequested(mockReport, jsonTransport))
+        .resolves.toBeNull();
+    });
+  });
+  describe('Add Collaborators', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SENDNOTIFICATIONS = true;
+      const email = await notifyCollaborator(mockReport, mockCollaborator1, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockCollaborator1.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`You have been added as a collaborator on Activity Report ${mockReport.displayId}`);
+      expect(message.text).toContain(
+        `You have been added as a collaborator on Activity Report ${mockReport.displayId}`,
+      );
+      expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
+    });
+    it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
+      process.env.SENDNOTIFICATIONS = false;
+      await expect(notifyCollaborator(mockReport, mockCollaborator1, jsonTransport))
         .resolves.toBeNull();
     });
   });
