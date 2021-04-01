@@ -17,7 +17,7 @@ import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { logger } from '../../logger';
-import { managerApprovalRequested, changesRequestedByManager } from '../../lib/mailer';
+import { managerApprovalRequested, changesRequestedByManager, reportApproved } from '../../lib/mailer';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -131,6 +131,9 @@ export async function reviewReport(req, res) {
     const savedReport = await review(report, status, managerNotes);
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       changesRequestedByManager(savedReport);
+    }
+    if (status === REPORT_STATUSES.APPROVED) {
+      reportApproved(savedReport);
     }
     res.json(savedReport);
   } catch (error) {

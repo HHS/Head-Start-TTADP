@@ -1,6 +1,6 @@
 import { createTransport } from 'nodemailer';
 import * as path from 'path';
-import { managerApprovalRequested, changesRequestedByManager } from '.';
+import { managerApprovalRequested, changesRequestedByManager, reportApproved } from '.';
 
 const mockManager = {
   name: 'Mock Manager',
@@ -53,6 +53,25 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`${mockManager.name} has requested changed to report ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
       expect(message.text).toContain(mockReport.managerNotes);
+    });
+    it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
+      process.env.SENDNOTIFICATIONS = false;
+      await expect(changesRequestedByManager(mockReport, jsonTransport)).resolves.toBeNull();
+    });
+  });
+  describe('Report Approved', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SENDNOTIFICATIONS = true;
+      const email = await reportApproved(mockReport, jsonTransport, true);
+      expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
+      expect(email.envelope.to).toStrictEqual([
+        mockAuthor.email,
+        mockCollaborator1.email,
+        mockCollaborator2.email,
+      ]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`Report ${mockReport.displayId} has been approved`);
+      expect(message.text).toContain(`Report ${mockReport.displayId} [${reportPath}] has been approved by ${mockManager.name}.`);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
       process.env.SENDNOTIFICATIONS = false;
