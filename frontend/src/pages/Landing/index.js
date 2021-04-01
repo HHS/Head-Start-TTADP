@@ -205,20 +205,22 @@ function Landing() {
   const [alertReportsCount, setAlertReportsCount] = useState(0);
 
   const [reportCheckboxes, setReportCheckboxes] = useState({});
+  const [allReportsChecked, setAllReportsChecked] = useState(false);
 
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
   );
 
   // The all-reports checkbox can select/deselect all visible reports
-  const handleSelectAll = (event) => {
+  const toggleSelectAll = (event) => {
     const { target: { checked = null } = {} } = event;
 
     if (checked === true) {
       setReportCheckboxes(makeReportCheckboxes(reports, true));
-      // Effect of making all checkboxes selected
+      setAllReportsChecked(true);
     } else {
       setReportCheckboxes(makeReportCheckboxes(reports, false));
+      setAllReportsChecked(false);
     }
   };
 
@@ -282,6 +284,7 @@ function Landing() {
         if (alertsCount) {
           setAlertReportsCount(alertsCount);
         }
+        setAllReportsChecked(false);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -296,6 +299,30 @@ function Landing() {
   useEffect(() => {
     setReportCheckboxes(makeReportCheckboxes(reports, false));
   }, [reports]);
+
+  useEffect(() => {
+    const checkValues = Object.values(reportCheckboxes);
+    if (checkValues.every((v) => v === true)) {
+      setAllReportsChecked(true);
+    } else if (allReportsChecked === true) {
+      setAllReportsChecked(false);
+    }
+  }, [reportCheckboxes]);
+
+  const handleDownloadClick = () => {
+    const toDownloadableReportIds = (accumulator, entry) => {
+      if (!reports) return accumulator;
+      const [key, value] = entry;
+      if (value === false) return accumulator;
+      // const { legacyId = null } = reports.find((r) => r.id === key);
+      // if (legacyId) return accumulator;
+      accumulator.push(key);
+      return accumulator;
+    };
+
+    const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
+    document.location = getReportsDownloadURL(downloadable);
+  };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -423,6 +450,11 @@ function Landing() {
             <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
                 <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
+                  <span>
+                    <button type="button" className="usa-button" onClick={handleDownloadClick}>
+                      Download Reports
+                    </button>
+                  </span>
                   <span
                     className="smart-hub--total-count"
                     aria-label={`Page ${activePage}, displaying rows ${renderTotal(
@@ -456,7 +488,7 @@ function Landing() {
                   <thead>
                     <tr>
                       <th aria-label="Select">
-                        <Checkbox id="all-reports" label="" onInput={handleSelectAll} aria-label="Select or deselect all reports" />
+                        <Checkbox id="all-reports" label="" onChange={toggleSelectAll} checked={allReportsChecked} aria-label="Select or deselect all reports" />
                       </th>
                       {renderColumnHeader('Report ID', 'regionId')}
                       {renderColumnHeader('Grantee', 'activityRecipients')}
