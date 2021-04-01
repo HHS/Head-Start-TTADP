@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 
 import MyAlerts from '../MyAlerts';
@@ -102,4 +103,20 @@ describe('My Alerts', () => {
     expect(draft).toBeVisible();
     expect(needsAction).toBeVisible();
   });
+
+  test('displays the context menu buttons', async () => {
+    const menuButtons = await screen.findAllByTestId('ellipsis-button');
+    userEvent.click(menuButtons[0]);
+
+    const viewButton = await screen.findAllByRole('button', {
+      name: 'View'
+    });
+
+    const deleteButton = await screen.findAllByRole('button', {
+      name: 'Delete'
+    });
+
+    expect(viewButton.length).toBe(1);
+    expect(deleteButton.length).toBe(1);
+  })
 });

@@ -22,9 +22,8 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
-import ContextMenu from '../../components/ContextMenu';
 
-function renderReports(reports, history) {
+function renderReports(reports) {
   const emptyReport = {
     id: '',
     displayId: '',
@@ -98,13 +97,6 @@ function renderReports(reports, history) {
     ));
 
     const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
-    const menuItems = [
-      {
-        label: 'View',
-        onClick: () => { history.push(linkTarget); },
-      },
-    ];
-    const contextMenuLabel = `View activity report ${displayId}`;
 
     return (
       <tr key={`landing_${id}`}>
@@ -143,9 +135,6 @@ function renderReports(reports, history) {
           >
             {status === 'needs_action' ? 'Needs action' : status}
           </Tag>
-        </td>
-        <td>
-          <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
         </td>
       </tr>
     );
@@ -217,36 +206,37 @@ function Landing() {
     setAlertsSortConfig({ sortBy, direction });
   };
 
-  useEffect(() => {
-    async function fetchReports() {
-      try {
-        const { count, rows } = await getReports(
-          sortConfig.sortBy,
-          sortConfig.direction,
-          offset,
-          perPage,
-        );
-        const { alertsCount, alerts } = await getReportAlerts(
-          alertsSortConfig.sortBy,
-          alertsSortConfig.direction,
-          alertsOffset,
-          alertsPerPage,
-        );
-        updateReports(rows);
-        if (count) {
-          setReportsCount(count);
-        }
-        updateReportAlerts(alerts);
-        if (alertsCount) {
-          setAlertReportsCount(alertsCount);
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
-        updateError('Unable to fetch reports');
+  async function fetchReports() {
+    try {
+      const { count, rows } = await getReports(
+        sortConfig.sortBy,
+        sortConfig.direction,
+        offset,
+        perPage,
+      );
+      const { alertsCount, alerts } = await getReportAlerts(
+        alertsSortConfig.sortBy,
+        alertsSortConfig.direction,
+        alertsOffset,
+        alertsPerPage,
+      );
+      updateReports(rows);
+      if (count) {
+        setReportsCount(count);
       }
-      setIsLoaded(true);
+      updateReportAlerts(alerts);
+      if (alertsCount) {
+        setAlertReportsCount(alertsCount);
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(e);
+      updateError('Unable to fetch reports');
     }
+    setIsLoaded(true);
+  }
+
+  useEffect(() => {
     fetchReports();
   }, [sortConfig, offset, perPage, alertsSortConfig, alertsOffset, alertsPerPage]);
 
@@ -372,6 +362,7 @@ function Landing() {
               alertsActivePage={alertsActivePage}
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
+              fetchReports={fetchReports}
             />
             <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
@@ -416,7 +407,6 @@ function Landing() {
                       {renderColumnHeader('Collaborator(s)', 'collaborators')}
                       {renderColumnHeader('Last saved', 'updatedAt')}
                       {renderColumnHeader('Status', 'status')}
-                      <th scope="col" aria-label="..." />
                     </tr>
                   </thead>
                   <tbody>{renderReports(reports, history)}</tbody>

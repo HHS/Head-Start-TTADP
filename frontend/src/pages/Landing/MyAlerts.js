@@ -1,19 +1,24 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tag, Table } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
+import {
+  Tag, Table, useModal, connectModal,
+} from '@trussworks/react-uswds';
+import { Link, useHistory } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 
+import DeleteModal from '../../components/DeleteReportModal';
 import Container from '../../components/Container';
+import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
+import { deleteReport } from '../../fetchers/activityReports';
 
-function renderReports(reports) {
+function renderReports(reports, fetchReports) {
   return reports.map((report) => {
     const {
       id,
@@ -53,43 +58,80 @@ function renderReports(reports) {
       </Tag>
     ));
 
+    const history = useHistory();
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
+    const contextMenuLabel = `View activity report ${id}`;
     const statusClassName = `smart-hub--table-tag-status smart-hub--status-${status}`;
 
+    const { isOpen, openModal, closeModal } = useModal();
+    const onDelete = (reportId) => {
+      // Once backend deletion method is implemented, this fake
+      // if statement is no longer needed, just deleteReport(...)
+      // eslint-disable-next-line no-constant-condition
+      if (false) deleteReport(reportId);
+      fetchReports();
+      closeModal();
+    };
+    const ConnectModal = connectModal(DeleteModal);
+
+    const menuItems = [
+      {
+        label: 'View',
+        onClick: () => { history.push(idLink); },
+      },
+      {
+        label: 'Delete',
+        onClick: () => { openModal(); },
+      },
+    ];
+
     return (
-      <tr key={idKey}>
-        <td>
-          <Link
-            to={idLink}
-          >
-            {displayId}
-          </Link>
-        </td>
-        <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
-        </td>
-        <td>{startDate}</td>
-        <td>
-          <span className="smart-hub--ellipsis" title={author.fullName}>
-            {author.fullName}
-          </span>
-        </td>
-        <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
-        </td>
-        <td>
-          <Tag
-            className={statusClassName}
-          >
-            {status === 'needs_action' ? 'Needs action' : status}
-          </Tag>
-        </td>
-      </tr>
+      <>
+        <ConnectModal
+          onDelete={() => onDelete(id)}
+          onClose={closeModal}
+          isOpen={isOpen}
+          openModal={openModal}
+          closeModal={closeModal}
+        />
+
+        <tr key={idKey}>
+          <td>
+            <Link
+              to={idLink}
+            >
+              {displayId}
+            </Link>
+          </td>
+          <td>
+            <span className="smart-hub--ellipsis" title={recipientsTitle}>
+              {recipients}
+            </span>
+          </td>
+          <td>{startDate}</td>
+          <td>
+            <span className="smart-hub--ellipsis" title={author.fullName}>
+              {author.fullName}
+            </span>
+          </td>
+          <td>
+            <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
+              {collaboratorsWithTags}
+            </span>
+          </td>
+          <td>
+            <Tag
+              className={statusClassName}
+            >
+              {status === 'needs_action' ? 'Needs action' : status}
+            </Tag>
+          </td>
+          <td>
+            <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
+          </td>
+        </tr>
+      </>
     );
   });
 }
@@ -116,6 +158,7 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
+    fetchReports,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -203,9 +246,10 @@ function MyAlerts(props) {
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Collaborator(s)', 'collaborators')}
                   {renderColumnHeader('Status', 'status')}
+                  <th scope="col" aria-label="..." />
                 </tr>
               </thead>
-              <tbody>{renderReports(reports)}</tbody>
+              <tbody>{renderReports(reports, fetchReports)}</tbody>
             </Table>
           </Container>
         </SimpleBar>
@@ -223,6 +267,7 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
+  fetchReports: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {
