@@ -7,15 +7,21 @@ const {
   SMTPHOST, SMTPPORT, SMTPUSER, SMTPPASS, SMTPSECURE,
 } = process.env;
 
+// nodemailer expects this value as a boolean.
+const secure = SMTPSECURE !== 'false';
+
 const defaultTransport = createTransport({
   host: SMTPHOST,
   port: SMTPPORT,
-  secure: SMTPSECURE,
+  secure,
   auth: {
     user: SMTPUSER,
     pass: SMTPPASS,
   },
 });
+
+// set to true for manual testing
+const send = false;
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
@@ -38,9 +44,11 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
         message: {
           from: FROMEMAILADDRESS,
         },
-        // Uncomment the following line to send email in non-production envs
-        // send: true,
+        send,
         transport,
+        htmlToText: {
+          wordwrap: 120,
+        },
       });
       return email.send({
         template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
@@ -62,6 +70,48 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
   return Promise.resolve(null);
 };
 
+export const reportApproved = (report, transport = defaultTransport) => {
+// Set these inside the function to allow easier testing
+  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
+  if (SENDNOTIFICATIONS === 'true') {
+    try {
+      const {
+        id,
+        author,
+        displayId,
+        approvingManager,
+        collaborators,
+      } = report;
+      const collaboratorEmailAddresses = collaborators.map((c) => c.email);
+      const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+      const email = new Email({
+        message: {
+          from: FROMEMAILADDRESS,
+        },
+        send,
+        transport,
+        htmlToText: {
+          wordwrap: 120,
+        },
+      });
+      return email.send({
+        template: path.resolve(emailTemplatePath, 'report_approved'),
+        message: {
+          to: [author.email, ...collaboratorEmailAddresses],
+        },
+        locals: {
+          manager: approvingManager.name,
+          reportPath,
+          displayId,
+        },
+      });
+    } catch (err) {
+      logger.error(err);
+    }
+  }
+  return Promise.resolve(null);
+};
+
 export const managerApprovalRequested = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
   const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
@@ -78,9 +128,11 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
         message: {
           from: FROMEMAILADDRESS,
         },
-        // Uncomment the following line to send email in non-production envs
-        // send: true,
+        send,
         transport,
+        htmlToText: {
+          wordwrap: 120,
+        },
       });
       return email.send({
         template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
