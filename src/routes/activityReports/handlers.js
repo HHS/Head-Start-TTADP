@@ -17,7 +17,9 @@ import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { logger } from '../../logger';
-import { managerApprovalRequested, changesRequestedByManager, reportApproved } from '../../lib/mailer';
+import {
+  managerApprovalRequested, changesRequestedByManager, reportApproved, collaboratorAdded,
+} from '../../lib/mailer';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -286,6 +288,15 @@ export async function saveReport(req, res) {
     newReport.lastUpdatedById = userId;
 
     const savedReport = await createOrUpdate(newReport, report);
+    if (savedReport.collaborators) {
+    // only include collaborators that aren't already in the report
+      const newCollaborators = savedReport.collaborators.filter((c) => {
+        const oldCollaborators = report.collaborators.map((x) => x.email);
+        return !oldCollaborators.includes(c.email);
+      });
+      collaboratorAdded(savedReport, newCollaborators);
+    }
+
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

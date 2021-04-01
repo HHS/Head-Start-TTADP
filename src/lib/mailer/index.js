@@ -21,7 +21,7 @@ const defaultTransport = createTransport({
 });
 
 // set to true for manual testing
-const send = false;
+const send = true;
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
@@ -151,4 +151,48 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
   }
   return Promise.resolve(null);
 };
+
+export const notifyCollaborator = (report, newCollaborator, transport = defaultTransport) => {
+// Set these inside the function to allow easier testing
+  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
+  if (SENDNOTIFICATIONS === 'true') {
+    try {
+      const {
+        id,
+        displayId,
+      } = report;
+      const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+      const email = new Email({
+        message: {
+          from: FROMEMAILADDRESS,
+        },
+        send,
+        transport,
+        htmlToText: {
+          wordwrap: 120,
+        },
+      });
+      return email.send({
+        template: path.resolve(emailTemplatePath, 'collaborator_added'),
+        message: {
+          to: [newCollaborator.email],
+        },
+        locals: {
+          reportPath,
+          displayId,
+        },
+      });
+    } catch (err) {
+      logger.error(err);
+    }
+  }
+  return Promise.resolve(null);
+};
+
+export const collaboratorAdded = (report, newCollaborators, transport = defaultTransport) => {
+  newCollaborators.forEach((collaborator) => {
+    notifyCollaborator(report, collaborator, transport);
+  });
+};
+
 export default defaultTransport;
