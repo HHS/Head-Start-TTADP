@@ -49,10 +49,10 @@ describe('mailer tests', () => {
         mockCollaborator2.email,
       ]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Changes requested to report ${mockReport.displayId}`);
+      expect(message.subject).toBe(`Changes were requested to Activity Report ${mockReport.displayId}`);
       expect(message.text).toContain(`${mockManager.name} has requested changed to report ${mockReport.displayId}`);
-      expect(message.text).toContain(reportPath);
       expect(message.text).toContain(mockReport.managerNotes);
+      expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
       process.env.SENDNOTIFICATIONS = false;
@@ -70,8 +70,9 @@ describe('mailer tests', () => {
         mockCollaborator2.email,
       ]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Report ${mockReport.displayId} has been approved`);
-      expect(message.text).toContain(`Report ${mockReport.displayId} [${reportPath}] has been approved by ${mockManager.name}.`);
+      expect(message.subject).toBe(`Activity Report ${mockReport.displayId} has been approved`);
+      expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved by ${mockManager.name}`);
+      expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
       process.env.SENDNOTIFICATIONS = false;
@@ -85,10 +86,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Report ${mockReport.displayId} submitted for approval`);
+      expect(message.subject).toBe(`Activity Report ${mockReport.displayId} submitted for approval`);
       expect(message.text).toContain(
-        `${mockAuthor.name} has submitted report ${mockReport.displayId}`,
+        `Activity Report ${mockReport.displayId} was submitted for your review.`,
       );
+      expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
       process.env.SENDNOTIFICATIONS = false;
