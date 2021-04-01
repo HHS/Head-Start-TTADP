@@ -1,5 +1,7 @@
 import join from 'url-join';
-import { get, put, post } from './index';
+import {
+  get, put, post, destroy,
+} from './index';
 import { DECIMAL_BASE, REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
@@ -24,6 +26,10 @@ export const submitReport = async (reportId, data) => {
 export const saveReport = async (reportId, data) => {
   const report = await put(join(activityReportUrl, reportId.toString(DECIMAL_BASE)), data);
   return report.json();
+};
+
+export const deleteReport = async (reportId) => {
+  await destroy(join(activityReportUrl, reportId.toString(DECIMAL_BASE)));
 };
 
 export const createReport = async (data) => {
