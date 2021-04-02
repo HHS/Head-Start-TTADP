@@ -1,0 +1,40 @@
+get:
+  tags:
+    - activity-reports
+  summary: Download activity reports, in various formats.
+  description: >-
+    Multiple report ids can be selected by repeat use of the `report` parameter.
+  parameters:
+    - name: report
+      in: query
+      description: Ids of reports to include in download
+      required: true
+      style: form
+      schema:
+        type: array
+        minItems: 1
+        items:
+          type: integer
+    - name: format
+      in: query
+      description: Format to download report in
+      required: false
+      style: form
+      schema:
+        type: string
+        enum:
+          - json
+          - csv
+        default: json
+
+  responses:
+    200:
+      description: Successfully retrieved activity reports
+      content:
+        text/csv; charset=utf-8:
+          schema:
+            type: string
+        application/json:
+          schema:
+            type: object
+            $ref: '../../index.yaml#/components/schemas/activityReport'
