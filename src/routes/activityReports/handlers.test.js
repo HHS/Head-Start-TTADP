@@ -27,6 +27,8 @@ import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import db, { User as UserModel } from '../../models';
+import * as mailer from '../../lib/mailer';
+import { REPORT_STATUSES } from '../../constants';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
@@ -154,22 +156,43 @@ describe('Activity Report handlers', () => {
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { status: 'Approved', managerNotes: 'notes' },
+      body: { status: REPORT_STATUSES.APPROVED, managerNotes: 'notes' },
     };
 
-    it('returns the new status', async () => {
+    it('returns the new approved status', async () => {
+      const mockReportApproved = jest.spyOn(mailer, 'reportApproved');
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
-      activityReportById.mockResolvedValue({ status: 'Approved' });
-      review.mockResolvedValue({ status: 'Approved' });
+      activityReportById.mockResolvedValue({ status: REPORT_STATUSES.APPROVED });
+      review.mockResolvedValue({ status: REPORT_STATUSES.APPROVED });
       userById.mockResolvedValue({
         id: mockUser.id,
       });
       await reviewReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ status: 'Approved' });
+      expect(mockResponse.json).toHaveBeenCalledWith({ status: REPORT_STATUSES.APPROVED });
+      expect(mockReportApproved).toHaveBeenCalled();
     });
 
+    it('returns the new needs action status', async () => {
+      const request1 = {
+        ...mockRequest,
+        params: { activityReportId: 1 },
+        body: { status: REPORT_STATUSES.NEEDS_ACTION, managerNotes: 'notes' },
+      };
+      const mockNeedsAction = jest.spyOn(mailer, 'changesRequestedByManager');
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      activityReportById.mockResolvedValue({ status: REPORT_STATUSES.NEEDS_ACTION });
+      review.mockResolvedValue({ status: REPORT_STATUSES.NEEDS_ACTION });
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+      await reviewReport(request1, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ status: REPORT_STATUSES.NEEDS_ACTION });
+      expect(mockNeedsAction).toHaveBeenCalled();
+    });
     it('handles unauthorizedRequests', async () => {
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
