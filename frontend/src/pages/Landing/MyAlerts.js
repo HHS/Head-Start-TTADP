@@ -8,7 +8,7 @@ import { Link, useHistory } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 
-import DeleteModal from '../../components/DeleteReportModal';
+import DeleteReportModal from '../../components/DeleteReportModal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
@@ -73,15 +73,15 @@ function renderReports(reports, fetchReports) {
       fetchReports();
       closeModal();
     };
-    const ConnectModal = connectModal(DeleteModal);
+    const ConnectModal = connectModal(DeleteReportModal);
 
     const menuItems = [
       {
-        label: 'View',
+        label: 'Open report',
         onClick: () => { history.push(idLink); },
       },
       {
-        label: 'Delete',
+        label: 'Delete report',
         onClick: () => { openModal(); },
       },
     ];
