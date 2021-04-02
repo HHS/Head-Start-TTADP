@@ -21,7 +21,7 @@ const defaultTransport = createTransport({
 });
 
 // set to true for manual testing
-const send = true;
+const send = false;
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
