@@ -1,3 +1,4 @@
+import stringify from 'csv-stringify/lib/sync';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import ActivityReport from '../../policies/activityReport';
@@ -11,11 +12,13 @@ import {
   setStatus,
   activityReportAlerts,
   activityReportByLegacyId,
+  getDownloadableActivityReports,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
+import { activityReportToCsvRecord } from '../../lib/transform';
 import { logger } from '../../logger';
 
 const { APPROVE_REPORTS } = SCOPES;
@@ -310,6 +313,41 @@ export async function createReport(req, res) {
 
     const report = await createOrUpdate(newReport);
     res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Download activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function downloadReports(req, res) {
+  try {
+    const readRegions = await getUserReadRegions(req.session.userId);
+    const reportsWithCount = await getDownloadableActivityReports(readRegions, req.query);
+    const { format = 'json' } = req.query || {};
+
+    if (!reportsWithCount) {
+      res.sendStatus(404);
+    } else if (format === 'csv') {
+      const { rows } = reportsWithCount;
+      const csvRows = await Promise.all(rows.map((r) => activityReportToCsvRecord(r)));
+      const csvData = stringify(
+        csvRows,
+        {
+          header: true,
+          quoted: true,
+          quoted_empty: true,
+        },
+      );
+      res.attachment('activity-reports.csv');
+      res.send(csvData);
+    } else {
+      res.json(reportsWithCount);
+    }
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
