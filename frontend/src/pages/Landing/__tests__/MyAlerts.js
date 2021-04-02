@@ -35,7 +35,7 @@ const renderMyAlerts = () => {
       />
     </Router>,
   );
-  return history
+  return history;
 };
 
 describe('My Alerts', () => {
@@ -122,11 +122,11 @@ describe('My Alerts', () => {
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findAllByRole('button', {
-      name: 'Open report'
+      name: 'Open report',
     });
 
     const deleteButton = await screen.findAllByRole('button', {
-      name: 'Delete report'
+      name: 'Delete report',
     });
 
     expect(viewButton.length).toBe(1);
@@ -139,20 +139,20 @@ describe('My Alerts', () => {
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
-      name: 'Open report'
+      name: 'Open report',
     });
     userEvent.click(viewButton);
 
     expect(history.location.pathname).toBe('/activity-reports/1');
   });
 
-  test('Deletes selected report ', async () => {
-    const history = renderMyAlerts();
+  test('Deletes selected report', async () => {
+    renderMyAlerts();
     const menuButtons = await screen.findAllByTestId('ellipsis-button');
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
-      name: 'Delete report'
+      name: 'Delete report',
     });
     userEvent.click(viewButton);
 
@@ -160,12 +160,12 @@ describe('My Alerts', () => {
     expect(contextMenu).toBeTruthy();
 
     const button = await screen.findByRole('button', {
-      name: 'Delete'
+      name: 'Delete',
     });
 
     userEvent.click(button);
 
-    const modal = await screen.queryByRole('modal');
+    const modal = screen.queryByRole('modal');
     expect(modal).not.toBeTruthy();
   });
 });

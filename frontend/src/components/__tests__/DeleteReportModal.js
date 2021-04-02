@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen
+  render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useModal, connectModal, Button } from '@trussworks/react-uswds';
@@ -23,17 +23,17 @@ const SomeComponent = () => {
       <Button onClick={openModal}>Open</Button>
     </div>
   );
-}
+};
 
 describe('DeleteReportModal', () => {
   it('shows two buttons', async () => {
     // Given a page with a modal
     render(<DeleteReportModal
-             onDelete={() => {}}
-             onClose={() => {}}
-             closeModal={() => {}}
-             isOpen={true}
-           />);
+      onDelete={() => {}}
+      onClose={() => {}}
+      closeModal={() => {}}
+      isOpen
+    />);
     // When the modal is triggered
     const buttons = await screen.findAllByRole('button');
 
@@ -43,7 +43,7 @@ describe('DeleteReportModal', () => {
 
   it('exists when escapse key is pressed', async () => {
     // Given a page with a modal
-    render( <SomeComponent /> );
+    render(<SomeComponent />);
 
     // When the modal is triggered
     const button = await screen.findByText('Open');
