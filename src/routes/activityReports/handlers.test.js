@@ -10,6 +10,7 @@ import {
   getReports,
   getReportAlerts,
   getLegacyReport,
+  downloadReports,
   updateLegacyFields,
 } from './handlers';
 import {
@@ -21,10 +22,12 @@ import {
   activityReports,
   activityReportAlerts,
   activityReportByLegacyId,
+  getDownloadableActivityReports,
 } from '../../services/activityReports';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
+import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
 
 jest.mock('../../services/activityReports', () => ({
@@ -36,6 +39,7 @@ jest.mock('../../services/activityReports', () => ({
   activityReports: jest.fn(),
   activityReportAlerts: jest.fn(),
   activityReportByLegacyId: jest.fn(),
+  getDownloadableActivityReports: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -47,9 +51,12 @@ jest.mock('../../services/users', () => ({
 
 jest.mock('../../policies/user');
 jest.mock('../../policies/activityReport');
+jest.mock('../../lib/apiErrorHandler');
 
 const mockResponse = {
+  attachment: jest.fn(),
   json: jest.fn(),
+  send: jest.fn(),
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
@@ -412,6 +419,89 @@ describe('Activity Report handlers', () => {
       activityReportAlerts.mockResolvedValue(null);
       await getReportAlerts(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('downloadReports', () => {
+    it('returns a csv with appopriate headers when format=csv', async () => {
+      const request = {
+        ...mockRequest,
+        query: { format: 'csv' },
+      };
+
+      const downloadableReport = {
+        id: 616,
+        author: {
+          name: 'Arty',
+        },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [downloadableReport] });
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalled();
+
+      expect(mockResponse.send).toHaveBeenCalled();
+      const [[value]] = mockResponse.send.mock.calls;
+      /* eslint-disable no-useless-escape */
+      expect(value).toMatch('\"displayId\"');
+      expect(value).toMatch('\"Arty\"');
+      /* eslint-enable no-useless-escape */
+    });
+
+    it('returns a 404 if we cannot get any reports', async () => {
+      const request = {
+        ...mockRequest,
+        query: { format: 'csv' },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue(null);
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('returns json when no format is specified', async () => {
+      const request = {
+        ...mockRequest,
+      };
+
+      const downloadableReport = {
+        id: 616,
+        author: {
+          name: 'Arty',
+        },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [downloadableReport] });
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.attachment).not.toHaveBeenCalled();
+
+      expect(mockResponse.json).toHaveBeenCalled();
+    });
+
+    it('handles thrown errors', async () => {
+      const request = {
+        ...mockRequest,
+      };
+
+      getDownloadableActivityReports.mockRejectedValueOnce(new Error('Something went wrong!'));
+
+      await downloadReports(request, mockResponse);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+
+    it('returns an empty value when no ids match and format=csv', async () => {
+      const request = {
+        ...mockRequest,
+        query: { report: [], format: 'csv' },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue({ count: 0, rows: [] });
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalled();
+      expect(mockResponse.send).toHaveBeenCalled();
+
+      const [[value]] = mockResponse.send.mock.calls;
+      expect(value).toEqual('');
     });
   });
 });
