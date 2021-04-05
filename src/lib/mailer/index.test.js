@@ -42,7 +42,7 @@ describe('mailer tests', () => {
   });
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SENDNOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = true;
       const email = await changesRequestedByManager(mockReport, jsonTransport, true);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([
@@ -63,7 +63,7 @@ describe('mailer tests', () => {
   });
   describe('Report Approved', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SENDNOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = true;
       const email = await reportApproved(mockReport, jsonTransport, true);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([
@@ -77,13 +77,13 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
-      process.env.SENDNOTIFICATIONS = false;
+      process.env.SEND_NOTIFICATIONS = false;
       await expect(changesRequestedByManager(mockReport, jsonTransport)).resolves.toBeNull();
     });
   });
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SENDNOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = true;
       const email = await managerApprovalRequested(mockReport, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
@@ -102,7 +102,7 @@ describe('mailer tests', () => {
   });
   describe('Add Collaborators', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SENDNOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyCollaborator(mockReport, mockCollaborator1, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
       expect(email.envelope.to).toStrictEqual([mockCollaborator1.email]);
@@ -114,7 +114,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
     });
     it('Tests that emails are not sent without SENDNOTIFICATIONS', async () => {
-      process.env.SENDNOTIFICATIONS = false;
+      process.env.SEND_NOTIFICATIONS = false;
       await expect(notifyCollaborator(mockReport, mockCollaborator1, jsonTransport))
         .resolves.toBeNull();
     });

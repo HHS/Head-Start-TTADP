@@ -4,19 +4,19 @@ import * as path from 'path';
 import { logger } from '../../logger';
 
 const {
-  SMTPHOST, SMTPPORT, SMTPUSER, SMTPPASS, SMTPSECURE,
+  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE,
 } = process.env;
 
 // nodemailer expects this value as a boolean.
-const secure = SMTPSECURE !== 'false';
+const secure = SMTP_SECURE !== 'false';
 
 const defaultTransport = createTransport({
-  host: SMTPHOST,
-  port: SMTPPORT,
+  host: SMTP_HOST,
+  port: SMTP_PORT,
   secure,
   auth: {
-    user: SMTPUSER,
-    pass: SMTPPASS,
+    user: SMTP_USER,
+    pass: SMTP_PASS,
   },
 });
 
@@ -27,8 +27,8 @@ const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
 export const changesRequestedByManager = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
-  if (SENDNOTIFICATIONS === 'true') {
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+  if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
         id,
@@ -42,7 +42,7 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
       const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
       const email = new Email({
         message: {
-          from: FROMEMAILADDRESS,
+          from: FROM_EMAIL_ADDRESS,
         },
         send,
         transport,
