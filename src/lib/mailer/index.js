@@ -72,8 +72,8 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
 
 export const reportApproved = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
-  if (SENDNOTIFICATIONS === 'true') {
+  const { FROMEMAILADDRESS, SEND_NOTIFICATIONS } = process.env;
+  if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
         id,
@@ -114,8 +114,8 @@ export const reportApproved = (report, transport = defaultTransport) => {
 
 export const managerApprovalRequested = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
-  if (SENDNOTIFICATIONS === 'true') {
+  const { FROMEMAILADDRESS, SEND_NOTIFICATIONS } = process.env;
+  if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
         id,
@@ -154,8 +154,8 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
 
 export const notifyCollaborator = (report, newCollaborator, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SENDNOTIFICATIONS } = process.env;
-  if (SENDNOTIFICATIONS === 'true') {
+  const { FROMEMAILADDRESS, SEND_NOTIFICATIONS } = process.env;
+  if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
         id,
