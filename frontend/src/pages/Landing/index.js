@@ -113,7 +113,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       menuItems.push(downloadMenuItem);
     }
 
-    const contextMenuLabel = `View activity report ${displayId}`;
+    const contextMenuLabel = `Actions for activity report ${displayId}`;
 
     const selectId = `report-${id}`;
     const isChecked = reportCheckboxes[id] || false;
@@ -391,6 +391,10 @@ function Landing() {
     );
   }
 
+  const headerMenuItems = [
+    { label: 'Download Selected Reports', onClick: () => handleDownloadClick() },
+  ];
+
   return (
     <>
       <Helmet>
@@ -450,11 +454,6 @@ function Landing() {
             <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
                 <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
-                  <span>
-                    <button type="button" className="usa-button" onClick={handleDownloadClick}>
-                      Download Reports
-                    </button>
-                  </span>
                   <span
                     className="smart-hub--total-count"
                     aria-label={`Page ${activePage}, displaying rows ${renderTotal(
@@ -498,7 +497,9 @@ function Landing() {
                       {renderColumnHeader('Collaborator(s)', 'collaborators')}
                       {renderColumnHeader('Last saved', 'updatedAt')}
                       {renderColumnHeader('Status', 'status')}
-                      <th scope="col" aria-label="..." />
+                      <th scope="col">
+                        <ContextMenu label="Actions for selected activity reports" menuItems={headerMenuItems} />
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
