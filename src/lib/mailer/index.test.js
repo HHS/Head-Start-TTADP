@@ -34,7 +34,7 @@ const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', 
 const jsonTransport = createTransport({ jsonTransport: true });
 
 const oldEnv = process.env;
-process.env.FROMEMAILADDRESS = 'fake@test.gov';
+process.env.FROM_EMAIL_ADDRESS = 'fake@test.gov';
 
 describe('mailer tests', () => {
   afterAll(() => {
@@ -44,7 +44,7 @@ describe('mailer tests', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await changesRequestedByManager(mockReport, jsonTransport, true);
-      expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([
         mockAuthor.email,
         mockCollaborator1.email,
@@ -65,7 +65,7 @@ describe('mailer tests', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await reportApproved(mockReport, jsonTransport, true);
-      expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([
         mockAuthor.email,
         mockCollaborator1.email,
@@ -85,7 +85,7 @@ describe('mailer tests', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await managerApprovalRequested(mockReport, jsonTransport);
-      expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId} submitted for approval`);
@@ -104,7 +104,7 @@ describe('mailer tests', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyCollaborator(mockReport, mockCollaborator1, jsonTransport);
-      expect(email.envelope.from).toBe(process.env.FROMEMAILADDRESS);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockCollaborator1.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`You have been added as a collaborator on Activity Report ${mockReport.displayId}`);

@@ -72,7 +72,7 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
 
 export const reportApproved = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
@@ -86,7 +86,7 @@ export const reportApproved = (report, transport = defaultTransport) => {
       const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
       const email = new Email({
         message: {
-          from: FROMEMAILADDRESS,
+          from: FROM_EMAIL_ADDRESS,
         },
         send,
         transport,
@@ -114,7 +114,7 @@ export const reportApproved = (report, transport = defaultTransport) => {
 
 export const managerApprovalRequested = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
@@ -126,7 +126,7 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
       const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
       const email = new Email({
         message: {
-          from: FROMEMAILADDRESS,
+          from: FROM_EMAIL_ADDRESS,
         },
         send,
         transport,
@@ -154,7 +154,7 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
 
 export const notifyCollaborator = (report, newCollaborator, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { FROMEMAILADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
     try {
       const {
@@ -164,7 +164,7 @@ export const notifyCollaborator = (report, newCollaborator, transport = defaultT
       const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
       const email = new Email({
         message: {
-          from: FROMEMAILADDRESS,
+          from: FROM_EMAIL_ADDRESS,
         },
         send,
         transport,
