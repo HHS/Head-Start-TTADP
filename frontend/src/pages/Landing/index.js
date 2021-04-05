@@ -120,7 +120,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
 
     return (
       <tr key={`landing_${id}`}>
-        <td>
+        <td className="width-8">
           <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
         </td>
         <th scope="row" className="smart-hub--blue">
@@ -486,7 +486,7 @@ function Landing() {
                   </caption>
                   <thead>
                     <tr>
-                      <th aria-label="Select">
+                      <th className="width-8" aria-label="Select">
                         <Checkbox id="all-reports" label="" onChange={toggleSelectAll} checked={allReportsChecked} aria-label="Select or deselect all reports" />
                       </th>
                       {renderColumnHeader('Report ID', 'regionId')}
