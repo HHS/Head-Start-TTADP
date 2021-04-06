@@ -42,7 +42,7 @@ those services are already running on your machine.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 8. Run `yarn docker:db:migrate` to run DB migrations
 9. Run `yarn docker:db:seed` to seed the database with test data.
-10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080` and minio will run on `localhost:9000`.
+10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`, API documentation will run on `localhost:5000`, and minio will run on `localhost:9000`.
 11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
@@ -57,7 +57,10 @@ You must also install and run minio locally to use the file upload functionality
 
 ### Running Tests
 
-Run `yarn docker:deps` to install dependencies. Run `yarn docker:db:migrate`, `yarn docker:db:seed` and `yarn docker:test` to run all tests for the frontend and backend.
+#### Docker
+
+Run `yarn docker:deps` to install dependencies. Run `yarn docker:test` to run all tests for the frontend and backend. Migrations and seeding of the test db occurs within the script run by the `docker:test` command.
+
 
 ### Docker on Windows
 
