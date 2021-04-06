@@ -21,7 +21,8 @@ const defaultTransport = createTransport({
 });
 
 // set to true for manual testing
-const send = false;
+// const send = false;
+const send = true;
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
@@ -29,6 +30,7 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
 // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
+    logger.info(`MAILER: ${report.approvingManager.name} requested changes on report ${report.displayId}}`);
     try {
       const {
         id,
@@ -74,6 +76,7 @@ export const reportApproved = (report, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
+    logger.info(`MAILER: ${report.approvingManager.name} approved report ${report.displayId}}`);
     try {
       const {
         id,
@@ -116,6 +119,7 @@ export const managerApprovalRequested = (report, transport = defaultTransport) =
 // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
+    logger.info(`MAILER: Notifying ${report.approvingManager.email} that they were requested to approve report ${report.displayId}`);
     try {
       const {
         id,
@@ -156,6 +160,7 @@ export const notifyCollaborator = (report, newCollaborator, transport = defaultT
 // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
+    logger.info(`MAILER: Notifying ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
     try {
       const {
         id,
