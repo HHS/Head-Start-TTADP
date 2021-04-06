@@ -331,6 +331,9 @@ export async function createReport(req, res) {
     }
 
     const report = await createOrUpdate(newReport);
+    if (report.collaborators) {
+      collaboratorAdded(report, report.collaborators);
+    }
     res.json(report);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
