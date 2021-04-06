@@ -50,7 +50,10 @@ describe('Import Activity Reports', () => {
     downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
     const legacyId = 'R14-AR-001132';
-    await ActivityReport.create({ legacyId, status: REPORT_STATUSES.SUBMITTED }, { validate: false });
+    const legacyReport = await ActivityReport.create({
+      legacyId,
+      status: REPORT_STATUSES.SUBMITTED,
+    }, { validate: false });
     await importActivityReports(fileName, 14);
 
     const records = await ActivityReport.findAll({
@@ -61,8 +64,7 @@ describe('Import Activity Reports', () => {
     });
     expect(records).toBeDefined();
     expect(records).toContainEqual(
-      expect.objectContaining({ id: expect.anything(), legacyId, status: REPORT_STATUSES.APPROVED }),
+      expect.objectContaining({ id: legacyReport.id, legacyId, status: REPORT_STATUSES.APPROVED }),
     );
-
   });
 });
