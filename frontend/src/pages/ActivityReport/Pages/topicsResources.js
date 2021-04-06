@@ -54,7 +54,7 @@ const TopicsResources = ({
             <br />
             Enter the URL for OHS resource(s) used.
             {' '}
-            <a href="https://eclkc.ohs.acf.hhs.gov/">https://eclkc.ohs.acf.hhs.gov/</a>
+            <a target="_blank" rel="noreferrer" href="https://eclkc.ohs.acf.hhs.gov/">https://eclkc.ohs.acf.hhs.gov/</a>
             <ResourceSelector
               name="ECLKCResourcesUsed"
               ariaName="ECLKC Resources"
