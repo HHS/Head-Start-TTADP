@@ -487,7 +487,7 @@ function Landing() {
                   <thead>
                     <tr>
                       <th className="width-8" aria-label="Select">
-                        <Checkbox id="all-reports" label="" onChange={toggleSelectAll} checked={allReportsChecked} aria-label="Select or deselect all reports" />
+                        <Checkbox id="all-reports" label="" onChange={toggleSelectAll} checked={allReportsChecked} aria-label="Select or de-select all reports" />
                       </th>
                       {renderColumnHeader('Report ID', 'regionId')}
                       {renderColumnHeader('Grantee', 'activityRecipients')}

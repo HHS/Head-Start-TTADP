@@ -378,6 +378,72 @@ describe('Landing Page sorting', () => {
   });
 });
 
+describe('Landing page table menus & selections', () => {
+  describe('Table header checkbox', () => {
+    afterEach(() => fetchMock.restore());
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 17, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    it('Selects all reports when checked', async () => {
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+
+      fireEvent.click(selectAllCheckbox);
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).toBeChecked());
+      });
+    });
+
+    it('De-selects all reports if all are already selected', async () => {
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+
+      fireEvent.click(selectAllCheckbox);
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).toBeChecked());
+      });
+
+      fireEvent.click(selectAllCheckbox);
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).not.toBeChecked());
+      });
+    });
+  });
+
+  describe('Tablewide Context Menu', () => {
+    test.todo('Download a single report');
+    test.todo('Download multiple reports');
+    test.todo('Legacy reports do not download');
+  });
+});
+
 describe('My alerts sorting', () => {
   afterEach(() => fetchMock.restore());
 
