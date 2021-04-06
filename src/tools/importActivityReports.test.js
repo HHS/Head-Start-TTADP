@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { Op } from 'sequelize';
 import importActivityReports from './importActivityReports';
 import { downloadFile } from '../lib/s3';
+import { REPORT_STATUSES } from '../constants';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -10,17 +11,18 @@ import db, {
 jest.mock('../lib/s3');
 
 describe('Import Activity Reports', () => {
+  const fileName = 'R14ActivityReportsTest.csv';
   beforeEach(() => {
     downloadFile.mockReset();
   });
-  afterAll(async () => {
+  afterEach(async () => {
     await ActivityRecipient.destroy({ where: {} });
-    await ActivityReport.destroy({ where: {} });
+    await ActivityReport.destroy({ where: { legacyId: { [Op.ne]: null } } });
+  });
+  afterAll(async () => {
     await db.sequelize.close();
   });
   it('should import ActivityReports table', async () => {
-    const fileName = 'R14ActivityReportsTest.csv';
-
     downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
     await importActivityReports(fileName, 14);
@@ -42,5 +44,25 @@ describe('Import Activity Reports', () => {
     expect(records).toContainEqual(
       expect.objectContaining({ id: expect.anything(), legacyId: 'R14-AR-001132', requester: 'Grantee' }),
     );
+  });
+
+  it('should update an existing report', async () => {
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+    const legacyId = 'R14-AR-001132';
+    await ActivityReport.create({ legacyId, status: REPORT_STATUSES.SUBMITTED }, { validate: false });
+    await importActivityReports(fileName, 14);
+
+    const records = await ActivityReport.findAll({
+      attributes: ['id', 'legacyId', 'status'],
+      where: {
+        legacyId: { [Op.ne]: null },
+      },
+    });
+    expect(records).toBeDefined();
+    expect(records).toContainEqual(
+      expect.objectContaining({ id: expect.anything(), legacyId, status: REPORT_STATUSES.APPROVED }),
+    );
+
   });
 });
