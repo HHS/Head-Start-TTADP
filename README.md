@@ -36,12 +36,10 @@ those services are already running on your machine.
 
 1. Make sure Docker is installed. To check run `docker ps`.
 2. Make sure you have Node 14.16.0 installed.
-3. Run `yarn docker:deps`. This builds the frontend and backend docker containers and install dependencies. You only need to run this step the first time you fire up the app and when dependencies are added/updated/removed.
 4. Copy `.env.example` to `.env`.  
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
-8. Run `yarn docker:db:migrate` to run DB migrations
-9. Run `yarn docker:db:seed` to seed the database with test data.
+3. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them.
 10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`, API documentation will run on `localhost:5000`, and minio will run on `localhost:9000`.
 11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
@@ -53,14 +51,23 @@ Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve docume
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
-You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000`
+You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
 ### Running Tests
 
 #### Docker
 
-Run `yarn docker:deps` to install dependencies. Run `yarn docker:test` to run all tests for the frontend and backend. Migrations and seeding of the test db occurs within the script run by the `docker:test` command.
+If switching branches for code review, run `yarn docker:reset` before running your tests. 
 
+Run `yarn docker:test` to run all tests for the frontend and backend. 
+
+To only run the frontend tests run `yarn docker:test frontend`.
+
+To only run the backend tests run `yarn docker:test backend`.
+
+Migrations and seeding of the test db occurs within the script run by the `docker:test` command.
+
+To run eslint run `yarn lint:all` or `yarn lint:fix:all` to have eslint attempt to fix linting problems.
 
 ### Docker on Windows
 
