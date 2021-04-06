@@ -74,7 +74,7 @@ describe('mailer tests', () => {
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId} has been approved`);
       expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved by ${mockManager.name}`);
-      expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
+      expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
@@ -92,7 +92,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(
         `Activity Report ${mockReport.displayId} was submitted for your review.`,
       );
-      expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
+      expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
@@ -111,7 +111,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(
         `You have been added as a collaborator on Activity Report ${mockReport.displayId}`,
       );
-      expect(message.text).toContain(`Access this report in the TTA Smart Hub: ${reportPath}`);
+      expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
