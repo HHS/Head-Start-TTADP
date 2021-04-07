@@ -75,9 +75,3 @@ export const resetToDraft = async (reportId) => {
   const response = await put(url);
   return response.json();
 };
-
-export const getReportsDownloadURL = (reportIds) => {
-  const reportsQuery = reportIds.map((i) => `report[]=${i}`);
-  const queryItems = ['?format=csv', ...reportsQuery];
-  return join(activityReportUrl, 'download', queryItems.join('&'));
-};

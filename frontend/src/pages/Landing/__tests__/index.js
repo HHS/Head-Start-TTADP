@@ -9,6 +9,11 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
+import { getReportsDownloadURL } from '../../../fetchers/helpers';
+
+jest.mock('../../../fetchers/helpers');
+
+const oldWindowLocation = window.location;
 
 const renderLanding = (user) => {
   render(
@@ -388,7 +393,7 @@ describe('Landing page table menus & selections', () => {
         { alertsCount: 0, alerts: [] });
       fetchMock.get(
         '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
-        { count: 17, rows: generateXFakeReports(10) },
+        { count: 10, rows: generateXFakeReports(10) },
       );
       const user = {
         name: 'test@test.com',
@@ -438,9 +443,102 @@ describe('Landing page table menus & selections', () => {
   });
 
   describe('Tablewide Context Menu', () => {
-    test.todo('Download a single report');
-    test.todo('Download multiple reports');
-    test.todo('Legacy reports do not download');
+    beforeAll(() => {
+      delete global.window.location;
+
+      global.window.location = {
+        ...oldWindowLocation,
+        assign: jest.fn(),
+      };
+    });
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      getReportsDownloadURL.mockClear();
+      fetchMock.restore();
+    });
+
+    afterAll(() => {
+      window.location = oldWindowLocation;
+    });
+
+    it('Download a single selected report', async () => {
+      const reportCheckboxes = await screen.findAllByRole('checkbox', { name: /select /i });
+
+      // Element 0 is 'Select all', so we want 1 or later
+      const singleReportCheck = reportCheckboxes[1];
+      expect(singleReportCheck.value).toEqual('1');
+
+      fireEvent.click(singleReportCheck);
+
+      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
+
+      fireEvent.click(contextMenu);
+
+      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
+
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(getReportsDownloadURL).toHaveBeenCalledWith(['1']);
+        expect(window.location.assign).toHaveBeenCalled();
+      });
+    });
+
+    it('Can trigger the download of multiple reports', async () => {
+      // Try selecting all reports first
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+
+      fireEvent.click(selectAllCheckbox);
+
+      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
+
+      fireEvent.click(contextMenu);
+
+      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
+
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(getReportsDownloadURL).toHaveBeenCalled();
+        expect(window.location.assign).toHaveBeenCalled();
+      });
+    });
+
+    it('Does not trigger download when no reports are selected', async () => {
+      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
+      fireEvent.click(contextMenu);
+
+      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(getReportsDownloadURL).not.toHaveBeenCalled();
+        expect(window.location.assign).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 
