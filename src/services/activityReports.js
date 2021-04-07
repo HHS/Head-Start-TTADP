@@ -415,6 +415,7 @@ export function activityReportAlerts(userId, {
           ],
         },
       ],
+      legacyId: null,
     },
     attributes: [
       'id',
