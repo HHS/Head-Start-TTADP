@@ -384,6 +384,46 @@ describe('Landing Page sorting', () => {
 });
 
 describe('Landing page table menus & selections', () => {
+  describe('Table row checkboxes', () => {
+    afterEach(() => fetchMock.restore());
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    it('Can select and deselect a single checkbox', async () => {
+      const reportCheckboxes = await screen.findAllByRole('checkbox', { name: /select /i });
+
+      // Element 0 is 'Select all', so we want 1 or later
+      const singleReportCheck = reportCheckboxes[1];
+      expect(singleReportCheck.value).toEqual('1');
+
+      fireEvent.click(singleReportCheck);
+      expect(singleReportCheck.checked).toBe(true);
+
+      fireEvent.click(singleReportCheck);
+      expect(singleReportCheck.checked).toBe(false);
+    });
+  });
+
   describe('Table header checkbox', () => {
     afterEach(() => fetchMock.restore());
 
