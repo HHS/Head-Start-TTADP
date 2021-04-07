@@ -14,7 +14,8 @@ import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
 import Container from '../../components/Container';
-import { getReports, getReportAlerts, getReportsDownloadURL } from '../../fetchers/activityReports';
+import { getReports, getReportAlerts } from '../../fetchers/activityReports';
+import { getReportsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
@@ -108,7 +109,10 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
     if (!legacyId) {
       const downloadMenuItem = {
         label: 'Download',
-        onClick: () => { document.location = getReportsDownloadURL([id]); },
+        onClick: () => {
+          const downloadURL = getReportsDownloadURL([id]);
+          window.location.assign(downloadURL);
+        },
       };
       menuItems.push(downloadMenuItem);
     }
@@ -314,14 +318,15 @@ function Landing() {
       if (!reports) return accumulator;
       const [key, value] = entry;
       if (value === false) return accumulator;
-      // const { legacyId = null } = reports.find((r) => r.id === key);
-      // if (legacyId) return accumulator;
       accumulator.push(key);
       return accumulator;
     };
 
     const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
-    document.location = getReportsDownloadURL(downloadable);
+    if (downloadable.length) {
+      const downloadURL = getReportsDownloadURL(downloadable);
+      window.location.assign(downloadURL);
+    }
   };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
@@ -498,7 +503,7 @@ function Landing() {
                       {renderColumnHeader('Last saved', 'updatedAt')}
                       {renderColumnHeader('Status', 'status')}
                       <th scope="col">
-                        <ContextMenu label="Actions for selected activity reports" menuItems={headerMenuItems} />
+                        <ContextMenu label="Actions for selected reports" menuItems={headerMenuItems} />
                       </th>
                     </tr>
                   </thead>
