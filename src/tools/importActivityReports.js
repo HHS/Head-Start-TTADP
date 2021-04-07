@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import parse from 'csv-parse/lib/sync';
 import moment from 'moment';
-import { logger } from '../logger';
+import { auditLogger, logger } from '../logger';
 import { downloadFile } from '../lib/s3';
 import {
   ActivityReport,
@@ -208,9 +208,8 @@ export default async function importActivityReports(fileKey, region) {
   try {
     csvFile = await readCsv(fileKey);
   } catch (e) {
-    logger.error(`key: '${fileKey}'`);
-    logger.error(e);
-    process.exit(1);
+    logger.error(`Error reading key: '${fileKey}'`);
+    throw e;
   }
 
   const regionId = region;
@@ -224,6 +223,8 @@ export default async function importActivityReports(fileKey, region) {
     const legacyId = coerceReportId(getValue(data, 'reportId'), regionId);
     // Ignore rows with no reportid
     if (legacyId) {
+      logger.debug(`Processing legacyId: ${legacyId}`);
+
       const granteeActivity = getValue(data, 'granteeActivity');
       const activityRecipientType = granteeActivity ? 'grantee' : 'nonGrantee';
 
@@ -280,6 +281,8 @@ export default async function importActivityReports(fileKey, region) {
         );
         if (built) {
           await ar.save({ validate: false });
+        } else {
+          await ar.update(arRecord, { validate: false });
         }
 
         // ActivityRecipients: connect Grants to ActivityReports
@@ -293,7 +296,8 @@ export default async function importActivityReports(fileKey, region) {
           }
         }
       } catch (e) {
-        logger.error(e);
+        auditLogger.error(`Error processing legacy report: ${legacyId}`);
+        auditLogger.error(e);
       }
     } else {
       logger.warn('ActivityReport with no reportId, skipping');
