@@ -380,6 +380,10 @@ describe('Activity Report handlers', () => {
     });
   });
 
+  describe('softDeleteReport', () => {
+    // Tests here
+  });
+
   describe('getReports', () => {
     const request = {
       ...mockRequest,

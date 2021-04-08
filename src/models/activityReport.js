@@ -152,7 +152,9 @@ export default (sequelize, DataTypes) => {
             this.topics,
             this.ttaType,
           ];
-          if (this.status !== REPORT_STATUSES.DRAFT) {
+          const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED]
+          if (!draftStatuses.includes(this.status)) {
+            // Require fields when report is not a draft
             if (requiredForSubmission.includes(null)) {
               throw new Error('Missing required field(s)');
             }
