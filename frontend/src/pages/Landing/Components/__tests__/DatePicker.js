@@ -15,15 +15,6 @@ const RenderDatePicker = ({ onUpdateFilter = () => {}, id = 'id', query = null }
 );
 
 describe('DatePicker', () => {
-  it('opens calendar when open calendar button is pressed', async () => {
-    render(<RenderDatePicker />);
-    const button = await screen.findByRole('button');
-    userEvent.click(button);
-    const calendar = await screen.findByRole('button', { name: 'Move backward to switch to the previous month.' });
-    expect(calendar).toBeVisible();
-    // This test runs slow on CI
-  }, 30000);
-
   it('parses a date `query`', async () => {
     render(<RenderDatePicker query="2021/05/05" />);
     const text = await screen.findByRole('textbox');
