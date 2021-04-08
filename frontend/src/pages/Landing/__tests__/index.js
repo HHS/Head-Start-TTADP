@@ -384,6 +384,77 @@ describe('Landing Page sorting', () => {
 });
 
 describe('Landing page table menus & selections', () => {
+  describe('Table row context menu', () => {
+    beforeAll(() => {
+      delete global.window.location;
+
+      global.window.location = {
+        ...oldWindowLocation,
+        assign: jest.fn(),
+      };
+    });
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      getReportsDownloadURL.mockClear();
+      fetchMock.restore();
+    });
+
+    afterAll(() => {
+      window.location = oldWindowLocation;
+    });
+
+    it('can trigger an activity report download', async () => {
+      const contextMenus = await screen.findAllByRole('button', { name: /actions for activity report /i });
+
+      await waitFor(() => {
+        expect(contextMenus.length).not.toBe(0);
+      });
+
+      const menu = contextMenus[0];
+
+      await waitFor(() => {
+        expect(menu).toBeVisible();
+      });
+
+      fireEvent.click(menu);
+
+      const viewButton = await screen.findByRole('button', { name: 'Download' });
+
+      await waitFor(() => {
+        expect(viewButton).toBeVisible();
+      });
+
+      fireEvent.click(viewButton);
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('Table row checkboxes', () => {
     afterEach(() => fetchMock.restore());
 
