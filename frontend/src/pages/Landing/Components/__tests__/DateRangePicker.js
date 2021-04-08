@@ -25,7 +25,8 @@ describe('DateRangePicker', () => {
     userEvent.click(button);
     const calendar = await screen.findByRole('button', { name: 'Move backward to switch to the previous month.' });
     expect(calendar).toBeVisible();
-  });
+    // This test runs slow on CI
+  }, 30000);
 
   describe('query parsing', () => {
     it('parses both dates', async () => {
