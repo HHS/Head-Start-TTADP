@@ -525,4 +525,12 @@ describe('Activity Reports DB service', () => {
       expect(rows[0].id).toEqual(report.id);
     });
   });
+
+  describe('defaultScope', () => {
+    it('excludes deleted reports', async () => {
+      // count reports in db
+      // update report status to deleted
+      // check that count decreases
+    });
+  });
 });
