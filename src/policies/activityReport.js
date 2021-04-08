@@ -36,7 +36,7 @@ export default class ActivityReport {
   }
 
   canDelete() {
-    return this.user.id === this.activityReport.userId;
+    return this.isAuthor() && (this.activityReport.status === REPORT_STATUSES.DRAFT);
   }
 
   canViewLegacy() {
