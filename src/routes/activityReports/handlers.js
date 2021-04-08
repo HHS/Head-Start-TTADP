@@ -175,13 +175,13 @@ export async function softDeleteReport(req, res) {
 
     const user = await userById(req.session.userId);
     const authorization = new ActivityReport(user, report);
-    if (!authorization.isAuthor()) {
+    if (!authorization.canDelete()) {
       res.sendStatus(403);
       return;
     }
 
     await setStatus(report, REPORT_STATUSES.DELETE);
-    res.sendStatus(200);
+    res.sendStatus(204);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
