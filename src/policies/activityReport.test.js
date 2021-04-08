@@ -146,7 +146,7 @@ describe('Activity Report policies', () => {
       const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
       const policy = new ActivityReport(otherUser, report);
       expect(policy.canReset()).toBeFalsy();
-    })
+    });
   });
 
   describe('canViewLegacy', () => {
