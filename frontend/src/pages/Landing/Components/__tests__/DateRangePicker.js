@@ -41,18 +41,6 @@ describe('DateRangePicker', () => {
     });
   });
 
-  it('closes the calendar after an end date is selected', async () => {
-    render(<RenderDateRangePicker />);
-    const button = await screen.findByRole('button');
-    userEvent.click(button);
-    const buttons = await screen.findAllByRole('button');
-    const firstDay = buttons.find((b) => b.textContent === '1');
-    const secondDay = buttons.find((b) => b.textContent === '2');
-    userEvent.click(firstDay);
-    userEvent.click(secondDay);
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Move backward to switch to the previous month.' })).toBeNull());
-  });
-
   it('calls "onChange" and sets the start date', async () => {
     const onUpdateFilter = jest.fn();
     render(<RenderDateRangePicker onUpdateFilter={onUpdateFilter} />);
