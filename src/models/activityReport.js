@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+import { Model, Op } from 'sequelize';
 import { uniqBy } from 'lodash';
 import moment from 'moment';
 import { REPORT_STATUSES } from '../constants';
@@ -152,7 +152,7 @@ export default (sequelize, DataTypes) => {
             this.topics,
             this.ttaType,
           ];
-          const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED]
+          const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.status)) {
             // Require fields when report is not a draft
             if (requiredForSubmission.includes(null)) {
@@ -204,6 +204,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+    defaultScope: {
+      where: {
+        status: {
+          [Op.ne]: 'deleted',
+        },
+      },
+    },
     sequelize,
     modelName: 'ActivityReport',
   });

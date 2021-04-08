@@ -192,4 +192,18 @@ describe('Activity Report policies', () => {
       });
     });
   });
+
+  describe('canDelete', () => {
+    it('is true for the author', () => {
+      const report = activityReport(author.id);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canDelete()).toBeTruthy();
+    });
+
+    it('is false for any non-author user', () => {
+      const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(collaborator, report);
+      expect(policy.canDelete()).toBeFalsy();
+    });
+  });
 });

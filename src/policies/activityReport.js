@@ -35,6 +35,10 @@ export default class ActivityReport {
       && this.activityReport.status === REPORT_STATUSES.SUBMITTED;
   }
 
+  canDelete() {
+    return this.user.id === this.activityReport.userId;
+  }
+
   canViewLegacy() {
     return this.canReadInRegion();
   }
