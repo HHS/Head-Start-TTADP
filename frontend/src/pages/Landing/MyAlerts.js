@@ -116,6 +116,7 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
+    hasFilters,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -155,7 +156,7 @@ function MyAlerts(props) {
 
   return (
     <>
-      {reports && reports.length === 0 && (
+      {reports && reports.length === 0 && !hasFilters && (
         <Container className="landing" padding={0}>
           <div id="caughtUp">
             <div>
@@ -170,7 +171,7 @@ function MyAlerts(props) {
           </div>
         </Container>
       )}
-      {reports && reports.length > 0 && (
+      {reports && (reports.length > 0 || hasFilters) && (
         <SimpleBar>
           <Container className="landing inline-size" padding={0}>
             <span
@@ -189,8 +190,7 @@ function MyAlerts(props) {
                 alertReportsCount,
               )}
             </span>
-
-            <Table bordered={false}>
+            <Table bordered={false} fullWidth>
               <caption className="smart-hub--table-caption">
                 My activity report alerts
                 <p id="arTblDesc">with sorting</p>
@@ -223,6 +223,7 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
+  hasFilters: PropTypes.bool,
 };
 
 MyAlerts.defaultProps = {
@@ -231,6 +232,7 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
+  hasFilters: false,
 };
 
 export default MyAlerts;

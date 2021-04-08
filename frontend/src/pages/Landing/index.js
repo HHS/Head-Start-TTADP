@@ -23,6 +23,7 @@ import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
 import ContextMenu from '../../components/ContextMenu';
+import Filter, { filtersToQueryString } from './Filter';
 
 function renderReports(reports, history) {
   const emptyReport = {
@@ -188,6 +189,7 @@ function Landing() {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
+  const [filters, setFilters] = useState([]);
 
   const requestSort = (sortBy) => {
     let direction = 'asc';
@@ -219,23 +221,38 @@ function Landing() {
 
   useEffect(() => {
     async function fetchReports() {
+      const filterQuery = filtersToQueryString(filters);
       try {
         const { count, rows } = await getReports(
           sortConfig.sortBy,
           sortConfig.direction,
           offset,
           perPage,
+          filterQuery,
         );
+        updateReports(rows);
+        if (count) {
+          setReportsCount(count);
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch reports');
+      }
+      setIsLoaded(true);
+    }
+    fetchReports();
+  }, [sortConfig, offset, perPage, filters]);
+
+  useEffect(() => {
+    async function fetchReports() {
+      try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
           alertsSortConfig.direction,
           alertsOffset,
           alertsPerPage,
         );
-        updateReports(rows);
-        if (count) {
-          setReportsCount(count);
-        }
         updateReportAlerts(alerts);
         if (alertsCount) {
           setAlertReportsCount(alertsCount);
@@ -248,7 +265,7 @@ function Landing() {
       setIsLoaded(true);
     }
     fetchReports();
-  }, [sortConfig, offset, perPage, alertsSortConfig, alertsOffset, alertsPerPage]);
+  }, [alertsSortConfig, alertsOffset, alertsPerPage]);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -375,30 +392,33 @@ function Landing() {
             />
             <SimpleBar forceVisible="y" autoHide={false}>
               <Container className="landing inline-size" padding={0}>
-                <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
-                  <span
-                    className="smart-hub--total-count"
-                    aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                      offset,
-                      perPage,
-                      activePage,
-                      reportsCount,
-                    )}`}
-                  >
-                    {renderTotal(offset, perPage, activePage, reportsCount)}
-                    <Pagination
-                      hideFirstLastPages
-                      prevPageText="<Prev"
-                      nextPageText="Next>"
-                      activePage={activePage}
-                      itemsCountPerPage={perPage}
-                      totalItemsCount={reportsCount}
-                      pageRangeDisplayed={4}
-                      onChange={handlePageChange}
-                      linkClassPrev="smart-hub--link-prev"
-                      linkClassNext="smart-hub--link-next"
-                      tabIndex={0}
-                    />
+                <span className="smart-hub--table-nav">
+                  <Filter className="float-left" applyFilters={setFilters} />
+                  <span aria-label="Pagination for activity reports">
+                    <span
+                      className="smart-hub--total-count"
+                      aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                        offset,
+                        perPage,
+                        activePage,
+                        reportsCount,
+                      )}`}
+                    >
+                      {renderTotal(offset, perPage, activePage, reportsCount)}
+                      <Pagination
+                        hideFirstLastPages
+                        prevPageText="<Prev"
+                        nextPageText="Next>"
+                        activePage={activePage}
+                        itemsCountPerPage={perPage}
+                        totalItemsCount={reportsCount}
+                        pageRangeDisplayed={4}
+                        onChange={handlePageChange}
+                        linkClassPrev="smart-hub--link-prev"
+                        linkClassNext="smart-hub--link-next"
+                        tabIndex={0}
+                      />
+                    </span>
                   </span>
                 </span>
                 <Table className="usa-table usa-table--borderless usa-table--striped">
