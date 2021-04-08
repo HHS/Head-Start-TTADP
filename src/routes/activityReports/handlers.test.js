@@ -392,7 +392,7 @@ describe('Activity Report handlers', () => {
         canDelete: () => true,
       }));
       await softDeleteReport(request, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204)
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
     });
 
     it('handles unauthorized', async () => {
