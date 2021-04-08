@@ -194,15 +194,21 @@ describe('Activity Report policies', () => {
   });
 
   describe('canDelete', () => {
-    it('is true for the author', () => {
-      const report = activityReport(author.id);
+    it('is true for author of draft report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.DRAFT);
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeTruthy();
     });
 
-    it('is false for any non-author user', () => {
-      const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
+    it('is false for any non-author user of draft report', () => {
+      const report = activityReport(author.id, collaborator, REPORT_STATUSES.DRAFT);
       const policy = new ActivityReport(collaborator, report);
+      expect(policy.canDelete()).toBeFalsy();
+    });
+
+    it('is false for author of non-draft report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeFalsy();
     });
   });
