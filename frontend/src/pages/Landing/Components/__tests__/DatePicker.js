@@ -21,7 +21,8 @@ describe('DatePicker', () => {
     userEvent.click(button);
     const calendar = await screen.findByRole('button', { name: 'Move backward to switch to the previous month.' });
     expect(calendar).toBeVisible();
-  });
+    // This test runs slow on CI
+  }, 30000);
 
   it('parses a date `query`', async () => {
     render(<RenderDatePicker query="2021/05/05" />);
