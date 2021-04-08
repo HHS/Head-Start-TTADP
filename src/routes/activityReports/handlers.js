@@ -158,6 +158,36 @@ export async function resetToDraft(req, res) {
 }
 
 /**
+ * Mark activity report status as deleted
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function softDeleteReport(req, res) {
+  try {
+    const { activityReportId } = req.params;
+
+    const report = await activityReportById(activityReportId);
+    if (report.status !== REPORT_STATUSES.DRAFT) {
+      res.sendStatus(409);
+      return;
+    }
+
+    const user = await userById(req.session.userId);
+    const authorization = new ActivityReport(user, report);
+    if (!authorization.isAuthor()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    await setStatus(report, REPORT_STATUSES.DELETE);
+    res.sendStatus(200);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
  * Flags a report as submitted for approval
  *
  * @param {*} req - request
