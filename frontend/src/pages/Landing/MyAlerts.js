@@ -3,8 +3,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
-import SimpleBar from 'simplebar-react';
-import 'simplebar/dist/simplebar.min.css';
 
 import Container from '../../components/Container';
 import NewReport from './NewReport';
@@ -12,6 +10,7 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
+import Filter from './Filter';
 
 function renderReports(reports) {
   return reports.map((report) => {
@@ -117,6 +116,7 @@ function MyAlerts(props) {
     alertReportsCount,
     sortHandler,
     hasFilters,
+    updateReportFilters,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -172,43 +172,46 @@ function MyAlerts(props) {
         </Container>
       )}
       {reports && (reports.length > 0 || hasFilters) && (
-        <SimpleBar>
-          <Container className="landing inline-size" padding={0}>
-            <span
-              id="alertsTotalCount"
-              aria-label={`Displaying rows ${renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}`}
-            >
-              {renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}
-            </span>
-            <Table bordered={false} fullWidth>
-              <caption className="smart-hub--table-caption">
-                My activity report alerts
-                <p id="arTblDesc">with sorting</p>
-              </caption>
-              <thead>
-                <tr>
-                  {renderColumnHeader('Report ID', 'regionId')}
-                  {renderColumnHeader('Grantee', 'activityRecipients')}
-                  {renderColumnHeader('Start date', 'startDate')}
-                  {renderColumnHeader('Creator', 'author')}
-                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                  {renderColumnHeader('Status', 'status')}
-                </tr>
-              </thead>
-              <tbody>{renderReports(reports)}</tbody>
-            </Table>
-          </Container>
-        </SimpleBar>
+      <Container className="landing inline-size maxw-full" padding={0}>
+        <span className="smart-hub--table-nav">
+          <Filter className="float-left" applyFilters={updateReportFilters} />
+          <span
+            id="alertsTotalCount"
+            aria-label={`Displaying rows ${renderTotal(
+              alertsOffset,
+              alertsPerPage,
+              alertsActivePage,
+              alertReportsCount,
+            )}`}
+          >
+            {renderTotal(
+              alertsOffset,
+              alertsPerPage,
+              alertsActivePage,
+              alertReportsCount,
+            )}
+          </span>
+        </span>
+        <div className="usa-table-container--scrollable">
+          <Table className="usa-table usa-table--borderless" fullWidth>
+            <caption className="smart-hub--table-caption">
+              My activity report alerts
+              <p id="arTblDesc">with sorting</p>
+            </caption>
+            <thead>
+              <tr>
+                {renderColumnHeader('Report ID', 'regionId')}
+                {renderColumnHeader('Grantee', 'activityRecipients')}
+                {renderColumnHeader('Start date', 'startDate')}
+                {renderColumnHeader('Creator', 'author')}
+                {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                {renderColumnHeader('Status', 'status')}
+              </tr>
+            </thead>
+            <tbody>{renderReports(reports)}</tbody>
+          </Table>
+        </div>
+      </Container>
       )}
     </>
   );
@@ -224,6 +227,7 @@ MyAlerts.propTypes = {
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
   hasFilters: PropTypes.bool,
+  updateReportFilters: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {

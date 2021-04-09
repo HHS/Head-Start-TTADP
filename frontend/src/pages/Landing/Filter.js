@@ -71,7 +71,9 @@ function Filter({ applyFilters }) {
     <span className="position-relative">
       <Button
         type="button"
-        onClick={() => { updateOpen(!open); }}
+        onClick={() => {
+          updateOpen(!open);
+        }}
         unstyled
         className={`smart-hub--filter-button smart-hub--filter-menu-button ${filterClass}`}
       >
@@ -81,7 +83,7 @@ function Filter({ applyFilters }) {
       </Button>
       {open && (
       <div className="z-400 position-absolute right-105">
-        <Container padding={2}>
+        <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
               <>
