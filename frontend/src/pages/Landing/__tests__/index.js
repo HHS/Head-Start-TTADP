@@ -152,14 +152,6 @@ describe('Landing Page', () => {
     expect(needsAction).toBeVisible();
   });
 
-  test('displays the options buttons', async () => {
-    const optionButtons = await screen.findAllByRole('button', {
-      name: /view activity report r14-ar-2/i,
-    });
-
-    expect(optionButtons.length).toBe(1);
-  });
-
   test('displays the new activity report button', async () => {
     const newActivityReportBtns = await screen.findAllByText(/New Activity Report/);
 
@@ -203,7 +195,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(statusColumnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/draft/i));
 
     fetchMock.get(
       '/api/activity-reports?sortBy=status&sortDir=desc&offset=0&limit=10',
@@ -212,7 +204,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(statusColumnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/needs action/i));
   });
 
   it('clicking Last saved column header will sort by updatedAt', async () => {
@@ -225,7 +217,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/02\/04\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/02\/05\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/02\/05\/2021/i));
   });
 
   it('clicking Collaborators column header will sort by collaborators', async () => {
@@ -238,7 +230,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent('Cucumber User, GSHermione Granger, SS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('Orange, GSHermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent('Orange, GSHermione Granger, SS'));
   });
 
   it('clicking Topics column header will sort by topics', async () => {
@@ -251,7 +243,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(''));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support'));
   });
 
   it('clicking Creator column header will sort by author', async () => {
@@ -264,7 +256,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent('Kiwi, GS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent('Kiwi, TTAC'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent('Kiwi, TTAC'));
   });
 
   it('clicking Start date column header will sort by start date', async () => {
@@ -277,7 +269,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('02/01/2021'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent('02/08/2021'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent('02/08/2021'));
   });
 
   it('clicking Grantee column header will sort by grantee', async () => {
@@ -337,7 +329,7 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(pageOne);
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/02\/05\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/02\/04\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/02\/04\/2021/i));
   });
 
   it('clicking on the second page updates to, from and total', async () => {
@@ -414,14 +406,14 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(statusColumnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/needs action/i));
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=status&sortDir=desc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
 
     fireEvent.click(statusColumnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/draft/i));
   });
 
   it('is enabled for Report ID', async () => {
@@ -438,7 +430,7 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/r14-ar-1/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/r14-ar-2/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/r14-ar-2/i));
   });
 
   it('is enabled for Grantee', async () => {
@@ -457,7 +449,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(/Johnston-RomagueraJohnston-RomagueraGrantee Name/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/qris system/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/qris system/i));
   });
 
   it('is enabled for Start date', async () => {
@@ -475,7 +467,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/02\/01\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/02\/08\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/02\/08\/2021/i));
   });
 
   it('is enabled for Creator', async () => {
@@ -493,7 +485,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/kiwi, gs/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/kiwi, ttac/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/kiwi, ttac/i));
   });
 
   it('is enabled for Collaborator(s)', async () => {
@@ -510,7 +502,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(/cucumber user, gshermione granger, ss/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/orange, gshermione granger, ss/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/orange, gshermione granger, ss/i));
   });
 });
 
@@ -555,7 +547,7 @@ describe('Landing Page error', () => {
     };
     renderLanding(user);
     const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(8);
+    expect(rowCells.length).toBe(7);
     const grantee = rowCells[0];
     expect(grantee).toHaveTextContent('');
   });
