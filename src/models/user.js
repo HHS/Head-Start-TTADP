@@ -19,6 +19,16 @@ const roles = [
   'System Specialist',
 ];
 
+const generateFullName = (name, role) => {
+  const combinedRoles = role.reduce((result, val) => {
+    if (val) {
+      return val === 'TTAC' || val === 'COR' ? `${result}, ${val}` : `${result}, ${val.split(' ').map((word) => word[0]).join('')}`;
+    }
+    return '';
+  }, []);
+  return combinedRoles.length > 0 ? `${name}${combinedRoles}` : name;
+};
+
 export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
@@ -70,14 +80,11 @@ export default (sequelize, DataTypes) => {
         },
       },
     },
-    role: DataTypes.ENUM(roles),
+    role: DataTypes.ARRAY(DataTypes.ENUM(roles)),
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        if (this.role) {
-          return this.role === 'TTAC' ? `${this.name}, ${this.role}` : `${this.name}, ${this.role.split(' ').map((word) => word[0]).join('')}`;
-        }
-        return this.name;
+        generateFullName(this.name, this.role);
       },
     },
     lastLogin: DataTypes.DATE,
