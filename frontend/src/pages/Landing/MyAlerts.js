@@ -44,19 +44,19 @@ function renderReports(reports, fetchReports) {
       </Tag>
     ));
 
-    const collaboratorsTitle = collaborators.reduce(
+    const collaboratorsTitle = collaborators ? collaborators.reduce(
       (result, collaborator) => `${result + collaborator.fullName}\n`,
       '',
-    );
+    ) : '';
 
-    const collaboratorsWithTags = collaborators.map((collaborator) => (
+    const collaboratorsWithTags = collaborators ? collaborators.map((collaborator) => (
       <Tag
         key={collaborator.fullName.slice(1, 3) + collaborator.id}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
       </Tag>
-    ));
+    )) : '';
 
     const history = useHistory();
     const idKey = `my_alerts_${id}`;
@@ -111,8 +111,8 @@ function renderReports(reports, fetchReports) {
           </td>
           <td>{startDate}</td>
           <td>
-            <span className="smart-hub--ellipsis" title={author.fullName}>
-              {author.fullName}
+            <span className="smart-hub--ellipsis" title={author ? author.fullName : ''}>
+              {author ? author.fullName : ''}
             </span>
           </td>
           <td>
