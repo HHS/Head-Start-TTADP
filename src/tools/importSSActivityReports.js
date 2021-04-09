@@ -1,7 +1,7 @@
 import {} from 'dotenv/config';
 import { option } from 'yargs';
 import importActivityReports from './importActivityReports';
-import { logger } from '../logger';
+import { auditLogger as logger } from '../logger';
 
 const { argv } = option('file', {
   alias: 'f',
@@ -26,4 +26,7 @@ if (!region) {
   process.exit(1);
 }
 
-importActivityReports(file, region);
+importActivityReports(file, region).catch((e) => {
+  logger.error(e);
+  return process.exit(1);
+});
