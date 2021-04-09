@@ -8,8 +8,6 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 
-import SimpleBar from 'simplebar-react';
-import 'simplebar/dist/simplebar.min.css';
 import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
@@ -190,6 +188,7 @@ function Landing() {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [filters, setFilters] = useState([]);
+  const [alertFilters, setAlertFilters] = useState([]);
 
   const requestSort = (sortBy) => {
     let direction = 'asc';
@@ -231,9 +230,7 @@ function Landing() {
           filterQuery,
         );
         updateReports(rows);
-        if (count) {
-          setReportsCount(count);
-        }
+        setReportsCount(count || 0);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -246,12 +243,14 @@ function Landing() {
 
   useEffect(() => {
     async function fetchReports() {
+      const filterQuery = filtersToQueryString(alertFilters);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
           alertsSortConfig.direction,
           alertsOffset,
           alertsPerPage,
+          filterQuery,
         );
         updateReportAlerts(alerts);
         if (alertsCount) {
@@ -265,7 +264,7 @@ function Landing() {
       setIsLoaded(true);
     }
     fetchReports();
-  }, [alertsSortConfig, alertsOffset, alertsPerPage]);
+  }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters]);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -389,38 +388,40 @@ function Landing() {
               alertsActivePage={alertsActivePage}
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
+              updateReportFilters={setAlertFilters}
+              hasFilters={alertFilters.length > 0}
             />
-            <SimpleBar forceVisible="y" autoHide={false}>
-              <Container className="landing inline-size" padding={0}>
-                <span className="smart-hub--table-nav">
-                  <Filter className="float-left" applyFilters={setFilters} />
-                  <span aria-label="Pagination for activity reports">
-                    <span
-                      className="smart-hub--total-count"
-                      aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                        offset,
-                        perPage,
-                        activePage,
-                        reportsCount,
-                      )}`}
-                    >
-                      {renderTotal(offset, perPage, activePage, reportsCount)}
-                      <Pagination
-                        hideFirstLastPages
-                        prevPageText="<Prev"
-                        nextPageText="Next>"
-                        activePage={activePage}
-                        itemsCountPerPage={perPage}
-                        totalItemsCount={reportsCount}
-                        pageRangeDisplayed={4}
-                        onChange={handlePageChange}
-                        linkClassPrev="smart-hub--link-prev"
-                        linkClassNext="smart-hub--link-next"
-                        tabIndex={0}
-                      />
-                    </span>
+            <Container className="landing inline-size maxw-full" padding={0}>
+              <span className="smart-hub--table-nav">
+                <Filter className="float-left" applyFilters={setFilters} />
+                <span aria-label="Pagination for activity reports">
+                  <span
+                    className="smart-hub--total-count"
+                    aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                      offset,
+                      perPage,
+                      activePage,
+                      reportsCount,
+                    )}`}
+                  >
+                    {renderTotal(offset, perPage, activePage, reportsCount)}
+                    <Pagination
+                      hideFirstLastPages
+                      prevPageText="<Prev"
+                      nextPageText="Next>"
+                      activePage={activePage}
+                      itemsCountPerPage={perPage}
+                      totalItemsCount={reportsCount}
+                      pageRangeDisplayed={4}
+                      onChange={handlePageChange}
+                      linkClassPrev="smart-hub--link-prev"
+                      linkClassNext="smart-hub--link-next"
+                      tabIndex={0}
+                    />
                   </span>
                 </span>
+              </span>
+              <div className="usa-table-container--scrollable">
                 <Table className="usa-table usa-table--borderless usa-table--striped">
                   <caption>
                     Activity reports
@@ -441,8 +442,8 @@ function Landing() {
                   </thead>
                   <tbody>{renderReports(reports, history)}</tbody>
                 </Table>
-              </Container>
-            </SimpleBar>
+              </div>
+            </Container>
           </>
         )}
       </UserContext.Consumer>

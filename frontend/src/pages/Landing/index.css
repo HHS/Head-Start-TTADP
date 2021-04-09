@@ -1,5 +1,4 @@
 .landing {
-  max-width: fit-content;
   font-family: 'Merriweather', serif;
 }
   
@@ -64,6 +63,7 @@ div.smart-hub--total-count {
 }
 
 .landing .smart-hub--table-nav {
+  position: relative;
   float: right;
   font-size: 16px;
   font-weight: 500;
