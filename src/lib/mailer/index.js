@@ -4,7 +4,7 @@ import * as path from 'path';
 import { logger } from '../../logger';
 
 const {
-  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE,
+  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE, SEND_NON_PRODUCTION_NOTIFICATIONS,
 } = process.env;
 
 // nodemailer expects this value as a boolean.
@@ -20,9 +20,7 @@ const defaultTransport = createTransport({
   },
 });
 
-// set to true for manual testing
-// const send = true;
-const send = false;
+const send = SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
