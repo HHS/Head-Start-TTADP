@@ -27,7 +27,8 @@ describe('UserInfo', () => {
     });
 
     test('has the default jobTitle', () => {
-      expect(screen.getByLabelText('Role')).toHaveValue('default');
+      const rolesSelect = screen.getByText(/default/i);
+      expect(rolesSelect).toBeDefined();
     });
 
     test('has a blank last login', async () => {
@@ -42,7 +43,7 @@ describe('UserInfo', () => {
         hsesUsername: 'username',
         name: 'first last',
         homeRegionId: 1,
-        role: 'Grantee Specialist',
+        role: ['Grantee Specialist'],
         lastLogin: '2021-02-09T16:15:00Z',
       };
 
@@ -66,7 +67,8 @@ describe('UserInfo', () => {
     });
 
     test('has correct jobTitle', () => {
-      expect(screen.getByLabelText('Role')).toHaveValue('Grantee Specialist');
+      const rolesSelect = screen.getByText(/grantee specialist/i);
+      expect(rolesSelect).toBeDefined();
     });
 
     test('has correct lastLogin', () => {
