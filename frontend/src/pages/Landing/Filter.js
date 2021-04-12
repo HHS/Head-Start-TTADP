@@ -30,7 +30,7 @@ const defaultFilter = () => (
   }
 );
 
-function Filter({ applyFilters }) {
+function Filter({ applyFilters, forMyAlerts }) {
   const [open, updateOpen] = useState(false);
   const [filters, updateFilters] = useState([]);
 
@@ -94,6 +94,7 @@ function Filter({ applyFilters }) {
                     condition={f.condition}
                     topic={f.topic}
                     query={f.query}
+                    forMyAlerts={forMyAlerts}
                     onRemoveFilter={() => onRemoveFilter(index)}
                     onUpdateFilter={(name, value) => {
                       onFilterUpdated(index, name, value);
@@ -142,6 +143,11 @@ function Filter({ applyFilters }) {
 
 Filter.propTypes = {
   applyFilters: PropTypes.func.isRequired,
+  forMyAlerts: PropTypes.bool,
+};
+
+Filter.defaultProps = {
+  forMyAlerts: false,
 };
 
 export function filtersToQueryString(filters) {

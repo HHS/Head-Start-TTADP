@@ -48,7 +48,7 @@ const dateInput = (query, onUpdateFilter, condition, id) => {
   );
 };
 
-const possibleFilters = [
+const commonFilters = [
   {
     id: 'reportId',
     display: 'Report ID',
@@ -74,14 +74,28 @@ const possibleFilters = [
     renderInput: singleSelectInput,
   },
   {
-    id: 'topic',
-    display: 'Topic',
+    id: 'collaborators',
+    display: 'Collaborator',
     conditions: SELECT_CONDITIONS,
     renderInput: singleSelectInput,
   },
+];
+
+const myAlertsFilters = [
+  ...commonFilters,
   {
-    id: 'collaborators',
-    display: 'Collaborator',
+    id: 'status',
+    display: 'Status',
+    conditions: SELECT_CONDITIONS,
+    renderInput: singleSelectInput,
+  },
+];
+
+const reportFilters = [
+  ...commonFilters,
+  {
+    id: 'topic',
+    display: 'Topic',
     conditions: SELECT_CONDITIONS,
     renderInput: singleSelectInput,
   },
@@ -100,7 +114,9 @@ export default function FilterItem({
   onUpdateFilter,
   onRemoveFilter,
   id,
+  forMyAlerts,
 }) {
+  const possibleFilters = forMyAlerts ? myAlertsFilters : reportFilters;
   const selectedTopic = possibleFilters.find((filter) => filter.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
   const showQuery = selectedTopic && condition;
@@ -153,9 +169,11 @@ FilterItem.propTypes = {
   condition: PropTypes.string,
   query: PropTypes.string.isRequired,
   id: PropTypes.string.isRequired,
+  forMyAlerts: PropTypes.bool,
 };
 
 FilterItem.defaultProps = {
   topic: '',
   condition: '',
+  forMyAlerts: false,
 };

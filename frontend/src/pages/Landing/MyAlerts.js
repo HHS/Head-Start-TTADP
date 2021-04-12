@@ -174,7 +174,11 @@ function MyAlerts(props) {
       {reports && (reports.length > 0 || hasFilters) && (
       <Container className="landing inline-size maxw-full" padding={0}>
         <span className="smart-hub--table-nav">
-          <Filter className="float-left" applyFilters={updateReportFilters} />
+          <Filter
+            className="float-left"
+            applyFilters={updateReportFilters}
+            forMyAlerts
+          />
           <span
             id="alertsTotalCount"
             aria-label={`Displaying rows ${renderTotal(
