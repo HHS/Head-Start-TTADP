@@ -526,11 +526,15 @@ describe('Activity Reports DB service', () => {
     });
   });
 
-  describe('defaultScope', () => {
+  // Move to src/scopes/activityReport/index.test.js
+  // after https://github.com/adhocteam/Head-Start-TTADP/pull/276 is merged
+  describe('Activity Report default scope', () => {
     it('excludes deleted reports', async () => {
-      // count reports in db
-      // update report status to deleted
-      // check that count decreases
+      await ActivityReport.create({ ...reportObject, status: 'deleted' });
+      const draftReport = await ActivityReport.create(reportObject);
+      const reports = await ActivityReport.findAll({ where: { userId: mockUser.id } });
+      expect(reports.length).toEqual(1);
+      expect(reports[0].id).toEqual(draftReport.id);
     });
   });
 });
