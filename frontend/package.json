@@ -154,6 +154,9 @@
         "functions": 90,
         "branches": 90,
         "lines": 90
+      },
+      "./src/pages/Landing/index.js": {
+        "branches": 85
       }
     }
   }
