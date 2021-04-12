@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, fireEvent, waitFor, waitForElementToBeRemoved,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -47,6 +47,49 @@ describe('Landing Page', () => {
     await screen.findByText('Activity Reports');
   });
   afterEach(() => fetchMock.restore());
+
+  test('displays a dismissable alert with a status message for a report, if provided', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+    const message = {
+      status: 'TESTED',
+      displayId: 'R14-AR-1',
+      time: 'today',
+    };
+
+    const pastLocations = [
+      { pathname: '/activity-reports/1', state: { message } },
+    ];
+
+    await render(
+      <MemoryRouter initialEntries={pastLocations}>
+        <UserContext.Provider value={{ user }}>
+          <Landing authenticated />
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toBeVisible();
+
+    const alertButton = await screen.findByLabelText(/dismiss alert/i);
+    expect(alertButton).toBeVisible();
+
+    fireEvent.click(alertButton);
+
+    // https://testing-library.com/docs/guide-disappearance#waiting-for-disappearance
+    await waitFor(() => {
+      expect(screen.queryByText(/you successfully tested report R14-AR-1 on today/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/dismiss alert/i)).not.toBeInTheDocument();
+    });
+  });
 
   test('displays activity reports heading', async () => {
     expect(await screen.findByText('Activity Reports')).toBeVisible();

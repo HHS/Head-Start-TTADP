@@ -378,7 +378,7 @@ function Landing() {
   const message = history.location.state && history.location.state.message;
   if (message) {
     msg = (
-      <div>
+      <>
         You successfully
         {' '}
         {message.status}
@@ -392,7 +392,7 @@ function Landing() {
         on
         {' '}
         {message.time}
-      </div>
+      </>
     );
   }
 
@@ -417,7 +417,7 @@ function Landing() {
                 <Button
                   role="button"
                   unstyled
-                  aria-label="dissmiss alert"
+                  aria-label="dismiss alert"
                   onClick={() => updateShowAlert(false)}
                 >
                   <span className="fa-sm">
