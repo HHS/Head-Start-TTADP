@@ -17,6 +17,7 @@ const RenderFilterItem = ({
   topic = 'reportId',
   condition = 'in',
   query = '',
+  forMyAlerts = false,
 }) => (
   <FilterItem
     id="id"
@@ -25,6 +26,7 @@ const RenderFilterItem = ({
     topic={topic}
     condition={condition}
     query={query}
+    forMyAlerts={forMyAlerts}
   />
 );
 
@@ -68,23 +70,45 @@ describe('FilterItem', () => {
     expect(onRemove).toHaveBeenCalled();
   });
 
-  it('has the correct topic options', async () => {
-    render(<RenderFilterItem />);
-    const topic = await screen.findByRole('combobox', { name: 'topic' });
-    const options = await within(topic).findAllByRole('option');
-    expect(options.length).toBe(7);
-    const text = options.map((o) => o.textContent);
-    const expectedOptions = [
-      'Report ID',
-      'Grantee',
-      'Start date',
-      'Creator',
-      'Topic',
-      'Collaborator',
-      'Last saved',
-    ];
+  describe('for the reports table', () => {
+    it('has the correct topic options', async () => {
+      render(<RenderFilterItem />);
+      const topic = await screen.findByRole('combobox', { name: 'topic' });
+      const options = await within(topic).findAllByRole('option');
+      expect(options.length).toBe(7);
+      const text = options.map((o) => o.textContent);
+      const expectedOptions = [
+        'Report ID',
+        'Grantee',
+        'Start date',
+        'Creator',
+        'Collaborator',
+        'Topic',
+        'Last saved',
+      ];
 
-    expect(text).toEqual(expectedOptions);
+      expect(text).toEqual(expectedOptions);
+    });
+  });
+
+  describe('for the MyAlerts table', () => {
+    it('has the correct topic options', async () => {
+      render(<RenderFilterItem forMyAlerts />);
+      const topic = await screen.findByRole('combobox', { name: 'topic' });
+      const options = await within(topic).findAllByRole('option');
+      expect(options.length).toBe(6);
+      const text = options.map((o) => o.textContent);
+      const expectedOptions = [
+        'Report ID',
+        'Grantee',
+        'Start date',
+        'Creator',
+        'Collaborator',
+        'Status',
+      ];
+
+      expect(text).toEqual(expectedOptions);
+    });
   });
 
   describe('for non-date topics', () => {

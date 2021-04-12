@@ -8,6 +8,7 @@ import { withoutTopics, withTopics } from './topic';
 import { beforeLastSaveDate, afterLastSaveDate, withinLastSaveDates } from './updatedAt';
 import { withAuthor, withoutAuthor } from './author';
 import { withCollaborators, withoutCollaborators } from './collaborators';
+import { withoutStatus, withStatus } from './status';
 
 const topicToQuery = {
   reportId: {
@@ -45,6 +46,10 @@ const topicToQuery = {
   collaborators: {
     in: (query) => withCollaborators(query),
     nin: (query) => withoutCollaborators(query),
+  },
+  status: {
+    in: (query) => withStatus(query),
+    nin: (query) => withoutStatus(query),
   },
 };
 
