@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor, waitForElementToBeRemoved,
+  render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
