@@ -19,7 +19,7 @@ describe('UserSection', () => {
       id: 1,
       email: 'email',
       name: 'first last',
-      role: 'Grantee Specialist',
+      role: ['Grantee Specialist'],
       homeRegionId: 1,
       permissions: [
         {

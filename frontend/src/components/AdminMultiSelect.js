@@ -23,17 +23,7 @@ const styles = {
       outline,
     };
   },
-  // groupHeading: (provided) => ({
-  //   ...provided,
-  //   fontWeight: 'bold',
-  //   fontFamily: 'SourceSansPro',
-  //   textTransform: 'capitalize',
-  //   fontSize: '14px',
-  //   color: '#21272d',
-  //   lineHeight: '22px',
-  // }),
   control: (provided, state) => ({
-    // height: singleRowInput ? '38px' : '',
     ...provided,
     borderColor: '#565c65',
     backgroundColor: 'white',
@@ -44,14 +34,8 @@ const styles = {
     // Match uswds disabled style
     opacity: state.isDisabled ? '0.7' : '1',
   }),
-  // indicatorsContainer: (provided) => ({
-  //   ...provided,
-  //   // The arrow dropdown icon is too far to the right, this pushes it back to the left
-  //   marginRight: '4px',
-  // }),
   indicatorSeparator: () => ({ display: 'none' }),
   placeholder: () => ({ color: '#1D1D1D' }),
-  // clearIndicator: (provided) => ({ ...provided, color: '#1D1D1D' }),
 };
 
 const getValues = (value) => (Array.isArray(value) ? value.map((v) => ({
@@ -84,15 +68,15 @@ function AdminMultiSelect({
 AdminMultiSelect.propTypes = {
   id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.arrayOf(PropTypes.string),
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   label: PropTypes.string.isRequired,
-  options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 AdminMultiSelect.defaultProps = {
-  value: 'default',
+  value: ['default'],
   placeholder: 'Select...',
 };
 
