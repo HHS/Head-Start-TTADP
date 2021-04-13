@@ -20,7 +20,10 @@ import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { logger } from '../../logger';
 import {
-  managerApprovalRequested, changesRequestedByManager, reportApproved, collaboratorAdded,
+  managerApprovalNotification,
+  changesRequestedNotification,
+  reportApprovedNotification,
+  collaboratorAddedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord } from '../../lib/transform';
 
@@ -134,10 +137,10 @@ export async function reviewReport(req, res) {
     }
     const savedReport = await review(report, status, managerNotes);
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
-      changesRequestedByManager(savedReport);
+      changesRequestedNotification(savedReport);
     }
     if (status === REPORT_STATUSES.APPROVED) {
-      reportApproved(savedReport);
+      reportApprovedNotification(savedReport);
     }
     res.json(savedReport);
   } catch (error) {
@@ -188,7 +191,7 @@ export async function submitReport(req, res) {
     }
 
     const savedReport = await createOrUpdate(newReport, report);
-    managerApprovalRequested(savedReport);
+    managerApprovalNotification(savedReport);
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -296,7 +299,7 @@ export async function saveReport(req, res) {
         const oldCollaborators = report.collaborators.map((x) => x.email);
         return !oldCollaborators.includes(c.email);
       });
-      collaboratorAdded(savedReport, newCollaborators);
+      collaboratorAddedNotification(savedReport, newCollaborators);
     }
 
     res.json(savedReport);
@@ -331,7 +334,7 @@ export async function createReport(req, res) {
 
     const report = await createOrUpdate(newReport);
     if (report.collaborators) {
-      collaboratorAdded(report, report.collaborators);
+      collaboratorAddedNotification(report, report.collaborators);
     }
     res.json(report);
   } catch (error) {
