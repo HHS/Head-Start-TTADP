@@ -81,7 +81,7 @@ function UserInfo({ user, onUserChange }) {
                 {user.hsesUsername || ''}
               </dd>
               <dt className="text-bold">HSES Authorities</dt>
-              <dd className="margin-bottom-1">
+              <dd className="margin-bottom-1" data-testid="hses-authorities">
                 <ul>
                   {(user.hsesAuthorities || []).map((a) => (
                     <li key={a}>{a}</li>
