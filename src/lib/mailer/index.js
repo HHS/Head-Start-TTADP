@@ -1,7 +1,7 @@
 import { createTransport } from 'nodemailer';
 import Email from 'email-templates';
 import * as path from 'path';
-import { logger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import newQueue from '../queue';
 
 export const notificationQueue = newQueue('notifications');
@@ -191,33 +191,49 @@ export const notifyCollaborator = (job, transport = defaultTransport) => {
 
 export const collaboratorAddedNotification = (report, newCollaborators) => {
   newCollaborators.forEach((collaborator) => {
-    const data = {
-      report,
-      newCollaborator: collaborator,
-    };
-    notificationQueue.add('collaboratorAdded', data);
+    try {
+      const data = {
+        report,
+        newCollaborator: collaborator,
+      };
+      notificationQueue.add('collaboratorAdded', data);
+    } catch (err) {
+      auditLogger.error(err);
+    }
   });
 };
 
 export const managerApprovalNotification = (report) => {
-  const data = {
-    report,
-  };
-  notificationQueue.add('managerApproval', data);
+  try {
+    const data = {
+      report,
+    };
+    notificationQueue.add('managerApproval', data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
 };
 
 export const reportApprovedNotification = (report) => {
-  const data = {
-    report,
-  };
-  notificationQueue.add('reportApproved', data);
+  try {
+    const data = {
+      report,
+    };
+    notificationQueue.add('reportApproved', data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
 };
 
 export const changesRequestedNotification = (report) => {
-  const data = {
-    report,
-  };
-  notificationQueue.add('changesRequested', data);
+  try {
+    const data = {
+      report,
+    };
+    notificationQueue.add('changesRequested', data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
 };
 
 export default defaultTransport;
