@@ -132,7 +132,6 @@ export async function reviewReport(req, res) {
       res.sendStatus(403);
       return;
     }
-
     const savedReport = await review(report, status, managerNotes);
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       changesRequestedByManager(savedReport);

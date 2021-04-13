@@ -75,7 +75,7 @@ export const changesRequestedByManager = (report, transport = defaultTransport) 
 };
 
 export const reportApproved = (report, transport = defaultTransport) => {
-// Set these inside the function to allow easier testing
+  // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
     logger.info(`MAILER: ${report.approvingManager.name} approved report ${report.displayId}}`);

@@ -90,6 +90,8 @@ const report = {
   id: 1,
   resourcesUsed: 'resources',
   userId: mockUser.id,
+  approvingManager: mockManager,
+  displayId: 'mockreport-1',
 };
 
 describe('Activity Report handlers', () => {
@@ -172,16 +174,28 @@ describe('Activity Report handlers', () => {
         canReview: () => true,
       }));
       activityReportById.mockResolvedValue({ status: REPORT_STATUSES.APPROVED });
-      review.mockResolvedValue({ status: REPORT_STATUSES.APPROVED });
+      const mockReviewResponse = {
+        author: mockUser,
+        approvingManager: mockManager,
+        displayId: report.displayId,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      review.mockResolvedValue(mockReviewResponse);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
       await reviewReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ status: REPORT_STATUSES.APPROVED });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockReviewResponse);
       expect(mockReportApproved).toHaveBeenCalled();
     });
 
     it('returns the new needs action status', async () => {
+      const mockReviewResponse = {
+        author: mockUser,
+        approvingManager: mockManager,
+        displayId: report.displayId,
+        status: REPORT_STATUSES.APPROVED,
+      };
       const request1 = {
         ...mockRequest,
         params: { activityReportId: 1 },
@@ -192,12 +206,12 @@ describe('Activity Report handlers', () => {
         canReview: () => true,
       }));
       activityReportById.mockResolvedValue({ status: REPORT_STATUSES.NEEDS_ACTION });
-      review.mockResolvedValue({ status: REPORT_STATUSES.NEEDS_ACTION });
+      review.mockResolvedValue(mockReviewResponse);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
       await reviewReport(request1, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ status: REPORT_STATUSES.NEEDS_ACTION });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockReviewResponse);
       expect(mockNeedsAction).toHaveBeenCalled();
     });
     it('handles unauthorizedRequests', async () => {
