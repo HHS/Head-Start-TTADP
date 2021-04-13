@@ -169,7 +169,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the new approved status', async () => {
-      const mockReportApproved = jest.spyOn(mailer, 'reportApproved');
+      const mockReportApproved = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
@@ -201,7 +201,7 @@ describe('Activity Report handlers', () => {
         params: { activityReportId: 1 },
         body: { status: REPORT_STATUSES.NEEDS_ACTION, managerNotes: 'notes' },
       };
-      const mockNeedsAction = jest.spyOn(mailer, 'changesRequestedByManager');
+      const mockNeedsAction = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation(() => jest.fn());
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
