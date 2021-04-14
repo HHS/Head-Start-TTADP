@@ -14,6 +14,8 @@
   $ref: './adminAllUsers.yaml'
 '/activity-reports':
   $ref: './activity-reports/activity-reports.yaml'
+'/activity-reports/alerts':
+  $ref: './activity-reports/alerts.yaml'
 '/activity-reports/download':
   $ref: './activity-reports/download.yaml'
 '/activity-reports/goals':
