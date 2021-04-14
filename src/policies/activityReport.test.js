@@ -42,8 +42,8 @@ function user(write, read, admin, id = 1) {
   if (admin) {
     u.permissions.push({
       scopeId: SCOPES.ADMIN,
-      regionId: null
-    })
+      regionId: null,
+    });
   }
 
   return u;
@@ -54,7 +54,7 @@ const collaborator = user(true, false, false, 2);
 const manager = user(true, false, false, 3);
 const otherUser = user(false, true, false, 4);
 const canNotReadRegion = user(false, false, false, 5);
-const admin = user(true, true, true, 6)
+const admin = user(true, true, true, 6);
 
 describe('Activity Report policies', () => {
   describe('canReview', () => {

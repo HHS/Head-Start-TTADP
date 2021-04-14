@@ -36,7 +36,8 @@ export default class ActivityReport {
   }
 
   canDelete() {
-    return (this.isAdmin() || this.isAuthor()) && this.activityReport.status === REPORT_STATUSES.DRAFT;
+    return (this.isAdmin() || this.isAuthor())
+      && this.activityReport.status === REPORT_STATUSES.DRAFT;
   }
 
   canViewLegacy() {
