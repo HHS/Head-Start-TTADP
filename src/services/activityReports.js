@@ -229,10 +229,6 @@ export function activityReportById(activityReportId) {
         include: [{
           model: Goal,
           as: 'goal',
-          include: [{
-            model: Objective,
-            as: 'objectives',
-          }],
         }],
       },
       {
