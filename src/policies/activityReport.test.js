@@ -23,7 +23,7 @@ function activityReport(
   return report;
 }
 
-function user(write, read, id = 1) {
+function user(write, read, admin, id = 1) {
   const u = { id, permissions: [] };
   if (write) {
     u.permissions.push({
@@ -39,14 +39,22 @@ function user(write, read, id = 1) {
     });
   }
 
+  if (admin) {
+    u.permissions.push({
+      scopeId: SCOPES.ADMIN,
+      regionId: null
+    })
+  }
+
   return u;
 }
 
-const author = user(true, false, 1);
-const collaborator = user(true, false, 2);
-const manager = user(true, false, 3);
-const otherUser = user(false, true, 4);
-const canNotReadRegion = user(false, false, 5);
+const author = user(true, false, false, 1);
+const collaborator = user(true, false, false, 2);
+const manager = user(true, false, false, 3);
+const otherUser = user(false, true, false, 4);
+const canNotReadRegion = user(false, false, false, 5);
+const admin = user(true, true, true, 6)
 
 describe('Activity Report policies', () => {
   describe('canReview', () => {
@@ -206,7 +214,13 @@ describe('Activity Report policies', () => {
       expect(policy.canDelete()).toBeTruthy();
     });
 
-    it('is false for any non-author user of draft report', () => {
+    it('is true for admin user of draft report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.DRAFT);
+      const policy = new ActivityReport(admin, report);
+      expect(policy.canDelete()).toBeTruthy();
+    });
+
+    it('is false for any non-admin/non-author user of draft report', () => {
       const report = activityReport(author.id, collaborator, REPORT_STATUSES.DRAFT);
       const policy = new ActivityReport(collaborator, report);
       expect(policy.canDelete()).toBeFalsy();
