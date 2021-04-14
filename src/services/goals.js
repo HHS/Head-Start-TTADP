@@ -84,13 +84,19 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, tra
 
   const goalIdsToRemove = previousGoalIds.filter((id) => !currentGoalIds.includes(id));
   const objectiveIdsToRemove = previousObjectiveIds
-    .filter((id) => !currentObjectiveIds.includes(id));
+    .filter((id) => {
+      const notCurrent = !currentObjectiveIds.includes(id);
+      const activityReportObjectives = ActivityReportObjective.findAll({ where: { id } });
+      const lastInstance = activityReportObjectives.length === 1;
+      return notCurrent && lastInstance;
+    });
 
   await removeActivityReportObjectivesFromReport(reportId, transaction);
   await removeObjectives(objectiveIdsToRemove, transaction);
   await removeGoals(goalIdsToRemove, transaction);
 }
 
+// TODO: should objectives be surfaced from previously approved goals.
 export async function saveGoalsForReport(goals, report, transaction) {
   await removeUnusedObjectivesGoalsFromReport(report.id, goals, transaction);
 
