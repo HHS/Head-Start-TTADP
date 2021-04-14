@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Modal } from '@trussworks/react-uswds';
 
-import { ESCAPE_KEY_CODE } from '../Constants';
+import { ESCAPE_KEY_CODES } from '../Constants';
 
 const DeleteModal = ({
   onDelete, onClose, isOpen, closeModal,
@@ -10,7 +10,8 @@ const DeleteModal = ({
   const modalRef = useRef(null);
 
   const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
+    console.log(typeof event.key);
+    if (ESCAPE_KEY_CODES.includes(event.key)) {
       closeModal();
     }
   }, [isOpen]);
