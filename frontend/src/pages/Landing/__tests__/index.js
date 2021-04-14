@@ -70,10 +70,10 @@ describe('Landing Page', () => {
 
     await render(
       <MemoryRouter initialEntries={pastLocations}>
-         <UserContext.Provider value={{ user }}>
-           <Landing authenticated />
-         </UserContext.Provider>
-       </MemoryRouter>,
+        <UserContext.Provider value={{ user }}>
+          <Landing authenticated />
+        </UserContext.Provider>
+      </MemoryRouter>,
     );
 
     const alert = await screen.findByRole('alert');
@@ -250,7 +250,6 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(statusColumnHeader);
-
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
 
@@ -286,7 +285,6 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent('Cucumber User, GSHermione Granger, SS'));
     await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent('Orange, GSHermione Granger, SS'));
   });
