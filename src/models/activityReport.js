@@ -171,7 +171,20 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const objectives = this.objectives || [];
-        return uniqBy(objectives.map((o) => o.goal), 'id');
+        const goals = objectives.map((o) => o.goal);
+        return goals.map((goal) => {
+          const objs = objectives.filter((o) => o.goalId === goal.id);
+          const plainObjectives = objs.map((o) => {
+            const plain = o.get({ plain: true });
+            const { goal: _, ...plainObj } = plain;
+            return plainObj;
+          });
+          const ret = {
+            ...goal.get({ plain: true }),
+            objectives: plainObjectives,
+          };
+          return ret;
+        });
       },
     },
     lastSaved: {
