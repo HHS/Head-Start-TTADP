@@ -10,7 +10,6 @@ const DeleteModal = ({
   const modalRef = useRef(null);
 
   const onEscape = useCallback((event) => {
-    console.log(typeof event.key);
     if (ESCAPE_KEY_CODES.includes(event.key)) {
       closeModal();
     }
