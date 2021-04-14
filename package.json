@@ -102,6 +102,7 @@
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/"
     ],
+    "testTimeout": 30000,
     "coverageThreshold": {
       "global": {
         "statements": 90,

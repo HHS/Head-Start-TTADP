@@ -262,3 +262,132 @@ components:
         isFromSmartsheetTtaPlan:
           type: boolean
           description: Flag indicating the origin of the goal, smartsheet or smarthub
+  parameters:
+    reportId.in:
+      in: query
+      name: reportId.in
+      type: array
+      description: Include reports that partial match the id
+      collectionFormat: multi
+      items:
+        type: string
+    reportId.nin:
+      in: query
+      name: reportId.nin
+      description: Include reports that do not partial match the id
+      collectionFormat: multi
+      type: array
+      items:
+        type: string
+    grantee.in:
+      in: query
+      name: grantee.in
+      description: Include reports with grantee's that partial match value
+      collectionFormat: multi
+      type: array
+      items:
+        type: string
+    grantee.nin:
+      in: query
+      name: grantee.nin
+      type: array
+      description: Include reports with grantee's that do not partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    creator.in:
+      in: query
+      name: creator.in
+      type: array
+      description: Include reports with an author name that partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    creator.nin:
+      in: query
+      name: creator.nin
+      type: array
+      description: Include reports with an author name that does not partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    topic.in:
+      in: query
+      name: topic.in
+      type: array
+      description: Include reports with topics that partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    topic.nin:
+      in: query
+      name: topic.nin
+      type: array
+      description: Include reports with topics that do not partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    collaborators.in:
+      in: query
+      name: collaborators.in
+      type: array
+      description: Include reports with collaborator names that partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    collaborators.nin:
+      in: query
+      name: collaborators.nin
+      type: array
+      description: Include reports with collaborator names that do not partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    status.in:
+      in: query
+      name: status.in
+      type: array
+      description: Include reports with a status that partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    status.nin:
+      in: query
+      name: status.nin
+      type: array
+      description: Include reports with a status that does not partial match value
+      collectionFormat: multi
+      items:
+        type: string
+    startDate.bef:
+      in: query
+      name: startDate.bef
+      type: string
+      description: Include reports a start date before the iso8601 value
+    startDate.aft:
+      in: query
+      name: startDate.aft
+      type: string
+      description: Include reports a start date after the iso8601 value
+    startDate.win:
+      in: query
+      name: startDate.win
+      type: string
+      example: 2001/12/01-2001/12/02
+      description: Include reports a start date within two iso8601 dates separated with '-'
+    lastSaved.bef:
+      in: query
+      name: lastSaved.bef
+      type: string
+      description: Include reports an updated at before the iso8601 value
+    lastSaved.aft:
+      in: query
+      name: lastSaved.aft
+      type: string
+      description: Include reports an updated at after the iso8601 value
+    lastSaved.win:
+      in: query
+      name: lastSaved.win
+      type: string
+      example: 2001/12/01-2001/12/02
+      description: Include reports an updated at within two iso8601 dates separated with '-'
