@@ -1,5 +1,4 @@
 import { Model } from 'sequelize';
-import { uniqBy } from 'lodash';
 import moment from 'moment';
 import { REPORT_STATUSES } from '../constants';
 
