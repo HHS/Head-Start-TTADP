@@ -238,11 +238,9 @@ export function activityReportById(activityReportId) {
       {
         model: User,
         as: 'author',
-        attributes: ['name'],
       },
       {
         model: User,
-        attributes: ['id', 'name'],
         as: 'collaborators',
       },
       {

@@ -31,7 +31,7 @@ export default class ActivityReport {
   }
 
   canReset() {
-    return (this.isAuthor || this.isCollaborator)
+    return (this.isAuthor() || this.isCollaborator())
       && this.activityReport.status === REPORT_STATUSES.SUBMITTED;
   }
 
