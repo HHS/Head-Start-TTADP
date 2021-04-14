@@ -84,7 +84,7 @@ export default (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        generateFullName(this.name, this.role);
+        return generateFullName(this.name, this.role);
       },
     },
     lastLogin: DataTypes.DATE,
