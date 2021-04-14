@@ -13,6 +13,7 @@ services:
     environment:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
+      - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
   frontend:
@@ -39,5 +40,6 @@ services:
     environment:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
+      - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
