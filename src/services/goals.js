@@ -84,12 +84,13 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, tra
 
   const goalIdsToRemove = previousGoalIds.filter((id) => !currentGoalIds.includes(id));
   const objectiveIdsToRemove = previousObjectiveIds
-    .filter(async (id) => {
-      const notCurrent = !currentObjectiveIds.includes(id);
-      const activityReportObjectives = await ActivityReportObjective.findAll({ where: { id } });
-      const lastInstance = activityReportObjectives.length <= 1;
-      return notCurrent && lastInstance;
-    });
+    .filter((id) => !currentObjectiveIds.includes(id));
+    // .filter(async (id) => {
+    //   const notCurrent = !currentObjectiveIds.includes(id);
+    //   const activityReportObjectives = await ActivityReportObjective.findAll({ where: { id } });
+    //   const lastInstance = activityReportObjectives.length <= 1;
+    //   return notCurrent && lastInstance;
+    // });
 
   await removeActivityReportObjectivesFromReport(reportId, transaction);
   await removeObjectives(objectiveIdsToRemove, transaction);
