@@ -30,6 +30,9 @@ import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
+import db, { User as UserModel } from '../../models';
+import * as mailer from '../../lib/mailer';
+import { REPORT_STATUSES } from '../../constants';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
@@ -69,16 +72,40 @@ const mockRequest = {
     userId: 1,
   },
 };
+const mockManager = {
+  id: 1843,
+  hsesUserId: '1843',
+  hsesUsername: 'user1843',
+  homeRegionId: 1,
+  email: 'mockManager1843@test.gov',
+};
+const mockUser = {
+  id: 1844,
+  hsesUserId: '1844',
+  hsesUsername: 'user1844',
+  homeRegionId: 1,
+  email: 'mockManager1844@test.gov',
+};
 
 const report = {
   id: 1,
   resourcesUsed: 'resources',
-  userId: 1,
+  userId: mockUser.id,
+  approvingManager: mockManager,
+  displayId: 'mockreport-1',
 };
 
 describe('Activity Report handlers', () => {
+  beforeAll(async () => {
+    await UserModel.create(mockManager);
+    await UserModel.create(mockUser);
+  });
   afterEach(() => {
     jest.clearAllMocks();
+  });
+  afterAll(async () => {
+    await UserModel.destroy({ where: { id: [mockUser.id, mockManager.id] } });
+    await db.sequelize.close();
   });
 
   describe('getLegacyReport', () => {
@@ -139,22 +166,55 @@ describe('Activity Report handlers', () => {
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { status: 'Approved', managerNotes: 'notes' },
+      body: { status: REPORT_STATUSES.APPROVED, managerNotes: 'notes' },
     };
 
-    it('returns the new status', async () => {
+    it('returns the new approved status', async () => {
+      const mockReportApproved = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
-      activityReportById.mockResolvedValue({ status: 'Approved' });
-      review.mockResolvedValue({ status: 'Approved' });
+      activityReportById.mockResolvedValue({ status: REPORT_STATUSES.APPROVED });
+      const mockReviewResponse = {
+        author: mockUser,
+        approvingManager: mockManager,
+        displayId: report.displayId,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      review.mockResolvedValue(mockReviewResponse);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await reviewReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ status: 'Approved' });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockReviewResponse);
+      expect(mockReportApproved).toHaveBeenCalled();
     });
 
+    it('returns the new needs action status', async () => {
+      const mockReviewResponse = {
+        author: mockUser,
+        approvingManager: mockManager,
+        displayId: report.displayId,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      const request1 = {
+        ...mockRequest,
+        params: { activityReportId: 1 },
+        body: { status: REPORT_STATUSES.NEEDS_ACTION, managerNotes: 'notes' },
+      };
+      const mockNeedsAction = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation(() => jest.fn());
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      activityReportById.mockResolvedValue({ status: REPORT_STATUSES.NEEDS_ACTION });
+      review.mockResolvedValue(mockReviewResponse);
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+      await reviewReport(request1, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockReviewResponse);
+      expect(mockNeedsAction).toHaveBeenCalled();
+    });
     it('handles unauthorizedRequests', async () => {
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
@@ -166,10 +226,12 @@ describe('Activity Report handlers', () => {
   });
 
   describe('submitReport', () => {
+    beforeAll(async () => {
+    });
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { approvingManagerId: 1, additionalNotes: 'notes' },
+      body: { approvingManagerId: mockManager.id, additionalNotes: 'notes' },
     };
 
     it('returns the report', async () => {
@@ -178,7 +240,7 @@ describe('Activity Report handlers', () => {
       }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -190,7 +252,7 @@ describe('Activity Report handlers', () => {
       }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -210,7 +272,7 @@ describe('Activity Report handlers', () => {
       }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await createReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -227,7 +289,7 @@ describe('Activity Report handlers', () => {
         canCreate: () => false,
       }));
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await createReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -248,7 +310,7 @@ describe('Activity Report handlers', () => {
       activityReportById.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -260,7 +322,7 @@ describe('Activity Report handlers', () => {
         canUpdate: () => false,
       }));
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -291,7 +353,7 @@ describe('Activity Report handlers', () => {
       }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
 
       await getReport(request, mockResponse);
