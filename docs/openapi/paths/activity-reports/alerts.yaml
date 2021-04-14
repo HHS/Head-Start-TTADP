@@ -1,7 +1,11 @@
 get:
   tags:
     - activity-reports
-  description: Gets activity reports from the database.
+  summary: Gets activity report alerts
+  description: |
+    A report is included in this response 1) If the report has not been approved and
+    you are the author or collaborator or 2) You are the approving manager and the
+    report needs approval
   parameters:
     - $ref: '../../index.yaml#/components/parameters/reportId.in'
     - $ref: '../../index.yaml#/components/parameters/reportId.nin'
@@ -9,16 +13,13 @@ get:
     - $ref: '../../index.yaml#/components/parameters/grantee.nin'
     - $ref: '../../index.yaml#/components/parameters/creator.in'
     - $ref: '../../index.yaml#/components/parameters/creator.nin'
-    - $ref: '../../index.yaml#/components/parameters/topic.in'
-    - $ref: '../../index.yaml#/components/parameters/topic.nin'
     - $ref: '../../index.yaml#/components/parameters/collaborators.in'
     - $ref: '../../index.yaml#/components/parameters/collaborators.nin'
+    - $ref: '../../index.yaml#/components/parameters/status.in'
+    - $ref: '../../index.yaml#/components/parameters/status.nin'
     - $ref: '../../index.yaml#/components/parameters/startDate.bef'
     - $ref: '../../index.yaml#/components/parameters/startDate.aft'
     - $ref: '../../index.yaml#/components/parameters/startDate.win'
-    - $ref: '../../index.yaml#/components/parameters/lastSaved.bef'
-    - $ref: '../../index.yaml#/components/parameters/lastSaved.aft'
-    - $ref: '../../index.yaml#/components/parameters/lastSaved.win'
   responses:
     200:
       description: Successfully retrieved activity reports
@@ -27,21 +28,3 @@ get:
           schema:
             type: object
             $ref: '../../index.yaml#/components/schemas/shortActivityReport'
-post:
-  tags:
-    - activity-reports
-  summary: Create a new activity report
-  requestBody:
-    description: A new activity report
-    required: true
-    content:
-      application/json:
-        schema:
-          $ref: '../../index.yaml#/components/schemas/activityReport'
-  responses:
-    200:
-      description: Successfully created activity report
-      content:
-        application/json:
-          schema:
-            $ref: '../../index.yaml#/components/schemas/activityReport'
