@@ -23,7 +23,7 @@ const styles = {
       outline,
     };
   },
-  control: (provided, state) => ({
+  control: (provided) => ({
     ...provided,
     borderColor: '#565c65',
     backgroundColor: 'white',
@@ -31,16 +31,14 @@ const styles = {
     '&:hover': {
       borderColor: '#565c65',
     },
-    // Match uswds disabled style
-    opacity: state.isDisabled ? '0.7' : '1',
   }),
   indicatorSeparator: () => ({ display: 'none' }),
   placeholder: () => ({ color: '#1D1D1D' }),
 };
 
-const getValues = (value) => (Array.isArray(value) ? value.map((v) => ({
+const getValues = (value) => (value.map((v) => ({
   value: v, label: v,
-})) : { value, label: value });
+})));
 
 function AdminMultiSelect({
   id, name, value, onChange, placeholder, label, options,
