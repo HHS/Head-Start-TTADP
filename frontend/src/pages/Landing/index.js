@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useEffect } from 'react';
 import {
-  Tag, Table, Alert, Grid, Button,
+  Tag, Table, Alert, Grid, Button, Checkbox,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -13,8 +13,10 @@ import 'simplebar/dist/simplebar.min.css';
 import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
+import ContextMenu from '../../components/ContextMenu';
 import Container from '../../components/Container';
 import { getReports, getReportAlerts } from '../../fetchers/activityReports';
+import { getReportsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
@@ -23,7 +25,7 @@ import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
 
-function renderReports(reports) {
+function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
     id: '',
     displayId: '',
@@ -98,8 +100,34 @@ function renderReports(reports) {
 
     const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
 
+    const menuItems = [
+      {
+        label: 'View',
+        onClick: () => { history.push(linkTarget); },
+      },
+    ];
+
+    if (!legacyId) {
+      const downloadMenuItem = {
+        label: 'Download',
+        onClick: () => {
+          const downloadURL = getReportsDownloadURL([id]);
+          window.location.assign(downloadURL);
+        },
+      };
+      menuItems.push(downloadMenuItem);
+    }
+
+    const contextMenuLabel = `Actions for activity report ${displayId}`;
+
+    const selectId = `report-${id}`;
+    const isChecked = reportCheckboxes[id] || false;
+
     return (
       <tr key={`landing_${id}`}>
+        <td className="width-8">
+          <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
+        </td>
         <th scope="row" className="smart-hub--blue">
           <Link
             to={linkTarget}
@@ -135,6 +163,9 @@ function renderReports(reports) {
           >
             {status === 'needs_action' ? 'Needs action' : status}
           </Tag>
+        </td>
+        <td>
+          <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
         </td>
       </tr>
     );
@@ -177,6 +208,35 @@ function Landing() {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
+
+  const [reportCheckboxes, setReportCheckboxes] = useState({});
+  const [allReportsChecked, setAllReportsChecked] = useState(false);
+
+  const makeReportCheckboxes = (reportsArr, checked) => (
+    reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
+  );
+
+  // The all-reports checkbox can select/deselect all visible reports
+  const toggleSelectAll = (event) => {
+    const { target: { checked = null } = {} } = event;
+
+    if (checked === true) {
+      setReportCheckboxes(makeReportCheckboxes(reports, true));
+      setAllReportsChecked(true);
+    } else {
+      setReportCheckboxes(makeReportCheckboxes(reports, false));
+      setAllReportsChecked(false);
+    }
+  };
+
+  const handleReportSelect = (event) => {
+    const { target: { checked = null, value = null } = {} } = event;
+    if (checked === true) {
+      setReportCheckboxes({ ...reportCheckboxes, [value]: true });
+    } else {
+      setReportCheckboxes({ ...reportCheckboxes, [value]: false });
+    }
+  };
 
   const requestSort = (sortBy) => {
     let direction = 'asc';
@@ -228,6 +288,7 @@ function Landing() {
       if (alertsCount) {
         setAlertReportsCount(alertsCount);
       }
+      setAllReportsChecked(false);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log(e);
@@ -239,6 +300,36 @@ function Landing() {
   useEffect(() => {
     fetchReports();
   }, [sortConfig, offset, perPage, alertsSortConfig, alertsOffset, alertsPerPage]);
+
+  // When reports are updated, make sure all checkboxes are unchecked
+  useEffect(() => {
+    setReportCheckboxes(makeReportCheckboxes(reports, false));
+  }, [reports]);
+
+  useEffect(() => {
+    const checkValues = Object.values(reportCheckboxes);
+    if (checkValues.every((v) => v === true)) {
+      setAllReportsChecked(true);
+    } else if (allReportsChecked === true) {
+      setAllReportsChecked(false);
+    }
+  }, [reportCheckboxes]);
+
+  const handleDownloadClick = () => {
+    const toDownloadableReportIds = (accumulator, entry) => {
+      if (!reports) return accumulator;
+      const [key, value] = entry;
+      if (value === false) return accumulator;
+      accumulator.push(key);
+      return accumulator;
+    };
+
+    const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
+    if (downloadable.length) {
+      const downloadURL = getReportsDownloadURL(downloadable);
+      window.location.assign(downloadURL);
+    }
+  };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -289,7 +380,7 @@ function Landing() {
   const message = history.location.state && history.location.state.message;
   if (message) {
     msg = (
-      <div>
+      <>
         You successfully
         {' '}
         {message.status}
@@ -303,9 +394,13 @@ function Landing() {
         on
         {' '}
         {message.time}
-      </div>
+      </>
     );
   }
+
+  const headerMenuItems = [
+    { label: 'Download Selected Reports', onClick: () => handleDownloadClick() },
+  ];
 
   return (
     <>
@@ -324,7 +419,7 @@ function Landing() {
                 <Button
                   role="button"
                   unstyled
-                  aria-label="dissmiss alert"
+                  aria-label="dismiss alert"
                   onClick={() => updateShowAlert(false)}
                 >
                   <span className="fa-sm">
@@ -399,6 +494,9 @@ function Landing() {
                   </caption>
                   <thead>
                     <tr>
+                      <th className="width-8" aria-label="Select">
+                        <Checkbox id="all-reports" label="" onChange={toggleSelectAll} checked={allReportsChecked} aria-label="Select or de-select all reports" />
+                      </th>
                       {renderColumnHeader('Report ID', 'regionId')}
                       {renderColumnHeader('Grantee', 'activityRecipients')}
                       {renderColumnHeader('Start date', 'startDate')}
@@ -407,9 +505,14 @@ function Landing() {
                       {renderColumnHeader('Collaborator(s)', 'collaborators')}
                       {renderColumnHeader('Last saved', 'updatedAt')}
                       {renderColumnHeader('Status', 'status')}
+                      <th scope="col">
+                        <ContextMenu label="Actions for selected reports" menuItems={headerMenuItems} />
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>{renderReports(reports, history)}</tbody>
+                  <tbody>
+                    {renderReports(reports, history, reportCheckboxes, handleReportSelect)}
+                  </tbody>
                 </Table>
               </Container>
             </SimpleBar>
