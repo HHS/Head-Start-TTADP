@@ -3279,11 +3279,6 @@ camelcase@^6.0.0, camelcase@^6.1.0, camelcase@^6.2.0:
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-6.2.0.tgz#924af881c9d525ac9d87f40d964e5cea982a1809"
   integrity sha512-c7wVvbw3f37nuobQNtgsgG9POC9qMbNuMQmTCqZv23b6MIz0fcYpBiOlv9gEN/hdLdnZTDQhg6e9Dq5M1vKvfg==
 
-can-use-dom@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/can-use-dom/-/can-use-dom-0.1.0.tgz#22cc4a34a0abc43950f42c6411024a3f6366b45a"
-  integrity sha1-IsxKNKCrxDlQ9CxkEQJKP2NmtFo=
-
 caniuse-api@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/caniuse-api/-/caniuse-api-3.0.0.tgz#5e4d90e2274961d46291997df599e3ed008ee4c0"
@@ -3715,7 +3710,7 @@ core-js@^2.4.0:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.12.tgz#d9333dfa7b065e347cc5682219d6f690859cc2ec"
   integrity sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==
 
-core-js@^3.0.0, core-js@^3.0.1, core-js@^3.6.5:
+core-js@^3.0.0, core-js@^3.6.5:
   version "3.9.1"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.9.1.tgz#cec8de593db8eb2a85ffb0dbdeb312cb6e5460ae"
   integrity sha512-gSjRvzkxQc1zjM/5paAmL4idJBFzuJoo+jDjF1tStYFMV2ERfD02HhahhCGXUyHxQRG4yFKVSdO6g62eoRMcDg==
@@ -7434,11 +7429,6 @@ lodash.templatesettings@^4.0.0:
   dependencies:
     lodash._reinterpolate "^3.0.0"
 
-lodash.throttle@^4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/lodash.throttle/-/lodash.throttle-4.1.1.tgz#c23e91b710242ac70c37f1e1cda9274cc39bf2f4"
-  integrity sha1-wj6RtxAkKscMN/HhzaknTMOb8vQ=
-
 lodash.uniq@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
@@ -10178,11 +10168,6 @@ requires-port@^1.0.0:
   resolved "https://registry.yarnpkg.com/requires-port/-/requires-port-1.0.0.tgz#925d2601d39ac485e091cf0da5c6e694dc3dcaff"
   integrity sha1-kl0mAdOaxIXgkc8NpcbmlNw9yv8=
 
-resize-observer-polyfill@^1.5.1:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/resize-observer-polyfill/-/resize-observer-polyfill-1.5.1.tgz#0e9020dd3d21024458d4ebd27e23e40269810464"
-  integrity sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==
-
 resolve-cwd@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/resolve-cwd/-/resolve-cwd-2.0.0.tgz#00a9f7387556e27038eae232caa372a6a59b665a"
@@ -10670,26 +10655,6 @@ simple-swizzle@^0.2.2:
   integrity sha1-pNprY1/8zMoz9w0Xy5JZLeleVXo=
   dependencies:
     is-arrayish "^0.3.1"
-
-simplebar-react@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/simplebar-react/-/simplebar-react-2.3.0.tgz#c5fdd4042a7c603687684407fa7b20e9dc1f8fab"
-  integrity sha512-ZhWEe4UkshSJ9xPG1F/W58UMJdA3fzgtXGrYsya3hxdMbIYoKUKEhdBsqdMoeaLGyn/5dbMPqDLinkLeg0W0cQ==
-  dependencies:
-    prop-types "^15.6.1"
-    simplebar "^5.3.0"
-
-simplebar@^5.3.0:
-  version "5.3.0"
-  resolved "https://registry.yarnpkg.com/simplebar/-/simplebar-5.3.0.tgz#857de63296401ed0c3026845514fe5db69795be5"
-  integrity sha512-LgrGdIWpwHLLlI9HqfnGql62H/iZlF0KDZ7w3ZNbd2ZLwh9NKsODLHPzQgUlqQ8aZe7Y6/1xJMXK1PU5e810+w==
-  dependencies:
-    can-use-dom "^0.1.0"
-    core-js "^3.0.1"
-    lodash.debounce "^4.0.8"
-    lodash.memoize "^4.1.2"
-    lodash.throttle "^4.1.1"
-    resize-observer-polyfill "^1.5.1"
 
 sisteransi@^1.0.5:
   version "1.0.5"
@@ -11749,10 +11714,10 @@ use@^3.1.0:
   resolved "https://registry.yarnpkg.com/use/-/use-3.1.1.tgz#d50c8cac79a19fbc20f2911f56eb973f4e10070f"
   integrity sha512-cwESVXlO3url9YWlFW/TA9cshCEhtu7IKJ/p5soJ/gGpj7vbvFrAY/eIioQ6Dw23KjZhYgiIo8HOs1nQ2vr/oQ==
 
-uswds@^2.9.0:
-  version "2.10.1"
-  resolved "https://registry.yarnpkg.com/uswds/-/uswds-2.10.1.tgz#544fcf9b3550b54c4b48071c9e8c51423c6ffd24"
-  integrity sha512-8HS6yjV8eoL3VE1nk++/VMEaSqXpJCG18SMKwCj2wrZGgtIFKMaYh2746SGxDcJzO5V6g4McEN1gL2eRLfy2GA==
+uswds@^2.11.1:
+  version "2.11.1"
+  resolved "https://registry.yarnpkg.com/uswds/-/uswds-2.11.1.tgz#3061ca8d958d6cbcd1f08e1d760e2028c3d025df"
+  integrity sha512-yhLTik8AuiLdp+e7/v84unn1PF3f+qtYjcdsFRjy8+7TI2mTa4wk8/5oDaMJnk1LMA3tSQNkmxGetmOS1q4zXA==
   dependencies:
     classlist-polyfill "^1.0.3"
     del "^6.0.0"

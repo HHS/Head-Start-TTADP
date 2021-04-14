@@ -102,6 +102,7 @@
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/"
     ],
+    "testTimeout": 30000,
     "coverageThreshold": {
       "global": {
         "statements": 90,
@@ -167,6 +168,7 @@
     "csv-stringify": "^5.6.2",
     "cucumber-html-reporter": "^5.2.0",
     "dotenv": "^8.2.0",
+    "email-templates": "^8.0.4",
     "express": "^4.17.1",
     "express-unless": "^0.5.0",
     "express-winston": "^4.0.5",
@@ -179,6 +181,7 @@
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
     "newrelic": "^7.0.1",
+    "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
     "sequelize": "^5.22.3",
     "sequelize-cli": "^6.2.0",
