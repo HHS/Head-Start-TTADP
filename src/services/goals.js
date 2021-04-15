@@ -84,7 +84,7 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, tra
 
   const goalIdsToRemove = previousGoalIds.filter((id) => !currentGoalIds.includes(id));
   const objectiveIdsToRemove = [];
-  Promise.all(
+  await Promise.all(
     previousObjectiveIds.map(async (id) => {
       const notCurrent = !currentObjectiveIds.includes(id);
       const activityReportObjectives = await ActivityReportObjective
