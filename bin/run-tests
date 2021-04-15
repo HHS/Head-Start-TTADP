@@ -1,5 +1,4 @@
 #!/bin/bash
-
 declare -a options=(frontend backend)
 declare lr=">>>>>>>>"
 declare -i exit_code=0
@@ -18,6 +17,7 @@ check_exit() {
 main() {
     local opt=""
     local docker="true"
+    local verbose="false"
 
     while [[ $# -gt 0 ]]
     do
@@ -25,6 +25,10 @@ main() {
       case "$key" in
         -l|--local)
           docker="false"
+          shift
+          ;;
+        -v | --verbose)
+          verbose="true"
           shift
           ;;
         *)
@@ -73,24 +77,32 @@ main() {
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
         # Test backend
+        command="yarn test:ci --colors"
+        if [ $verbose == "false" ]; then
+          command="yarn test:ci --silent --colors"
+        fi
         echo
         log "Running backend tests"
         if [[ $docker == "true" ]]; then
-          docker exec test-backend bash -c "yarn test:ci"
+          docker exec test-backend bash -c "$command"
         else
-          yarn test:ci
+          $command
         fi
         check_exit "$?"
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then
         # Test frontend
+        command="yarn --cwd frontend run test:ci --colors"
+        if [ $verbose == "false" ]; then
+          command="yarn --cwd frontend run test:ci --silent --colors"
+        fi
         echo
         log "Running frontend tests"
         if [[ $docker == "true" ]]; then
-          docker exec test-frontend bash -c "yarn --cwd frontend run test:ci"
+          docker exec test-frontend bash -c "$command"
         else
-          yarn --cwd frontend run test:ci
+          $command
         fi
         check_exit "$?"
     fi
