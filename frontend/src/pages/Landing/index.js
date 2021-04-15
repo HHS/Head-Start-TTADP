@@ -8,8 +8,6 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 
-import SimpleBar from 'simplebar-react';
-import 'simplebar/dist/simplebar.min.css';
 import Pagination from 'react-js-pagination';
 
 import UserContext from '../../UserContext';
@@ -24,6 +22,7 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
+import Filter, { filtersToQueryString } from './Filter';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
@@ -208,6 +207,8 @@ function Landing() {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
+  const [filters, setFilters] = useState([]);
+  const [alertFilters, setAlertFilters] = useState([]);
 
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
@@ -266,24 +267,39 @@ function Landing() {
     setAlertsSortConfig({ sortBy, direction });
   };
 
-  async function fetchReports() {
+  useEffect(() => {
+    async function fetchReports() {
+      const filterQuery = filtersToQueryString(filters);
+      try {
+        const { count, rows } = await getReports(
+          sortConfig.sortBy,
+          sortConfig.direction,
+          offset,
+          perPage,
+          filterQuery,
+        );
+        updateReports(rows);
+        setReportsCount(count || 0);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch reports');
+      }
+      setIsLoaded(true);
+    }
+    fetchReports();
+  }, [sortConfig, offset, perPage, filters]);
+
+  async function fetchAlertReports() {
+    const filterQuery = filtersToQueryString(alertFilters);
     try {
-      const { count, rows } = await getReports(
-        sortConfig.sortBy,
-        sortConfig.direction,
-        offset,
-        perPage,
-      );
       const { alertsCount, alerts } = await getReportAlerts(
         alertsSortConfig.sortBy,
         alertsSortConfig.direction,
         alertsOffset,
         alertsPerPage,
+        filterQuery,
       );
-      updateReports(rows);
-      if (count) {
-        setReportsCount(count);
-      }
       updateReportAlerts(alerts);
       if (alertsCount) {
         setAlertReportsCount(alertsCount);
@@ -296,10 +312,13 @@ function Landing() {
     }
     setIsLoaded(true);
   }
+  useEffect(() => {
+    fetchAlertReports();
+  }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters]);
 
   useEffect(() => {
-    fetchReports();
-  }, [sortConfig, offset, perPage, alertsSortConfig, alertsOffset, alertsPerPage]);
+    fetchAlertReports();
+  }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters]);
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
@@ -457,11 +476,14 @@ function Landing() {
               alertsActivePage={alertsActivePage}
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
-              fetchReports={fetchReports}
+              fetchReports={fetchAlertReports}
+              updateReportFilters={setAlertFilters}
+              hasFilters={alertFilters.length > 0}
             />
-            <SimpleBar forceVisible="y" autoHide={false}>
-              <Container className="landing inline-size" padding={0}>
-                <span className="smart-hub--table-nav" aria-label="Pagination for activity reports">
+            <Container className="landing inline-size maxw-full" padding={0}>
+              <span className="smart-hub--table-nav">
+                <Filter className="float-left" applyFilters={setFilters} />
+                <span aria-label="Pagination for activity reports">
                   <span
                     className="smart-hub--total-count"
                     aria-label={`Page ${activePage}, displaying rows ${renderTotal(
@@ -487,6 +509,8 @@ function Landing() {
                     />
                   </span>
                 </span>
+              </span>
+              <div className="usa-table-container--scrollable">
                 <Table className="usa-table usa-table--borderless usa-table--striped">
                   <caption>
                     Activity reports
@@ -514,8 +538,8 @@ function Landing() {
                     {renderReports(reports, history, reportCheckboxes, handleReportSelect)}
                   </tbody>
                 </Table>
-              </Container>
-            </SimpleBar>
+              </div>
+            </Container>
           </>
         )}
       </UserContext.Consumer>

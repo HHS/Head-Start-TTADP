@@ -5,8 +5,6 @@ import {
   Tag, Table, useModal, connectModal,
 } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
-import SimpleBar from 'simplebar-react';
-import 'simplebar/dist/simplebar.min.css';
 
 import DeleteReportModal from '../../components/DeleteReportModal';
 import Container from '../../components/Container';
@@ -17,6 +15,7 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
+import Filter from './Filter';
 
 function renderReports(reports, fetchReports) {
   return reports.map((report) => {
@@ -159,6 +158,8 @@ function MyAlerts(props) {
     alertReportsCount,
     sortHandler,
     fetchReports,
+    hasFilters,
+    updateReportFilters,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -198,7 +199,7 @@ function MyAlerts(props) {
 
   return (
     <>
-      {reports && reports.length === 0 && (
+      {reports && reports.length === 0 && !hasFilters && (
         <Container className="landing" padding={0}>
           <div id="caughtUp">
             <div>
@@ -213,46 +214,53 @@ function MyAlerts(props) {
           </div>
         </Container>
       )}
-      {reports && reports.length > 0 && (
-        <SimpleBar>
-          <Container className="landing inline-size" padding={0}>
-            <span
-              id="alertsTotalCount"
-              aria-label={`Displaying rows ${renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}`}
-            >
-              {renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}
-            </span>
 
-            <Table bordered={false}>
-              <caption className="smart-hub--table-caption">
-                My activity report alerts
-                <p id="arTblDesc">with sorting</p>
-              </caption>
-              <thead>
-                <tr>
-                  {renderColumnHeader('Report ID', 'regionId')}
-                  {renderColumnHeader('Grantee', 'activityRecipients')}
-                  {renderColumnHeader('Start date', 'startDate')}
-                  {renderColumnHeader('Creator', 'author')}
-                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                  {renderColumnHeader('Status', 'status')}
-                  <th scope="col" aria-label="..." />
-                </tr>
-              </thead>
-              <tbody>{renderReports(reports, fetchReports)}</tbody>
-            </Table>
-          </Container>
-        </SimpleBar>
+      {reports && (reports.length > 0 || hasFilters) && (
+      <Container className="landing inline-size maxw-full" padding={0}>
+        <span className="smart-hub--table-nav">
+          <Filter
+            className="float-left"
+            applyFilters={updateReportFilters}
+            forMyAlerts
+          />
+          <span
+            id="alertsTotalCount"
+            aria-label={`Displaying rows ${renderTotal(
+              alertsOffset,
+              alertsPerPage,
+              alertsActivePage,
+              alertReportsCount,
+            )}`}
+          >
+            {renderTotal(
+              alertsOffset,
+              alertsPerPage,
+              alertsActivePage,
+              alertReportsCount,
+            )}
+          </span>
+        </span>
+        <div className="usa-table-container--scrollable">
+          <Table className="usa-table usa-table--borderless" fullWidth>
+            <caption className="smart-hub--table-caption">
+              My activity report alerts
+              <p id="arTblDesc">with sorting</p>
+            </caption>
+            <thead>
+              <tr>
+                {renderColumnHeader('Report ID', 'regionId')}
+                {renderColumnHeader('Grantee', 'activityRecipients')}
+                {renderColumnHeader('Start date', 'startDate')}
+                {renderColumnHeader('Creator', 'author')}
+                {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                {renderColumnHeader('Status', 'status')}
+                <th scope="col" aria-label="..." />
+              </tr>
+            </thead>
+            <tbody>{renderReports(reports, fetchReports)}</tbody>
+          </Table>
+        </div>
+      </Container>
       )}
     </>
   );
@@ -268,6 +276,8 @@ MyAlerts.propTypes = {
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
   fetchReports: PropTypes.func.isRequired,
+  hasFilters: PropTypes.bool,
+  updateReportFilters: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {
@@ -276,6 +286,7 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
+  hasFilters: false,
 };
 
 export default MyAlerts;
