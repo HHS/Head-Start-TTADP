@@ -17,12 +17,17 @@ describe('Import TTA plan goals', () => {
 
   describe('for a single region', () => {
     beforeAll(async () => {
-      const fileName = 'GranteeTTAPlanTest.csv';
-      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
-      await Role.destroy({ where: {} });
-      await Topic.destroy({ where: {} });
-      await Goal.destroy({ where: {} });
-      await importGoals(fileName, 14);
+      try {
+        const fileName = 'GranteeTTAPlanTest.csv';
+        downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+        await Role.destroy({ where: {} });
+        await Topic.destroy({ where: {} });
+        await Goal.destroy({ where: {} });
+        await importGoals(fileName, 14);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log(`Unable to setup Import Plan Goals test ${error}`);
+      }
     });
 
     it('should import Roles table', async () => {
