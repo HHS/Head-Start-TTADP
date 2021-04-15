@@ -136,7 +136,7 @@ function App() {
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
-          <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
+          <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
             <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
               <section className="usa-section padding-top-3">
                 {!authenticated && (authError === 403
