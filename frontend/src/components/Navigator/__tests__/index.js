@@ -57,6 +57,7 @@ const pages = [
     review: true,
     render: (formData, onFormSubmit) => (
       <div>
+        <Input name="fourth" required />
         <button type="button" data-testid="review" onClick={onFormSubmit}>Continue</button>
       </div>
     ),

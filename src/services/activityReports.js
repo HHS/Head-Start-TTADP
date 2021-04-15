@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
+import { filtersToScopes } from '../scopes/activityReport';
 
 import {
   ActivityReport,
@@ -283,6 +284,7 @@ export function activityReportById(activityReportId) {
     ],
   });
 }
+
 /**
  * Retrieves activity reports in sorted slices
  * using sequelize.literal for several associated fields based on the following
@@ -295,13 +297,18 @@ export function activityReportById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export function activityReports(readRegions, {
-  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE,
+  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
 }) {
   const regions = readRegions || [];
+  const scopes = filtersToScopes(filters);
 
   return ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions, status: REPORT_STATUSES.APPROVED },
+      where: {
+        regionId: regions,
+        status: REPORT_STATUSES.APPROVED,
+        [Op.and]: scopes,
+      },
       attributes: [
         'id',
         'displayId',
@@ -386,10 +393,12 @@ export function activityReports(readRegions, {
  * @param {*} userId
  */
 export function activityReportAlerts(userId, {
-  sortBy = 'startDate', sortDir = 'desc', offset = 0,
+  sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
 }) {
+  const scopes = filtersToScopes(filters);
   return ActivityReport.findAndCountAll({
     where: {
+      [Op.and]: scopes,
       [Op.or]: [
         {
           [Op.or]: [
