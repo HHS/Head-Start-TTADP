@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:14.16.0-browsers
+      - image: cimg/node:14.16.0-browsers
   docker-postgres-executor:
     docker:
-      - image: circleci/node:14.16.0-browsers
+      - image: cimg/node:14.16.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4
@@ -164,7 +164,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "cm-102-fix-objectives-delete-error"
+    default: "js-j32-filtering-reports"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
