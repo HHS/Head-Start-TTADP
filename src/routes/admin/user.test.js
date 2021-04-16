@@ -131,7 +131,7 @@ describe('User route handler', () => {
     const testUpdateUser = {
       id: 53,
       name: 'Joe Green',
-      role: 'Health Specialist',
+      role: ['Health Specialist'],
       phoneNumber: '555-555-554',
       hsesUserId: '53',
       hsesUsername: 'test53@test.com',
