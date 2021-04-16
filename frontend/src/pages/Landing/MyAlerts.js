@@ -50,7 +50,7 @@ function renderReports(reports, fetchReports) {
 
     const collaboratorsWithTags = collaborators ? collaborators.map((collaborator) => (
       <Tag
-        key={collaborator.fullName.slice(1, 3) + collaborator.id}
+        key={collaborator.id + Math.random().toString(36).substring(7)}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
