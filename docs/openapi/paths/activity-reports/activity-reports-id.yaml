@@ -39,3 +39,18 @@ put:
         application/json:
           schema:
             $ref: '../../index.yaml#/components/schemas/activityReport'
+delete:
+  tags:
+    - activity-reports
+  summary: Soft delete an activity report
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    204:
+      description: activity report status was changed to deleted
+    403:
+      description: User is not authorized to delete this activity report
