@@ -7,21 +7,21 @@ const grants = [
     granteeId: 1,
     number: 'zz123',
     cdi: true,
-    region: 13,
+    regionId: 13,
   },
   {
     id: 91,
     granteeId: 1,
     number: 'zz456',
     cdi: true,
-    region: 13,
+    regionId: 13,
   },
   {
     id: 92,
     granteeId: 1,
     number: 'zz789',
     cdi: false,
-    region: 13,
+    regionId: 13,
   },
 ];
 
@@ -67,6 +67,7 @@ describe('Grant DB service', () => {
     it('can return unassigned grants', async () => {
       const foundGrantees = await cdiGrants('true');
       const foundIds = foundGrantees.map((g) => g.id);
+      console.log(foundIds);
       expect(foundIds.length).toBe(5);
     });
   });
