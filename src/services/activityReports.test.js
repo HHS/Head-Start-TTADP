@@ -18,8 +18,8 @@ jest.mock('./goals', () => ({
   copyGoalsToGrants: jest.fn(),
 }));
 
-const RECIPIENT_ID = 15;
-const GRANTEE_ID = 16;
+const RECIPIENT_ID = 30;
+const GRANTEE_ID = 31;
 
 const mockUser = {
   id: 1000,
@@ -67,14 +67,12 @@ const submittedReport = {
 };
 
 describe('Activity Reports DB service', () => {
-  let grantee;
-
   beforeAll(async () => {
     await User.create(mockUser);
-    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee', regionId: 17 });
+    await Grantee.findOrCreate({ where: { name: 'grantee', id: RECIPIENT_ID } });
     await Region.create({ name: 'office 17', id: 17 });
     await Grant.create({
-      id: RECIPIENT_ID, number: 1, granteeId: grantee.id, regionId: 17, status: 'Active',
+      id: RECIPIENT_ID, number: 1, granteeId: RECIPIENT_ID, regionId: 17, status: 'Active',
     });
     await NonGrantee.create({ id: RECIPIENT_ID, name: 'nonGrantee' });
   });

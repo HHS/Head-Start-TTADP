@@ -124,9 +124,9 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        nonGranteeIncluded1 = await NonGrantee.create({ id: 16, name: 'test' });
-        nonGranteeIncluded2 = await NonGrantee.create({ id: 17, name: 'another test' });
-        nonGranteeExcluded = await NonGrantee.create({ id: 18, name: 'nonGrantee' });
+        nonGranteeIncluded1 = await NonGrantee.create({ id: 40, name: 'test' });
+        nonGranteeIncluded2 = await NonGrantee.create({ id: 41, name: 'another test' });
+        nonGranteeExcluded = await NonGrantee.create({ id: 42, name: 'nonGrantee' });
 
         reportIncluded1 = await ActivityReport.create({ ...reportObject });
         reportIncluded2 = await ActivityReport.create({ ...reportObject });
@@ -213,9 +213,9 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        granteeIncluded1 = await Grantee.create({ id: 16, name: '1234' });
-        granteeIncluded2 = await Grantee.create({ id: 17, name: 'testing 1234' });
-        granteeExcluded = await Grantee.create({ id: 18, name: '4321' });
+        granteeIncluded1 = await Grantee.create({ id: 50, name: '1234' });
+        granteeIncluded2 = await Grantee.create({ id: 51, name: 'testing 1234' });
+        granteeExcluded = await Grantee.create({ id: 52, name: '4321' });
 
         grantIncluded1 = await Grant.create({
           id: granteeIncluded1.id, number: 1234, granteeId: granteeIncluded1.id,
