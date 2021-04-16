@@ -8,7 +8,7 @@ import Cdi from './cdi';
 function Admin() {
   return (
     <>
-      <h2>Admin UI</h2>
+      <h1>Admin UI</h1>
       <div className="margin-bottom-2">
         <Link className="usa-button" to="/admin/cdi">
           CDI grants
