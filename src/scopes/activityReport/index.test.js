@@ -637,10 +637,10 @@ describe('filtersToScopes', () => {
     it('excludes deleted reports', async () => {
       await ActivityReport.create({ ...reportObject });
       const beginningAR = await ActivityReport.findAll();
-      expect(beginningAR.length).toEqual(2);
+      const count = beginningAR.length;
       await ActivityReport.create({ ...deletedReport });
       const endAR = await ActivityReport.findAll();
-      expect(endAR.length).toEqual(2);
+      expect(endAR.length).toEqual(count);
     });
   });
 });
