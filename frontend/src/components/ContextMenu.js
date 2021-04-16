@@ -49,6 +49,7 @@ function ContextMenu({
   return (
     <div
       onBlur={onBlur}
+      className="position-relative"
     >
       <Button
         className="smart-hub--context-menu-button smart-hub--button__no-margin"
