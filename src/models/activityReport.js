@@ -1,6 +1,6 @@
 import { Model } from 'sequelize';
-import { uniqBy } from 'lodash';
 import moment from 'moment';
+import { isEqual, uniqWith } from 'lodash';
 import { REPORT_STATUSES } from '../constants';
 
 function formatDate(fieldName) {
@@ -171,7 +171,22 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const objectives = this.objectives || [];
-        return uniqBy(objectives.map((o) => o.goal), 'id');
+        const goalsArray = objectives.map((o) => o.goal);
+        const goals = uniqWith(goalsArray, isEqual);
+
+        return goals.map((goal) => {
+          const objs = objectives.filter((o) => o.goalId === goal.id);
+          const plainObjectives = objs.map((o) => {
+            const plain = o.get({ plain: true });
+            const { goal: _, ...plainObj } = plain;
+            return plainObj;
+          });
+          const ret = {
+            ...goal.get({ plain: true }),
+            objectives: plainObjectives,
+          };
+          return ret;
+        });
       },
     },
     lastSaved: {
