@@ -14,6 +14,7 @@ import {
   getLegacyReport,
   downloadReports,
   updateLegacyFields,
+  softDeleteReport,
 } from './handlers';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 
@@ -34,6 +35,7 @@ router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, updateLegacyFie
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
+router.delete('/:activityReportId', softDeleteReport);
 router.put('/:activityReportId/reset', resetToDraft);
 router.put('/:activityReportId/review', reviewReport);
 router.post('/:activityReportId/submit', submitReport);
