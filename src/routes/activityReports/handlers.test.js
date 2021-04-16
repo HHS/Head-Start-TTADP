@@ -12,6 +12,7 @@ import {
   getLegacyReport,
   downloadReports,
   updateLegacyFields,
+  softDeleteReport,
 } from './handlers';
 import {
   activityReportById,
@@ -438,6 +439,29 @@ describe('Activity Report handlers', () => {
         canReset: () => false,
       }));
       await resetToDraft(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('softDeleteReport', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+    };
+
+    it('returns 204', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canDelete: () => true,
+      }));
+      await softDeleteReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    it('handles unauthorized', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canDelete: () => false,
+      }));
+      await softDeleteReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
