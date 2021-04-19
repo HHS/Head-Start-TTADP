@@ -100,5 +100,17 @@ describe('goals objectives', () => {
       const objective = await screen.findByText('title');
       expect(objective).toBeVisible();
     });
+
+    it('isPageComplete is true', async () => {
+      const formData = { activityRecipientType: 'non-grantee', goals: [] };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).toBeTruthy();
+    });
+
+    it('isPageComplete is false', async () => {
+      const formData = { activityRecipientType: 'grantee', goals: [] };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).not.toBeTruthy();
+    });
   });
 });
