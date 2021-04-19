@@ -7,7 +7,14 @@ import ContextMenu from '../../../../components/ContextMenu';
 import './Goal.css';
 
 const Goals = ({
-  name, isEditable, onRemoveGoal, goalIndex, objectives, onUpdateObjectives, createObjective,
+  name,
+  isEditable,
+  onRemoveGoal,
+  goalIndex,
+  onUpdateGoal,
+  objectives,
+  onUpdateObjectives,
+  createObjective,
 }) => {
   // TODO: only newAvailableGoals are editable
   const [editing, updateEditing] = useState(false);
@@ -22,6 +29,10 @@ const Goals = ({
   };
 
   // TODO: updateGoal handler, probably passed in as prop
+  const handleGoalUpdate = () => {
+    onUpdateGoal(goalName);
+    updateEditing(false);
+  };
 
   const onRemoveObjective = (index) => {
     const newObjectives = objectives.filter((o, objectiveIndex) => index !== objectiveIndex);
@@ -55,7 +66,7 @@ const Goals = ({
   const InplaceGoalEditor = (
     <div className="">
       <TextInput value={goalName} onChange={onGoalChange} />
-      <button type="button" className="usa-button">
+      <button type="button" className="usa-button" onClick={() => handleGoalUpdate()}>
         Update Goal
       </button>
       <button type="button" onClick={() => updateEditing(false)} className="usa-button usa-button--secondary">
@@ -123,6 +134,7 @@ Goals.propTypes = {
   name: PropTypes.string.isRequired,
   isEditable: PropTypes.bool.isRequired,
   goalIndex: PropTypes.number.isRequired,
+  onUpdateGoal: PropTypes.func.isRequired,
   onRemoveGoal: PropTypes.func.isRequired,
   onUpdateObjectives: PropTypes.func.isRequired,
 };

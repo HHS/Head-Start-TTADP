@@ -40,6 +40,19 @@ const GoalPicker = ({
     setValue('goals', newGoals);
   };
 
+  const onUpdateGoal = (index, name) => {
+    if (name !== '') {
+      const oldGoal = selectedGoals[index];
+      const goal = {
+        ...oldGoal,
+        name,
+      };
+      const updatedGoals = cloneDeep(selectedGoals);
+      updatedGoals[index] = goal;
+      setValue('goals', updatedGoals);
+    }
+  };
+
   const onSaveGoal = () => {
     if (newGoal !== '') {
       const goal = { id: uuidv4(), name: newGoal, objectives: [createObjective()] };
@@ -115,25 +128,22 @@ const GoalPicker = ({
           Save Goal
         </Button>
         <div>
-          {selectedGoals.map((goal, index) => {
-            // FIXME: newAvailableGoals doesn't encompass all that should be editable
-            const isEditable = newAvailableGoals.some((g) => g.id === goal.id);
-            return (
-              <Goal
-                key={goal.id}
-                goalIndex={index}
-                id={goal.id}
-                objectives={goal.objectives}
-                name={goal.name}
-                isEditable={isEditable}
-                createObjective={createObjective}
-                onRemoveGoal={() => onRemoveGoal(goal.id)}
-                onUpdateObjectives={(newObjectives) => {
-                  onUpdateObjectives(index, newObjectives);
-                }}
-              />
-            );
-          })}
+          {selectedGoals.map((goal, index) => (
+            <Goal
+              key={goal.id}
+              goalIndex={index}
+              id={goal.id}
+              objectives={goal.objectives}
+              name={goal.name}
+              isEditable
+              createObjective={createObjective}
+              onRemoveGoal={() => onRemoveGoal(goal.id)}
+              onUpdateObjectives={(newObjectives) => {
+                onUpdateObjectives(index, newObjectives);
+              }}
+              onUpdateGoal={(goalName) => onUpdateGoal(index, goalName)}
+            />
+          ))}
         </div>
       </FormItem>
     </div>
