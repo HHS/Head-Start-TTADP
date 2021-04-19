@@ -115,20 +115,25 @@ const GoalPicker = ({
           Save Goal
         </Button>
         <div>
-          {selectedGoals.map((goal, index) => (
-            <Goal
-              key={goal.id}
-              goalIndex={index}
-              id={goal.id}
-              objectives={goal.objectives}
-              name={goal.name}
-              createObjective={createObjective}
-              onRemoveGoal={() => onRemoveGoal(goal.id)}
-              onUpdateObjectives={(newObjectives) => {
-                onUpdateObjectives(index, newObjectives);
-              }}
-            />
-          ))}
+          {selectedGoals.map((goal, index) => {
+            // FIXME: newAvailableGoals doesn't encompass all that should be editable
+            const isEditable = newAvailableGoals.some((g) => g.id === goal.id);
+            return (
+              <Goal
+                key={goal.id}
+                goalIndex={index}
+                id={goal.id}
+                objectives={goal.objectives}
+                name={goal.name}
+                isEditable={isEditable}
+                createObjective={createObjective}
+                onRemoveGoal={() => onRemoveGoal(goal.id)}
+                onUpdateObjectives={(newObjectives) => {
+                  onUpdateObjectives(index, newObjectives);
+                }}
+              />
+            );
+          })}
         </div>
       </FormItem>
     </div>
