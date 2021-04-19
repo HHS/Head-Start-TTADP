@@ -74,6 +74,7 @@ export const managerReportStatuses = [
 
 export const REPORT_STATUSES = {
   DRAFT: 'draft',
+  DELETED: 'deleted',
   SUBMITTED: 'submitted',
   NEEDS_ACTION: 'needs_action',
   APPROVED: 'approved',

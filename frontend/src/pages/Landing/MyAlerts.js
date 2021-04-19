@@ -65,10 +65,7 @@ function renderReports(reports, fetchReports) {
 
     const { isOpen, openModal, closeModal } = useModal();
     const onDelete = (reportId) => {
-      // Once backend deletion method is implemented, this fake
-      // if statement is no longer needed, just deleteReport(...)
-      // eslint-disable-next-line no-constant-condition
-      if (false) deleteReport(reportId);
+      deleteReport(reportId);
       fetchReports();
       closeModal();
     };
