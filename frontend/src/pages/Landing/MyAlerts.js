@@ -73,11 +73,11 @@ function renderReports(reports, fetchReports) {
 
     const menuItems = [
       {
-        label: 'Open report',
+        label: 'View',
         onClick: () => { history.push(idLink); },
       },
       {
-        label: 'Delete report',
+        label: 'Delete',
         onClick: () => { openModal(); },
       },
     ];
