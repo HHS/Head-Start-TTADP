@@ -38,6 +38,13 @@ const approvedReport = {
   ttaType: ['type'],
 };
 
+// Included to test default scope
+const deletedReport = {
+  status: REPORT_STATUSES.DELETED,
+  userId: mockUser.id,
+  regionId: 1,
+};
+
 describe('filtersToScopes', () => {
   let globallyExcluded;
   let includedUser1;
@@ -623,6 +630,17 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcluded.id]));
+    });
+  });
+
+  describe('defaultScope', () => {
+    it('excludes deleted reports', async () => {
+      const beginningARCount = await ActivityReport.count();
+      const deleted = await ActivityReport.create({ ...deletedReport });
+      expect(deleted.id).toBeDefined();
+      const endARCount = await ActivityReport.count();
+      expect(endARCount).toEqual(beginningARCount);
+      await deleted.destroy();
     });
   });
 });
