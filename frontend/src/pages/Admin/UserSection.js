@@ -27,6 +27,13 @@ function UserSection({ user, onSave }) {
   }, [user]);
 
   const onUserChange = (e) => {
+    if (Array.isArray(e)) {
+      updateUser({
+        ...formUser,
+        role: e.map((obj) => obj.value),
+      });
+      return;
+    }
     const { name, value } = e.target;
     updateUser({
       ...formUser,
