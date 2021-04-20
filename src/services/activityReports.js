@@ -278,6 +278,9 @@ export function activityReportById(activityReportId) {
         required: false,
       },
     ],
+    order: [
+      [{ model: Objective, as: 'objectives' }, 'id', 'ASC'],
+    ],
   });
 }
 
