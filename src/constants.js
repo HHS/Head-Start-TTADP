@@ -1,5 +1,6 @@
 export const REPORT_STATUSES = {
   DRAFT: 'draft',
+  DELETED: 'deleted',
   SUBMITTED: 'submitted',
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',

@@ -15,5 +15,5 @@ module.exports = {
   {
     ignoreDuplicates: true,
   }),
-  down: (queryInterface) => queryInterface.bulkDelete('Regions', null, {}),
+  down: (queryInterface) => queryInterface.bulkDelete('NonGrantees', null, {}),
 };
