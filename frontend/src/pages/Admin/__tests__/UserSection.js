@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import {
+  render, screen, within, fireEvent,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import UserSection from '../UserSection';
@@ -19,7 +21,7 @@ describe('UserSection', () => {
       id: 1,
       email: 'email',
       name: 'first last',
-      role: 'Grantee Specialist',
+      role: ['Grantee Specialist'],
       homeRegionId: 1,
       permissions: [
         {
@@ -75,6 +77,25 @@ describe('UserSection', () => {
     const region = within(userInfo).getByLabelText('Region');
     userEvent.selectOptions(region, '1');
     expect(within(userInfo).getByLabelText('Region')).toHaveValue('1');
+  });
+
+  it('the roles support multi selection', () => {
+    const rolesInputGS = screen.getByText('Grantee Specialist');
+
+    fireEvent.focus(rolesInputGS);
+    fireEvent.keyDown(rolesInputGS, { key: 'ArrowDown', code: 40 });
+    fireEvent.click(screen.getByText('COR'));
+    // Find the next option selected in the multiselect input
+    const rolesInputCOR = rolesInputGS.parentElement.nextElementSibling.firstChild;
+    expect(within(rolesInputCOR).getByText('COR')).toBeDefined();
+  });
+
+  it('there is a placeholder in the roles input', () => {
+    const rolesInputGS = screen.getByText('Grantee Specialist');
+    const removeRoleButton = rolesInputGS.nextElementSibling;
+    fireEvent.click(removeRoleButton);
+    const placeholder = screen.getByText('Select roles...');
+    expect(placeholder).toBeDefined();
   });
 
   it('submitting the form calls the onSave prop', () => {

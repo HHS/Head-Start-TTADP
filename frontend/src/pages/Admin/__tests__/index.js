@@ -34,7 +34,7 @@ describe('Admin Page', () => {
         email: 'gs@hogwarts.com',
         name: undefined,
         homeRegionId: 1,
-        role: 'Grantee Specialist',
+        role: ['Grantee Specialist'],
         lastLogin: moment().subtract(65, 'days').toISOString(),
         permissions: [{
           userId: 2,
@@ -47,7 +47,7 @@ describe('Admin Page', () => {
         email: 'potter@hogwarts.com',
         name: 'Harry Potter',
         homeRegionId: 1,
-        role: 'Grantee Specialist',
+        role: ['Grantee Specialist'],
         lastLogin: moment().toISOString(),
         permissions: [{
           userId: 3,
@@ -60,7 +60,7 @@ describe('Admin Page', () => {
         email: 'granger@hogwarts.com',
         name: 'Hermione Granger',
         homeRegionId: 1,
-        role: 'Early Childhood Specialist',
+        role: ['Early Childhood Specialist'],
         lastLogin: moment().subtract(190, 'days').toISOString(),
         permissions: [{
           userId: 4,
@@ -158,7 +158,7 @@ describe('Admin Page', () => {
           email: 'email',
           name: 'Potter Harry',
           homeRegionId: 1,
-          role: 'Grantee Specialist',
+          role: ['Grantee Specialist'],
           permissions: [],
         });
         render(<Router history={history}><Admin match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
