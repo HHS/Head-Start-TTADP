@@ -109,6 +109,9 @@ export async function saveGoalsForReport(goals, report, transaction) {
       const { id, ...newGoal } = goal;
       const savedGoal = await Goal.create(newGoal, { transaction });
       goalId = savedGoal.id;
+    } else {
+      const savedGoal = await Goal.findOne({ where: { id: goalId } });
+      await savedGoal.update(goal);
     }
 
     return Promise.all(goal.objectives.map(async (objective) => {
