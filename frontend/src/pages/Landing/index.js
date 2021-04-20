@@ -312,6 +312,7 @@ function Landing() {
     }
     setIsLoaded(true);
   }
+
   useEffect(() => {
     fetchAlertReports();
   }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters]);

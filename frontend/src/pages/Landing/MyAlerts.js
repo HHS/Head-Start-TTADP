@@ -64,9 +64,9 @@ function renderReports(reports, fetchReports) {
     const statusClassName = `smart-hub--table-tag-status smart-hub--status-${status}`;
 
     const { isOpen, openModal, closeModal } = useModal();
-    const onDelete = (reportId) => {
-      deleteReport(reportId);
-      fetchReports();
+    const onDelete = async (reportId) => {
+      await deleteReport(reportId);
+      await fetchReports();
       closeModal();
     };
     const ConnectModal = connectModal(DeleteReportModal);
