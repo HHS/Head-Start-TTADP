@@ -35,6 +35,11 @@ export default class ActivityReport {
       && this.activityReport.status === REPORT_STATUSES.SUBMITTED;
   }
 
+  canDelete() {
+    return (this.isAdmin() || this.isAuthor())
+      && this.activityReport.status === REPORT_STATUSES.DRAFT;
+  }
+
   canViewLegacy() {
     return this.canReadInRegion();
   }
@@ -69,6 +74,13 @@ export default class ActivityReport {
         || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
         && permission.regionId === this.activityReport.regionId));
     return !_.isUndefined(permissions);
+  }
+
+  isAdmin() {
+    const adminScope = this.user.permissions.find(
+      (permission) => permission.scopeId === SCOPES.ADMIN,
+    );
+    return !_.isUndefined(adminScope);
   }
 
   isAuthor() {
