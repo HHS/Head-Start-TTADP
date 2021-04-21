@@ -290,34 +290,29 @@ function Landing() {
     fetchReports();
   }, [sortConfig, offset, perPage, filters]);
 
-  async function fetchAlertReports() {
-    const filterQuery = filtersToQueryString(alertFilters);
-    try {
-      const { alertsCount, alerts } = await getReportAlerts(
-        alertsSortConfig.sortBy,
-        alertsSortConfig.direction,
-        alertsOffset,
-        alertsPerPage,
-        filterQuery,
-      );
-      updateReportAlerts(alerts);
-      if (alertsCount) {
-        setAlertReportsCount(alertsCount);
+  useEffect(() => {
+    async function fetchAlertReports() {
+      const filterQuery = filtersToQueryString(alertFilters);
+      try {
+        const { alertsCount, alerts } = await getReportAlerts(
+          alertsSortConfig.sortBy,
+          alertsSortConfig.direction,
+          alertsOffset,
+          alertsPerPage,
+          filterQuery,
+        );
+        updateReportAlerts(alerts);
+        if (alertsCount) {
+          setAlertReportsCount(alertsCount);
+        }
+        setAllReportsChecked(false);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch reports');
       }
-      setAllReportsChecked(false);
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.log(e);
-      updateError('Unable to fetch reports');
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
-  }
-
-  useEffect(() => {
-    fetchAlertReports();
-  }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters]);
-
-  useEffect(() => {
     fetchAlertReports();
   }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters]);
 
@@ -477,10 +472,12 @@ function Landing() {
               alertsActivePage={alertsActivePage}
               alertReportsCount={alertReportsCount}
               sortHandler={requestAlertsSort}
-              fetchReports={fetchAlertReports}
               updateReportFilters={setAlertFilters}
               hasFilters={alertFilters.length > 0}
+              updateReportAlerts={updateReportAlerts}
+              setAlertReportsCount={setAlertReportsCount}
             />
+
             <Container className="landing inline-size maxw-full" padding={0}>
               <span className="smart-hub--table-nav">
                 <Filter className="float-left" applyFilters={setFilters} />
