@@ -64,7 +64,7 @@ describe('CDI', () => {
 
   it('renders the grant view if a grant is selected', async () => {
     render(<RenderCDI grantId={1} />);
-    const number = await screen.findByText(withText('Number: abc123'));
+    const number = await screen.findByText(withText('Number: abc123 - 1'));
     expect(number).toBeVisible();
   });
 
