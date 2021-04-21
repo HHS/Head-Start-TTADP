@@ -1,0 +1,24 @@
+get:
+  tags:
+    - admin
+  operationId: getCDIGrants
+  description: Get all cdi grants
+  parameters:
+    - in: query
+      name: unassigned
+      description: True if the result should only include CDI grants that are still assigned region 13
+      schema:
+        type: enum
+        enum: [true, false]
+  responses:
+    200:
+      summary: CDI Grants
+      description: |
+        All grants that have been flagged as CDI. A grant is flagged as CDI
+        if it is imported with a region of 13
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../index.yaml#/components/schemas/grant'

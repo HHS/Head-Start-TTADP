@@ -57,21 +57,32 @@ export async function processFiles() {
       let { grant_start_date: startDate, grant_end_date: endDate } = g;
       if (typeof startDate === 'object') { startDate = null; }
       if (typeof endDate === 'object') { endDate = null; }
+      const regionId = parseInt(g.region_id, 10);
+      const cdi = regionId === 13;
       return {
         id: parseInt(g.grant_award_id, 10),
         number: g.grant_number,
-        regionId: parseInt(g.region_id, 10),
         granteeId: parseInt(g.agency_id, 10),
         status: g.grant_status,
         startDate,
         endDate,
+        regionId,
+        cdi,
       };
     });
 
+    const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
+    const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
+
     logger.debug(`updateGrantsGrantees: calling bulkCreate for ${grantsForDb.length} grants`);
-    await Grant.bulkCreate(grantsForDb,
+    await Grant.bulkCreate(nonCdiGrants,
       {
         updateOnDuplicate: ['number', 'regionId', 'granteeId', 'status', 'startDate', 'endDate', 'updatedAt'],
+      });
+
+    await Grant.bulkCreate(cdiGrants,
+      {
+        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt'],
       });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);
