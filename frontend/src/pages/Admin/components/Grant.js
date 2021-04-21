@@ -30,7 +30,7 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
       <div>
         <Grid row gap>
           <Grid col={6}>
-            <GrantLabel label="Number" value={grant.number} />
+            <GrantLabel label="Number" value={`${grant.number} - ${grant.id}`} />
             <GrantLabel label="Region" value={grant.regionId} />
             <GrantLabel label="Grantee" value={grant.grantee.name} />
           </Grid>

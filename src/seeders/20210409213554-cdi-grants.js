@@ -31,6 +31,14 @@ const grants = [
     cdi: true,
     status: 'Active',
   },
+  {
+    id: 17,
+    number: '13000004',
+    regionId: 3,
+    granteeId: 2,
+    cdi: true,
+    status: 'Inactive',
+  },
 ];
 
 module.exports = {

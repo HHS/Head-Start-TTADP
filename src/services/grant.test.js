@@ -67,7 +67,6 @@ describe('Grant DB service', () => {
     it('can return unassigned grants', async () => {
       const foundGrantees = await cdiGrants('true');
       const foundIds = foundGrantees.map((g) => g.id);
-      console.log(foundIds);
       expect(foundIds.length).toBe(5);
     });
   });

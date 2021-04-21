@@ -13,8 +13,8 @@ const namespace = 'SERVICE:GRANTS';
  */
 export async function getCDIGrants(req, res) {
   try {
-    const { unassigned } = req.query;
-    const grants = await cdiGrants(unassigned);
+    const { unassigned, active } = req.query;
+    const grants = await cdiGrants(unassigned, active);
     res.json(grants);
   } catch (error) {
     await handleErrors(req, res, error, { namespace });

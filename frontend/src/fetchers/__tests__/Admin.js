@@ -47,13 +47,13 @@ describe('Admin', () => {
 
   describe('getCDIGrants', () => {
     it('can get only unassigned CDI grants', async () => {
-      fetchMock.get(join('/', 'api', 'admin', 'grants', 'cdi?unassigned=true'), grants);
+      fetchMock.get(join('/', 'api', 'admin', 'grants', 'cdi?unassigned=true&active=true'), grants);
       const fetchedGrants = await getCDIGrants();
       expect(fetchedGrants).toEqual(grants);
     });
 
     it('gets CDI grants', async () => {
-      fetchMock.get(join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false'), grants);
+      fetchMock.get(join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true'), grants);
       const fetchedGrants = await getCDIGrants(false);
       expect(fetchedGrants).toEqual(grants);
     });

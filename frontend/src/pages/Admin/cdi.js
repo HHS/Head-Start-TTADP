@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import {
-  Grid, SideNav, Alert, Checkbox,
+  Grid, SideNav, Alert, Checkbox, Label, TextInput,
 } from '@trussworks/react-uswds';
 
 import NavLink from '../../components/NavLink';
@@ -19,13 +19,15 @@ function Cdi({ match: { params: { grantId } } }) {
   const [loaded, updateLoaded] = useState(false);
   const [error, updateError] = useState(false);
   const [unassigned, updateUnassigned] = useState(false);
+  const [grantSearch, updateGrantSearch] = useState('');
+  const [active, updateActive] = useState(true);
 
   useEffect(() => {
     async function fetchGrants() {
       updateLoaded(false);
       try {
         const [fetchedGrants, fetchedGrantees] = await Promise.all([
-          getCDIGrants(unassigned),
+          getCDIGrants(unassigned, active),
           getGrantees(),
         ]);
 
@@ -39,7 +41,7 @@ function Cdi({ match: { params: { grantId } } }) {
       updateLoaded(true);
     }
     fetchGrants();
-  }, [unassigned]);
+  }, [unassigned, active]);
 
   useEffect(() => {
     if (grantId) {
@@ -49,8 +51,16 @@ function Cdi({ match: { params: { grantId } } }) {
     }
   }, [grantId, grants]);
 
-  const renderGrants = () => grants.map(({ id, number }) => (
-    <NavLink to={`/admin/cdi/${id}`}>{number}</NavLink>
+  const onGrantSearchChange = (e) => {
+    updateGrantSearch(e.target.value);
+  };
+
+  const filteredGrants = grants.filter((g) => g.number.toLowerCase().includes(
+    grantSearch.toLowerCase(),
+  ));
+
+  const renderGrants = () => filteredGrants.map(({ id, number }) => (
+    <NavLink to={`/admin/cdi/${id}`}>{`${number} - ${id}`}</NavLink>
   ));
 
   const onAssignCDIGrant = async (selectedGrantId, regionId, granteeId) => {
@@ -82,6 +92,17 @@ function Cdi({ match: { params: { grantId } } }) {
               checked={unassigned}
               onChange={(e) => updateUnassigned(e.target.checked)}
             />
+            <Checkbox
+              className="margin-bottom-3"
+              id="active"
+              label="Show only active"
+              checked={active}
+              onChange={(e) => updateActive(e.target.checked)}
+            />
+            <div className="margin-bottom-2">
+              <Label htmlFor="input-filter-grants">Filter Grants</Label>
+              <TextInput value={grantSearch} onChange={onGrantSearchChange} id="input-filter-grants" name="input-filter-grants" type="text" />
+            </div>
             <SideNav items={renderGrants()} />
           </Grid>
           <Grid col={8}>
