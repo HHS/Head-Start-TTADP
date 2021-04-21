@@ -33,8 +33,9 @@ export async function assignRegionGranteeToCDIGrant(req, res) {
     }
 
     const { regionId, granteeId } = req.body;
-    const updatedGrant = await assignCDIGrant(grant, regionId, granteeId);
-    res.json(updatedGrant);
+    await assignCDIGrant(grant, regionId, granteeId);
+    const newGrant = await grantById(grantId);
+    res.json(newGrant);
   } catch (error) {
     await handleErrors(req, res, error, { namespace });
   }
