@@ -16,7 +16,6 @@ const Goals = ({
   onUpdateObjectives,
   createObjective,
 }) => {
-  // TODO: only newAvailableGoals are editable
   const [editing, updateEditing] = useState(false);
   const [goalName, updateGoalName] = useState(name);
 
@@ -28,7 +27,6 @@ const Goals = ({
     updateGoalName(e.target.value);
   };
 
-  // TODO: updateGoal handler, probably passed in as prop
   const handleGoalUpdate = () => {
     onUpdateGoal(goalName);
     updateEditing(false);
@@ -46,7 +44,7 @@ const Goals = ({
   };
   const singleObjective = objectives.length === 1;
 
-  const menuLabel = `Edit or remove goal ${goalIndex + 1}`;
+  const menuLabel = `Actions for goal ${goalIndex + 1}`;
   const editMenuItem = {
     label: 'Edit',
     onClick: onEditGoal,
