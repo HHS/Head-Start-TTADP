@@ -164,7 +164,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-83-enable-deleting-of-activity-reports"
+    default: "js-j93-cdi-grants"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -485,7 +485,7 @@ workflows:
   daily_scan:
     triggers:
       - schedule:
-          cron: "0 13 * * 1-5"
+          cron: "0 12 * * 1-5"
           filters:
             branches:
               only:
