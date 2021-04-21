@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import userEvent from '@testing-library/user-event';
@@ -54,8 +54,15 @@ describe('Goal', () => {
   it('clicking remove calls "onRemove"', async () => {
     const onRemove = jest.fn();
     render(<RenderGoal name="test goal" onRemove={onRemove} />);
-    const button = await screen.findByRole('button', { name: 'remove goal 1' });
-    userEvent.click(button);
+    const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+
+    await waitFor(() => expect(menuButton).toBeVisible());
+    fireEvent.click(menuButton);
+
+    const removeButton = await screen.findByRole('button', { name: 'Remove' });
+    await waitFor(() => expect(removeButton).toBeVisible());
+
+    userEvent.click(removeButton);
     await waitFor(() => expect(onRemove).toHaveBeenCalled());
   });
 
