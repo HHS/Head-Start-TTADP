@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {
-  Grid, Alert, Dropdown, Label, Button,
+  Grid, Alert, Label, Button,
 } from '@trussworks/react-uswds';
 
+import Select from '../../../components/Select';
 import RegionDropdown from '../../../components/RegionDropdown';
-
 import GrantLabel from './GrantLabel';
 
 function Grant({ grant, grantees, onAssignCDIGrant }) {
@@ -50,16 +50,13 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
         />
         <div>
           <Label htmlFor="grantee">Grantee</Label>
-          <Dropdown
-            id="grantee"
+          <Select
+            className="margin-top-1 width-mobile-lg"
+            options={grantees.map((g) => ({ label: `${g.name} - ${g.id}`, value: g.id }))}
             name="grantee"
             value={selectedGrantee}
-            onChange={(e) => updateSelectedGrantee(e.target.value)}
-          >
-            {grantees.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </Dropdown>
+            onChange={updateSelectedGrantee}
+          />
         </div>
         <div className="margin-top-3">
           <Button
@@ -69,7 +66,7 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
                 updateError('A region must be selected');
               } else {
                 try {
-                  await onAssignCDIGrant(grant.id, selectedRegion, selectedGrantee);
+                  await onAssignCDIGrant(grant.id, selectedRegion, selectedGrantee.value);
                   updateError('');
                 } catch (e) {
                   // eslint-disable-next-line no-console
