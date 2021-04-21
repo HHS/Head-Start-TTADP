@@ -13,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 import Cdi from '../cdi';
 import { withText } from '../../../testHelpers';
 
-const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false');
+const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true');
 const granteesUrl = join('/', 'api', 'admin', 'grantees');
 
 const defaultGrantees = [

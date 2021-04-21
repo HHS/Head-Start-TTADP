@@ -2,11 +2,15 @@ import { Op } from 'sequelize';
 import { Grant, Grantee } from '../models';
 
 // eslint-disable-next-line import/prefer-default-export
-export async function cdiGrants(unassigned) {
+export async function cdiGrants(unassigned, active) {
   const where = [{ cdi: true }];
 
   if (unassigned === 'true') {
     where.push({ regionId: 13 });
+  }
+
+  if (active === 'true') {
+    where.push({ status: 'Active' });
   }
 
   return Grant.findAll({
@@ -17,6 +21,9 @@ export async function cdiGrants(unassigned) {
         model: Grantee,
         as: 'grantee',
       },
+    ],
+    order: [
+      ['id', 'ASC'],
     ],
   });
 }

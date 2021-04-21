@@ -12,8 +12,8 @@ export const updateUser = async (userId, data) => {
   return user.json();
 };
 
-export const getCDIGrants = async (unassigned = true) => {
-  const grants = await get((join('/', 'api', 'admin', 'grants', `cdi?unassigned=${unassigned}`)));
+export const getCDIGrants = async (unassigned = true, active = true) => {
+  const grants = await get((join('/', 'api', 'admin', 'grants', `cdi?unassigned=${unassigned}&active=${active}`)));
   return grants.json();
 };
 
