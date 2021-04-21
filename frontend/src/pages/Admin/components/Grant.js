@@ -11,8 +11,9 @@ import GrantLabel from './GrantLabel';
 
 function Grant({ grant, grantees, onAssignCDIGrant }) {
   const region = grant.regionId === 13 ? 0 : grant.regionId;
+  const defaultGrantee = grantees.find((g) => g.id === grant.granteeId);
   const [selectedRegion, updateSelectedRegion] = useState(region);
-  const [selectedGrantee, updateSelectedGrantee] = useState(grant.granteeId);
+  const [selectedGrantee, updateSelectedGrantee] = useState({ value: defaultGrantee.id, label: `${defaultGrantee.name} - ${defaultGrantee.id}` });
   const [error, updateError] = useState('');
   const startDate = moment(grant.startDate);
   const endDate = moment(grant.endDate);
