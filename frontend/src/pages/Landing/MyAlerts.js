@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Tag, Table, useModal, connectModal,
@@ -17,8 +17,20 @@ import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
 
-function renderReports(reports, fetchReports) {
-  return reports.map((report) => {
+function ReportsRow({ reports, removeAlert }) {
+  const history = useHistory();
+  const { isOpen, openModal, closeModal } = useModal();
+  const ConnectModal = connectModal(DeleteReportModal);
+
+  const [idToDelete, updateIdToDelete] = useState(0);
+
+  const onDelete = async (reportId) => {
+    await deleteReport(reportId);
+    removeAlert(reportId);
+    closeModal();
+  };
+
+  const tableRows = reports.map((report) => {
     const {
       id,
       displayId,
@@ -57,19 +69,10 @@ function renderReports(reports, fetchReports) {
       </Tag>
     )) : '';
 
-    const history = useHistory();
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
     const statusClassName = `smart-hub--table-tag-status smart-hub--status-${status}`;
-
-    const { isOpen, openModal, closeModal } = useModal();
-    const onDelete = async (reportId) => {
-      await deleteReport(reportId);
-      await fetchReports();
-      closeModal();
-    };
-    const ConnectModal = connectModal(DeleteReportModal);
 
     const menuItems = [
       {
@@ -78,20 +81,12 @@ function renderReports(reports, fetchReports) {
       },
       {
         label: 'Delete',
-        onClick: () => { openModal(); },
+        onClick: () => { updateIdToDelete(id); openModal(); },
       },
     ];
 
     return (
       <>
-        <ConnectModal
-          onDelete={() => onDelete(id)}
-          onClose={closeModal}
-          isOpen={isOpen}
-          openModal={openModal}
-          closeModal={closeModal}
-        />
-
         <tr key={idKey}>
           <td>
             <Link
@@ -130,7 +125,25 @@ function renderReports(reports, fetchReports) {
       </>
     );
   });
+
+  return (
+    <>
+      <ConnectModal
+        onDelete={() => onDelete(idToDelete)}
+        onClose={closeModal}
+        isOpen={isOpen}
+        openModal={openModal}
+        closeModal={closeModal}
+      />
+      { tableRows }
+    </>
+  );
 }
+
+ReportsRow.propTypes = {
+  reports: PropTypes.arrayOf(PropTypes.object).isRequired,
+  removeAlert: PropTypes.func.isRequired,
+};
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -154,9 +167,10 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
-    fetchReports,
     hasFilters,
     updateReportFilters,
+    updateReportAlerts,
+    setAlertReportsCount,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -192,6 +206,12 @@ function MyAlerts(props) {
         </a>
       </th>
     );
+  };
+
+  const removeAlert = (id) => {
+    const newReports = reports.filter((report) => report.id !== id);
+    setAlertReportsCount(alertReportsCount - 1);
+    updateReportAlerts(newReports);
   };
 
   return (
@@ -254,7 +274,9 @@ function MyAlerts(props) {
                 <th scope="col" aria-label="..." />
               </tr>
             </thead>
-            <tbody>{renderReports(reports, fetchReports)}</tbody>
+            <tbody>
+              <ReportsRow reports={reports} removeAlert={removeAlert} />
+            </tbody>
           </Table>
         </div>
       </Container>
@@ -272,9 +294,10 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
-  fetchReports: PropTypes.func.isRequired,
   hasFilters: PropTypes.bool,
   updateReportFilters: PropTypes.func.isRequired,
+  updateReportAlerts: PropTypes.func.isRequired,
+  setAlertReportsCount: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {
