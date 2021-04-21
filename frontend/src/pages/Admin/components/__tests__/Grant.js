@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
+import selectEvent from 'react-select-event';
 
 import Grant from '../Grant';
 import { withText } from '../../../../testHelpers';
@@ -106,10 +107,13 @@ describe('Grant', () => {
     });
 
     it('grantee is select-able', async () => {
-      render(<RenderGrant />);
+      const onAssign = jest.fn();
+      render(<RenderGrant onAssign={onAssign} />);
       const dropdown = await screen.findByLabelText('Grantee');
-      userEvent.selectOptions(dropdown, ['10']);
-      expect(dropdown).toHaveValue('10');
+      await selectEvent.select(dropdown, ['grantee 2 - 10']);
+      const button = await screen.findByRole('button');
+      userEvent.click(button);
+      expect(onAssign).toHaveBeenCalledWith(1, 1, 10);
     });
 
     describe('on submit', () => {
