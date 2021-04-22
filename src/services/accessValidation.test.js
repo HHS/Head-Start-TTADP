@@ -79,6 +79,7 @@ describe('accessValidation', () => {
       expect(retrievedUser.hsesUserId).toEqual(user.hsesUserId);
       expect(retrievedUser.email).toEqual(user.email);
       expect(retrievedUser.id).toEqual(user.id);
+      expect(retrievedUser.lastLogin).not.toEqual(createdUser.lastLogin);
     });
 
     it('Handles HSES resets', async () => {
