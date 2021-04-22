@@ -485,7 +485,7 @@ workflows:
   daily_scan:
     triggers:
       - schedule:
-          cron: "0 13 * * 1-5"
+          cron: "0 12 * * 1-5"
           filters:
             branches:
               only:

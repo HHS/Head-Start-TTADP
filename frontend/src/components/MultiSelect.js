@@ -27,7 +27,7 @@ import { Controller } from 'react-hook-form/dist/index.ie11';
 
 import arrowBoth from '../images/arrow-both.svg';
 
-const DropdownIndicator = (props) => (
+export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
   <components.DropdownIndicator {...props}>
     <img alt="" style={{ width: '8px' }} src={arrowBoth} />

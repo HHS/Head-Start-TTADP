@@ -1,6 +1,6 @@
-import { Model } from 'sequelize';
-import { uniqBy } from 'lodash';
+import { Model, Op } from 'sequelize';
 import moment from 'moment';
+import { isEqual, uniqWith } from 'lodash';
 import { REPORT_STATUSES } from '../constants';
 
 function formatDate(fieldName) {
@@ -152,7 +152,9 @@ export default (sequelize, DataTypes) => {
             this.topics,
             this.ttaType,
           ];
-          if (this.status !== REPORT_STATUSES.DRAFT) {
+          const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
+          if (!draftStatuses.includes(this.status)) {
+            // Require fields when report is not a draft
             if (requiredForSubmission.includes(null)) {
               throw new Error('Missing required field(s)');
             }
@@ -171,7 +173,22 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const objectives = this.objectives || [];
-        return uniqBy(objectives.map((o) => o.goal), 'id');
+        const goalsArray = objectives.map((o) => o.goal);
+        const goals = uniqWith(goalsArray, isEqual);
+
+        return goals.map((goal) => {
+          const objs = objectives.filter((o) => o.goalId === goal.id);
+          const plainObjectives = objs.map((o) => {
+            const plain = o.get({ plain: true });
+            const { goal: _, ...plainObj } = plain;
+            return plainObj;
+          });
+          const ret = {
+            ...goal.get({ plain: true }),
+            objectives: plainObjectives,
+          };
+          return ret;
+        });
       },
     },
     lastSaved: {
@@ -202,6 +219,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
+    defaultScope: {
+      where: {
+        status: {
+          [Op.ne]: 'deleted',
+        },
+      },
+    },
     sequelize,
     modelName: 'ActivityReport',
   });

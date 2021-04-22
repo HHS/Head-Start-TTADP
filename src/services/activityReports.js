@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
+import { filtersToScopes } from '../scopes/activityReport';
 
 import {
   ActivityReport,
@@ -229,20 +230,14 @@ export function activityReportById(activityReportId) {
         include: [{
           model: Goal,
           as: 'goal',
-          include: [{
-            model: Objective,
-            as: 'objectives',
-          }],
         }],
       },
       {
         model: User,
         as: 'author',
-        attributes: ['name'],
       },
       {
         model: User,
-        attributes: ['id', 'name'],
         as: 'collaborators',
       },
       {
@@ -285,6 +280,7 @@ export function activityReportById(activityReportId) {
     ],
   });
 }
+
 /**
  * Retrieves activity reports in sorted slices
  * using sequelize.literal for several associated fields based on the following
@@ -297,13 +293,18 @@ export function activityReportById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export function activityReports(readRegions, {
-  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE,
+  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
 }) {
   const regions = readRegions || [];
+  const scopes = filtersToScopes(filters);
 
   return ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions, status: REPORT_STATUSES.APPROVED },
+      where: {
+        regionId: regions,
+        status: REPORT_STATUSES.APPROVED,
+        [Op.and]: scopes,
+      },
       attributes: [
         'id',
         'displayId',
@@ -388,10 +389,12 @@ export function activityReports(readRegions, {
  * @param {*} userId
  */
 export function activityReportAlerts(userId, {
-  sortBy = 'startDate', sortDir = 'desc', offset = 0,
+  sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
 }) {
+  const scopes = filtersToScopes(filters);
   return ActivityReport.findAndCountAll({
     where: {
+      [Op.and]: scopes,
       [Op.or]: [
         {
           [Op.or]: [
@@ -415,6 +418,7 @@ export function activityReportAlerts(userId, {
           ],
         },
       ],
+      legacyId: null,
     },
     attributes: [
       'id',
@@ -596,4 +600,112 @@ export async function possibleRecipients(regionId) {
     attributes: [['id', 'activityRecipientId'], 'name'],
   });
   return { grants, nonGrantees };
+}
+
+/**
+ * Fetches ActivityReports for downloading
+ *
+ * @param {Array<int>} report - array of report ids
+ * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
+ */
+export async function getDownloadableActivityReports(readRegions, {
+  report = [],
+}) {
+  const regions = readRegions || [];
+  // Create a Set to ensure unique ordered values
+  const reportSet = Array.isArray(report) ? new Set(report) : new Set([report]);
+  const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
+
+  const result = await ActivityReport.findAndCountAll(
+    {
+      where: { regionId: regions, imported: null, id: { [Op.in]: reportIds } },
+      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
+      include: [
+        {
+          model: ActivityRecipient,
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
+          as: 'activityRecipients',
+          required: false,
+          include: [
+            {
+              model: Grant,
+              attributes: ['id', 'number'],
+              as: 'grant',
+              required: false,
+              include: [
+                {
+                  model: Grantee,
+                  as: 'grantee',
+                  attributes: ['name'],
+                },
+              ],
+            },
+            {
+              model: NonGrantee,
+              as: 'nonGrantee',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: Objective,
+          as: 'objectives',
+          include: [{
+            model: Goal,
+            as: 'goal',
+            include: [{
+              model: Objective,
+              as: 'objectives',
+            }],
+          }],
+        },
+        {
+          model: File,
+          where: {
+            status: {
+              [Op.ne]: 'UPLOAD_FAILED',
+            },
+          },
+          as: 'attachments',
+          required: false,
+        },
+        {
+          model: User,
+          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          as: 'author',
+        },
+        {
+          model: User,
+          attributes: ['id', 'name', 'role', 'fullName'],
+          as: 'collaborators',
+          through: { attributes: [] },
+        },
+        {
+          model: NextStep,
+          where: {
+            noteType: {
+              [Op.eq]: 'SPECIALIST',
+            },
+          },
+          attributes: ['note', 'id'],
+          as: 'specialistNextSteps',
+          required: false,
+        },
+        {
+          model: NextStep,
+          where: {
+            noteType: {
+              [Op.eq]: 'GRANTEE',
+            },
+          },
+          attributes: ['note', 'id'],
+          as: 'granteeNextSteps',
+          required: false,
+        },
+      ],
+      distinct: true,
+      order: [['id', 'DESC']],
+    },
+  );
+  return result;
 }

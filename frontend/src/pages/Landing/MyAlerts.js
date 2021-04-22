@@ -3,8 +3,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
-import SimpleBar from 'simplebar-react';
-import 'simplebar/dist/simplebar.min.css';
 
 import Container from '../../components/Container';
 import NewReport from './NewReport';
@@ -12,6 +10,7 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
+import Filter from './Filter';
 
 function renderReports(reports) {
   return reports.map((report) => {
@@ -39,19 +38,19 @@ function renderReports(reports) {
       </Tag>
     ));
 
-    const collaboratorsTitle = collaborators.reduce(
+    const collaboratorsTitle = collaborators ? collaborators.reduce(
       (result, collaborator) => `${result + collaborator.fullName}\n`,
       '',
-    );
+    ) : '';
 
-    const collaboratorsWithTags = collaborators.map((collaborator) => (
+    const collaboratorsWithTags = collaborators ? collaborators.map((collaborator) => (
       <Tag
-        key={collaborator.fullName.slice(1, 3) + collaborator.id}
+        key={collaborator.id + Math.random().toString(36).substring(7)}
         className="smart-hub--table-collection"
       >
         {collaborator.fullName}
       </Tag>
-    ));
+    )) : '';
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
@@ -73,8 +72,8 @@ function renderReports(reports) {
         </td>
         <td>{startDate}</td>
         <td>
-          <span className="smart-hub--ellipsis" title={author.fullName}>
-            {author.fullName}
+          <span className="smart-hub--ellipsis" title={author ? author.fullName : ''}>
+            {author ? author.fullName : ''}
           </span>
         </td>
         <td>
@@ -116,6 +115,8 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
+    hasFilters,
+    updateReportFilters,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -155,7 +156,7 @@ function MyAlerts(props) {
 
   return (
     <>
-      {reports && reports.length === 0 && (
+      {reports && reports.length === 0 && !hasFilters && (
         <Container className="landing" padding={0}>
           <div id="caughtUp">
             <div>
@@ -170,45 +171,51 @@ function MyAlerts(props) {
           </div>
         </Container>
       )}
-      {reports && reports.length > 0 && (
-        <SimpleBar>
-          <Container className="landing inline-size" padding={0}>
-            <span
-              id="alertsTotalCount"
-              aria-label={`Displaying rows ${renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}`}
-            >
-              {renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}
-            </span>
-
-            <Table bordered={false}>
-              <caption className="smart-hub--table-caption">
-                My activity report alerts
-                <p id="arTblDesc">with sorting</p>
-              </caption>
-              <thead>
-                <tr>
-                  {renderColumnHeader('Report ID', 'regionId')}
-                  {renderColumnHeader('Grantee', 'activityRecipients')}
-                  {renderColumnHeader('Start date', 'startDate')}
-                  {renderColumnHeader('Creator', 'author')}
-                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                  {renderColumnHeader('Status', 'status')}
-                </tr>
-              </thead>
-              <tbody>{renderReports(reports)}</tbody>
-            </Table>
-          </Container>
-        </SimpleBar>
+      {reports && (reports.length > 0 || hasFilters) && (
+      <Container className="landing inline-size maxw-full" padding={0}>
+        <span className="smart-hub--table-nav">
+          <Filter
+            className="float-left"
+            applyFilters={updateReportFilters}
+            forMyAlerts
+          />
+          <span
+            id="alertsTotalCount"
+            aria-label={`Displaying rows ${renderTotal(
+              alertsOffset,
+              alertsPerPage,
+              alertsActivePage,
+              alertReportsCount,
+            )}`}
+          >
+            {renderTotal(
+              alertsOffset,
+              alertsPerPage,
+              alertsActivePage,
+              alertReportsCount,
+            )}
+          </span>
+        </span>
+        <div className="usa-table-container--scrollable">
+          <Table className="usa-table usa-table--borderless" fullWidth>
+            <caption className="smart-hub--table-caption">
+              My activity report alerts
+              <p id="arTblDesc">with sorting</p>
+            </caption>
+            <thead>
+              <tr>
+                {renderColumnHeader('Report ID', 'regionId')}
+                {renderColumnHeader('Grantee', 'activityRecipients')}
+                {renderColumnHeader('Start date', 'startDate')}
+                {renderColumnHeader('Creator', 'author')}
+                {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                {renderColumnHeader('Status', 'status')}
+              </tr>
+            </thead>
+            <tbody>{renderReports(reports)}</tbody>
+          </Table>
+        </div>
+      </Container>
       )}
     </>
   );
@@ -223,6 +230,8 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
+  hasFilters: PropTypes.bool,
+  updateReportFilters: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {
@@ -231,6 +240,7 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
+  hasFilters: false,
 };
 
 export default MyAlerts;

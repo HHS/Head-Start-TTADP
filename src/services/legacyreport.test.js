@@ -79,12 +79,17 @@ describe('reconcile legacy reports', () => {
   let mockManager;
 
   beforeAll(async () => {
-    mockReport1 = await ActivityReport.create(report1);
-    mockReport2 = await ActivityReport.create(report2);
-    mockUser1 = await User.create(user1);
-    mockUser2 = await User.create(user2);
-    mockUser3 = await User.create(user3);
-    mockManager = await User.create(manager);
+    try {
+      mockReport1 = await ActivityReport.create(report1);
+      mockReport2 = await ActivityReport.create(report2);
+      mockUser1 = await User.create(user1);
+      mockUser2 = await User.create(user2);
+      mockUser3 = await User.create(user3);
+      mockManager = await User.create(manager);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log(`Unable to setup tests for legacy reports ${error}`);
+    }
   });
 
   afterAll(async () => {
