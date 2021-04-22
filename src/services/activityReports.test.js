@@ -18,8 +18,8 @@ jest.mock('./goals', () => ({
   copyGoalsToGrants: jest.fn(),
 }));
 
-const RECIPIENT_ID = 15;
-const GRANTEE_ID = 16;
+const GRANTEE_ID = 30;
+const GRANTEE_ID_SORTING = 31;
 
 const mockUser = {
   id: 1000,
@@ -44,7 +44,7 @@ const reportObject = {
   regionId: 1,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
-  activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
+  activityRecipients: [{ activityRecipientId: GRANTEE_ID }],
 };
 
 const submittedReport = {
@@ -67,16 +67,14 @@ const submittedReport = {
 };
 
 describe('Activity Reports DB service', () => {
-  let grantee;
-
   beforeAll(async () => {
     await User.create(mockUser);
-    grantee = await Grantee.create({ id: RECIPIENT_ID, name: 'grantee', regionId: 17 });
+    await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
     await Region.create({ name: 'office 17', id: 17 });
     await Grant.create({
-      id: RECIPIENT_ID, number: 1, granteeId: grantee.id, regionId: 17, status: 'Active',
+      id: GRANTEE_ID, number: 1, granteeId: GRANTEE_ID, regionId: 17, status: 'Active',
     });
-    await NonGrantee.create({ id: RECIPIENT_ID, name: 'nonGrantee' });
+    await NonGrantee.create({ id: GRANTEE_ID, name: 'nonGrantee' });
   });
 
   afterAll(async () => {
@@ -87,9 +85,9 @@ describe('Activity Reports DB service', () => {
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
-    await NonGrantee.destroy({ where: { id: RECIPIENT_ID } });
-    await Grant.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
-    await Grantee.destroy({ where: { id: [RECIPIENT_ID, GRANTEE_ID] } });
+    await NonGrantee.destroy({ where: { id: GRANTEE_ID } });
+    await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
+    await Grantee.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
     await Region.destroy({ where: { id: 17 } });
     await db.sequelize.close();
   });
@@ -134,12 +132,12 @@ describe('Activity Reports DB service', () => {
       const report = await createOrUpdate(reportObject);
       const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
       expect(endARCount.length - beginningARCount.length).toBe(1);
-      expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
+      expect(report.activityRecipients[0].grant.id).toBe(GRANTEE_ID);
     });
 
     it('creates a new report with non-grantee recipient', async () => {
       const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'non-grantee' });
-      expect(report.activityRecipients[0].nonGrantee.id).toBe(RECIPIENT_ID);
+      expect(report.activityRecipients[0].nonGrantee.id).toBe(GRANTEE_ID);
     });
 
     it('handles reports with collaborators', async () => {
@@ -320,8 +318,8 @@ describe('Activity Reports DB service', () => {
     beforeAll(async () => {
       const topicsOne = ['topic d', 'topic c'];
       const topicsTwo = ['topic b', 'topic a'];
-      const firstGrantee = await Grantee.create({ id: GRANTEE_ID, name: 'aaaa' });
-      firstGrant = await Grant.create({ id: GRANTEE_ID, number: 'anumber', granteeId: firstGrantee.id });
+      const firstGrantee = await Grantee.create({ id: GRANTEE_ID_SORTING, name: 'aaaa' });
+      firstGrant = await Grant.create({ id: GRANTEE_ID_SORTING, number: 'anumber', granteeId: firstGrantee.id });
 
       await User.findOrCreate({
         where: {
