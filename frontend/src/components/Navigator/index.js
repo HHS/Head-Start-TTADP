@@ -190,6 +190,8 @@ function Navigator({
                 <NavigatorHeader
                   key={page.label}
                   label={page.label}
+                  titleOverride={page.titleOverride}
+                  formData={formData}
                 />
                 {hasErrors
                 && (
@@ -262,7 +264,7 @@ Navigator.propTypes = {
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.string,
+    role: PropTypes.arrayOf(PropTypes.string),
   }),
 };
 
