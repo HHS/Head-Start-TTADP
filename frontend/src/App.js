@@ -109,8 +109,10 @@ function App() {
 
         {admin && (
           <Route
-            path="/admin/:userId?"
-            render={({ match }) => <Admin match={match} />}
+            path="/admin"
+            render={() => (
+              <Admin />
+            )}
           />
         )}
 

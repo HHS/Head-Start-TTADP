@@ -1,8 +1,8 @@
 import db, {
   User, Permission,
 } from '../../models';
-import getUsers, {
-  getUser, deleteUser, createUser, updateUser,
+import {
+  getUsers, getUser, deleteUser, createUser, updateUser,
 } from './user';
 import handleErrors from '../../lib/apiErrorHandler';
 
