@@ -560,9 +560,9 @@ export async function createOrUpdate(newActivityReport, report) {
       await saveNotes(id, specialistNextSteps, false, transaction);
     }
 
-    if (objectivesWithoutGoals) {
+    if (allFields.activityRecipientType === 'non-grantee' && objectivesWithoutGoals) {
       await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
-    } else if (goals) {
+    } else if (allFields.activityRecipientType === 'grantee' && goals) {
       await saveGoalsForReport(goals, savedReport, transaction);
     }
   });
