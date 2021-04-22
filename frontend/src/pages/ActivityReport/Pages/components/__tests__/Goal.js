@@ -17,7 +17,9 @@ let id = 0;
 
 const RenderGoal = ({
   name,
+  isEditable = false,
   onRemove = () => {},
+  onUpdate = () => {},
   onUpdateObjectives = () => {},
   objectives = [],
   createObjective = () => {
@@ -30,9 +32,11 @@ const RenderGoal = ({
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Goal
+        isEditable={isEditable}
         objectives={objectives}
         createObjective={createObjective}
         onRemoveGoal={onRemove}
+        onUpdateGoal={onUpdate}
         onUpdateObjectives={onUpdateObjectives}
         goalIndex={0}
         name={name}
@@ -69,6 +73,51 @@ describe('Goal', () => {
 
     userEvent.click(removeButton);
     await waitFor(() => expect(onRemove).toHaveBeenCalled());
+  });
+
+  describe('InplaceGoalEditor', () => {
+    it('can edit a goal name', async () => {
+      const onUpdateMock = jest.fn();
+      render(<RenderGoal name="test goal" isEditable onUpdate={onUpdateMock} />);
+
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+      fireEvent.click(menuButton);
+
+      const editButton = await screen.findByRole('button', { name: 'Edit' });
+      fireEvent.click(editButton);
+
+      const goalNameInput = await screen.findByLabelText('edit goal');
+      await waitFor(() => expect(goalNameInput).toBeVisible());
+
+      fireEvent.change(goalNameInput, { target: { value: 'test goal edited' } });
+      await waitFor(() => expect(goalNameInput.value).toBe('test goal edited'));
+
+      const updateButton = await screen.findByRole('button', { name: 'Update Goal' });
+      fireEvent.click(updateButton);
+      await waitFor(() => expect(onUpdateMock).toHaveBeenCalledWith('test goal edited'));
+    });
+
+    it('can cancel editing a goal name', async () => {
+      const onUpdateMock = jest.fn();
+      render(<RenderGoal name="test goal" isEditable onUpdate={onUpdateMock} />);
+
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+      fireEvent.click(menuButton);
+
+      const editButton = await screen.findByRole('button', { name: 'Edit' });
+      fireEvent.click(editButton);
+
+      expect(screen.queryByLabelText('edit goal')).toBeVisible();
+
+      const cancelButton = await screen.findByRole('button', { name: 'Cancel' });
+      await waitFor(() => expect(cancelButton).toBeVisible());
+
+      fireEvent.click(cancelButton);
+
+      expect(screen.queryByLabelText('edit goal')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Update Goal' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+    });
   });
 
   describe('with objectives', () => {

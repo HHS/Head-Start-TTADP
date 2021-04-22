@@ -63,7 +63,7 @@ const Goals = ({
 
   const InplaceGoalEditor = (
     <div className="">
-      <TextInput value={goalName} onChange={onGoalChange} />
+      <TextInput aria-label="edit goal" value={goalName} onChange={onGoalChange} />
       <button type="button" className="usa-button" onClick={() => handleGoalUpdate()}>
         Update Goal
       </button>
