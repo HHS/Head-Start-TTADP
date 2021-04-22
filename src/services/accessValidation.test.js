@@ -113,8 +113,6 @@ describe('accessValidation', () => {
       expect(updatedUser.id).toEqual(user.id);
     });
 
-
-
     it('Updates the lastLogin timestamp when a matching user exists', async () => {
       const userId = 36;
       const user = {
