@@ -76,7 +76,7 @@ const ActivitySummary = ({
       setValue('pageState', { ...pageState, 3: NOT_STARTED });
     }
     previousActivityRecipientType.current = activityRecipientType;
-  }, [activityRecipientType, setValue]);
+  }, [activityRecipientType, setValue, pageState]);
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
