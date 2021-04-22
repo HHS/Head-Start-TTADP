@@ -1,7 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
