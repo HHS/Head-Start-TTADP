@@ -118,6 +118,40 @@ describe('GoalPicker', () => {
       userEvent.click(removeButton);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
     });
+
+    it('can be updated', async () => {
+      const availableGoals = [];
+      const selectedGoals = [
+        { id: 1, name: 'goal to edit', objectives: [] },
+        { id: 2, name: 'another goal', objectives: [] },
+      ];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+      fireEvent.click(menuButton);
+
+      const editButton = await screen.findByRole('button', { name: 'Edit' });
+      fireEvent.click(editButton);
+
+      const goalNameInput = await screen.findByLabelText('edit goal');
+      await waitFor(() => expect(goalNameInput).toBeVisible());
+
+      fireEvent.change(goalNameInput, { target: { value: 'test goal edited' } });
+
+      const updateButton = await screen.findByRole('button', { name: 'Update Goal' });
+      fireEvent.click(updateButton);
+
+      // Old goal name should not exist, new goal name should
+      expect(screen.queryByText('goal to edit')).not.toBeInTheDocument();
+      expect(screen.queryByText('test goal edited')).toBeVisible();
+      expect(screen.queryByText('another goal')).toBeVisible();
+    });
   });
 
   describe('input box', () => {
