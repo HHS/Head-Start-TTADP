@@ -3,7 +3,7 @@ import unless from 'express-unless';
 import join from 'url-join';
 
 import authMiddleware, { login } from '../middleware/authMiddleware';
-import adminRouter from './user';
+import adminRouter from './admin';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
@@ -19,7 +19,7 @@ const router = express.Router();
 
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
-router.use('/admin/users', adminRouter);
+router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
 router.use('/users', usersRouter);
 
