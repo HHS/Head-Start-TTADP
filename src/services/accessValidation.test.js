@@ -81,6 +81,40 @@ describe('accessValidation', () => {
       expect(retrievedUser.id).toEqual(user.id);
     });
 
+    it('Handles HSES resets', async () => {
+      const user = {
+        id: 39,
+        hsesUserId: '39',
+        email: 'test39@test.com',
+        hsesUsername: 'test39@test.com',
+        homeRegionId: 3,
+      };
+      // Verify that the user with id 39 doesn't exist
+      await User.destroy({ where: { id: 39 } });
+      const noUser = await User.findOne({
+        where: {
+          id: user.id,
+        },
+      });
+
+      expect(noUser).toBeNull();
+
+      // Create a user
+      const createdUser = await User.create(user);
+      expect(createdUser).toBeInstanceOf(User);
+
+      // Change user's hsesUserId
+      user.hsesUserId = '40';
+      const updatedUser = await findOrCreateUser(user);
+
+      expect(updatedUser).toBeInstanceOf(User);
+      expect(updatedUser.hsesUserId).toEqual(user.hsesUserId);
+      expect(updatedUser.email).toEqual(user.email);
+      expect(updatedUser.id).toEqual(user.id);
+    });
+
+
+
     it('Updates the lastLogin timestamp when a matching user exists', async () => {
       const userId = 36;
       const user = {
