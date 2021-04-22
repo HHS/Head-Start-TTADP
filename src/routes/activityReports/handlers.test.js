@@ -10,7 +10,9 @@ import {
   getReports,
   getReportAlerts,
   getLegacyReport,
+  downloadReports,
   updateLegacyFields,
+  softDeleteReport,
 } from './handlers';
 import {
   activityReportById,
@@ -21,11 +23,16 @@ import {
   activityReports,
   activityReportAlerts,
   activityReportByLegacyId,
+  getDownloadableActivityReports,
 } from '../../services/activityReports';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
+import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
+import db, { User as UserModel } from '../../models';
+import * as mailer from '../../lib/mailer';
+import { REPORT_STATUSES } from '../../constants';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
@@ -36,6 +43,7 @@ jest.mock('../../services/activityReports', () => ({
   activityReports: jest.fn(),
   activityReportAlerts: jest.fn(),
   activityReportByLegacyId: jest.fn(),
+  getDownloadableActivityReports: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -47,9 +55,12 @@ jest.mock('../../services/users', () => ({
 
 jest.mock('../../policies/user');
 jest.mock('../../policies/activityReport');
+jest.mock('../../lib/apiErrorHandler');
 
 const mockResponse = {
+  attachment: jest.fn(),
   json: jest.fn(),
+  send: jest.fn(),
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
@@ -61,16 +72,40 @@ const mockRequest = {
     userId: 1,
   },
 };
+const mockManager = {
+  id: 1843,
+  hsesUserId: '1843',
+  hsesUsername: 'user1843',
+  homeRegionId: 1,
+  email: 'mockManager1843@test.gov',
+};
+const mockUser = {
+  id: 1844,
+  hsesUserId: '1844',
+  hsesUsername: 'user1844',
+  homeRegionId: 1,
+  email: 'mockManager1844@test.gov',
+};
 
 const report = {
   id: 1,
   resourcesUsed: 'resources',
-  userId: 1,
+  userId: mockUser.id,
+  approvingManager: mockManager,
+  displayId: 'mockreport-1',
 };
 
 describe('Activity Report handlers', () => {
+  beforeAll(async () => {
+    await UserModel.create(mockManager);
+    await UserModel.create(mockUser);
+  });
   afterEach(() => {
     jest.clearAllMocks();
+  });
+  afterAll(async () => {
+    await UserModel.destroy({ where: { id: [mockUser.id, mockManager.id] } });
+    await db.sequelize.close();
   });
 
   describe('getLegacyReport', () => {
@@ -131,22 +166,55 @@ describe('Activity Report handlers', () => {
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { status: 'Approved', managerNotes: 'notes' },
+      body: { status: REPORT_STATUSES.APPROVED, managerNotes: 'notes' },
     };
 
-    it('returns the new status', async () => {
+    it('returns the new approved status', async () => {
+      const mockReportApproved = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
-      activityReportById.mockResolvedValue({ status: 'Approved' });
-      review.mockResolvedValue({ status: 'Approved' });
+      activityReportById.mockResolvedValue({ status: REPORT_STATUSES.APPROVED });
+      const mockReviewResponse = {
+        author: mockUser,
+        approvingManager: mockManager,
+        displayId: report.displayId,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      review.mockResolvedValue(mockReviewResponse);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await reviewReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ status: 'Approved' });
+      expect(mockResponse.json).toHaveBeenCalledWith(mockReviewResponse);
+      expect(mockReportApproved).toHaveBeenCalled();
     });
 
+    it('returns the new needs action status', async () => {
+      const mockReviewResponse = {
+        author: mockUser,
+        approvingManager: mockManager,
+        displayId: report.displayId,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      const request1 = {
+        ...mockRequest,
+        params: { activityReportId: 1 },
+        body: { status: REPORT_STATUSES.NEEDS_ACTION, managerNotes: 'notes' },
+      };
+      const mockNeedsAction = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation(() => jest.fn());
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      activityReportById.mockResolvedValue({ status: REPORT_STATUSES.NEEDS_ACTION });
+      review.mockResolvedValue(mockReviewResponse);
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+      await reviewReport(request1, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockReviewResponse);
+      expect(mockNeedsAction).toHaveBeenCalled();
+    });
     it('handles unauthorizedRequests', async () => {
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
@@ -158,10 +226,12 @@ describe('Activity Report handlers', () => {
   });
 
   describe('submitReport', () => {
+    beforeAll(async () => {
+    });
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { approvingManagerId: 1, additionalNotes: 'notes' },
+      body: { approvingManagerId: mockManager.id, additionalNotes: 'notes' },
     };
 
     it('returns the report', async () => {
@@ -170,7 +240,7 @@ describe('Activity Report handlers', () => {
       }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -182,7 +252,7 @@ describe('Activity Report handlers', () => {
       }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -202,7 +272,7 @@ describe('Activity Report handlers', () => {
       }));
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await createReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -219,7 +289,7 @@ describe('Activity Report handlers', () => {
         canCreate: () => false,
       }));
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await createReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -240,7 +310,7 @@ describe('Activity Report handlers', () => {
       activityReportById.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
@@ -252,7 +322,7 @@ describe('Activity Report handlers', () => {
         canUpdate: () => false,
       }));
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -283,7 +353,7 @@ describe('Activity Report handlers', () => {
       }));
       activityReportById.mockResolvedValue(report);
       userById.mockResolvedValue({
-        id: 1,
+        id: mockUser.id,
       });
 
       await getReport(request, mockResponse);
@@ -373,6 +443,29 @@ describe('Activity Report handlers', () => {
     });
   });
 
+  describe('softDeleteReport', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+    };
+
+    it('returns 204', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canDelete: () => true,
+      }));
+      await softDeleteReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    it('handles unauthorized', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canDelete: () => false,
+      }));
+      await softDeleteReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
   describe('getReports', () => {
     const request = {
       ...mockRequest,
@@ -412,6 +505,89 @@ describe('Activity Report handlers', () => {
       activityReportAlerts.mockResolvedValue(null);
       await getReportAlerts(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('downloadReports', () => {
+    it('returns a csv with appopriate headers when format=csv', async () => {
+      const request = {
+        ...mockRequest,
+        query: { format: 'csv' },
+      };
+
+      const downloadableReport = {
+        id: 616,
+        author: {
+          name: 'Arty',
+        },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [downloadableReport] });
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalled();
+
+      expect(mockResponse.send).toHaveBeenCalled();
+      const [[value]] = mockResponse.send.mock.calls;
+      /* eslint-disable no-useless-escape */
+      expect(value).toMatch('\"displayId\"');
+      expect(value).toMatch('\"Arty\"');
+      /* eslint-enable no-useless-escape */
+    });
+
+    it('returns a 404 if we cannot get any reports', async () => {
+      const request = {
+        ...mockRequest,
+        query: { format: 'csv' },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue(null);
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('returns json when no format is specified', async () => {
+      const request = {
+        ...mockRequest,
+      };
+
+      const downloadableReport = {
+        id: 616,
+        author: {
+          name: 'Arty',
+        },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [downloadableReport] });
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.attachment).not.toHaveBeenCalled();
+
+      expect(mockResponse.json).toHaveBeenCalled();
+    });
+
+    it('handles thrown errors', async () => {
+      const request = {
+        ...mockRequest,
+      };
+
+      getDownloadableActivityReports.mockRejectedValueOnce(new Error('Something went wrong!'));
+
+      await downloadReports(request, mockResponse);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+
+    it('returns an empty value when no ids match and format=csv', async () => {
+      const request = {
+        ...mockRequest,
+        query: { report: [], format: 'csv' },
+      };
+
+      getDownloadableActivityReports.mockResolvedValue({ count: 0, rows: [] });
+      await downloadReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalled();
+      expect(mockResponse.send).toHaveBeenCalled();
+
+      const [[value]] = mockResponse.send.mock.calls;
+      expect(value).toEqual('');
     });
   });
 });

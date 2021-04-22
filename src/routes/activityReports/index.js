@@ -12,7 +12,9 @@ import {
   reviewReport,
   resetToDraft,
   getLegacyReport,
+  downloadReports,
   updateLegacyFields,
+  softDeleteReport,
 } from './handlers';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 
@@ -28,10 +30,12 @@ router.get('/activity-recipients', getActivityRecipients);
 router.get('/goals', getGoals);
 router.get('/alerts', getReportAlerts);
 router.get('/legacy/:legacyReportId', getLegacyReport);
+router.get('/download', downloadReports);
 router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, updateLegacyFields);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);
 router.put('/:activityReportId', saveReport);
+router.delete('/:activityReportId', softDeleteReport);
 router.put('/:activityReportId/reset', resetToDraft);
 router.put('/:activityReportId/review', reviewReport);
 router.post('/:activityReportId/submit', submitReport);

@@ -1,4 +1,6 @@
+/* eslint-disable quotes */
 const moment = require('moment');
+const sequelize = require('sequelize');
 
 const SITE_ACCESS = 1;
 const ADMIN = 2;
@@ -115,7 +117,7 @@ const users = [
     email: 'hermionegranger@hogwarts.com',
     hsesUserId: '1',
     hsesUsername: 'hermionegranger@hogwarts.com',
-    role: 'System Specialist',
+    role: sequelize.literal(`ARRAY['System Specialist']::"enum_Users_role"[]`),
     name: 'Hermione Granger',
     phoneNumber: '555-555-5550',
     homeRegionId: 1,
@@ -126,7 +128,7 @@ const users = [
     email: 'dumbledore@hogwarts.com',
     hsesUserId: '2',
     hsesUsername: 'dumbledore@hogwarts.com',
-    role: undefined,
+    role: sequelize.literal('ARRAY[]::"enum_Users_role"[]'),
     name: undefined,
     phoneNumber: undefined,
     homeRegionId: undefined,
@@ -137,7 +139,7 @@ const users = [
     hsesUserId: '3',
     email: 'harrypotter@hogwarts.com',
     hsesUsername: 'harrypotter@hogwarts.com',
-    role: 'Grants Specialist',
+    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Harry Potter',
     phoneNumber: '555-555-5551',
     homeRegionId: 2,
@@ -148,7 +150,7 @@ const users = [
     hsesUserId: '4',
     email: 'ronweasley@hogwarts.com',
     hsesUsername: 'ronweasley@hogwarts.com',
-    role: 'Grants Specialist',
+    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Ron Weasley',
     phoneNumber: '555-555-5552',
     homeRegionId: 3,
@@ -159,7 +161,7 @@ const users = [
     hsesUserId: '5',
     email: 'cucumber@hogwarts.com',
     hsesUsername: 'cucumber@hogwarts.com',
-    role: 'Grants Specialist',
+    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Cucumber User',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
@@ -172,7 +174,7 @@ const users = [
     // These hses ids will likely get out of date at some point, but
     // still nice to have this shortcut while it lasts
     hsesUserId: '50385',
-    role: 'Grants Specialist',
+    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Krys',
     phoneNumber: '555-555-5553',
     homeRegionId: 1,
@@ -182,7 +184,7 @@ const users = [
     id: 7,
     email: 'josh@adhocteam.us',
     hsesUsername: 'josh@adhocteam.us',
-    role: 'Grants Specialist',
+    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Josh',
     hsesUserId: '50154',
     phoneNumber: '555-555-5553',
@@ -193,7 +195,7 @@ const users = [
     id: 8,
     email: 'chuck.mcandrew@adhocteam.us',
     hsesUsername: 'chuck.mcandrew@adhocteam.us',
-    role: 'Grants Specialist',
+    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Chuck',
     hsesUserId: '50387',
     phoneNumber: '555-555-5553',

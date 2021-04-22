@@ -1,3 +1,4 @@
+import express from 'express';
 import {
   User, Permission, sequelize,
 } from '../../models';
@@ -33,7 +34,7 @@ export async function getUser(req, res) {
  * @param {*} req - request
  * @param {*} res - response
  */
-export default async function getUsers(req, res) {
+export async function getUsers(req, res) {
   try {
     const users = await User.findAll({
       attributes: userAttributes,
@@ -114,3 +115,13 @@ export async function deleteUser(req, res) {
     await handleErrors(req, res, error, logContext);
   }
 }
+
+const router = express.Router();
+
+router.get('/:userId', getUser);
+router.get('/', getUsers);
+router.post('/', createUser);
+router.put('/:userId', updateUser);
+router.delete('/:userId', deleteUser);
+
+export default router;

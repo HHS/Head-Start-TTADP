@@ -1,8 +1,7 @@
 .landing {
-  max-width: fit-content;
   font-family: 'Merriweather', serif;
 }
-  
+
 .pagination {
   float: right;
   white-space: nowrap;
@@ -64,6 +63,7 @@ div.smart-hub--total-count {
 }
 
 .landing .smart-hub--table-nav {
+  position: relative;
   float: right;
   font-size: 16px;
   font-weight: 500;
@@ -110,12 +110,7 @@ h1.landing {
   border-color: #ECEEF1;
   border-bottom: none;
   cursor: pointer;
-  min-width: 90px;
   padding-right: 0px;
-}
-
-.landing .usa-table--borderless th:first-child {
-  padding-left: 20px;
 }
 
 .landing .usa-table td {

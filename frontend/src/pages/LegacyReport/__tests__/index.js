@@ -32,6 +32,12 @@ const report = {
   imported: {
     granteeName: 'first\nsecond\nlast',
   },
+  attachments: [{
+    id: 1,
+    originalFileName: 'test',
+    url: { url: 'url' },
+    status: 'status',
+  }],
 };
 
 describe('LegacyReport', () => {
@@ -48,9 +54,11 @@ describe('LegacyReport', () => {
     const first = await screen.findByText('first');
     const second = await screen.findByText('second');
     const last = await screen.findByText('last');
+    const attachment = await screen.findByText('test');
 
     expect(first).toBeVisible();
     expect(second).toBeVisible();
     expect(last).toBeVisible();
+    expect(attachment).toBeVisible();
   });
 });
