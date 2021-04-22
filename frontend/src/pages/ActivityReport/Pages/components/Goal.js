@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +16,9 @@ const Goals = ({
     const newObjectives = objectives.filter((o, objectiveIndex) => index !== objectiveIndex);
     onUpdateObjectives(newObjectives);
   };
+
+  const { errors } = useFormContext();
+  const isValid = !errors.goals;
 
   const onUpdateObjective = (index, newObjective) => {
     const newObjectives = [...objectives];
@@ -42,8 +46,9 @@ const Goals = ({
           {objectives.map((objective, objectiveIndex) => (
             <div className="margin-top-1" key={objective.id}>
               <Objective
-                goalIndex={goalIndex}
-                objectiveIndex={objectiveIndex}
+                isValid={isValid}
+                parentLabel="goals"
+                objectiveAriaLabel={`${objectiveIndex + 1} on goal ${goalIndex + 1}`}
                 objective={objective}
                 onRemove={() => { if (!singleObjective) { onRemoveObjective(objectiveIndex); } }}
                 onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}

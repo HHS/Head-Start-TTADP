@@ -6,7 +6,7 @@ import PrintSummary from '../PrintSummary';
 
 describe('PrintSummary', () => {
   it('when a reportCreator with name and role is provided, it renders that', () => {
-    const reportCreator = { name: 'Lois Lane', role: 'Reporter' };
+    const reportCreator = { name: 'Lois Lane', role: ['Reporter'] };
 
     render(
       <PrintSummary reportCreator={reportCreator} />,
@@ -47,13 +47,13 @@ describe('PrintSummary', () => {
   });
 
   it('when a reportCreator has empty name and role strings, it does not render the report creator row', () => {
-    const emptyCreator = { name: '', role: '' };
+    const emptyCreator = { name: '', role: [] };
     render(
       <PrintSummary reportCreator={emptyCreator} />,
     );
     expect(screen.queryByText('Report Creator')).toBeNull();
 
-    const roleWithoutAName = { name: '', role: 'Ghost' };
+    const roleWithoutAName = { name: '', role: ['Ghost'] };
     render(
       <PrintSummary reportCreator={roleWithoutAName} />,
     );
