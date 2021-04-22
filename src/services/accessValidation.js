@@ -28,7 +28,7 @@ export default function findOrCreateUser(data) {
     if (!userFoundByHsesUserId) {
       return User.findOrCreate({
         where: {
-          hsesUsername: data.hsesUsername
+          hsesUsername: data.hsesUsername,
         },
         defaults: data,
         transaction,
