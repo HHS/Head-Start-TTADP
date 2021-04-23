@@ -18,12 +18,14 @@ const statuses = [
   'Complete',
 ];
 
+const EMPTY_TEXT_BOX = '<p></p>';
+
 const Objective = ({
   goalIndex, objectiveIndex, objective, onRemove, onUpdate,
 }) => {
   const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
   const firstInput = useRef();
-  const { errors, trigger } = useFormContext();
+  const { errors, trigger, unregister } = useFormContext();
   const isValid = !errors.goals;
 
   useEffect(() => {
@@ -41,13 +43,18 @@ const Objective = ({
   };
 
   const { title, ttaProvided, status } = editableObject;
-  const defaultShowEdit = !(title && ttaProvided && status);
+  const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
+
+  const onLocalRemove = () => {
+    unregister(`goals[${goalIndex}].objectives[${objectiveIndex}].ttaProvided`);
+    onRemove();
+  };
 
   const updateEdit = (isEditing) => {
     if (isEditing) {
       updateShowEdit(true);
-    } else if (title && ttaProvided) {
+    } else if (title && ttaProvided !== EMPTY_TEXT_BOX) {
       updateShowEdit(false);
       onUpdate(editableObject);
     } else {
@@ -60,11 +67,11 @@ const Objective = ({
   };
 
   const onCancel = () => {
-    if (objective.title || objective.ttaProvided) {
+    if (objective.title || objective.ttaProvided !== EMPTY_TEXT_BOX) {
       updateEditableObject(objective);
       updateShowEdit(false);
     } else {
-      onRemove();
+      onLocalRemove();
     }
   };
 
