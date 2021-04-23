@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, TextInput } from '@trussworks/react-uswds';
+import { Button, Label, TextInput } from '@trussworks/react-uswds';
 
 import Objective from './Objective';
 import ContextMenu from '../../../../components/ContextMenu';
@@ -63,7 +63,10 @@ const Goals = ({
 
   const InplaceGoalEditor = (
     <div className="">
-      <TextInput aria-label="edit goal" value={goalName} onChange={onGoalChange} />
+      <Label>
+        Edit goal
+        <TextInput name="goalName" value={goalName} onChange={onGoalChange} />
+      </Label>
       <button type="button" className="usa-button" onClick={() => handleGoalUpdate()}>
         Update Goal
       </button>

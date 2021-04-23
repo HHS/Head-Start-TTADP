@@ -86,7 +86,7 @@ describe('Goal', () => {
       const editButton = await screen.findByRole('button', { name: 'Edit' });
       fireEvent.click(editButton);
 
-      const goalNameInput = await screen.findByLabelText('edit goal');
+      const goalNameInput = await screen.findByLabelText('Edit goal');
       await waitFor(() => expect(goalNameInput).toBeVisible());
 
       fireEvent.change(goalNameInput, { target: { value: 'test goal edited' } });
@@ -107,14 +107,14 @@ describe('Goal', () => {
       const editButton = await screen.findByRole('button', { name: 'Edit' });
       fireEvent.click(editButton);
 
-      expect(screen.queryByLabelText('edit goal')).toBeVisible();
+      expect(screen.queryByLabelText('Edit goal')).toBeVisible();
 
       const cancelButton = await screen.findByRole('button', { name: 'Cancel' });
       await waitFor(() => expect(cancelButton).toBeVisible());
 
       fireEvent.click(cancelButton);
 
-      expect(screen.queryByLabelText('edit goal')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Edit goal')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Update Goal' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
     });
