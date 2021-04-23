@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -11,9 +12,18 @@ import './Goal.css';
 const Goals = ({
   name, onRemoveGoal, goalIndex, objectives, onUpdateObjectives, createObjective,
 }) => {
+  const { unregister } = useFormContext();
   const onRemoveObjective = (index) => {
     const newObjectives = objectives.filter((o, objectiveIndex) => index !== objectiveIndex);
     onUpdateObjectives(newObjectives);
+  };
+
+  const onLocalRemoveGoal = () => {
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < objectives.length; i++) {
+      unregister(`goals[${goalIndex}].objectives[${i}].ttaProvided`);
+    }
+    onRemoveGoal();
   };
 
   const onUpdateObjective = (index, newObjective) => {
@@ -33,7 +43,7 @@ const Goals = ({
           </p>
 
           <div className="margin-left-auto">
-            <Button type="button" onClick={onRemoveGoal} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
+            <Button type="button" onClick={onLocalRemoveGoal} unstyled className="smart-hub--button" aria-label={`remove goal ${goalIndex + 1}`}>
               <FontAwesomeIcon color="black" icon={faTrash} />
             </Button>
           </div>

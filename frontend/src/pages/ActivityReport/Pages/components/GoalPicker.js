@@ -20,7 +20,7 @@ const components = {
 };
 
 const createObjective = () => ({
-  title: '', ttaProvided: '', status: 'Not Started', id: uuidv4(), new: true,
+  title: '', ttaProvided: '<p></p>', status: 'Not Started', id: uuidv4(), new: true,
 });
 
 const GoalPicker = ({
