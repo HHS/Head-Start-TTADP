@@ -19,20 +19,37 @@ const logContext = {
  * @returns {Promise<any>} - returns a promise
  */
 export default function findOrCreateUser(data) {
-  return sequelize.transaction((transaction) => User.findOrCreate({
+  return sequelize.transaction((transaction) => User.findOne({
     where: {
       hsesUserId: data.hsesUserId,
     },
-    defaults: data,
     transaction,
-  }).then(([user, created]) => {
-    if (created) {
-      logger.info(`Created user ${user.id} with no access permissions`);
-      return user;
+  }).then((userFoundByHsesUserId) => {
+    if (!userFoundByHsesUserId) {
+      return User.findOrCreate({
+        where: {
+          hsesUsername: data.hsesUsername,
+        },
+        defaults: data,
+        transaction,
+      }).then(([user, created]) => {
+        if (created) {
+          logger.info(`Created user ${user.id} with no access permissions`);
+          return user;
+        }
+        logger.warn(`Updating user ${user.id} found by hsesUserName`);
+        return user.update({
+          hsesUsername: data.hsesUsername,
+          hsesAuthorities: data.hsesAuthorities,
+          hsesUserId: data.hsesUserId,
+          lastLogin: sequelize.fn('NOW'),
+        }, { transaction });
+      });
     }
-    return user.update({
+    return userFoundByHsesUserId.update({
       hsesUsername: data.hsesUsername,
       hsesAuthorities: data.hsesAuthorities,
+      hsesUserId: data.hsesUserId,
       lastLogin: sequelize.fn('NOW'),
     }, { transaction });
   }).catch((error) => {
