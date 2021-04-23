@@ -139,7 +139,7 @@ describe('GoalPicker', () => {
       const editButton = await screen.findByRole('button', { name: 'Edit' });
       fireEvent.click(editButton);
 
-      const goalNameInput = await screen.findByLabelText('edit goal');
+      const goalNameInput = await screen.findByLabelText('Edit goal');
       await waitFor(() => expect(goalNameInput).toBeVisible());
 
       fireEvent.change(goalNameInput, { target: { value: 'test goal edited' } });
