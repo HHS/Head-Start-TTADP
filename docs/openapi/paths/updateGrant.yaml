@@ -1,0 +1,27 @@
+put:
+  tags:
+    - admin
+  operationId: updateCDIGrant
+  description: Update a CDI grant with a region and grantee
+  requestBody:
+      description: The new regionId and granteeId for this grant
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              regionId:
+                type: number
+                description: The id of the region for this grant
+              granteeId:
+                type: number
+                description: The id of the grantee for this grant
+  responses:
+    200:
+      summary: The updated Grant
+      content:
+        application/json:
+          schema:
+            type: object
+            $ref: '../index.yaml#/components/schemas/grant'

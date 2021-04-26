@@ -10,6 +10,8 @@ jest.mock('axios');
 const mockZip = jest.fn();
 jest.mock('adm-zip', () => jest.fn().mockImplementation(() => ({ extractAllTo: mockZip })));
 
+const SMALLEST_GRANT_ID = 100;
+
 describe('Update HSES data', () => {
   beforeEach(() => {
     const response = {
@@ -61,18 +63,18 @@ describe('Update HSES data', () => {
 
 describe('Update grants and grantees', () => {
   beforeAll(async () => {
-    await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
-    await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
+    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
-    await Grant.destroy({ where: { id: { [Op.gt]: 20 } } });
-    await Grantee.destroy({ where: { id: { [Op.gt]: 20 } } });
+    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(() => {
     db.sequelize.close();
   });
   it('should import or update grantees', async () => {
-    const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: 20 } } });
+    const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     expect(granteesBefore.length).toBe(0);
     await processFiles();
 
@@ -82,7 +84,7 @@ describe('Update grants and grantees', () => {
   });
 
   it('should import or update grants', async () => {
-    const grantsBefore = await Grant.findAll({ where: { id: { [Op.gt]: 20 } } });
+    const grantsBefore = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
 
     expect(grantsBefore.length).toBe(0);
     await processFiles();
@@ -92,8 +94,8 @@ describe('Update grants and grantees', () => {
     expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
-    const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: 20 } } });
-    expect(totalGrants.length).toBe(10);
+    const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    expect(totalGrants.length).toBe(11);
   });
 
   it('should not exclude grantees with only inactive grants', async () => {
@@ -120,5 +122,25 @@ describe('Update grants and grantees', () => {
     expect(grant).not.toBeNull();
     expect(grant.updatedAt).not.toEqual(dbGrant.updatedAt);
     expect(grant.number).toBe('90CI4444');
+  });
+
+  it('should flag cdi grants', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 11630 } });
+    expect(grant.cdi).toBeTruthy();
+    expect(grant.regionId).toBe(13);
+    expect(grant.granteeId).toBe(119);
+  });
+
+  it('should update cdi grants', async () => {
+    await Grantee.findOrCreate({ where: { id: 500, name: 'Another Agency' } });
+    await Grant.create({
+      status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', granteeId: 500,
+    });
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 11630 } });
+    expect(grant.status).toBe('Active');
+    expect(grant.regionId).toBe(5);
+    expect(grant.granteeId).toBe(500);
   });
 });

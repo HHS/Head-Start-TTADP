@@ -12,6 +12,12 @@
   $ref: './admin.yaml'
 '/admin/users':
   $ref: './adminAllUsers.yaml'
+'/admin/grantees':
+  $ref: './grantees.yaml'
+'/admin/grants/cdi':
+  $ref: './grants.yaml'
+'/admin/grants/cdi/{grantId}':
+  $ref: './updateGrant.yaml'
 '/activity-reports':
   $ref: './activity-reports/activity-reports.yaml'
 '/activity-reports/alerts':
