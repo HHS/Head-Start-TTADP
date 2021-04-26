@@ -56,6 +56,8 @@ const ExternalLink = ({ to, children }) => {
   }, [onEscape]);
 
   useEffect(() => {
+    if (!modalRef.current) return;
+
     const button = modalRef.current.querySelector('button');
     if (button) {
       button.focus();
