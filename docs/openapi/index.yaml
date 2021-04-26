@@ -16,6 +16,40 @@ paths:
   $ref: "./paths/index.yaml"
 components:
   schemas:
+    grant:
+      type: object
+      description: >
+        A grant imported from HSES
+      properties:
+        id:
+          type: number
+        cdi:
+          type: boolean
+        number:
+          type: string
+        status:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        regionId:
+          type: number
+        granteeId:
+          type: number
+    grantee:
+      type: object
+      description: >
+        A grantee imported from HSES
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/grant"
     activityReport:
       type: object
       description: >
