@@ -62,7 +62,7 @@ const Goals = ({
   }
 
   const InplaceGoalEditor = (
-    <div className="">
+    <div>
       <Label>
         Edit goal
         <TextInput name="goalName" value={goalName} onChange={onGoalChange} />
