@@ -7,7 +7,13 @@ const getReportsDownloadURL = (reportIds) => {
   return join(activityReportUrl, 'download', queryItems.join('&'));
 };
 
+const getAllReportsDownloadURL = (filterQuery) => {
+  const query = filterQuery ? `?${filterQuery}` : '';
+  return join('/', 'api', 'activity-reports', `downloadAll${query}`);
+};
+
 export {
   getReportsDownloadURL as default,
   getReportsDownloadURL,
+  getAllReportsDownloadURL,
 };

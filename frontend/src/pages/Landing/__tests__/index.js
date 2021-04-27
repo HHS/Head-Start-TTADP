@@ -6,10 +6,11 @@ import {
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
 
+import userEvent from '@testing-library/user-event';
 import UserContext from '../../../UserContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
-import { getReportsDownloadURL } from '../../../fetchers/helpers';
+import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../../fetchers/helpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -593,6 +594,69 @@ describe('Landing page table menus & selections', () => {
         expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
         checkboxes.forEach((c) => expect(c).not.toBeChecked());
       });
+    });
+  });
+
+  describe('Selected count badge', () => {
+    it('can de-select all reports', async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+      userEvent.click(selectAllCheckbox);
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).toBeChecked());
+      });
+
+      const deselect = await screen.findByRole('button', { name: 'deselect all reports' });
+      fireEvent.click(deselect);
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).not.toBeChecked());
+      });
+    });
+  });
+
+  describe('download all reports button', () => {
+    afterAll(() => {
+      getAllReportsDownloadURL.mockClear();
+    });
+
+    it('downloads all reports', async () => {
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      const reportMenu = await screen.findByRole('button', { name: 'Open report menu' });
+      userEvent.click(reportMenu);
+      const downloadButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+      userEvent.click(downloadButton);
+      expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
     });
   });
 
