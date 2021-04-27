@@ -13,6 +13,7 @@ import {
   downloadReports,
   updateLegacyFields,
   softDeleteReport,
+  downloadAllReports,
 } from './handlers';
 import {
   activityReportById,
@@ -505,6 +506,29 @@ describe('Activity Report handlers', () => {
       activityReportAlerts.mockResolvedValue(null);
       await getReportAlerts(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('downloadAllReports', () => {
+    const request = {
+      ...mockRequest,
+      query: { },
+    };
+
+    it('returns a csv', async () => {
+      activityReports.mockResolvedValue({ count: 1, rows: [report] });
+      getUserReadRegions.mockResolvedValue([1]);
+
+      await downloadAllReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
+    });
+
+    it('handles a list of reports that are not found', async () => {
+      activityReports.mockResolvedValue(null);
+      getUserReadRegions.mockResolvedValue([1]);
+
+      await downloadAllReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
   });
 

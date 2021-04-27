@@ -5,11 +5,7 @@ import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import moment from 'moment';
 
-import {
-  faFilter,
-  faPlus,
-  faCheck,
-} from '@fortawesome/free-solid-svg-icons';
+import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuidv4 } from 'uuid';
 
 import Container from '../../components/Container';
@@ -62,9 +58,7 @@ function Filter({ applyFilters, forMyAlerts }) {
   let filterClass = '';
 
   if (open) {
-    filterClass = 'smart-hub--filter-menu-button__open';
-  } else if (hasFilters) {
-    filterClass = 'smart-hub--filter-menu-button__selected';
+    filterClass = 'smart-hub--menu-button__open';
   }
 
   return (
@@ -74,15 +68,15 @@ function Filter({ applyFilters, forMyAlerts }) {
         onClick={() => {
           updateOpen(!open);
         }}
-        unstyled
-        className={`smart-hub--filter-button smart-hub--filter-menu-button ${filterClass}`}
+        outline
+        className={`smart-hub--filter-button smart-hub--table-controls__button ${filterClass}`}
       >
-        <FontAwesomeIcon color="black" icon={faFilter} />
+        {`Filters ${filters.length > 0 ? `(${filters.length})` : ''}`}
         {' '}
-        {hasFilters ? `${filters.length} Filters` : 'Filter'}
+        <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
       </Button>
       {open && (
-      <div className="z-400 position-absolute right-105">
+      <div className="z-400 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
@@ -108,30 +102,26 @@ function Filter({ applyFilters, forMyAlerts }) {
               No filters have been applied
             </div>
             )}
-            <div className="margin-top-2 padding-bottom-2">
+            <div className="height-20 margin-top-2 clearfix">
               <Button
                 type="button"
-                unstyled
+                outline
                 className="float-left smart-hub--filter-button"
                 onClick={() => {
                   updateFilters([...filters, defaultFilter()]);
                 }}
               >
-                <FontAwesomeIcon size="xs" icon={faPlus} />
-                {' '}
-                Add filter
+                Add New Filter
               </Button>
+              {hasFilters && (
               <Button
                 type="button"
                 className="float-right smart-hub--filter-button"
-                unstyled
                 onClick={onApplyFilter}
               >
-                <FontAwesomeIcon size="xs" icon={faCheck} />
-                {' '}
-                Apply
+                Apply Filters
               </Button>
-
+              )}
             </div>
           </div>
         </Container>

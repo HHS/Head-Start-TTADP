@@ -15,6 +15,7 @@ import {
   downloadReports,
   updateLegacyFields,
   softDeleteReport,
+  downloadAllReports,
 } from './handlers';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 
@@ -31,6 +32,7 @@ router.get('/goals', getGoals);
 router.get('/alerts', getReportAlerts);
 router.get('/legacy/:legacyReportId', getLegacyReport);
 router.get('/download', downloadReports);
+router.get('/downloadAll', downloadAllReports);
 router.put('/legacy/:legacyReportId', userAdminAccessMiddleware, updateLegacyFields);
 router.get('/:activityReportId', getReport);
 router.get('/', getReports);

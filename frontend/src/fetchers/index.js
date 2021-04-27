@@ -7,12 +7,13 @@ export class HTTPError extends Error {
   }
 }
 
-export const get = async (url) => {
+export const get = async (url, headers = {}) => {
   const res = await fetch(url, {
     credentials: 'same-origin',
     headers: {
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
+      ...headers,
     },
   });
   if (!res.ok) {

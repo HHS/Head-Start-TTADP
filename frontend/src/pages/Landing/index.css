@@ -62,6 +62,28 @@ div.smart-hub--total-count {
   padding: 2px;
 }
 
+.smart-hub--table-controls {
+  position: relative;
+  float: left;
+  margin-left: 200px;
+  margin-bottom: -90px;
+  margin-top: 24px;
+}
+
+.smart-hub--selected-tag {
+  border-radius: 15px;
+  background-color: #0166AB;
+  padding: 5px;
+  padding-right: 15px;
+  padding-left: 15px;
+  color: white;
+  width: 65px;
+  height: 13px;
+  font-family: SourceSansPro;
+  font-size: 14px;
+  line-height: 26px;
+}
+
 .landing .smart-hub--table-nav {
   position: relative;
   float: right;
@@ -290,4 +312,33 @@ a.desc {
   width:1px;
   height:1px;
   overflow:hidden;
+}
+
+.landing .smart-hub--select-tag__button {
+  margin-left: 0;
+  vertical-align: none;
+  margin-bottom: 3px;
+}
+
+.landing .smart-hub--table-controls__button {
+  color: black;
+  text-decoration: none;
+  margin-right: 12px;
+  padding: 6px 12px;
+  margin-left: 0px;
+  border-radius: 3px;
+  font-weight: normal;
+  box-shadow: inset 0 0 0 1px black;
+}
+
+.smart-hub--reports-button {
+  display: block;
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+  color: black;
+}
+
+.smart-hub--menu-button__open {
+  background-color: #eceef1;
 }

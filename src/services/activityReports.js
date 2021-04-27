@@ -292,19 +292,29 @@ export function activityReportById(activityReportId) {
  * @param {*} limit - size of the slice
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
-export function activityReports(readRegions, {
-  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
-}) {
+export function activityReports(
+  readRegions,
+  {
+    sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
+  },
+  excludeLegacy = false,
+) {
   const regions = readRegions || [];
   const scopes = filtersToScopes(filters);
 
+  const where = {
+    regionId: regions,
+    status: REPORT_STATUSES.APPROVED,
+    [Op.and]: scopes,
+  };
+
+  if (excludeLegacy) {
+    where.legacyId = { [Op.eq]: null };
+  }
+
   return ActivityReport.findAndCountAll(
     {
-      where: {
-        regionId: regions,
-        status: REPORT_STATUSES.APPROVED,
-        [Op.and]: scopes,
-      },
+      where,
       attributes: [
         'id',
         'displayId',
