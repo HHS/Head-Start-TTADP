@@ -12,8 +12,14 @@ const getAllReportsDownloadURL = (filterQuery) => {
   return join('/', 'api', 'activity-reports', `downloadAll${query}`);
 };
 
+const getAllAlertsDownloadURL = (filterQuery) => {
+  const query = filterQuery ? `?${filterQuery}` : '';
+  return join('/', 'api', 'activity-reports', 'alerts', `downloadAll${query}`);
+};
+
 export {
   getReportsDownloadURL as default,
   getReportsDownloadURL,
   getAllReportsDownloadURL,
+  getAllAlertsDownloadURL,
 };

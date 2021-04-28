@@ -14,6 +14,7 @@ import {
   updateLegacyFields,
   softDeleteReport,
   downloadAllReports,
+  downloadAllAlerts,
 } from './handlers';
 import {
   activityReportById,
@@ -528,6 +529,29 @@ describe('Activity Report handlers', () => {
       getUserReadRegions.mockResolvedValue([1]);
 
       await downloadAllReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
+    });
+  });
+
+  describe('downloadAllAlerts', () => {
+    const request = {
+      ...mockRequest,
+      query: { },
+    };
+
+    it('returns a csv', async () => {
+      activityReports.mockResolvedValue({ count: 1, rows: [report] });
+      getUserReadRegions.mockResolvedValue([1]);
+
+      await downloadAllAlerts(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
+    });
+
+    it('handles a list of reports that are not found', async () => {
+      activityReports.mockResolvedValue(null);
+      getUserReadRegions.mockResolvedValue([1]);
+
+      await downloadAllAlerts(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
   });

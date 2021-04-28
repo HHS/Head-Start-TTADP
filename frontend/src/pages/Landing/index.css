@@ -70,6 +70,14 @@ div.smart-hub--total-count {
   margin-top: 24px;
 }
 
+.smart-hub--alerts-table-controls {
+  position: relative;
+  float: left;
+  margin-left: 275px;
+  margin-bottom: -90px;
+  margin-top: 24px;
+}
+
 .smart-hub--selected-tag {
   border-radius: 15px;
   background-color: #0166AB;
