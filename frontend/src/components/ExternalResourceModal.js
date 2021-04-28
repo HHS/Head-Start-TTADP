@@ -39,10 +39,6 @@ ExternalResourceModal.propTypes = {
 };
 
 const ExternalLink = ({ to, children }) => {
-  if (!isValidURL(to)) {
-    return to;
-  }
-
   const modalRef = useRef(null);
   const { isOpen, openModal, closeModal } = useModal();
 
@@ -50,7 +46,7 @@ const ExternalLink = ({ to, children }) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
       closeModal();
     }
-  }, [isOpen]);
+  }, [closeModal]);
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -60,11 +56,17 @@ const ExternalLink = ({ to, children }) => {
   }, [onEscape]);
 
   useEffect(() => {
+    if (!modalRef.current) return;
+
     const button = modalRef.current.querySelector('button');
     if (button) {
       button.focus();
     }
   });
+
+  if (!isValidURL(to)) {
+    return to;
+  }
 
   const onClick = () => {
     closeModal();
