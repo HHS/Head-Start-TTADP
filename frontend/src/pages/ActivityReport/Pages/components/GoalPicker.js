@@ -140,7 +140,7 @@ const GoalPicker = ({
               id={goal.id}
               objectives={goal.objectives}
               name={goal.name}
-              isEditable={goal.new}
+              isEditable={goal.new === true}
               createObjective={createObjective}
               onRemoveGoal={() => onRemoveGoal(goal.id)}
               onUpdateObjectives={(newObjectives) => {
