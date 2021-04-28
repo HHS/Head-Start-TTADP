@@ -12,6 +12,7 @@ import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
+import { reportIsEditable } from '../../../utils';
 
 const GoalsObjectives = () => {
   const {
@@ -70,7 +71,10 @@ const ReviewSection = () => {
   const {
     context,
     goals,
+    status,
   } = watch();
+
+  const canEdit = reportIsEditable(status);
 
   return (
     <>
@@ -80,6 +84,7 @@ const ReviewSection = () => {
         basePath="goals-objectives"
         anchor="context"
         title="Context"
+        canEdit={canEdit}
       >
         <ReviewItem
           label="Context"
@@ -92,6 +97,7 @@ const ReviewSection = () => {
         basePath="goals-objectives"
         anchor="goals-and-objectives"
         title="Goals"
+        canEdit={canEdit}
       >
         {goals.map((goal) => {
           const objectives = goal.objectives || [];
