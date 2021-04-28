@@ -55,7 +55,12 @@ const GoalPicker = ({
 
   const onSaveGoal = () => {
     if (newGoal !== '') {
-      const goal = { id: uuidv4(), name: newGoal, objectives: [createObjective()] };
+      const goal = {
+        id: uuidv4(),
+        new: true,
+        name: newGoal,
+        objectives: [createObjective()],
+      };
       setValue('goals', [...selectedGoals, goal]);
       updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
       updateNewGoal('');
@@ -135,7 +140,7 @@ const GoalPicker = ({
               id={goal.id}
               objectives={goal.objectives}
               name={goal.name}
-              isEditable
+              isEditable={goal.new}
               createObjective={createObjective}
               onRemoveGoal={() => onRemoveGoal(goal.id)}
               onUpdateObjectives={(newObjectives) => {
