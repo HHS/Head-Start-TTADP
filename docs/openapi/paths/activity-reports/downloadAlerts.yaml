@@ -1,0 +1,28 @@
+get:
+  tags:
+    - activity-reports
+  description: Download all activity report alerts as a CSV
+  parameters:
+    - $ref: '../../index.yaml#/components/parameters/reportId.in'
+    - $ref: '../../index.yaml#/components/parameters/reportId.nin'
+    - $ref: '../../index.yaml#/components/parameters/grantee.in'
+    - $ref: '../../index.yaml#/components/parameters/grantee.nin'
+    - $ref: '../../index.yaml#/components/parameters/creator.in'
+    - $ref: '../../index.yaml#/components/parameters/creator.nin'
+    - $ref: '../../index.yaml#/components/parameters/topic.in'
+    - $ref: '../../index.yaml#/components/parameters/topic.nin'
+    - $ref: '../../index.yaml#/components/parameters/collaborators.in'
+    - $ref: '../../index.yaml#/components/parameters/collaborators.nin'
+    - $ref: '../../index.yaml#/components/parameters/startDate.bef'
+    - $ref: '../../index.yaml#/components/parameters/startDate.aft'
+    - $ref: '../../index.yaml#/components/parameters/startDate.win'
+    - $ref: '../../index.yaml#/components/parameters/lastSaved.bef'
+    - $ref: '../../index.yaml#/components/parameters/lastSaved.aft'
+    - $ref: '../../index.yaml#/components/parameters/lastSaved.win'
+  responses:
+    200:
+      description: Successfully retrieved activity reports
+      content:
+        text/csv; charset=utf-8:
+          schema:
+            type: string
