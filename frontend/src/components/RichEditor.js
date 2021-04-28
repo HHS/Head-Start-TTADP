@@ -1,4 +1,14 @@
 /* istanbul ignore file */
+/*
+ * Ignoring this file due to how hard it is to test the functionality.
+ * The main reason is that the react testing library uses JSDOM, which doesn't
+ * support the html attribute `contentEditable` (which the component is built upon)
+ *
+ * https://github.com/jsdom/jsdom/issues/1670
+ *
+ * Creating a test that checks it renders properly decreases the test suite below the
+ * threshold as well.
+*/
 
 import React from 'react';
 import PropTypes from 'prop-types';
