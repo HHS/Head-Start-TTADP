@@ -17,9 +17,6 @@ const Goals = ({
     onUpdateObjectives(newObjectives);
   };
 
-  const { errors } = useFormContext();
-  const isValid = !errors.goals;
-
   const onUpdateObjective = (index, newObjective) => {
     const newObjectives = [...objectives];
     newObjectives[index] = newObjective;
@@ -46,7 +43,6 @@ const Goals = ({
           {objectives.map((objective, objectiveIndex) => (
             <div className="margin-top-1" key={objective.id}>
               <Objective
-                isValid={isValid}
                 parentLabel="goals"
                 objectiveAriaLabel={`${objectiveIndex + 1} on goal ${goalIndex + 1}`}
                 objective={objective}

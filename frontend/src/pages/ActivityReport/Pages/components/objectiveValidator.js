@@ -7,5 +7,10 @@ export const validateObjectives = (objectives) => {
     return OBJECTIVES_EMPTY;
   }
 
-  return unfinishedObjectives(objectives) || true;
+  const unfinishedMessage = unfinishedObjectives(objectives);
+
+  if (unfinishedMessage) {
+    return unfinishedMessage;
+  }
+  return true;
 };
