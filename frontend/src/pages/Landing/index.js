@@ -13,7 +13,7 @@ import Pagination from 'react-js-pagination';
 import UserContext from '../../UserContext';
 import Container from '../../components/Container';
 import { getReports, getReportAlerts } from '../../fetchers/activityReports';
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
+import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
@@ -352,6 +352,12 @@ function Landing() {
     window.location.assign(downloadURL);
   };
 
+  const handleDownloadAllAlerts = () => {
+    const filterQuery = filtersToQueryString(alertFilters);
+    const downloadURL = getAllAlertsDownloadURL(filterQuery);
+    window.location.assign(downloadURL);
+  };
+
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
@@ -481,6 +487,7 @@ function Landing() {
               sortHandler={requestAlertsSort}
               updateReportFilters={setAlertFilters}
               hasFilters={alertFilters.length > 0}
+              handleDownloadAllAlerts={handleDownloadAllAlerts}
             />
             <Container className="landing inline-size maxw-full" padding={0}>
               <span className="smart-hub--table-controls">

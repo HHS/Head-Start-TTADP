@@ -11,6 +11,7 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import Filter from './Filter';
+import ReportMenu from './ReportMenu';
 
 function renderReports(reports) {
   return reports.map((report) => {
@@ -117,6 +118,7 @@ function MyAlerts(props) {
     sortHandler,
     hasFilters,
     updateReportFilters,
+    handleDownloadAllAlerts,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -173,12 +175,14 @@ function MyAlerts(props) {
       )}
       {reports && (reports.length > 0 || hasFilters) && (
       <Container className="landing inline-size maxw-full" padding={0}>
-        <span className="smart-hub--table-nav">
-          <Filter
-            className="float-left"
-            applyFilters={updateReportFilters}
-            forMyAlerts
+        <span className="smart-hub--alerts-table-controls">
+          <Filter applyFilters={updateReportFilters} forMyAlerts />
+          <ReportMenu
+            hasSelectedReports={false}
+            onExportAll={handleDownloadAllAlerts}
           />
+        </span>
+        <span className="smart-hub--table-nav">
           <span
             id="alertsTotalCount"
             aria-label={`Displaying rows ${renderTotal(
@@ -232,6 +236,7 @@ MyAlerts.propTypes = {
   sortHandler: PropTypes.func.isRequired,
   hasFilters: PropTypes.bool,
   updateReportFilters: PropTypes.func.isRequired,
+  handleDownloadAllAlerts: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {

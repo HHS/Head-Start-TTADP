@@ -419,7 +419,18 @@ export async function downloadAllReports(req, res) {
     const rows = reportsWithCount ? reportsWithCount.rows : [];
     await sendActivityReportCSV(rows, res);
   } catch (error) {
-    console.log(error);
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function downloadAllAlerts(req, res) {
+  try {
+    const { userId } = req.session;
+    const alertsWithCount = await activityReportAlerts(userId, req.query);
+
+    const rows = alertsWithCount ? alertsWithCount.rows : [];
+    await sendActivityReportCSV(rows, res);
+  } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
