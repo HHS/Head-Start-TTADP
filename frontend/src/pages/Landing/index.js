@@ -328,7 +328,7 @@ function Landing() {
     } else if (allReportsChecked === true) {
       setAllReportsChecked(false);
     }
-  }, [reportCheckboxes]);
+  }, [reportCheckboxes, allReportsChecked]);
 
   const handleDownloadClick = () => {
     const toDownloadableReportIds = (accumulator, entry) => {
