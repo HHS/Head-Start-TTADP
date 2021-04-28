@@ -119,10 +119,12 @@ describe('GoalPicker', () => {
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
     });
 
-    it('can be updated', async () => {
+    it('can be updated, if new', async () => {
       const availableGoals = [];
       const selectedGoals = [
-        { id: 1, name: 'goal to edit', objectives: [] },
+        {
+          id: 1, name: 'goal to edit', new: true, objectives: [],
+        },
         { id: 2, name: 'another goal', objectives: [] },
       ];
 
