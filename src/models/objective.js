@@ -16,7 +16,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Objective.init({
-    goalId: DataTypes.INTEGER,
+    goalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     title: DataTypes.TEXT,
     ttaProvided: DataTypes.TEXT,
     status: DataTypes.STRING,
