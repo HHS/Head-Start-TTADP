@@ -42,8 +42,8 @@ const Goals = ({
           {objectives.map((objective, objectiveIndex) => (
             <div className="margin-top-1" key={objective.id}>
               <Objective
-                goalIndex={goalIndex}
-                objectiveIndex={objectiveIndex}
+                parentLabel="goals"
+                objectiveAriaLabel={`${objectiveIndex + 1} on goal ${goalIndex + 1}`}
                 objective={objective}
                 onRemove={() => { if (!singleObjective) { onRemoveObjective(objectiveIndex); } }}
                 onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}
