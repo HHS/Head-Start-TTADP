@@ -9,7 +9,7 @@ const PrintSummary = ({ reportCreator = {} }) => {
   let creatorText = null;
 
   if (name && role) {
-    creatorText = `${name}, ${role}`;
+    creatorText = `${name}, ${role.join(', ')}`;
   } else if (name) {
     creatorText = name;
   }
@@ -35,13 +35,13 @@ const PrintSummary = ({ reportCreator = {} }) => {
 PrintSummary.propTypes = {
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.string,
+    role: PropTypes.arrayOf(PropTypes.string),
   }),
 };
 PrintSummary.defaultProps = {
   reportCreator: {
     name: null,
-    role: null,
+    role: [],
   },
 };
 

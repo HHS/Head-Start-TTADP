@@ -32,10 +32,22 @@ export default (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
       ActivityReport.belongsToMany(models.Objective, {
+        scope: {
+          goalId: { [Op.is]: null },
+        },
         through: models.ActivityReportObjective,
         foreignKey: 'activityReportId',
         otherKey: 'objectiveId',
-        as: 'objectives',
+        as: 'objectivesWithoutGoals',
+      });
+      ActivityReport.belongsToMany(models.Objective, {
+        scope: {
+          goalId: { [Op.not]: null },
+        },
+        through: models.ActivityReportObjective,
+        foreignKey: 'activityReportId',
+        otherKey: 'objectiveId',
+        as: 'objectivesWithGoals',
       });
     }
   }
@@ -172,7 +184,7 @@ export default (sequelize, DataTypes) => {
     goals: {
       type: DataTypes.VIRTUAL,
       get() {
-        const objectives = this.objectives || [];
+        const objectives = this.objectivesWithGoals || [];
         const goalsArray = objectives.map((o) => o.goal);
         const goals = uniqWith(goalsArray, isEqual);
 
