@@ -16,12 +16,15 @@ const statuses = [
 ];
 
 const Objective = ({
-  goalIndex, objectiveIndex, objective, onRemove, onUpdate,
+  objectiveAriaLabel,
+  objective,
+  onRemove,
+  onUpdate,
+  parentLabel,
 }) => {
-  const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
   const firstInput = useRef();
   const { errors, trigger } = useFormContext();
-  const isValid = !errors.goals;
+  const isValid = !errors[parentLabel];
 
   useEffect(() => {
     if (firstInput.current) {
@@ -48,11 +51,11 @@ const Objective = ({
       updateShowEdit(false);
       onUpdate(editableObject);
     } else {
-      trigger('goals');
+      trigger(parentLabel);
     }
 
     if (!isValid) {
-      trigger('goals');
+      trigger(parentLabel);
     }
   };
 
@@ -171,10 +174,14 @@ Objective.propTypes = {
     ttaProvided: PropTypes.string,
     status: PropTypes.string,
   }).isRequired,
-  objectiveIndex: PropTypes.number.isRequired,
-  goalIndex: PropTypes.number.isRequired,
   onRemove: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  parentLabel: PropTypes.string.isRequired,
+  objectiveAriaLabel: PropTypes.string,
+};
+
+Objective.defaultProps = {
+  objectiveAriaLabel: '',
 };
 
 export default Objective;
