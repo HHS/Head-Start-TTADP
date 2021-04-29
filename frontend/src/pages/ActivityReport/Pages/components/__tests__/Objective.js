@@ -22,6 +22,8 @@ const RenderObjective = ({
         objective={objective}
         onRemove={onRemove}
         onUpdate={onUpdate}
+        parentLabel="goals"
+        objectiveAriaLabel="1 on goal 1"
         goalIndex={0}
         objectiveIndex={0}
       />
