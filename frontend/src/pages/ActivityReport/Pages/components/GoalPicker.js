@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Label, TextInput,
 } from '@trussworks/react-uswds';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
 import { v4 as uuidv4 } from 'uuid';
 
 import FormItem from '../../../../components/FormItem';
@@ -27,11 +27,14 @@ const GoalPicker = ({
   availableGoals,
 }) => {
   const {
-    watch, control, setValue,
+    control, setValue,
   } = useFormContext();
   const [newGoal, updateNewGoal] = useState('');
   const [newAvailableGoals, updateNewAvailableGoals] = useState([]);
-  const selectedGoals = watch('goals');
+  const selectedGoals = useWatch({ name: 'goals' });
+  // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
+  // newAvailableGoals: created by user but not yet saved
+  // selectedGoals: goals selected by user in MultiSelect
   const allAvailableGoals = [...availableGoals, ...newAvailableGoals, ...selectedGoals];
 
   const onRemoveGoal = (id) => {
@@ -70,11 +73,14 @@ const GoalPicker = ({
   const onUpdateObjectives = (index, objectives) => {
     const newGoals = cloneDeep(selectedGoals);
     newGoals[index].objectives = objectives;
+    // When objecttives are added/updated, make sure they are attached to available goals
+    updateNewAvailableGoals(newGoals);
     setValue('goals', newGoals);
   };
 
   const onItemSelected = (event) => {
-    const newGoals = event.map((e) => {
+    // Use selections from MultiSelect to update goals form state
+    const newlySelectedGoals = event.map((e) => {
       const goal = allAvailableGoals.find((g) => g.id === e.value);
       let objectives = [createObjective()];
 
@@ -86,7 +92,12 @@ const GoalPicker = ({
         objectives,
       };
     });
-    setValue('goals', newGoals);
+    // Preserve deselected goals so they can be re-reselected
+    const selectedIds = event.map((g) => g.id);
+    const deselectedGoals = selectedGoals.filter((g) => !selectedIds.includes(g.id));
+    updateNewAvailableGoals(deselectedGoals);
+
+    setValue('goals', newlySelectedGoals);
   };
 
   const onNewGoalChange = (e) => {
