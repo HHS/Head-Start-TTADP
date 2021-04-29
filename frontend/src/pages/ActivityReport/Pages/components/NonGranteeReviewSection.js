@@ -1,0 +1,45 @@
+import React from 'react';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { isUndefined } from 'lodash';
+
+import Section from '../Review/ReviewSection';
+
+const NonGranteeReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    objectivesWithoutGoals,
+  } = watch();
+  return (
+    <Section
+      hidePrint={isUndefined(objectivesWithoutGoals)}
+      key="Objectives"
+      basePath="goals-objectives"
+      anchor="goals-and-objectives"
+      title="Objectives"
+    >
+      <>
+        {objectivesWithoutGoals.map((objective) => (
+          <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
+            <div>
+              <span className="text-bold">Objective:</span>
+              {' '}
+              {objective.title}
+            </div>
+            <div>
+              <span className="text-bold">TTA Provided:</span>
+              {' '}
+              {objective.ttaProvided}
+            </div>
+            <div>
+              <span className="text-bold">Status:</span>
+              {' '}
+              {objective.status}
+            </div>
+          </div>
+        ))}
+      </>
+    </Section>
+  );
+};
+
+export default NonGranteeReviewSection;
