@@ -71,8 +71,9 @@ const ActivitySummary = ({
       // Goals and objectives (page 3) has required fields when the recipient
       // type is grantee, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
-      // selected goals
+      // selected goals and objectives
       setValue('goals', []);
+      setValue('objectivesWithoutGoals', []);
       setValue('pageState', { ...pageState, 3: NOT_STARTED });
     }
     previousActivityRecipientType.current = activityRecipientType;
