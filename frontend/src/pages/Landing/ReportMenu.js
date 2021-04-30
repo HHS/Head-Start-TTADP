@@ -6,7 +6,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import Container from '../../components/Container';
 
-function ReportMenu({ onExportAll, onExportSelected, hasSelectedReports }) {
+function ReportMenu({
+  onExportAll,
+  onExportSelected,
+  hasSelectedReports,
+  label,
+}) {
   const [open, updateOpen] = useState(false);
   let openClass = '';
 
@@ -20,7 +25,7 @@ function ReportMenu({ onExportAll, onExportSelected, hasSelectedReports }) {
         type="button"
         outline
         className={`smart-hub--filter-button smart-hub--table-controls__button ${openClass}`}
-        aria-label="Open report menu"
+        aria-label={label}
         onClick={() => updateOpen((current) => !current)}
       >
         Reports
@@ -65,6 +70,11 @@ ReportMenu.propTypes = {
   onExportAll: PropTypes.func.isRequired,
   onExportSelected: PropTypes.func.isRequired,
   hasSelectedReports: PropTypes.bool.isRequired,
+  label: PropTypes.string,
+};
+
+ReportMenu.defaultProps = {
+  label: 'Open report menu',
 };
 
 export default ReportMenu;
