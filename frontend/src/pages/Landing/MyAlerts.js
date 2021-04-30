@@ -178,6 +178,7 @@ function MyAlerts(props) {
         <span className="smart-hub--alerts-table-controls">
           <Filter applyFilters={updateReportFilters} forMyAlerts />
           <ReportMenu
+            label="Open alerts report menu"
             hasSelectedReports={false}
             onExportAll={handleDownloadAllAlerts}
           />

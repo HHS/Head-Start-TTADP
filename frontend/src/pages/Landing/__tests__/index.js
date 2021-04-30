@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import UserContext from '../../../UserContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../../fetchers/helpers';
+import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -635,6 +635,45 @@ describe('Landing page table menus & selections', () => {
     });
   });
 
+  describe('download all alerts button', () => {
+    describe('downloads all alerts', () => {
+      afterAll(() => {
+        getAllAlertsDownloadURL.mockClear();
+      });
+
+      beforeAll(async () => {
+        fetchMock.reset();
+        fetchMock.get(
+          '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+          { count: 10, alerts: generateXFakeReports(10) },
+        );
+        fetchMock.get(
+          '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+          { count: 10, rows: [] },
+        );
+      });
+
+      it('downloads all reports', async () => {
+        const user = {
+          name: 'test@test.com',
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        const reportMenu = await screen.findByRole('button', { name: 'Open alerts report menu' });
+        userEvent.click(reportMenu);
+        const downloadButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+        userEvent.click(downloadButton);
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
+      });
+    });
+  });
+
   describe('download all reports button', () => {
     afterAll(() => {
       getAllReportsDownloadURL.mockClear();
@@ -659,111 +698,13 @@ describe('Landing page table menus & selections', () => {
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
     });
   });
-
-  describe('Tablewide Context Menu', () => {
-    beforeAll(() => {
-      delete global.window.location;
-
-      global.window.location = {
-        ...oldWindowLocation,
-        assign: jest.fn(),
-      };
-    });
-
-    beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
-        { alertsCount: 0, alerts: [] });
-      fetchMock.get(
-        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
-        { count: 10, rows: generateXFakeReports(10) },
-      );
-      const user = {
-        name: 'test@test.com',
-        permissions: [
-          {
-            scopeId: 3,
-            regionId: 1,
-          },
-        ],
-      };
-
-      renderLanding(user);
-      await screen.findByText('Activity Reports');
-    });
-
-    afterEach(() => {
-      window.location.assign.mockReset();
-      getReportsDownloadURL.mockClear();
-      fetchMock.restore();
-    });
-
-    afterAll(() => {
-      window.location = oldWindowLocation;
-    });
-
-    it('Download a single selected report', async () => {
-      const reportCheckboxes = await screen.findAllByRole('checkbox', { name: /select /i });
-
-      // Element 0 is 'Select all', so we want 1 or later
-      const singleReportCheck = reportCheckboxes[1];
-      expect(singleReportCheck.value).toEqual('1');
-
-      fireEvent.click(singleReportCheck);
-
-      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
-
-      fireEvent.click(contextMenu);
-
-      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
-
-      fireEvent.click(downloadButton);
-
-      await waitFor(() => {
-        expect(getReportsDownloadURL).toHaveBeenCalledWith(['1']);
-        expect(window.location.assign).toHaveBeenCalled();
-      });
-    });
-
-    it('Can trigger the download of multiple reports', async () => {
-      // Try selecting all reports first
-      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
-
-      fireEvent.click(selectAllCheckbox);
-
-      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
-
-      fireEvent.click(contextMenu);
-
-      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
-
-      fireEvent.click(downloadButton);
-
-      await waitFor(() => {
-        expect(getReportsDownloadURL).toHaveBeenCalled();
-        expect(window.location.assign).toHaveBeenCalled();
-      });
-    });
-
-    it('Does not trigger download when no reports are selected', async () => {
-      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
-      fireEvent.click(contextMenu);
-
-      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
-      fireEvent.click(downloadButton);
-
-      await waitFor(() => {
-        expect(getReportsDownloadURL).not.toHaveBeenCalled();
-        expect(window.location.assign).not.toHaveBeenCalled();
-      });
-    });
-  });
 });
 
 describe('My alerts sorting', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(async () => {
+    fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',

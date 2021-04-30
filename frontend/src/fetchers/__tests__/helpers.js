@@ -1,4 +1,4 @@
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../helpers';
+import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../helpers';
 
 describe('getReportsDownloadURL', () => {
   it('Creates a URL for downloading a single report', () => {
@@ -28,5 +28,17 @@ describe('getAllReportsDownloadURL', () => {
   it('creates a URL for downloading all reports with a filter', () => {
     const url = getAllReportsDownloadURL('filter');
     expect(url).toMatch('/api/activity-reports/download-all?filter');
+  });
+});
+
+describe('getAllAlertsDownloadURL', () => {
+  it('creates a URL for downloading all reports', () => {
+    const url = getAllAlertsDownloadURL();
+    expect(url).toMatch('/api/activity-reports/alerts/download-all');
+  });
+
+  it('creates a URL for downloading all reports with a filter', () => {
+    const url = getAllAlertsDownloadURL('filter');
+    expect(url).toMatch('/api/activity-reports/alerts/download-all?filter');
   });
 });
