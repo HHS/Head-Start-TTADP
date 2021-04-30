@@ -48,6 +48,7 @@ function Filter({ applyFilters, forMyAlerts }) {
     const newFilters = [...filters];
     newFilters.splice(index, 1);
     updateFilters(newFilters);
+    applyFilters(newFilters);
   };
 
   const onApplyFilter = () => {

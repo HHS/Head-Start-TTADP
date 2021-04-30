@@ -9,12 +9,12 @@ const getReportsDownloadURL = (reportIds) => {
 
 const getAllReportsDownloadURL = (filterQuery) => {
   const query = filterQuery ? `?${filterQuery}` : '';
-  return join('/', 'api', 'activity-reports', `downloadAll${query}`);
+  return join('/', 'api', 'activity-reports', `download-all${query}`);
 };
 
 const getAllAlertsDownloadURL = (filterQuery) => {
   const query = filterQuery ? `?${filterQuery}` : '';
-  return join('/', 'api', 'activity-reports', 'alerts', `downloadAll${query}`);
+  return join('/', 'api', 'activity-reports', 'alerts', `download-all${query}`);
 };
 
 export {
