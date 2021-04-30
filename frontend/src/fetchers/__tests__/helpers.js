@@ -22,11 +22,11 @@ describe('getReportsDownloadURL', () => {
 describe('getAllReportsDownloadURL', () => {
   it('creates a URL for downloading all reports', () => {
     const url = getAllReportsDownloadURL();
-    expect(url).toMatch('/api/activity-reports/downloadAll');
+    expect(url).toMatch('/api/activity-reports/download-all');
   });
 
   it('creates a URL for downloading all reports with a filter', () => {
     const url = getAllReportsDownloadURL('filter');
-    expect(url).toMatch('/api/activity-reports/downloadAll?filter');
+    expect(url).toMatch('/api/activity-reports/download-all?filter');
   });
 });

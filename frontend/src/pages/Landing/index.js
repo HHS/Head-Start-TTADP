@@ -426,10 +426,6 @@ function Landing() {
     );
   }
 
-  const headerMenuItems = [
-    { label: 'Download Selected Reports', onClick: () => handleDownloadClick() },
-  ];
-
   return (
     <>
       <Helmet>
@@ -564,9 +560,7 @@ function Landing() {
                       {renderColumnHeader('Collaborator(s)', 'collaborators')}
                       {renderColumnHeader('Last saved', 'updatedAt')}
                       {renderColumnHeader('Status', 'status')}
-                      <th scope="col">
-                        <ContextMenu label="Actions for selected reports" menuItems={headerMenuItems} />
-                      </th>
+                      <th scope="col" aria-label="context menu" />
                     </tr>
                   </thead>
                   <tbody>
