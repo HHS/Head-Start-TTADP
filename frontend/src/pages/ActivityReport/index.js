@@ -49,6 +49,7 @@ const defaultValues = {
   grantees: [],
   nonECLKCResourcesUsed: [{ value: '' }],
   numberOfParticipants: null,
+  objectivesWithoutGoals: [],
   otherResources: [],
   participantCategory: '',
   participants: [],
@@ -292,7 +293,7 @@ ActivityReport.propTypes = {
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
-    role: PropTypes.string,
+    role: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
 };
 
