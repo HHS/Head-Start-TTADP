@@ -30,16 +30,16 @@ const GoalPicker = ({
     control, setValue,
   } = useFormContext();
   const [newGoal, updateNewGoal] = useState('');
-  const [newAvailableGoals, updateNewAvailableGoals] = useState([]);
+  const [inMemoryGoals, updateInMemoryGoals] = useState([]);
   const selectedGoals = useWatch({ name: 'goals' });
   // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
-  // newAvailableGoals: created by user but not yet saved
+  // inMemoryGoals: unsaved goals, deselected goals
   // selectedGoals: goals selected by user in MultiSelect
-  const allAvailableGoals = [...availableGoals, ...newAvailableGoals, ...selectedGoals];
+  const allAvailableGoals = [...availableGoals, ...inMemoryGoals, ...selectedGoals];
 
   const onRemoveGoal = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateNewAvailableGoals(newGoals);
+    updateInMemoryGoals(newGoals);
     setValue('goals', newGoals);
   };
 
@@ -65,7 +65,7 @@ const GoalPicker = ({
         objectives: [createObjective()],
       };
       setValue('goals', [...selectedGoals, goal]);
-      updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
+      updateInMemoryGoals((oldGoals) => [...oldGoals, goal]);
       updateNewGoal('');
     }
   };
@@ -74,7 +74,7 @@ const GoalPicker = ({
     const newGoals = cloneDeep(selectedGoals);
     newGoals[index].objectives = objectives;
     // When objecttives are added/updated, make sure they are attached to available goals
-    updateNewAvailableGoals(newGoals);
+    updateInMemoryGoals(newGoals);
     setValue('goals', newGoals);
   };
 
@@ -95,7 +95,7 @@ const GoalPicker = ({
     // Preserve deselected goals so they can be re-reselected
     const selectedIds = event.map((g) => g.id);
     const deselectedGoals = selectedGoals.filter((g) => !selectedIds.includes(g.id));
-    updateNewAvailableGoals(deselectedGoals);
+    updateInMemoryGoals([...inMemoryGoals, ...deselectedGoals]);
 
     setValue('goals', newlySelectedGoals);
   };
