@@ -17,7 +17,7 @@ function DismissingComponentWrapper({
     return () => {
       clearTimeout(id);
     };
-  }, [shown]);
+  });
 
   return (
     <>

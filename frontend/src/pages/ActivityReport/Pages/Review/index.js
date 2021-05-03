@@ -125,7 +125,7 @@ ReviewSubmit.propTypes = {
   }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    role: PropTypes.string.isRequired,
+    role: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   reviewItems: PropTypes.arrayOf(
