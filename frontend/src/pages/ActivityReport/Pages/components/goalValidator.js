@@ -31,5 +31,9 @@ export const validateGoals = (goals) => {
     return GOALS_EMPTY;
   }
 
-  return unfinishedGoals(goals) || true;
+  const unfinishedMessage = unfinishedGoals(goals);
+  if (unfinishedMessage) {
+    return unfinishedMessage;
+  }
+  return true;
 };
