@@ -18,10 +18,6 @@ export async function goalsForGrants(grantIds) {
           id: grantIds,
         },
       },
-      {
-        model: Objective,
-        as: 'objectives',
-      },
     ],
     order: ['createdAt'],
   });
