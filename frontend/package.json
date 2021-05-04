@@ -48,7 +48,7 @@
     "node": "14.16.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
     "build:local": "INLINE_RUNTIME_CHUNK=false react-scripts build",
     "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client",
     "eject": "react-scripts eject",
@@ -66,7 +66,8 @@
     "extends": [
       "airbnb",
       "plugin:jest/recommended",
-      "plugin:testing-library/react"
+      "plugin:testing-library/react",
+      "plugin:react-hooks/recommended"
     ],
     "ignorePatterns": [
       "build/*",

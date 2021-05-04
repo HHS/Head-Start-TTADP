@@ -10,7 +10,7 @@ import { Editor } from 'react-draft-wysiwyg';
 import { managerReportStatuses } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
 import FormItem from '../../../../../components/FormItem';
-import RichEditor from '../../../../../components/RichEditor';
+import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 
 const Review = ({
   additionalNotes,
@@ -36,7 +36,7 @@ const Review = ({
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
           <Label htmlFor="managerNotes">Manager notes</Label>
           <div className={`margin-top-1 ${textAreaClass}`}>
-            <RichEditor id="managerNotes" name="managerNotes" />
+            <HookFormRichEditor id="managerNotes" name="managerNotes" />
           </div>
         </Fieldset>
         <FormItem

@@ -10,7 +10,7 @@ import {
 import IncompletePages from './IncompletePages';
 import { DECIMAL_BASE } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
-import RichEditor from '../../../../../components/RichEditor';
+import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 
 const Draft = ({
   approvers,
@@ -66,7 +66,7 @@ const Draft = ({
             required={false}
           >
             <div className={`margin-top-1 ${textAreaClass}`}>
-              <RichEditor name="additionalNotes" id="additionalNotes" />
+              <HookFormRichEditor name="additionalNotes" id="additionalNotes" />
             </div>
           </FormItem>
         </Fieldset>
