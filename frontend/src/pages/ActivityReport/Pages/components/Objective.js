@@ -21,12 +21,15 @@ const statuses = [
 const EMPTY_TEXT_BOX = '<p></p>';
 
 const Objective = ({
-  goalIndex, objectiveIndex, objective, onRemove, onUpdate,
+  objectiveAriaLabel,
+  objective,
+  onRemove,
+  onUpdate,
+  parentLabel,
 }) => {
-  const objectiveAriaLabel = `${objectiveIndex + 1} on goal ${goalIndex + 1}`;
   const firstInput = useRef();
-  const { errors, trigger, unregister } = useFormContext();
-  const isValid = !errors.goals;
+  const { errors, trigger } = useFormContext();
+  const isValid = !errors[parentLabel];
 
   useEffect(() => {
     if (firstInput.current) {
@@ -46,11 +49,6 @@ const Objective = ({
   const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
-  const onLocalRemove = () => {
-    unregister(`goals[${goalIndex}].objectives[${objectiveIndex}].ttaProvided`);
-    onRemove();
-  };
-
   const updateEdit = (isEditing) => {
     if (isEditing) {
       updateShowEdit(true);
@@ -58,11 +56,11 @@ const Objective = ({
       updateShowEdit(false);
       onUpdate(editableObject);
     } else {
-      trigger('goals');
+      trigger(parentLabel);
     }
 
     if (!isValid) {
-      trigger('goals');
+      trigger(parentLabel);
     }
   };
 
@@ -71,7 +69,7 @@ const Objective = ({
       updateEditableObject(objective);
       updateShowEdit(false);
     } else {
-      onLocalRemove();
+      onRemove();
     }
   };
 
@@ -115,10 +113,10 @@ const Objective = ({
           >
             <div className="smart-hub--text-area__resize-vertical">
               <RichEditor
-                name={`goals[${goalIndex}].objectives[${objectiveIndex}].ttaProvided`}
+                value={ttaProvided}
                 ariaLabel={`TTA provided for objective ${objectiveAriaLabel}`}
                 defaultValue={ttaProvided}
-                onUpdate={(content) => {
+                onChange={(content) => {
                   updateEditableObject({
                     ...editableObject,
                     ttaProvided: content,
@@ -187,10 +185,14 @@ Objective.propTypes = {
     ttaProvided: PropTypes.string,
     status: PropTypes.string,
   }).isRequired,
-  objectiveIndex: PropTypes.number.isRequired,
-  goalIndex: PropTypes.number.isRequired,
   onRemove: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  parentLabel: PropTypes.string.isRequired,
+  objectiveAriaLabel: PropTypes.string,
+};
+
+Objective.defaultProps = {
+  objectiveAriaLabel: '',
 };
 
 export default Objective;

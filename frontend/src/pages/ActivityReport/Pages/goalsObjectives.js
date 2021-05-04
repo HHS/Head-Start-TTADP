@@ -4,15 +4,17 @@ import { Fieldset, Label } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
-import { Editor } from 'react-draft-wysiwyg';
-import { getEditorState } from '../../../utils';
 
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
-import RichEditor from '../../../components/RichEditor';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
+import ObjectivePicker from './components/ObjectivePicker';
+import GranteeReviewSection from './components/GranteeReviewSection';
+import NonGranteeReviewSection from './components/NonGranteeReviewSection';
+import { validateObjectives } from './components/objectiveValidator';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
@@ -41,6 +43,11 @@ const GoalsObjectives = () => {
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      {!recipientGrantee && (
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for non-grantee TTA">
+          <ObjectivePicker />
+        </Fieldset>
+      )}
       {showGoals
         && (
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
@@ -53,7 +60,7 @@ const GoalsObjectives = () => {
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
         <div className="margin-top-1">
-          <RichEditor name="context" id="context" />
+          <HookFormRichEditor name="context" id="context" />
         </div>
       </Fieldset>
     </>
@@ -66,8 +73,10 @@ const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
     context,
-    goals,
+    activityRecipientType,
   } = watch();
+
+  const nonGrantee = activityRecipientType === 'non-grantee';
 
   return (
     <>
@@ -83,55 +92,10 @@ const ReviewSection = () => {
           name="context"
         />
       </Section>
-      <Section
-        hidePrint={isUndefined(goals)}
-        key="Goals"
-        basePath="goals-objectives"
-        anchor="goals-and-objectives"
-        title="Goals"
-      >
-        {goals.map((goal) => {
-          const objectives = goal.objectives || [];
-          return (
-            <div key={goal.id}>
-              <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
-                <span>
-                  <span className="text-bold">Goal:</span>
-                  {' '}
-                  {goal.name}
-                </span>
-                <div className="padding-left-2 margin-top-2">
-                  <>
-                    {objectives.map((objective) => (
-                      <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
-                        <div>
-                          <span className="text-bold">Objective:</span>
-                          {' '}
-                          {objective.title}
-                        </div>
-                        <div>
-                          <span className="text-bold">Status:</span>
-                          {' '}
-                          {objective.status}
-                        </div>
-                        <div>
-                          <span className="text-bold">TTA Provided:</span>
-                          {' '}
-                          <Editor
-                            readOnly
-                            toolbarHidden
-                            defaultEditorState={getEditorState(objective.ttaProvided)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </Section>
+      {!nonGrantee
+        && <GranteeReviewSection />}
+      {nonGrantee
+        && <NonGranteeReviewSection />}
     </>
   );
 };
@@ -139,9 +103,27 @@ const ReviewSection = () => {
 export default {
   position: 3,
   label: 'Goals and objectives',
+  titleOverride: (formData) => {
+    const { activityRecipientType } = formData;
+    if (activityRecipientType === 'non-grantee') {
+      return 'Objectives';
+    }
+    return 'Goals and objectives';
+  },
   path: 'goals-objectives',
   review: false,
-  isPageComplete: (formData) => formData.activityRecipientType !== 'grantee' || validateGoals(formData.goals) === true,
+  isPageComplete: (formData) => {
+    const { activityRecipientType } = formData;
+
+    if (!activityRecipientType) {
+      return false;
+    }
+
+    if (activityRecipientType === 'non-grantee') {
+      return validateObjectives(formData.objectivesWithoutGoals) === true;
+    }
+    return activityRecipientType !== 'grantee' || validateGoals(formData.goals) === true;
+  },
   reviewSection: () => <ReviewSection />,
   render: () => (
     <GoalsObjectives />

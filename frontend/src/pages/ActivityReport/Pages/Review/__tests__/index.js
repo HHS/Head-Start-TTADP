@@ -17,7 +17,7 @@ const approvers = [
 
 const reportCreator = {
   name: 'Walter Burns',
-  role: 'Reporter',
+  role: ['Reporter'],
 };
 
 const RenderReview = ({
