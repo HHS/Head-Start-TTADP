@@ -35,11 +35,11 @@ const GoalPicker = ({
   // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
   // inMemoryGoals: unsaved goals, deselected goals
   // selectedGoals: goals selected by user in MultiSelect
-  const allAvailableGoals = [...availableGoals, ...inMemoryGoals, ...selectedGoals];
+  const allAvailableGoals = [...selectedGoals, ...inMemoryGoals, ...availableGoals];
 
   const onRemoveGoal = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateInMemoryGoals(newGoals);
+    updateInMemoryGoals([...inMemoryGoals, ...newGoals]);
     setValue('goals', newGoals);
   };
 
@@ -108,6 +108,7 @@ const GoalPicker = ({
 
   return (
     <div className="margin-top-4">
+      <p>Warning: Navigating away from this page will remove any goals and objectives that are not selected.</p>
       <FormItem
         label="You must select an established goal(s) OR create a new goal for this activity."
         name="goals"
