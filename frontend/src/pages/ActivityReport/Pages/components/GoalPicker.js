@@ -108,7 +108,10 @@ const GoalPicker = ({
 
   return (
     <div className="margin-top-4">
-      <p>Warning: Navigating away from this page will remove any goals and objectives that are not selected.</p>
+      <p>
+        Warning: Navigating away from this page will
+        remove any goals and objectives that are not selected.
+      </p>
       <FormItem
         label="You must select an established goal(s) OR create a new goal for this activity."
         name="goals"
