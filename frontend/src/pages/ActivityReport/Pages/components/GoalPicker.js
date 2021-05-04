@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Label, TextInput,
 } from '@trussworks/react-uswds';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
 import { v4 as uuidv4 } from 'uuid';
 
 import FormItem from '../../../../components/FormItem';
@@ -27,24 +27,45 @@ const GoalPicker = ({
   availableGoals,
 }) => {
   const {
-    watch, control, setValue,
+    control, setValue,
   } = useFormContext();
   const [newGoal, updateNewGoal] = useState('');
-  const [newAvailableGoals, updateNewAvailableGoals] = useState([]);
-  const selectedGoals = watch('goals');
-  const allAvailableGoals = [...availableGoals, ...newAvailableGoals, ...selectedGoals];
+  const [inMemoryGoals, updateInMemoryGoals] = useState([]);
+  const selectedGoals = useWatch({ name: 'goals' });
+  // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
+  // inMemoryGoals: unsaved goals, deselected goals
+  // selectedGoals: goals selected by user in MultiSelect
+  const allAvailableGoals = [...selectedGoals, ...inMemoryGoals, ...availableGoals];
 
   const onRemoveGoal = (id) => {
     const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateNewAvailableGoals(newGoals);
+    updateInMemoryGoals([...inMemoryGoals, ...newGoals]);
     setValue('goals', newGoals);
+  };
+
+  const onUpdateGoal = (index, name) => {
+    if (name !== '') {
+      const oldGoal = selectedGoals[index];
+      const goal = {
+        ...oldGoal,
+        name,
+      };
+      const updatedGoals = cloneDeep(selectedGoals);
+      updatedGoals[index] = goal;
+      setValue('goals', updatedGoals);
+    }
   };
 
   const onSaveGoal = () => {
     if (newGoal !== '') {
-      const goal = { id: uuidv4(), name: newGoal, objectives: [createObjective()] };
+      const goal = {
+        id: uuidv4(),
+        new: true,
+        name: newGoal,
+        objectives: [createObjective()],
+      };
       setValue('goals', [...selectedGoals, goal]);
-      updateNewAvailableGoals((oldGoals) => [...oldGoals, goal]);
+      updateInMemoryGoals((oldGoals) => [...oldGoals, goal]);
       updateNewGoal('');
     }
   };
@@ -52,11 +73,14 @@ const GoalPicker = ({
   const onUpdateObjectives = (index, objectives) => {
     const newGoals = cloneDeep(selectedGoals);
     newGoals[index].objectives = objectives;
+    // When objecttives are added/updated, make sure they are attached to available goals
+    updateInMemoryGoals(newGoals);
     setValue('goals', newGoals);
   };
 
   const onItemSelected = (event) => {
-    const newGoals = event.map((e) => {
+    // Use selections from MultiSelect to update goals form state
+    const newlySelectedGoals = event.map((e) => {
       const goal = allAvailableGoals.find((g) => g.id === e.value);
       let objectives = [createObjective()];
 
@@ -68,7 +92,12 @@ const GoalPicker = ({
         objectives,
       };
     });
-    setValue('goals', newGoals);
+    // Preserve deselected goals so they can be re-reselected
+    const selectedIds = event.map((g) => g.id);
+    const deselectedGoals = selectedGoals.filter((g) => !selectedIds.includes(g.id));
+    updateInMemoryGoals([...inMemoryGoals, ...deselectedGoals]);
+
+    setValue('goals', newlySelectedGoals);
   };
 
   const onNewGoalChange = (e) => {
@@ -79,6 +108,10 @@ const GoalPicker = ({
 
   return (
     <div className="margin-top-4">
+      <p>
+        Warning: Navigating away from this page will
+        remove any goals and objectives that are not selected.
+      </p>
       <FormItem
         label="You must select an established goal(s) OR create a new goal for this activity."
         name="goals"
@@ -122,11 +155,13 @@ const GoalPicker = ({
               id={goal.id}
               objectives={goal.objectives}
               name={goal.name}
+              isEditable={goal.new === true}
               createObjective={createObjective}
               onRemoveGoal={() => onRemoveGoal(goal.id)}
               onUpdateObjectives={(newObjectives) => {
                 onUpdateObjectives(index, newObjectives);
               }}
+              onUpdateGoal={(goalName) => onUpdateGoal(index, goalName)}
             />
           ))}
         </div>

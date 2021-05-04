@@ -1,7 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
@@ -71,8 +76,13 @@ describe('GoalPicker', () => {
     });
 
     it('can be unselected', async () => {
-      const goal = await screen.findByLabelText('remove goal 1');
-      userEvent.click(goal);
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+
+      await waitFor(() => expect(menuButton).toBeVisible());
+      fireEvent.click(menuButton);
+
+      const removeButton = await screen.findByRole('button', { name: 'Remove' });
+      userEvent.click(removeButton);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
     });
 
@@ -99,9 +109,50 @@ describe('GoalPicker', () => {
       );
 
       expect(await screen.findByText(withText('1 goal selected'))).toBeVisible();
-      const goal = await screen.findByLabelText('remove goal 1');
-      userEvent.click(goal);
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+
+      await waitFor(() => expect(menuButton).toBeVisible());
+      fireEvent.click(menuButton);
+
+      const removeButton = await screen.findByRole('button', { name: 'Remove' });
+      userEvent.click(removeButton);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
+    });
+
+    it('can be updated, if new', async () => {
+      const availableGoals = [];
+      const selectedGoals = [
+        {
+          id: 1, name: 'goal to edit', new: true, objectives: [],
+        },
+        { id: 2, name: 'another goal', objectives: [] },
+      ];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+      fireEvent.click(menuButton);
+
+      const editButton = await screen.findByRole('button', { name: 'Edit' });
+      fireEvent.click(editButton);
+
+      const goalNameInput = await screen.findByLabelText('Edit goal');
+      await waitFor(() => expect(goalNameInput).toBeVisible());
+
+      fireEvent.change(goalNameInput, { target: { value: 'test goal edited' } });
+
+      const updateButton = await screen.findByRole('button', { name: 'Update Goal' });
+      fireEvent.click(updateButton);
+
+      // Old goal name should not exist, new goal name should
+      expect(screen.queryByText('goal to edit')).not.toBeInTheDocument();
+      expect(screen.queryByText('test goal edited')).toBeVisible();
+      expect(screen.queryByText('another goal')).toBeVisible();
     });
   });
 
