@@ -621,23 +621,10 @@ export async function possibleRecipients(regionId) {
   return { grants, nonGrantees };
 }
 
-/**
- * Fetches ActivityReports for downloading
- *
- * @param {Array<int>} report - array of report ids
- * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
- */
-export async function getDownloadableActivityReports(readRegions, {
-  report = [],
-}) {
-  const regions = readRegions || [];
-  // Create a Set to ensure unique ordered values
-  const reportSet = Array.isArray(report) ? new Set(report) : new Set([report]);
-  const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
-
-  const result = await ActivityReport.findAndCountAll(
+async function getDownloadableActivityReports(where) {
+  return ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions, imported: null, id: { [Op.in]: reportIds } },
+      where,
       attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
       include: [
         {
@@ -714,5 +701,69 @@ export async function getDownloadableActivityReports(readRegions, {
       order: [['id', 'DESC']],
     },
   );
-  return result;
+}
+
+export async function getAllDownloadableActivityReports(readRegions, filters) {
+  const regions = readRegions || [];
+  const scopes = filtersToScopes(filters);
+
+  const where = {
+    regionId: regions,
+    status: REPORT_STATUSES.APPROVED,
+    imported: null,
+    [Op.and]: scopes,
+  };
+
+  return getDownloadableActivityReports(where);
+}
+
+export async function getAllDownloadableActivityReportAlerts(userId, filters) {
+  const scopes = filtersToScopes(filters);
+  const where = {
+    [Op.and]: scopes,
+    [Op.or]: [
+      {
+        [Op.or]: [
+          { status: REPORT_STATUSES.SUBMITTED },
+          { status: REPORT_STATUSES.NEEDS_ACTION },
+        ],
+        approvingManagerId: userId,
+      },
+      {
+        [Op.and]: [
+          {
+            [Op.and]: [
+              {
+                status: { [Op.ne]: REPORT_STATUSES.APPROVED },
+              },
+            ],
+          },
+          {
+            [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+          },
+        ],
+      },
+    ],
+    legacyId: null,
+  };
+
+  return getDownloadableActivityReports(where);
+}
+
+/**
+ * Fetches ActivityReports for downloading
+ *
+ * @param {Array<int>} report - array of report ids
+ * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
+ */
+export async function getDownloadableActivityReportsByIds(readRegions, {
+  report = [],
+}) {
+  const regions = readRegions || [];
+  // Create a Set to ensure unique ordered values
+  const reportSet = Array.isArray(report) ? new Set(report) : new Set([report]);
+  const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
+  const where = { regionId: regions, imported: null, id: { [Op.in]: reportIds } };
+
+  return getDownloadableActivityReports(where);
 }

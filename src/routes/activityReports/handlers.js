@@ -12,7 +12,9 @@ import {
   setStatus,
   activityReportAlerts,
   activityReportByLegacyId,
-  getDownloadableActivityReports,
+  getDownloadableActivityReportsByIds,
+  getAllDownloadableActivityReportAlerts,
+  getAllDownloadableActivityReports,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -392,7 +394,7 @@ export async function createReport(req, res) {
 export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
-    const reportsWithCount = await getDownloadableActivityReports(readRegions, req.query);
+    const reportsWithCount = await getDownloadableActivityReportsByIds(readRegions, req.query);
     const { format = 'json' } = req.query || {};
 
     if (!reportsWithCount) {
@@ -410,7 +412,7 @@ export async function downloadReports(req, res) {
 export async function downloadAllReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
-    const reportsWithCount = await activityReports(
+    const reportsWithCount = await getAllDownloadableActivityReports(
       readRegions,
       { ...req.query, limit: null },
       true,
@@ -426,7 +428,7 @@ export async function downloadAllReports(req, res) {
 export async function downloadAllAlerts(req, res) {
   try {
     const { userId } = req.session;
-    const alertsWithCount = await activityReportAlerts(userId, req.query);
+    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, req.query);
 
     const rows = alertsWithCount ? alertsWithCount.rows : [];
     await sendActivityReportCSV(rows, res);
