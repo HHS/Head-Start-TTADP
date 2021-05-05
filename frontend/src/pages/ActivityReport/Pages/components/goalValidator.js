@@ -5,7 +5,7 @@ export const GOALS_EMPTY = 'Every report must have at least one goal';
 export const unfinishedObjectives = (objectives) => {
   // Every objective for this goal has to have a title and ttaProvided
   const unfinished = objectives.some(
-    (objective) => !(objective.title && objective.ttaProvided),
+    (objective) => !(objective.title && objective.ttaProvided !== '<p></p>'),
   );
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };

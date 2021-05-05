@@ -21,10 +21,11 @@ describe('activityReports fetcher', () => {
         sortDir: 'desc',
         offset: 0,
         limit: 10,
+        filters: 'filters',
       };
 
       fetchMock.get(join('api', 'activity-reports'), [], { query });
-      await getReports();
+      await getReports(undefined, undefined, undefined, undefined, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
   });
@@ -36,10 +37,11 @@ describe('activityReports fetcher', () => {
         sortDir: 'asc',
         offset: 0,
         limit: 10,
+        filters: 'filters',
       };
 
       fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
-      await getReportAlerts();
+      await getReportAlerts(undefined, undefined, undefined, undefined, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
   });
