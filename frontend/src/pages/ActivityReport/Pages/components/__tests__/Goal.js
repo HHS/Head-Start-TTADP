@@ -125,10 +125,10 @@ describe('Goal', () => {
       const onUpdate = jest.fn();
       const objectives = [
         {
-          id: 'a', title: 'first', ttaProvided: '', status: 'Not Started',
+          id: 'a', title: 'first', ttaProvided: '<p></p>', status: 'Not Started',
         },
         {
-          id: 'b', title: '', ttaProvided: '', status: 'Not Started',
+          id: 'b', title: '', ttaProvided: '<p></p>', status: 'Not Started',
         },
       ];
       render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
@@ -136,7 +136,7 @@ describe('Goal', () => {
       const remove = await screen.findByRole('button', { name: 'Cancel update of objective 2 on goal 1' });
       userEvent.click(remove);
       expect(onUpdate).toHaveBeenCalledWith([{
-        id: 'a', title: 'first', ttaProvided: '', status: 'Not Started',
+        id: 'a', title: 'first', ttaProvided: '<p></p>', status: 'Not Started',
       }]);
     });
 
