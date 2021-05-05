@@ -9,14 +9,16 @@ import {
 // eslint-disable-next-line import/prefer-default-export
 export async function goalsForGrants(grantIds) {
   return Goal.findAll({
-    include: {
-      model: Grant,
-      as: 'grants',
-      attributes: ['id'],
-      where: {
-        id: grantIds,
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: ['id'],
+        where: {
+          id: grantIds,
+        },
       },
-    },
+    ],
     order: ['createdAt'],
   });
 }
@@ -83,9 +85,18 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, tra
   const previousObjectiveIds = previousObjectives.map((ro) => ro.objectiveId);
 
   const goalIdsToRemove = previousGoalIds.filter((id) => !currentGoalIds.includes(id));
-  const objectiveIdsToRemove = previousObjectiveIds
-    .filter((id) => !currentObjectiveIds.includes(id));
-
+  const objectiveIdsToRemove = [];
+  await Promise.all(
+    previousObjectiveIds.map(async (id) => {
+      const notCurrent = !currentObjectiveIds.includes(id);
+      const activityReportObjectives = await ActivityReportObjective
+        .findAll({ where: { objectiveId: id } });
+      const lastInstance = activityReportObjectives.length <= 1;
+      if (notCurrent && lastInstance) {
+        objectiveIdsToRemove.push(id);
+      }
+    }),
+  );
   await removeActivityReportObjectivesFromReport(reportId, transaction);
   await removeObjectives(objectiveIdsToRemove, transaction);
   await removeGoals(goalIdsToRemove, transaction);
@@ -100,6 +111,9 @@ export async function saveGoalsForReport(goals, report, transaction) {
       const { id, ...newGoal } = goal;
       const savedGoal = await Goal.create(newGoal, { transaction });
       goalId = savedGoal.id;
+    } else {
+      const savedGoal = await Goal.findOne({ where: { id: goalId } });
+      await savedGoal.update(goal);
     }
 
     return Promise.all(goal.objectives.map(async (objective) => {

@@ -33,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       */
     },
+    cdi: DataTypes.BOOLEAN,
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,

@@ -58,7 +58,7 @@ export const destroy = async (url) => {
   const res = await fetch(url, {
     method: 'DELETE',
     credentials: 'same-origin',
-    headeres: {
+    headers: {
       'Content-Type': 'application/json',
     },
   });
@@ -66,4 +66,5 @@ export const destroy = async (url) => {
   if (!res.ok) {
     throw new Error(res.statusText);
   }
+  return res;
 };

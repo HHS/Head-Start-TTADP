@@ -9,6 +9,11 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
+import { getReportsDownloadURL } from '../../../fetchers/helpers';
+
+jest.mock('../../../fetchers/helpers');
+
+const oldWindowLocation = window.location;
 
 const renderLanding = (user) => {
   render(
@@ -42,6 +47,49 @@ describe('Landing Page', () => {
     await screen.findByText('Activity Reports');
   });
   afterEach(() => fetchMock.restore());
+
+  test('displays a dismissable alert with a status message for a report, if provided', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+    const message = {
+      status: 'TESTED',
+      displayId: 'R14-AR-1',
+      time: 'today',
+    };
+
+    const pastLocations = [
+      { pathname: '/activity-reports/1', state: { message } },
+    ];
+
+    await render(
+      <MemoryRouter initialEntries={pastLocations}>
+        <UserContext.Provider value={{ user }}>
+          <Landing authenticated />
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toBeVisible();
+
+    const alertButton = await screen.findByLabelText(/dismiss alert/i);
+    expect(alertButton).toBeVisible();
+
+    fireEvent.click(alertButton);
+
+    // https://testing-library.com/docs/guide-disappearance#waiting-for-disappearance
+    await waitFor(() => {
+      expect(screen.queryByText(/you successfully tested report R14-AR-1 on today/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/dismiss alert/i)).not.toBeInTheDocument();
+    });
+  });
 
   test('displays activity reports heading', async () => {
     expect(await screen.findByText('Activity Reports')).toBeVisible();
@@ -152,6 +200,14 @@ describe('Landing Page', () => {
     expect(needsAction).toBeVisible();
   });
 
+  test('displays the options buttons', async () => {
+    const optionButtons = await screen.findAllByRole('button', {
+      name: /actions for activity report r14-ar-2/i,
+    });
+
+    expect(optionButtons.length).toBe(1);
+  });
+
   test('displays the new activity report button', async () => {
     const newActivityReportBtns = await screen.findAllByText(/New Activity Report/);
 
@@ -194,8 +250,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(statusColumnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
 
     fetchMock.get(
       '/api/activity-reports?sortBy=status&sortDir=desc&offset=0&limit=10',
@@ -203,8 +259,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(statusColumnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
   });
 
   it('clicking Last saved column header will sort by updatedAt', async () => {
@@ -216,8 +272,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/02\/04\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/02\/05\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/02\/04\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/02\/05\/2021/i));
   });
 
   it('clicking Collaborators column header will sort by collaborators', async () => {
@@ -229,8 +285,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent('Cucumber User, GSHermione Granger, SS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent('Orange, GSHermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent('Cucumber User, GSHermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent('Orange, GSHermione Granger, SS'));
   });
 
   it('clicking Topics column header will sort by topics', async () => {
@@ -242,8 +298,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(''));
-    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(''));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support'));
   });
 
   it('clicking Creator column header will sort by author', async () => {
@@ -255,8 +311,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent('Kiwi, GS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent('Kiwi, TTAC'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent('Kiwi, GS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('Kiwi, TTAC'));
   });
 
   it('clicking Start date column header will sort by start date', async () => {
@@ -268,8 +324,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('02/01/2021'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent('02/08/2021'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent('02/01/2021'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent('02/08/2021'));
   });
 
   it('clicking Grantee column header will sort by grantee', async () => {
@@ -283,7 +339,7 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Johnston-RomagueraJohnston-RomagueraGrantee Name'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-RomagueraJohnston-RomagueraGrantee Name'));
   });
 
   it('clicking Report id column header will sort by region and id', async () => {
@@ -328,8 +384,8 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(pageOne);
-    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(/02\/05\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/02\/04\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/02\/05\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/02\/04\/2021/i));
   });
 
   it('clicking on the second page updates to, from and total', async () => {
@@ -367,6 +423,276 @@ describe('Landing Page sorting', () => {
 
     fireEvent.click(pageTwo);
     await waitFor(() => expect(screen.getByText(/11-17 of 17/i)).toBeVisible());
+  });
+});
+
+describe('Landing page table menus & selections', () => {
+  describe('Table row context menu', () => {
+    beforeAll(() => {
+      delete global.window.location;
+
+      global.window.location = {
+        ...oldWindowLocation,
+        assign: jest.fn(),
+      };
+    });
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      getReportsDownloadURL.mockClear();
+      fetchMock.restore();
+    });
+
+    afterAll(() => {
+      window.location = oldWindowLocation;
+    });
+
+    it('can trigger an activity report download', async () => {
+      const contextMenus = await screen.findAllByRole('button', { name: /actions for activity report /i });
+
+      await waitFor(() => {
+        expect(contextMenus.length).not.toBe(0);
+      });
+
+      const menu = contextMenus[0];
+
+      await waitFor(() => {
+        expect(menu).toBeVisible();
+      });
+
+      fireEvent.click(menu);
+
+      const viewButton = await screen.findByRole('button', { name: 'Download' });
+
+      await waitFor(() => {
+        expect(viewButton).toBeVisible();
+      });
+
+      fireEvent.click(viewButton);
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Table row checkboxes', () => {
+    afterEach(() => fetchMock.restore());
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    it('Can select and deselect a single checkbox', async () => {
+      const reportCheckboxes = await screen.findAllByRole('checkbox', { name: /select /i });
+
+      // Element 0 is 'Select all', so we want 1 or later
+      const singleReportCheck = reportCheckboxes[1];
+      expect(singleReportCheck.value).toEqual('1');
+
+      fireEvent.click(singleReportCheck);
+      expect(singleReportCheck.checked).toBe(true);
+
+      fireEvent.click(singleReportCheck);
+      expect(singleReportCheck.checked).toBe(false);
+    });
+  });
+
+  describe('Table header checkbox', () => {
+    afterEach(() => fetchMock.restore());
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    it('Selects all reports when checked', async () => {
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+
+      fireEvent.click(selectAllCheckbox);
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).toBeChecked());
+      });
+    });
+
+    it('De-selects all reports if all are already selected', async () => {
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+
+      fireEvent.click(selectAllCheckbox);
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).toBeChecked());
+      });
+
+      fireEvent.click(selectAllCheckbox);
+
+      await waitFor(() => {
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
+        checkboxes.forEach((c) => expect(c).not.toBeChecked());
+      });
+    });
+  });
+
+  describe('Tablewide Context Menu', () => {
+    beforeAll(() => {
+      delete global.window.location;
+
+      global.window.location = {
+        ...oldWindowLocation,
+        assign: jest.fn(),
+      };
+    });
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+        { alertsCount: 0, alerts: [] });
+      fetchMock.get(
+        '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      await screen.findByText('Activity Reports');
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      getReportsDownloadURL.mockClear();
+      fetchMock.restore();
+    });
+
+    afterAll(() => {
+      window.location = oldWindowLocation;
+    });
+
+    it('Download a single selected report', async () => {
+      const reportCheckboxes = await screen.findAllByRole('checkbox', { name: /select /i });
+
+      // Element 0 is 'Select all', so we want 1 or later
+      const singleReportCheck = reportCheckboxes[1];
+      expect(singleReportCheck.value).toEqual('1');
+
+      fireEvent.click(singleReportCheck);
+
+      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
+
+      fireEvent.click(contextMenu);
+
+      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
+
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(getReportsDownloadURL).toHaveBeenCalledWith(['1']);
+        expect(window.location.assign).toHaveBeenCalled();
+      });
+    });
+
+    it('Can trigger the download of multiple reports', async () => {
+      // Try selecting all reports first
+      const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
+
+      fireEvent.click(selectAllCheckbox);
+
+      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
+
+      fireEvent.click(contextMenu);
+
+      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
+
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(getReportsDownloadURL).toHaveBeenCalled();
+        expect(window.location.assign).toHaveBeenCalled();
+      });
+    });
+
+    it('Does not trigger download when no reports are selected', async () => {
+      const contextMenu = await screen.findByLabelText(/actions for selected reports/i);
+      fireEvent.click(contextMenu);
+
+      const downloadButton = await screen.findByRole('button', { name: 'Download Selected Reports' });
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(getReportsDownloadURL).not.toHaveBeenCalled();
+        expect(window.location.assign).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 
@@ -547,8 +873,8 @@ describe('Landing Page error', () => {
     };
     renderLanding(user);
     const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(7);
-    const grantee = rowCells[0];
+    expect(rowCells.length).toBe(9);
+    const grantee = rowCells[1];
     expect(grantee).toHaveTextContent('');
   });
 

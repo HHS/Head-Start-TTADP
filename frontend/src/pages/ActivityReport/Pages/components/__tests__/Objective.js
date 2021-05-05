@@ -22,6 +22,8 @@ const RenderObjective = ({
         objective={objective}
         onRemove={onRemove}
         onUpdate={onUpdate}
+        parentLabel="goals"
+        objectiveAriaLabel="1 on goal 1"
         goalIndex={0}
         objectiveIndex={0}
       />
@@ -31,7 +33,7 @@ const RenderObjective = ({
 
 describe('Objective', () => {
   it('opens in edit mode if "ttaProvided" is blank', async () => {
-    render(<RenderObjective objective={{ ttaProvided: '', title: 'title', status: 'status' }} />);
+    render(<RenderObjective objective={{ ttaProvided: '<p></p>', title: 'title', status: 'status' }} />);
     const save = await screen.findByText('Save Objective');
     expect(save).toBeVisible();
   });
@@ -75,7 +77,7 @@ describe('Objective', () => {
 
     it('calls onRemove when the cancel button is clicked with an empty objective', async () => {
       const onRemove = jest.fn();
-      render(<RenderObjective objective={{}} onRemove={onRemove} />);
+      render(<RenderObjective objective={{ title: '', ttaProvided: '<p></p>' }} onRemove={onRemove} />);
       const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
       userEvent.click(cancel);
       expect(onRemove).toHaveBeenCalled();
@@ -101,11 +103,9 @@ describe('Objective', () => {
       };
       render(<RenderObjective objective={objective} />);
       const title = await screen.findByText('title');
-      const tta = await screen.findByText('test');
       const status = await screen.findByText('Not Started');
 
       expect(title).toBeVisible();
-      expect(tta).toBeVisible();
       expect(status).toBeVisible();
     });
 

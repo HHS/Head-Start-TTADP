@@ -23,7 +23,7 @@ function activityReport(
   return report;
 }
 
-function user(write, read, id = 1) {
+function user(write, read, admin, id = 1) {
   const u = { id, permissions: [] };
   if (write) {
     u.permissions.push({
@@ -39,14 +39,22 @@ function user(write, read, id = 1) {
     });
   }
 
+  if (admin) {
+    u.permissions.push({
+      scopeId: SCOPES.ADMIN,
+      regionId: null,
+    });
+  }
+
   return u;
 }
 
-const author = user(true, false, 1);
-const collaborator = user(true, false, 2);
-const manager = user(true, false, 3);
-const otherUser = user(false, true, 4);
-const canNotReadRegion = user(false, false, 5);
+const author = user(true, false, false, 1);
+const collaborator = user(true, false, false, 2);
+const manager = user(true, false, false, 3);
+const otherUser = user(false, true, false, 4);
+const canNotReadRegion = user(false, false, false, 5);
+const admin = user(true, true, true, 6);
 
 describe('Activity Report policies', () => {
   describe('canReview', () => {
@@ -124,22 +132,28 @@ describe('Activity Report policies', () => {
   });
 
   describe('canReset', () => {
-    it('is false for reports that have not been submitted', async () => {
+    it('is false for reports that have not been submitted', () => {
       const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
       const policy = new ActivityReport(author, report);
       expect(policy.canReset()).toBeFalsy();
     });
 
-    it('is true for the author', async () => {
+    it('is true for the author', () => {
       const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
       const policy = new ActivityReport(author, report);
       expect(policy.canReset()).toBeTruthy();
     });
 
-    it('is true for collaborators', async () => {
+    it('is true for collaborators', () => {
       const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
       const policy = new ActivityReport(collaborator, report);
       expect(policy.canReset()).toBeTruthy();
+    });
+
+    it('is false for other users', () => {
+      const report = activityReport(author.id, collaborator, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(otherUser, report);
+      expect(policy.canReset()).toBeFalsy();
     });
   });
 
@@ -190,6 +204,32 @@ describe('Activity Report policies', () => {
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canGet()).toBeTruthy();
       });
+    });
+  });
+
+  describe('canDelete', () => {
+    it('is true for author of draft report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.DRAFT);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canDelete()).toBeTruthy();
+    });
+
+    it('is true for admin user of draft report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.DRAFT);
+      const policy = new ActivityReport(admin, report);
+      expect(policy.canDelete()).toBeTruthy();
+    });
+
+    it('is false for any non-admin/non-author user of draft report', () => {
+      const report = activityReport(author.id, collaborator, REPORT_STATUSES.DRAFT);
+      const policy = new ActivityReport(collaborator, report);
+      expect(policy.canDelete()).toBeFalsy();
+    });
+
+    it('is false for author of non-draft report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canDelete()).toBeFalsy();
     });
   });
 });

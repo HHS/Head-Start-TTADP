@@ -42,6 +42,11 @@ services:
     env_file: .env
     ports:
       - "6379:6379"
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports: 
+      - "1025:1025"
+      - "1080:1080"
 volumes:
   dbdata: {}
   miniodata: {}

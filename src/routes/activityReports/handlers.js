@@ -18,8 +18,14 @@ import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions } from '../../services/accessValidation';
-import { activityReportToCsvRecord } from '../../lib/transform';
 import { logger } from '../../logger';
+import {
+  managerApprovalNotification,
+  changesRequestedNotification,
+  reportApprovedNotification,
+  collaboratorAddedNotification,
+} from '../../lib/mailer';
+import { activityReportToCsvRecord } from '../../lib/transform';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -129,8 +135,13 @@ export async function reviewReport(req, res) {
       res.sendStatus(403);
       return;
     }
-
     const savedReport = await review(report, status, managerNotes);
+    if (status === REPORT_STATUSES.NEEDS_ACTION) {
+      changesRequestedNotification(savedReport);
+    }
+    if (status === REPORT_STATUSES.APPROVED) {
+      reportApprovedNotification(savedReport);
+    }
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -152,6 +163,32 @@ export async function resetToDraft(req, res) {
 
     const savedReport = await setStatus(report, REPORT_STATUSES.DRAFT);
     res.json(savedReport);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Mark activity report status as deleted
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function softDeleteReport(req, res) {
+  try {
+    const { activityReportId } = req.params;
+
+    const report = await activityReportById(activityReportId);
+    const user = await userById(req.session.userId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canDelete()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    await setStatus(report, REPORT_STATUSES.DELETED);
+    res.sendStatus(204);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -180,6 +217,7 @@ export async function submitReport(req, res) {
     }
 
     const savedReport = await createOrUpdate(newReport, report);
+    managerApprovalNotification(savedReport);
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -281,6 +319,15 @@ export async function saveReport(req, res) {
     newReport.lastUpdatedById = userId;
 
     const savedReport = await createOrUpdate(newReport, report);
+    if (savedReport.collaborators) {
+    // only include collaborators that aren't already in the report
+      const newCollaborators = savedReport.collaborators.filter((c) => {
+        const oldCollaborators = report.collaborators.map((x) => x.email);
+        return !oldCollaborators.includes(c.email);
+      });
+      collaboratorAddedNotification(savedReport, newCollaborators);
+    }
+
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -312,6 +359,9 @@ export async function createReport(req, res) {
     }
 
     const report = await createOrUpdate(newReport);
+    if (report.collaborators) {
+      collaboratorAddedNotification(report, report.collaborators);
+    }
     res.json(report);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
