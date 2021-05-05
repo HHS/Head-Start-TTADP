@@ -284,6 +284,9 @@ export function activityReportById(activityReportId) {
         required: false,
       },
     ],
+    order: [
+      [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
+    ],
   });
 }
 
