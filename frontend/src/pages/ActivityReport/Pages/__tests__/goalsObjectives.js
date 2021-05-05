@@ -175,8 +175,16 @@ describe('goals objectives', () => {
       expect(objective).toBeVisible();
     });
 
-    it('isPageComplete is true', async () => {
-      const formData = { activityRecipientType: 'non-grantee', goals: [] };
+    it.only('isPageComplete is true', async () => {
+      const objectives = [
+        {
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        },
+      ];
+      const formData = { activityRecipientType: 'non-grantee', objectivesWithoutGoals: objectives };
       const isComplete = goalsObjectives.isPageComplete(formData);
       expect(isComplete).toBeTruthy();
     });
