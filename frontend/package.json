@@ -12,6 +12,9 @@
     "@hookform/error-message": "^0.0.5",
     "@trussworks/react-uswds": "1.11.0",
     "@use-it/interval": "^1.0.0",
+    "draft-js": "^0.11.7",
+    "draftjs-to-html": "^0.9.1",
+    "html-to-draftjs": "^1.5.0",
     "http-proxy-middleware": "^1.0.5",
     "lodash": "^4.17.20",
     "moment": "^2.29.1",
@@ -21,6 +24,7 @@
     "react-app-polyfill": "^2.0.0",
     "react-dates": "^21.8.0",
     "react-dom": "^17.0.1",
+    "react-draft-wysiwyg": "^1.14.5",
     "react-dropzone": "^11.2.0",
     "react-helmet": "^6.1.0",
     "react-hook-form": "^6.15.0",
@@ -150,7 +154,7 @@
     "coverageThreshold": {
       "global": {
         "statements": 90,
-        "functions": 90,
+        "functions": 89,
         "branches": 90,
         "lines": 90
       }
