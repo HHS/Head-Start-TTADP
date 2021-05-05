@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
+import { filtersToScopes } from '../scopes/activityReport';
 
 import {
   ActivityReport,
@@ -21,6 +22,8 @@ import {
 import {
   saveGoalsForReport, copyGoalsToGrants,
 } from './goals';
+
+import { saveObjectivesForReport } from './objectives';
 
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
   const newCollaborators = collaborators.map((collaborator) => ({
@@ -225,24 +228,22 @@ export function activityReportById(activityReportId) {
       },
       {
         model: Objective,
-        as: 'objectives',
+        as: 'objectivesWithGoals',
         include: [{
           model: Goal,
           as: 'goal',
-          include: [{
-            model: Objective,
-            as: 'objectives',
-          }],
         }],
+      },
+      {
+        model: Objective,
+        as: 'objectivesWithoutGoals',
       },
       {
         model: User,
         as: 'author',
-        attributes: ['name'],
       },
       {
         model: User,
-        attributes: ['id', 'name'],
         as: 'collaborators',
       },
       {
@@ -283,8 +284,12 @@ export function activityReportById(activityReportId) {
         required: false,
       },
     ],
+    order: [
+      [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
+    ],
   });
 }
+
 /**
  * Retrieves activity reports in sorted slices
  * using sequelize.literal for several associated fields based on the following
@@ -297,13 +302,18 @@ export function activityReportById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export function activityReports(readRegions, {
-  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE,
+  sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
 }) {
   const regions = readRegions || [];
+  const scopes = filtersToScopes(filters);
 
   return ActivityReport.findAndCountAll(
     {
-      where: { regionId: regions, status: REPORT_STATUSES.APPROVED },
+      where: {
+        regionId: regions,
+        status: REPORT_STATUSES.APPROVED,
+        [Op.and]: scopes,
+      },
       attributes: [
         'id',
         'displayId',
@@ -388,10 +398,12 @@ export function activityReports(readRegions, {
  * @param {*} userId
  */
 export function activityReportAlerts(userId, {
-  sortBy = 'startDate', sortDir = 'desc', offset = 0,
+  sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
 }) {
+  const scopes = filtersToScopes(filters);
   return ActivityReport.findAndCountAll({
     where: {
+      [Op.and]: scopes,
       [Op.or]: [
         {
           [Op.or]: [
@@ -493,7 +505,8 @@ export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
     goals,
-    objectives,
+    objectivesWithGoals,
+    objectivesWithoutGoals,
     collaborators,
     activityRecipients,
     attachments,
@@ -550,7 +563,9 @@ export async function createOrUpdate(newActivityReport, report) {
       await saveNotes(id, specialistNextSteps, false, transaction);
     }
 
-    if (goals) {
+    if (allFields.activityRecipientType === 'non-grantee' && objectivesWithoutGoals) {
+      await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
+    } else if (allFields.activityRecipientType === 'grantee' && goals) {
       await saveGoalsForReport(goals, savedReport, transaction);
     }
   });
@@ -643,18 +658,6 @@ export async function getDownloadableActivityReports(readRegions, {
               required: false,
             },
           ],
-        },
-        {
-          model: Objective,
-          as: 'objectives',
-          include: [{
-            model: Goal,
-            as: 'goal',
-            include: [{
-              model: Objective,
-              as: 'objectives',
-            }],
-          }],
         },
         {
           model: File,

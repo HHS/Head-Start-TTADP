@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Modal } from '@trussworks/react-uswds';
 
-import { ESCAPE_KEY_CODE } from '../Constants';
+import { ESCAPE_KEY_CODES } from '../Constants';
+import './DeleteReportModal.css';
 
 const DeleteModal = ({
   onDelete, onClose, isOpen, closeModal,
@@ -10,7 +11,7 @@ const DeleteModal = ({
   const modalRef = useRef(null);
 
   const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
+    if (ESCAPE_KEY_CODES.includes(event.key)) {
       closeModal();
     }
   }, [isOpen]);
@@ -30,9 +31,9 @@ const DeleteModal = ({
   });
 
   return (
-    <div ref={modalRef} aria-modal="true" role="dialog">
+    <div ref={modalRef} aria-modal="true" role="dialog" id="deleteDialog">
       <Modal
-        title={<h3>Delete Activity Report</h3>}
+        title={<h2>Delete Activity Report</h2>}
         actions={(
           <>
             <Button type="button" onClick={onClose}>

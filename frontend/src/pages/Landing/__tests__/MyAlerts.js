@@ -122,11 +122,11 @@ describe('My Alerts', () => {
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findAllByRole('button', {
-      name: 'Open report',
+      name: 'View',
     });
 
     const deleteButton = await screen.findAllByRole('button', {
-      name: 'Delete report',
+      name: 'Delete',
     });
 
     expect(viewButton.length).toBe(1);
@@ -139,7 +139,7 @@ describe('My Alerts', () => {
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
-      name: 'Open report',
+      name: 'View',
     });
     userEvent.click(viewButton);
 
@@ -152,7 +152,7 @@ describe('My Alerts', () => {
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
-      name: 'Delete report',
+      name: 'Delete',
     });
     userEvent.click(viewButton);
 

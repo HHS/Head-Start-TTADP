@@ -41,7 +41,7 @@ describe('DeleteReportModal', () => {
     expect(buttons.length).toBe(2);
   });
 
-  it('exists when escapse key is pressed', async () => {
+  it('exits when escapse key is pressed', async () => {
     // Given a page with a modal
     render(<SomeComponent />);
 
