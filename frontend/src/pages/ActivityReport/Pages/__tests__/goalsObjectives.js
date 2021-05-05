@@ -175,7 +175,7 @@ describe('goals objectives', () => {
       expect(objective).toBeVisible();
     });
 
-    it.only('isPageComplete is true', async () => {
+    it('isPageComplete is true', async () => {
       const objectives = [
         {
           id: 1,
