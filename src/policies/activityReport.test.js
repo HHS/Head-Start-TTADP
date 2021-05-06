@@ -214,6 +214,18 @@ describe('Activity Report policies', () => {
       expect(policy.canDelete()).toBeTruthy();
     });
 
+    it('is true for author of submitted report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canDelete()).toBeTruthy();
+    });
+
+    it('is true for author of a report the needs action', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.NEEDS_ACTION);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canDelete()).toBeTruthy();
+    });
+
     it('is true for admin user of draft report', () => {
       const report = activityReport(author.id, null, REPORT_STATUSES.DRAFT);
       const policy = new ActivityReport(admin, report);
@@ -226,8 +238,8 @@ describe('Activity Report policies', () => {
       expect(policy.canDelete()).toBeFalsy();
     });
 
-    it('is false for author of non-draft report', () => {
-      const report = activityReport(author.id, null, REPORT_STATUSES.SUBMITTED);
+    it('is false for author of an approved report', () => {
+      const report = activityReport(author.id, null, REPORT_STATUSES.APPROVED);
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeFalsy();
     });
