@@ -1,3 +1,5 @@
+import htmlToDraft from 'html-to-draftjs';
+import { EditorState, ContentState } from 'draft-js';
 import { GOVERNMENT_HOSTNAME_EXTENSION } from './Constants';
 
 /**
@@ -40,4 +42,16 @@ export const isExternalURL = (url) => {
   }
 
   return (newUrl.host !== currentHost.host);
+};
+
+/**
+ * Given an html string.
+ * Return an `EditorState` object that is used for the Rich Editor Text Box.
+ *
+ */
+
+export const getEditorState = (name) => {
+  const { contentBlocks, entityMap } = htmlToDraft(name || '');
+  const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
+  return EditorState.createWithContent(contentState);
 };
