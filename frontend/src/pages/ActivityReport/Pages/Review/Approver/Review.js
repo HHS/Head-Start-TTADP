@@ -27,10 +27,8 @@ const Review = ({
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
-          <br />
-          <br />
-          <Editor readOnly toolbarHidden defaultEditorState={defaultEditorState} />
         </p>
+        <Editor readOnly toolbarHidden defaultEditorState={defaultEditorState} />
       </div>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
