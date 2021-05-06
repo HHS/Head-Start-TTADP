@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { Editor } from 'react-draft-wysiwyg';
+import { getEditorState } from '../../../../../utils';
 
 import IncompletePages from './IncompletePages';
 
@@ -21,6 +23,9 @@ const NeedsAction = ({
     }
   };
 
+  const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
+  const managerNotesState = getEditorState(managerNotes || 'No manager notes');
+
   return (
     <>
       <h2>Review and re-submit report</h2>
@@ -29,7 +34,7 @@ const NeedsAction = ({
           <span className="text-bold">Creator notes</span>
           <br />
           <br />
-          { additionalNotes || 'No creator notes' }
+          <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
         </p>
       </div>
       <div className="smart-hub--creator-notes margin-top-2">
@@ -37,7 +42,7 @@ const NeedsAction = ({
           <span className="text-bold">Manager notes</span>
           <br />
           <br />
-          { managerNotes || 'No manager notes' }
+          <Editor readOnly toolbarHidden defaultEditorState={managerNotesState} />
         </p>
       </div>
       <div>
