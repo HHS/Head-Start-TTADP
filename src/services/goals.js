@@ -9,14 +9,16 @@ import {
 // eslint-disable-next-line import/prefer-default-export
 export async function goalsForGrants(grantIds) {
   return Goal.findAll({
-    include: {
-      model: Grant,
-      as: 'grants',
-      attributes: ['id'],
-      where: {
-        id: grantIds,
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: ['id'],
+        where: {
+          id: grantIds,
+        },
       },
-    },
+    ],
     order: ['createdAt'],
   });
 }
@@ -109,6 +111,9 @@ export async function saveGoalsForReport(goals, report, transaction) {
       const { id, ...newGoal } = goal;
       const savedGoal = await Goal.create(newGoal, { transaction });
       goalId = savedGoal.id;
+    } else {
+      const savedGoal = await Goal.findOne({ where: { id: goalId } });
+      await savedGoal.update(goal);
     }
 
     return Promise.all(goal.objectives.map(async (objective) => {
