@@ -33,10 +33,8 @@ const Submitted = ({
       <div className="smart-hub--creator-notes">
         <p>
           <span className="text-bold">Creator notes</span>
-          <br />
-          <br />
-          <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
         </p>
+        <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
       </div>
       <p>
         <span className="text-bold">{approvingManager.name}</span>
