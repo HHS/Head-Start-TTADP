@@ -1,6 +1,6 @@
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
-import { GOVERNMENT_HOSTNAME_EXTENSION } from './Constants';
+import { GOVERNMENT_HOSTNAME_EXTENSION, REPORT_STATUSES } from './Constants';
 
 /**
  * Given a potential url, verify that it is a valid url with http(s) scheme.
@@ -43,6 +43,9 @@ export const isExternalURL = (url) => {
 
   return (newUrl.host !== currentHost.host);
 };
+
+export const reportIsEditable = (status) => status === REPORT_STATUSES.DRAFT
+  || status === REPORT_STATUSES.NEEDS_ACTION;
 
 /**
  * Given an html string.
