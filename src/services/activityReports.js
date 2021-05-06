@@ -23,6 +23,8 @@ import {
   saveGoalsForReport, copyGoalsToGrants,
 } from './goals';
 
+import { saveObjectivesForReport } from './objectives';
+
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
   const newCollaborators = collaborators.map((collaborator) => ({
     activityReportId,
@@ -226,11 +228,15 @@ export function activityReportById(activityReportId) {
       },
       {
         model: Objective,
-        as: 'objectives',
+        as: 'objectivesWithGoals',
         include: [{
           model: Goal,
           as: 'goal',
         }],
+      },
+      {
+        model: Objective,
+        as: 'objectivesWithoutGoals',
       },
       {
         model: User,
@@ -277,6 +283,9 @@ export function activityReportById(activityReportId) {
         as: 'approvingManager',
         required: false,
       },
+    ],
+    order: [
+      [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
     ],
   });
 }
@@ -496,7 +505,8 @@ export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
     goals,
-    objectives,
+    objectivesWithGoals,
+    objectivesWithoutGoals,
     collaborators,
     activityRecipients,
     attachments,
@@ -553,7 +563,9 @@ export async function createOrUpdate(newActivityReport, report) {
       await saveNotes(id, specialistNextSteps, false, transaction);
     }
 
-    if (goals) {
+    if (allFields.activityRecipientType === 'non-grantee' && objectivesWithoutGoals) {
+      await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
+    } else if (allFields.activityRecipientType === 'grantee' && goals) {
       await saveGoalsForReport(goals, savedReport, transaction);
     }
   });
@@ -646,18 +658,6 @@ export async function getDownloadableActivityReports(readRegions, {
               required: false,
             },
           ],
-        },
-        {
-          model: Objective,
-          as: 'objectives',
-          include: [{
-            model: Goal,
-            as: 'goal',
-            include: [{
-              model: Objective,
-              as: 'objectives',
-            }],
-          }],
         },
         {
           model: File,
