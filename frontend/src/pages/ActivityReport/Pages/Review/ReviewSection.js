@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { HashLink } from 'react-router-hash-link';
 
 const Section = ({
-  title, children, basePath, anchor, hidePrint,
+  title, children, basePath, anchor, hidePrint, canEdit,
 }) => {
   const classes = [
     'smart-hub-review-section',
@@ -19,6 +19,7 @@ const Section = ({
           <b className="margin-y-1">{title}</b>
         </div>
         <div className="grid-col-12 desktop:grid-col-6 display-flex flex-align-end flex-column flex-justify-center">
+          {canEdit && (
           <HashLink
             aria-label={`Edit form section "${title}"`}
             to={`${basePath}#${anchor}`}
@@ -26,6 +27,7 @@ const Section = ({
           >
             Edit
           </HashLink>
+          )}
         </div>
       </div>
       {children}
@@ -39,6 +41,7 @@ Section.propTypes = {
   anchor: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
   basePath: PropTypes.string.isRequired,
+  canEdit: PropTypes.bool.isRequired,
 };
 
 export default Section;
