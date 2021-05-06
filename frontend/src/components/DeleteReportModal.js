@@ -56,7 +56,6 @@ const DeleteModal = ({
 DeleteModal.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
-  isOpen: PropTypes.bool.isRequired,
   closeModal: PropTypes.func.isRequired,
 };
 
