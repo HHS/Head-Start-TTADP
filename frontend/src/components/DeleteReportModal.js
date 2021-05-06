@@ -6,7 +6,7 @@ import { ESCAPE_KEY_CODES } from '../Constants';
 import './DeleteReportModal.css';
 
 const DeleteModal = ({
-  onDelete, onClose, isOpen, closeModal,
+  onDelete, onClose, closeModal,
 }) => {
   const modalRef = useRef(null);
 
@@ -14,7 +14,7 @@ const DeleteModal = ({
     if (ESCAPE_KEY_CODES.includes(event.key)) {
       closeModal();
     }
-  }, [isOpen]);
+  }, [closeModal]);
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
