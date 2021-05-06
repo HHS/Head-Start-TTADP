@@ -183,6 +183,12 @@ describe('goals objectives', () => {
           ttaProvided: 'tta',
           status: 'In Progress',
         },
+        {
+          id: 2,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        },
       ];
       const formData = { activityRecipientType: 'non-grantee', objectivesWithoutGoals: objectives };
       const isComplete = goalsObjectives.isPageComplete(formData);
