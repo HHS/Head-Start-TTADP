@@ -10,6 +10,7 @@ import {
   getReports,
   getReportAlerts,
 } from '../activityReports';
+import { REPORTS_PER_PAGE } from '../../Constants';
 
 describe('activityReports fetcher', () => {
   afterEach(() => fetchMock.restore());
@@ -28,6 +29,20 @@ describe('activityReports fetcher', () => {
       await getReports(undefined, undefined, undefined, undefined, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
+
+    it('can be filtered', async () => {
+      const query = {
+        sortBy: 'updatedAt',
+        sortDir: 'desc',
+        offset: 0,
+        limit: 10,
+        filters: 'filters',
+      };
+
+      fetchMock.get(join('api', 'activity-reports'), [], { query });
+      await getReports('updatedAt', 'desc', 0, REPORTS_PER_PAGE, 'filters=filters');
+      expect(fetchMock.called()).toBeTruthy();
+    });
   });
 
   describe('getReportAlerts', () => {
@@ -42,6 +57,20 @@ describe('activityReports fetcher', () => {
 
       fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
       await getReportAlerts(undefined, undefined, undefined, undefined, 'filters=filters');
+      expect(fetchMock.called()).toBeTruthy();
+    });
+
+    it('can be filtered', async () => {
+      const query = {
+        sortBy: 'updatedAt',
+        sortDir: 'desc',
+        offset: 0,
+        limit: 10,
+        filters: 'filters',
+      };
+
+      fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
+      await getReportAlerts('updatedAt', 'desc', 0, REPORTS_PER_PAGE, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
   });

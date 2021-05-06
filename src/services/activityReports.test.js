@@ -9,7 +9,9 @@ import {
   activityReports,
   activityReportAlerts,
   activityReportByLegacyId,
-  getDownloadableActivityReports,
+  getDownloadableActivityReportsByIds,
+  getAllDownloadableActivityReports,
+  getAllDownloadableActivityReportAlerts,
 } from './activityReports';
 import { copyGoalsToGrants } from './goals';
 import { REPORT_STATUSES } from '../constants';
@@ -35,6 +37,14 @@ const mockUserTwo = {
   name: 'user1002',
   hsesUserId: 1002,
   hsesUsername: 'Rex',
+};
+
+const mockUserThree = {
+  id: 1003,
+  homeRegionId: 1,
+  name: 'user1003',
+  hsesUserId: 1003,
+  hsesUsername: 'Tex',
 };
 
 const reportObject = {
@@ -79,7 +89,7 @@ describe('Activity Reports DB service', () => {
 
   afterAll(async () => {
     const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id, mockUserTwo.id] } });
+      .findAll({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
@@ -460,7 +470,92 @@ describe('Activity Reports DB service', () => {
     });
   });
 
-  describe('getDownloadableActivityReports', () => {
+  describe('getAllDownloadableActivityReports', () => {
+    let report;
+    let legacyReport;
+    let approvedReport;
+
+    beforeAll(async () => {
+      await User.findOrCreate({
+        where: {
+          id: mockUser.id,
+        },
+        defaults: mockUser,
+      });
+      const mockLegacyReport = {
+        ...submittedReport,
+        imported: { foo: 'bar' },
+        legacyId: 'R14-AR-123456',
+        regionId: 14,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      const mockReport = {
+        ...submittedReport,
+        regionId: 14,
+        status: REPORT_STATUSES.APPROVED,
+      };
+      report = await ActivityReport.create(mockReport);
+      await ActivityReport.create(mockReport);
+      legacyReport = await ActivityReport.create(mockLegacyReport);
+      approvedReport = await ActivityReport.create({
+        ...mockReport, status: REPORT_STATUSES.SUBMITTED,
+      });
+    });
+
+    it('returns all approved reports', async () => {
+      const result = await getAllDownloadableActivityReports([14]);
+      const { rows } = result;
+      const ids = rows.map((row) => row.id);
+
+      expect(ids.length).toEqual(2);
+      expect(ids).toContain(report.id);
+    });
+
+    it('excludes legacy reports', async () => {
+      const result = await getAllDownloadableActivityReports([14]);
+      const { rows } = result;
+      const ids = rows.map((row) => row.id);
+      expect(ids).not.toContain(legacyReport.id);
+    });
+
+    it('excludes non-approved reports', async () => {
+      const result = await getAllDownloadableActivityReports([14]);
+      const { rows } = result;
+      const ids = rows.map((row) => row.id);
+      expect(ids).not.toContain(approvedReport.id);
+    });
+  });
+
+  describe('getAllDownloadableActivityReportAlerts', () => {
+    let report;
+
+    beforeAll(async () => {
+      await User.findOrCreate({
+        where: {
+          id: mockUserThree.id,
+        },
+        defaults: mockUserThree,
+      });
+      const mockReport = {
+        ...submittedReport,
+        regionId: 14,
+        userId: mockUserThree.id,
+      };
+      report = await ActivityReport.create(mockReport);
+      await ActivityReport.create(mockReport);
+    });
+
+    it('returns all reports', async () => {
+      const result = await getAllDownloadableActivityReportAlerts(mockUserThree.id);
+      const { rows } = result;
+      const ids = rows.map((row) => row.id);
+
+      expect(ids.length).toEqual(2);
+      expect(ids).toContain(report.id);
+    });
+  });
+
+  describe('getDownloadableActivityReportsByIds', () => {
     beforeAll(async () => {
       await User.findOrCreate({
         where: {
@@ -481,7 +576,7 @@ describe('Activity Reports DB service', () => {
         ...submittedReport,
       };
       const report = await ActivityReport.create(mockReport);
-      const result = await getDownloadableActivityReports([1], { report: report.id });
+      const result = await getDownloadableActivityReportsByIds([1], { report: report.id });
       const { rows } = result;
 
       expect(rows.length).toEqual(1);
@@ -492,7 +587,7 @@ describe('Activity Reports DB service', () => {
       const mockLegacyReport = {
         ...reportObject,
         imported: { foo: 'bar' },
-        legacyId: 'R14-AR-123456',
+        legacyId: 'R14-AR-abc123',
       };
       const legacyReport = await ActivityReport.create(mockLegacyReport);
 
@@ -501,7 +596,7 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReports([1],
+      const result = await getDownloadableActivityReportsByIds([1],
         { report: [report.id, legacyReport.id] });
       const { rows } = result;
 
@@ -515,7 +610,7 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReports([1],
+      const result = await getDownloadableActivityReportsByIds([1],
         { report: [report.id, 'invalidIdentifier'] });
       const { rows } = result;
 
