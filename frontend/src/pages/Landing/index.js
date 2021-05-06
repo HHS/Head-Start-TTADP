@@ -39,7 +39,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
 
   const displayReports = reports.length ? reports : [emptyReport];
 
-  return displayReports.map((report) => {
+  return displayReports.map((report, index, { length }) => {
     const {
       id,
       displayId,
@@ -164,7 +164,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </Tag>
         </td>
         <td>
-          <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
+          <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={index + 1 === length} />
         </td>
       </tr>
     );
