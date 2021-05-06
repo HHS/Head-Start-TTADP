@@ -65,6 +65,22 @@ describe('ContextMenu', () => {
       expect(menu).not.toHaveClass('smart-hub--context-menu__left');
     });
 
+    it('can be shifted up', async () => {
+      render(<ContextMenu up left={false} menuItems={menuItems('one')} label="label" />);
+      const button = await screen.findByTestId('ellipsis-button');
+      userEvent.click(button);
+      const menu = await screen.findByTestId('menu');
+      expect(menu).toHaveClass('smart-hub--context-menu__up');
+    });
+
+    it('can be shifted up and left', async () => {
+      render(<ContextMenu up menuItems={menuItems('one')} label="label" />);
+      const button = await screen.findByTestId('ellipsis-button');
+      userEvent.click(button);
+      const menu = await screen.findByTestId('menu');
+      expect(menu).toHaveClass('smart-hub--context-menu__left_and_up');
+    });
+
     it('ignores keypresses that are not escape', async () => {
       const onClick = jest.fn();
       render(<ContextMenu menuItems={menuItems('one', onClick)} label="label" />);
