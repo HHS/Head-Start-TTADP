@@ -24,7 +24,7 @@
     "react-app-polyfill": "^2.0.0",
     "react-dates": "^21.8.0",
     "react-dom": "^17.0.1",
-    "react-draft-wysiwyg": "^1.14.5",
+    "react-draft-wysiwyg": "^1.14.6",
     "react-dropzone": "^11.2.0",
     "react-helmet": "^6.1.0",
     "react-hook-form": "^6.15.0",
