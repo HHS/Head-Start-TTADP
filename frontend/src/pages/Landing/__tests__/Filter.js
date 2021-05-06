@@ -15,24 +15,20 @@ describe('filter', () => {
     it('can be opened and closed', async () => {
       render(<RenderFilterItem />);
       const button = await screen.findByRole('button');
-      expect(button).not.toHaveClass('smart-hub--filter-menu-button__open');
+      expect(button).not.toHaveClass('smart-hub--menu-button__open');
       userEvent.click(button);
-      expect(button).toHaveClass('smart-hub--filter-menu-button__open');
+      expect(button).toHaveClass('smart-hub--menu-button__open');
       expect(button).not.toHaveClass('smart-hub--filter-menu-button__selected');
-      const addFilter = await screen.findByRole('button', { name: 'Add filter' });
-      userEvent.click(addFilter);
-      userEvent.click(button);
-      expect(button).toHaveClass('smart-hub--filter-menu-button__selected');
     });
 
     it('shows the current number of filters', async () => {
       render(<RenderFilterItem />);
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      const addFilter = await screen.findByRole('button', { name: 'Add filter' });
+      const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });
       userEvent.click(addFilter);
       userEvent.click(addFilter);
-      expect(button.textContent).toContain('2 Filters');
+      expect(button.textContent).toContain('Filters (2)');
     });
   });
 
@@ -41,7 +37,7 @@ describe('filter', () => {
     const button = await screen.findByRole('button');
     userEvent.click(button);
 
-    const addFilter = await screen.findByRole('button', { name: 'Add filter' });
+    const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });
     userEvent.click(addFilter);
 
     const remove = await screen.findByRole('button', { name: 'remove filter' });
@@ -57,7 +53,7 @@ describe('filter', () => {
     const button = await screen.findByRole('button');
     userEvent.click(button);
 
-    const addFilter = await screen.findByRole('button', { name: 'Add filter' });
+    const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });
     userEvent.click(addFilter);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });
@@ -69,7 +65,7 @@ describe('filter', () => {
     const query = await screen.findByRole('textbox');
     userEvent.type(query, 'test');
 
-    const apply = await screen.findByRole('button', { name: 'Apply' });
+    const apply = await screen.findByRole('button', { name: 'Apply Filters' });
     userEvent.click(apply);
     expect(applyFilters).toHaveBeenCalledWith([
       {
