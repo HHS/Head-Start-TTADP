@@ -2,7 +2,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
-import { getEditorState } from '../../../../utils';
+import { getEditorState, reportIsEditable } from '../../../../utils';
 
 import Section from '../Review/ReviewSection';
 
@@ -10,7 +10,11 @@ const NonGranteeReviewSection = () => {
   const { watch } = useFormContext();
   const {
     objectivesWithoutGoals,
+    status,
   } = watch();
+
+  const canEdit = reportIsEditable(status);
+
   return (
     <Section
       hidePrint={isUndefined(objectivesWithoutGoals)}
@@ -18,6 +22,7 @@ const NonGranteeReviewSection = () => {
       basePath="goals-objectives"
       anchor="goals-and-objectives"
       title="Objectives"
+      canEdit={canEdit}
     >
       <>
         {objectivesWithoutGoals.map((objective) => (

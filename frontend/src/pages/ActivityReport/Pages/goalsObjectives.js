@@ -10,6 +10,7 @@ import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
+import { reportIsEditable } from '../../../utils';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ObjectivePicker from './components/ObjectivePicker';
 import GranteeReviewSection from './components/GranteeReviewSection';
@@ -73,9 +74,11 @@ const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
     context,
+    status,
     activityRecipientType,
   } = watch();
 
+  const canEdit = reportIsEditable(status);
   const nonGrantee = activityRecipientType === 'non-grantee';
 
   return (
@@ -86,6 +89,7 @@ const ReviewSection = () => {
         basePath="goals-objectives"
         anchor="context"
         title="Context"
+        canEdit={canEdit}
       >
         <HtmlReviewItem
           label="Context"
