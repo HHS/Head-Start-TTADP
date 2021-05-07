@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
+import { Editor } from 'react-draft-wysiwyg';
 import {
   Alert, Button,
 } from '@trussworks/react-uswds';
+import { getEditorState } from '../../../../../utils';
 
 const NotEditableAlert = () => (
   <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
@@ -19,31 +20,33 @@ const Submitted = ({
   additionalNotes,
   approvingManager,
   resetToDraft,
-}) => (
-  <>
-    <Alert noIcon className="margin-y-4" type="success">
-      <b>Success</b>
-      <br />
-      This report was successfully submitted for approval
-    </Alert>
-    <div className="smart-hub--creator-notes">
+}) => {
+  const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
+
+  return (
+    <>
+      <Alert noIcon className="margin-y-4" type="success">
+        <b>Success</b>
+        <br />
+        This report was successfully submitted for approval
+      </Alert>
+      <div className="smart-hub--creator-notes">
+        <p>
+          <span className="text-bold">Creator notes</span>
+        </p>
+        <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
+      </div>
       <p>
-        <span className="text-bold">Creator notes</span>
-        <br />
-        <br />
-        { additionalNotes || 'No creator notes' }
+        <span className="text-bold">{approvingManager.name}</span>
+        {' '}
+        is the approving manager for this report.
+        {' '}
       </p>
-    </div>
-    <p>
-      <span className="text-bold">{approvingManager.name}</span>
-      {' '}
-      is the approving manager for this report.
-      {' '}
-    </p>
-    <Button type="button" onClick={resetToDraft}>Reset to Draft</Button>
-    <NotEditableAlert />
-  </>
-);
+      <Button type="button" onClick={resetToDraft}>Reset to Draft</Button>
+      <NotEditableAlert />
+    </>
+  );
+};
 
 Submitted.propTypes = {
   additionalNotes: PropTypes.string,
