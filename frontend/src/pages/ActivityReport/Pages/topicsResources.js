@@ -15,6 +15,7 @@ import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
 import ResourceSelector from './components/ResourceSelector';
 import { topics } from '../constants';
+import { reportIsEditable } from '../../../utils';
 
 const TopicsResources = ({
   reportId,
@@ -103,10 +104,12 @@ const ReviewSection = () => {
     nonECLKCResources,
     ECLKCResources,
     attachments,
+    status,
     topics: formTopics,
   } = watch();
 
   const hasAttachments = attachments && attachments.length > 0;
+  const canEdit = reportIsEditable(status);
 
   return (
     <>
@@ -116,6 +119,7 @@ const ReviewSection = () => {
         basePath="topics-resources"
         anchor="topics-resources"
         title="Topics covered"
+        canEdit={canEdit}
       >
         <ReviewItem
           label="Topics"
@@ -128,6 +132,7 @@ const ReviewSection = () => {
         basePath="topics-resources"
         anchor="ECLKCResources"
         title="OHS / ECLKC resources"
+        canEdit={canEdit}
       >
         <ReviewItem
           label="ECLKC resources"
@@ -141,6 +146,7 @@ const ReviewSection = () => {
         basePath="topics-resources"
         anchor="nonECLKCResources"
         title="Non-ECLKC resources"
+        canEdit={canEdit}
       >
         <ReviewItem
           label="Non-ECLKC resources"
@@ -154,6 +160,7 @@ const ReviewSection = () => {
         basePath="topics-resources"
         anchor="attachments"
         title="Attachments"
+        canEdit={canEdit}
       >
         {attachments.map((file) => (
           <FileReviewItem

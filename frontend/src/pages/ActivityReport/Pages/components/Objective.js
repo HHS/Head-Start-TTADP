@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { Editor } from 'react-draft-wysiwyg';
 import {
-  Tag, Label, Button, TextInput, Dropdown, Grid, Textarea,
+  Tag, Label, Button, TextInput, Dropdown, Grid,
 } from '@trussworks/react-uswds';
 
 import ObjectiveFormItem from './ObjectiveFormItem';
 import ContextMenu from '../../../../components/ContextMenu';
+import RichEditor from '../../../../components/RichEditor';
+import { getEditorState } from '../../../../utils';
 import './Objective.css';
 
 const statuses = [
@@ -14,6 +17,8 @@ const statuses = [
   'In Progress',
   'Complete',
 ];
+
+const EMPTY_TEXT_BOX = '<p></p>';
 
 const Objective = ({
   objectiveAriaLabel,
@@ -41,13 +46,13 @@ const Objective = ({
   };
 
   const { title, ttaProvided, status } = editableObject;
-  const defaultShowEdit = !(title && ttaProvided && status);
+  const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
   const updateEdit = (isEditing) => {
     if (isEditing) {
       updateShowEdit(true);
-    } else if (title && ttaProvided) {
+    } else if (title && ttaProvided !== EMPTY_TEXT_BOX) {
       updateShowEdit(false);
       onUpdate(editableObject);
     } else {
@@ -60,7 +65,7 @@ const Objective = ({
   };
 
   const onCancel = () => {
-    if (objective.title || objective.ttaProvided) {
+    if (objective.title || objective.ttaProvided !== EMPTY_TEXT_BOX) {
       updateEditableObject(objective);
       updateShowEdit(false);
     } else {
@@ -106,13 +111,19 @@ const Objective = ({
             label="TTA Provided"
             value={ttaProvided}
           >
-            <Textarea
-              className="smart-hub--text-area__resize-vertical"
-              name="ttaProvided"
-              aria-label={`TTA provided for objective ${objectiveAriaLabel}`}
-              onChange={onChange}
-              value={ttaProvided}
-            />
+            <div className="smart-hub--text-area__resize-vertical">
+              <RichEditor
+                value={ttaProvided}
+                ariaLabel={`TTA provided for objective ${objectiveAriaLabel}`}
+                defaultValue={ttaProvided}
+                onChange={(content) => {
+                  updateEditableObject({
+                    ...editableObject,
+                    ttaProvided: content,
+                  });
+                }}
+              />
+            </div>
           </ObjectiveFormItem>
           <Grid row gap>
             <Grid col={4}>
@@ -159,8 +170,8 @@ const Objective = ({
           </p>
           <p>
             <span className="text-bold">TTA Provided: </span>
-            {ttaProvided}
           </p>
+          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(ttaProvided)} />
           <Tag className="smart-hub--objective-tag">{status}</Tag>
         </>
       )}

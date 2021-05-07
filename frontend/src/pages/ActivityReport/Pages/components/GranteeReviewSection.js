@@ -1,6 +1,8 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
+import { Editor } from 'react-draft-wysiwyg';
+import { getEditorState, reportIsEditable } from '../../../../utils';
 
 import Section from '../Review/ReviewSection';
 
@@ -8,7 +10,11 @@ const GranteeReviewSection = () => {
   const { watch } = useFormContext();
   const {
     goals,
+    status,
   } = watch();
+
+  const canEdit = reportIsEditable(status);
+
   return (
     <Section
       hidePrint={isUndefined(goals)}
@@ -16,6 +22,7 @@ const GranteeReviewSection = () => {
       basePath="goals-objectives"
       anchor="goals-and-objectives"
       title="Goals"
+      canEdit={canEdit}
     >
       {goals.map((goal) => {
         const objectives = goal.objectives || [];
@@ -37,14 +44,18 @@ const GranteeReviewSection = () => {
                         {objective.title}
                       </div>
                       <div>
-                        <span className="text-bold">TTA Provided:</span>
-                        {' '}
-                        {objective.ttaProvided}
-                      </div>
-                      <div>
                         <span className="text-bold">Status:</span>
                         {' '}
                         {objective.status}
+                      </div>
+                      <div>
+                        <span className="text-bold">TTA Provided:</span>
+                        {' '}
+                        <Editor
+                          readOnly
+                          toolbarHidden
+                          defaultEditorState={getEditorState(objective.ttaProvided)}
+                        />
                       </div>
                     </div>
                   ))}

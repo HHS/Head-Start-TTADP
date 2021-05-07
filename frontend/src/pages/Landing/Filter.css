@@ -24,16 +24,6 @@
   vertical-align: bottom;
 }
 
-.landing .smart-hub--filter-menu-button {
-  color: black;
-  text-decoration: none;
-  margin-right: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  margin-left: 0px;
-  font-weight: bold;
-}
-
 .landing .smart-hub--filter-button {
   margin-left: 0px;
   font-size: 14px;
@@ -42,10 +32,6 @@
 .smart-hub--filter-menu-button:hover {
   color: black;
   text-decoration: none;
-}
-
-.smart-hub--filter-menu-button__open {
-  background-color: #eceef1;
 }
 
 .smart-hub--filter-menu-button__selected {
