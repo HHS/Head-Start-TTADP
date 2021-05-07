@@ -170,8 +170,8 @@ const Objective = ({
           </p>
           <p>
             <span className="text-bold">TTA Provided: </span>
-            <Editor readOnly toolbarHidden defaultEditorState={getEditorState(ttaProvided)} />
           </p>
+          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(ttaProvided)} />
           <Tag className="smart-hub--objective-tag">{status}</Tag>
         </>
       )}
