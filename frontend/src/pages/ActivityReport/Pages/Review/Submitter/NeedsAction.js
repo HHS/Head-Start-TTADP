@@ -32,18 +32,14 @@ const NeedsAction = ({
       <div className="smart-hub--creator-notes">
         <p>
           <span className="text-bold">Creator notes</span>
-          <br />
-          <br />
-          <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
         </p>
+        <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
       </div>
       <div className="smart-hub--creator-notes margin-top-2">
         <p>
           <span className="text-bold">Manager notes</span>
-          <br />
-          <br />
-          <Editor readOnly toolbarHidden defaultEditorState={managerNotesState} />
         </p>
+        <Editor readOnly toolbarHidden defaultEditorState={managerNotesState} />
       </div>
       <div>
         <div className="margin-top-2">
