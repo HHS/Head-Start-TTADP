@@ -29,6 +29,8 @@ describe('My Alerts', () => {
           alertsActivePage={alertsActivePage}
           alertReportsCount={alertReportsCount}
           sortHandler={requestAlertsSort}
+          updateReportFilters={() => {}}
+          handleDownloadAllAlerts={() => {}}
         />
       </MemoryRouter>,
     );

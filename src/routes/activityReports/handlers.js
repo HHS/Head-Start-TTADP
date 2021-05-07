@@ -12,7 +12,9 @@ import {
   setStatus,
   activityReportAlerts,
   activityReportByLegacyId,
-  getDownloadableActivityReports,
+  getDownloadableActivityReportsByIds,
+  getAllDownloadableActivityReportAlerts,
+  getAllDownloadableActivityReports,
 } from '../../services/activityReports';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -34,6 +36,21 @@ const namespace = 'SERVICE:ACTIVITY_REPORTS';
 const logContext = {
   namespace,
 };
+
+async function sendActivityReportCSV(reports, res) {
+  const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
+  const csvData = stringify(
+    csvRows,
+    {
+      header: true,
+      quoted: true,
+      quoted_empty: true,
+    },
+  );
+
+  res.attachment('activity-reports.csv');
+  res.send(csvData);
+}
 
 export async function updateLegacyFields(req, res) {
   try {
@@ -377,27 +394,44 @@ export async function createReport(req, res) {
 export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
-    const reportsWithCount = await getDownloadableActivityReports(readRegions, req.query);
+    const reportsWithCount = await getDownloadableActivityReportsByIds(readRegions, req.query);
     const { format = 'json' } = req.query || {};
 
     if (!reportsWithCount) {
       res.sendStatus(404);
     } else if (format === 'csv') {
-      const { rows } = reportsWithCount;
-      const csvRows = await Promise.all(rows.map((r) => activityReportToCsvRecord(r)));
-      const csvData = stringify(
-        csvRows,
-        {
-          header: true,
-          quoted: true,
-          quoted_empty: true,
-        },
-      );
-      res.attachment('activity-reports.csv');
-      res.send(csvData);
+      await sendActivityReportCSV(reportsWithCount.rows, res);
     } else {
       res.json(reportsWithCount);
     }
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function downloadAllReports(req, res) {
+  try {
+    const readRegions = await getUserReadRegions(req.session.userId);
+    const reportsWithCount = await getAllDownloadableActivityReports(
+      readRegions,
+      { ...req.query, limit: null },
+      true,
+    );
+
+    const rows = reportsWithCount ? reportsWithCount.rows : [];
+    await sendActivityReportCSV(rows, res);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function downloadAllAlerts(req, res) {
+  try {
+    const { userId } = req.session;
+    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, req.query);
+
+    const rows = alertsWithCount ? alertsWithCount.rows : [];
+    await sendActivityReportCSV(rows, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

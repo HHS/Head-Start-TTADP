@@ -16,8 +16,16 @@
   z-index: 1;
 }
 
+.smart-hub--context-menu__left_and_up {
+  transform: translateY(-120%) translateX(-90%); 
+}
+
 .smart-hub--context-menu__left {
-  transform:translateX(-75%);
+  transform: translateX(-90%); 
+}
+
+.smart-hub--context-menu__left_up {
+  transform: translateY(-120%); 
 }
 
 .smart-hub--context-menu-item-label {

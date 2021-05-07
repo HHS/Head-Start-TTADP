@@ -1,10 +1,12 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import ReviewPage from '../ReviewPage';
+import { REPORT_STATUSES } from '../../../../../Constants';
 
 const sections = [
   {
@@ -42,12 +44,13 @@ const values = {
   single: 'value',
   object: { test: 'test' },
   link: 'https://www.google.com/awesome',
+  status: REPORT_STATUSES.DRAFT,
 };
 
-const RenderReviewPage = () => {
+const RenderReviewPage = ({ defaultValues = values }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: values,
+    defaultValues,
     shouldUnregister: false,
   });
   return (
@@ -63,43 +66,48 @@ const RenderReviewPage = () => {
 };
 
 describe('ReviewPage', () => {
-  beforeEach(() => {
-    render(
-      <RenderReviewPage />,
-    );
+  it('does not display the "edit" link if the report is not editable', async () => {
+    render(<RenderReviewPage defaultValues={{ ...values, status: REPORT_STATUSES.APPROVED }} />);
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'Edit form section "first"' })).toBeNull());
   });
 
-  it('separates sections as distinct UI elements', async () => {
-    expect(await screen.findByText('first')).toBeVisible();
-    expect(await screen.findByText('second')).toBeVisible();
-  });
+  describe('with an editable report', () => {
+    beforeEach(() => {
+      render(<RenderReviewPage />);
+    });
 
-  it('properly sets the "Edit" links target', async () => {
-    const linkOne = await screen.findByRole('link', { name: 'Edit form section "first"' });
-    expect(linkOne).toHaveAttribute('href', '/id#first');
-    const linkTwo = await screen.findByRole('link', { name: 'Edit form section "second"' });
-    expect(linkTwo).toHaveAttribute('href', '/id#second');
-  });
+    it('separates sections as distinct UI elements', async () => {
+      expect(await screen.findByText('first')).toBeVisible();
+      expect(await screen.findByText('second')).toBeVisible();
+    });
 
-  it('displays arrays of values', async () => {
-    const first = await screen.findByLabelText('array 1');
-    expect(first).toHaveTextContent('one');
-    const second = await screen.findByLabelText('array 2');
-    expect(second).toHaveTextContent('two');
-  });
+    it('properly sets the "Edit" links target', async () => {
+      const linkOne = await screen.findByRole('link', { name: 'Edit form section "first"' });
+      expect(linkOne).toHaveAttribute('href', '/id#first');
+      const linkTwo = await screen.findByRole('link', { name: 'Edit form section "second"' });
+      expect(linkTwo).toHaveAttribute('href', '/id#second');
+    });
 
-  it('displays string values', async () => {
-    const value = await screen.findByLabelText('single value 1');
-    expect(value).toHaveTextContent('value');
-  });
+    it('displays arrays of values', async () => {
+      const first = await screen.findByLabelText('array 1');
+      expect(first).toHaveTextContent('one');
+      const second = await screen.findByLabelText('array 2');
+      expect(second).toHaveTextContent('two');
+    });
 
-  it('displays link values', async () => {
-    const value = await screen.findByLabelText('link 1');
-    expect(value).toHaveTextContent('https://www.google.com/awesome');
-  });
+    it('displays string values', async () => {
+      const value = await screen.findByLabelText('single value 1');
+      expect(value).toHaveTextContent('value');
+    });
 
-  it('displays an objects value (via method call)', async () => {
-    const value = await screen.findByLabelText('object 1');
-    expect(value).toHaveTextContent('test');
+    it('displays link values', async () => {
+      const value = await screen.findByLabelText('link 1');
+      expect(value).toHaveTextContent('https://www.google.com/awesome');
+    });
+
+    it('displays an objects value (via method call)', async () => {
+      const value = await screen.findByLabelText('object 1');
+      expect(value).toHaveTextContent('test');
+    });
   });
 });

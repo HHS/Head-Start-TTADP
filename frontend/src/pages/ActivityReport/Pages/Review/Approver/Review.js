@@ -3,11 +3,14 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import _ from 'lodash';
 import {
-  Dropdown, Form, Label, Fieldset, Textarea, Button,
+  Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
+import { Editor } from 'react-draft-wysiwyg';
 
 import { managerReportStatuses } from '../../../../../Constants';
+import { getEditorState } from '../../../../../utils';
 import FormItem from '../../../../../components/FormItem';
+import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 
 const Review = ({
   additionalNotes,
@@ -17,21 +20,22 @@ const Review = ({
   const watchTextValue = watch('managerNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
+  const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
   return (
     <>
       <h2>Review and approve report</h2>
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
-          <br />
-          <br />
-          { additionalNotes || 'No creator notes' }
         </p>
+        <Editor readOnly toolbarHidden defaultEditorState={defaultEditorState} />
       </div>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
           <Label htmlFor="managerNotes">Manager notes</Label>
-          <Textarea inputRef={register} id="managerNotes" name="managerNotes" className={textAreaClass} />
+          <div className={`margin-top-1 ${textAreaClass}`}>
+            <HookFormRichEditor id="managerNotes" name="managerNotes" />
+          </div>
         </Fieldset>
         <FormItem
           name="status"

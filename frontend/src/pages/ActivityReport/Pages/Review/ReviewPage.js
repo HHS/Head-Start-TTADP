@@ -5,9 +5,12 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 
 import Section from './ReviewSection';
 import ReviewItem from './ReviewItem';
+import { reportIsEditable } from '../../../../utils';
 
 const ReviewPage = ({ sections, path }) => {
   const { getValues } = useFormContext();
+  const canEdit = reportIsEditable(getValues('status'));
+
   return (
     <>
       {sections.map((section) => {
@@ -21,6 +24,7 @@ const ReviewPage = ({ sections, path }) => {
             basePath={path}
             anchor={section.anchor}
             title={section.title}
+            canEdit={canEdit}
           >
             {section.items.map((item) => (
               <ReviewItem
