@@ -16,6 +16,7 @@ import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
+import ReportMenu from './ReportMenu';
 
 function ReportsRow({ reports, removeAlert }) {
   const history = useHistory();
@@ -171,6 +172,7 @@ function MyAlerts(props) {
     updateReportFilters,
     updateReportAlerts,
     setAlertReportsCount,
+    handleDownloadAllAlerts,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -234,12 +236,15 @@ function MyAlerts(props) {
 
       {reports && (reports.length > 0 || hasFilters) && (
       <Container className="landing inline-size maxw-full" padding={0}>
-        <span className="smart-hub--table-nav">
-          <Filter
-            className="float-left"
-            applyFilters={updateReportFilters}
-            forMyAlerts
+        <span className="smart-hub--alerts-table-controls">
+          <Filter applyFilters={updateReportFilters} forMyAlerts />
+          <ReportMenu
+            label="Open alerts report menu"
+            hasSelectedReports={false}
+            onExportAll={handleDownloadAllAlerts}
           />
+        </span>
+        <span className="smart-hub--table-nav">
           <span
             id="alertsTotalCount"
             aria-label={`Displaying rows ${renderTotal(
@@ -298,6 +303,7 @@ MyAlerts.propTypes = {
   updateReportFilters: PropTypes.func.isRequired,
   updateReportAlerts: PropTypes.func.isRequired,
   setAlertReportsCount: PropTypes.func.isRequired,
+  handleDownloadAllAlerts: PropTypes.func.isRequired,
 };
 
 MyAlerts.defaultProps = {

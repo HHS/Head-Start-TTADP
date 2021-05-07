@@ -32,6 +32,8 @@ const renderMyAlerts = () => {
         alertReportsCount={alertReportsCount}
         sortHandler={requestAlertsSort}
         fetchReports={() => {}}
+        updateReportFilters={() => {}}
+        handleDownloadAllAlerts={() => {}}
       />
     </Router>,
   );
