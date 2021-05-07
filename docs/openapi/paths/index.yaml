@@ -20,8 +20,12 @@
   $ref: './updateGrant.yaml'
 '/activity-reports':
   $ref: './activity-reports/activity-reports.yaml'
+'/activity-reports/download-all':
+  $ref: './activity-reports/downloadAllReports.yaml'
 '/activity-reports/alerts':
   $ref: './activity-reports/alerts.yaml'
+'/activity-reports/alerts/download-all':
+  $ref: './activity-reports/downloadAlerts.yaml'
 '/activity-reports/download':
   $ref: './activity-reports/download.yaml'
 '/activity-reports/goals':

@@ -16,11 +16,10 @@ import './ContextMenu.css';
 const ESCAPE_KEY_CODE = 27;
 
 function ContextMenu({
-  label, menuItems, backgroundColor, left,
+  label, menuItems, backgroundColor, left, up,
 }) {
   const [shown, updateShown] = useState(false);
   const defaultClass = 'smart-hub--context-menu';
-  const menuClass = left ? `${defaultClass} smart-hub--context-menu__left` : defaultClass;
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
@@ -45,6 +44,24 @@ function ContextMenu({
       }
     }, 0);
   };
+
+  const placementClass = () => {
+    if (left && up) {
+      return 'smart-hub--context-menu__left_and_up';
+    }
+
+    if (left) {
+      return 'smart-hub--context-menu__left';
+    }
+
+    if (up) {
+      return 'smart-hub--context-menu__up';
+    }
+
+    return '';
+  };
+
+  const menuClass = `${defaultClass} ${placementClass()}`;
 
   return (
     <div
@@ -90,11 +107,13 @@ ContextMenu.propTypes = {
   })).isRequired,
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,
+  up: PropTypes.bool,
 };
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
   left: true,
+  up: false,
 };
 
 export default ContextMenu;

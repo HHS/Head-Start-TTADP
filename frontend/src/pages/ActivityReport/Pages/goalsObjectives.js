@@ -1,26 +1,24 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Fieldset, Label, Textarea,
-} from '@trussworks/react-uswds';
+import { Fieldset, Label } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
 
-import ReviewItem from './Review/ReviewItem';
+import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
+import { reportIsEditable } from '../../../utils';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ObjectivePicker from './components/ObjectivePicker';
 import GranteeReviewSection from './components/GranteeReviewSection';
 import NonGranteeReviewSection from './components/NonGranteeReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 
 const GoalsObjectives = () => {
-  const {
-    register, watch,
-  } = useFormContext();
+  const { watch } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const recipientGrantee = activityRecipientType === 'grantee';
@@ -62,11 +60,9 @@ const GoalsObjectives = () => {
         )}
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
         <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
-        <Textarea
-          id="context"
-          name="context"
-          inputRef={register()}
-        />
+        <div className="margin-top-1">
+          <HookFormRichEditor name="context" id="context" />
+        </div>
       </Fieldset>
     </>
   );
@@ -78,9 +74,11 @@ const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
     context,
+    status,
     activityRecipientType,
   } = watch();
 
+  const canEdit = reportIsEditable(status);
   const nonGrantee = activityRecipientType === 'non-grantee';
 
   return (
@@ -91,8 +89,9 @@ const ReviewSection = () => {
         basePath="goals-objectives"
         anchor="context"
         title="Context"
+        canEdit={canEdit}
       >
-        <ReviewItem
+        <HtmlReviewItem
           label="Context"
           name="context"
         />

@@ -14,7 +14,7 @@ const missingTitle = {
 
 const missingTTAProvided = {
   title: 'title',
-  ttaProvided: '',
+  ttaProvided: '<p></p>',
 };
 
 const validObjective = {

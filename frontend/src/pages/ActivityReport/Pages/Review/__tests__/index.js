@@ -176,8 +176,8 @@ describe('ReviewSubmit', () => {
   });
 
   it('initializes the form with "initialData"', async () => {
-    renderReview(true, false, REPORT_STATUSES.DRAFT, { additionalNotes: 'test' });
-    const textBox = await screen.findByLabelText('Creator notes');
-    await waitFor(() => expect(textBox).toHaveValue('test'));
+    renderReview(true, false, REPORT_STATUSES.DRAFT, { }, () => {}, () => {}, 1);
+    const selectBox = await screen.findByLabelText('Approving manager (Required)');
+    await waitFor(() => expect(selectBox).toHaveValue('1'));
   });
 });
