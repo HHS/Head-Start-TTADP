@@ -12,7 +12,7 @@ We need to capture information about user behaviors and task completion on the w
 
 ## Decision
 
-We will use New Relic to capture and track web analytics. New Relic provides [browser monitoring](https://docs.newrelic.com/docs/browser/) that can captures essential metrics such as page views, and offers both [agent and SPA API](https://docs.newrelic.com/docs/browser/new-relic-browser/browser-agent-spa-api/) and [APM](https://developer.newrelic.com/collect-data/custom-attributes) methods for capturing custom data.
+We will use New Relic to capture and track web analytics. New Relic provides [browser monitoring](https://docs.newrelic.com/docs/browser/) that can capture essential metrics such as page views, and offers both [agent and SPA API](https://docs.newrelic.com/docs/browser/new-relic-browser/browser-agent-spa-api/) and [APM](https://developer.newrelic.com/collect-data/custom-attributes) methods for capturing custom data.
 
 ## Consequences
 
@@ -25,4 +25,3 @@ We may need to update our APM configuration to [record custom metrics](https://d
 We will create one or more [custom dashboards](https://docs.newrelic.com/docs/query-your-data/explore-query-data/dashboards/introduction-dashboards/) to make information accessible to stakeholders.
 
 When we add new features or change existing ones, we will need to account for changes we may need to make to capture relevant analytics data.
-
