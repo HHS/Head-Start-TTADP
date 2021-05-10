@@ -1,20 +1,37 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Tag, Table } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
+import {
+  Tag, Table, useModal, connectModal,
+} from '@trussworks/react-uswds';
+import { Link, useHistory } from 'react-router-dom';
 
+import DeleteReportModal from '../../components/DeleteReportModal';
 import Container from '../../components/Container';
+import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
+import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
 import ReportMenu from './ReportMenu';
 
-function renderReports(reports) {
-  return reports.map((report) => {
+function ReportsRow({ reports, removeAlert }) {
+  const history = useHistory();
+  const { isOpen, openModal, closeModal } = useModal();
+  const ConnectModal = connectModal(DeleteReportModal);
+
+  const [idToDelete, updateIdToDelete] = useState(0);
+
+  const onDelete = async (reportId) => {
+    await deleteReport(reportId);
+    removeAlert(reportId);
+    closeModal();
+  };
+
+  const tableRows = reports.map((report, index, { length }) => {
     const {
       id,
       displayId,
@@ -55,44 +72,79 @@ function renderReports(reports) {
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
+    const contextMenuLabel = `View activity report ${id}`;
     const statusClassName = `smart-hub--table-tag-status smart-hub--status-${status}`;
 
+    const menuItems = [
+      {
+        label: 'View',
+        onClick: () => { history.push(idLink); },
+      },
+      {
+        label: 'Delete',
+        onClick: () => { updateIdToDelete(id); openModal(); },
+      },
+    ];
+
     return (
-      <tr key={idKey}>
-        <td>
-          <Link
-            to={idLink}
-          >
-            {displayId}
-          </Link>
-        </td>
-        <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
-        </td>
-        <td>{startDate}</td>
-        <td>
-          <span className="smart-hub--ellipsis" title={author ? author.fullName : ''}>
-            {author ? author.fullName : ''}
-          </span>
-        </td>
-        <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
-        </td>
-        <td>
-          <Tag
-            className={statusClassName}
-          >
-            {status === 'needs_action' ? 'Needs action' : status}
-          </Tag>
-        </td>
-      </tr>
+      <>
+        <tr key={idKey}>
+          <td>
+            <Link
+              to={idLink}
+            >
+              {displayId}
+            </Link>
+          </td>
+          <td>
+            <span className="smart-hub--ellipsis" title={recipientsTitle}>
+              {recipients}
+            </span>
+          </td>
+          <td>{startDate}</td>
+          <td>
+            <span className="smart-hub--ellipsis" title={author ? author.fullName : ''}>
+              {author ? author.fullName : ''}
+            </span>
+          </td>
+          <td>
+            <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
+              {collaboratorsWithTags}
+            </span>
+          </td>
+          <td>
+            <Tag
+              className={statusClassName}
+            >
+              {status === 'needs_action' ? 'Needs action' : status}
+            </Tag>
+          </td>
+          <td>
+            <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={index + 1 === length} />
+          </td>
+        </tr>
+      </>
     );
   });
+
+  return (
+    <>
+      <ConnectModal
+        onDelete={() => onDelete(idToDelete)}
+        onClose={closeModal}
+        isOpen={isOpen}
+        openModal={openModal}
+        closeModal={closeModal}
+      />
+      { tableRows }
+    </>
+  );
 }
+
+ReportsRow.propTypes = {
+  reports: PropTypes.arrayOf(PropTypes.object).isRequired,
+  removeAlert: PropTypes.func.isRequired,
+};
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -118,6 +170,8 @@ function MyAlerts(props) {
     sortHandler,
     hasFilters,
     updateReportFilters,
+    updateReportAlerts,
+    setAlertReportsCount,
     handleDownloadAllAlerts,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
@@ -156,6 +210,12 @@ function MyAlerts(props) {
     );
   };
 
+  const removeAlert = (id) => {
+    const newReports = reports.filter((report) => report.id !== id);
+    setAlertReportsCount(alertReportsCount - 1);
+    updateReportAlerts(newReports);
+  };
+
   return (
     <>
       {reports && reports.length === 0 && !hasFilters && (
@@ -173,6 +233,7 @@ function MyAlerts(props) {
           </div>
         </Container>
       )}
+
       {reports && (reports.length > 0 || hasFilters) && (
       <Container className="landing inline-size maxw-full" padding={0}>
         <span className="smart-hub--alerts-table-controls">
@@ -215,9 +276,12 @@ function MyAlerts(props) {
                 {renderColumnHeader('Creator', 'author')}
                 {renderColumnHeader('Collaborator(s)', 'collaborators')}
                 {renderColumnHeader('Status', 'status')}
+                <th scope="col" aria-label="..." />
               </tr>
             </thead>
-            <tbody>{renderReports(reports)}</tbody>
+            <tbody>
+              <ReportsRow reports={reports} removeAlert={removeAlert} />
+            </tbody>
           </Table>
         </div>
       </Container>
@@ -237,6 +301,8 @@ MyAlerts.propTypes = {
   sortHandler: PropTypes.func.isRequired,
   hasFilters: PropTypes.bool,
   updateReportFilters: PropTypes.func.isRequired,
+  updateReportAlerts: PropTypes.func.isRequired,
+  setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
 };
 
