@@ -1,0 +1,8 @@
+#deleteDialog div {
+    border-style: none;
+    padding: .5rem;
+    margin: .5rem;
+}
+#deleteDialog button {
+    margin-left: 20px;
+}
