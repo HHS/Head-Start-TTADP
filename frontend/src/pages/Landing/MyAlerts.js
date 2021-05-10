@@ -31,7 +31,7 @@ function ReportsRow({ reports, removeAlert }) {
     closeModal();
   };
 
-  const tableRows = reports.map((report) => {
+  const tableRows = reports.map((report, index, { length }) => {
     const {
       id,
       displayId,
@@ -120,7 +120,7 @@ function ReportsRow({ reports, removeAlert }) {
             </Tag>
           </td>
           <td>
-            <ContextMenu label={contextMenuLabel} menuItems={menuItems} />
+            <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={index + 1 === length} />
           </td>
         </tr>
       </>
