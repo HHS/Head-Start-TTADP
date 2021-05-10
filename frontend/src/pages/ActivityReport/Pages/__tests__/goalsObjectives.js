@@ -174,5 +174,31 @@ describe('goals objectives', () => {
       const objective = await screen.findByText('title');
       expect(objective).toBeVisible();
     });
+
+    it('isPageComplete is true', async () => {
+      const objectives = [
+        {
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        },
+        {
+          id: 2,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        },
+      ];
+      const formData = { activityRecipientType: 'non-grantee', objectivesWithoutGoals: objectives };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).toBeTruthy();
+    });
+
+    it('isPageComplete is false', async () => {
+      const formData = { activityRecipientType: 'grantee', goals: [] };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).not.toBeTruthy();
+    });
   });
 });
