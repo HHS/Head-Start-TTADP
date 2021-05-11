@@ -72,7 +72,9 @@ function Filter({ applyFilters, forMyAlerts }) {
   return (
     <span className="position-relative">
       <Button
+        role="menuitem"
         type="button"
+        aria-label={`Open Filters Menu. ${filters.length} filter${filters.length !== 1 ? 's' : ''} currently applied`}
         onClick={() => {
           updateOpen(!open);
         }}
@@ -84,7 +86,7 @@ function Filter({ applyFilters, forMyAlerts }) {
         <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
       </Button>
       {open && (
-      <div onBlur={onMenuBlur} className="z-400 position-absolute">
+      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} className="z-400 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
