@@ -107,7 +107,7 @@ const reportFilters = [
   },
 ];
 
-export default function FilterItem({
+function FilterItem({
   topic,
   condition,
   query,
@@ -115,6 +115,7 @@ export default function FilterItem({
   onRemoveFilter,
   id,
   forMyAlerts,
+  forwardedRef,
 }) {
   const possibleFilters = forMyAlerts ? myAlertsFilters : reportFilters;
   const selectedTopic = possibleFilters.find((filter) => filter.id === topic);
@@ -122,7 +123,7 @@ export default function FilterItem({
   const showQuery = selectedTopic && condition;
 
   return (
-    <div role="menuitem" tabIndex={0} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
+    <div role="menuitem" tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
       <Button
         type="button"
         unstyled
@@ -170,10 +171,21 @@ FilterItem.propTypes = {
   query: PropTypes.string.isRequired,
   id: PropTypes.string.isRequired,
   forMyAlerts: PropTypes.bool,
+  forwardedRef: PropTypes.oneOfType([
+    PropTypes.func,
+    // eslint-disable-next-line react/forbid-prop-types
+    PropTypes.shape({ current: PropTypes.object }),
+  ]),
 };
 
 FilterItem.defaultProps = {
   topic: '',
   condition: '',
   forMyAlerts: false,
+  forwardedRef: null,
 };
+
+// eslint-disable-next-line react/jsx-props-no-spreading
+const WrappedFilterItem = React.forwardRef((props, ref) => (<FilterItem {...props} forwardedRef={ref} />));
+
+export default WrappedFilterItem;
