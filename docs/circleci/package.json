@@ -10,6 +10,6 @@
   "dependencies": {
     "circleci": "^0.3.3",
     "esm": "^3.2.25",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.21"
   }
 }
