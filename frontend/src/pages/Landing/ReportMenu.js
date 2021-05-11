@@ -30,6 +30,7 @@ function ReportMenu({
     <span>
       <Button
         type="button"
+        role="menuitem"
         outline
         className={`smart-hub--filter-button smart-hub--table-controls__button ${openClass}`}
         aria-label={label}
@@ -46,7 +47,7 @@ function ReportMenu({
         />
       </Button>
       {open && (
-        <div onBlur={onMenuBlur} style={{ left: '85px' }} className="z-400 position-absolute width-card-lg">
+        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} style={{ left: '85px' }} className="z-400 position-absolute width-card-lg">
           <Container padding={2} className="margin-bottom-0">
             <Button
               onClick={onExportAll}

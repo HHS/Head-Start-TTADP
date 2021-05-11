@@ -122,7 +122,7 @@ export default function FilterItem({
   const showQuery = selectedTopic && condition;
 
   return (
-    <div className="margin-top-1 smart-hub--filter smart-hub--filter-item">
+    <div role="menuitem" tabIndex={0} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
       <Button
         type="button"
         unstyled
