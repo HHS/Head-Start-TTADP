@@ -55,6 +55,13 @@ function Filter({ applyFilters, forMyAlerts }) {
     applyFilters(filters);
   };
 
+  const onMenuBlur = (e) => {
+    // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      updateOpen(false);
+    }
+  };
+
   const hasFilters = filters.length !== 0;
   let filterClass = '';
 
@@ -77,7 +84,7 @@ function Filter({ applyFilters, forMyAlerts }) {
         <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
       </Button>
       {open && (
-      <div className="z-400 position-absolute">
+      <div onBlur={onMenuBlur} className="z-400 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
