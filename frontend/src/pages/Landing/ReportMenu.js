@@ -19,6 +19,13 @@ function ReportMenu({
     openClass = 'smart-hub--menu-button__open';
   }
 
+  const onMenuBlur = (e) => {
+    // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      updateOpen(false);
+    }
+  };
+
   return (
     <span>
       <Button
@@ -39,7 +46,7 @@ function ReportMenu({
         />
       </Button>
       {open && (
-        <div style={{ left: '85px' }} className="z-400 position-absolute width-card-lg">
+        <div onBlur={onMenuBlur} style={{ left: '85px' }} className="z-400 position-absolute width-card-lg">
           <Container padding={2} className="margin-bottom-0">
             <Button
               onClick={onExportAll}
