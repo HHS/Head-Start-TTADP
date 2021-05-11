@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -29,6 +29,23 @@ const defaultFilter = () => (
 function Filter({ applyFilters, forMyAlerts }) {
   const [open, updateOpen] = useState(false);
   const [filters, updateFilters] = useState([]);
+
+  const prevFilterCount = useRef();
+  const lastItemRef = useRef();
+  const menuRef = useRef();
+
+  useEffect(() => {
+    if (prevFilterCount.current !== filters.length && lastItemRef.current) {
+      lastItemRef.current.focus();
+    }
+    prevFilterCount.current = filters.length;
+  }, [filters]);
+
+  useEffect(() => {
+    if (open === true) {
+      menuRef.current.focus();
+    }
+  }, [open]);
 
   const onFilterUpdated = (index, name, value) => {
     const newFilters = [...filters];
@@ -86,25 +103,30 @@ function Filter({ applyFilters, forMyAlerts }) {
         <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
       </Button>
       {open && (
-      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} className="z-400 position-absolute">
+      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} ref={menuRef} className="z-400 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
               <>
-                {filters.map((f, index) => (
-                  <FilterItem
-                    key={f.id}
-                    id={f.id}
-                    condition={f.condition}
-                    topic={f.topic}
-                    query={f.query}
-                    forMyAlerts={forMyAlerts}
-                    onRemoveFilter={() => onRemoveFilter(index)}
-                    onUpdateFilter={(name, value) => {
-                      onFilterUpdated(index, name, value);
-                    }}
-                  />
-                ))}
+                {filters.map((f, index, array) => {
+                  const lastItem = index === array.length - 1;
+
+                  return (
+                    <FilterItem
+                      key={f.id}
+                      ref={lastItem ? lastItemRef : null}
+                      id={f.id}
+                      condition={f.condition}
+                      topic={f.topic}
+                      query={f.query}
+                      forMyAlerts={forMyAlerts}
+                      onRemoveFilter={() => onRemoveFilter(index)}
+                      onUpdateFilter={(name, value) => {
+                        onFilterUpdated(index, name, value);
+                      }}
+                    />
+                  );
+                })}
               </>
             )}
             {!hasFilters && (
