@@ -33,6 +33,7 @@ function Filter({ applyFilters, forMyAlerts }) {
   const prevFilterCount = useRef();
   const lastItemRef = useRef();
   const menuRef = useRef();
+  const menuButtonRef = useRef();
 
   useEffect(() => {
     if (prevFilterCount.current !== filters.length && lastItemRef.current) {
@@ -79,6 +80,13 @@ function Filter({ applyFilters, forMyAlerts }) {
     }
   };
 
+  const onMenuKeyDown = (e) => {
+    if (['Escape', 'Esc'].includes(e.key)) {
+      updateOpen(false);
+      menuButtonRef.current.focus();
+    }
+  };
+
   const hasFilters = filters.length !== 0;
   let filterClass = '';
 
@@ -88,22 +96,23 @@ function Filter({ applyFilters, forMyAlerts }) {
 
   return (
     <span className="position-relative">
-      <Button
+      <button
+        ref={menuButtonRef}
         role="menuitem"
+        aria-haspopup="menu"
         type="button"
         aria-label={`Open Filters Menu. ${filters.length} filter${filters.length !== 1 ? 's' : ''} currently applied`}
         onClick={() => {
           updateOpen(!open);
         }}
-        outline
-        className={`smart-hub--filter-button smart-hub--table-controls__button ${filterClass}`}
+        className={`usa-button usa-button--outline smart-hub--filter-button smart-hub--table-controls__button ${filterClass}`}
       >
         {`Filters ${filters.length > 0 ? `(${filters.length})` : ''}`}
         {' '}
         <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
-      </Button>
+      </button>
       {open && (
-      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} ref={menuRef} className="z-400 position-absolute">
+      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
