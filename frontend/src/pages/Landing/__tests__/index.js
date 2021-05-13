@@ -665,9 +665,9 @@ describe('Landing page table menus & selections', () => {
         };
 
         renderLanding(user);
-        const reportMenu = await screen.findByRole('button', { name: 'Open alerts report menu' });
+        const reportMenu = await screen.findByRole('menuitem', { name: 'Open alerts report menu' });
         userEvent.click(reportMenu);
-        const downloadButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+        const downloadButton = await screen.findByRole('menuitem', { name: 'Export Table Data...' });
         userEvent.click(downloadButton);
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
       });
@@ -691,9 +691,9 @@ describe('Landing page table menus & selections', () => {
       };
 
       renderLanding(user);
-      const reportMenu = await screen.findByRole('button', { name: 'Open report menu' });
+      const reportMenu = await screen.findByRole('menuitem', { name: 'Open report menu' });
       userEvent.click(reportMenu);
-      const downloadButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+      const downloadButton = await screen.findByRole('menuitem', { name: 'Export Table Data...' });
       userEvent.click(downloadButton);
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
     });
