@@ -9,6 +9,7 @@ import {
   legacyReportById,
   getReports,
   getReportAlerts,
+  deleteReport,
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
@@ -117,6 +118,15 @@ describe('activityReports fetcher', () => {
       fetchMock.put(join('api', 'activity-reports', '1', 'review'), report);
       const savedReport = await reviewReport(1, report);
       expect(savedReport).toEqual(report);
+    });
+  });
+
+  describe('deleteReport', () => {
+    it('deletes the report', async () => {
+      const status = { status: 200 };
+      fetchMock.delete(join('api', 'activity-reports', '1'), status);
+      await deleteReport(1);
+      expect(fetchMock.called()).toBeTruthy();
     });
   });
 });

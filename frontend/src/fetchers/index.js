@@ -50,3 +50,21 @@ export const post = async (url, data) => {
   }
   return res;
 };
+
+/*
+ * Note: Due to `delete` being a keyword, we'll settle with `destroy`
+ */
+export const destroy = async (url) => {
+  const res = await fetch(url, {
+    method: 'DELETE',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res;
+};
