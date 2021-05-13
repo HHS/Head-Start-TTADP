@@ -122,8 +122,10 @@ function FilterItem({
   const conditions = selectedTopic ? selectedTopic.conditions : [];
   const showQuery = selectedTopic && condition;
 
+  const ariaLabel = `Filter: ${topic || 'no topic selected'} ${condition || 'no condition selected'} ${query || 'no query entered'}`;
+
   return (
-    <div role="menuitem" tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
+    <div role="menuitem" aria-label={ariaLabel} tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
       <Button
         type="button"
         unstyled
