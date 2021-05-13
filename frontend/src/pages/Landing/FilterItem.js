@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import {
@@ -126,19 +125,18 @@ function FilterItem({
 
   return (
     <div role="menuitem" aria-label={ariaLabel} tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
-      <Button
+      <button
         type="button"
-        unstyled
         aria-label="remove filter"
-        className="margin-right-1 smart-hub--filter-button"
+        className="usa-button usa-button--unstyled margin-right-1 smart-hub--filter-button"
         onClick={onRemoveFilter}
       >
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
-      </Button>
+      </button>
       Where
       <select
         name="topic"
-        aria-label="topic"
+        aria-label="select a topic to filter on"
         value={topic}
         onChange={(e) => onUpdateFilter(e.target.name, e.target.value)}
         className="margin-left-2 smart-hub--filter-input height-205"
@@ -150,7 +148,7 @@ function FilterItem({
       </select>
       <select
         name="condition"
-        aria-label="condition"
+        aria-label="select a condition"
         value={condition}
         onChange={(e) => onUpdateFilter(e.target.name, e.target.value)}
         className="margin-left-1 minw-15 smart-hub--filter-input height-205"
