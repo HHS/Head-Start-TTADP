@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import moment from 'moment';
 
@@ -144,24 +143,23 @@ function Filter({ applyFilters, forMyAlerts }) {
             </div>
             )}
             <div className="height-20 margin-top-2 clearfix">
-              <Button
+              <button
                 type="button"
-                outline
-                className="float-left smart-hub--filter-button"
+                className="usa-button usa-button--outline float-left smart-hub--filter-button"
                 onClick={() => {
                   updateFilters([...filters, defaultFilter()]);
                 }}
               >
                 Add New Filter
-              </Button>
+              </button>
               {hasFilters && (
-              <Button
+              <button
                 type="button"
-                className="float-right smart-hub--filter-button"
+                className="usa-button float-right smart-hub--filter-button"
                 onClick={onApplyFilter}
               >
                 Apply Filters
-              </Button>
+              </button>
               )}
             </div>
           </div>
