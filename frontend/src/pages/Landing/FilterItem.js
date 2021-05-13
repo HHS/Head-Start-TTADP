@@ -136,7 +136,7 @@ function FilterItem({
       Where
       <select
         name="topic"
-        aria-label="select a topic to filter on"
+        aria-label="topic"
         value={topic}
         onChange={(e) => onUpdateFilter(e.target.name, e.target.value)}
         className="margin-left-2 smart-hub--filter-input height-205"
@@ -148,7 +148,7 @@ function FilterItem({
       </select>
       <select
         name="condition"
-        aria-label="select a condition"
+        aria-label="condition"
         value={condition}
         onChange={(e) => onUpdateFilter(e.target.name, e.target.value)}
         className="margin-left-1 minw-15 smart-hub--filter-input height-205"
