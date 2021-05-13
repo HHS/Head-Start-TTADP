@@ -21,7 +21,7 @@ const RenderReportMenu = ({
 describe('ReportMenu', () => {
   it('has the open CSS class when opened', async () => {
     render(<RenderReportMenu />);
-    const button = await screen.findByRole('button');
+    const button = await screen.findByRole('menuitem');
     userEvent.click(button);
     const report = await screen.findByText('Reports');
     expect(report).toHaveClass('smart-hub--menu-button__open');
@@ -30,9 +30,9 @@ describe('ReportMenu', () => {
   it('calls onExportAll', async () => {
     const onExport = jest.fn();
     render(<RenderReportMenu onExportAll={onExport} />);
-    const button = await screen.findByRole('button');
+    const button = await screen.findByRole('menuitem');
     userEvent.click(button);
-    const exportButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+    const exportButton = await screen.findByRole('menuitem', { name: 'Export Table Data...' });
     userEvent.click(exportButton);
     expect(onExport).toHaveBeenCalled();
   });
@@ -41,9 +41,9 @@ describe('ReportMenu', () => {
     it('calls onExportSelected', async () => {
       const onExport = jest.fn();
       render(<RenderReportMenu onExportSelected={onExport} hasSelectedReports />);
-      const button = await screen.findByRole('button');
+      const button = await screen.findByRole('menuitem');
       userEvent.click(button);
-      const exportButton = await screen.findByRole('button', { name: 'Export Selected Reports...' });
+      const exportButton = await screen.findByRole('menuitem', { name: 'Export Selected Reports...' });
       userEvent.click(exportButton);
       expect(onExport).toHaveBeenCalled();
     });
