@@ -25,6 +25,8 @@ import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
 import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
+import AriaLiveContext from './AriaLiveContext';
+import AriaLiveRegion from './components/AriaLiveRegion';
 
 function App() {
   const [user, updateUser] = useState();
@@ -33,6 +35,7 @@ function App() {
   const [loggedOut, updateLoggedOut] = useState(false);
   const authenticated = user !== undefined;
   const [timedOut, updateTimedOut] = useState(false);
+  const [announcements, updateAnnouncements] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +61,10 @@ function App() {
     updateAuthError();
     updateLoggedOut(true);
     updateTimedOut(timeout);
+  };
+
+  const announce = (message) => {
+    updateAnnouncements([...announcements, message]);
   };
 
   if (loading) {
@@ -137,20 +144,23 @@ function App() {
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
-          <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
-          <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
-            <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
-              <section className="usa-section padding-top-3">
-                {!authenticated && (authError === 403
-                  ? <RequestPermissions />
-                  : <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                )}
-                {authenticated && renderAuthenticatedRoutes()}
-              </section>
+          <AriaLiveContext.Provider value={{ announce }}>
+            <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+            <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
+              <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
+                <section className="usa-section padding-top-3">
+                  {!authenticated && (authError === 403
+                    ? <RequestPermissions />
+                    : <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                  )}
+                  {authenticated && renderAuthenticatedRoutes()}
+                </section>
+              </div>
             </div>
-          </div>
+          </AriaLiveContext.Provider>
         </UserContext.Provider>
       </BrowserRouter>
+      <AriaLiveRegion messages={announcements} />
     </>
   );
 }
