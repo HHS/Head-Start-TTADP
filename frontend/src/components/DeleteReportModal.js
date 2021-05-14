@@ -47,6 +47,7 @@ const DeleteModal = ({
         )}
       >
         Are you sure you want to delete this activity report?
+        <br />
         This action
         {' '}
         <b>cannot</b>
