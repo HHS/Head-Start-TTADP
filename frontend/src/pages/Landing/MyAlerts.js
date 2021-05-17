@@ -239,7 +239,7 @@ function MyAlerts(props) {
         <span role="menubar" className="smart-hub--alerts-table-controls">
           <Filter applyFilters={updateReportFilters} forMyAlerts />
           <ReportMenu
-            label="Open alerts report menu"
+            label="My Alerts report menu"
             hasSelectedReports={false}
             onExportAll={handleDownloadAllAlerts}
           />

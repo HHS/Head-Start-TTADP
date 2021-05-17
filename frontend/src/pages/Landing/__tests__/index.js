@@ -670,9 +670,9 @@ describe('Landing page table menus & selections', () => {
         };
 
         renderLanding(user);
-        const reportMenu = await screen.findByRole('menuitem', { name: 'Open alerts report menu' });
+        const reportMenu = await screen.findByLabelText(/my alerts report menu/i);
         userEvent.click(reportMenu);
-        const downloadButton = await screen.findByRole('menuitem', { name: 'Export Table Data...' });
+        const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
       });
@@ -696,9 +696,9 @@ describe('Landing page table menus & selections', () => {
       };
 
       renderLanding(user);
-      const reportMenu = await screen.findByRole('menuitem', { name: 'Open report menu' });
+      const reportMenu = await screen.findByLabelText(/reports menu/i);
       userEvent.click(reportMenu);
-      const downloadButton = await screen.findByRole('menuitem', { name: 'Export Table Data...' });
+      const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
       userEvent.click(downloadButton);
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
     });
@@ -932,7 +932,7 @@ describe('handleApplyFilters', () => {
     };
     renderLanding(user);
     // Only one button exists only because there are no alerts
-    const filterMenuButton = await screen.findByRole('menuitem', { name: /open filters menu/i });
+    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
     const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
     fireEvent.click(addFilterButton);
@@ -979,8 +979,8 @@ describe('handleApplyAlertFilters', () => {
     };
     renderLanding(user);
 
-    // Both alerts and AR tables' menuitems buttons should appear
-    const allFilterButtons = await screen.findAllByRole('menuitem', { name: /open filters menu/i });
+    // Both alerts and AR tables' buttons should appear
+    const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
     expect(allFilterButtons.length).toBe(2);
 
     const filterMenuButton = allFilterButtons[0];

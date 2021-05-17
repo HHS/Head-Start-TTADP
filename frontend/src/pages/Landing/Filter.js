@@ -97,10 +97,9 @@ function Filter({ applyFilters, forMyAlerts }) {
     <span className="position-relative">
       <button
         ref={menuButtonRef}
-        role="menuitem"
         aria-haspopup="menu"
         type="button"
-        aria-label={`Open Filters Menu. ${filters.length} filter${filters.length !== 1 ? 's' : ''} currently applied`}
+        aria-label={`Filters Menu. ${filters.length} filter${filters.length !== 1 ? 's' : ''} currently applied`}
         onClick={() => {
           updateOpen(!open);
         }}

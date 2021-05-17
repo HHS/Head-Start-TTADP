@@ -47,7 +47,6 @@ function ReportMenu({
       <button
         ref={menuButtonRef}
         type="button"
-        role="menuitem"
         aria-haspopup="menu"
         className={`usa-button usa-button--outline smart-hub--filter-button smart-hub--table-controls__button ${openClass}`}
         aria-label={label}
@@ -99,7 +98,7 @@ ReportMenu.propTypes = {
 };
 
 ReportMenu.defaultProps = {
-  label: 'Open report menu',
+  label: 'Reports menu',
 };
 
 export default ReportMenu;
