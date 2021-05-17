@@ -14,7 +14,7 @@ describe('filter', () => {
   describe('toggle button', () => {
     it('can be opened and closed', async () => {
       render(<RenderFilterItem />);
-      const button = await screen.findByRole('menuitem');
+      const button = await screen.findByRole('button');
       expect(button).not.toHaveClass('smart-hub--menu-button__open');
       userEvent.click(button);
       expect(button).toHaveClass('smart-hub--menu-button__open');
@@ -23,7 +23,7 @@ describe('filter', () => {
 
     it('shows the current number of filters', async () => {
       render(<RenderFilterItem />);
-      const button = await screen.findByRole('menuitem');
+      const button = await screen.findByRole('button');
       userEvent.click(button);
       const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });
       userEvent.click(addFilter);
@@ -36,7 +36,7 @@ describe('filter', () => {
     let menu;
 
     render(<RenderFilterItem />);
-    const button = await screen.findByRole('menuitem');
+    const button = await screen.findByRole('button');
     expect(button).not.toHaveClass('smart-hub--menu-button__open');
     userEvent.click(button);
     expect(button).toHaveClass('smart-hub--menu-button__open');
@@ -52,7 +52,7 @@ describe('filter', () => {
     let menu;
 
     render(<RenderFilterItem />);
-    const button = await screen.findByRole('menuitem');
+    const button = await screen.findByRole('button');
     expect(button).not.toHaveClass('smart-hub--menu-button__open');
     userEvent.click(button);
     expect(button).toHaveClass('smart-hub--menu-button__open');
@@ -72,7 +72,7 @@ describe('filter', () => {
 
   it('can remove filters', async () => {
     render(<RenderFilterItem />);
-    const button = await screen.findByRole('menuitem');
+    const button = await screen.findByRole('button');
     userEvent.click(button);
 
     const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });
@@ -88,7 +88,7 @@ describe('filter', () => {
   it('applyFilters calls `applyFilters`', async () => {
     const applyFilters = jest.fn();
     render(<RenderFilterItem applyFilters={applyFilters} />);
-    const button = await screen.findByRole('menuitem');
+    const button = await screen.findByRole('button');
     userEvent.click(button);
 
     const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });

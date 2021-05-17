@@ -124,7 +124,7 @@ function FilterItem({
   const ariaLabel = `Filter: ${topic || 'no topic selected'} ${condition || 'no condition selected'} ${query || 'no query entered'}`;
 
   return (
-    <div role="menuitem" aria-label={ariaLabel} tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
+    <div role="toolbar" aria-label={ariaLabel} tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
       <button
         type="button"
         aria-label="remove filter"
