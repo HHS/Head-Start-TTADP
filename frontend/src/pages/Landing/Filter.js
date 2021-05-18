@@ -74,7 +74,8 @@ function Filter({ applyFilters, forMyAlerts }) {
 
   const onMenuBlur = (e) => {
     // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
-    if (!e.currentTarget.contains(e.relatedTarget)) {
+    // e.relatedTarget can be null when focus changes within the menu (when using VoiceOver)
+    if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) {
       updateOpen(false);
     }
   };
