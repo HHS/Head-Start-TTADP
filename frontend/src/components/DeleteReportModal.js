@@ -47,7 +47,12 @@ const DeleteModal = ({
         )}
       >
         Are you sure you want to delete this activity report?
-        This action can only be undone by a TTA Smart Hub Administrator
+        <br />
+        This action
+        {' '}
+        <b>cannot</b>
+        {' '}
+        be undone.
       </Modal>
     </div>
   );
