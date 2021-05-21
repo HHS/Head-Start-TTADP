@@ -49,7 +49,7 @@ function ReportMenu({
             >
               Export Table Data...
             </Button>
-            {hasSelectedReports && (
+            {hasSelectedReports && onExportSelected && (
               <Button
                 onClick={onExportSelected}
                 type="button"
@@ -68,13 +68,14 @@ function ReportMenu({
 
 ReportMenu.propTypes = {
   onExportAll: PropTypes.func.isRequired,
-  onExportSelected: PropTypes.func.isRequired,
+  onExportSelected: PropTypes.func,
   hasSelectedReports: PropTypes.bool.isRequired,
   label: PropTypes.string,
 };
 
 ReportMenu.defaultProps = {
   label: 'Open report menu',
+  onExportSelected: null,
 };
 
 export default ReportMenu;
