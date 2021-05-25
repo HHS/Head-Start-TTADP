@@ -11,7 +11,7 @@ output=$($cmd)
 result=$?
 
 if [ $result -eq 0 ]; then
-	# everything is fine
+	echo No known vulnerabilities
 	exit 0
 fi
 
