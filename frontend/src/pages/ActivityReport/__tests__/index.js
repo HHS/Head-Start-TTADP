@@ -62,7 +62,7 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
 };
 
 const recipients = {
-  grants: [{ name: 'grantee', grants: [{ activityRecipientId: 1, name: 'grant' }] }],
+  grants: [{ name: 'grantee', grants: [{ activityRecipientId: 1, name: 'Grantee Name' }] }],
   nonGrantees: [{ activityRecipientId: 1, name: 'nonGrantee' }],
 };
 
@@ -151,7 +151,7 @@ describe('ActivityReport', () => {
       const grantee = within(information).getByLabelText('Grantee');
       fireEvent.click(grantee);
       const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-      await reactSelectEvent.select(granteeSelectbox, ['grant']);
+      await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
       userEvent.click(button);
@@ -178,7 +178,7 @@ describe('ActivityReport', () => {
         fireEvent.click(grantee);
         const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await screen.findByText(withText('grant'))).toBeVisible();
+        expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
       });
 
       it('Non-grantee', async () => {
@@ -194,13 +194,20 @@ describe('ActivityReport', () => {
 
     it('clears selection when non-grantee is selected', async () => {
       renderActivityReport('new');
-      const enabled = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-      expect(enabled).toBeDisabled();
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const grantee = within(information).getByLabelText('Grantee');
-      fireEvent.click(grantee);
-      const disabled = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-      expect(disabled).not.toBeDisabled();
+      await fireEvent.click(grantee);
+
+      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+      await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
+
+      expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
+
+      const nonGrantee = within(information).getByLabelText('Non-Grantee');
+      await fireEvent.click(nonGrantee);
+      await fireEvent.click(grantee);
+
+      expect(screen.queryByText(withText('Grantee Name'))).toBeNull();
     });
   });
 });
