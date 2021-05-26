@@ -45,15 +45,10 @@ describe('MultiSelect', () => {
   it('expects multi select to remain open after selection', async () => {
     const onSubmit = jest.fn();
     render(<TestMultiSelect onSubmit={onSubmit} />);
-    /*
-    const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-    reactSelectEvent.openMenu(granteeSelectbox);
-    */
-
     await selectEvent.select(screen.getByLabelText('label'), ['one']);
     expect(await screen.findByText('two')).toBeVisible();
   });
-
+  
   it('selected value is an array of strings', async () => {
     const onSubmit = jest.fn();
     render(<TestMultiSelect onSubmit={onSubmit} />);
