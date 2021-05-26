@@ -505,7 +505,7 @@ function Landing() {
             />
 
             <Container className="landing inline-size maxw-full" padding={0}>
-              <span role="menubar" className="smart-hub--table-controls">
+              <span className="smart-hub--table-controls">
                 {numberOfSelectedReports > 0
                   && (
                   <span className="smart-hub--selected-tag margin-right-1">
