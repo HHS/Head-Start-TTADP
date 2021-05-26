@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { findByText, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import { act } from 'react-dom/test-utils';
 import { useForm } from 'react-hook-form/dist/index.ie11';
@@ -48,7 +48,7 @@ describe('MultiSelect', () => {
     await selectEvent.select(screen.getByLabelText('label'), ['one']);
     expect(await screen.findByText('two')).toBeVisible();
   });
-  
+
   it('selected value is an array of strings', async () => {
     const onSubmit = jest.fn();
     render(<TestMultiSelect onSubmit={onSubmit} />);
