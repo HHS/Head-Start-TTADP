@@ -5,14 +5,13 @@
 
 set -u
 
-set +e
+
 cmd="yarn audit --level low --json"
 output=$($cmd)
 result=$?
-set -e
 
 if [ $result -eq 0 ]; then
-	# everything is fine
+	echo No known vulnerabilities
 	exit 0
 fi
 
@@ -23,8 +22,14 @@ if [ -f yarn-audit-known-issues ] && echo "$output" | grep auditAdvisory | diff 
 fi
 
 echo
-echo Security vulnerabilities were found that were not ignored
+echo Security vulnerabilities were found that were not ignored:
+echo "$output" | jq -s 'map(select(.type == "auditAdvisory")) | map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique'
 echo
+if [ -f yarn-audit-known-issues ]; then
+	echo Previously ignored:
+	cat yarn-audit-known-issues | jq -s 'map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique'
+	echo
+fi
 echo Check to see if these vulnerabilities apply to production
 echo and/or if they have fixes available. If they do not have
 echo fixes and they do not apply to production, you may ignore them
@@ -34,7 +39,5 @@ echo
 echo "$cmd | grep auditAdvisory > yarn-audit-known-issues"
 echo
 echo and commit the yarn-audit-known-issues file
-echo
-echo "$output" | grep auditAdvisory | python -mjson.tool
 
 exit "$result"
