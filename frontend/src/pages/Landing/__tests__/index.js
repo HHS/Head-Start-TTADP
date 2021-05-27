@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 
 import userEvent from '@testing-library/user-event';
 import UserContext from '../../../UserContext';
+import AriaLiveContext from '../../../AriaLiveContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
 import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../../../fetchers/helpers';
@@ -16,12 +17,16 @@ jest.mock('../../../fetchers/helpers');
 
 const oldWindowLocation = window.location;
 
+const mockAnnounce = jest.fn();
+
 const renderLanding = (user) => {
   render(
     <MemoryRouter>
-      <UserContext.Provider value={{ user }}>
-        <Landing authenticated />
-      </UserContext.Provider>
+      <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+        <UserContext.Provider value={{ user }}>
+          <Landing authenticated />
+        </UserContext.Provider>
+      </AriaLiveContext.Provider>
     </MemoryRouter>,
   );
 };
@@ -665,9 +670,9 @@ describe('Landing page table menus & selections', () => {
         };
 
         renderLanding(user);
-        const reportMenu = await screen.findByRole('button', { name: 'Open alerts report menu' });
+        const reportMenu = await screen.findByLabelText(/my alerts report menu/i);
         userEvent.click(reportMenu);
-        const downloadButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+        const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
       });
@@ -691,9 +696,9 @@ describe('Landing page table menus & selections', () => {
       };
 
       renderLanding(user);
-      const reportMenu = await screen.findByRole('button', { name: 'Open report menu' });
+      const reportMenu = await screen.findByLabelText(/reports menu/i);
       userEvent.click(reportMenu);
-      const downloadButton = await screen.findByRole('button', { name: 'Export Table Data...' });
+      const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
       userEvent.click(downloadButton);
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
     });
@@ -900,5 +905,101 @@ describe('Landing Page error', () => {
     renderLanding(user);
 
     await expect(screen.findAllByText(/New Activity Report/)).rejects.toThrow();
+  });
+});
+
+//  107,350-361,402
+//
+describe('handleApplyFilters', () => {
+  beforeEach(() => {
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 2, rows: activityReports },
+    );
+  });
+
+  afterEach(() => fetchMock.restore());
+
+  it('calls AriaLiveContext.announce', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 2,
+          regionId: 1,
+        },
+      ],
+    };
+    renderLanding(user);
+    // Only one button exists only because there are no alerts
+    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
+    fireEvent.click(filterMenuButton);
+    const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
+    fireEvent.click(addFilterButton);
+
+    const topic = await screen.findByRole('combobox', { name: 'topic' });
+    userEvent.selectOptions(topic, 'reportId');
+
+    const condition = await screen.findByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, 'Contains');
+
+    const query = await screen.findByRole('textbox');
+    userEvent.type(query, 'test');
+
+    const apply = await screen.findByRole('button', { name: 'Apply Filters' });
+    userEvent.click(apply);
+
+    expect(mockAnnounce).toHaveBeenCalled();
+  });
+});
+
+describe('handleApplyAlertFilters', () => {
+  beforeEach(() => {
+    fetchMock.get(
+      '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10',
+      { count: 10, alerts: generateXFakeReports(10) },
+    );
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10',
+      { count: 0, rows: [] },
+    );
+  });
+
+  afterEach(() => fetchMock.restore());
+
+  it('calls AriaLiveContext.announce', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 2,
+          regionId: 1,
+        },
+      ],
+    };
+    renderLanding(user);
+
+    // Both alerts and AR tables' buttons should appear
+    const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
+    expect(allFilterButtons.length).toBe(2);
+
+    const filterMenuButton = allFilterButtons[0];
+    fireEvent.click(filterMenuButton);
+    const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
+    fireEvent.click(addFilterButton);
+
+    const topic = await screen.findByRole('combobox', { name: 'topic' });
+    userEvent.selectOptions(topic, 'reportId');
+
+    const condition = await screen.findByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, 'Contains');
+
+    const query = await screen.findByRole('textbox');
+    userEvent.type(query, 'test');
+
+    const apply = await screen.findByRole('button', { name: 'Apply Filters' });
+    userEvent.click(apply);
+
+    expect(mockAnnounce).toHaveBeenCalled();
   });
 });
