@@ -1,5 +1,3 @@
-'/hello':
-  $ref: './hello.yaml'
 '/user':
   $ref: './user.yaml'
 '/users/collaborators':

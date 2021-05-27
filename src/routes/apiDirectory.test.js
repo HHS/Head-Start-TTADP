@@ -43,14 +43,6 @@ describe('apiDirectory tests', () => {
     await db.sequelize.close();
   });
 
-  it('tests the hello route', async () => {
-    await request(app)
-      .get('/api/hello')
-      .expect(200)
-      .then((res) => {
-        expect(res.text).toBe('Hello from ttadp');
-      });
-  });
   it('tests an unknown route', async () => {
     await request(app)
       .get('/api/unknown')
