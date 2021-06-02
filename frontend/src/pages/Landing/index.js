@@ -508,13 +508,13 @@ function Landing() {
               <span className="smart-hub--table-controls">
                 {numberOfSelectedReports > 0
                   && (
-                  <span className="smart-hub--selected-tag margin-right-1">
+                  <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1">
                     {numberOfSelectedReports}
                     {' '}
                     selected
                     {' '}
                     <Button
-                      className="smart-hub--select-tag__button"
+                      className="smart-hub--select-tag__button margin-left-1"
                       unstyled
                       aria-label="deselect all reports"
                       onClick={() => {

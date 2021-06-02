@@ -78,18 +78,8 @@ div.smart-hub--total-count {
   margin-top: 24px;
 }
 
-.smart-hub--selected-tag {
-  border-radius: 15px;
+.smart-hub-bg-vivid {
   background-color: #0166AB;
-  padding: 5px;
-  padding-right: 15px;
-  padding-left: 15px;
-  color: white;
-  width: 65px;
-  height: 13px;
-  font-family: SourceSansPro;
-  font-size: 14px;
-  line-height: 26px;
 }
 
 .landing .smart-hub--table-nav {
@@ -160,11 +150,6 @@ h1.landing {
 
 .smart-hub--blue a {
   color: #3C72AE;
-}
-
-.landing .usa-button {
-  margin-left: 45px;
-  vertical-align: middle;
 }
 
 .landing .usa-alert .usa-alert--error {
@@ -320,12 +305,6 @@ a.desc {
   width:1px;
   height:1px;
   overflow:hidden;
-}
-
-.landing .smart-hub--select-tag__button {
-  margin-left: 0;
-  vertical-align: none;
-  margin-bottom: 3px;
 }
 
 .landing .smart-hub--table-controls__button {
