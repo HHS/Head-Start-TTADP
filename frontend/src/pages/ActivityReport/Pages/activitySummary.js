@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isEmpty } from 'lodash';
-
+import moment from 'moment';
 import {
   Fieldset, Radio, Grid, TextInput, Checkbox,
 } from '@trussworks/react-uswds';
@@ -38,6 +38,20 @@ const ActivitySummary = ({
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
+
+  /**
+   *
+   *  if "endDate" is passed into the Start Date Date picker as is,
+   *  then it is excluded as an option on that start date date picker
+   *  so we calculate the day after using the included moment library
+   *  and convert it to a string to pass prop types validation
+   *
+   *  that way once start and end date are entered, you can still edit the
+   *  start date to be the same as end date
+   *
+   */
+
+  const allowedEndDate = (selectedEndDate) => (selectedEndDate ? moment(endDate).add(1, 'days').format('MM/DD/YYYY') : null);
 
   const grants = rawGrants.map((grantee) => ({
     label: grantee.name,
@@ -242,7 +256,7 @@ const ActivitySummary = ({
                 <DatePicker
                   ariaName="Start Date (Required)"
                   control={control}
-                  maxDate={endDate}
+                  maxDate={allowedEndDate(endDate)}
                   name="startDate"
                   openUp
                 />
