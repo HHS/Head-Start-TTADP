@@ -43,7 +43,7 @@ function ReportMenu({
   };
 
   return (
-    <span>
+    <span className="position-relative">
       <button
         ref={menuButtonRef}
         type="button"
@@ -63,7 +63,7 @@ function ReportMenu({
         />
       </button>
       {open && (
-        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} style={{ left: '95px' }} className="z-400 position-absolute width-card-lg">
+        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute left-0 width-card-lg">
           <Container padding={2} className="margin-bottom-0">
             <button
               role="menuitem"

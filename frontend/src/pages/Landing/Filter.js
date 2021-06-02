@@ -114,7 +114,7 @@ function Filter({ applyFilters, forMyAlerts }) {
         <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
       </button>
       {open && (
-      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute">
+      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 left-0 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
