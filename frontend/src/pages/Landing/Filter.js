@@ -76,13 +76,9 @@ function Filter({ applyFilters, forMyAlerts }) {
     // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
     // e.relatedTarget can be null when focus changes within the menu (when using VoiceOver)
 
-    /* the <td>'s inside the datepicker have a tabindex=-1 so that they will always evaluate to
-    null as e.relatedTarget (or that's my understanding)despite having a role="button",
-    so manually check to see if they are a calendar day */
+    const isCalendarControl = e.target.matches('.CalendarDay, .DayPickerNavigation_button');
 
-    const isCalendarDay = e.target.classList.contains('CalendarDay');
-
-    if (!isCalendarDay && !e.currentTarget.contains(e.relatedTarget)) {
+    if (!isCalendarControl && !e.currentTarget.contains(e.relatedTarget)) {
       updateOpen(false);
     }
   };
