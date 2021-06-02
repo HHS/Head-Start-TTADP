@@ -107,7 +107,7 @@ function Filter({ applyFilters, forMyAlerts }) {
         onClick={() => {
           updateOpen(!open);
         }}
-        className={`usa-button usa-button--outline smart-hub--filter-button smart-hub--table-controls__button ${filterClass}`}
+        className={`usa-button usa-button--outline font-sans-xs margin-left-1 smart-hub--table-controls__button ${filterClass}`}
       >
         {`Filters ${filters.length > 0 ? `(${filters.length})` : ''}`}
         {' '}
@@ -148,7 +148,7 @@ function Filter({ applyFilters, forMyAlerts }) {
             <div className="height-20 margin-top-2 clearfix">
               <button
                 type="button"
-                className="usa-button usa-button--outline float-left smart-hub--filter-button"
+                className="usa-button usa-button--outline float-left font-sans-xs margin-left-1"
                 onClick={() => {
                   updateFilters([...filters, defaultFilter()]);
                 }}
@@ -158,7 +158,7 @@ function Filter({ applyFilters, forMyAlerts }) {
               {hasFilters && (
               <button
                 type="button"
-                className="usa-button float-right smart-hub--filter-button"
+                className="usa-button float-right font-sans-xs margin-left-1"
                 onClick={onApplyFilter}
               >
                 Apply Filters

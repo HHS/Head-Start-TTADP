@@ -48,7 +48,7 @@ function ReportMenu({
         ref={menuButtonRef}
         type="button"
         aria-haspopup="menu"
-        className={`usa-button usa-button--outline smart-hub--filter-button smart-hub--table-controls__button ${openClass}`}
+        className={`usa-button usa-button--outline font-sans-xs margin-left-1 smart-hub--table-controls__button ${openClass}`}
         aria-label={label}
         onClick={() => updateOpen((current) => !current)}
       >
@@ -63,7 +63,7 @@ function ReportMenu({
         />
       </button>
       {open && (
-        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} style={{ left: '85px' }} className="z-400 position-absolute width-card-lg">
+        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} style={{ left: '95px' }} className="z-400 position-absolute width-card-lg">
           <Container padding={2} className="margin-bottom-0">
             <button
               role="menuitem"
