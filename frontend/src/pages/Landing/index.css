@@ -298,15 +298,6 @@ a.desc {
   padding-bottom: 15px;
 }
 
-#arTblDesc {
-  position:absolute;
-  left:-10000px;
-  top:auto;
-  width:1px;
-  height:1px;
-  overflow:hidden;
-}
-
 .landing .smart-hub--table-controls__button {
   color: black;
   text-decoration: none;

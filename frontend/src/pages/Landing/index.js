@@ -564,7 +564,7 @@ function Landing() {
                 <Table className="usa-table usa-table--borderless usa-table--striped">
                   <caption>
                     Activity reports
-                    <p id="arTblDesc">with sorting and pagination</p>
+                    <p className="usa-sr-only">with sorting and pagination</p>
                   </caption>
                   <thead>
                     <tr>
