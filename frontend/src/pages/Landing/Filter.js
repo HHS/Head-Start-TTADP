@@ -76,6 +76,7 @@ function Filter({ applyFilters, forMyAlerts }) {
     // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
     // e.relatedTarget can be null when focus changes within the menu (when using VoiceOver)
 
+    // const isCalendarControl = e.target.classList.contains('CalendarDay') || e.target.classList.contains('DayPickerNavigation_button');
     const isCalendarControl = e.target.matches('.CalendarDay, .DayPickerNavigation_button');
 
     if (!isCalendarControl && !e.currentTarget.contains(e.relatedTarget)) {
