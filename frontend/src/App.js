@@ -28,6 +28,8 @@ import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
 
+import './polyfills';
+
 function App() {
   const [user, updateUser] = useState();
   const [authError, updateAuthError] = useState();
