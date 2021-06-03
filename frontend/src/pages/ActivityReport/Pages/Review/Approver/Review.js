@@ -34,7 +34,7 @@ const Review = ({
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
           <Label htmlFor="managerNotes">Manager notes</Label>
           <div className={`margin-top-1 ${textAreaClass}`}>
-            <HookFormRichEditor id="managerNotes" name="managerNotes" />
+            <HookFormRichEditor ariaLabel="Manager notes" id="managerNotes" name="managerNotes" />
           </div>
         </Fieldset>
         <FormItem
