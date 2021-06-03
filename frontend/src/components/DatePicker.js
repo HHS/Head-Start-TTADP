@@ -30,7 +30,6 @@ const DateInput = ({
 
   const isOutsideRange = (date) => {
     const isBefore = minDate && date.isBefore(moment(minDate, dateFmt));
-    // console.log({name, maxDate: moment(maxDate, "DD-MM-YYYY").add(1, 'days')});
 
     // If max date is inclusive (maxDateInclusive == true)
     // allow the user to pick a start date that is the same as the maxDate
