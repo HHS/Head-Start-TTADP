@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import Filter, { filtersToQueryString } from '../Filter';
@@ -30,6 +30,44 @@ describe('filter', () => {
       userEvent.click(addFilter);
       expect(button.textContent).toContain('Filters (2)');
     });
+  });
+
+  it('filter menu closes when focus moves away from it', async () => {
+    let menu;
+
+    render(<RenderFilterItem />);
+    const button = await screen.findByRole('button');
+    expect(button).not.toHaveClass('smart-hub--menu-button__open');
+    userEvent.click(button);
+    expect(button).toHaveClass('smart-hub--menu-button__open');
+    menu = screen.queryByRole('menu');
+    expect(menu).toBeInTheDocument();
+
+    button.focus();
+    menu = screen.queryByRole('menu');
+    expect(menu).not.toBeInTheDocument();
+  });
+
+  it('filter menu closes when Escape key is pressed', async () => {
+    let menu;
+
+    render(<RenderFilterItem />);
+    const button = await screen.findByRole('button');
+    expect(button).not.toHaveClass('smart-hub--menu-button__open');
+    userEvent.click(button);
+    expect(button).toHaveClass('smart-hub--menu-button__open');
+    menu = screen.queryByRole('menu');
+    expect(menu).toBeInTheDocument();
+
+    // Non-Escape presses should not close the menu
+    fireEvent.keyDown(document.activeElement || document.body, { key: ' ' });
+    menu = screen.queryByRole('menu');
+    expect(menu).toBeInTheDocument();
+
+    // Keypress with the escape key should close the menu
+    fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape' });
+    menu = screen.queryByRole('menu');
+    expect(menu).not.toBeInTheDocument();
   });
 
   it('can remove filters', async () => {

@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import {
@@ -107,7 +106,7 @@ const reportFilters = [
   },
 ];
 
-export default function FilterItem({
+function FilterItem({
   topic,
   condition,
   query,
@@ -115,23 +114,25 @@ export default function FilterItem({
   onRemoveFilter,
   id,
   forMyAlerts,
+  forwardedRef,
 }) {
   const possibleFilters = forMyAlerts ? myAlertsFilters : reportFilters;
   const selectedTopic = possibleFilters.find((filter) => filter.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
   const showQuery = selectedTopic && condition;
 
+  const ariaLabel = `Filter: ${topic || 'no topic selected'} ${condition || 'no condition selected'} ${query || 'no query entered'}`;
+
   return (
-    <div className="margin-top-1 smart-hub--filter smart-hub--filter-item">
-      <Button
+    <div role="toolbar" aria-label={ariaLabel} tabIndex={0} ref={forwardedRef} className="margin-top-1 smart-hub--filter smart-hub--filter-item">
+      <button
         type="button"
-        unstyled
         aria-label="remove filter"
-        className="margin-right-1 smart-hub--filter-button"
+        className="usa-button usa-button--unstyled margin-right-1 smart-hub--filter-button"
         onClick={onRemoveFilter}
       >
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
-      </Button>
+      </button>
       Where
       <select
         name="topic"
@@ -170,10 +171,21 @@ FilterItem.propTypes = {
   query: PropTypes.string.isRequired,
   id: PropTypes.string.isRequired,
   forMyAlerts: PropTypes.bool,
+  forwardedRef: PropTypes.oneOfType([
+    PropTypes.func,
+    // eslint-disable-next-line react/forbid-prop-types
+    PropTypes.shape({ current: PropTypes.object }),
+  ]),
 };
 
 FilterItem.defaultProps = {
   topic: '',
   condition: '',
   forMyAlerts: false,
+  forwardedRef: null,
 };
+
+// eslint-disable-next-line react/jsx-props-no-spreading
+const WrappedFilterItem = React.forwardRef((props, ref) => (<FilterItem {...props} forwardedRef={ref} />));
+
+export default WrappedFilterItem;
