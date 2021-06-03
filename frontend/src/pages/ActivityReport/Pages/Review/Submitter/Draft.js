@@ -66,7 +66,7 @@ const Draft = ({
             required={false}
           >
             <div className={`margin-top-1 ${textAreaClass}`}>
-              <HookFormRichEditor name="additionalNotes" id="additionalNotes" />
+              <HookFormRichEditor ariaLabel="Additional notes" name="additionalNotes" id="additionalNotes" />
             </div>
           </FormItem>
         </Fieldset>
