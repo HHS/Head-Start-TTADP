@@ -266,7 +266,7 @@ function MyAlerts(props) {
           <Table className="usa-table usa-table--borderless" fullWidth>
             <caption className="smart-hub--table-caption">
               My activity report alerts
-              <p id="arTblDesc">with sorting</p>
+              <p className="usa-sr-only">with sorting</p>
             </caption>
             <thead>
               <tr>
