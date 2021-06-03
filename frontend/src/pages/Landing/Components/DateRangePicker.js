@@ -8,6 +8,12 @@ import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 
 import { DATE_FMT, EARLIEST_FILTER_DATE } from '../constants';
 
+const phrases = {
+  focusStartDate: 'Interact with the calendar and add the dates for your date range',
+  chooseAvailableStartDate: ({ date }) => `Choose ${date} for the earliest date`,
+  chooseAvailableEndDate: ({ date }) => `Choose ${date} for the latest date`,
+};
+
 function DateRangePicker({
   query, onUpdateFilter, id,
 }) {
@@ -36,6 +42,7 @@ function DateRangePicker({
     <span id={id}>
       <DateRange
         small
+        phrases={phrases}
         focusedInput={focusedInput}
         startDateId={startDateId}
         endDateId={endDateId}
