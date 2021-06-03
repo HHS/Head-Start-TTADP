@@ -505,7 +505,7 @@ function Landing() {
             />
 
             <Container className="landing inline-size maxw-full" padding={0}>
-              <span className="smart-hub--table-controls">
+              <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
                 {numberOfSelectedReports > 0
                   && (
                   <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1">

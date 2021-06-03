@@ -236,7 +236,7 @@ function MyAlerts(props) {
 
       {reports && (reports.length > 0 || hasFilters) && (
       <Container className="landing inline-size maxw-full" padding={0}>
-        <span role="menubar" className="smart-hub--alerts-table-controls">
+        <span role="menubar" className="smart-hub--alerts-table-controls display-flex flex-row flex-align-center">
           <Filter applyFilters={updateReportFilters} forMyAlerts />
           <ReportMenu
             label="My Alerts report menu"
