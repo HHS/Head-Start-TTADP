@@ -32,7 +32,7 @@ const ActivitySummary = ({
   } = useFormContext();
   const activityRecipientType = watch('activityRecipientType');
   const startDate = watch('startDate');
-  // const endDate = watch('endDate');
+  const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
@@ -240,7 +240,8 @@ const ActivitySummary = ({
                 <DatePicker
                   ariaName="Start Date (Required)"
                   control={control}
-                  maxDate="07/04/2021"
+                  maxDate={endDate}
+                  maxDateInclusive
                   name="startDate"
                   openUp
                 />
