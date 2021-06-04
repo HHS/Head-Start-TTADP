@@ -59,7 +59,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
 
     const { url } = requestObj;
     const { data } = await axios.get(url, requestObj);
-    logger.info(`User details response data: ${JSON.stringify(data, null, 2)}`);
+    auditLogger.info(`User details response data: ${JSON.stringify(data, null, 2)}`);
     const {
       name,
       principal: {
