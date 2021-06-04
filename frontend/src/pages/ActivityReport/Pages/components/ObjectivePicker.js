@@ -47,7 +47,7 @@ const ObjectivePicker = () => {
           <div className="margin-top-1" key={objective.id}>
             <Objective
               parentLabel={OBJECTIVE_LABEL}
-              objectiveAriaLabel={objectiveIndex + 1}
+              objectiveAriaLabel={(objectiveIndex + 1).toString()}
               objective={objective}
               onRemove={() => { if (!singleObjective) { onRemoveObjective(objectiveIndex); } }}
               onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}
