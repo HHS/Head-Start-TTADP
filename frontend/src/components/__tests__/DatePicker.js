@@ -27,7 +27,7 @@ Object.defineProperty(window, 'getComputedStyle', {
 
 describe('DatePicker', () => {
   // eslint-disable-next-line react/prop-types
-  const RenderDatePicker = ({ disabled, maxDate, maxDateInclusive }) => {
+  const RenderDatePicker = ({ disabled }) => {
     const { control } = useForm();
     return (
       <form>
@@ -37,8 +37,6 @@ describe('DatePicker', () => {
           name="picker"
           disabled={disabled}
           ariaName="datepicker"
-          maxDateInclusive={maxDateInclusive}
-          maxDate={maxDate}
         />
       </form>
     );
