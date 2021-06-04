@@ -52,6 +52,7 @@ function AdminMultiSelect({
           isMulti
           options={options}
           onChange={onChange}
+          closeMenuOnSelect={false}
           name={name}
           value={getValues(value)}
           styles={styles}

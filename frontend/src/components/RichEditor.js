@@ -67,10 +67,15 @@ const RichEditor = ({
     />
   );
 };
+
 RichEditor.propTypes = {
-  value: PropTypes.string.isRequired,
+  value: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   ariaLabel: PropTypes.string.isRequired,
+};
+
+RichEditor.defaultProps = {
+  value: '',
 };
 
 export default RichEditor;
