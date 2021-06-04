@@ -462,7 +462,7 @@ function Landing() {
                   aria-label="dismiss alert"
                   onClick={() => updateShowAlert(false)}
                 >
-                  <span className="fa-sm">
+                  <span className="fa-sm margin-right-2">
                     <FontAwesomeIcon color="black" icon={faTimesCircle} />
                   </span>
                 </Button>
