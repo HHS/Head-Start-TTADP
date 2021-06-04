@@ -3,8 +3,6 @@ import React from 'react';
 import {
   render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-
 import { useForm } from 'react-hook-form/dist/index.ie11';
 import DatePicker from '../DatePicker';
 
@@ -64,23 +62,5 @@ describe('DatePicker', () => {
     fireEvent.click(openCalendar);
     const button = await screen.findByLabelText('Move backward to switch to the previous month.');
     await waitFor(() => expect(button).toBeVisible());
-  });
-
-  it('correctly accounts for the maxDateInclusive prop being false', async () => {
-    render(<RenderDatePicker maxDate="07/04/2021" maxDateInclusive={false} />);
-
-    const text = await screen.findByRole('textbox');
-    userEvent.type(text, '02/02/2022');
-
-    await waitFor(() => expect(text).toBeInvalid());
-  });
-
-  it('correctly accounts for the maxDateInclusive prop being true', async () => {
-    render(<RenderDatePicker maxDate="07/04/2021" maxDateInclusive />);
-
-    const text = await screen.findByRole('textbox');
-    userEvent.type(text, '02/02/2022');
-
-    expect(text).toBeValid();
   });
 });
