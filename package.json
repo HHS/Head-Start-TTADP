@@ -26,6 +26,7 @@
     "lint:ci": "eslint -f eslint-formatter-multiple src",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "lint:fix": "eslint --fix src",
+    "lint:fix:single": "eslint --fix",
     "lint:fix:all": "yarn lint:fix && yarn --cwd frontend lint:fix",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
     "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
