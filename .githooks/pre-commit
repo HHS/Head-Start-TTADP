@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-eslint_installed=false 
-
-# Check for eslint
-if ! which eslint; then
-  printf "Not auto linting, please install eslint globally (npm i -g eslint)"
-else 
-  eslint_installed=true
-fi
-
 # Format any *.tf files that were cached/staged
 files=$(git diff --cached --name-only)
 for f in $files
@@ -19,14 +10,7 @@ do
     terraform fmt "$f"
     git add "$f"
   fi
-
-  if $eslint_installed && [ -e "$f" ] && [[ $f == *.js ]]; then    
-    eslint --fix "$f"
-    if [[ "$?" == 0 ]]; then      
-      git add "$f"
-    else
-      printf "\t\033[41mESLint fix Failed: %s\033[0m", "$f"
-    fi
-  fi
-
 done
+
+# run the linter on all files
+yarn lint:fix:all
