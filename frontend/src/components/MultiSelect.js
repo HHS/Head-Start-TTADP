@@ -150,7 +150,7 @@ function MultiSelect({
             isDisabled={disabled}
             tabSelectsValue={false}
             isClearable={multiSelectOptions.isClearable}
-            closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect}
+            closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
             controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
             hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
             placeholder=""

@@ -149,7 +149,8 @@
     "coveragePathIgnorePatterns": [
       "<rootDir>/src/index.js",
       "<rootDir>/src/setupProxy.js",
-      "<rootDir>/src/pages/NotFound/index.js"
+      "<rootDir>/src/pages/NotFound/index.js",
+      "<rootDir>/src/polyfills.js"
     ],
     "coverageThreshold": {
       "global": {
