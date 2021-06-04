@@ -87,7 +87,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
 
     const collaboratorsTitle = collaborators && collaborators.reduce(
       (result, collaborator) => `${result + collaborator.fullName}\n`,
-      '',
+      '', // this is a weird change
     );
 
     const collaboratorsWithTags = collaborators && collaborators.map((collaborator) => (
