@@ -194,20 +194,23 @@ describe('ActivityReport', () => {
 
     it('clears selection when non-grantee is selected', async () => {
       renderActivityReport('new');
-      const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+      let information = await screen.findByRole('group', { name: 'Who was the activity for?' });
+
       const grantee = within(information).getByLabelText('Grantee');
       await fireEvent.click(grantee);
 
-      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+      let granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+      reactSelectEvent.openMenu(granteeSelectbox);
       await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
-
       expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
 
+      information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const nonGrantee = within(information).getByLabelText('Non-Grantee');
       await fireEvent.click(nonGrantee);
       await fireEvent.click(grantee);
 
-      expect(screen.queryByText(withText('Grantee Name'))).toBeNull();
+      granteeSelectbox = await screen.findByLabelText(/grantee name\(s\)/i);
+      expect(within(granteeSelectbox).queryByText('Grantee Name')).toBeNull();
     });
 
     it('allows you to pick the same start and end date', async () => {
