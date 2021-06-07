@@ -22,7 +22,7 @@ import './DatePicker.css';
 const dateFmt = 'MM/DD/YYYY';
 
 const DateInput = ({
-  control, minDate, name, disabled, maxDate, openUp, required, ariaName,
+  control, minDate, name, disabled, maxDate, openUp, required, ariaName, maxDateInclusive,
 }) => {
   const hintId = `${name}-hint`;
   const [isFocused, updateFocus] = useState(false);
@@ -30,7 +30,17 @@ const DateInput = ({
 
   const isOutsideRange = (date) => {
     const isBefore = minDate && date.isBefore(moment(minDate, dateFmt));
-    const isAfter = maxDate && date.isAfter(moment(maxDate, dateFmt));
+
+    // If max date is inclusive (maxDateInclusive == true)
+    // allow the user to pick a start date that is the same as the maxDate
+    // otherwise, only the day before is allowed
+    let isAfter = false;
+    if (maxDateInclusive) {
+      const newDate = moment(maxDate, dateFmt).add(1, 'days');
+      isAfter = maxDate && date.isAfter(newDate, dateFmt);
+    } else {
+      isAfter = maxDate && date.isAfter(moment(maxDate, dateFmt));
+    }
 
     return isBefore || isAfter;
   };
@@ -103,6 +113,7 @@ DateInput.propTypes = {
   openUp: PropTypes.bool,
   disabled: PropTypes.bool,
   required: PropTypes.bool,
+  maxDateInclusive: PropTypes.bool,
 };
 
 DateInput.defaultProps = {
@@ -111,6 +122,7 @@ DateInput.defaultProps = {
   disabled: false,
   openUp: false,
   required: true,
+  maxDateInclusive: false,
 };
 
 export default DateInput;
