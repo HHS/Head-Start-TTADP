@@ -76,6 +76,10 @@ function Filter({ applyFilters, forMyAlerts }) {
     // https://reactjs.org/docs/events.html#detecting-focus-entering-and-leaving
     // e.relatedTarget can be null when focus changes within the menu (when using VoiceOver)
 
+    /**
+     * We check for these because if we don't, the filter menu will abruptly close when the calendar day
+     * or the month navigation buttons are clicked, rendering the date picker un-usable
+     */
     const isCalendarControl = e.target.matches('.CalendarDay, .DayPickerNavigation_button');
 
     if (!isCalendarControl && !e.currentTarget.contains(e.relatedTarget)) {
