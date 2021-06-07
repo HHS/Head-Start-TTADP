@@ -3,7 +3,6 @@ import React from 'react';
 import {
   render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
-
 import { useForm } from 'react-hook-form/dist/index.ie11';
 import DatePicker from '../DatePicker';
 
