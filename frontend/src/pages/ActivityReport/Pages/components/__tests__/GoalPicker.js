@@ -5,7 +5,7 @@ import {
   render,
   screen,
   fireEvent,
-  waitFor
+  waitFor,
 } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
@@ -159,14 +159,16 @@ describe('GoalPicker', () => {
       const availableGoals = [];
       const selectedGoals = [
         {
-          id: 1, name: 'goal to edit', new: true,
+          id: 1,
+          name: 'goal to edit',
+          new: true,
           objectives: [{
             id: 1,
             title: 'orig objective 1',
             ttaProvided: 'objective 1 desc',
             status: 'In Progress',
-          }]
-        }
+          }],
+        },
       ];
 
       render(
@@ -182,10 +184,10 @@ describe('GoalPicker', () => {
       const editObjBtn = await screen.findByRole('button', { name: 'Edit' });
       fireEvent.click(editObjBtn);
 
-      let objectiveTitleTxtBx = screen.getByDisplayValue(/objective 1/i);
+      const objectiveTitleTxtBx = screen.getByDisplayValue(/objective 1/i);
       fireEvent.change(objectiveTitleTxtBx, { target: { value: 'updated objective 1' } });
 
-      const saveObjectiveBtn = await screen.getByRole('button', { name: /save objective 1 on goal 1/i });
+      const saveObjectiveBtn = screen.getByRole('button', { name: /save objective 1 on goal 1/i });
       userEvent.click(saveObjectiveBtn);
 
       expect(screen.queryByText('orig objective 1')).not.toBeInTheDocument();
