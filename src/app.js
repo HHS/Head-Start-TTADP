@@ -59,7 +59,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
 
     const { url } = requestObj;
     const { data } = await axios.get(url, requestObj);
-    logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
+    auditLogger.info(`User details response data: ${JSON.stringify(data, null, 2)}`);
     const {
       name,
       principal: {
@@ -84,7 +84,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
     req.session.userId = dbUser.id;
     auditLogger.info(`User ${dbUser.id} logged in`);
 
-    logger.debug(`referrer path: ${req.session.referrerPath}`);
+    logger.info(`referrer path: ${req.session.referrerPath}`);
     res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
   } catch (error) {
     auditLogger.error(`Error logging in: ${error}`);
