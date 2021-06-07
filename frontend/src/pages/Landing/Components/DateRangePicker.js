@@ -69,7 +69,7 @@ function DateRangePicker({
         onClick={() => { updateOpened(true); updateFocused('startDate'); }}
         aria-label={'open calendar"'}
         type="button"
-        className="margin-top-auto margin-bottom-auto smart-hub--filter-button smart-hub--filter-date-picker-button"
+        className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
         unstyled
       >
         <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
