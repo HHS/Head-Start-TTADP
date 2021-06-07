@@ -128,7 +128,7 @@ function FilterItem({
       <button
         type="button"
         aria-label="remove filter"
-        className="usa-button usa-button--unstyled margin-right-1 smart-hub--filter-button"
+        className="usa-button usa-button--unstyled font-sans-xs margin-right-1 margin-left-0"
         onClick={onRemoveFilter}
       >
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
