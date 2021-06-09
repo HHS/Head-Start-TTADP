@@ -140,6 +140,28 @@ describe('Goal', () => {
       }]);
     });
 
+    it('cant be removed', async () => {
+      const onUpdate = jest.fn();
+      const objectives = [
+        {
+          id: 'a', title: 'first', ttaProvided: '<p>This is the TTA Desc</p>', status: 'Not Started',
+        },
+      ];
+      render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
+
+      const optionsObjBtn = screen.getByRole('button', { name: /edit or delete objective 1 on goal 1/i });
+      fireEvent.click(optionsObjBtn);
+
+      const deleteObjBtn = await screen.findByRole('button', { name: 'Delete' });
+      fireEvent.click(deleteObjBtn);
+
+      const objName = screen.getByText(/first/i);
+      expect(objName).toBeVisible();
+
+      const objDesc = screen.getByText(/this is the tta desc/i);
+      expect(objDesc).toBeVisible();
+    });
+
     it('can be updated', async () => {
       const onUpdate = jest.fn();
       const objectives = [{
