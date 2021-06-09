@@ -234,7 +234,7 @@ function MyAlerts(props) {
 
       {reports && (reports.length > 0 || hasFilters) && (
       <Container className="landing inline-size maxw-full" padding={0}>
-        <span role="menubar" className="smart-hub--alerts-table-controls">
+        <span className="smart-hub--alerts-table-controls display-flex flex-row flex-align-center">
           <Filter applyFilters={updateReportFilters} forMyAlerts />
           <ReportMenu
             label="My Alerts report menu"
@@ -264,7 +264,7 @@ function MyAlerts(props) {
           <Table className="usa-table usa-table--borderless" fullWidth>
             <caption className="smart-hub--table-caption">
               My activity report alerts
-              <p id="arTblDesc">with sorting</p>
+              <p className="usa-sr-only">with sorting</p>
             </caption>
             <thead>
               <tr>
