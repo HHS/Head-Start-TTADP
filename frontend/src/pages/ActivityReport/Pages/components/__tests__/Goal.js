@@ -158,8 +158,8 @@ describe('Goal', () => {
       const objName = screen.getByText(/first/i);
       expect(objName).toBeVisible();
 
-      const objDesc = screen.getByText(/this is the tta desc/i)
-      expect(objDesc).toBeVisible();;
+      const objDesc = screen.getByText(/this is the tta desc/i);
+      expect(objDesc).toBeVisible();
     });
 
     it('can be updated', async () => {
