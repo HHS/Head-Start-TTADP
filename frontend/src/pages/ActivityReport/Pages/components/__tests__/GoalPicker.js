@@ -154,6 +154,80 @@ describe('GoalPicker', () => {
       expect(screen.queryByText('test goal edited')).toBeVisible();
       expect(screen.queryByText('another goal')).toBeVisible();
     });
+
+    it('cant be updated, if new name is blank', async () => {
+      const availableGoals = [];
+      const selectedGoals = [
+        {
+          id: 1, name: 'goal to edit', new: true, objectives: [],
+        },
+        { id: 2, name: 'another goal', objectives: [] },
+      ];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
+      fireEvent.click(menuButton);
+
+      const editButton = await screen.findByRole('button', { name: 'Edit' });
+      fireEvent.click(editButton);
+
+      const goalNameInput = await screen.findByLabelText('Edit goal');
+      await waitFor(() => expect(goalNameInput).toBeVisible());
+
+      fireEvent.change(goalNameInput, { target: { value: '' } });
+
+      const updateButton = await screen.findByRole('button', { name: 'Update Goal' });
+      fireEvent.click(updateButton);
+
+      // Old goal name should exist, new blank goal name should not
+      expect(screen.queryByText('goal to edit')).toBeVisible();
+      expect(screen.queryByText('another goal')).toBeVisible();
+    });
+
+    it('objective can be updated', async () => {
+      const availableGoals = [];
+      const selectedGoals = [
+        {
+          id: 1,
+          name: 'goal to edit',
+          new: true,
+          objectives: [{
+            id: 1,
+            title: 'orig objective 1',
+            ttaProvided: 'objective 1 desc',
+            status: 'In Progress',
+          }],
+        },
+      ];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const optionsObjBtn = screen.getByRole('button', { name: /edit or delete objective 1 on goal 1/i });
+      fireEvent.click(optionsObjBtn);
+
+      const editObjBtn = await screen.findByRole('button', { name: 'Edit' });
+      fireEvent.click(editObjBtn);
+
+      const objectiveTitleTxtBx = screen.getByDisplayValue(/objective 1/i);
+      fireEvent.change(objectiveTitleTxtBx, { target: { value: 'updated objective 1' } });
+
+      const saveObjectiveBtn = screen.getByRole('button', { name: /save objective 1 on goal 1/i });
+      userEvent.click(saveObjectiveBtn);
+
+      expect(screen.queryByText('orig objective 1')).not.toBeInTheDocument();
+      expect(screen.queryByText('updated objective 1')).toBeVisible();
+    });
   });
 
   describe('input box', () => {
