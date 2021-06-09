@@ -155,8 +155,11 @@ describe('Goal', () => {
       const deleteObjBtn = await screen.findByRole('button', { name: 'Delete' });
       fireEvent.click(deleteObjBtn);
 
-      expect(objectives.length)
-      expect(onUpdate).not.toHaveBeenCalledWith(objectives[0]);
+      const objName = screen.getByText(/first/i);
+      expect(objName).toBeVisible();
+
+      const objDesc = screen.getByText(/this is the tta desc/i)
+      expect(objDesc).toBeVisible();;
     });
 
     it('can be updated', async () => {
