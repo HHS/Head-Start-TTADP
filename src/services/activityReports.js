@@ -207,6 +207,7 @@ export function activityReportById(activityReportId) {
         attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
         as: 'activityRecipients',
         required: false,
+        separate: true,
         include: [
           {
             model: Grant,
@@ -255,6 +256,7 @@ export function activityReportById(activityReportId) {
         },
         as: 'attachments',
         required: false,
+        separate: true,
       },
       {
         model: NextStep,
@@ -266,6 +268,7 @@ export function activityReportById(activityReportId) {
         attributes: ['note', 'id'],
         as: 'specialistNextSteps',
         required: false,
+        separate: true,
       },
       {
         model: NextStep,
@@ -277,6 +280,7 @@ export function activityReportById(activityReportId) {
         attributes: ['note', 'id'],
         as: 'granteeNextSteps',
         required: false,
+        separate: true,
       },
       {
         model: User,
