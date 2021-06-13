@@ -108,16 +108,11 @@ if (process.env.NODE_ENV === 'production') {
 
 // Set timing parameters.
 // Run at 4 am ET
-const schedule = '*/2 * * * *';
-// const schedule = '0 4 * * *';
+const schedule = '0 4 * * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
   try {
-    auditLogger.info('Updating grants and grantees');
-    logger.info('Update grants and grantees');
-    logger.debug('Enabling debug log level');
-    auditLogger.info(logger.level);
     return updateGrantsGrantees();
   } catch (error) {
     auditLogger.error(`Error processing HSES file: ${error}`);
