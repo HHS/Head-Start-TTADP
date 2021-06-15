@@ -637,7 +637,7 @@ function Landing() {
                 </Table>
               </div>
             </Container>
-            <button id="tp-ar-landing-survey" className="usa-button position-fixed bottom-2 right-1" aria-label="Leave feedback here" type="button">Leave feedback here</button>
+            <button id="tp-ar-landing-survey" className="usa-button position-fixed bottom-2 right-1" aria-label="Please leave feedback" type="button">Please leave feedback</button>
           </>
         )}
       </UserContext.Consumer>
