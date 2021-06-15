@@ -217,6 +217,8 @@ function Landing() {
 
   const ariaLiveContext = useContext(AriaLiveContext);
 
+  const [tpSurveyIsVisible, setTpSurveyIsVisible] = useState(false);
+
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
   );
@@ -442,11 +444,23 @@ function Landing() {
     );
   }
 
+  const displaySurveyModal = () => {
+    const modal = document.getElementsByClassName('fba-modal');
+    if(modal)
+    {
+      console.log("found!!!", modal[0]);
+      modal[0].setAttribute('hidden','false');
+      setTpSurveyIsVisible(!tpSurveyIsVisible);
+    }
+  }
+
   return (
     <>
       <Helmet>
         <title>Landing</title>
+        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
+      
       <UserContext.Consumer>
         {({ user }) => (
           <>
@@ -588,6 +602,7 @@ function Landing() {
                 </Table>
               </div>
             </Container>
+            <button id="tp-ar-landing-survey" class='usa-button position-fixed bottom-2 right-1'  onClick={displaySurveyModal}>Leave feedback here</button>
           </>
         )}
       </UserContext.Consumer>
