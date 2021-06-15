@@ -2,6 +2,10 @@
   font-family: 'Merriweather', serif;
 }
 
+.fba-modal .fba-modal-dialog {
+  margin-top: 120px;
+}
+
 .pagination {
   float: right;
   white-space: nowrap;
