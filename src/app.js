@@ -21,7 +21,7 @@ const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
 app.use(requestLogger);
-app.use(express.json());
+app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
   contentSecurityPolicy: {
@@ -59,15 +59,23 @@ app.get(oauth2CallbackPath, async (req, res) => {
 
     const { url } = requestObj;
     const { data } = await axios.get(url, requestObj);
+
     logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
-    const {
-      name,
-      principal: {
-        username,
-        userId,
-        authorities,
-      },
-    } = data;
+
+    let name; let username; let userId; let
+      authorities;
+    if (data.principal.attributes) { // PIV card use response
+      name = data.name;
+      username = data.principal.attributes.user.username;
+      userId = data.principal.attributes.user.userId;
+      authorities = data.principal.attributes.user.authorities;
+    } else {
+      name = data.name;
+      username = data.principal.username;
+      userId = data.principal.userId;
+      authorities = data.principal.authorities;
+    }
+
     let email = null;
     if (isEmail(username)) {
       email = username;
@@ -85,7 +93,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
     auditLogger.info(`User ${dbUser.id} logged in`);
 
     logger.debug(`referrer path: ${req.session.referrerPath}`);
-    res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath));
+    res.redirect(join(process.env.TTA_SMART_HUB_URI, req.session.referrerPath || ''));
   } catch (error) {
     auditLogger.error(`Error logging in: ${error}`);
     res.status(INTERNAL_SERVER_ERROR).end();
@@ -99,8 +107,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Set timing parameters.
-// Run at midnight
-const schedule = '0 0 * * *';
+// Run at 4 am ET
+const schedule = '0 4 * * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {

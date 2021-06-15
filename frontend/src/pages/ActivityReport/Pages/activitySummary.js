@@ -3,11 +3,9 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isEmpty } from 'lodash';
-
 import {
   Fieldset, Radio, Grid, TextInput, Checkbox,
 } from '@trussworks/react-uswds';
-
 import ReviewPage from './Review/ReviewPage';
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
@@ -243,6 +241,7 @@ const ActivitySummary = ({
                   ariaName="Start Date (Required)"
                   control={control}
                   maxDate={endDate}
+                  maxDateInclusive
                   name="startDate"
                   openUp
                 />

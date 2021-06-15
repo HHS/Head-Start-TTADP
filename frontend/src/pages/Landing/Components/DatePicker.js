@@ -50,7 +50,7 @@ function DatePicker({ query, onUpdateFilter, id }) {
         aria-label={'open calendar"'}
         type="button"
         unstyled
-        className="margin-top-auto margin-bottom-auto smart-hub--filter-button smart-hub--filter-date-picker-button"
+        className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
       >
         <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
       </Button>
