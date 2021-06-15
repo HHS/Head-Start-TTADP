@@ -65,7 +65,7 @@ div.smart-hub--total-count {
 .smart-hub--table-controls {
   position: relative;
   float: left;
-  margin-left: 200px;
+  margin-left: 275px;
   margin-bottom: -90px;
   margin-top: 24px;
 }
@@ -235,6 +235,10 @@ h1.landing {
   line-height: 0.5;
   min-width: 220px;
   background-color: #0166ab;
+  max-height: 44px;
+  border-radius: 5px;
+  padding: 0.7rem 1.25rem 0.75rem 1.25rem;
+
 }
 
 .smart-hub--create-new-report {
