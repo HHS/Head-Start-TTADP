@@ -733,7 +733,7 @@ describe('Landing page table menus & selections', () => {
       };
 
       renderLanding(user);
-      const surveyButton = await screen.findByLabelText(/leave feedback here/i);
+      const surveyButton = await screen.findByLabelText(/please leave feedback/i);
       expect(surveyButton).toBeVisible();
     });
   });
