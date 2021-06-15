@@ -56,7 +56,8 @@ describe('permissions', () => {
           },
         ],
       };
-      const regions = allRegionsUserHasPermissionTo(user);
+      const includeAdmin = true;
+      const regions = allRegionsUserHasPermissionTo(user, includeAdmin);
       expect(regions).toEqual(expect.arrayContaining([14, 3, 4]));
     });
 

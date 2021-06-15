@@ -14,6 +14,7 @@ import {
   DATE_FMT,
   QUERY_CONDITIONS,
 } from './constants';
+import { DECIMAL_BASE } from '../../Constants';
 import './Filter.css';
 
 const defaultFilter = () => (
@@ -111,14 +112,14 @@ function Filter({ applyFilters, forMyAlerts }) {
         onClick={() => {
           updateOpen(!open);
         }}
-        className={`usa-button usa-button--outline smart-hub--filter-button smart-hub--table-controls__button ${filterClass}`}
+        className={`usa-button usa-button--outline font-sans-xs margin-left-1 smart-hub--table-controls__button ${filterClass}`}
       >
         {`Filters ${filters.length > 0 ? `(${filters.length})` : ''}`}
         {' '}
         <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
       </button>
       {open && (
-      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute">
+      <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 left-0 position-absolute">
         <Container padding={2} className="margin-bottom-0">
           <div className="font-body-2xs">
             {hasFilters && (
@@ -152,7 +153,7 @@ function Filter({ applyFilters, forMyAlerts }) {
             <div className="height-20 margin-top-2 clearfix">
               <button
                 type="button"
-                className="usa-button usa-button--outline float-left smart-hub--filter-button"
+                className="usa-button usa-button--outline float-left font-sans-xs margin-left-1"
                 onClick={() => {
                   updateFilters([...filters, defaultFilter()]);
                 }}
@@ -162,7 +163,7 @@ function Filter({ applyFilters, forMyAlerts }) {
               {hasFilters && (
               <button
                 type="button"
-                className="usa-button float-right smart-hub--filter-button"
+                className="usa-button float-right font-sans-xs margin-left-1"
                 onClick={onApplyFilter}
               >
                 Apply Filters
@@ -186,7 +187,7 @@ Filter.defaultProps = {
   forMyAlerts: false,
 };
 
-export function filtersToQueryString(filters) {
+export function filtersToQueryString(filters, region) {
   const filtersWithValues = filters.filter((f) => {
     if (f.condition === WITHIN) {
       const [startDate, endDate] = f.query.split('-');
@@ -198,6 +199,9 @@ export function filtersToQueryString(filters) {
     const con = QUERY_CONDITIONS[filter.condition];
     return `${filter.topic}.${con}=${filter.query}`;
   });
+  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
+    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
+  }
   return queryFragments.join('&');
 }
 

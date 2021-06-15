@@ -41,7 +41,7 @@ describe('DeleteReportModal', () => {
     expect(buttons.length).toBe(2);
   });
 
-  it('exits when escapse key is pressed', async () => {
+  it('exits when escape key is pressed', async () => {
     // Given a page with a modal
     render(<SomeComponent />);
 
@@ -55,5 +55,21 @@ describe('DeleteReportModal', () => {
     // And the modal  can closeclose the modal via the escape key
     userEvent.type(modal, '{esc}', { skipClick: true });
     expect(screen.queryByTestId('modal')).not.toBeTruthy();
+  });
+
+  it('does not escape when any other key is pressed', async () => {
+    // Given a page with a modal
+    render(<SomeComponent />);
+
+    // When the modal is triggered
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    const modal = await screen.findByTestId('modal');
+    expect(modal).toBeVisible();
+
+    // And the modal  can closeclose the modal via the escape key
+    userEvent.type(modal, '{enter}', { skipClick: true });
+    expect(screen.queryByTestId('modal')).toBeTruthy();
   });
 });

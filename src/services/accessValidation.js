@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { User, Permission, sequelize } from '../models';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
+import { DECIMAL_BASE } from '../constants';
 
 const { SITE_ACCESS, ADMIN } = SCOPES;
 
@@ -112,4 +113,23 @@ export async function getUserReadRegions(userId) {
     logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
     throw error;
   }
+}
+
+/*
+  Make sure the user has read permissions to the regions requested. If no regions
+  are explicitly requested default to all regions which the user has access to.
+*/
+export async function setReadRegions(query, userId, useFirstReadRegion = false) {
+  const readRegions = await getUserReadRegions(userId);
+  if ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) {
+    return {
+      ...query,
+      'region.in': query['region.in'].filter((r) => readRegions.includes(parseInt(r, DECIMAL_BASE))),
+    };
+  }
+
+  return {
+    ...query,
+    'region.in': useFirstReadRegion ? [readRegions[0]] : readRegions,
+  };
 }
