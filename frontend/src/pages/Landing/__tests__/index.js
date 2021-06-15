@@ -703,6 +703,24 @@ describe('Landing page table menus & selections', () => {
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
     });
   });
+
+  describe('survey button', () => {
+    it('has survey button', async () => {
+      const user = {
+        name: 'test@test.com',
+        permissions: [
+          {
+            scopeId: 3,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderLanding(user);
+      const surveyButton = await screen.findByLabelText(/leave feedback here/i);
+      expect(surveyButton).toBeVisible();
+    });
+  });
 });
 
 describe('My alerts sorting', () => {
