@@ -298,4 +298,15 @@ export const generateXFakeReports = (count) => {
   }
   return result;
 };
+
+export const overviewRegionOne = {
+  numReports: '1',
+  numGrants: '2',
+  numTotalGrants: '4',
+  numParticipants: '3',
+  sumTrainingDuration: '5.0',
+  sumTaDuration: '1.0',
+  sumDuration: '0.5',
+};
+
 export default activityReports;

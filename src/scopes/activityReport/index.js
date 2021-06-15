@@ -9,6 +9,7 @@ import { beforeLastSaveDate, afterLastSaveDate, withinLastSaveDates } from './up
 import { withAuthor, withoutAuthor } from './author';
 import { withCollaborators, withoutCollaborators } from './collaborators';
 import { withoutStatus, withStatus } from './status';
+import withRegion from './region';
 
 const topicToQuery = {
   reportId: {
@@ -50,6 +51,9 @@ const topicToQuery = {
   status: {
     in: (query) => withStatus(query),
     nin: (query) => withoutStatus(query),
+  },
+  region: {
+    in: (query) => withRegion(query),
   },
 };
 

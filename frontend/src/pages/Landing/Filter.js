@@ -14,6 +14,7 @@ import {
   DATE_FMT,
   QUERY_CONDITIONS,
 } from './constants';
+import { DECIMAL_BASE } from '../../Constants';
 import './Filter.css';
 
 const defaultFilter = () => (
@@ -186,7 +187,7 @@ Filter.defaultProps = {
   forMyAlerts: false,
 };
 
-export function filtersToQueryString(filters) {
+export function filtersToQueryString(filters, region) {
   const filtersWithValues = filters.filter((f) => {
     if (f.condition === WITHIN) {
       const [startDate, endDate] = f.query.split('-');
@@ -198,6 +199,9 @@ export function filtersToQueryString(filters) {
     const con = QUERY_CONDITIONS[filter.condition];
     return `${filter.topic}.${con}=${filter.query}`;
   });
+  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
+    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
+  }
   return queryFragments.join('&');
 }
 
