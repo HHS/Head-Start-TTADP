@@ -4,6 +4,7 @@ import findOrCreateUser, {
   validateUserAuthForAccess,
   validateUserAuthForAdmin,
   getUserReadRegions,
+  setReadRegions,
 } from './accessValidation';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
@@ -292,6 +293,68 @@ describe('accessValidation', () => {
 
     it('Throws on error', async () => {
       await expect(getUserReadRegions(undefined)).rejects.toThrow();
+    });
+  });
+
+  describe('setReadRegions', () => {
+    it('filters out regions user does not have permissions to', async () => {
+      await setupUser(mockUser);
+      await Permission.create({
+        scopeId: READ_REPORTS,
+        userId: mockUser.id,
+        regionId: 14,
+      });
+      await Permission.create({
+        scopeId: READ_WRITE_REPORTS,
+        userId: mockUser.id,
+        regionId: 13,
+      });
+
+      const query = { 'region.in': [1, 13, 14] };
+
+      const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
+
+      expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [13, 14] });
+    });
+
+    it('returns all regions user has permissions to if region not specified', async () => {
+      await setupUser(mockUser);
+      await Permission.create({
+        scopeId: READ_REPORTS,
+        userId: mockUser.id,
+        regionId: 14,
+      });
+      await Permission.create({
+        scopeId: READ_WRITE_REPORTS,
+        userId: mockUser.id,
+        regionId: 13,
+      });
+
+      const query = {};
+
+      const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
+
+      expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [14, 13] });
+    });
+
+    it('returns an empty array if user has no permissions', async () => {
+      await setupUser(mockUser);
+
+      const query = { 'region.in': [1, 13, 14] };
+
+      const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
+
+      expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [] });
+    });
+
+    it('returns an empty array if a user does not exist in database', async () => {
+      await User.destroy({ where: { id: mockUser.id } });
+
+      const query = { 'region.in': [1, 13, 14] };
+
+      const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
+
+      expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [] });
     });
   });
 });

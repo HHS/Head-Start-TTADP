@@ -20,19 +20,20 @@ const isAdmin = (user) => {
  * Read Activity Reports
  * Read Write Activity Reports
  * @param {*} - user object
+ * @param {includeAdmin} - flag to include/exclude admin permissions
  * @returns {array} - An array of integers, where each integer signifies a region.
  */
-// FIXME: Descide if we will keep this or remove
-export const allRegionsUserHasPermissionTo = (user) => {
+export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
   const permissions = _.get(user, 'permissions');
 
   if (!permissions) return [];
 
   const minPermissions = [
-    SCOPE_IDS.ADMIN,
     SCOPE_IDS.READ_ACTIVITY_REPORTS,
     SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
   ];
+
+  if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
 
   const regions = [];
   permissions.forEach((perm) => {
@@ -43,6 +44,37 @@ export const allRegionsUserHasPermissionTo = (user) => {
 
   return _.uniq(regions);
 };
+
+// /**
+//  * Return all regions that user has a read access to.
+//  * Permissions that qualify this criteria are:
+//  * Read Activity Reports
+//  * Read Write Activity Reports
+//  * @param {*} - user object
+//  * @param {includeAdmin} - flag to include/exclude admin permissions
+//  * @returns {array} - An array of integers, where each integer signifies a region.
+//  */
+// export const allRegionsUserHasReadTo = (user, includeAdmin) => {
+//   const permissions = _.get(user, 'permissions');
+
+//   if (!permissions) return [];
+
+//   const minPermissions = [
+//     SCOPE_IDS.READ_ACTIVITY_REPORTS,
+//     SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+//   ];
+
+//   if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
+
+//   const regions = [];
+//   permissions.forEach((perm) => {
+//     if (minPermissions.includes(perm.scopeId)) {
+//       regions.push(perm.regionId);
+//     }
+//   });
+
+//   return _.uniq(regions);
+// };
 
 /**
  * Search the user's permissions for any region they have read/write permissions to.
