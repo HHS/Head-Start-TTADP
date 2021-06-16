@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { NavLink as Link } from 'react-router-dom';
+import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 
@@ -33,6 +33,7 @@ const SiteNav = ({
   authenticated,
   logout,
   user,
+  location,
 }) => {
   const navItems = [
     <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
@@ -46,12 +47,23 @@ const SiteNav = ({
     </NavLink>,
   ];
 
+  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === '/activity-reports') {
+      setShowActivityReportSurveyButton(true);
+    } else {
+      setShowActivityReportSurveyButton(false);
+    }
+  }, [location.pathname]);
+
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
     <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
       {authenticated && (
         <>
+          <button id="tp-ar-landing-survey" style={{ display: showActivityReportSurveyButton ? 'block' : 'none' }} className="usa-button position-fixed bottom-2 right-1" aria-label="Please leave feedback" type="button">Please leave feedback</button>
           <div className="width-full smart-hub-sitenav-separator--after">
             <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
               <p className="text-bold margin-top-5">{ user.name }</p>
@@ -91,6 +103,7 @@ SiteNav.propTypes = {
   authenticated: PropTypes.bool,
   logout: PropTypes.func,
   user: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
+  location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
 };
 
 SiteNav.defaultProps = {
@@ -103,4 +116,4 @@ SiteNav.defaultProps = {
   },
 };
 
-export default SiteNav;
+export default withRouter(SiteNav);
