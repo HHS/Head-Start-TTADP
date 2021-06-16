@@ -60,10 +60,13 @@ const SiteNav = ({
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
-    <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
-      {authenticated && (
+    <div>
+      <div className="position-relative z-top">
+        <button id="tp-ar-landing-survey" className={`usa-button position-fixed  bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
+      </div>
+      <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
+        {authenticated && (
         <>
-          <button id="tp-ar-landing-survey" style={{ display: showActivityReportSurveyButton ? 'block' : 'none' }} className="usa-button position-fixed bottom-2 right-1" aria-label="Please leave feedback" type="button">Please leave feedback</button>
           <div className="width-full smart-hub-sitenav-separator--after">
             <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
               <p className="text-bold margin-top-5">{ user.name }</p>
@@ -92,7 +95,8 @@ const SiteNav = ({
             </div>
           </nav>
         </>
-      )}
+        )}
+      </div>
     </div>
   );
 };
