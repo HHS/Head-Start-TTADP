@@ -460,7 +460,6 @@ function Landing() {
     <>
       <Helmet>
         <title>Landing</title>
-        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
       <UserContext.Consumer>
         {({ user }) => (
@@ -637,7 +636,6 @@ function Landing() {
                 </Table>
               </div>
             </Container>
-            <button id="tp-ar-landing-survey" className="usa-button position-fixed bottom-2 right-1" aria-label="Please leave feedback" type="button">Please leave feedback</button>
           </>
         )}
       </UserContext.Consumer>
