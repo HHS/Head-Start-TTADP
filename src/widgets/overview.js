@@ -13,9 +13,6 @@ import {
 */
 export default async function overview(scopes, region) {
   const grantsWhere = `WHERE "status" = 'Active' AND "regionId" in (${region})`;
-  const trainingWhere = '"ttaType" = \'{"training"}\'';
-  const taWhere = '"ttaType" = \'{"technical-assistance"}\'';
-  const ttaWhere = '"ttaType" = \'{"training", "technical-assistance"}\'';
   const baseWhere = `WHERE "regionId" IN (${region}) AND "legacyId" IS NULL AND "status" != 'deleted'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct
   // numbers for SUM
@@ -25,10 +22,9 @@ export default async function overview(scopes, region) {
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))), 'numGrants'],
       [sequelize.literal(`(SELECT COUNT(*) from "Grants" ${grantsWhere})`), 'numTotalGrants'],
+      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."nonGranteeId"'))), 'numNonGrantees'],
       [sequelize.literal(`(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`), 'numParticipants'],
-      [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere} AND ${trainingWhere})`), 'sumTrainingDuration'],
-      [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere} AND ${taWhere})`), 'sumTaDuration'],
-      [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere} AND ${ttaWhere})`), 'sumDuration'],
+      [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`), 'sumDuration'],
     ],
     where: { [Op.and]: [scopes, { legacyId: null }] },
     raw: true,
