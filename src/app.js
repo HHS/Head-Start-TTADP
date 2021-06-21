@@ -28,7 +28,7 @@ app.use(helmet({
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js']
+      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
     },
   },
 }));
