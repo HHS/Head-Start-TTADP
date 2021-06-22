@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import {
   ActivityReport, ActivityRecipient, Grant, NonGrantee, sequelize,
 } from '../models';
+import { REPORT_STATUSES } from '../constants';
 /*
   Widgets on the backend should only have to worry about fetching data in the format required
   by the widget. In this case we return a single object but other widgets my require an array
@@ -13,7 +14,7 @@ import {
 */
 export default async function overview(scopes, region) {
   const grantsWhere = `WHERE "status" = 'Active' AND "regionId" in (${region})`;
-  const baseWhere = `WHERE "regionId" IN (${region}) AND "legacyId" IS NULL AND "status" != 'deleted'`;
+  const baseWhere = `WHERE "regionId" IN (${region}) AND "status" = '${REPORT_STATUSES.APPROVED}'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct
   // numbers for SUM
   // FIXME: see if there is a better way to get totals using SUM
@@ -26,7 +27,7 @@ export default async function overview(scopes, region) {
       [sequelize.literal(`(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`), 'numParticipants'],
       [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`), 'sumDuration'],
     ],
-    where: { [Op.and]: [scopes, { legacyId: null }] },
+    where: { [Op.and]: [scopes, { status: REPORT_STATUSES.APPROVED }] },
     raw: true,
     // without 'includeIgnoreAttributes' the attributes from the join table
     // "activityReportObjectives" are included which causes postgres to error when

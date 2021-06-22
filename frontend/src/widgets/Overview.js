@@ -53,7 +53,7 @@ function Overview({ data, region }) {
           {' '}
           TTA Overview
         </h2>
-        <span className="smart-hub--overview-period"> 3/17/21 to Today</span>
+        <span className="smart-hub--overview-period"> 9/15/2020 to Today</span>
       </Grid>
       <Grid row gap className="smart-hub--overview-data">
         <Field col="fill" tablet={{ col: true }} label="Grants served " labelExt={`(of ${data.numTotalGrants})`} data={data.numGrants} />
