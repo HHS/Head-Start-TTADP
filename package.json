@@ -78,7 +78,7 @@
   "eslintConfig": {
     "extends": [
       "airbnb-base",
-      "plugin:jest/recommended",
+      "plugin:jest/recommended"
     ],
     "ignorePatterns": [
       "node_modules/*"
