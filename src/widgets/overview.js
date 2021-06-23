@@ -13,8 +13,8 @@ import { REPORT_STATUSES } from '../constants';
   If adding a new widget be sure to add the widget to ./index.js
 */
 export default async function overview(scopes, region) {
-  const grantsWhere = `WHERE "status" = 'Active' AND "regionId" in (${region})`;
-  const baseWhere = `WHERE "regionId" IN (${region}) AND "status" = '${REPORT_STATUSES.APPROVED}'`;
+  const grantsWhere = `WHERE "regionId" in (${region})`;
+  const baseWhere = `${grantsWhere} AND "status" = '${REPORT_STATUSES.APPROVED}'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct
   // numbers for SUM
   // FIXME: see if there is a better way to get totals using SUM
@@ -27,7 +27,7 @@ export default async function overview(scopes, region) {
       [sequelize.literal(`(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`), 'numParticipants'],
       [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`), 'sumDuration'],
     ],
-    where: { [Op.and]: [scopes, { status: REPORT_STATUSES.APPROVED }] },
+    where: { [Op.and]: [scopes, { status: REPORT_STATUSES.APPROVED }, {legacyId: {[Op.ne]: null}}] },
     raw: true,
     // without 'includeIgnoreAttributes' the attributes from the join table
     // "activityReportObjectives" are included which causes postgres to error when
