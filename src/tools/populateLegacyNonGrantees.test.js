@@ -19,6 +19,7 @@ const mockUser = {
 
 const reportObject = {
   activityRecipientType: 'non-grantee',
+  // activityRecipients: [{ nonGranteeId: 1 }],
   status: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
@@ -40,6 +41,7 @@ const reportObject = {
     nonGranteeActivity:
       'CCDF / Child Care Administrator\nHSCO\nState Advisory Council\nState Head Start Association\nState Professional Development / Continuing Education',
   },
+  legacyId: '2',
 };
 
 const regionOneReport = {
@@ -49,6 +51,10 @@ const regionOneReport = {
 
 describe('populateLegacyNonGrantees', () => {
   beforeAll(async () => {
+    await User.findOrCreate({ where: mockUser });
+  });
+
+  afterAll(async () => {
     await ActivityRecipient.destroy({
       where: {
         nonGranteeId: { [Op.ne]: null },
@@ -61,22 +67,19 @@ describe('populateLegacyNonGrantees', () => {
       },
     });
     await User.findOrCreate({ where: mockUser });
-  });
-
-  afterAll(async () => {
     await sequelize.close();
   });
 
   it('connects non-grantees to activity reports', async () => {
     const reportOne = await ActivityReport.findOne({ where: { duration: 1 } });
-    await createOrUpdate(regionOneReport, reportOne);
+    const report = await createOrUpdate(regionOneReport, reportOne);
     const activityRecipientBefore = await ActivityRecipient.findOne({
-      where: { activityReportId: reportOne.id },
+      where: { activityReportId: report.id },
     });
     expect(activityRecipientBefore).toBeNull();
     await populateLegacyNonGrantees();
     const activityRecipientsAfter = await ActivityRecipient.findAll({
-      where: { activityReportId: reportOne.id },
+      where: { activityReportId: report.id },
     });
     expect(activityRecipientsAfter.length).toBe(5);
     expect(activityRecipientsAfter[2].nonGranteeId).toBe(3);
