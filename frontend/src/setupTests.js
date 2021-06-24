@@ -15,4 +15,4 @@ import MutationObserver from '@sheerun/mutationobserver-shim';
 
 window.MutationObserver = MutationObserver;
 
-jest.setTimeout(10000);
+jest.setTimeout(30000);
