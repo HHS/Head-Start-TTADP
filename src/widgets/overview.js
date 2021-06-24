@@ -20,14 +20,57 @@ export default async function overview(scopes, region) {
   // FIXME: see if there is a better way to get totals using SUM
   const res = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))), 'numGrants'],
-      [sequelize.literal(`(SELECT COUNT(*) from "Grants" ${grantsWhere})`), 'numTotalGrants'],
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."nonGranteeId"'))), 'numNonGrantees'],
-      [sequelize.literal(`(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`), 'numParticipants'],
-      [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`), 'sumDuration'],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id')),
+        ),
+        'numReports',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('"activityRecipients->grant"."id"'),
+          ),
+        ),
+        'numGrants',
+      ],
+      [
+        sequelize.literal(`(SELECT COUNT(*) from "Grants" ${grantsWhere})`),
+        'numTotalGrants',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('"activityRecipients"."nonGranteeId"'),
+          ),
+        ),
+        'numNonGrantees',
+      ],
+      [
+        sequelize.literal(
+          `(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`,
+        ),
+        'numParticipants',
+      ],
+      [
+        sequelize.literal(
+          `(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`,
+        ),
+        'sumDuration',
+      ],
     ],
-    where: { [Op.and]: [scopes, { status: REPORT_STATUSES.APPROVED }, {legacyId: {[Op.ne]: null}}] },
+    where: {
+      [Op.and]: [
+        scopes,
+        { status: REPORT_STATUSES.APPROVED },
+        { legacyId: { [Op.ne]: null } },
+      ],
+    },
     raw: true,
     // without 'includeIgnoreAttributes' the attributes from the join table
     // "activityReportObjectives" are included which causes postgres to error when

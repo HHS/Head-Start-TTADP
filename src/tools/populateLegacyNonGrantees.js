@@ -1,15 +1,17 @@
-import { auditLogger } from "../logger";
-import { Op } from "sequelize";
-import { ActivityReport, ActivityRecipient, NonGrantee } from "../models";
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-loop-func */
+import { Op } from 'sequelize';
+import { auditLogger } from '../logger';
+import { ActivityReport, ActivityRecipient, NonGrantee } from '../models';
 
 const hubNonGrantees = {
-  HSCO: "Head Start Collaboration Office",
-  "Local/State Education System": "State Education System",
-  "State Early Learning System / Guidelines": "State Early Learning Standards",
-  "State Advisory Council": "QRIS System",
-  "Regional TTA Team / Specialists": "Regional TTA/Other Specialists",
-  "State Early Learning Standards / Guidelines":
-    "State Early Learning Standards",
+  HSCO: 'Head Start Collaboration Office',
+  'Local/State Education System': 'State Education System',
+  'State Early Learning System / Guidelines': 'State Early Learning Standards',
+  'State Advisory Council': 'QRIS System',
+  'Regional TTA Team / Specialists': 'Regional TTA/Other Specialists',
+  'State Early Learning Standards / Guidelines':
+    'State Early Learning Standards',
 };
 
 const populateLegacyNonGrantees = async () => {
@@ -20,7 +22,7 @@ const populateLegacyNonGrantees = async () => {
         {
           imported: {
             nonGranteeActivity: {
-              [Op.ne]: "",
+              [Op.ne]: '',
             },
           },
         },
@@ -30,17 +32,16 @@ const populateLegacyNonGrantees = async () => {
 
   for await (const nonGranteeReport of nonGranteeReports) {
     const nonGranteeArray = nonGranteeReport.imported.nonGranteeActivity.split(
-      "\n"
+      '\n',
     );
     for await (const nonGranteeName of nonGranteeArray) {
-      const translatedNonGranteeName =
-        hubNonGrantees[nonGranteeName] || nonGranteeName;
+      const translatedNonGranteeName = hubNonGrantees[nonGranteeName] || nonGranteeName;
       const nonGrantee = await NonGrantee.findOne({
         where: { name: translatedNonGranteeName },
       });
       if (nonGrantee) {
         auditLogger.info(
-          `Processing non-grantee ${nonGrantee.id} for activity report ${nonGranteeReport.id}`
+          `Processing non-grantee ${nonGrantee.id} for activity report ${nonGranteeReport.id}`,
         );
         await ActivityRecipient.findOrCreate({
           where: {
