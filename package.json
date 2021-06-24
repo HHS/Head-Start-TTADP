@@ -67,7 +67,9 @@
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantGranteesCLI.js --skipdownload",
     "import:hses": "node ./build/server/tools/importGrantGranteesCLI.js",
     "reconcile:legacy": "node ./build/server/tools/reconcileLegacyReports.js",
-    "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js"
+    "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
+    "populateLegacyNonGrantees": "node ./build/server/tools/populateLegacyNonGranteesCLI.js",
+    "populateLegacyNonGrantees:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyNonGranteesCLI.js"
   },
   "repository": {
     "type": "git",
