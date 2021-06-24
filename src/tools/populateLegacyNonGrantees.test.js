@@ -65,7 +65,6 @@ describe('populateLegacyNonGrantees', () => {
         legacyId: { [Op.ne]: null },
       },
     });
-    await User.findOrCreate({ where: mockUser });
     await sequelize.close();
   });
 
