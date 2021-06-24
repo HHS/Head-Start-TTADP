@@ -48,6 +48,8 @@ const regionOneReport = {
   regionId: 1,
 };
 
+let arId;
+
 describe('populateLegacyNonGrantees', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser });
@@ -57,6 +59,7 @@ describe('populateLegacyNonGrantees', () => {
     await ActivityRecipient.destroy({
       where: {
         nonGranteeId: { [Op.ne]: null },
+        activityReportId: arId,
       },
     });
     await ActivityReport.destroy({
@@ -71,6 +74,7 @@ describe('populateLegacyNonGrantees', () => {
   it('connects non-grantees to activity reports', async () => {
     const reportOne = await ActivityReport.findOne({ where: { duration: 1 } });
     const report = await createOrUpdate(regionOneReport, reportOne);
+    arId = report.id; // save to later delete the right record
     const activityRecipientBefore = await ActivityRecipient.findOne({
       where: { activityReportId: report.id },
     });
