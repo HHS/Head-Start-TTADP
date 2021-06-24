@@ -68,7 +68,6 @@ export default async function overview(scopes, region) {
       [Op.and]: [
         scopes,
         { status: REPORT_STATUSES.APPROVED },
-        { legacyId: { [Op.ne]: null } },
       ],
     },
     raw: true,

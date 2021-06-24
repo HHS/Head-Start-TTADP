@@ -10,16 +10,15 @@ import { createOrUpdate } from '../services/activityReports';
 jest.mock('../logger');
 
 const mockUser = {
-  id: 1000,
+  id: 2000,
   homeRegionId: 1,
-  name: 'user1000',
-  hsesUsername: 'user1000',
-  hsesUserId: '1000',
+  name: 'user2000',
+  hsesUsername: 'user2000',
+  hsesUserId: '2000',
 };
 
 const reportObject = {
   activityRecipientType: 'non-grantee',
-  // activityRecipients: [{ nonGranteeId: 1 }],
   status: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
