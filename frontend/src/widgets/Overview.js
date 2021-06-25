@@ -21,17 +21,13 @@ function Field({
 Field.propTypes = {
   label: PropTypes.string.isRequired,
   labelExt: PropTypes.string,
-  data: PropTypes.string,
-  col: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
+  data: PropTypes.string.isRequired,
+  col: PropTypes.number,
 };
 
 Field.defaultProps = {
   labelExt: '',
   col: 2,
-  data: '',
 };
 
 /*
@@ -53,14 +49,15 @@ function Overview({ data, region }) {
           {' '}
           TTA Overview
         </h2>
-        <span className="smart-hub--overview-period"> 9/15/2020 to Today</span>
+        <span className="smart-hub--overview-period"> 3/17/21 to Today</span>
       </Grid>
-      <Grid row gap className="smart-hub--overview-data">
-        <Field col="fill" tablet={{ col: true }} label="Grants served " labelExt={`(of ${data.numTotalGrants})`} data={data.numGrants} />
-        <Field col="fill" label="Non-grantees served" data={data.numNonGrantees} />
-        <Field col="fill" label="Activity reports" data={data.numReports} />
-        <Field col="fill" label="Participants" data={data.numParticipants} />
-        <Field col={2} label="Hours of TTA" data={data.sumDuration} />
+      <Grid row className="smart-hub--overview-data">
+        <Field label="Grants served " labelExt={`(of ${data.numTotalGrants})`} data={data.numGrants} />
+        <Field label="Activity reports" data={data.numReports} />
+        <Field label="Participants" data={data.numParticipants} />
+        <Field label="Hours of Training" data={data.sumTrainingDuration} />
+        <Field label="Hours of TA" data={data.sumTaDuration} />
+        <Field label="Hours of TTA" data={data.sumDuration} />
       </Grid>
     </Container>
   );
@@ -70,9 +67,10 @@ Overview.propTypes = {
   data: PropTypes.shape({
     numReports: PropTypes.string,
     numGrants: PropTypes.string,
-    numNonGrantees: PropTypes.string,
     numTotalGrants: PropTypes.string,
     numParticipants: PropTypes.string,
+    sumTrainingDuration: PropTypes.string,
+    sumTaDuration: PropTypes.string,
     sumDuration: PropTypes.string,
   }).isRequired,
   region: PropTypes.number.isRequired,

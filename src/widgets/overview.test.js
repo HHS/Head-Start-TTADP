@@ -120,20 +120,21 @@ describe('Overview widget', () => {
     await createOrUpdate({ ...regionTwoReport, duration: 1.5 }, reportOneR2);
 
     const scopes = filtersToScopes({ 'region.in': ['17'] });
-    const data = await overview(scopes, 17);
     const {
       numReports,
       numGrants,
       numTotalGrants,
-      numNonGrantees,
       numParticipants,
+      sumTrainingDuration,
+      sumTaDuration,
       sumDuration,
-    } = data;
+    } = await overview(scopes, 17);
     expect(numReports).toBe('4');
     expect(numGrants).toBe('2');
     expect(numTotalGrants).toBe('2');
-    expect(numNonGrantees).toBe('0');
     expect(numParticipants).toBe('44');
-    expect(sumDuration).toBe('12.0');
+    expect(sumTrainingDuration).toBe('4.0');
+    expect(sumTaDuration).toBe('3.0');
+    expect(sumDuration).toBe('5.0');
   });
 });

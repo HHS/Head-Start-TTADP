@@ -29,9 +29,6 @@ export async function userById(userId) {
     include: [
       { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
     ],
-    order: [
-      [{ model: Permission, as: 'permissions' }, 'regionId', 'ASC'],
-    ],
   });
 }
 
