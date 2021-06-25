@@ -9,7 +9,8 @@
 }
 
 .smart-hub--overview-data {
-  margin-left: -36px !important;
+  margin-left: -20px;
+  margin-bottom: -20px;
 }
 
 .smart-hub--overview-nowrap {
