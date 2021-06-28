@@ -57,6 +57,17 @@ function App() {
     fetchData();
   }, []);
 
+  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
+
+  useEffect(() => {
+    console.log('LOCATION!!!', location.pathname);
+    if (location.pathname === '/activity-reports') {
+      setShowActivityReportSurveyButton(true);
+    } else {
+      setShowActivityReportSurveyButton(false);
+    }
+  }, [location.pathname]);
+
   const logout = async (timeout = false) => {
     await fetchLogout();
     updateUser();
@@ -153,6 +164,10 @@ function App() {
             Skip to main content
           </a>
         )}
+
+      <div className="position-relative z-top">
+        <button id="tp-ar-landing-survey" className={`usa-button position-fixed  bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
+      </div>
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <AriaLiveContext.Provider value={{ announce }}>
