@@ -57,6 +57,7 @@ function App() {
     fetchData();
   }, []);
 
+  /*
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
 
   useEffect(() => {
@@ -67,6 +68,7 @@ function App() {
       setShowActivityReportSurveyButton(false);
     }
   }, [location.pathname]);
+  */
 
   const logout = async (timeout = false) => {
     await fetchLogout();
@@ -165,9 +167,9 @@ function App() {
           </a>
         )}
 
-      <div className="position-relative z-top">
-        <button id="tp-ar-landing-survey" className={`usa-button position-fixed  bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
-      </div>
+        <div className="position-relative z-top">
+          <button id="tp-ar-landing-survey" className="usa-button position-fixed  bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
+        </div>
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <AriaLiveContext.Provider value={{ announce }}>
