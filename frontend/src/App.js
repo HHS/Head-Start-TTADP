@@ -167,7 +167,7 @@ function App() {
           </a>
         )}
 
-        <div className="position-relative z-top">
+        <div className="z-top">
           <button id="tp-ar-landing-survey" className="usa-button position-fixed  bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
         </div>
         <UserContext.Provider value={{ user, authenticated, logout }}>
