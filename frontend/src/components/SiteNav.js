@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { NavLink as Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
-import { Helmet } from 'react-helmet';
 
 import './SiteNav.css';
 
@@ -51,9 +50,6 @@ const SiteNav = ({
 
   return (
     <>
-      <Helmet>
-        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
-      </Helmet>
       <div>
         <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
           {authenticated && (
@@ -65,7 +61,6 @@ const SiteNav = ({
                 </div>
               </div>
               <nav>
-                <button id="tp-ar-landing-survey" className="usa-button position-fixed  bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
                 <div className="width-full margin-bottom-2 margin-top-6">
                   <ul className="add-list-reset">
                     <li>
