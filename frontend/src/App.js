@@ -95,6 +95,7 @@ function App() {
 
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
+      <button id="tp-ar-landing-survey" className="usa-button position-fixed bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
       <IdleModal
         modalTimeout={Number(process.env.REACT_APP_INACTIVE_MODAL_TIMEOUT)}
         logoutTimeout={Number(process.env.REACT_APP_SESSION_TIMEOUT)}
@@ -158,6 +159,7 @@ function App() {
     <>
       <Helmet titleTemplate="%s - TTA Smart Hub" defaultTitle="TTA Smart Hub">
         <meta charSet="utf-8" />
+        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
       <BrowserRouter>
         {authenticated && (
