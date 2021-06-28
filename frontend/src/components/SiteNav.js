@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { NavLink as Link, withRouter } from 'react-router-dom';
+import { NavLink as Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 
@@ -47,23 +47,11 @@ const SiteNav = ({
     </NavLink>,
   ];
 
-  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
-
-  useEffect(() => {
-    if (location.pathname === '/activity-reports') {
-      setShowActivityReportSurveyButton(true);
-    } else {
-      setShowActivityReportSurveyButton(false);
-    }
-  }, [location.pathname]);
-
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
     <div>
-      <div className="position-relative z-top">
-        <button id="tp-ar-landing-survey" className={`usa-button position-fixed  bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
-      </div>
+
       <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
         <>
@@ -119,5 +107,4 @@ SiteNav.defaultProps = {
     email: '',
   },
 };
-
-export default withRouter(SiteNav);
+export default SiteNav;
