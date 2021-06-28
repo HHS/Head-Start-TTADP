@@ -55,9 +55,7 @@ const SiteNav = ({
         <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
       <div>
-        <div className="position-relative z-top">
           <button id="tp-ar-landing-survey" className="usa-button position-fixed  bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
-        </div>
         <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
           {authenticated && (
             <>
