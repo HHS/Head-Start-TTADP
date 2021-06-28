@@ -19,7 +19,10 @@ const renderMyAlerts = () => {
   const alertsPerPage = ALERTS_PER_PAGE;
   const alertsActivePage = 1;
   const alertReportsCount = 10;
+  const updateReportAlerts = jest.fn();
+  const setAlertReportsCount = jest.fn();
   const requestAlertsSort = jest.fn();
+
   render(
     <Router history={history}>
       <MyAlerts
@@ -31,6 +34,8 @@ const renderMyAlerts = () => {
         alertsActivePage={alertsActivePage}
         alertReportsCount={alertReportsCount}
         sortHandler={requestAlertsSort}
+        updateReportAlerts={updateReportAlerts}
+        setAlertReportsCount={setAlertReportsCount}
         fetchReports={() => {}}
         updateReportFilters={() => {}}
         handleDownloadAllAlerts={() => {}}

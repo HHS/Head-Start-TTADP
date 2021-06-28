@@ -36,7 +36,7 @@ those services are already running on your machine.
 
 1. Make sure Docker is installed. To check run `docker ps`.
 2. Make sure you have Node 14.16.1 installed.
-4. Copy `.env.example` to `.env`.  
+4. Copy `.env.example` to `.env`.
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 3. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them.
@@ -57,9 +57,9 @@ You must also install and run minio locally to use the file upload functionality
 
 #### Docker
 
-If switching branches for code review, run `yarn docker:reset` before running your tests. 
+If switching branches for code review, run `yarn docker:reset` before running your tests.
 
-Run `yarn docker:test` to run all tests for the frontend and backend. 
+Run `yarn docker:test` to run all tests for the frontend and backend.
 
 To only run the frontend tests run `yarn docker:test frontend`.
 
@@ -258,6 +258,8 @@ If your env variable is secret or the value is dependent on the deployment envir
 
 **Interacting with a deployed database**
 
+Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
+
 Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod). For instructions on how to create and modify databases instances within the cloud.gov ecosystem see the [terraform/README.md](terraform/README.md).
 
 You can run psql commands directly against a deployed database by following these directions.
@@ -312,7 +314,7 @@ The script takes two flags
 - \-e | \-\-environment controls which environment you are targeting.
   - Options are "sandbox", "dev", "staging", and "prod"
 
-Ex. 
+Ex.
 ```
 # Puts the dev environment into maintenance mode
 ./bin/maintenance -e dev -m on
@@ -324,6 +326,7 @@ If you are not logged into the cf cli, it will ask you for an sso temporary pass
 <!-- Links -->
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
+[TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations)
 [circleci-envvar]: https://app.circleci.com/settings/project/github/adhocteam/Head-Start-TTADP/environment-variables?return-to=https%3A%2F%2Fcircleci.com%2Fdashboard
 [cloudgov]: https://dashboard.fr.cloud.gov/home
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
