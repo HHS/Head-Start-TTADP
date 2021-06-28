@@ -166,14 +166,13 @@ function App() {
             Skip to main content
           </a>
         )}
-
-        <div className="z-top">
-          <button id="tp-ar-landing-survey" className="usa-button position-fixed  bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
-        </div>
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <AriaLiveContext.Provider value={{ announce }}>
             <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+            <div className="position-relative z-top">
+              <button id="tp-ar-landing-survey" className="usa-button position-fixed  bottom-2 right-1 display-block" aria-label="Please leave feedback" type="button">Please leave feedback</button>
+            </div>
             <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
               <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
                 <section className="usa-section padding-top-3">
