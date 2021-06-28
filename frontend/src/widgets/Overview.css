@@ -1,0 +1,29 @@
+.smart-hub--overview-period {
+  padding: 22px;
+  font-size: 15px;
+}
+
+.smart-hub--overview-header {
+  margin-top: -35px;
+  margin-left: -20px;
+}
+
+.smart-hub--overview-data {
+  margin-left: -36px !important;
+}
+
+.smart-hub--overview-nowrap {
+  white-space: nowrap;
+}
+
+.smart-hub--overview  h2 {
+  font-size: 21px;
+}
+
+.smart-hub--overview-font-size {
+  font-size: 19px;
+}
+
+.smart-hub--overview-border {
+  border: 3px solid #0166ab;
+}
