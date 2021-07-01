@@ -50,12 +50,12 @@ const SiteNav = ({
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
 
   useEffect(() => {
-    if (location.pathname === '/activity-reports') {
+    if (location.pathname === '/activity-reports' && authenticated) {
       setShowActivityReportSurveyButton(true);
     } else {
       setShowActivityReportSurveyButton(false);
     }
-  }, [location.pathname]);
+  }, [location.pathname, authenticated]);
 
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
