@@ -145,8 +145,8 @@ function App() {
   return (
     <>
       <Helmet titleTemplate="%s - TTA Smart Hub" defaultTitle="TTA Smart Hub">
-        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
         <meta charSet="utf-8" />
+        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
       <BrowserRouter>
         {authenticated && (
