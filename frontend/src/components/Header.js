@@ -1,5 +1,4 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
 
 import logo1x from '../images/eclkc-blocks-logo-43x56.png';
 import logo2x from '../images/eclkc-blocks-logo-86x111.png';
@@ -19,4 +18,4 @@ function Header() {
   );
 }
 
-export default withRouter(Header);
+export default Header;
