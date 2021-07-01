@@ -29,6 +29,7 @@ import Filter, { filtersToQueryString } from './Filter';
 import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from './RegionalSelect';
+import './TouchPoints.css';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {

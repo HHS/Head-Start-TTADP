@@ -29,7 +29,6 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
-import './TouchPoints.css';
 
 function App() {
   const [user, updateUser] = useState();
