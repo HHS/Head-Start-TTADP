@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { NavLink as Link } from 'react-router-dom';
+import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
 
@@ -33,6 +33,7 @@ const SiteNav = ({
   authenticated,
   logout,
   user,
+  location,
 }) => {
   const navItems = [
     <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
@@ -106,6 +107,7 @@ SiteNav.propTypes = {
   authenticated: PropTypes.bool,
   logout: PropTypes.func,
   user: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
+  location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
 };
 
 SiteNav.defaultProps = {
@@ -118,4 +120,3 @@ SiteNav.defaultProps = {
   },
 };
 export default withRouter(SiteNav);
-
