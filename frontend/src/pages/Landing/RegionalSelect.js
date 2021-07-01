@@ -115,9 +115,17 @@ function RegionalSelect(props) {
   };
 
   CustomOption.propTypes = {
-    data: PropTypes.object.isRequired,
-    innerRef: PropTypes.string.isRequired,
+    data: PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    }),
+    innerRef: PropTypes.func,
     innerProps: PropTypes.object.isRequired,
+  };
+
+  CustomOption.defaultProps = {
+    data: {},
+    innerRef: () => 0,
   };
 
   const options = [...getUserOptions(regions), { custom: true }];

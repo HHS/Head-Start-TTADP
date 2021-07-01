@@ -164,7 +164,7 @@ parameters:
     default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-138/al-fix-csp-for-script"
+    default: "kw-test"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
