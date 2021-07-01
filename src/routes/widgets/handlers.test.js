@@ -31,7 +31,7 @@ describe('Widget handlers', () => {
       query: { 'region.in': ['1'] },
     };
     const response = {
-      numGrants: '0', numParticipants: '0', numReports: '0', numTotalGrants: '2', sumDuration: '0', sumTaDuration: '0', sumTrainingDuration: '0',
+      numGrants: '0', numNonGrantees: '0', numParticipants: '0', numReports: '0', numTotalGrants: '2', sumDuration: '0',
     };
 
     beforeEach(() => {
