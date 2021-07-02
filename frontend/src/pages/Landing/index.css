@@ -324,3 +324,7 @@ a.desc {
 .smart-hub--menu-button__open {
   background-color: #eceef1;
 }
+
+.fba-modal .fba-modal-dialog {
+  margin-top: 120px;
+}
