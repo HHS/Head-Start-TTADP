@@ -1,5 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect, useContext } from 'react';
+import React, {
+  useState, useEffect, useContext,
+} from 'react';
 import {
   Tag, Table, Alert, Grid, Button, Checkbox,
 } from '@trussworks/react-uswds';
@@ -27,6 +29,7 @@ import Filter, { filtersToQueryString } from './Filter';
 import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from './RegionalSelect';
+import './TouchPoints.css';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
