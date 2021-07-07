@@ -53,6 +53,22 @@ You can also run build commands directly on your host (without docker). Make sur
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
+#### Precommit hooks
+
+Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command  on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in .gihooks/pre-commit, also contains code to auto-format our terraform files, which you can read more about [here](https://github.com/adhocteam/Head-Start-TTADP/tree/main/terraform#set-up).
+
+If you are not using your own custom pre-commit hooks:
+
+- **start from repo root directory**
+
+- **make the pre-commit file executable**
+chmod 755 .githooks/pre-commit
+
+- **change your default hooks directory to `.githooks`.**
+git config core.hooksPath .githooks
+
+If you are already using git hooks, add the .githooks/pre-commit contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+
 ### Running Tests
 
 #### Docker
