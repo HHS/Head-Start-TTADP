@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
-# Format any *.tf files that were cached/staged
+
 files=$(git diff --cached --name-only)
 for f in $files
 do
+  
+  # Format any *.tf files that were cached/staged
   if [ -e "$f" ] && [[ $f == *.tf ]]; then
     printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
-    terraform fmt $f
-    git add $f
+    terraform fmt "$f"
+    git add "$f"
   fi
+
+  # Autolint changed .js files
+  if [ -e "$f" ] && [[ $f == *.js ]]; then
+    yarn lint:fix:single "$f"
+    git add "$f"
+  fi
+
 done

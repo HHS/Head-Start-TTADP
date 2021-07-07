@@ -1,3 +1,9 @@
+@media print {
+  .fba-modal, #tp-ar-landing-survey {
+    display: none !important;
+  }
+}
+
 .fba-modal {
   background-color: rgb(0, 0, 0, 0.375);
   z-index: 10001;
