@@ -255,6 +255,10 @@ describe('Landing Page sorting', () => {
           scopeId: 3,
           regionId: 1,
         },
+        {
+          scopeId: 2,
+          regionId: 1,
+        },
       ],
     };
 
@@ -474,6 +478,10 @@ describe('Landing page table menus & selections', () => {
             scopeId: 3,
             regionId: 1,
           },
+          {
+            scopeId: 2,
+            regionId: 1,
+          },
         ],
       };
 
@@ -682,6 +690,10 @@ describe('Landing page table menus & selections', () => {
               scopeId: 3,
               regionId: 1,
             },
+            {
+              scopeId: 2,
+              regionId: 1,
+            },
           ],
         };
 
@@ -741,6 +753,10 @@ describe('My alerts sorting', () => {
       permissions: [
         {
           scopeId: 3,
+          regionId: 1,
+        },
+        {
+          scopeId: 2,
           regionId: 1,
         },
       ],
