@@ -11,9 +11,8 @@ import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
 import updateGrantsGrantees from './lib/updateGrantsGrantees';
-
+import updateTopicNames from './lib/updateTopicNames';
 import findOrCreateUser from './services/accessValidation';
-
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
@@ -116,9 +115,9 @@ const timezone = 'America/New_York';
 
 const runJob = () => {
   try {
-    return updateGrantsGrantees();
+    return [updateGrantsGrantees(), updateTopicNames()];
   } catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
+    auditLogger.error(`Error running scheduled tasks: ${error}`);
     logger.error(error.stack);
   }
   return false;
