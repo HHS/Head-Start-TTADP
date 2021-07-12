@@ -23,7 +23,7 @@ import 'uswds/dist/css/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
-import isAdmin, { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
+import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
 import Filter, { filtersToQueryString } from './Filter';
 import ReportMenu from './ReportMenu';
@@ -380,13 +380,13 @@ function Landing() {
   };
 
   const handleDownloadAllReports = () => {
-    const filterQuery = filtersToQueryString(filters);
+    const filterQuery = filtersToQueryString(filters, appliedRegion);
     const downloadURL = getAllReportsDownloadURL(filterQuery);
     window.location.assign(downloadURL);
   };
 
   const handleDownloadAllAlerts = () => {
-    const filterQuery = filtersToQueryString(alertFilters);
+    const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
     window.location.assign(downloadURL);
   };
@@ -493,7 +493,7 @@ function Landing() {
                 <h1 className="landing">Activity Reports</h1>
               </Grid>
               <Grid col={2} className="flex-align-self-center">
-                {isAdmin(user) && getUserRegions(user).length > 1
+                {getUserRegions(user).length > 1
                 && (
                 <RegionalSelect
                   regions={allRegionsUserHasPermissionTo(user)}
@@ -509,14 +509,12 @@ function Landing() {
             </Grid>
             <Grid row gap className="smart-hub--overview">
               <Grid col={10}>
-                {isAdmin(user) && (
                 <Overview
                   filters={filters}
                   region={appliedRegion}
                   allRegions={getUserRegions(user)}
                   skipLoading
                 />
-                )}
               </Grid>
             </Grid>
             <Grid row>
