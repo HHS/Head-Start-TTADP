@@ -56,8 +56,8 @@ function Overview({ data, region }) {
         <span className="smart-hub--overview-period"> 9/15/2020 to Today</span>
       </Grid>
       <Grid row gap className="smart-hub--overview-data">
-        <Field col="fill" tablet={{ col: true }} label="Grants served " labelExt={`(of ${data.numTotalGrants})`} data={data.numGrants} />
-        <Field col="fill" label="Non-grantees served" data={data.numNonGrantees} />
+        <Field col="fill" tablet={{ col: true }} label="Grants served " data={data.numGrants} />
+        <Field col="fill" label="Non-grantee entities served" data={data.numNonGrantees} />
         <Field col="fill" label="Activity reports" data={data.numReports} />
         <Field col="fill" label="Participants" data={data.numParticipants} />
         <Field col={2} label="Hours of TTA" data={data.sumDuration} />
