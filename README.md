@@ -342,7 +342,7 @@ If you are not logged into the cf cli, it will ask you for an sso temporary pass
 <!-- Links -->
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
-[TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations)
+[TTAHUB-System-Operations]: https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations
 [circleci-envvar]: https://app.circleci.com/settings/project/github/adhocteam/Head-Start-TTADP/environment-variables?return-to=https%3A%2F%2Fcircleci.com%2Fdashboard
 [cloudgov]: https://dashboard.fr.cloud.gov/home
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
