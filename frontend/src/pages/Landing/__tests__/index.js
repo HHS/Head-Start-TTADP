@@ -702,7 +702,7 @@ describe('Landing page table menus & selections', () => {
         userEvent.click(reportMenu);
         const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
-        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
       });
     });
   });
@@ -728,7 +728,7 @@ describe('Landing page table menus & selections', () => {
       userEvent.click(reportMenu);
       const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
       userEvent.click(downloadButton);
-      expect(getAllReportsDownloadURL).toHaveBeenCalledWith('');
+      expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
     });
   });
 });
