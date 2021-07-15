@@ -11,7 +11,7 @@ import { withCollaborators, withoutCollaborators } from './collaborators';
 import { withoutStatus, withStatus } from './status';
 import withRegion from './region';
 
-const topicToQuery = {
+export const topicToQuery = {
   reportId: {
     in: (query) => withReportIds(query),
     nin: (query) => withoutReportIds(query),

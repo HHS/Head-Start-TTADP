@@ -12,7 +12,8 @@ import { REPORT_STATUSES } from '../constants';
 
   If adding a new widget be sure to add the widget to ./index.js
 */
-export default async function overview(scopes, region) {
+export default async function overview(scopes, query) {
+  const { region } = query;
   const grantsWhere = `WHERE "regionId" in (${region})`;
   const baseWhere = `${grantsWhere} AND "status" = '${REPORT_STATUSES.APPROVED}'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct

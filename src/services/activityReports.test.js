@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
+  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region, Permission,
 } from '../models';
 import {
   createOrUpdate,
@@ -14,6 +14,7 @@ import {
   getAllDownloadableActivityReportAlerts,
 } from './activityReports';
 import { copyGoalsToGrants } from './goals';
+import SCOPES from '../middleware/scopeConstants';
 import { REPORT_STATUSES } from '../constants';
 
 jest.mock('./goals', () => ({
@@ -95,6 +96,7 @@ describe('Activity Reports DB service', () => {
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
+    await Permission.destroy({ where: { userId: mockUserTwo.id } });
     await NonGrantee.destroy({ where: { id: GRANTEE_ID } });
     await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
     await Grantee.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
@@ -439,8 +441,21 @@ describe('Activity Reports DB service', () => {
         },
         defaults: mockUserTwo,
       });
+
       reportObject.userId = mockUserTwo.id;
       await ActivityReport.create(reportObject);
+
+      await Permission.create({
+        userId: mockUserTwo.id,
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      await Permission.create({
+        userId: mockUserTwo.id,
+        regionId: 2,
+        scopeId: SCOPES.READ_REPORTS,
+      });
 
       const { count, rows } = await activityReportAlerts(mockUserTwo.id, {});
       expect(count).toBe(5);
