@@ -42,14 +42,14 @@ Field.defaultProps = {
   API. Note the `example` passed as a 2nd parameter to `withWidgetData` must match the widget
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
-function Overview({ data, region }) {
+function Overview({ data, regionLabel }) {
   return (
     <Container className="smart-hub--overview-border">
       <Grid row className="smart-hub--overview-header">
         <h2>
           Region
           {' '}
-          {region}
+          {regionLabel}
           {' '}
           TTA Overview
         </h2>
@@ -75,7 +75,7 @@ Overview.propTypes = {
     numParticipants: PropTypes.string,
     sumDuration: PropTypes.string,
   }).isRequired,
-  region: PropTypes.number.isRequired,
+  regionLabel: PropTypes.string.isRequired,
 };
 
 export default withWidgetData(Overview, 'overview');
