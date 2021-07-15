@@ -29,14 +29,15 @@ import {
   getAllDownloadableActivityReports,
   getAllDownloadableActivityReportAlerts,
 } from '../../services/activityReports';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
-import db, { User as UserModel } from '../../models';
+import db, { User as UserModel, Permission } from '../../models';
 import * as mailer from '../../lib/mailer';
 import { REPORT_STATUSES } from '../../constants';
+import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({
   activityReportById: jest.fn(),
@@ -105,11 +106,17 @@ describe('Activity Report handlers', () => {
   beforeAll(async () => {
     await UserModel.create(mockManager);
     await UserModel.create(mockUser);
+    await Permission.create({
+      userId: mockUser.id,
+      regionId: 1,
+      scopeId: SCOPES.READ_WRITE_REPORTS,
+    });
   });
   afterEach(() => {
     jest.clearAllMocks();
   });
   afterAll(async () => {
+    await Permission.destroy({ where: { regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS } });
     await UserModel.destroy({ where: { id: [mockUser.id, mockManager.id] } });
     await db.sequelize.close();
   });
@@ -516,13 +523,15 @@ describe('Activity Report handlers', () => {
 
   describe('downloadAllReports', () => {
     const request = {
-      ...mockRequest,
-      query: { },
+      session: {
+        userId: mockUser.id,
+      },
+      query: { 'region.in': '1' },
     };
 
     it('returns a csv', async () => {
       getAllDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [report] });
-      getUserReadRegions.mockResolvedValue([1]);
+      setReadRegions.mockResolvedValue([1]);
 
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');

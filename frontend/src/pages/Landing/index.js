@@ -128,7 +128,6 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
 
     const selectId = `report-${id}`;
     const isChecked = reportCheckboxes[id] || false;
-
     return (
       <tr key={`landing_${id}`}>
         <td className="width-8">
@@ -220,7 +219,7 @@ function Landing() {
 
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
-
+  const [regionLabel, setRegionLabel] = useState('');
   const ariaLiveContext = useContext(AriaLiveContext);
 
   const makeReportCheckboxes = (reportsArr, checked) => (
@@ -279,7 +278,15 @@ function Landing() {
 
   const getUserRegions = (user) => {
     const regions = allRegionsUserHasPermissionTo(user);
-    if (appliedRegion === 0) updateAppliedRegion(regions[0]);
+    if (appliedRegion === 0) {
+      // this says, if a user's home region is 14
+      // then set the region to central office (all regions)
+      if (user.homeRegionId === 14) {
+        updateAppliedRegion(14);
+      } else {
+        updateAppliedRegion(regions[0]);
+      }
+    }
     return regions;
   };
 
@@ -353,6 +360,10 @@ function Landing() {
   useEffect(() => {
     setReportCheckboxes(makeReportCheckboxes(reports, false));
   }, [reports]);
+
+  useEffect(() => {
+    setRegionLabel(appliedRegion === 14 ? 'All' : appliedRegion);
+  }, [appliedRegion]);
 
   useEffect(() => {
     const checkValues = Object.values(reportCheckboxes);
@@ -465,84 +476,88 @@ function Landing() {
         <title>Landing</title>
       </Helmet>
       <UserContext.Consumer>
-        {({ user }) => (
-          <>
-            {showAlert && message && (
-            <Alert
-              type="success"
-              role="alert"
-              noIcon
-              cta={(
-                <Button
-                  role="button"
-                  unstyled
-                  aria-label="dismiss alert"
-                  onClick={() => updateShowAlert(false)}
-                >
-                  <span className="fa-sm margin-right-2">
-                    <FontAwesomeIcon color="black" icon={faTimesCircle} />
-                  </span>
-                </Button>
+        {({ user }) => {
+          const allUserRegions = getUserRegions(user);
+          return (
+            <>
+              {showAlert && message && (
+              <Alert
+                type="success"
+                role="alert"
+                noIcon
+                cta={(
+                  <Button
+                    role="button"
+                    unstyled
+                    aria-label="dismiss alert"
+                    onClick={() => updateShowAlert(false)}
+                  >
+                    <span className="fa-sm margin-right-2">
+                      <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                    </span>
+                  </Button>
               )}
-            >
-              {msg}
-            </Alert>
-            )}
-            <Grid row gap>
-              <Grid>
-                <h1 className="landing">Activity Reports</h1>
-              </Grid>
-              <Grid col={2} className="flex-align-self-center">
-                {getUserRegions(user).length > 1
+              >
+                {msg}
+              </Alert>
+              )}
+              <Grid row gap>
+                <Grid>
+                  <h1 className="landing">Activity Reports</h1>
+                </Grid>
+                <Grid col={2} className="flex-align-self-center">
+                  {getUserRegions(user).length > 1
                 && (
                 <RegionalSelect
                   regions={allRegionsUserHasPermissionTo(user)}
                   onApply={onApplyRegion}
+                  hasCentralOffice={user.homeRegionId === 14}
                 />
                 )}
-              </Grid>
-              <Grid className="flex-align-self-center">
-                {reportAlerts
+                </Grid>
+                <Grid className="flex-align-self-center">
+                  {reportAlerts
                   && reportAlerts.length > 0
                   && hasReadWrite(user) && <NewReport />}
+                </Grid>
               </Grid>
-            </Grid>
-            <Grid row gap className="smart-hub--overview">
-              <Grid col={10}>
-                <Overview
-                  filters={filters}
-                  region={appliedRegion}
-                  allRegions={getUserRegions(user)}
-                  skipLoading
-                />
+              <Grid row gap className="smart-hub--overview">
+                <Grid col={10}>
+                  <Overview
+                    filters={filters}
+                    region={appliedRegion}
+                    allRegions={allUserRegions}
+                    skipLoading
+                    regionLabel={regionLabel}
+                  />
+                </Grid>
               </Grid>
-            </Grid>
-            <Grid row>
-              {error && (
+              <Grid row>
+                {error && (
                 <Alert type="error" role="alert">
                   {error}
                 </Alert>
-              )}
-            </Grid>
-            <MyAlerts
-              reports={reportAlerts}
-              newBtn={hasReadWrite(user)}
-              alertsSortConfig={alertsSortConfig}
-              alertsOffset={alertsOffset}
-              alertsPerPage={alertsPerPage}
-              alertsActivePage={alertsActivePage}
-              alertReportsCount={alertReportsCount}
-              sortHandler={requestAlertsSort}
-              updateReportFilters={handleApplyAlertFilters}
-              hasFilters={alertFilters.length > 0}
-              updateReportAlerts={updateReportAlerts}
-              setAlertReportsCount={setAlertReportsCount}
-              handleDownloadAllAlerts={handleDownloadAllAlerts}
-            />
+                )}
+              </Grid>
+              <MyAlerts
+                reports={reportAlerts}
+                newBtn={hasReadWrite(user)}
+                alertsSortConfig={alertsSortConfig}
+                alertsOffset={alertsOffset}
+                alertsPerPage={alertsPerPage}
+                alertsActivePage={alertsActivePage}
+                alertReportsCount={alertReportsCount}
+                sortHandler={requestAlertsSort}
+                updateReportFilters={handleApplyAlertFilters}
+                hasFilters={alertFilters.length > 0}
+                updateReportAlerts={updateReportAlerts}
+                setAlertReportsCount={setAlertReportsCount}
+                handleDownloadAllAlerts={handleDownloadAllAlerts}
+              />
 
-            <Container className="landing inline-size maxw-full" padding={0}>
-              <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
-                {numberOfSelectedReports > 0
+              <Container className="landing inline-size maxw-full" padding={0}>
+                <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
+                  {numberOfSelectedReports > 0
                   && (
                   <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
                     {numberOfSelectedReports}
@@ -565,82 +580,83 @@ function Landing() {
                     </Button>
                   </span>
                   )}
-                <Filter applyFilters={handleApplyFilters} />
-                <ReportMenu
-                  hasSelectedReports={numberOfSelectedReports > 0}
-                  onExportAll={handleDownloadAllReports}
-                  onExportSelected={handleDownloadClick}
-                />
-              </span>
-              <span className="smart-hub--table-nav">
-                <span aria-label="Pagination for activity reports">
-                  <span
-                    className="smart-hub--total-count"
-                    aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                      offset,
-                      perPage,
-                      activePage,
-                      reportsCount,
-                    )}`}
-                  >
-                    {renderTotal(offset, perPage, activePage, reportsCount)}
-                    <Pagination
-                      hideFirstLastPages
-                      prevPageText="<Prev"
-                      nextPageText="Next>"
-                      activePage={activePage}
-                      itemsCountPerPage={perPage}
-                      totalItemsCount={reportsCount}
-                      pageRangeDisplayed={4}
-                      onChange={handlePageChange}
-                      linkClassPrev="smart-hub--link-prev"
-                      linkClassNext="smart-hub--link-next"
-                      tabIndex={0}
-                    />
+                  <Filter applyFilters={handleApplyFilters} />
+                  <ReportMenu
+                    hasSelectedReports={numberOfSelectedReports > 0}
+                    onExportAll={handleDownloadAllReports}
+                    onExportSelected={handleDownloadClick}
+                  />
+                </span>
+                <span className="smart-hub--table-nav">
+                  <span aria-label="Pagination for activity reports">
+                    <span
+                      className="smart-hub--total-count"
+                      aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                        offset,
+                        perPage,
+                        activePage,
+                        reportsCount,
+                      )}`}
+                    >
+                      {renderTotal(offset, perPage, activePage, reportsCount)}
+                      <Pagination
+                        hideFirstLastPages
+                        prevPageText="<Prev"
+                        nextPageText="Next>"
+                        activePage={activePage}
+                        itemsCountPerPage={perPage}
+                        totalItemsCount={reportsCount}
+                        pageRangeDisplayed={4}
+                        onChange={handlePageChange}
+                        linkClassPrev="smart-hub--link-prev"
+                        linkClassNext="smart-hub--link-next"
+                        tabIndex={0}
+                      />
+                    </span>
                   </span>
                 </span>
-              </span>
-              <div className="usa-table-container--scrollable">
-                <Table className="usa-table usa-table--borderless usa-table--striped">
-                  <caption>
-                    { `Region ${appliedRegion} Activity reports` }
-                    <p className="usa-sr-only">with sorting and pagination</p>
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th className="width-8" aria-label="Select">
-                        <Checkbox
-                          id="all-reports"
-                          label=""
-                          onChange={toggleSelectAll}
-                          checked={allReportsChecked}
-                          aria-label="Select or de-select all reports"
-                        />
-                      </th>
-                      {renderColumnHeader('Report ID', 'regionId')}
-                      {renderColumnHeader('Grantee', 'activityRecipients')}
-                      {renderColumnHeader('Start date', 'startDate')}
-                      {renderColumnHeader('Creator', 'author')}
-                      {renderColumnHeader('Topic(s)', 'topics')}
-                      {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                      {renderColumnHeader('Last saved', 'updatedAt')}
-                      {renderColumnHeader('Status', 'status')}
-                      <th scope="col" aria-label="context menu" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderReports(
-                      reports,
-                      history,
-                      reportCheckboxes,
-                      handleReportSelect,
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </Container>
-          </>
-        )}
+                <div className="usa-table-container--scrollable">
+                  <Table className="usa-table usa-table--borderless usa-table--striped">
+                    <caption>
+                      { `Region ${regionLabel} Activity reports` }
+                      <p className="usa-sr-only">with sorting and pagination</p>
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th className="width-8" aria-label="Select">
+                          <Checkbox
+                            id="all-reports"
+                            label=""
+                            onChange={toggleSelectAll}
+                            checked={allReportsChecked}
+                            aria-label="Select or de-select all reports"
+                          />
+                        </th>
+                        {renderColumnHeader('Report ID', 'regionId')}
+                        {renderColumnHeader('Grantee', 'activityRecipients')}
+                        {renderColumnHeader('Start date', 'startDate')}
+                        {renderColumnHeader('Creator', 'author')}
+                        {renderColumnHeader('Topic(s)', 'topics')}
+                        {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                        {renderColumnHeader('Last saved', 'updatedAt')}
+                        {renderColumnHeader('Status', 'status')}
+                        <th scope="col" aria-label="context menu" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {renderReports(
+                        reports,
+                        history,
+                        reportCheckboxes,
+                        handleReportSelect,
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
+              </Container>
+            </>
+          );
+        }}
       </UserContext.Consumer>
     </>
   );
