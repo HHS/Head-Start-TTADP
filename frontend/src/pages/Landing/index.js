@@ -518,7 +518,9 @@ function Landing() {
                 <Grid className="flex-align-self-center">
                   {reportAlerts
                   && reportAlerts.length > 0
-                  && hasReadWrite(user) && <NewReport />}
+                  && hasReadWrite(user)
+                  && appliedRegion !== 14
+                  && <NewReport />}
                 </Grid>
               </Grid>
               <Grid row gap className="smart-hub--overview">
