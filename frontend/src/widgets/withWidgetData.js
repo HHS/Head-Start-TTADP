@@ -18,6 +18,7 @@ const withWidgetData = (Widget, widgetId) => {
     const {
       region, allRegions, loadingOverride, skipLoading, errorOverride,
     } = props;
+
     useEffect(() => {
       const fetch = async () => {
         try {
