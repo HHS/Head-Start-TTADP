@@ -395,6 +395,7 @@ export async function createReport(req, res) {
 export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
+
     const reportsWithCount = await getDownloadableActivityReportsByIds(readRegions, req.query);
     const { format = 'json' } = req.query || {};
 
@@ -412,10 +413,11 @@ export async function downloadReports(req, res) {
 
 export async function downloadAllReports(req, res) {
   try {
-    const readRegions = await getUserReadRegions(req.session.userId);
+    const readRegions = await setReadRegions(req.query, req.session.userId);
+
     const reportsWithCount = await getAllDownloadableActivityReports(
-      readRegions,
-      { ...req.query, limit: null },
+      readRegions['region.in'],
+      { readRegions, limit: null },
       true,
     );
 
@@ -429,7 +431,8 @@ export async function downloadAllReports(req, res) {
 export async function downloadAllAlerts(req, res) {
   try {
     const { userId } = req.session;
-    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, req.query);
+    const query = await setReadRegions(req.query, userId);
+    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, query);
 
     const rows = alertsWithCount ? alertsWithCount.rows : [];
     await sendActivityReportCSV(rows, res);

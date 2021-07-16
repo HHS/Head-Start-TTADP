@@ -317,8 +317,44 @@ describe('accessValidation', () => {
       expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [13, 14] });
     });
 
+    it('returns all regions if central office is specified', async () => {
+      await setupUser(mockUser);
+
+      await Promise.all([
+        await Permission.create({
+          scopeId: READ_WRITE_REPORTS,
+          userId: mockUser.id,
+          regionId: 14,
+        }),
+
+        await Permission.create({
+          scopeId: READ_WRITE_REPORTS,
+          userId: mockUser.id,
+          regionId: 1,
+        }),
+
+        await Permission.create({
+          scopeId: READ_WRITE_REPORTS,
+          userId: mockUser.id,
+          regionId: 2,
+        }),
+
+        await Permission.create({
+          scopeId: READ_WRITE_REPORTS,
+          userId: mockUser.id,
+          regionId: 3,
+        }),
+
+      ]).then(async () => {
+        const query = { 'region.in': [14] };
+        const queryWithCentralOffice = await setReadRegions(query, mockUser.id);
+        expect(queryWithCentralOffice).toStrictEqual({ 'region.in': [14, 1, 2, 3] });
+      });
+    });
+
     it('returns all regions user has permissions to if region not specified', async () => {
       await setupUser(mockUser);
+
       await Permission.create({
         scopeId: READ_REPORTS,
         userId: mockUser.id,
