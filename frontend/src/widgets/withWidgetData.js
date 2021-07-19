@@ -19,12 +19,13 @@ const withWidgetData = (Widget, widgetId) => {
       region, allRegions, loadingOverride, skipLoading, errorOverride,
     } = props;
 
+    const selectedRegion = region || allRegions[0];
+
     useEffect(() => {
       const fetch = async () => {
         try {
           updateLoading(true);
-          const requestedRegion = region || allRegions[0];
-          const fetchedData = await fetchWidget(widgetId, requestedRegion);
+          const fetchedData = await fetchWidget(widgetId, selectedRegion);
           updateData(fetchedData);
           updateError('');
         } catch (e) {
@@ -34,7 +35,7 @@ const withWidgetData = (Widget, widgetId) => {
         }
       };
       fetch();
-    }, [region, allRegions]);
+    }, [selectedRegion]);
 
     if ((loading || loadingOverride) && !skipLoading) {
       return (
