@@ -1,10 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../../utils';
+import ApproverStatusList from '../../components/ApproverStatusList';
 
 import IncompletePages from './IncompletePages';
 
@@ -14,6 +13,7 @@ const NeedsAction = ({
   onSubmit,
   approvingManager,
   incompletePages,
+  approverStatusList,
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
 
@@ -41,21 +41,9 @@ const NeedsAction = ({
         </p>
         <Editor readOnly toolbarHidden defaultEditorState={managerNotesState} />
       </div>
-      <div>
-        <div className="margin-top-2">
-          <span>
-            <FontAwesomeIcon color="red" icon={faInfoCircle} />
-          </span>
-          {' '}
-          <span className="text-bold">Action Requested</span>
-          {' '}
-          from
-          {' '}
-          { approvingManager.name }
-        </div>
-      </div>
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <div className="margin-top-3">
+        <ApproverStatusList approverStatus={approverStatusList} />
         <Button onClick={submit}>Re-submit for Approval</Button>
       </div>
     </>
@@ -71,6 +59,10 @@ NeedsAction.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
   }).isRequired,
+  approverStatusList: PropTypes.arrayOf(PropTypes.shape({
+    approver: PropTypes.string,
+    status: PropTypes.string,
+  })).isRequired,
 };
 
 NeedsAction.defaultProps = {
