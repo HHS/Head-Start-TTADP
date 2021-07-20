@@ -3,6 +3,7 @@ export const reasons = [
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
   'Child Incidents',
+  'Complaint',
   'COVID-19 response',
   'Full Enrollment',
   'New Grantee',
