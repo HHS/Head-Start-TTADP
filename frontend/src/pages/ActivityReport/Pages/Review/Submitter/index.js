@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 
@@ -31,6 +31,13 @@ const Submitter = ({
   const submitted = status === REPORT_STATUSES.SUBMITTED;
   const needsAction = status === REPORT_STATUSES.NEEDS_ACTION;
   const approved = status === REPORT_STATUSES.APPROVED;
+  const [approverStatusList, updateApproverStatusList] = useState([]);
+
+  useEffect(() => {
+    if (formData && approvingManager && status) {
+      updateApproverStatusList([{ approver: approvingManager.fullName, status }]);
+    }
+  }, [formData, approvingManager, status]);
 
   const resetToDraft = async () => {
     await onResetToDraft();
@@ -73,7 +80,7 @@ const Submitter = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2">
+      <Container skipTopPadding className="margin-top-2 padding-top-2 padding-bottom-1" skipBottomPadding>
         {error && (
         <Alert noIcon className="margin-y-4" type="error">
           <b>Error</b>
@@ -90,6 +97,7 @@ const Submitter = ({
           onFormSubmit={onFormSubmit}
           reportId={id}
           displayId={displayId}
+          approverStatusList={approverStatusList}
         />
         )}
         {submitted
@@ -100,6 +108,7 @@ const Submitter = ({
             resetToDraft={resetToDraft}
             reportId={id}
             displayId={displayId}
+            approverStatusList={approverStatusList}
           />
         )}
         {needsAction
@@ -110,6 +119,7 @@ const Submitter = ({
           onSubmit={onFormSubmit}
           approvingManager={approvingManager}
           incompletePages={incompletePages}
+          approverStatusList={approverStatusList}
         />
         )}
         {approved
@@ -117,6 +127,7 @@ const Submitter = ({
         <Approved
           additionalNotes={additionalNotes}
           managerNotes={managerNotes}
+          approverStatusList={approverStatusList}
         />
         )}
       </Container>
@@ -142,6 +153,7 @@ Submitter.propTypes = {
   formData: PropTypes.shape({
     approvingManager: PropTypes.shape({
       name: PropTypes.string,
+      fullName: PropTypes.string,
     }),
     managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
