@@ -1,3 +1,11 @@
+.ttahub-activity-report-view h1 {
+    white-space: initial;
+}
+
+.ttahub-activity-report-view hr{
+    margin: auto 0;    
+}
+
 @media( min-width: 1200px ) {
     .ttahub-activity-report-view {
         max-width: 900px;
@@ -8,10 +16,4 @@
     }
 }
 
-.ttahub-activity-report-view h1 {
-    white-space: initial;
-}
 
-.ttahub-activity-report-view hr{
-    margin: auto 0;    
-}
