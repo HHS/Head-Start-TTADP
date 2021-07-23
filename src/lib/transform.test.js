@@ -4,7 +4,7 @@ import {
   Objective,
   User,
 } from '../models';
-import { activityReportToCsvRecord, makeGoalsAndObjectivesObject } from './transform';
+import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
 describe('activityReportToCsvRecord', () => {
   const mockAuthor = {
@@ -141,7 +141,6 @@ describe('activityReportToCsvRecord', () => {
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
       'goal-1': 'Goal 1',
-      'goal-1-status': 'Fake',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-ttaProvided': 'Training',
       'objective-1.1-status': 'Fake',
@@ -149,7 +148,6 @@ describe('activityReportToCsvRecord', () => {
       'objective-1.2-ttaProvided': 'Training',
       'objective-1.2-status': 'Fake',
       'goal-2': 'Goal 2',
-      'goal-2-status': 'Fake',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-ttaProvided': 'Training',
       'objective-2.1-status': '',
@@ -160,11 +158,38 @@ describe('activityReportToCsvRecord', () => {
       'objective-2.3-ttaProvided': 'Training',
       'objective-2.3-status': '',
       'goal-3': 'Goal 3',
-      'goal-3-status': 'Fake',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': '',
     });
+  });
+
+  it('return a list of all keys that are a goal or objective and in the proper order', () => {
+    const csvData = [
+      {
+        'goal-1': 'butter',
+        'objective-1': 'cream',
+      },
+      {
+        'goal-1': 'butter',
+        'objective-1': 'cream',
+        'goal-2': 'cream',
+        'goal-2-status': 'butter',
+        'objective-2.1': 'eggs',
+        'objective-2.1-ttaProvided': 'cream',
+      },
+      {
+        'goal-3': 'butter',
+        'objective-3.1-status': 'cream',
+        kitchen: 'test',
+      },
+    ];
+
+    const validated = extractListOfGoalsAndObjectives(csvData);
+
+    expect(validated).toStrictEqual([
+      'goal-1', 'objective-1', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
+    ]);
   });
 
   it('does not provide values for builders that are not strings or functions', async () => {

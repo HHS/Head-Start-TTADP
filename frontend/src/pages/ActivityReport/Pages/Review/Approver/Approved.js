@@ -13,7 +13,7 @@ const Approved = ({
   const managerNotesState = getEditorState(managerNotes || 'No manager notes');
 
   return (
-    <>
+    <div className="no-print">
       <h2>Report approved</h2>
       <div className="smart-hub--creator-notes">
         <p>
@@ -30,7 +30,7 @@ const Approved = ({
       <div className="margin-top-3">
         <ApproverStatusList approverStatus={approverStatusList} />
       </div>
-    </>
+    </div>
   );
 };
 

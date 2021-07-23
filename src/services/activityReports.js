@@ -631,8 +631,17 @@ async function getDownloadableActivityReports(where) {
   return ActivityReport.findAndCountAll(
     {
       where,
-      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
+      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId', 'managerNotes', 'additionalNotes'] },
       include: [
+        {
+          model: Objective,
+          as: 'objectives',
+          include: [{
+            model: Goal,
+            as: 'goal',
+          }],
+          attributes: ['title', 'status', 'ttaProvided'],
+        },
         {
           model: ActivityRecipient,
           attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
