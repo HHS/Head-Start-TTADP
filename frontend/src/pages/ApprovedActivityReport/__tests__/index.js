@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
+  fireEvent,
   render, screen, waitFor, within,
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
@@ -85,7 +86,7 @@ describe('Activity report print and share view', () => {
 
   beforeAll(() => {
     navigator.clipboard = jest.fn();
-    navigator.clipboard.writeText = jest.fn();
+    navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
     window.print = jest.fn();
   });
 
@@ -96,7 +97,7 @@ describe('Activity report print and share view', () => {
     fetchMock.get('/api/activity-reports/5001', {
       ...report,
       eclkcResources: null,
-      ttaType: ['technical-assistance'],
+      ttaType: ['technical assistance'],
       objectivesWithoutGoals: [],
       goals: [{
         name: 'Goal',
@@ -107,9 +108,16 @@ describe('Activity report print and share view', () => {
           },
         ],
       }],
+      requester: 'chud',
     });
     fetchMock.get('/api/activity-reports/5002', {
       regionId: 45,
+    });
+
+    fetchMock.get('/api/activity-reports/5003', {
+      ...report,
+      ttaType: ['training', 'technical-assistance'],
+      requester: 'regionalOffice',
     });
   });
 
@@ -117,7 +125,6 @@ describe('Activity report print and share view', () => {
     act(() => renderApprovedActivityReport(5000));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /copy url link/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /print to pdf/i })).toBeInTheDocument();
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
       expect(screen.getByText(report.approvingManager.fullName)).toBeInTheDocument();
@@ -177,6 +184,24 @@ describe('Activity report print and share view', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+    });
+  });
+
+  it('copies a url to clipboard', async () => {
+    act(() => renderApprovedActivityReport(5000));
+    await waitFor(() => {
+      const copyButton = screen.getByRole('button', { name: /copy url link/i });
+      fireEvent.click(copyButton);
+      expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    });
+  });
+
+  it('opens a print dialog', async () => {
+    act(() => renderApprovedActivityReport(5003));
+    await waitFor(() => {
+      const printButton = screen.getByRole('button', { name: /print to pdf/i });
+      fireEvent.click(printButton);
+      expect(window.print).toHaveBeenCalled();
     });
   });
 });
