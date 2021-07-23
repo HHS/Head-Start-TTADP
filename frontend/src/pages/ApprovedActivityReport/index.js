@@ -86,7 +86,7 @@ function createResourceMarkup(resources) {
   return (
     `<ul>
       ${resources.map((resource) => (
-      `<li><a href="${resource}">Link</a></li>`
+      resource ? `<li><a href="${resource}">Link</a></li>` : ''
     )).join('')}
     </ul>`
   );
