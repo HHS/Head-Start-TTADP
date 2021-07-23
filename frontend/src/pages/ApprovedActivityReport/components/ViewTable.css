@@ -33,8 +33,15 @@
     padding: 0;
 }
 
-@media( min-width: 768px ) {
+@media screen and ( min-width: 768px ) {
     .ttahub-activity-report-view-table th {     
         width: 250px;
+    }
+}
+
+@media print {
+    .ttahub-activity-report-view-table-container {
+        border: none;
+        border-top: 1px solid #C5C5C5;
     }
 }

@@ -16,4 +16,12 @@
     }
 }
 
-
+@media print {
+    .smart-hub-offset-nav {
+        margin-top: 0;
+    }
+    /* how clumsy it is to set padding-top 0 to a class named padding 5? */
+    .ttahub-activity-report-view > .padding-5 {
+        padding-top: 0;
+    }
+}
