@@ -29,7 +29,7 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
-import ActivityReportPrint from './pages/ActivityReportPrint';
+import ApprovedActivityReport from './pages/ApprovedActivityReport';
 
 function App() {
   const [user, updateUser] = useState();
@@ -114,7 +114,7 @@ function App() {
         <Route
           path="/activity-reports/view/:activityReportId"
           render={({ match, location }) => (
-            <ActivityReportPrint location={location} match={match} user={user} />
+            <ApprovedActivityReport location={location} match={match} user={user} />
           )}
         />
         <Route
