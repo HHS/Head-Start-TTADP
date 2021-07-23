@@ -166,7 +166,7 @@ describe('Landing Page', () => {
     expect(reportIdLink).toBeVisible();
     expect(reportIdLink.closest('a')).toHaveAttribute(
       'href',
-      '/activity-reports/view/1',
+      '/activity-reports/1',
     );
   });
 
