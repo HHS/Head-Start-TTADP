@@ -100,6 +100,7 @@ const report = {
   userId: mockUser.id,
   approvingManager: mockManager,
   displayId: 'mockreport-1',
+  regionId: 1,
 };
 
 describe('Activity Report handlers', () => {
@@ -532,7 +533,7 @@ describe('Activity Report handlers', () => {
     it('returns a csv', async () => {
       getAllDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [report] });
       setReadRegions.mockResolvedValue([1]);
-
+      userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
@@ -555,6 +556,7 @@ describe('Activity Report handlers', () => {
     it('returns a csv', async () => {
       getAllDownloadableActivityReportAlerts.mockResolvedValue({ count: 1, rows: [report] });
       getUserReadRegions.mockResolvedValue([1]);
+      userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
 
       await downloadAllAlerts(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
@@ -570,7 +572,7 @@ describe('Activity Report handlers', () => {
   });
 
   describe('downloadReports', () => {
-    it('returns a csv with appopriate headers when format=csv', async () => {
+    it('returns a csv with appropriate headers when format=csv', async () => {
       const request = {
         ...mockRequest,
         query: { format: 'csv' },
@@ -583,6 +585,7 @@ describe('Activity Report handlers', () => {
         },
       };
 
+      userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
       getDownloadableActivityReportsByIds.mockResolvedValue({
         count: 1, rows: [downloadableReport],
       });
@@ -592,8 +595,8 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.send).toHaveBeenCalled();
       const [[value]] = mockResponse.send.mock.calls;
       /* eslint-disable no-useless-escape */
-      expect(value).toMatch('\"displayId\"');
-      expect(value).toMatch('\"Arty\"');
+      expect(value).toContain('\"Creator\"');
+      expect(value).toContain('\"Arty\"');
       /* eslint-enable no-useless-escape */
     });
 
