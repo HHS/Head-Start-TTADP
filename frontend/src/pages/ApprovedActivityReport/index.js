@@ -69,9 +69,9 @@ function formatMethod(method, delivery) {
 
   if (method.length > 1) {
     methodOfContact = 'Training and Technical Assistance';
-  } else if (method[0] === 'training') {
+  } else if (method[0].toLowerCase() === 'training') {
     methodOfContact = 'Training';
-  } else if (method[0] === 'technical-assistance') {
+  } else if (method[0].toLowerCase().replace(' ', '-') === 'technical-assistance') {
     methodOfContact = 'Technical Assistance';
   }
 
@@ -83,10 +83,6 @@ function formatMethod(method, delivery) {
 }
 
 function createResourceMarkup(resources) {
-  if (!resources) {
-    return '';
-  }
-
   return (
     `<ul>
       ${resources.map((resource) => (
@@ -100,6 +96,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
   const [displayId, setDisplayId] = useState('');
+  const [recipientType] = useState('Grantee');
   const [creator, setCreator] = useState('');
   const [collaborators, setCollaborators] = useState([]);
   const [approvingManagers, setApprovingManagers] = useState('');
@@ -172,10 +169,14 @@ export default function ApprovedActivityReport({ match, user }) {
     });
   }, [match.params.activityReportId, user]);
 
-  function handleCopyUrl() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
+  async function handleCopyUrl() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
       setSuccessfullyCopiedClipboard(true);
-    });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+    }
   }
 
   if (notAuthorized) {
@@ -244,7 +245,7 @@ export default function ApprovedActivityReport({ match, user }) {
           caption="Activity summary"
           headings={
               [
-                'Grantee',
+                recipientType,
                 'Reason',
                 'Program Type',
                 'Start date',
