@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import moment from 'moment';
 import Container from '../../components/Container';
 import './index.css';
 import ViewTable from './components/ViewTable';
@@ -120,6 +121,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [managerNotes, setManagerNotes] = useState('');
   const [creatorNotes, setCreatorNotes] = useState('');
   const [successfullyCopiedClipboard, setSuccessfullyCopiedClipboard] = useState(false);
+  const [somethingWentWrongWithClipboard, setSomethingWentWrongWithClipboard] = useState(false);
 
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
@@ -146,9 +148,9 @@ export default function ApprovedActivityReport({ match, user }) {
       setParticipantCount(report.numberOfParticipants);
       setReasons(report.reason.join(', '));
       setProgramType(report.programTypes.join(', '));
-      setStartDate(report.startDate);
-      setEndDate(report.endDate);
-      setDuration(report.duration);
+      setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
+      setEndDate(moment(report.endDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
+      setDuration(`${report.duration} hours`);
       setMethod(formatMethod(report.ttaType, report.virtualDeliveryType));
       setRequester(formatRequester(report.requester));
 
@@ -181,6 +183,7 @@ export default function ApprovedActivityReport({ match, user }) {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
+      setSomethingWentWrongWithClipboard(true);
     }
   }
 
@@ -218,8 +221,28 @@ export default function ApprovedActivityReport({ match, user }) {
           </div>
         </div>
       ) : null }
+      {somethingWentWrongWithClipboard
+        ? (
+          <div className="usa-alert usa-alert--warning">
+            <div className="usa-alert__body">
+              <p className="usa-alert__text">
+                Sorry, something went wrong copying that url.
+                { window.location.href && (
+                <>
+                  {' '}
+                  Here it is
+                  {window.location.href }
+                </>
+                )}
+              </p>
+            </div>
+          </div>
+        )
+        : null}
       <Grid row>
-        <button type="button" className="usa-button no-print" onClick={handleCopyUrl} style={{ display: navigator.clipboard ? 'inline' : 'none' }}>Copy URL Link</button>
+        {navigator && navigator.clipboard
+          ? <button type="button" className="usa-button no-print" onClick={handleCopyUrl}>Copy URL Link</button>
+          : null }
         <button type="button" className="usa-button no-print" onClick={() => window.print()}>Print to PDF</button>
       </Grid>
       <Container className="ttahub-activity-report-view margin-top-2">
@@ -310,6 +333,7 @@ export default function ApprovedActivityReport({ match, user }) {
           }
         />
         <ViewTable
+          className="no-print"
           caption="Review and Submit"
           headings={
               [

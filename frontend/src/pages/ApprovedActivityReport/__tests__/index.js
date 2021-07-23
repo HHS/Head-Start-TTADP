@@ -28,8 +28,8 @@ describe('Activity report print and share view', () => {
     numberOfParticipants: 3,
     programTypes: ['Party'],
     reason: ['Needed it'],
-    startDate: 'Yesterday',
-    endDate: 'Tomorrow',
+    startDate: '08/01/1968',
+    endDate: '08/02/1969',
     duration: 6.5,
     ttaType: ['training'],
     virtualDeliveryType: 'Phone',
@@ -37,7 +37,7 @@ describe('Activity report print and share view', () => {
     topics: ['Tea', 'cookies'],
     ECLKCResourcesUsed: ['http://website'],
     nonECLKCResourcesUsed: ['http://betterwebsite'],
-    attachments: [],
+    attachments: [''],
     context: '',
     goals: [],
     objectivesWithoutGoals: [
@@ -85,8 +85,8 @@ describe('Activity report print and share view', () => {
   afterEach(() => fetchMock.restore());
 
   beforeAll(() => {
-    navigator.clipboard = jest.fn();
-    navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
+    // navigator.clipboard = jest.fn();
+    // navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
     window.print = jest.fn();
   });
 
@@ -99,7 +99,8 @@ describe('Activity report print and share view', () => {
       activityRecipients: [
         { name: 'Tim', grantId: 400 },
       ],
-      eclkcResources: null,
+      ECLKCResourcesUsed: [''],
+      nonECLKCResourcesUsed: [''],
       ttaType: ['technical assistance'],
       objectivesWithoutGoals: [],
       goals: [{
@@ -131,15 +132,14 @@ describe('Activity report print and share view', () => {
     act(() => renderApprovedActivityReport(5000));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /print to pdf/i })).toBeInTheDocument();
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
       expect(screen.getByText(report.approvingManager.fullName)).toBeInTheDocument();
       expect(screen.getByText(report.activityRecipients.map((arRecipient) => arRecipient.name).join(', '))).toBeInTheDocument();
       expect(screen.getByText(report.reason.join(', '))).toBeInTheDocument();
       expect(screen.getByText(report.programTypes.join(', '))).toBeInTheDocument();
-      expect(screen.getByText(report.startDate)).toBeInTheDocument();
-      expect(screen.getByText(report.endDate)).toBeInTheDocument();
-      expect(screen.getByText(report.duration)).toBeInTheDocument();
+      expect(screen.getByText(/august 1, 1968/i)).toBeInTheDocument();
+      expect(screen.getByText(/august 2, 1969/i)).toBeInTheDocument();
+      expect(screen.getByText(`${report.duration} hours`)).toBeInTheDocument();
       expect(screen.getByText(/training, virtual \(phone\)/i)).toBeInTheDocument();
 
       const granteeRowHeader = screen.getByRole('rowheader', { name: /grantees/i });
@@ -194,11 +194,24 @@ describe('Activity report print and share view', () => {
   });
 
   it('copies a url to clipboard', async () => {
+    global.navigator.clipboard = jest.fn();
+    global.navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
+
     act(() => renderApprovedActivityReport(5000));
     await waitFor(() => {
       const copyButton = screen.getByRole('button', { name: /copy url link/i });
       fireEvent.click(copyButton);
       expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    });
+  });
+
+  it('handles a missing DOM API', async () => {
+    global.navigator.clipboard = jest.fn();
+    act(() => renderApprovedActivityReport(5000));
+    await waitFor(() => {
+      const copyButton = screen.getByRole('button', { name: /copy url link/i });
+      fireEvent.click(copyButton);
+      expect(screen.getByText(/sorry, something went wrong copying that url\. here it ishttp:\/\/localhost\//i)).toBeInTheDocument();
     });
   });
 
