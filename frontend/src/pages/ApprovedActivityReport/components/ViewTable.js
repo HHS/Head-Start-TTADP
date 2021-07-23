@@ -3,10 +3,6 @@ import PropTypes from 'prop-types';
 import './ViewTable.css';
 
 function renderData(data) {
-  if (Array.isArray(data)) {
-    return <ul>{data.map((line) => <li>{line}</li>)}</ul>;
-  }
-
   // eslint-disable-next-line react/no-danger
   return <span dangerouslySetInnerHTML={{ __html: data }} />;
 }
