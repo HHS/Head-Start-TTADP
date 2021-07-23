@@ -104,7 +104,9 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       </Tag>
     ));
 
-    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/view/${id}`;
+    const viewOrEditLink = status === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
+
+    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
 
     const menuItems = [
       {
