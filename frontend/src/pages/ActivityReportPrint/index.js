@@ -154,7 +154,7 @@ export default function ActivityReportPrint({ match, user }) {
       setTopics(report.topics.join(', '));
       setECLKCResources(createResourceMarkup(report.ECLKCResourcesUsed));
       setNonECLKCResourcesUsed(createResourceMarkup(report.nonECLKCResourcesUsed));
-      setAttachments(['']);
+      setAttachments(report.attachments);
 
       // third table
       setContext(report.context);
