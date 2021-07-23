@@ -96,7 +96,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
   const [displayId, setDisplayId] = useState('');
-  const [recipientType] = useState('Grantee');
+  const [recipientType, setRecipientType] = useState('Grantee');
   const [creator, setCreator] = useState('');
   const [collaborators, setCollaborators] = useState([]);
   const [approvingManagers, setApprovingManagers] = useState('');
@@ -131,6 +131,11 @@ export default function ApprovedActivityReport({ match, user }) {
       }
 
       // first table
+      let recipientTypeLabel = report.activityRecipients[0].grantId ? 'Grantee' : 'Non-grantee';
+      if (report.activityRecipients.length > 1) {
+        recipientTypeLabel = `${recipientTypeLabel}s`;
+      }
+      setRecipientType(recipientTypeLabel);
       const arRecipients = report.activityRecipients.map((arRecipient) => arRecipient.name).join(', ');
       setRecipients(arRecipients);
       setDisplayId(report.displayId);

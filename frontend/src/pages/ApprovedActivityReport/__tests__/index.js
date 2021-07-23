@@ -13,8 +13,8 @@ describe('Activity report print and share view', () => {
   const report = {
     regionId: 45,
     activityRecipients: [
-      { name: 'Tim' },
-      { name: 'Tina' },
+      { name: 'Tim', grantId: 400 },
+      { name: 'Tina', grantId: 401 },
     ],
     displayId: 'Boat',
     author: {
@@ -96,6 +96,9 @@ describe('Activity report print and share view', () => {
     fetchMock.get('/api/activity-reports/5000', report);
     fetchMock.get('/api/activity-reports/5001', {
       ...report,
+      activityRecipients: [
+        { name: 'Tim', grantId: 400 },
+      ],
       eclkcResources: null,
       ttaType: ['technical assistance'],
       objectivesWithoutGoals: [],
@@ -118,6 +121,9 @@ describe('Activity report print and share view', () => {
       ...report,
       ttaType: ['training', 'technical-assistance'],
       requester: 'regionalOffice',
+      activityRecipients: [
+        { name: 'Anti-tim' },
+      ],
     });
   });
 
@@ -136,8 +142,8 @@ describe('Activity report print and share view', () => {
       expect(screen.getByText(report.duration)).toBeInTheDocument();
       expect(screen.getByText(/training, virtual \(phone\)/i)).toBeInTheDocument();
 
-      const granteeRowHeader = screen.getByRole('rowheader', { name: /grantee/i });
-      expect(within(granteeRowHeader).getByText('Grantee')).toBeInTheDocument();
+      const granteeRowHeader = screen.getByRole('rowheader', { name: /grantees/i });
+      expect(within(granteeRowHeader).getByText('Grantees')).toBeInTheDocument();
 
       const eclkcResources = screen.getByRole('row', { name: /ohs \/ eclkc resources link/i });
       within(eclkcResources).getByRole('link', { name: /link/i });
