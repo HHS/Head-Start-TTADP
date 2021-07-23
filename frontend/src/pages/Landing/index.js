@@ -113,6 +113,15 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       },
     ];
 
+    if (navigator.clipboard) {
+      menuItems.push({
+        label: 'Copy URL',
+        onClick: async () => {
+          await navigator.clipboard.writeText(`${window.location.origin}${linkTarget}`);
+        },
+      });
+    }
+
     if (!legacyId) {
       const downloadMenuItem = {
         label: 'Download',
