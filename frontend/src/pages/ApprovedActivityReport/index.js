@@ -96,7 +96,7 @@ function createResourceMarkup(resources) {
   );
 }
 
-export default function ActivityReportPrint({ match, user }) {
+export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
   const [displayId, setDisplayId] = useState('');
@@ -322,7 +322,7 @@ export default function ActivityReportPrint({ match, user }) {
     </>
   );
 }
-ActivityReportPrint.propTypes = {
+ApprovedActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,

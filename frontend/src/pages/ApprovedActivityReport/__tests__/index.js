@@ -6,7 +6,7 @@ import {
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 
-import ActivityReportPrint from '../index';
+import ApprovedActivityReport from '../index';
 
 describe('Activity report print and share view', () => {
   const report = {
@@ -70,7 +70,7 @@ describe('Activity report print and share view', () => {
     ],
   };
 
-  function renderActivityReportPrint(id) {
+  function renderApprovedActivityReport(id) {
     const match = {
       path: '',
       url: '',
@@ -79,7 +79,7 @@ describe('Activity report print and share view', () => {
       },
     };
 
-    render(<ActivityReportPrint user={user} match={match} />);
+    render(<ApprovedActivityReport user={user} match={match} />);
   }
   afterEach(() => fetchMock.restore());
 
@@ -114,7 +114,7 @@ describe('Activity report print and share view', () => {
   });
 
   it('renders an activity report in clean view', async () => {
-    act(() => renderActivityReportPrint(5000));
+    act(() => renderApprovedActivityReport(5000));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /copy url link/i })).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles alternate report data', async () => {
-    act(() => renderActivityReportPrint(5001));
+    act(() => renderApprovedActivityReport(5001));
 
     await waitFor(() => {
       expect(screen.getByText(/technical assistance, virtual \(phone\)/i)).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
-    act(() => renderActivityReportPrint(4999));
+    act(() => renderApprovedActivityReport(4999));
 
     await waitFor(() => {
       expect(screen.getByText(/sorry, you are not allowed to view this report/i)).toBeInTheDocument();
@@ -173,7 +173,7 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles data errors', async () => {
-    act(() => renderActivityReportPrint(5002));
+    act(() => renderApprovedActivityReport(5002));
 
     await waitFor(() => {
       expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
