@@ -153,7 +153,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setCollaborators(report.collaborators);
       setApprovingManagers(report.approvingManager.fullName);
       setAttendees(report.participants.join(', '));
-      setParticipantCount(report.numberOfParticipants);
+      setParticipantCount(report.numberOfParticipants.toString());
       setReasons(report.reason.join(', '));
       setProgramType(report.programTypes.join(', '));
       setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
@@ -168,7 +168,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setNonECLKCResourcesUsed(createResourceMarkup(report.nonECLKCResourcesUsed));
       setAttachments(mapAttachments(report.attachments));
 
-      // third table
+      // // third table
       setContext(report.context);
       const [goalHeadings, goals] = calculateGoalsAndObjectives(report);
       setGoalsAndObjectiveHeadings(goalHeadings);
