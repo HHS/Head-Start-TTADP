@@ -45,13 +45,10 @@ ViewTable.propTypes = {
   className: PropTypes.string,
   caption: PropTypes.string.isRequired,
   headings: PropTypes.arrayOf(PropTypes.string).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  // data: PropTypes.array,
   data: PropTypes.arrayOf(
     PropTypes.oneOfType(
       [
         PropTypes.string,
-        PropTypes.number,
         PropTypes.arrayOf(
           PropTypes.string,
         ),
