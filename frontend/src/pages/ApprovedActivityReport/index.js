@@ -134,6 +134,11 @@ export default function ApprovedActivityReport({ match, user }) {
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
+    if (!parseInt(match.params.activityReportId, 10)) {
+      setSomethingWentWrong(true);
+      return;
+    }
+
     getReport(match.params.activityReportId).then((report) => {
       if (!allowedRegions.includes(report.regionId)) {
         setNotAuthorized(true);
