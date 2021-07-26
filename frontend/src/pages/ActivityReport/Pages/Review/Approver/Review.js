@@ -11,16 +11,19 @@ import { managerReportStatuses } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
+import ApproverStatusList from '../../components/ApproverStatusList';
 
 const Review = ({
   additionalNotes,
   onFormReview,
+  approverStatusList,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('managerNotes');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
 
   const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
+
   return (
     <>
       <h2>Review and approve report</h2>
@@ -40,6 +43,7 @@ const Review = ({
         <FormItem
           name="status"
           label="Choose report status"
+          className="margin-bottom-3"
         >
           <Dropdown id="status" name="status" defaultValue="" inputRef={register({ required: true })}>
             <option name="default" value="" disabled hidden>- Select -</option>
@@ -48,6 +52,7 @@ const Review = ({
             ))}
           </Dropdown>
         </FormItem>
+        <ApproverStatusList approverStatus={approverStatusList} />
         <Button type="submit">Submit</Button>
       </Form>
     </>
@@ -57,6 +62,10 @@ const Review = ({
 Review.propTypes = {
   additionalNotes: PropTypes.string.isRequired,
   onFormReview: PropTypes.func.isRequired,
+  approverStatusList: PropTypes.arrayOf(PropTypes.shape({
+    approver: PropTypes.string,
+    status: PropTypes.string,
+  })).isRequired,
 };
 
 export default Review;

@@ -16,9 +16,13 @@ const Approver = ({
   children,
   error,
 }) => {
-  const { managerNotes, additionalNotes, status } = formData;
+  const {
+    managerNotes, additionalNotes, status, approvingManager,
+  } = formData;
   const review = status === REPORT_STATUSES.SUBMITTED || status === REPORT_STATUSES.NEEDS_ACTION;
   const approved = status === REPORT_STATUSES.APPROVED;
+  const approverStatusList = formData && approvingManager && status
+    ? [{ approver: approvingManager.fullName, status }] : [];
 
   // NOTE: This is only an estimate of which timezone the user is in.
   // Not guaranteed to be 100% correct but is "good enough"
@@ -37,7 +41,7 @@ const Approver = ({
       {review && (
         <>
           <span className="text-bold">
-            { author.name }
+            {author.name}
             {' '}
             has requested approval for this activity report.
           </span>
@@ -57,7 +61,7 @@ const Approver = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2">
+      <Container skipTopPadding className="margin-top-2 padding-top-2 padding-bottom-1" skipBottomPadding>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -68,27 +72,29 @@ const Approver = ({
 
         {/* `reviewed` will only be true after user submits the form. */}
         {reviewed
-         && review
-         && <Redirect to={{ pathname: '/activity-reports', state: { message: { ...message, status: 'reviewed' } } }} />}
+          && review
+          && <Redirect to={{ pathname: '/activity-reports', state: { message: { ...message, status: 'reviewed' } } }} />}
 
         {reviewed
-         && approved
-         && <Redirect to={{ pathname: '/activity-reports', state: { message: { ...message, status: 'approved' } } }} />}
+          && approved
+          && <Redirect to={{ pathname: '/activity-reports', state: { message: { ...message, status: 'approved' } } }} />}
 
         {review
-         && (
-           <Review
-             additionalNotes={additionalNotes}
-             onFormReview={onFormReview}
-           />
-         )}
+          && (
+            <Review
+              additionalNotes={additionalNotes}
+              onFormReview={onFormReview}
+              approverStatusList={approverStatusList}
+            />
+          )}
         {approved
-         && (
-           <Approved
-             additionalNotes={additionalNotes}
-             managerNotes={managerNotes}
-           />
-         )}
+          && (
+            <Approved
+              additionalNotes={additionalNotes}
+              managerNotes={managerNotes}
+              approverStatusList={approverStatusList}
+            />
+          )}
       </Container>
     </>
   );
@@ -102,6 +108,7 @@ Approver.propTypes = {
   formData: PropTypes.shape({
     approvingManager: PropTypes.shape({
       name: PropTypes.string,
+      fullName: PropTypes.string,
     }),
     managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
