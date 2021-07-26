@@ -83,6 +83,14 @@ function formatMethod(method, delivery) {
   return methodOfContact;
 }
 
+function mapAttachments(attachments) {
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    return `<ul>${attachments.map((attachment) => `<li>${attachment.originalFileName}</li>`).join('')}</ul>`;
+  }
+
+  return [];
+}
+
 function createResourceMarkup(resources) {
   return (
     `<ul>
@@ -127,6 +135,8 @@ export default function ApprovedActivityReport({ match, user }) {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
     getReport(match.params.activityReportId).then((report) => {
+      console.log(report);
+
       if (!allowedRegions.includes(report.regionId)) {
         setNotAuthorized(true);
         return;
@@ -158,7 +168,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setTopics(report.topics.join(', '));
       setECLKCResources(createResourceMarkup(report.ECLKCResourcesUsed));
       setNonECLKCResourcesUsed(createResourceMarkup(report.nonECLKCResourcesUsed));
-      setAttachments(report.attachments);
+      setAttachments(mapAttachments(report.attachments));
 
       // third table
       setContext(report.context);
