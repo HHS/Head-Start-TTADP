@@ -37,7 +37,7 @@ describe('Activity report print and share view', () => {
     topics: ['Tea', 'cookies'],
     ECLKCResourcesUsed: ['http://website'],
     nonECLKCResourcesUsed: ['http://betterwebsite'],
-    attachments: [''],
+    attachments: [],
     context: '',
     goals: [],
     objectivesWithoutGoals: [
@@ -145,18 +145,14 @@ describe('Activity report print and share view', () => {
       const granteeRowHeader = screen.getByRole('rowheader', { name: /grantees/i });
       expect(within(granteeRowHeader).getByText('Grantees')).toBeInTheDocument();
 
-      const eclkcResources = screen.getByRole('row', { name: /ohs \/ eclkc resources link/i });
-      within(eclkcResources).getByRole('link', { name: /link/i });
-
-      const nonEclkcResources = screen.getByRole('row', { name: /non-eclkc resources link/i });
-      expect(within(nonEclkcResources).getByRole('link', { name: /link/i })).toBeInTheDocument();
+      const resourcesTable = screen.getByRole('table', { name: /resources/i });
+      expect(within(resourcesTable).getAllByRole('link', { name: /link/i }).length).toBeGreaterThan(0);
 
       expect(screen.getByRole('rowheader', { name: /supporting attachments/i })).toBeInTheDocument();
       expect(screen.getByRole('rowheader', { name: /context/i })).toBeInTheDocument();
       expect(screen.getByRole('rowheader', { name: /objective 1/i })).toBeInTheDocument();
 
-      const objectiveCell = screen.getByRole('cell', { name: /objective/i });
-      expect(within(objectiveCell).getByText(/objective/i)).toBeInTheDocument();
+      expect(screen.getByText('Objective')).toBeInTheDocument();
 
       expect(screen.getByRole('rowheader', { name: /tta provided 1/i })).toBeInTheDocument();
       expect(screen.getByText(/all of it/i)).toBeInTheDocument();
@@ -172,8 +168,8 @@ describe('Activity report print and share view', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/technical assistance, virtual \(phone\)/i)).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /goal/i })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: /test/i })).toBeInTheDocument();
+      expect(screen.getByText('Goal')).toBeInTheDocument();
+      expect(screen.getByText(/test/i)).toBeInTheDocument();
     });
   });
 
