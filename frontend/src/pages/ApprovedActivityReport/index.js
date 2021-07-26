@@ -135,8 +135,6 @@ export default function ApprovedActivityReport({ match, user }) {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
     getReport(match.params.activityReportId).then((report) => {
-      console.log(report);
-
       if (!allowedRegions.includes(report.regionId)) {
         setNotAuthorized(true);
         return;
