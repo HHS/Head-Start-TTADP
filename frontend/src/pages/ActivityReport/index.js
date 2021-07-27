@@ -66,6 +66,14 @@ const defaultValues = {
 const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
 
+export const unflattenResourcesUsed = (array) => {
+  if (!array) {
+    return [];
+  }
+
+  return array.map((value) => ({ value }));
+};
+
 function ActivityReport({
   match, user, location, region,
 }) {
@@ -89,14 +97,6 @@ function ActivityReport({
     // seeing a save message if they refresh the page after creating a new report.
     history.replace();
   }, [activityReportId, history]);
-
-  const unflattenResourcesUsed = (array) => {
-    if (!array) {
-      return [];
-    }
-
-    return array.map((value) => ({ value }));
-  };
 
   const convertReportToFormData = (fetchedReport) => {
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);

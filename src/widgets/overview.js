@@ -14,91 +14,58 @@ import { REPORT_STATUSES } from '../constants';
 */
 export default async function overview(scopes, query) {
   const { region } = query;
-  const grantsWhere = `WHERE "regionId" in (${region})`;
-  const baseWhere = `${grantsWhere} AND "status" = '${REPORT_STATUSES.APPROVED}'`;
+  const startDte = '2020-09-15';
+  const grantsWhere = `WHERE "regionId" in (${region !== undefined ? region : '0'}) and "endDate" >= '${startDte}'`;
+  const baseWhere = `${grantsWhere} AND "status" = '${REPORT_STATUSES.APPROVED}' AND "startDate" >= '${startDte}'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct
   // numbers for SUM
   // FIXME: see if there is a better way to get totals using SUM
-  const res = await ActivityReport.findAll({
-    attributes: [
-      [
-        sequelize.fn(
-          'COUNT',
-          sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id')),
-        ),
-        'numReports',
-      ],
-      [
-        sequelize.fn(
-          'COUNT',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityRecipients->grant"."id"'),
-          ),
-        ),
-        'numGrants',
-      ],
-      [
-        sequelize.literal(`(SELECT COUNT(*) from "Grants" ${grantsWhere})`),
-        'numTotalGrants',
-      ],
-      [
-        sequelize.fn(
-          'COUNT',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityRecipients"."nonGranteeId"'),
-          ),
-        ),
-        'numNonGrantees',
-      ],
-      [
-        sequelize.literal(
-          `(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`,
-        ),
-        'numParticipants',
-      ],
-      [
-        sequelize.literal(
-          `(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`,
-        ),
-        'sumDuration',
-      ],
-    ],
-    where: {
-      [Op.and]: [
-        scopes,
-        { status: REPORT_STATUSES.APPROVED },
-      ],
-    },
-    raw: true,
-    // without 'includeIgnoreAttributes' the attributes from the join table
-    // "activityReportObjectives" are included which causes postgres to error when
-    // those attributes are not aggregated or used in a group by (since all the
-    // other DB fields are aggregated)
-    includeIgnoreAttributes: false,
-    include: [
+  const res = await ActivityReport.findAll(
+    {
+      attributes: [
+        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
+        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))), 'numGrants'],
+        [sequelize.literal(`(SELECT COUNT(*) from "Grants" ${grantsWhere})`), 'numTotalGrants'],
+        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."nonGranteeId"'))), 'numNonGrantees'],
+        [sequelize.literal(`(SELECT COALESCE(SUM("numberOfParticipants"), 0) FROM "ActivityReports" ${baseWhere})`), 'numParticipants'],
+        [sequelize.literal(`(SELECT COALESCE(SUM(duration), 0) FROM "ActivityReports" ${baseWhere})`), 'sumDuration']],
+      where:
       {
-        model: ActivityRecipient,
-        as: 'activityRecipients',
-        attributes: [],
-        required: false,
-        include: [
-          {
-            model: Grant,
-            as: 'grant',
-            attributes: [],
-            required: false,
-          },
-          {
-            model: NonGrantee,
-            attributes: [],
-            as: 'nonGrantee',
-            required: false,
-          },
+        [Op.and]:
+        [scopes,
+          { status: REPORT_STATUSES.APPROVED },
+          { startDate: { [Op.gte]: startDte } },
         ],
       },
-    ],
-  });
+      raw: true,
+      // without 'includeIgnoreAttributes' the attributes from the join table
+      // "activityReportObjectives" are included which causes postgres to error when
+      // those attributes are not aggregated or used in a group by (since all the
+      // other DB fields are aggregated)
+      includeIgnoreAttributes: false,
+      include: [
+        {
+          model: ActivityRecipient,
+          as: 'activityRecipients',
+          attributes: [],
+          required: false,
+          include: [
+            {
+              model: Grant,
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+            {
+              model: NonGrantee,
+              attributes: [],
+              as: 'nonGrantee',
+              required: false,
+            },
+          ],
+        },
+      ],
+    },
+  );
   return res[0];
 }

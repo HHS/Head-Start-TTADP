@@ -11,7 +11,7 @@ import MyAlerts from '../MyAlerts';
 import activityReports from '../mocks';
 import { ALERTS_PER_PAGE } from '../../../Constants';
 
-const renderMyAlerts = () => {
+const renderMyAlerts = (report = false) => {
   const history = createMemoryHistory();
   const newBtn = true;
   const alertsSortConfig = { sortBy: 'startDate', direction: 'desc' };
@@ -26,7 +26,7 @@ const renderMyAlerts = () => {
   render(
     <Router history={history}>
       <MyAlerts
-        reports={activityReports}
+        reports={report ? [...activityReports, report] : activityReports}
         newBtn={newBtn}
         alertsSortConfig={alertsSortConfig}
         alertsOffset={alertsOffset}
@@ -154,7 +154,64 @@ describe('My Alerts', () => {
   });
 
   test('Deletes selected report', async () => {
-    renderMyAlerts();
+    const report = {
+      startDate: '02/08/2021',
+      lastSaved: '02/05/2021',
+      id: 1,
+      displayId: 'R14-AR-1',
+      regionId: 14,
+      topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+      status: 'draft',
+      activityRecipients: [
+        {
+          activityRecipientId: 5,
+          name: 'Johnston-Romaguera - 14CH00003',
+          id: 1,
+          grant: {
+            id: 5,
+            number: '14CH00003',
+            grantee: {
+              name: 'Johnston-Romaguera',
+            },
+          },
+          nonGrantee: null,
+        },
+        {
+          activityRecipientId: 4,
+          name: 'Johnston-Romaguera - 14CH00002',
+          id: 2,
+          grant: {
+            id: 4,
+            number: '14CH00002',
+            grantee: {
+              name: 'Johnston-Romaguera',
+            },
+          },
+          nonGrantee: null,
+        },
+        {
+          activityRecipientId: 1,
+          name: 'Grantee Name - 14CH1234',
+          id: 3,
+          grant: {
+            id: 1,
+            number: '14CH1234',
+            grantee: {
+              name: 'Grantee Name',
+            },
+          },
+          nonGrantee: null,
+        },
+      ],
+      author: {
+        fullName: 'Kiwi, GS',
+        name: 'Kiwi',
+        role: 'Grants Specialist',
+        homeRegionId: 14,
+      },
+    };
+
+    renderMyAlerts(report);
     const menuButtons = await screen.findAllByTestId('ellipsis-button');
     userEvent.click(menuButtons[0]);
 

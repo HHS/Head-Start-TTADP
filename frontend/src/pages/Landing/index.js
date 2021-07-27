@@ -28,7 +28,7 @@ import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
 import Filter, { filtersToQueryString } from './Filter';
 import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
-import RegionalSelect from './RegionalSelect';
+import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
@@ -511,6 +511,7 @@ function Landing() {
                 <RegionalSelect
                   regions={allRegionsUserHasPermissionTo(user)}
                   onApply={onApplyRegion}
+                  appliedRegion={appliedRegion}
                   hasCentralOffice={user.homeRegionId === 14}
                 />
                 )}
@@ -567,7 +568,7 @@ function Landing() {
                     selected
                     {' '}
                     <Button
-                      className="smart-hub--select-tag__button margin-left-1"
+                      className="smart-hub--select-tag__button"
                       unstyled
                       aria-label="deselect all reports"
                       onClick={() => {
