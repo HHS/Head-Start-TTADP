@@ -11,10 +11,9 @@ import Container from '../../components/Container';
 import FilterItem from './FilterItem';
 import {
   WITHIN,
-  DATE_FMT,
   QUERY_CONDITIONS,
 } from './constants';
-import { DECIMAL_BASE } from '../../Constants';
+import { DECIMAL_BASE, DATE_FMT } from '../../Constants';
 import './Filter.css';
 
 const defaultFilter = () => (

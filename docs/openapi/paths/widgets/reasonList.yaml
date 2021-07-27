@@ -1,0 +1,19 @@
+get:
+  tags:
+    - widgets
+  operationId: reasonList
+  description: Gets widget data for the reason list widget
+  responses:
+    200:
+      description: widget data for the reason list widget
+      content:
+        application/json:
+          schema:
+            type: array
+            items:  
+              type: object
+              properties:
+                reason:
+                  type: string
+                count:
+                  type: number

@@ -16,7 +16,7 @@ const withWidgetData = (Widget, widgetId) => {
     const [data, updateData] = useState({});
 
     const {
-      region, allRegions, loadingOverride, skipLoading, errorOverride,
+      dateRange, region, allRegions, loadingOverride, skipLoading, errorOverride,
     } = props;
 
     const selectedRegion = region || allRegions[0];
@@ -25,7 +25,7 @@ const withWidgetData = (Widget, widgetId) => {
       const fetch = async () => {
         try {
           updateLoading(true);
-          const fetchedData = await fetchWidget(widgetId, selectedRegion);
+          const fetchedData = await fetchWidget(widgetId, selectedRegion, dateRange);
           updateData(fetchedData);
           updateError('');
         } catch (e) {
@@ -34,8 +34,9 @@ const withWidgetData = (Widget, widgetId) => {
           updateLoading(false);
         }
       };
+
       fetch();
-    }, [selectedRegion]);
+    }, [selectedRegion, dateRange]);
 
     if ((loading || loadingOverride) && !skipLoading) {
       return (
@@ -62,6 +63,8 @@ const withWidgetData = (Widget, widgetId) => {
     errorOverride: PropTypes.bool,
     loadingOverride: PropTypes.bool,
     skipLoading: PropTypes.bool,
+    startDate: PropTypes.string,
+    dateRange: PropTypes.string,
   };
 
   WidgetWrapper.defaultProps = {
@@ -69,6 +72,8 @@ const withWidgetData = (Widget, widgetId) => {
     loadingOverride: false,
     skipLoading: false,
     region: 0,
+    startDate: '',
+    dateRange: '',
   };
 
   return WidgetWrapper;
