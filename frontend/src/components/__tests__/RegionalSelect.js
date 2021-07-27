@@ -5,20 +5,22 @@ import {
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-
-import selectEvent from 'react-select-event';
 import RegionalSelect from '../RegionalSelect';
 
-const renderRegionalSelect = () => {
+const renderRegionalSelect = (
+  onApplyRegion = jest.fn(),
+  hasCentralOffice = true,
+  appliedRegion = 14,
+) => {
   const history = createMemoryHistory();
-  const onApplyRegion = jest.fn();
 
   render(
     <Router history={history}>
       <RegionalSelect
+        appliedRegion={appliedRegion}
         regions={[1, 2]}
         onApply={onApplyRegion}
-        hasCentralOffice
+        hasCentralOffice={hasCentralOffice}
       />
     </Router>,
   );
@@ -27,19 +29,27 @@ const renderRegionalSelect = () => {
 
 describe('Regional Select', () => {
   test('displays correct region in input', async () => {
-    renderRegionalSelect();
+    const onApplyRegion = jest.fn();
+    renderRegionalSelect(onApplyRegion);
     const input = await screen.findByText(/all regions/i);
     expect(input).toBeVisible();
   });
 
   test('changes input value on apply', async () => {
-    renderRegionalSelect();
-    let input = await screen.findByText(/all regions/i);
+    const onApplyRegion = jest.fn();
+    renderRegionalSelect(onApplyRegion, false, 1);
+    const input = await screen.findByText(/region 1/i);
     expect(input).toBeVisible();
-    await selectEvent.select(input, [/region 2/i]);
-    const applyButton = await screen.findByText(/apply/i);
+
+    fireEvent.click(input);
+
+    fireEvent.click(screen.getByRole('button', {
+      name: /select to view data from region 2\. select apply filters button to apply selection/i,
+    }));
+
+    const applyButton = screen.getByRole('button', { name: 'Apply filters' });
     fireEvent.click(applyButton);
-    input = await screen.findByText(/region 2/i);
-    expect(input).toBeVisible();
+
+    expect(onApplyRegion).toHaveBeenCalled();
   });
 });

@@ -1,0 +1,25 @@
+get:
+  tags:
+    - widgets
+  operationId: dashboardOverview
+  description: Gets widget data for the dashboard statistics widget
+  responses:
+    200:
+      description: widget data for the dashboard statistics widget
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nonGrantees: 
+                type: string
+              numReports: 
+                type: string
+              numGrants: 
+                type: string
+              numTotalGrants: 
+                type: string
+              sumDuration: 
+                type: string
+              inPerson: 
+                type: string

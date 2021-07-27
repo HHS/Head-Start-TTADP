@@ -1,0 +1,52 @@
+.ttahub--total-hrs-grantee-graph-tooltip {
+  background: black;
+  border-radius: 5px;
+  color: white;
+  min-width: 2rem;
+  padding: 0.5em;
+  position: fixed;
+  text-align: center;
+  z-index: 2;
+}
+
+.ttahub--total-hrs-grantee-graph-tooltip::after {
+  border-top: 5px solid black;
+  border-bottom: 5px solid transparent;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  height: 0;
+  width: 0;
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 33%;
+}
+
+.ttahub--total-hrs-grantee-graph-legend span {
+  font-size: 16px;
+  padding-right: 18px;
+}
+
+.ttahub--total-hrs-grantee-graph-legend span::after {
+  height: 3px;
+  content: " ";
+  width: 74px;
+  display: inline-block;
+  background-color: #264a64;
+  margin-left: 10px;
+  margin-bottom: 2px;
+}
+
+.ttahub--total-hrs-grantee-graph-legend div:nth-child(2) span::after {
+  background-color: #e29f4d;
+}
+
+.ttahub--total-hrs-grantee-graph-legend div:nth-child(3) span::after {
+  background-color: #148439;
+}
+
+.ttahub--total-hrs-grantee-graph-legend div:nth-child(4) span::after {
+  border-top: 3px dashed #0166ab;
+  height: 3px;
+  background-color: #ffffff00;
+}

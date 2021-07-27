@@ -9,7 +9,7 @@ import {
 
 import './Filter.css';
 import DatePicker from './Components/DatePicker';
-import DateRangePicker from './Components/DateRangePicker';
+import DateRangePicker from '../../components/DateRangePicker';
 import FilterInput from './Components/FilterInput';
 
 import {

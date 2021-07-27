@@ -19,6 +19,7 @@
     "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
+    "plotly.js-basic-dist": "^2.2.1",
     "prop-types": "^15.7.2",
     "query-string": "^7.0.0",
     "react": "^17.0.1",
@@ -152,9 +153,9 @@
       "<rootDir>/src/index.js",
       "<rootDir>/src/setupProxy.js",
       "<rootDir>/src/pages/NotFound/index.js",
+      "<rootDir>/src/polyfills.js",
       "<rootDir>/src/pages/Widgets/index.js",
-      "<rootDir>/src/widgets/Example.js",
-      "<rootDir>/src/polyfills.js"
+      "<rootDir>/src/widgets/Example.js"
     ],
     "coverageThreshold": {
       "global": {

@@ -13,6 +13,7 @@ import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
+import Dashboard from './pages/Dashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -29,6 +30,7 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
+// import { SCOPE_IDS } from './Constants';
 
 function App() {
   const [user, updateUser] = useState();
@@ -106,10 +108,9 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => (
-            <Home />
-          )}
+          render={() => <Home />}
         />
+
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
@@ -125,18 +126,25 @@ function App() {
           />
         )}
         {admin && (
-          <Route
-            path="/admin"
-            render={() => (
-              <Admin />
-            )}
-          />
+          <>
+            <Route
+              exact
+              path="/dashboard"
+              render={() => (
+                <Dashboard user={user} />
+              )}
+            />
+            <Route
+              path="/admin"
+              render={() => (
+                <Admin />
+              )}
+            />
+          </>
         )}
-
         <Route
           render={() => <NotFound />}
         />
-
       </Switch>
     </div>
   );
