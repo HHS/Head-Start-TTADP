@@ -8,7 +8,7 @@ const READ_WRITE_REPORTS = 3;
 const READ_REPORTS = 4;
 const APPROVE_REPORTS = 5;
 
-const permissions = [
+const staticUserPermissions = [
   {
     userId: 1,
     scopeId: SITE_ACCESS,
@@ -74,44 +74,23 @@ const permissions = [
     regionId: 1,
     scopeId: READ_WRITE_REPORTS,
   },
-  {
-    userId: 6,
-    scopeId: SITE_ACCESS,
-    regionId: 14,
-  },
-  {
-    userId: 6,
-    regionId: 14,
-    scopeId: ADMIN,
-  },
-  {
-    userId: 6,
-    regionId: 1,
-    scopeId: READ_WRITE_REPORTS,
-  },
-  {
-    userId: 7,
-    regionId: 1,
-    scopeId: READ_WRITE_REPORTS,
-  },
-  {
-    userId: 8,
-    scopeId: SITE_ACCESS,
-    regionId: 14,
-  },
-  {
-    userId: 8,
-    regionId: 14,
-    scopeId: ADMIN,
-  },
-  {
-    userId: 8,
-    regionId: 1,
-    scopeId: READ_WRITE_REPORTS,
-  },
 ];
 
-const users = [
+const hsesUsernames = [
+  'test.tta.adam',
+  'test.tta.angela',
+  'test.tta.christine',
+  'test.tta.josh',
+  'test.tta.kelly',
+  'test.tta.krys',
+  'test.tta.lauren',
+  'test.tta.liz',
+  'test.tta.matt',
+  'test.tta.patrice',
+  'test.tta.ryan',
+  'test.tta.sarah-jaine',
+];
+const staticUsers = [
   {
     id: 1,
     email: 'hermionegranger@hogwarts.com',
@@ -167,48 +146,50 @@ const users = [
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
   },
-  {
-    id: 6,
-    email: 'krystyna@adhocteam.us',
-    hsesUsername: 'krystyna@adhocteam.us',
-    // These hses ids will likely get out of date at some point, but
-    // still nice to have this shortcut while it lasts
-    hsesUserId: '50385',
-    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
-    name: 'Krys',
-    phoneNumber: '555-555-5553',
-    homeRegionId: 1,
-    lastLogin: moment().toISOString(),
-  },
-  {
-    id: 7,
-    email: 'josh@adhocteam.us',
-    hsesUsername: 'josh@adhocteam.us',
-    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
-    name: 'Josh',
-    hsesUserId: '50154',
-    phoneNumber: '555-555-5553',
-    homeRegionId: 1,
-    lastLogin: moment().toISOString(),
-  },
-  {
-    id: 8,
-    email: 'chuck.mcandrew@adhocteam.us',
-    hsesUsername: 'chuck.mcandrew@adhocteam.us',
-    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
-    name: 'Chuck',
-    hsesUserId: '50387',
-    phoneNumber: '555-555-5553',
-    homeRegionId: 1,
-    lastLogin: moment().toISOString(),
-  },
 ];
+
+const generatedUsers = hsesUsernames.map((u) => ({
+  email: u,
+  hsesUsername: u,
+  role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
+  name: u.split('.')[2],
+  phoneNumber: '555-555-5553',
+  homeRegionId: 1,
+  lastLogin: moment().toISOString(),
+}));
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Users', users, {});
+    await queryInterface.bulkInsert('Users', staticUsers, {});
     await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 10;');
-    await queryInterface.bulkInsert('Permissions', permissions, {});
+    const generatedUserIds = await queryInterface.bulkInsert('Users', generatedUsers, { returning: ['id'] });
+    await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 100;');
+
+    const generatedUserPermissions = generatedUserIds.map(({ id }) => [
+      {
+        userId: id,
+        scopeId: SITE_ACCESS,
+        regionId: 14,
+      },
+      {
+        userId: id,
+        regionId: 14,
+        scopeId: ADMIN,
+      },
+      {
+        userId: id,
+        regionId: 1,
+        scopeId: READ_WRITE_REPORTS,
+      },
+      {
+        userId: id,
+        regionId: 1,
+        scopeId: APPROVE_REPORTS,
+      },
+    ]);
+
+    await queryInterface.bulkInsert('Permissions', staticUserPermissions, {});
+    await queryInterface.bulkInsert('Permissions', generatedUserPermissions.flat(), {});
   },
 
   down: async (queryInterface) => {
