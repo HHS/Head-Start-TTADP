@@ -85,20 +85,14 @@ function formatMethod(method, delivery) {
 
 function mapAttachments(attachments) {
   if (Array.isArray(attachments) && attachments.length > 0) {
-    return `<ul>${attachments.map((attachment) => `<li>${attachment.originalFileName}</li>`).join('')}</ul>`;
+    return attachments.map((attachment) => attachment.originalFileName);
   }
 
   return [];
 }
 
 function createResourceMarkup(resources) {
-  return (
-    `<ul>
-      ${resources.map((resource) => (
-      resource ? `<li><a href="${resource}">Link</a></li>` : ''
-    )).join('')}
-    </ul>`
-  );
+  return resources.map((resource) => <li><a href={resource}>Link</a></li>);
 }
 
 export default function ApprovedActivityReport({ match, user }) {
