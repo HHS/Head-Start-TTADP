@@ -104,12 +104,12 @@ export default function ApprovedActivityReport({ match, user }) {
   const [collaborators, setCollaborators] = useState([]);
   const [approvingManagers, setApprovingManagers] = useState('');
   const [attendees, setAttendees] = useState('');
-  const [participantCount, setParticipantCount] = useState(0);
+  const [participantCount, setParticipantCount] = useState('');
   const [reasons, setReasons] = useState('');
   const [programType, setProgramType] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState('');
   const [recipients, setRecipients] = useState('');
   const [method, setMethod] = useState('');
   const [requester, setRequester] = useState('');
@@ -152,7 +152,8 @@ export default function ApprovedActivityReport({ match, user }) {
       setCollaborators(report.collaborators);
       setApprovingManagers(report.approvingManager.fullName);
       setAttendees(report.participants.join(', '));
-      setParticipantCount(report.numberOfParticipants.toString());
+      const newCount = report.numberOfParticipants.toString();
+      setParticipantCount(newCount);
       setReasons(report.reason.join(', '));
       setProgramType(report.programTypes.join(', '));
       setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));

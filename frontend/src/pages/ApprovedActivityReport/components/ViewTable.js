@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
+import { v4 as uuidv4 } from 'uuid';
 import { getEditorState } from '../../../utils';
 import './ViewTable.css';
 
 function renderEditor(data) {
+  /**
+   * sometimes, we may receive JSX
+   */
+  if (typeof data === 'object') {
+    return data;
+  }
+
+  /**
+   * otherwise, we render the contents via react-draft
+   */
   const defaultEditorState = getEditorState(data || '');
   return (
     <Editor
@@ -19,7 +30,7 @@ function renderData(data) {
   if (Array.isArray(data)) {
     return (
       <ul>
-        {data.map((line) => renderEditor(line))}
+        {data.map((line) => <Fragment key={uuidv4()}>{renderEditor(line)}</Fragment>)}
       </ul>
     );
   }
@@ -56,9 +67,13 @@ ViewTable.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.oneOfType(
       [
+        PropTypes.element,
         PropTypes.string,
         PropTypes.arrayOf(
-          PropTypes.string,
+          PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.element,
+          ]),
         ),
       ],
     ),
