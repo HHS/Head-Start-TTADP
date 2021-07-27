@@ -53,4 +53,8 @@
         border: none;
         border-top: 1px solid #C5C5C5;
     }
+
+    .ttahub-activity-report-view-table td, .ttahub-activity-report-view-table th{
+        border: 1px solid black;
+    }
 }
