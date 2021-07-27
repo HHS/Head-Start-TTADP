@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,7 +30,7 @@ function renderData(data) {
   if (Array.isArray(data)) {
     return (
       <ul>
-        {data.map((line) => <Fragment key={uuidv4()}>{renderEditor(line)}</Fragment>)}
+        {data.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(line)}</li>)}
       </ul>
     );
   }
