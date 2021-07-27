@@ -6,7 +6,7 @@ import { SingleDatePicker, isInclusivelyBeforeDay } from 'react-dates';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 
-import { DATE_FMT, EARLIEST_FILTER_DATE } from '../constants';
+import { DATE_FMT, EARLIEST_FILTER_DATE } from '../../../Constants';
 
 function DatePicker({ query, onUpdateFilter, id }) {
   const [isFocused, updateIsFocused] = useState(false);

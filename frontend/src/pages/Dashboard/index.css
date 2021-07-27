@@ -1,0 +1,28 @@
+.grid-container {
+  max-width: 100%;
+}
+
+@media( max-width: 768px ) {
+  .ttahub-dashboard--filters {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1em;
+  }
+}
+
+.ttahub--dashboard-title {
+  font-size: 40px;
+  font-family: 'Merriweather', serif;
+  font-weight: 700;
+  margin: 0 30px 0 0;
+  white-space: inherit;
+}
+
+.ttahub--dashboard-widget-heading {
+  font-size: 1.25em;
+}
+
+.ttahub-total-hours-container {
+  height: calc( 100% - 1.5rem);
+}
+
