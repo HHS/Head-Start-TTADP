@@ -204,7 +204,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
   if (notAuthorized) {
     return (
-      <div className="usa-alert usa-alert--error" role="alert">
+      <div className="usa-alert usa-alert--error no-print" role="alert">
         <div className="usa-alert__body">
           <h4 className="usa-alert__heading">Unauthorized</h4>
           <p className="usa-alert__text">
@@ -217,7 +217,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
   if (somethingWentWrong) {
     return (
-      <div className="usa-alert usa-alert--warning">
+      <div className="usa-alert usa-alert--warning no-print">
         <div className="usa-alert__body">
           <p className="usa-alert__text">
             Sorry, something went wrong.
@@ -238,7 +238,7 @@ export default function ApprovedActivityReport({ match, user }) {
         </title>
       </Helmet>
       {successfullyCopiedClipboard ? (
-        <div className="usa-alert usa-alert--success margin-bottom-2">
+        <div className="usa-alert usa-alert--success margin-bottom-2 no-print">
           <div className="usa-alert__body">
             <p className="usa-alert__text">Successfully copied URL</p>
           </div>
@@ -246,7 +246,7 @@ export default function ApprovedActivityReport({ match, user }) {
       ) : null }
       {somethingWentWrongWithClipboard
         ? (
-          <div className="usa-alert usa-alert--warning">
+          <div className="usa-alert usa-alert--warning no-print">
             <div className="usa-alert__body">
               <p className="usa-alert__text">
                 Sorry, something went wrong copying that url.
