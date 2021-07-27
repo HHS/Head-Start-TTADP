@@ -89,6 +89,11 @@ export default (sequelize, DataTypes) => {
     },
     lastLogin: DataTypes.DATE,
   }, {
+    defaultScope: {
+      order: [
+        [sequelize.fn('CONCAT', sequelize.col('name'), sequelize.col('email')), 'ASC'],
+      ],
+    },
     sequelize,
     modelName: 'User',
   });
