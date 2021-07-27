@@ -92,7 +92,13 @@ function mapAttachments(attachments) {
 }
 
 function createResourceMarkup(resources) {
-  return resources.map((resource) => <li><a href={resource}>Link</a></li>);
+  return resources.map((resource) => {
+    try {
+      return <li><a href={new URL(resource)}>Link</a></li>;
+    } catch (err) {
+      return <li>{resource}</li>;
+    }
+  });
 }
 
 export default function ApprovedActivityReport({ match, user }) {
