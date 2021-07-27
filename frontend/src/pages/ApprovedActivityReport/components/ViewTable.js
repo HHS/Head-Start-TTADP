@@ -4,11 +4,7 @@ import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../utils';
 import './ViewTable.css';
 
-function renderData(data) {
-  if (Array.isArray(data)) {
-    return <ul>{data.map((line) => <li key={line}>{line}</li>)}</ul>;
-  }
-
+function renderEditor(data) {
   const defaultEditorState = getEditorState(data || '');
   return (
     <Editor
@@ -17,6 +13,18 @@ function renderData(data) {
       defaultEditorState={defaultEditorState}
     />
   );
+}
+
+function renderData(data) {
+  if (Array.isArray(data)) {
+    return (
+      <ul>
+        {data.map((line) => renderEditor(line))}
+      </ul>
+    );
+  }
+
+  return renderEditor(data);
 }
 
 export default function ViewTable({
