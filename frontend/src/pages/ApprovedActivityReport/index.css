@@ -17,15 +17,33 @@
 }
 
 @media print {
-    .ttahub-activity-report-view {
+    .smart-hub-offset-nav {
         max-width: none;
+    }
+
+    .smart-hub-offset-nav, .ttahub-activity-report-view {
+        max-width: none;
+    }
+
+    .ttahub-activity-report-view h1 {
+        margin: 1em 0;
+    }
+
+    .ttahub-activity-report-view hr {
+        display: none;
     }
 
     .smart-hub-offset-nav {
         margin-top: 0;
+        margin-right: 0;
     }
+
+    .smart-hub-offset-nav > .grid-col-12 {
+        margin: 0;
+    }
+    
     /* how clumsy it is to set padding-top 0 to a class named padding 5? */
     .ttahub-activity-report-view > .padding-5 {
-        padding-top: 0;
+        padding: 0;
     }
 }
