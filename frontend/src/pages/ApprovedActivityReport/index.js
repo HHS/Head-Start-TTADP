@@ -94,9 +94,9 @@ function mapAttachments(attachments) {
 function createResourceMarkup(resources) {
   return resources.map((resource) => {
     try {
-      return <li><a href={new URL(resource)}>Link</a></li>;
+      return <a href={new URL(resource)}>{resource}</a>;
     } catch (err) {
-      return <li>{resource}</li>;
+      return resource;
     }
   });
 }

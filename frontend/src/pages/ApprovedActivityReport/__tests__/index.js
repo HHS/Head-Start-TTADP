@@ -146,7 +146,7 @@ describe('Activity report print and share view', () => {
       expect(within(granteeRowHeader).getByText('Grantees')).toBeInTheDocument();
 
       const resourcesTable = screen.getByRole('table', { name: /resources/i });
-      expect(within(resourcesTable).getAllByRole('link', { name: /link/i }).length).toBeGreaterThan(0);
+      expect(within(resourcesTable).getByRole('link', { name: /http:\/\/website/i })).toBeInTheDocument();
 
       expect(screen.getByRole('rowheader', { name: /supporting attachments/i })).toBeInTheDocument();
       expect(screen.getByRole('rowheader', { name: /context/i })).toBeInTheDocument();
