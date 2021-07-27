@@ -67,13 +67,9 @@ ViewTable.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.oneOfType(
       [
-        PropTypes.element,
-        PropTypes.string,
+        PropTypes.node,
         PropTypes.arrayOf(
-          PropTypes.oneOfType([
-            PropTypes.string,
-            PropTypes.element,
-          ]),
+          PropTypes.node,
         ),
       ],
     ),
