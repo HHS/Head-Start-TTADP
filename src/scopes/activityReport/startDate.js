@@ -17,6 +17,12 @@ export function afterStartDate(date) {
 }
 
 export function withinStartDates(startDate, endDate) {
+  if (!startDate || !endDate) {
+    return {
+      startDate: {},
+    };
+  }
+
   return {
     startDate: {
       [Op.between]: [new Date(startDate), new Date(endDate)],

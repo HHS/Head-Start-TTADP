@@ -13,6 +13,7 @@ import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
+import Dashboard from './pages/Dashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -107,10 +108,9 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => (
-            <Home />
-          )}
+          render={() => <Home />}
         />
+
         <Route
           path="/activity-reports/view/:activityReportId"
           render={({ match, location }) => (
@@ -132,18 +132,25 @@ function App() {
           />
         )}
         {admin && (
-          <Route
-            path="/admin"
-            render={() => (
-              <Admin />
-            )}
-          />
+          <>
+            <Route
+              exact
+              path="/dashboard"
+              render={() => (
+                <Dashboard user={user} />
+              )}
+            />
+            <Route
+              path="/admin"
+              render={() => (
+                <Admin />
+              )}
+            />
+          </>
         )}
-
         <Route
           render={() => <NotFound />}
         />
-
       </Switch>
     </div>
   );

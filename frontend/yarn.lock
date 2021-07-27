@@ -8931,6 +8931,11 @@ pkg-up@^2.0.0:
   dependencies:
     find-up "^2.1.0"
 
+plotly.js-basic-dist@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/plotly.js-basic-dist/-/plotly.js-basic-dist-2.2.1.tgz#d4d3e2db383a714208f0d0f0efe561eaa95b104b"
+  integrity sha512-mvVeuEGXNU6lq3bqPXy65HPUoOQPkksO6xHmBoWVuzYlYWVsI8CRiOg77uwvLAs4TC2SaF6sk0cWKgsk0kK5tg==
+
 pnp-webpack-plugin@1.6.4:
   version "1.6.4"
   resolved "https://registry.yarnpkg.com/pnp-webpack-plugin/-/pnp-webpack-plugin-1.6.4.tgz#c9711ac4dc48a685dabafc86f8b6dd9f8df84149"

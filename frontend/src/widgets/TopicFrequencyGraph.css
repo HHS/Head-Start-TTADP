@@ -1,0 +1,29 @@
+.ttahub--aragraph-tooltip {
+    background: black;
+    border-radius: 5px;
+    color: white;
+    min-width: 2rem;
+    padding: .5em;
+    position: fixed;
+    text-align: center;    
+    z-index: 2;
+}
+
+.ttahub--aragraph-tooltip::after {
+    border-top: 5px solid black;
+    border-bottom: 5px solid transparent;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    height: 0;
+    width: 0;
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 33%;
+}
+
+.tta-dashboard--bar-graph-container::after {
+    content: 'Topics';
+    display: block;
+    padding-left: 10em;
+}

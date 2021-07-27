@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export const SCOPE_IDS = {
   SITE_ACCESS: 1,
   ADMIN: 2,
@@ -88,3 +90,6 @@ export const ESCAPE_KEY_CODE = 27;
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
 export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
+
+export const DATE_FMT = 'YYYY/MM/DD';
+export const EARLIEST_FILTER_DATE = moment('2020-09-01');

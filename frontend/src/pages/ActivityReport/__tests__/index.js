@@ -11,7 +11,7 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
-import ActivityReport from '../index';
+import ActivityReport, { unflattenResourcesUsed } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
 const formData = () => ({
@@ -241,6 +241,14 @@ describe('ActivityReport', () => {
 
       // expect everything to be ok
       expect(endDate).toBeEnabled();
+    });
+
+    it('unflattens resources properly', async () => {
+      const empty = unflattenResourcesUsed(undefined);
+      expect(empty).toEqual([]);
+
+      const good = unflattenResourcesUsed(['resource']);
+      expect(good).toEqual([{ value: 'resource' }]);
     });
   });
 });
