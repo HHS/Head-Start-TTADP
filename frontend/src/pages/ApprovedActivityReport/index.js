@@ -275,7 +275,7 @@ export default function ApprovedActivityReport({ match, user }) {
           <p>
             <strong>Collaborators:</strong>
             {' '}
-            {collaborators.map((collaborator) => collaborator.fullName)}
+            {collaborators.map((collaborator) => collaborator.fullName).join(', ')}
           </p>
           <p>
             <strong>Managers:</strong>
