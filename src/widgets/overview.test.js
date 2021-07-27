@@ -48,8 +48,8 @@ const reportObject = {
   numberOfParticipants: 11,
   deliveryMethod: 'method',
   duration: 1,
-  endDate: '2000-01-01T12:00:00Z',
-  startDate: '2000-01-01T12:00:00Z',
+  endDate: '2020-09-16T12:00:00Z',
+  startDate: '2020-09-15T12:00:00Z',
   requester: 'requester',
   programTypes: ['type'],
   targetPopulations: ['pop'],
@@ -77,12 +77,24 @@ describe('Overview widget', () => {
     await Region.create({ name: 'office 18', id: 18 });
     await Grant.findOrCreate({
       where: {
-        id: GRANTEE_ID, number: '1', granteeId: GRANTEE_ID, regionId: 17, status: 'Active',
+        id: GRANTEE_ID,
+        number: '1',
+        granteeId: GRANTEE_ID,
+        regionId: 17,
+        status: 'Active',
+        startDate: new Date('2021/01/01'),
+        endDate: new Date('2021/01/02'),
       },
     });
     await Grant.findOrCreate({
       where: {
-        id: GRANTEE_ID_TWO, number: '2', granteeId: GRANTEE_ID, regionId: 17, status: 'Active',
+        id: GRANTEE_ID_TWO,
+        number: '2',
+        granteeId: GRANTEE_ID,
+        regionId: 17,
+        status: 'Active',
+        startDate: new Date('2021/01/01'),
+        endDate: new Date('2021/01/02'),
       },
     });
     await NonGrantee.findOrCreate({ where: { id: GRANTEE_ID, name: 'nonGrantee' } });

@@ -1,0 +1,47 @@
+.smart-hub--button-select-toggle-btn {
+    justify-content: space-between;
+    padding: 14px;
+    min-width: 140px;
+}
+
+.smart-hub--button-select-menu {
+    background-color: hsl(0, 0%, 100%);
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
+    margin-bottom: 8px;
+    margin-top: 8px;
+    position: absolute;
+    min-width: 200px;
+    z-index: 1;
+    box-sizing: border-box;
+}
+
+.smart-hub--button-select-range-button {
+    background: white;
+    border: 0;
+    display: block;
+    outline: 0.25rem transparent;
+    outline-offset: 0;
+    padding: 11px;    
+    text-align: left;    
+    width: 100%;
+}
+
+.smart-hub--button-select-range-button[aria-pressed="true"] {
+    background: #F8F8F8;  
+    color: #0166AB;
+    font-weight: bold;
+}
+
+.smart-hub--button-select-checkmark {
+    float: right;
+    margin-top: -9px;
+    width: 32px;
+}
+.smart-hub--button-select-menu .ttahub-date-range-picker {
+    margin: 0.5em;
+}
+
+.smart-hub--button-select-menu .DateInput {
+    width: 97px;
+}

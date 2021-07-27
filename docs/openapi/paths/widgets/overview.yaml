@@ -1,0 +1,29 @@
+get:
+  tags:
+    - widgets
+  operationId: overview
+  description: Gets widget data for the overview widget
+  responses:
+    200:
+      description: widget data for the overview widget
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              numReports: 
+                type: string
+              numGrants: 
+                type: string
+              numTotalGrants:
+                type: string
+              numNonGrantees: 
+                type: string
+              numParticipants: 
+                type: string
+              sumDuration: 
+                type: string
+    
+ 
+
+ 

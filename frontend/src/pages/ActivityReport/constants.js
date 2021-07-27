@@ -64,6 +64,8 @@ export const programTypes = [
   'EHS-CCP',
 ];
 
+// Note that if this topic list is changed, it needs also to be changed in
+// - src/widgets/topicFrequencyGraph.js
 export const topics = [
   'Behavioral / Mental Health / Trauma',
   'Child Assessment, Development, Screening',
