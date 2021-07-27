@@ -1,0 +1,23 @@
+get:
+  tags:
+    - widgets
+  operationId: topicAndFrequencyGraph
+  description: Gets widget data for the topic and frequency graph widget
+  responses:
+    200:
+      description: widget data for the topic and frequency graph widget
+      content:
+        application/json:
+          schema:
+            type: array
+            items:             
+              type: object
+              properties:
+                reason:
+                  type: string
+                count:
+                  type: number
+                participants:
+                  type: array
+                  items:                      
+                    type: string

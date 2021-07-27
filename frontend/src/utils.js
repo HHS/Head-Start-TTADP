@@ -1,7 +1,6 @@
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
 import { GOVERNMENT_HOSTNAME_EXTENSION, REPORT_STATUSES } from './Constants';
-
 /**
  * Given a potential url, verify that it is a valid url with http(s) scheme.
  */
