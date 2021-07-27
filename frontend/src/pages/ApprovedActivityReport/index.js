@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
+import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
 import './index.css';
 import ViewTable from './components/ViewTable';
@@ -228,6 +229,15 @@ export default function ApprovedActivityReport({ match, user }) {
 
   return (
     <>
+      <Helmet>
+        <title>
+          Activity Report
+          {' '}
+          {displayId}
+          {' '}
+          - TTA Smart Hub
+        </title>
+      </Helmet>
       {successfullyCopiedClipboard ? (
         <div className="usa-alert usa-alert--success margin-bottom-2">
           <div className="usa-alert__body">
