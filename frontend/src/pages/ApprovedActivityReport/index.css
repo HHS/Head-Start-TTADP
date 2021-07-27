@@ -24,6 +24,17 @@
     .smart-hub-offset-nav, .ttahub-activity-report-view {
         max-width: none;
     }
+    .ttahub-activity-report-view .activity-summary-table caption {
+        border-top: 1px solid #C5C5C5;
+        border-left: 1px solid #C5C5C5;
+        border-right: 1px solid #C5C5C5;
+        margin-bottom: 0;
+    }
+    
+    .ttahub-activity-report-view .activity-summary-table td, 
+    .ttahub-activity-report-view .activity-summary-table th {
+        border: 1px solid #C5C5C5;
+    }
 
     .ttahub-activity-report-view h1 {
         margin: 1em 0;

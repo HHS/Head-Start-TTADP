@@ -50,19 +50,19 @@
 
 @media print {    
     .ttahub-activity-report-view-table th {     
+        padding: 0.5em 1em;
+        vertical-align: top;
         width: 250px;
+    } 
+
+    .ttahub-activity-report-view-table td {
+        padding: 0 1em;
     }
 
     .ttahub-activity-report-view-table-container {
         border: none;
-        border-top: 1px solid #C5C5C5;
     }
     
-    /* .ttahub-activity-report-view-table th,
-    .ttahub-activity-report-view-table td {
-        border: 1px solid black;
-    } */
-
     .ttahub-activity-report-view-table tr {
         page-break-inside: avoid;
     }

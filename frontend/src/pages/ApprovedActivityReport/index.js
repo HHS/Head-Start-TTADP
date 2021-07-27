@@ -308,6 +308,7 @@ export default function ApprovedActivityReport({ match, user }) {
                 'Requested by',
               ]
           }
+          className="activity-summary-table"
           data={
               [
                 recipients,
