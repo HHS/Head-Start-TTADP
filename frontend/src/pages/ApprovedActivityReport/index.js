@@ -235,7 +235,6 @@ export default function ApprovedActivityReport({ match, user }) {
           {' '}
           {displayId}
           {' '}
-          - TTA Smart Hub
         </title>
       </Helmet>
       {successfullyCopiedClipboard ? (
