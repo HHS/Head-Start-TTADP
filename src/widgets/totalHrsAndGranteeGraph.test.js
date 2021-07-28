@@ -112,6 +112,13 @@ describe('Total Hrs and Grantee Graph widget', () => {
     jest.clearAllMocks();
   });
 
+  it('handles no filters', async () => {
+    const query = { };
+    const scopes = filtersToScopes(query);
+    const data = await totalHrsAndGranteeGraph(scopes, query);
+    expect(data.length).toBe(5);
+  });
+
   it('retrieves line graph data by month', async () => {
     // Outside of Start Date bounds.
     const reportOne = await ActivityReport.findOne({ where: { duration: 1, startDate: '2021-01-03' } });
