@@ -86,7 +86,11 @@ function formatMethod(method, delivery) {
 
 function mapAttachments(attachments) {
   if (Array.isArray(attachments) && attachments.length > 0) {
-    return attachments.map((attachment) => attachment.originalFileName);
+    return attachments.map((attachment) => (
+      <li>
+        <a href={attachment.url.url}>{attachment.originalFileName}</a>
+      </li>
+    ));
   }
 
   return [];
@@ -301,6 +305,7 @@ export default function ApprovedActivityReport({ match, user }) {
                 'Program Type',
                 'Start date',
                 'End date',
+                'Topics',
                 'Duration',
                 'Number of participants',
                 'Attendees',
@@ -316,6 +321,7 @@ export default function ApprovedActivityReport({ match, user }) {
                 programType,
                 startDate,
                 endDate,
+                topics,
                 duration,
                 participantCount,
                 attendees,
@@ -328,7 +334,6 @@ export default function ApprovedActivityReport({ match, user }) {
           caption="Resources"
           headings={
               [
-                'Topics',
                 'OHS / ECLKC resources',
                 'Non-ECLKC resources',
                 'Supporting attachments',
@@ -336,7 +341,6 @@ export default function ApprovedActivityReport({ match, user }) {
             }
           data={
               [
-                topics,
                 ECLKCResources,
                 nonECLKCResourcesUsed,
                 attachments,
