@@ -26,8 +26,21 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd) {
 }
 
 export default async function totalHrsAndGranteeGraph(scopes, query) {
+  // Build out return Graph data.
+  const res = [
+    { name: 'All Dates', x: [], y: [] },
+    { name: 'Grantee Rec TTA', x: [], y: [] },
+    { name: 'Hours of Training', x: [], y: [] },
+    { name: 'Hours of Technical Assistance', x: [], y: [] },
+    { name: 'Hours of Both', x: [], y: [] }];
+
   // Get the Date Range.
   const dateRange = query['startDate.win'];
+
+  if (!dateRange) {
+    return res;
+  }
+
   const dates = dateRange.split('-');
 
   // Parse out Start and End Date.
@@ -97,14 +110,6 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
     ],
     order: [['startDate', 'ASC']],
   });
-
-  // Build out return Graph data.
-  const res = [
-    { name: 'All Dates', x: [], y: [] },
-    { name: 'Grantee Rec TTA', x: [], y: [] },
-    { name: 'Hours of Training', x: [], y: [] },
-    { name: 'Hours of Technical Assistance', x: [], y: [] },
-    { name: 'Hours of Both', x: [], y: [] }];
 
   const arDates = [];
   const usedDates = [];
