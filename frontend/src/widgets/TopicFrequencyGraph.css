@@ -1,4 +1,8 @@
-.ttahub--aragraph-tooltip {
+.ttahub--topic-frequency-graph {
+    width: 100%;
+}
+
+.ttahub--topic-frequency-graph-tooltip {
     background: black;
     border-radius: 5px;
     color: white;
@@ -9,7 +13,7 @@
     z-index: 2;
 }
 
-.ttahub--aragraph-tooltip::after {
+.ttahub--topic-frequency-graph-tooltip::after {
     border-top: 5px solid black;
     border-bottom: 5px solid transparent;
     border-left: 5px solid transparent;
