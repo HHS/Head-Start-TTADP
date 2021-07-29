@@ -21,6 +21,7 @@ function DateRangePicker({
   const [opened, updateOpened] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [showDateError, setShowDateError] = useState(false);
 
   const startDateId = `${id}-start`;
   const endDateId = `${id}-end`;
@@ -56,54 +57,68 @@ function DateRangePicker({
 
   const handleBlur = () => {
     if (startDate === null) {
-      onChange(EARLIEST_FILTER_DATE.clone().add(1, 'day'), endDate);
+      setShowDateError(true);
     }
   };
 
   const cssClasses = `ttahub-date-range-picker ${classNames.join(' ')}`;
 
   return (
-    <span
-      id={id}
-      className={cssClasses}
-      onBlur={handleBlur}
-    >
-      <DateRange
-        small
-        phrases={phrases}
-        focusedInput={focusedInput}
-        startDateId={startDateId}
-        endDateId={endDateId}
-        startDate={startDate}
-        numberOfMonths={1}
-        hideKeyboardShortcutsPanel
-        endDate={endDate}
-        isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_FILTER_DATE)}
-        onFocusChange={(focused) => {
-          if (focusedInput !== null) {
-            updateFocused(focused);
-            updateOpened(focused !== null);
-          }
-        }}
-        onDatesChange={({ startDate: selectedStartDate, endDate: selectedEndDate }) => {
-          const input = document.getElementById(startDateId);
-
-          onChange(selectedStartDate, selectedEndDate);
-          if (opened && selectedEndDate) {
-            if (input) input.focus();
-          }
-        }}
-      />
-      <Button
-        onClick={() => { updateOpened(true); updateFocused('startDate'); }}
-        aria-label={'open calendar"'}
-        type="button"
-        className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
-        unstyled
+    <>
+      { showDateError ? (
+        <div className="usa-alert margin-1" role="alert">
+          <div className="usa-alert__body">
+            <p className="usa-alert__text">
+              Please enter a valid start date
+              <br />
+              in the DD/MM/YYYY format
+            </p>
+          </div>
+        </div>
+      ) : null }
+      <span
+        id={id}
+        className={cssClasses}
+        onBlur={handleBlur}
       >
-        <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
-      </Button>
-    </span>
+
+        <DateRange
+          small
+          phrases={phrases}
+          focusedInput={focusedInput}
+          startDateId={startDateId}
+          endDateId={endDateId}
+          startDate={startDate}
+          numberOfMonths={1}
+          hideKeyboardShortcutsPanel
+          endDate={endDate}
+          isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_FILTER_DATE)}
+          onFocusChange={(focused) => {
+            if (focusedInput !== null) {
+              updateFocused(focused);
+              updateOpened(focused !== null);
+            }
+          }}
+          onDatesChange={({ startDate: selectedStartDate, endDate: selectedEndDate }) => {
+            const input = document.getElementById(startDateId);
+
+            onChange(selectedStartDate, selectedEndDate);
+            if (opened && selectedEndDate) {
+              if (input) input.focus();
+            }
+          }}
+        />
+        <Button
+          onClick={() => { updateOpened(true); updateFocused('startDate'); }}
+          aria-label={'open calendar"'}
+          type="button"
+          className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
+          unstyled
+        >
+          <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
+        </Button>
+      </span>
+    </>
   );
 }
 
