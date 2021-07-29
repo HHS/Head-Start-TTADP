@@ -115,7 +115,7 @@ const styles = {
     '&:hover': {
       borderColor: '#565c65',
     },
-    height: 'auto',
+    height: '100%',
     width: '180px',
   }),
   menu: (provided) => ({
@@ -225,7 +225,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
 
     bars.current.on('plotly_hover', (e) => {
       if (e.points && e.points[0]) {
-        const rect = document.querySelectorAll('.point')[e.points[0].pointIndex].getBoundingClientRect();
+        const rect = bars.current.querySelectorAll('.point')[e.points[0].pointIndex].getBoundingClientRect();
         const x = rect.left;
         const y = rect.top;
         setShowTooltip(true);
@@ -262,10 +262,10 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} tabletLg={{ col: 12 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid col="auto" className="display-flex padding-x-2 flex-align-self-center">
+        <Grid col="auto" className="display-flex desktop:padding-x-2 desktop:margin-y-0 margin-y-2 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
-        <Grid col="auto" className="display-flex padding-x-2">
+        <Grid col="auto" className="display-flex desktop:padding-x-2">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="usa-label sr-only" htmlFor="arGraphOrder">Change topic data order</label>
           <select className="usa-select radius-md margin-right-2" id="arGraphOrder" name="arGraphOrder" value={order} onChange={handleSelect}>
