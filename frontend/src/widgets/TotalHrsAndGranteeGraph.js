@@ -186,9 +186,9 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
   return (
     <div className="ttahub--total-hrs-grantee-graph">
-      <Grid row className="position-relative">
-        <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0 margin-bottom-2">Total Hours of TTA and Number of Grants Served</h2></Grid>
-        <Grid col="auto" className="display-flex padding-x-2 flex-align-self-center">
+      <Grid row className="position-relative margin-bottom-4">
+        <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0">Total Hours of TTA and Number of Grants Served</h2></Grid>
+        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-2 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
       </Grid>
