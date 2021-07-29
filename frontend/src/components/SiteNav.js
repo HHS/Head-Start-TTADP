@@ -95,7 +95,7 @@ const SiteNav = ({
                           <span className="padding-right-105">
                             <FontAwesomeIcon color="white" icon={faBorderAll} />
                           </span>
-                          TTA Dashboard
+                          Regional Analytics
                         </NavLink>
                       </li>
                     ) : null }

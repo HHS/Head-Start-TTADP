@@ -41,7 +41,7 @@ export function Tooltip(props) {
   const {
     show, x, y, text,
   } = props;
-  return show ? <span className="ttahub--argraph ttahub--aragraph-tooltip" style={{ left: x, top: y - 50 }}>{text}</span> : null;
+  return show ? <span className="ttahub--topic-frequency-graph-tooltip" style={{ left: x, top: y - 50 }}>{text}</span> : null;
 }
 
 Tooltip.propTypes = {
@@ -193,7 +193,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
 
     const layout = {
       bargap: 0.5,
-      height: 480,
+      height: 300,
       hoverlabel: {
         bgcolor: '#fff',
         bordercolor: '#fff',
@@ -205,6 +205,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
       margin: {
         l: 80,
         pad: 20,
+        t: 24,
       },
       xaxis: {
         automargin: true,
@@ -256,7 +257,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
   }));
 
   return (
-    <Container className="ttahub--argraph overflow-x-scroll" padding={3}>
+    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3}>
       <Grid row className="position-relative">
         <Tooltip show={showTooltip} x={tooltipX} y={tooltipY} text={tooltipText} />
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} tabletLg={{ col: 12 }}>
@@ -267,8 +268,8 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         </Grid>
         <Grid col="auto" className="display-flex desktop:padding-x-2">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label className="usa-label sr-only" htmlFor="arGraphOrder">Change topic data order</label>
-          <select className="usa-select radius-md margin-right-2" id="arGraphOrder" name="arGraphOrder" value={order} onChange={handleSelect}>
+          <label className="usa-label sr-only" htmlFor="tfGraphOrder">Change topic data order</label>
+          <select className="usa-select radius-md margin-right-2" id="tfGraphOrder" name="tfGraphOrder" value={order} onChange={handleSelect}>
             <option value="desc">High To Low</option>
             <option value="asc">Low to High</option>
           </select>
@@ -287,7 +288,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
             isMulti
             isClearable={false}
             styles={styles}
-            data-testid="arGraphSpecialists"
+            data-testid="tfGraphSpecialists"
           />
         </Grid>
       </Grid>
