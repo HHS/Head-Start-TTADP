@@ -346,6 +346,7 @@ export default function ApprovedActivityReport({ match, user }) {
                 attachments,
               ]
             }
+          allowBreakWithin={false}
         />
         <ViewTable
           caption="TTA Provided"

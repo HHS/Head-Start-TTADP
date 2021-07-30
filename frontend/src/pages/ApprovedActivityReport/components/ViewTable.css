@@ -53,10 +53,9 @@
         border: none;
         width: 100%;
     }
-    
-    .ttahub-activity-report-view-table tr,
-    .ttahub-activity-report-view-table caption {
-        page-break-inside: avoid;
+
+    .ttahub-activity-report-view-table.no-break-within {
+        break-inside: avoid;
     }
 
     .ttahub-activity-report-view-table th {     

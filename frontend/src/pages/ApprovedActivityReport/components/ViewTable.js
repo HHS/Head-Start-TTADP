@@ -39,11 +39,11 @@ function renderData(data) {
 }
 
 export default function ViewTable({
-  caption, headings, data, className,
+  caption, headings, data, className, allowBreakWithin,
 }) {
   return (
     <div className={`ttahub-activity-report-view-table-container margin-bottom-2 ${className}`}>
-      <table className="ttahub-activity-report-view-table usa-table">
+      <table className={`ttahub-activity-report-view-table usa-table ${allowBreakWithin ? 'allow-break-within' : 'no-break-within'}`}>
         <caption className="padding-y-1 padding-left-2">{caption}</caption>
         <tbody>
           { headings.map((heading, index) => (
@@ -61,6 +61,7 @@ export default function ViewTable({
 }
 
 ViewTable.propTypes = {
+  allowBreakWithin: PropTypes.bool,
   className: PropTypes.string,
   caption: PropTypes.string.isRequired,
   headings: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -77,6 +78,7 @@ ViewTable.propTypes = {
 };
 
 ViewTable.defaultProps = {
+  allowBreakWithin: true,
   className: '',
   data: [],
 };
