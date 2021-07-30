@@ -54,7 +54,8 @@
         width: 100%;
     }
     
-    .ttahub-activity-report-view-table tr {
+    .ttahub-activity-report-view-table tr,
+    .ttahub-activity-report-view-table caption {
         page-break-inside: avoid;
     }
 
@@ -65,6 +66,11 @@
     } 
 
     .ttahub-activity-report-view-table td {
-        padding: 0 1em;
+        padding: 0.5em 1em;
+        vertical-align: top;
+    }
+
+    .ttahub-activity-report-view-table td ul {
+        margin: 0
     }
 }
