@@ -9,17 +9,18 @@ import topicFrequencyGraph, { topics } from './topicFrequencyGraph';
 const BASE_REASONS = topics.map((topic) => ({
   reason: topic,
   count: 0,
-  participants: [],
+  roles: [],
 }));
 
 const GRANTEE_ID = 30;
 
 const mockUser = {
-  id: 1000,
+  id: 2000,
   homeRegionId: 1,
   name: 'user1000',
   hsesUsername: 'user1000',
   hsesUserId: '1000',
+  role: ['Grants Specialist'],
 };
 
 const reportObject = {
@@ -63,9 +64,9 @@ const regionTwoReport = {
   regionId: 18,
 };
 
-describe('AR Graph widget', () => {
+describe('Topics and frequency graph widget', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser });
+    await User.create(mockUser);
     await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -119,7 +120,7 @@ describe('AR Graph widget', () => {
     const reasonToModify = reasons.find((reason) => reason.reason === 'Program Planning and Services');
 
     reasonToModify.count = 1;
-    reasonToModify.participants = ['participants', 'genies'];
+    reasonToModify.roles = ['Grants Specialist'];
 
     expect(data).toStrictEqual(reasons);
   });
@@ -131,7 +132,7 @@ describe('AR Graph widget', () => {
     const reasons = [...BASE_REASONS];
     const reasonToModify = reasons.find((reason) => reason.reason === 'Program Planning and Services');
     reasonToModify.count = 1;
-    reasonToModify.participants = ['participants', 'genies'];
+    reasonToModify.roles = ['Grants Specialist'];
 
     expect(data).toStrictEqual(reasons);
   });
@@ -145,14 +146,12 @@ describe('AR Graph widget', () => {
     const reasonToModify = reasons.find((reason) => reason.reason === 'Program Planning and Services');
 
     reasonToModify.count = 2;
-    reasonToModify.participants = ['participants', 'genies'];
+    reasonToModify.roles = ['Grants Specialist'];
 
     const secondReasonToModify = reasons.find((reason) => reason.reason === 'Recordkeeping and Reporting');
     secondReasonToModify.count = 1;
-    secondReasonToModify.participants = ['participants', 'genies'];
+    secondReasonToModify.roles = ['Grants Specialist'];
 
     expect(data).toStrictEqual(reasons);
   });
-
-  // todo - write test with dummy reason
 });

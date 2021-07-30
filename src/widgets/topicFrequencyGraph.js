@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import {
-  ActivityReport,
+  ActivityReport, User,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -49,21 +49,31 @@ export default async function topicFrequencyGraph(scopes) {
   const topicsAndParticipants = await ActivityReport.findAll({
     attributes: [
       'topics',
-      'participants',
+    ],
+    include: [
+      {
+        model: User,
+        attributes: [['role', 'authorRole'], 'id', 'role'],
+        as: 'author',
+      },
+      {
+        model: User,
+        attributes: [['role', 'collaboratorRole']],
+        as: 'collaborators',
+      },
     ],
     where: {
       [Op.and]: [scopes],
       status: REPORT_STATUSES.APPROVED,
-
     },
+    nest: true,
     raw: true,
-    includeIgnoreAttributes: false,
   });
 
   const reasons = topics.map((topic) => ({
     reason: topic,
     count: 0,
-    participants: [],
+    roles: [],
   }));
 
   topicsAndParticipants.forEach((topicAndParticipant) => {
@@ -76,12 +86,29 @@ export default async function topicFrequencyGraph(scopes) {
         // increment the count
         selectedReason.count += 1;
 
+        if (
+          topicAndParticipant.author
+          && topicAndParticipant.author.authorRole
+        ) {
+          selectedReason.roles = [
+            ...selectedReason.roles,
+            ...topicAndParticipant.author.authorRole,
+          ];
+        }
+
+        if (
+          topicAndParticipant.collaborators
+          && topicAndParticipant.collaborators.collaboratorRole
+        ) {
         // add that reason to the participants
-        selectedReason.participants = [...selectedReason.participants,
-          ...topicAndParticipant.participants];
+          selectedReason.roles = [
+            ...selectedReason.roles,
+            ...topicAndParticipant.collaborators.collaboratorRole,
+          ];
+        }
 
         // remove dupes from the participants
-        selectedReason.participants = Array.from(new Set(selectedReason.participants));
+        selectedReason.roles = Array.from(new Set(selectedReason.roles));
       }
     });
   });
