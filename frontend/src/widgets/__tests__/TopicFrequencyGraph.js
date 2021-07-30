@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   TopicFrequencyGraphWidget, reasonsWithLineBreaks, filterData, sortData, Tooltip,
@@ -9,32 +9,32 @@ import {
 const TEST_DATA = [{
   reason: 'CLASS: Instructional Support',
   count: 12,
-  participants: [],
+  roles: [],
 },
 {
   reason: 'Community and Self-Assessment',
   count: 155,
-  participants: [],
+  roles: [],
 },
 {
   reason: 'Family Support Services',
   count: 53,
-  participants: [],
+  roles: [],
 },
 {
   reason: 'Fiscal / Budget',
   count: 0,
-  participants: ['Louise'],
+  roles: [],
 },
 {
   reason: 'Five-Year Grant',
   count: 33,
-  participants: ['Bob'],
+  roles: [],
 },
 {
   reason: 'Human Resources',
   count: 0,
-  participants: ['Gene'],
+  roles: ['System Specialist'],
 }];
 
 const renderArGraphOverview = async (props) => (
@@ -43,7 +43,7 @@ const renderArGraphOverview = async (props) => (
   )
 );
 
-describe('AR Graph Widget', () => {
+describe('Topic & Frequency Graph Widget', () => {
   it('shows the correct data', async () => {
     renderArGraphOverview({ data: TEST_DATA });
     const graphTitle = screen.getByRole('heading', { name: /number of activity reports by topic/i });
@@ -53,13 +53,13 @@ describe('AR Graph Widget', () => {
 
   it('correctly filters data', () => {
     const data = [...TEST_DATA];
-    const filteredData = filterData(data, [{ label: 'Gene' }]);
+    const filteredData = filterData(data, [{ value: 'System Specialist' }]);
 
     expect(filteredData).toStrictEqual([
       {
         reason: 'Human Resources',
         count: 0,
-        participants: ['Gene'],
+        roles: ['System Specialist'],
       },
     ]);
   });
@@ -73,38 +73,32 @@ describe('AR Graph Widget', () => {
       {
         reason: 'Fiscal / Budget',
         count: 0,
-        participants: [
-          'Louise',
-        ],
+        roles: [],
       },
       {
         reason: 'Human Resources',
         count: 0,
-        participants: [
-          'Gene',
-        ],
+        roles: ['System Specialist'],
       },
       {
         reason: 'CLASS: Instructional Support',
         count: 12,
-        participants: [],
+        roles: [],
       },
       {
         reason: 'Five-Year Grant',
         count: 33,
-        participants: [
-          'Bob',
-        ],
+        roles: [],
       },
       {
         reason: 'Family Support Services',
         count: 53,
-        participants: [],
+        roles: [],
       },
       {
         reason: 'Community and Self-Assessment',
         count: 155,
-        participants: [],
+        roles: [],
       },
     ]);
 
@@ -114,38 +108,32 @@ describe('AR Graph Widget', () => {
       {
         reason: 'Community and Self-Assessment',
         count: 155,
-        participants: [],
+        roles: [],
       },
       {
         reason: 'Family Support Services',
         count: 53,
-        participants: [],
+        roles: [],
       },
       {
         reason: 'Five-Year Grant',
         count: 33,
-        participants: [
-          'Bob',
-        ],
+        roles: [],
       },
       {
         reason: 'CLASS: Instructional Support',
         count: 12,
-        participants: [],
+        roles: [],
       },
       {
         reason: 'Fiscal / Budget',
         count: 0,
-        participants: [
-          'Louise',
-        ],
+        roles: [],
       },
       {
         reason: 'Human Resources',
         count: 0,
-        participants: [
-          'Gene',
-        ],
+        roles: ['System Specialist'],
       },
     ]);
   });
@@ -168,6 +156,9 @@ describe('AR Graph Widget', () => {
     const order = screen.getByRole('combobox', { name: /change topic data order/i });
     userEvent.selectOptions(order, ['asc']);
 
+    const applyFiltersButton = screen.getByRole('button', { name: 'Apply filters' });
+    fireEvent.click(applyFiltersButton);
+
     expect(order.value).toBe('asc');
   });
 
@@ -186,11 +177,11 @@ describe('AR Graph Widget', () => {
 
     expect(select.classList.contains('ar__control--is-focused')).toBe(true);
 
-    let louise = screen.getByText(/louise/i);
+    let louise = screen.getByText(/system specialist/i);
 
     userEvent.click(louise);
 
-    louise = screen.getByText(/louise/i);
+    louise = screen.getByText(/system specialist/i);
 
     expect(louise.classList.contains('ar__multi-value__label')).toBe(true);
   });

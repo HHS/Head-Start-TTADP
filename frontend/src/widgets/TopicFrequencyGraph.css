@@ -26,8 +26,26 @@
     left: 33%;
 }
 
+
+.tta-dashboard--topic-frequency-graph-apply-filters {
+    height: 40px;
+    min-width: 120px;
+}
+
 .tta-dashboard--bar-graph-container::after {
     content: 'Topics';
     display: block;
     padding-left: 10em;
+}
+
+@media(max-width: 768px) {
+    .ttahub--topic-frequency-graph-control-row {
+        display: block;
+        width: 100%;
+    }
+
+    .ttahub--topic-frequency-graph-control-row .usa-select, 
+    .tta-dashboard--topic-frequency-graph-apply-filters {
+        width: 180px;
+    }
 }
