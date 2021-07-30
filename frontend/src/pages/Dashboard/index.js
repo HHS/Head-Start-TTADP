@@ -156,7 +156,6 @@ function Dashboard({ user }) {
   return (
     <div className="ttahub-dashboard">
       <Helmet titleTemplate="%s - Dashboard - TTA Smart Hub" defaultTitle="TTA Smart Hub - Dashboard" />
-
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Smart Hub" defaultTitle="TTA Smart Hub - Dashboard" />
         <Grid className="ttahub-dashboard--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
@@ -164,7 +163,7 @@ function Dashboard({ user }) {
             <h1 className="ttahub--dashboard-title">
               {appliedRegion === 14 ? 'Regional' : `Region ${appliedRegion}` }
               {' '}
-              TTA Activity Dashboard
+              TTA Activity Analytics
             </h1>
           </Grid>
           <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 desktop:margin-top-0">
