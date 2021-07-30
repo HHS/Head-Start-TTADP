@@ -1,7 +1,7 @@
 .reason-list {
   font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
     sans-serif;
-  height: calc(100% - 1.5rem);
+    height: calc(100% - 1.5rem);
 }
 
 .reason-list .usa-table-container--scrollable {
