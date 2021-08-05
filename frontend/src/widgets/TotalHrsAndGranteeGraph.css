@@ -1,3 +1,9 @@
+.ttahub--total-hrs-grantee-graph-legend {
+  margin-left: 12%;
+  margin-right: 12%;
+  text-align: center;
+}
+
 .ttahub--total-hrs-grantee-graph-legend span {
   font-size: 16px;
   padding-right: 18px;
@@ -6,7 +12,7 @@
 .ttahub--total-hrs-grantee-graph-legend span::after {
   height: 3px;
   content: " ";
-  width: 74px;
+  width: 80px;
   display: inline-block;
   background-color: #264a64;
   margin-left: 10px;

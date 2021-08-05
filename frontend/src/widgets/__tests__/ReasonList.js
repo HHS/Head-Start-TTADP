@@ -53,6 +53,6 @@ describe('Reason List Widget', () => {
     expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /# of activities/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /reason 10 is a very very very long reason and should not cut off the text/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /999999/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /999,999/i })).toBeInTheDocument();
   });
 });
