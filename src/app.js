@@ -11,9 +11,7 @@ import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
 import updateGrantsGrantees from './lib/updateGrantsGrantees';
-
 import findOrCreateUser from './services/accessValidation';
-
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
@@ -26,8 +24,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content'),
+      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
+      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
+      imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
+      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
     },
   },
 }));

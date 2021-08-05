@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import { filtersToScopes } from '../scopes/activityReport';
+import { setReadRegions } from './accessValidation';
 
 import {
   ActivityReport,
@@ -408,10 +409,11 @@ export function activityReports(
  * submitted.
  * @param {*} userId
  */
-export function activityReportAlerts(userId, {
+export async function activityReportAlerts(userId, {
   sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
 }) {
-  const scopes = filtersToScopes(filters);
+  const updatedFilters = await setReadRegions(filters, userId);
+  const scopes = filtersToScopes(updatedFilters);
   return ActivityReport.findAndCountAll({
     where: {
       [Op.and]: scopes,
@@ -629,8 +631,17 @@ async function getDownloadableActivityReports(where) {
   return ActivityReport.findAndCountAll(
     {
       where,
-      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId'] },
+      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId', 'managerNotes', 'additionalNotes'] },
       include: [
+        {
+          model: Objective,
+          as: 'objectives',
+          include: [{
+            model: Goal,
+            as: 'goal',
+          }],
+          attributes: ['title', 'status', 'ttaProvided'],
+        },
         {
           model: ActivityRecipient,
           attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
@@ -709,10 +720,13 @@ async function getDownloadableActivityReports(where) {
 
 export async function getAllDownloadableActivityReports(readRegions, filters) {
   const regions = readRegions || [];
+
   const scopes = filtersToScopes(filters);
 
   const where = {
-    regionId: regions,
+    regionId: {
+      [Op.in]: regions,
+    },
     status: REPORT_STATUSES.APPROVED,
     imported: null,
     [Op.and]: scopes,

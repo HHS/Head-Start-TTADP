@@ -11,6 +11,7 @@ import IncompletePages from './IncompletePages';
 import { DECIMAL_BASE } from '../../../../../Constants';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
+import ApproverStatusList from '../../components/ApproverStatusList';
 
 const Draft = ({
   approvers,
@@ -19,6 +20,7 @@ const Draft = ({
   incompletePages,
   reportId,
   displayId,
+  approverStatusList,
 }) => {
   const {
     watch, register, handleSubmit,
@@ -56,7 +58,7 @@ const Draft = ({
 
   return (
     <>
-      { justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
+      {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Additional Notes">
@@ -89,6 +91,9 @@ const Draft = ({
           </FormItem>
         </Fieldset>
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        <div className="margin-top-3">
+          <ApproverStatusList approverStatus={approverStatusList} />
+        </div>
         <Button outline type="button" onClick={() => { onSaveForm(false); }}>Save Draft</Button>
         <Button type="submit">Submit for approval</Button>
       </Form>
@@ -106,6 +111,10 @@ Draft.propTypes = {
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
   reportId: PropTypes.number.isRequired,
   displayId: PropTypes.string.isRequired,
+  approverStatusList: PropTypes.arrayOf(PropTypes.shape({
+    approver: PropTypes.string,
+    status: PropTypes.string,
+  })).isRequired,
 };
 
 export default Draft;

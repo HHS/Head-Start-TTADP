@@ -28,9 +28,9 @@ import {
   reportApprovedNotification,
   collaboratorAddedNotification,
 } from '../../lib/mailer';
-import { activityReportToCsvRecord } from '../../lib/transform';
+import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 
-const { APPROVE_REPORTS } = SCOPES;
+const { APPROVE_REPORTS, ADMIN } = SCOPES;
 
 const namespace = 'SERVICE:ACTIVITY_REPORTS';
 
@@ -38,15 +38,146 @@ const logContext = {
   namespace,
 };
 
-async function sendActivityReportCSV(reports, res) {
+async function sendActivityReportCSV(reports, res, userId) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
+
+  // base options
+  let options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+  };
+
+  // if we have some rows, we need to extract a list of goals and objectives and format the columns
+  if (csvRows.length > 0) {
+    const goalsAndObjectives = extractListOfGoalsAndObjectives(csvRows);
+    const user = await userById(userId);
+    const isAdmin = user.permissions.find((permission) => permission.scopeId === ADMIN);
+
+    options = {
+      ...options,
+      columns: [
+        {
+          key: 'displayId',
+          header: 'Report ID',
+        },
+        {
+          key: 'author',
+          header: 'Creator',
+        },
+        {
+          key: 'collaborators',
+          header: 'Collaborators',
+        },
+        {
+          key: 'requester',
+          header: 'Requester',
+        },
+        {
+          key: 'activityRecipientType',
+          header: 'Grantee or non-grantee',
+        },
+        {
+          key: 'activityRecipients',
+          header: 'Grantee name/non-grantee name',
+        },
+        {
+          key: 'programTypes',
+          header: 'Program type',
+        },
+        {
+          key: 'reason',
+          header: 'Reason',
+        },
+        {
+          key: 'targetPopulations',
+          header: 'Target population',
+        },
+        {
+          key: 'startDate',
+          header: 'Start date',
+        },
+        {
+          key: 'endDate',
+          header: 'End date',
+        },
+        {
+          key: 'ttaType',
+          header: 'TTA type',
+        },
+        {
+          key: 'deliveryMethod',
+          header: 'Delivery method',
+        },
+        {
+          key: 'virtualDeliveryType',
+          header: 'Virtual delivery type',
+        },
+        {
+          key: 'duration',
+          header: 'Duration',
+        },
+        {
+          key: 'participants',
+          header: 'Participant roles',
+        },
+        {
+          key: 'numberOfParticipants',
+          header: 'Number of participants',
+        },
+        {
+          key: 'topics',
+          header: 'Topics covered',
+        },
+        {
+          key: 'ECLKCResourcesUsed',
+          header: 'ECLKC resources',
+        },
+        {
+          key: 'nonECLKCResourcesUsed',
+          header: 'Non-ECLKC resources',
+        },
+        {
+          key: 'attachments',
+          header: 'Attachments',
+        },
+        {
+          key: 'context',
+          header: 'Context',
+        },
+        {
+          key: 'specialistNextSteps',
+          header: 'Specialist next steps',
+        },
+        {
+          key: 'granteeNextSteps',
+          header: 'Grantee next steps',
+        },
+        {
+          key: 'lastSaved',
+          header: 'Last saved',
+        },
+
+      ],
+    };
+
+    // Feature flag (goal fields for admins only)...
+    if (isAdmin) {
+      const contextPosition = 22;
+
+      goalsAndObjectives.forEach((obj, index) => {
+        options.columns.splice(contextPosition + index, 0, {
+          key: obj,
+          // capitalize each word and space them out (no '-' in there)
+          header: obj.split('-').map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join(' '),
+        });
+      });
+    }
+  }
+
   const csvData = stringify(
     csvRows,
-    {
-      header: true,
-      quoted: true,
-      quoted_empty: true,
-    },
+    options,
   );
 
   res.attachment('activity-reports.csv');
@@ -395,13 +526,14 @@ export async function createReport(req, res) {
 export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
+
     const reportsWithCount = await getDownloadableActivityReportsByIds(readRegions, req.query);
     const { format = 'json' } = req.query || {};
 
     if (!reportsWithCount) {
       res.sendStatus(404);
     } else if (format === 'csv') {
-      await sendActivityReportCSV(reportsWithCount.rows, res);
+      await sendActivityReportCSV(reportsWithCount.rows, res, req.session.userId);
     } else {
       res.json(reportsWithCount);
     }
@@ -412,15 +544,16 @@ export async function downloadReports(req, res) {
 
 export async function downloadAllReports(req, res) {
   try {
-    const readRegions = await getUserReadRegions(req.session.userId);
+    const readRegions = await setReadRegions(req.query, req.session.userId);
+
     const reportsWithCount = await getAllDownloadableActivityReports(
-      readRegions,
-      { ...req.query, limit: null },
+      readRegions['region.in'],
+      { ...readRegions, limit: null },
       true,
     );
 
     const rows = reportsWithCount ? reportsWithCount.rows : [];
-    await sendActivityReportCSV(rows, res);
+    await sendActivityReportCSV(rows, res, req.session.userId);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -429,10 +562,12 @@ export async function downloadAllReports(req, res) {
 export async function downloadAllAlerts(req, res) {
   try {
     const { userId } = req.session;
-    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, req.query);
+    const query = await setReadRegions(req.query, userId);
+    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, query);
 
     const rows = alertsWithCount ? alertsWithCount.rows : [];
-    await sendActivityReportCSV(rows, res);
+
+    await sendActivityReportCSV(rows, res, userId);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

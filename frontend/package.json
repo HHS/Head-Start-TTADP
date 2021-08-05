@@ -19,8 +19,11 @@
     "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
+    "plotly.js-basic-dist": "^2.2.1",
     "prop-types": "^15.7.2",
+    "query-string": "^7.0.0",
     "react": "^17.0.1",
+    "react-admin": "^3.15.0",
     "react-app-polyfill": "^2.0.0",
     "react-dates": "^21.8.0",
     "react-dom": "^17.0.1",
@@ -137,7 +140,7 @@
     "eslint-plugin-react-hooks": "^4.0.8",
     "eslint-plugin-testing-library": "^3.10.1",
     "fetch-mock": "^9.10.7",
-    "history": "^5.0.0",
+    "history": "4.10.1",
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^12.0.0",
     "mutationobserver-shim": "^0.3.7",
@@ -150,7 +153,9 @@
       "<rootDir>/src/index.js",
       "<rootDir>/src/setupProxy.js",
       "<rootDir>/src/pages/NotFound/index.js",
-      "<rootDir>/src/polyfills.js"
+      "<rootDir>/src/polyfills.js",
+      "<rootDir>/src/pages/Widgets/index.js",
+      "<rootDir>/src/widgets/Example.js"
     ],
     "coverageThreshold": {
       "global": {

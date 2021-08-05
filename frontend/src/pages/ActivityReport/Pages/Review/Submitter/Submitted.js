@@ -5,21 +5,23 @@ import {
   Alert, Button,
 } from '@trussworks/react-uswds';
 import { getEditorState } from '../../../../../utils';
+import ApproverStatusList from '../../components/ApproverStatusList';
 
 const NotEditableAlert = () => (
-  <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
-    <b>Report is not editable</b>
+  <Alert type="warning" noIcon slim className="margin-bottom-1 no-print">
+    <b>Caution:</b>
+    {' '}
+    Report has been submitted for manager approval.
     <br />
-    This report is no longer editable while it is waiting for manager approval.
-    If you wish to update this report click &quot;Reset to Draft&quot; to
-    move the report back to draft mode.
+    If you wish to update this report,
+    please check with your manager before clicking &quot;Reset to Draft&quot;.
   </Alert>
 );
 
 const Submitted = ({
   additionalNotes,
-  approvingManager,
   resetToDraft,
+  approverStatusList,
 }) => {
   const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
 
@@ -30,31 +32,30 @@ const Submitted = ({
         <br />
         This report was successfully submitted for approval
       </Alert>
-      <div className="smart-hub--creator-notes">
+      <div className="smart-hub--creator-notes margin-bottom-3">
         <p>
           <span className="text-bold">Creator notes</span>
         </p>
         <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
       </div>
-      <p>
-        <span className="text-bold">{approvingManager.name}</span>
-        {' '}
-        is the approving manager for this report.
-        {' '}
-      </p>
-      <Button type="button" onClick={resetToDraft}>Reset to Draft</Button>
+      <div className="margin-top-205">
+        <ApproverStatusList approverStatus={approverStatusList} />
+      </div>
       <NotEditableAlert />
+      <div className="margin-top-3">
+        <Button type="button" onClick={resetToDraft}>Reset to Draft</Button>
+      </div>
     </>
   );
 };
 
 Submitted.propTypes = {
   additionalNotes: PropTypes.string,
-  approvingManager: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-  }).isRequired,
   resetToDraft: PropTypes.func.isRequired,
+  approverStatusList: PropTypes.arrayOf(PropTypes.shape({
+    approver: PropTypes.string,
+    status: PropTypes.string,
+  })).isRequired,
 };
 
 Submitted.defaultProps = {

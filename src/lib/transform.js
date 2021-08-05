@@ -44,6 +44,9 @@ function transformRelatedModel(field, prop) {
  * Helper function for transformGoalsAndObjectives
  */
 function sortObjectives(a, b) {
+  if (!b.goal || !a.goal) {
+    return 1;
+  }
   if (b.goal.id < a.goal.id) {
     return 1;
   }
@@ -59,14 +62,14 @@ function sortObjectives(a, b) {
  */
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
-  let objectiveNum = 1;
+  let objectiveNum = 0;
   let goalNum = 0;
 
   return objectiveRecords.reduce((accum, objective) => {
     const {
       goal, title, status, ttaProvided,
     } = objective;
-    const goalName = goal.name || null;
+    const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
@@ -75,10 +78,25 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         value: goalName,
         enumerable: true,
       });
-      Object.defineProperty(accum, `goal-${goalNum}-status`, {
-        value: goal.status,
-        enumerable: true,
-      });
+      // Object.defineProperty(accum, `goal-${goalNum}-status`, {
+      //   value: goal.status,
+      //   enumerable: true,
+      // });
+      objectiveNum = 1;
+    }
+
+    // goal number should be at least 1
+    if (!goalNum) {
+      goalNum = 1;
+    }
+
+    // same with objective num
+
+    /**
+     * this will start non-grantee objectives at 1.1, which will prevent the creation
+     * of columns that don't fit the current schema (for example, objective-1.0)
+     */
+    if (!objectiveNum) {
       objectiveNum = 1;
     }
 
@@ -109,10 +127,12 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
  */
 async function transformGoalsAndObjectives(report) {
   let obj = {};
+
   const objectiveRecords = await report.objectives;
   if (objectiveRecords) {
     obj = makeGoalsAndObjectivesObject(objectiveRecords);
   }
+
   return obj;
 }
 
@@ -150,6 +170,66 @@ const arTransformers = [
   'lastSaved',
 ];
 
+/**
+ * csvRows is an array of objects representing csv data. Sometimes,
+ * some objects can have keys that other objects will not.
+ * We also want the goals and objectives to appear at the end
+ * of the report. This extracts a list of all the goals and objectives.
+ *
+ * @param {object[]} csvRows
+ * @returns object[]
+ */
+function extractListOfGoalsAndObjectives(csvRows) {
+  // an empty array to hold our keys
+  let keys = [];
+
+  // remove all the keys and get em in an array
+  csvRows.forEach((row) => keys.push(Object.keys(row)));
+
+  // flatten arrays of keys and dedupe
+  keys = Array.from(new Set(keys.flat()));
+
+  const goals = [];
+  const objectives = [];
+
+  keys.forEach((key) => {
+    if (key.match(/^(goal)/)) {
+      goals.push(key);
+    }
+
+    if (key.match(/^(objective)/)) {
+      objectives.push(key);
+    }
+  });
+
+  if (goals.length === 0) {
+    return objectives;
+  }
+
+  let goalsAndObjectives = [];
+
+  goals.forEach((goal, index, goalsArray) => {
+    // push the goal to our array
+    goalsAndObjectives.push(goal);
+
+    // get the goal number
+    const goalNumberNeedle = goal.split('-')[1];
+
+    // check to see if the next goal is from the same set of goal fields
+    if (goalsArray[index + 1] && goalsArray[index + 1].match(`^(goal-${goalNumberNeedle})`)) {
+      return;
+    }
+
+    // find any associated objectives
+    const associatedObjectives = objectives.filter((objective) => objective.match(new RegExp(`^(objective-${goalNumberNeedle})`)));
+
+    // make em friends
+    goalsAndObjectives = [...goalsAndObjectives, ...associatedObjectives];
+  });
+
+  return goalsAndObjectives;
+}
+
 async function activityReportToCsvRecord(report, transformers = arTransformers) {
   const callFunctionOrValueGetter = (x) => {
     if (typeof x === 'function') {
@@ -162,6 +242,7 @@ async function activityReportToCsvRecord(report, transformers = arTransformers) 
   };
   const recordObjects = await Promise.all(transformers.map(callFunctionOrValueGetter));
   const record = recordObjects.reduce((obj, value) => Object.assign(obj, value), {});
+
   return record;
 }
 
@@ -169,4 +250,5 @@ export {
   activityReportToCsvRecord,
   arTransformers,
   makeGoalsAndObjectivesObject,
+  extractListOfGoalsAndObjectives,
 };

@@ -1,0 +1,51 @@
+.ttahub--topic-frequency-graph {
+    width: 100%;
+}
+
+.ttahub--topic-frequency-graph-tooltip {
+    background: black;
+    border-radius: 5px;
+    color: white;
+    min-width: 2rem;
+    padding: .5em;
+    position: fixed;
+    text-align: center;    
+    z-index: 2;
+}
+
+.ttahub--topic-frequency-graph-tooltip::after {
+    border-top: 5px solid black;
+    border-bottom: 5px solid transparent;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    height: 0;
+    width: 0;
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 33%;
+}
+
+
+.tta-dashboard--topic-frequency-graph-apply-filters {
+    height: 40px;
+    min-width: 120px;
+}
+
+.tta-dashboard--bar-graph-container::after {
+    content: 'Topics';
+    display: block;
+    padding-left: 10em;
+}
+
+@media(max-width: 768px) {
+    .ttahub--topic-frequency-graph-control-row {
+        display: block;
+        width: 100%;
+    }
+
+    .ttahub--topic-frequency-graph-control-row .usa-select, 
+    .tta-dashboard--topic-frequency-graph-apply-filters {
+        width: 180px;
+    }
+}

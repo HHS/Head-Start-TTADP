@@ -4,13 +4,14 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import './Overview.css';
+import FormatNumber from './WidgetHelper';
 
 function Field({
-  label, labelExt, data, col,
+  label, labelExt, data, col, decimalPlaces,
 }) {
   return (
     <Grid col={col} className="smart-hub--overview">
-      <span className="text-bold smart-hub--overview-font-size">{data}</span>
+      <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
       <br />
       {label}
       <span className="smart-hub--overview-nowrap">{labelExt}</span>
@@ -22,6 +23,7 @@ Field.propTypes = {
   label: PropTypes.string.isRequired,
   labelExt: PropTypes.string,
   data: PropTypes.string,
+  decimalPlaces: PropTypes.number,
   col: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
@@ -32,6 +34,7 @@ Field.defaultProps = {
   labelExt: '',
   col: 2,
   data: '',
+  decimalPlaces: 0,
 };
 
 /*
@@ -42,25 +45,25 @@ Field.defaultProps = {
   API. Note the `example` passed as a 2nd parameter to `withWidgetData` must match the widget
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
-function Overview({ data, region }) {
+function Overview({ data, regionLabel }) {
   return (
     <Container className="smart-hub--overview-border">
       <Grid row className="smart-hub--overview-header">
         <h2>
           Region
           {' '}
-          {region}
+          {regionLabel}
           {' '}
           TTA Overview
         </h2>
         <span className="smart-hub--overview-period"> 9/15/2020 to Today</span>
       </Grid>
       <Grid row gap className="smart-hub--overview-data">
-        <Field col="fill" tablet={{ col: true }} label="Grants served " labelExt={`(of ${data.numTotalGrants})`} data={data.numGrants} />
-        <Field col="fill" label="Non-grantees served" data={data.numNonGrantees} />
+        <Field col="fill" tablet={{ col: true }} label="Grants served " data={data.numGrants} />
+        <Field col="fill" label="Non-grantee entities served" data={data.numNonGrantees} />
         <Field col="fill" label="Activity reports" data={data.numReports} />
         <Field col="fill" label="Participants" data={data.numParticipants} />
-        <Field col={2} label="Hours of TTA" data={data.sumDuration} />
+        <Field col={2} label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
       </Grid>
     </Container>
   );
@@ -75,7 +78,7 @@ Overview.propTypes = {
     numParticipants: PropTypes.string,
     sumDuration: PropTypes.string,
   }).isRequired,
-  region: PropTypes.number.isRequired,
+  regionLabel: PropTypes.string.isRequired,
 };
 
 export default withWidgetData(Overview, 'overview');

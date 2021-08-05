@@ -13,6 +13,7 @@ import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
+import RegionalDashboard from './pages/RegionalDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -29,6 +30,7 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
+// import { SCOPE_IDS } from './Constants';
 
 function App() {
   const [user, updateUser] = useState();
@@ -106,10 +108,9 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => (
-            <Home />
-          )}
+          render={() => <Home />}
         />
+
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
@@ -125,18 +126,25 @@ function App() {
           />
         )}
         {admin && (
-          <Route
-            path="/admin"
-            render={() => (
-              <Admin />
-            )}
-          />
+          <>
+            <Route
+              exact
+              path="/regional-dashboard"
+              render={() => (
+                <RegionalDashboard user={user} />
+              )}
+            />
+            <Route
+              path="/admin"
+              render={() => (
+                <Admin />
+              )}
+            />
+          </>
         )}
-
         <Route
           render={() => <NotFound />}
         />
-
       </Switch>
     </div>
   );
@@ -145,6 +153,7 @@ function App() {
     <>
       <Helmet titleTemplate="%s - TTA Smart Hub" defaultTitle="TTA Smart Hub">
         <meta charSet="utf-8" />
+        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
       <BrowserRouter>
         {authenticated && (

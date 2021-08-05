@@ -1,0 +1,94 @@
+@media print {
+  .fba-modal, #tp-ar-landing-survey {
+    display: none !important;
+  }
+}
+
+.fba-modal {
+  background-color: rgb(0, 0, 0, 0.375);
+  z-index: 10001;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  overflow-x: auto;
+  padding: 20px;
+}
+
+.fba-modal-dialog {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  margin: 0 auto 40px auto;
+  max-width: 560px;
+  position: relative;
+}
+
+#fba-modal-dialog .wrapper {
+  padding: 20px 20px 0 20px;
+}
+
+.fixed-tab-button {
+  bottom: 0;
+  padding: 5px 10px;
+  position: fixed;
+  right: 12px;
+  z-index: 9999;
+}
+
+#fba-button.usa-button:hover,
+.fixed-tab-button.usa-button:hover {
+  color: white;
+  background-color: #1a4480;
+  border-bottom: 0;
+  text-decoration: none;
+}
+
+#fba-modal-title {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  margin-right: 20px;
+  margin-top: 0;
+  word-wrap: break-word;
+}
+
+#fba-text-name,
+#fba-text-email {
+  max-width: 100% !important;
+  font-size: 100%;
+}
+
+.fba-modal-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  font-size: 24px;
+  color: #5b616b;
+  background: none;
+  line-height: 1;
+  text-decoration: none;
+  width: auto;
+}
+
+/* Form Sections */
+.touchpoints-form-wrapper form div.section {
+  display: none;
+}
+.touchpoints-form-wrapper form div.section.visible {
+  display: block;
+}
+
+.hide {
+  display: none;
+}
+
+/* Override */
+#fba-modal-dialog .usa-form {
+  max-width: inherit;
+}
+
+/* Custom */
+.touchpoints-form-wrapper .usa-banner {
+  margin-top: 10px;
+}
