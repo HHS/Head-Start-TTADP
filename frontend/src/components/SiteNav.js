@@ -90,12 +90,12 @@ const SiteNav = ({
                     ? (
                       <li>
                         <NavLink
-                          to="/dashboard"
+                          to="/regional-dashboard"
                         >
                           <span className="padding-right-105">
                             <FontAwesomeIcon color="white" icon={faBorderAll} />
                           </span>
-                          Regional Analytics
+                          Regional Dashboard
                         </NavLink>
                       </li>
                     ) : null }

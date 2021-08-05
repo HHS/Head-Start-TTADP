@@ -10,11 +10,11 @@ export default async function dashboardOverview(scopes) {
     attributes: [
       'duration',
       'deliveryMethod',
+      'numberOfParticipants',
     ],
     where: {
       [Op.and]: [scopes],
       status: REPORT_STATUSES.APPROVED,
-
     },
     raw: true,
     includeIgnoreAttributes: false,
@@ -28,13 +28,16 @@ export default async function dashboardOverview(scopes) {
   const inPerson = duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length
     .toString();
 
+  // eslint-disable-next-line max-len
+  const numParticipants = duration.reduce((prev, ar) => prev + (ar.numberOfParticipants ? parseInt(ar.numberOfParticipants, 10) : 0), 0)
+    .toString();
+
   const res = await ActivityReport.findAll({
     attributes: [
       // This is a literal because it needs to *not* respect the scopes passed in
       // [sequelize.literal(`(SELECT COUNT(*) from "Grants" ${grantsWhere})`), 'numTotalGrants'],
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))), 'numGrants'],
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->nonGrantee"."id"'))), 'nonGrantees'],
     ],
     where: {
       [Op.and]: [scopes],
@@ -70,5 +73,6 @@ export default async function dashboardOverview(scopes) {
     ...res[0],
     inPerson,
     sumDuration,
+    numParticipants,
   };
 }

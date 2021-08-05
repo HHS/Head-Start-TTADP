@@ -8,6 +8,7 @@ import Container from '../components/Container';
 import arrowBoth from '../images/arrow-both.svg';
 import DateTime from '../components/DateTime';
 import './TopicFrequencyGraph.css';
+import FormatNumber from './WidgetHelper';
 
 export function filterData(data, selectedRoles) {
   return data.filter((dataPoint) => {
@@ -207,7 +208,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         tickangle: 0,
       },
       yaxis: {
-        tickformat: 'd',
+        tickformat: ',.0d',
         title: {
           standoff: 60,
           text: 'Number of Activity Reports',
@@ -227,7 +228,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         setShowTooltip(true);
         setTooltipX(x);
         setTooltipY(y);
-        setTooltipText(counts[e.points[0].pointIndex]);
+        setTooltipText(FormatNumber(counts[e.points[0].pointIndex]));
       }
     });
 
