@@ -149,7 +149,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         tickformat: ',.0d',
         title: {
           standoff: 20,
-          text: 'Number of Hours / Grants',
+          text: 'Number of Hours',
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
@@ -169,24 +169,27 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
   return (
     <div className="ttahub--total-hrs-grantee-graph">
-      <Grid row className="position-relative margin-bottom-4">
+      <Grid row className="position-relative margin-bottom-2">
         <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
-        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-2 flex-align-self-center">
-          <DateTime classNames="display-flex flex-align-center padding-x-1 margin-left-1" timestamp={dateTime.timestamp} label={dateTime.label} />
+        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
+          <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
       </Grid>
 
-      <Grid row className="position-relative margin-top-1 margin-bottom-3 ttahub--total-hrs-grantee-graph-legend">
-        <Grid desktop={{ col: 4 }} col={6}>
+      <div className="grid-row ttahub--total-hrs-grantee-graph-legend margin-bottom-3">
+
+        <div className="grid-col flex-auto">
           <span>TA</span>
-        </Grid>
-        <Grid desktop={{ col: 4 }} col={6}>
+        </div>
+
+        <div className="grid-col flex-auto">
           <span>Training</span>
-        </Grid>
-        <Grid desktop={{ col: 4 }} col={6}>
+        </div>
+
+        <div className="grid-col flex-auto">
           <span>Both</span>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       <div data-testid="lines" ref={lines} />
     </div>

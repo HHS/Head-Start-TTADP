@@ -1,6 +1,6 @@
 /* WidgetHelper.js */
 /* Helper Functions for Widgets */
-function FormatNumber(numberToFormat, decimalPlaces = 0) {
+function formatNumber(numberToFormat, decimalPlaces = 0) {
   if (!numberToFormat || Number.isNaN(numberToFormat)) {
     return 0;
   }
@@ -11,4 +11,4 @@ function FormatNumber(numberToFormat, decimalPlaces = 0) {
 
   return number;
 }
-export default FormatNumber;
+export default formatNumber;
