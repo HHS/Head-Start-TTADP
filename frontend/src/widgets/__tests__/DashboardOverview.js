@@ -18,7 +18,7 @@ describe('Dashboard Overview Widget', () => {
       numReports: '5',
       numGrants: '2',
       numTotalGrants: '2',
-      nonGrantees: '2',
+      numParticipants: '10',
       sumDuration: '2623.0',
       inPerson: '1.0',
     };
@@ -27,8 +27,9 @@ describe('Dashboard Overview Widget', () => {
 
     expect(screen.getByText(/5/i)).toBeInTheDocument();
     expect(screen.getByText(/activity reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/non-grantee entities served/i)).toBeInTheDocument();
-    expect(screen.getByText(/2623\.0/i)).toBeInTheDocument();
+    expect(screen.getByText(/participants/i)).toBeInTheDocument();
+    expect(screen.getByText(/10/i)).toBeInTheDocument();
+    expect(screen.getByText(/2,623.0/i)).toBeInTheDocument();
     expect(screen.getByText(/hours of tta/i)).toBeInTheDocument();
     expect(screen.getByText(/in-person activities/i)).toBeInTheDocument();
   });

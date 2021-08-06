@@ -17,14 +17,14 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
     /*
       Data: The below is a breakdown of the Traces widget data array.
-      data[0]: All Dates
-      data[1]: Grantee Rec TTA
+      data[0]: Grantee Rec TTA
       data[1]: Hours of Training
       data[2]: Hours of Technical Assistance
       data[3]: Hours of Both
     */
 
     const traces = [
+      /*
       {
         type: 'scatter',
         mode: 'lines+markers',
@@ -34,17 +34,18 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         hoverinfo: 'y',
         line: {
           dash: 'dot',
-          width: 0,
-          color: '#fff',
+          width: 3,
+          color: '#0166ab',
         },
         marker: {
-          size: 0,
+          size: 7,
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
           bgcolor: '#21272d',
         },
       },
+      */
       {
         type: 'scatter',
         mode: 'lines+markers',
@@ -53,9 +54,9 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
-          dash: 'dot',
+          dash: 'solid',
           width: 3,
-          color: '#0166ab',
+          color: '#e29f4d',
         },
         marker: {
           size: 7,
@@ -75,7 +76,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         line: {
           dash: 'solid',
           width: 3,
-          color: '#e29f4d',
+          color: '#264a64',
         },
         marker: {
           size: 7,
@@ -90,26 +91,6 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         mode: 'lines+markers',
         x: data[3].x,
         y: data[3].y,
-        hovertemplate: ' %{y}<extra></extra> ',
-        hoverinfo: 'y',
-        line: {
-          dash: 'solid',
-          width: 3,
-          color: '#264a64',
-        },
-        marker: {
-          size: 7,
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: '#21272d',
-        },
-      },
-      {
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[4].x,
-        y: data[4].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
@@ -152,6 +133,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         showgrid: false,
         b: 0,
         t: 0,
+        autotypenumbers: 'strict',
         title: {
           text: 'Date Range',
           standoff: 40,
@@ -164,9 +146,10 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       },
       yaxis: {
         automargin: true,
+        tickformat: ',.0d',
         title: {
           standoff: 20,
-          text: 'Number of Hours / Grants',
+          text: 'Number of Hours',
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
@@ -186,27 +169,27 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
   return (
     <div className="ttahub--total-hrs-grantee-graph">
-      <Grid row className="position-relative margin-bottom-4">
-        <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0">Total Hours of TTA and Number of Grants Served</h2></Grid>
-        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-2 flex-align-self-center">
+      <Grid row className="position-relative margin-bottom-2">
+        <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
+        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
       </Grid>
 
-      <Grid row className="position-relative margin-top-1 margin-bottom-3 ttahub--total-hrs-grantee-graph-legend">
-        <Grid desktop={{ col: 3 }} col={6}>
+      <div className="grid-row ttahub--total-hrs-grantee-graph-legend margin-bottom-3">
+
+        <div className="grid-col flex-auto">
           <span>TA</span>
-        </Grid>
-        <Grid desktop={{ col: 3 }} col={6}>
+        </div>
+
+        <div className="grid-col flex-auto">
           <span>Training</span>
-        </Grid>
-        <Grid desktop={{ col: 3 }} col={6}>
+        </div>
+
+        <div className="grid-col flex-auto">
           <span>Both</span>
-        </Grid>
-        <Grid desktop={{ col: 3 }} col={6}>
-          <span>Active Grants</span>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       <div data-testid="lines" ref={lines} />
     </div>
