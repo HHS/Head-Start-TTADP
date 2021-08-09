@@ -195,11 +195,11 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
   return (
     <div className="ttahub--total-hrs-grantee-graph">
       <Grid row className="position-relative margin-bottom-2">
-        <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
-        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
+        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
+        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
-        <Grid col="auto" className="ttahub--show-accessible-data-button">
+        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button type="button" className="usa-button--unstyled" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
         </Grid>
       </Grid>
