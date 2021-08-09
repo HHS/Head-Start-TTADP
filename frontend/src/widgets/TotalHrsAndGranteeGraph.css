@@ -1,7 +1,10 @@
-.ttahub--show-accessible-data-button {
-  flex: 1;
-  text-align: right;
+@media(min-width: 1090px){
+  .ttahub--show-accessible-data-button {
+    flex: 1;
+    text-align: right;
+  }
 }
+
 
 .ttahub--total-hrs-grantee-graph-legend {
   text-align: center;
