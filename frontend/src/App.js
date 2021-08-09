@@ -13,7 +13,7 @@ import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
-import Dashboard from './pages/Dashboard';
+import RegionalDashboard from './pages/RegionalDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -135,9 +135,9 @@ function App() {
           <>
             <Route
               exact
-              path="/dashboard"
+              path="/regional-dashboard"
               render={() => (
-                <Dashboard user={user} />
+                <RegionalDashboard user={user} />
               )}
             />
             <Route

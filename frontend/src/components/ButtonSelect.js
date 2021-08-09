@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import DateRangePicker from './DateRangePicker';
-import { CUSTOM_DATE_RANGE } from '../pages/Dashboard/constants';
+import { CUSTOM_DATE_RANGE } from '../pages/RegionalDashboard/constants';
 import './ButtonSelect.css';
 import triangleDown from '../images/triange_down.png';
 import check from '../images/check.svg';
