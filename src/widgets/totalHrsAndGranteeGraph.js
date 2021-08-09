@@ -38,10 +38,18 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd) {
 export default async function totalHrsAndGranteeGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
-    { name: 'Grantee Rec TTA', x: [], y: [] },
-    { name: 'Training', x: [], y: [] },
-    { name: 'Technical Assistance', x: [], y: [] },
-    { name: 'Both', x: [], y: [] },
+    {
+      name: 'Grantee Rec TTA', x: [], y: [], month: null,
+    },
+    {
+      name: 'Training', x: [], y: [], month: null,
+    },
+    {
+      name: 'Technical Assistance', x: [], y: [], month: null,
+    },
+    {
+      name: 'Both', x: [], y: [], month: null,
+    },
   ];
 
   // Get the Date Range.
@@ -83,6 +91,14 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
     // const yearDiff = edDate.diff(sdDate, 'years', true);
     // multipleYrs = yearDiff > 1;
     multipleYrs = moment(sdDate).format('YY') !== moment(edDate).format('YY');
+  }
+
+  if (useDays) {
+    const month = moment(startDate).format('MMM');
+    res.forEach((r) => {
+      // eslint-disable-next-line no-param-reassign
+      r.month = month;
+    });
   }
 
   // Query Approved AR's.
