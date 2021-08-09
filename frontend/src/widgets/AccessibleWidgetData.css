@@ -1,0 +1,7 @@
+.ttahub--accessible-widget-data  {
+    width: 100%;
+}
+
+.ttahub--accessible-widget-data th[scope="row"] {
+    font-weight: bold;
+}

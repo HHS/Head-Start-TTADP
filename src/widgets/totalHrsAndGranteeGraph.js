@@ -39,9 +39,9 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     { name: 'Grantee Rec TTA', x: [], y: [] },
-    { name: 'Hours of Training', x: [], y: [] },
-    { name: 'Hours of Technical Assistance', x: [], y: [] },
-    { name: 'Hours of Both', x: [], y: [] },
+    { name: 'Training', x: [], y: [] },
+    { name: 'Technical Assistance', x: [], y: [] },
+    { name: 'Both', x: [], y: [] },
   ];
 
   // Get the Date Range.
