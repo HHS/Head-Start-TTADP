@@ -173,11 +173,17 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       return;
     }
 
-    const headings = ['', ...data[0].x];
+    const headings = ['', ...data[0].x.map((x) => {
+      if (data[0].month) {
+        return `${data[0].month} ${x}`;
+      }
+
+      return x;
+    })];
 
     const rows = data.map((row) => ({
       heading: row.name,
-      data: row.y.map((y) => y.toString()),
+      data: row.y.map((y) => `${y.toString()} hours`),
     }));
 
     setColumnHeadings(headings);

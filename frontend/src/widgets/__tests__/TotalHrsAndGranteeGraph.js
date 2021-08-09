@@ -98,7 +98,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
     // eslint-disable-next-line no-plusplus
     for (let index = 1; index < 15; index++) {
-      cells.push(screen.getByRole('cell', { name: index.toString() }));
+      cells.push(screen.getByRole('cell', { name: `${index.toString()} hours` }));
     }
 
     cells.forEach((cell) => expect(cell).toBeInTheDocument());
