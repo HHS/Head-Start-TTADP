@@ -208,26 +208,36 @@ export default function ApprovedActivityReport({ match, user }) {
 
   if (notAuthorized) {
     return (
-      <div className="usa-alert usa-alert--error no-print" role="alert">
-        <div className="usa-alert__body">
-          <h4 className="usa-alert__heading">Unauthorized</h4>
-          <p className="usa-alert__text">
-            Sorry, you are not allowed to view this report
-          </p>
+      <>
+        <Helmet>
+          <title>Not authorized to view activity report</title>
+        </Helmet>
+        <div className="usa-alert usa-alert--error no-print" role="alert">
+          <div className="usa-alert__body">
+            <h4 className="usa-alert__heading">Unauthorized</h4>
+            <p className="usa-alert__text">
+              Sorry, you are not allowed to view this report
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (somethingWentWrong) {
     return (
-      <div className="usa-alert usa-alert--warning no-print">
-        <div className="usa-alert__body">
-          <p className="usa-alert__text">
-            Sorry, something went wrong.
-          </p>
+      <>
+        <Helmet>
+          <title>Error displaying activity report - TTAHUB</title>
+        </Helmet>
+        <div className="usa-alert usa-alert--warning no-print">
+          <div className="usa-alert__body">
+            <p className="usa-alert__text">
+              Sorry, something went wrong.
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -235,10 +245,11 @@ export default function ApprovedActivityReport({ match, user }) {
     <>
       <Helmet>
         <title>
-          Activity Report
-          {' '}
           {displayId}
           {' '}
+          {creator}
+          {' '}
+          {startDate}
         </title>
       </Helmet>
       {successfullyCopiedClipboard ? (
@@ -329,6 +340,7 @@ export default function ApprovedActivityReport({ match, user }) {
                 requester,
               ]
           }
+
         />
         <ViewTable
           caption="Resources"
