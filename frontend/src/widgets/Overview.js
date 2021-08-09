@@ -4,13 +4,14 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import './Overview.css';
+import FormatNumber from './WidgetHelper';
 
 function Field({
-  label, labelExt, data, col,
+  label, labelExt, data, col, decimalPlaces,
 }) {
   return (
     <Grid col={col} className="smart-hub--overview">
-      <span className="text-bold smart-hub--overview-font-size">{data}</span>
+      <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
       <br />
       {label}
       <span className="smart-hub--overview-nowrap">{labelExt}</span>
@@ -22,6 +23,7 @@ Field.propTypes = {
   label: PropTypes.string.isRequired,
   labelExt: PropTypes.string,
   data: PropTypes.string,
+  decimalPlaces: PropTypes.number,
   col: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
@@ -32,6 +34,7 @@ Field.defaultProps = {
   labelExt: '',
   col: 2,
   data: '',
+  decimalPlaces: 0,
 };
 
 /*
@@ -60,7 +63,7 @@ function Overview({ data, regionLabel }) {
         <Field col="fill" label="Non-grantee entities served" data={data.numNonGrantees} />
         <Field col="fill" label="Activity reports" data={data.numReports} />
         <Field col="fill" label="Participants" data={data.numParticipants} />
-        <Field col={2} label="Hours of TTA" data={data.sumDuration} />
+        <Field col={2} label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
       </Grid>
     </Container>
   );

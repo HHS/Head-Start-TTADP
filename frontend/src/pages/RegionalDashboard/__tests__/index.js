@@ -3,13 +3,14 @@ import React from 'react';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
-import Dashboard from '../index';
+import RegionalDashboard from '../index';
 import formatDateRange from '../formatDateRange';
 
-describe('Dashboard page', () => {
-  const renderDashboard = (user) => render(<Dashboard user={user} />);
+describe('Regional Dashboard page', () => {
+  const renderDashboard = (user) => render(<RegionalDashboard user={user} />);
 
   const user = {
+    homeRegionId: 14,
     permissions: [{
       regionId: 14,
     }],
@@ -17,7 +18,7 @@ describe('Dashboard page', () => {
 
   it('shows a heading', async () => {
     renderDashboard(user);
-    const heading = await screen.findByText(/regional tta activity analytics/i);
+    const heading = await screen.findByText(/regional tta activity dashboard/i);
     expect(heading).toBeInTheDocument();
   });
 

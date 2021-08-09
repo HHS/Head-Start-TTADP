@@ -8,6 +8,7 @@ import Container from '../components/Container';
 import arrowBoth from '../images/arrow-both.svg';
 import DateTime from '../components/DateTime';
 import './TopicFrequencyGraph.css';
+import FormatNumber from './WidgetHelper';
 
 export function filterData(data, selectedRoles) {
   return data.filter((dataPoint) => {
@@ -207,7 +208,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         tickangle: 0,
       },
       yaxis: {
-        tickformat: 'd',
+        tickformat: ',.0d',
         title: {
           standoff: 60,
           text: 'Number of Activity Reports',
@@ -227,7 +228,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         setShowTooltip(true);
         setTooltipX(x);
         setTooltipY(y);
-        setTooltipText(counts[e.points[0].pointIndex]);
+        setTooltipText(FormatNumber(counts[e.points[0].pointIndex]));
       }
     });
 
@@ -257,7 +258,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} tabletLg={{ col: 12 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid col="auto" className="display-flex desktop:padding-x-2 desktop:margin-y-0 margin-y-2 flex-align-self-center">
+        <Grid col="auto" className="display-flex desktop:padding-x-1 desktop:margin-y-0 margin-y-2 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
         <Grid col="auto" className="ttahub--topic-frequency-graph-control-row display-flex desktop:padding-x-2">
