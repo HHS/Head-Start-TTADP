@@ -244,7 +244,7 @@ function ActivityReport({
 
   return (
     <div className="smart-hub-activity-report">
-      <Helmet titleTemplate="%s - Activity Report - TTA Smart Hub" defaultTitle="TTA Smart Hub - Activity Report" />
+      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">
