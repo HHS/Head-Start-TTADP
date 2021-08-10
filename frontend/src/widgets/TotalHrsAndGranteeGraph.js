@@ -22,40 +22,17 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
     /*
       Data: The below is a breakdown of the Traces widget data array.
-      data[0]: Grantee Rec TTA
-      data[1]: Hours of Training
-      data[2]: Hours of Technical Assistance
-      data[3]: Hours of Both
+      data[0]: Hours of Training
+      data[1]: Hours of Technical Assistance
+      data[2]: Hours of Both
     */
 
     const traces = [
-      /*
       {
         type: 'scatter',
         mode: 'lines+markers',
         x: data[0].x,
         y: data[0].y,
-        hovertemplate: ' %{y}<extra></extra> ',
-        hoverinfo: 'y',
-        line: {
-          dash: 'dot',
-          width: 3,
-          color: '#0166ab',
-        },
-        marker: {
-          size: 7,
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: '#21272d',
-        },
-      },
-      */
-      {
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[1].x,
-        y: data[1].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
@@ -74,8 +51,8 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       {
         type: 'scatter',
         mode: 'lines+markers',
-        x: data[2].x,
-        y: data[2].y,
+        x: data[1].x,
+        y: data[1].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
@@ -94,8 +71,8 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       {
         type: 'scatter',
         mode: 'lines+markers',
-        x: data[3].x,
-        y: data[3].y,
+        x: data[2].x,
+        y: data[2].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
