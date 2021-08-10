@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faChartBar, faUserFriends, faUser, faClock, faDollarSign,
+  faChartBar, faUserFriends, faUser, faClock, faBuilding,
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
@@ -59,7 +59,7 @@ export function DashboardOverviewWidget({ data }) {
   return (
     <Grid row className="smart-hub--dashboard-overview margin-bottom-3">
       <Field icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />
-      <Field icon={faDollarSign} iconColor="#0166ab" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />
+      <Field icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />
       <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} labelCssClasses="padding-top-2" />
       <Field icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
       <Field icon={faUser} iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />
