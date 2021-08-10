@@ -104,7 +104,9 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       </Tag>
     ));
 
-    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : `/activity-reports/${id}`;
+    const viewOrEditLink = status === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
+
+    const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
 
     const menuItems = [
       {
@@ -112,6 +114,15 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
         onClick: () => { history.push(linkTarget); },
       },
     ];
+
+    if (navigator.clipboard) {
+      menuItems.push({
+        label: 'Copy URL',
+        onClick: async () => {
+          await navigator.clipboard.writeText(`${window.location.origin}${linkTarget}`);
+        },
+      });
+    }
 
     if (!legacyId) {
       const downloadMenuItem = {
