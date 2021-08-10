@@ -116,7 +116,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     const query = { };
     const scopes = filtersToScopes(query);
     const data = await totalHrsAndGranteeGraph(scopes, query);
-    expect(data.length).toBe(4);
+    expect(data.length).toBe(3);
   });
 
   it('retrieves line graph data by month', async () => {
@@ -175,29 +175,20 @@ describe('Total Hrs and Grantee Graph widget', () => {
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
-    expect(data.length).toEqual(4);
+    expect(data.length).toEqual(3);
 
-    // Grantee Rec TTA.
-    /*
-    expect(data[0].x.length).toEqual(3);
-    expect(data[0].y.length).toEqual(3);
-
-    expect(data[0].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[0].y).toStrictEqual([2, 8, 4]);
-    */
     // Hours of Training.
-
-    expect(data[1].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[1].y).toStrictEqual([0, 6.3, 6]);
-    expect(data[1].month).toBe(null);
+    expect(data[0].x).toEqual(['Feb', 'Jun', 'Jul']);
+    expect(data[0].y).toStrictEqual([0, 6.3, 6]);
+    expect(data[0].month).toBe(null);
 
     // Hours of Technical Assistance.
-    expect(data[2].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[2].y).toStrictEqual([2, 4, 0]);
+    expect(data[1].x).toEqual(['Feb', 'Jun', 'Jul']);
+    expect(data[1].y).toStrictEqual([2, 4, 0]);
 
     // Both.
-    expect(data[3].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[3].y).toStrictEqual([0, 5.5, 7]);
+    expect(data[2].x).toEqual(['Feb', 'Jun', 'Jul']);
+    expect(data[2].y).toStrictEqual([0, 5.5, 7]);
   });
 
   it('retrieves line graph data by day', async () => {
@@ -230,25 +221,20 @@ describe('Total Hrs and Grantee Graph widget', () => {
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
-    expect(data.length).toEqual(4);
+    expect(data.length).toEqual(3);
 
-    // Grantee Rec TTA.
-    /*
-    expect(data[0].x).toEqual(['10', '15', '20']);
-    expect(data[0].y).toStrictEqual([2, 2, 4]);
-    */
     // Hours of Training.
-    expect(data[1].x).toEqual(['10', '15', '20']);
-    expect(data[1].y).toStrictEqual([1, 0, 0]);
-    expect(data[1].month).toBe('Jun');
+    expect(data[0].x).toEqual(['10', '15', '20']);
+    expect(data[0].y).toStrictEqual([1, 0, 0]);
+    expect(data[0].month).toBe('Jun');
 
     // Hours of Technical Assistance.
-    expect(data[2].x).toEqual(['10', '15', '20']);
-    expect(data[2].y).toStrictEqual([0, 2, 4]);
+    expect(data[1].x).toEqual(['10', '15', '20']);
+    expect(data[1].y).toStrictEqual([0, 2, 4]);
 
     // Both.
-    expect(data[3].x).toEqual(['10', '15', '20']);
-    expect(data[3].y).toStrictEqual([0, 0, 3.3]);
+    expect(data[2].x).toEqual(['10', '15', '20']);
+    expect(data[2].y).toStrictEqual([0, 0, 3.3]);
   });
 
   it('retrieves legacy reports line graph data', async () => {
@@ -280,25 +266,19 @@ describe('Total Hrs and Grantee Graph widget', () => {
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
-    expect(data.length).toEqual(4);
-
-    // Grantee Rec TTA.
-    /*
-    expect(data[0].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[0].y).toStrictEqual([2, 4, 2]);
-    */
+    expect(data.length).toEqual(3);
 
     // Hours of Training.
-    expect(data[1].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[1].y).toStrictEqual([1, 0, 0]);
+    expect(data[0].x).toEqual(['Jan', 'Feb', 'Mar']);
+    expect(data[0].y).toStrictEqual([1, 0, 0]);
 
     // Hours of Technical Assistance.
-    expect(data[2].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[2].y).toStrictEqual([0, 5, 0]);
+    expect(data[1].x).toEqual(['Jan', 'Feb', 'Mar']);
+    expect(data[1].y).toStrictEqual([0, 5, 0]);
 
     // Both.
-    expect(data[3].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[3].y).toStrictEqual([0, 0, 4.5]);
+    expect(data[2].x).toEqual(['Jan', 'Feb', 'Mar']);
+    expect(data[2].y).toStrictEqual([0, 0, 4.5]);
   });
 
   it('retrieves months with year when range is longer than a year', async () => {
@@ -335,27 +315,18 @@ describe('Total Hrs and Grantee Graph widget', () => {
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
-    expect(data.length).toEqual(4);
+    expect(data.length).toEqual(3);
 
-    // Grantee Rec TTA.
-    /*
-    expect(data[0].x.length).toEqual(5);
-    expect(data[0].y.length).toEqual(5);
-
-    expect(data[0].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[0].y).toStrictEqual([2, 2, 2, 2, 2]);
-    */
     // Hours of Training.
-
-    expect(data[1].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[1].y).toStrictEqual([1, 0, 0, 3, 0]);
+    expect(data[0].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(data[0].y).toStrictEqual([1, 0, 0, 3, 0]);
 
     // Hours of Technical Assistance.
-    expect(data[2].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[2].y).toStrictEqual([0, 2, 0, 0, 3]);
+    expect(data[1].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(data[1].y).toStrictEqual([0, 2, 0, 0, 3]);
 
     // Both.
-    expect(data[3].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[3].y).toStrictEqual([0, 0, 3.2, 0, 0]);
+    expect(data[2].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(data[2].y).toStrictEqual([0, 0, 3.2, 0, 0]);
   });
 });
