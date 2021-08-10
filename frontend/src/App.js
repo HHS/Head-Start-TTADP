@@ -30,7 +30,7 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
-// import { SCOPE_IDS } from './Constants';
+import ApprovedActivityReport from './pages/ApprovedActivityReport';
 
 function App() {
   const [user, updateUser] = useState();
@@ -111,6 +111,12 @@ function App() {
           render={() => <Home />}
         />
 
+        <Route
+          path="/activity-reports/view/:activityReportId"
+          render={({ match, location }) => (
+            <ApprovedActivityReport location={location} match={match} user={user} />
+          )}
+        />
         <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
