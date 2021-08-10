@@ -2,6 +2,7 @@ import parse from 'csv-parse/lib/sync';
 import fs from 'fs';
 import path from 'path';
 
+import { logger } from '../logger';
 import { Grant, ActivityRecipient } from '../models';
 
 const PRIMARY_COLUMN = 'Primary Column';
@@ -23,8 +24,7 @@ function missingActivityRecipientsFromCSV(filename, grantsByNumber) {
     const grantId = grantsByNumber[grantNumber];
 
     if (!grantId) {
-      // eslint-disable-next-line no-console
-      console.warn(`Unable to find grant ${grantee} (number ${grantNumber}) for report ${reportDisplayId} (id ${activityReportId})`);
+      logger.warn(`Unable to find grant ${grantee} (number ${grantNumber}) for report ${reportDisplayId} (id ${activityReportId})`);
     } else {
       activityRecipients.push({
         activityReportId,
