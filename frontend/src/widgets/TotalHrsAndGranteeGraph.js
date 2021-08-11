@@ -1,56 +1,38 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import DateTime from '../components/DateTime';
+import AccessibleWidgetData from './AccessibleWidgetData';
 import './TotalHrsAndGranteeGraph.css';
 
 export function TotalHrsAndGranteeGraph({ data, dateTime }) {
   // the dom el for drawing the chart
   const lines = useRef();
 
+  const [showAccessibleData, setShowAccessibleData] = useState(false);
+  const [columnHeadings, setColumnHeadings] = useState([]);
+  const [tableRows, setTableRows] = useState([]);
+
   useEffect(() => {
-    if (!lines || !data || !Array.isArray(data)) {
+    if (!lines || !data || !Array.isArray(data) || showAccessibleData) {
       return;
     }
 
     /*
       Data: The below is a breakdown of the Traces widget data array.
-      data[0]: Grantee Rec TTA
-      data[1]: Hours of Training
-      data[2]: Hours of Technical Assistance
-      data[3]: Hours of Both
+      data[0]: Hours of Training
+      data[1]: Hours of Technical Assistance
+      data[2]: Hours of Both
     */
 
     const traces = [
-      /*
       {
         type: 'scatter',
         mode: 'lines+markers',
         x: data[0].x,
         y: data[0].y,
-        hovertemplate: ' %{y}<extra></extra> ',
-        hoverinfo: 'y',
-        line: {
-          dash: 'dot',
-          width: 3,
-          color: '#0166ab',
-        },
-        marker: {
-          size: 7,
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: '#21272d',
-        },
-      },
-      */
-      {
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[1].x,
-        y: data[1].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
@@ -69,8 +51,8 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       {
         type: 'scatter',
         mode: 'lines+markers',
-        x: data[2].x,
-        y: data[2].y,
+        x: data[1].x,
+        y: data[1].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
@@ -89,8 +71,8 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       {
         type: 'scatter',
         mode: 'lines+markers',
-        x: data[3].x,
-        y: data[3].y,
+        x: data[2].x,
+        y: data[2].y,
         hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
@@ -161,37 +143,77 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
     // draw the plot
     Plotly.newPlot(lines.current, traces, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data]);
+  }, [data, showAccessibleData]);
+
+  useEffect(() => {
+    if (!lines || !data || !Array.isArray(data) || !showAccessibleData) {
+      return;
+    }
+
+    const headings = ['', ...data[0].x.map((x) => {
+      if (data[0].month) {
+        return `${data[0].month} ${x}`;
+      }
+
+      return x;
+    })];
+
+    const rows = data.map((row) => ({
+      heading: row.name,
+      data: row.y.map((y) => {
+        if (y === 1) {
+          return `${y.toString()} hour`;
+        }
+        return `${y.toString()} hours`;
+      }),
+    }));
+
+    setColumnHeadings(headings);
+    setTableRows(rows);
+  }, [data, showAccessibleData]);
 
   if (!data) {
     return <p>Loading...</p>;
   }
 
+  function toggleType() {
+    setShowAccessibleData(!showAccessibleData);
+  }
+
   return (
     <div className="ttahub--total-hrs-grantee-graph">
       <Grid row className="position-relative margin-bottom-2">
-        <Grid col="auto"><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
-        <Grid col="auto" className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
+        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
+        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
+        </Grid>
+        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+          <button type="button" className="usa-button--unstyled" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
         </Grid>
       </Grid>
 
-      <div className="grid-row ttahub--total-hrs-grantee-graph-legend margin-bottom-3">
+      { showAccessibleData
+        ? <AccessibleWidgetData caption="Total TTA Hours by Date and Type" columnHeadings={columnHeadings} rows={tableRows} />
+        : (
+          <>
+            <div className="grid-row ttahub--total-hrs-grantee-graph-legend margin-bottom-3">
 
-        <div className="grid-col flex-auto">
-          <span>TA</span>
-        </div>
+              <div className="grid-col flex-auto">
+                <span>TA</span>
+              </div>
 
-        <div className="grid-col flex-auto">
-          <span>Training</span>
-        </div>
+              <div className="grid-col flex-auto">
+                <span>Training</span>
+              </div>
 
-        <div className="grid-col flex-auto">
-          <span>Both</span>
-        </div>
-      </div>
+              <div className="grid-col flex-auto">
+                <span>Both</span>
+              </div>
+            </div>
 
-      <div data-testid="lines" ref={lines} />
+            <div data-testid="lines" ref={lines} />
+          </>
+        )}
     </div>
   );
 }

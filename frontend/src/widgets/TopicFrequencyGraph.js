@@ -255,10 +255,10 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
     <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3}>
       <Grid row className="position-relative margin-bottom-2">
         <Tooltip show={showTooltip} x={tooltipX} y={tooltipY} text={tooltipText} />
-        <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} tabletLg={{ col: 12 }}>
+        <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid col="auto" className="display-flex desktop:padding-x-1 desktop:margin-y-0 margin-y-2 flex-align-self-center">
+        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="display-flex desktop:padding-x-1 desktop:margin-y-0 margin-y-2 flex-align-self-center">
           <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
         </Grid>
         <Grid col="auto" className="ttahub--topic-frequency-graph-control-row display-flex desktop:padding-x-2">

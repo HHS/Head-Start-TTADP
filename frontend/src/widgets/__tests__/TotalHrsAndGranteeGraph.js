@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { TotalHrsAndGranteeGraph } from '../TotalHrsAndGranteeGraph';
 
 const TEST_DATA_MONTHS = [
@@ -19,7 +19,7 @@ const TEST_DATA_DAYS = [
 
 const renderTotalHrsAndGranteeGraph = async (props) => (
   render(
-    <TotalHrsAndGranteeGraph data={props.data} dateTime={{ dateInExpectedFormat: '', prettyPrintedQuery: '05/27/1967-08/21/1968' }} />,
+    <TotalHrsAndGranteeGraph data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
@@ -81,5 +81,30 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     renderTotalHrsAndGranteeGraph({ data });
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  it('handles switching contexts', async () => {
+    renderTotalHrsAndGranteeGraph({ data: TEST_DATA_MONTHS });
+    const button = screen.getByRole('button', { name: /show accessible data/i });
+    fireEvent.click(button);
+    const table = screen.getByRole('table', { name: /total tta hours by date and type/i });
+
+    const randomRowHeader = screen.getByRole('rowheader', { name: /grantee rec tta/i });
+    expect(randomRowHeader).toBeInTheDocument();
+    const randomColumnHeader = screen.getByRole('columnheader', { name: /apr/i });
+    expect(randomColumnHeader).toBeInTheDocument();
+
+    const cells = [];
+
+    // eslint-disable-next-line no-plusplus
+    for (let index = 2; index < 15; index++) {
+      cells.push(screen.getByRole('cell', { name: `${index.toString()} hours` }));
+    }
+
+    cells.forEach((cell) => expect(cell).toBeInTheDocument());
+
+    expect(table).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(table).not.toBeInTheDocument();
   });
 });
