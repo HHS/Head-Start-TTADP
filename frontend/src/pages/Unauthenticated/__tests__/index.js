@@ -11,11 +11,11 @@ describe('Unauthenticated Page', () => {
     });
 
     test('displays welcome message', () => {
-      expect(screen.getByText('Welcome to the TTA Smart Hub')).toBeVisible();
+      expect(screen.getByText('Welcome to the TTA Hub')).toBeVisible();
     });
 
     test('does not display the logged out message', () => {
-      expect(screen.queryByText('You have successfully logged out of the TTA Smart Hub')).toBeNull();
+      expect(screen.queryByText('You have successfully logged out of the TTA Hub')).toBeNull();
     });
   });
 
@@ -25,7 +25,7 @@ describe('Unauthenticated Page', () => {
     });
 
     test('displays the logged out message', () => {
-      expect(screen.getByText('You have successfully logged out of the TTA Smart Hub')).toBeVisible();
+      expect(screen.getByText('You have successfully logged out of the TTA Hub')).toBeVisible();
     });
   });
 
