@@ -8,7 +8,7 @@ import logo1x from '../../images/eclkc-blocks-logo-78.png';
 import logo2x from '../../images/eclkc-blocks-logo-156.png';
 
 function Unauthenticated({ loggedOut, timedOut }) {
-  let msg = 'You have successfully logged out of the TTA Smart Hub';
+  let msg = 'You have successfully logged out of the TTA Hub';
   let type = 'success';
   let heading = 'Logout Successful';
 
@@ -25,7 +25,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
         <div className="maxw-mobile margin-x-auto padding-y-7">
           <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="ECLKC Blocks Logo" className="smart-hub-logo display-block margin-x-auto" />
           <h1 id="welcome-message" className="font-serif-xl text-center margin-4">
-            Welcome to the TTA Smart Hub
+            Welcome to the TTA Hub
           </h1>
           {loggedOut
           && (
@@ -35,7 +35,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
           )}
           <div className="text-center margin-top-4">
             <p id="login-description">
-              You must log in with HSES in order to access the Office of Head Start TTA Smart Hub.
+              You must log in with HSES in order to access the Office of Head Start TTA Hub.
             </p>
             <Link referrerPolicy="same-origin" className="usa-button smart-hub-bg-blue-primary display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
               Log In with HSES
