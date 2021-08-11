@@ -11,7 +11,7 @@ function Header() {
           <img src={logo1x} srcSet={`${logo2x} 2x`} width="43" height="56" alt="ECLKC Blocks Logo" className="smart-hub-logo" />
         </div>
         <div className="flex-column flex-align-self-center margin-left-2">
-          <p className="smart-hub-title font-family-sans text-bold margin-y-1">Office of Head Start TTA Smart Hub</p>
+          <p className="smart-hub-title font-family-sans text-bold margin-y-1">Office of Head Start TTA Hub</p>
         </div>
       </div>
     </header>
