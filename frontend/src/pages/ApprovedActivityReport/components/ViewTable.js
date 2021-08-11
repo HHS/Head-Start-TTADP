@@ -47,7 +47,7 @@ export default function ViewTable({
         <caption className="padding-y-1 padding-left-2">{caption}</caption>
         <tbody>
           { headings.map((heading, index) => (
-            <tr key={`tr-${heading.toLowerCase().replace(' ', '-')}`}>
+            <tr key={uuidv4()}>
               <th scope="row">{heading}</th>
               <td>
                 {data[index] ? renderData(data[index]) : ''}

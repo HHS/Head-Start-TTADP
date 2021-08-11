@@ -95,10 +95,6 @@ body {
     background: #fff !important;
     font-size: 12pt;
   }
-/* 
-  @page {
-    margin: 0.5in;
-  } */
 
   .grid-container {
     max-width: unset;
