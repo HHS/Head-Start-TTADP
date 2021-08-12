@@ -373,7 +373,7 @@ describe('Activity Reports DB service', () => {
     });
 
     it('retrieves reports with default sort by updatedAt', async () => {
-      const { count, rows } = await activityReports({ 'region.in': ['1'] });
+      const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nin': [9999] });
       expect(rows.length).toBe(6);
       expect(count).toBeDefined();
       expect(rows[0].id).toBe(latestReport.id);
@@ -383,7 +383,7 @@ describe('Activity Reports DB service', () => {
       reportObject.userId = mockUserTwo.id;
 
       const { rows } = await activityReports({
-        sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2, 'region.in': ['1'],
+        sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2, 'region.in': ['1'], 'reportId.nin': [9999],
       });
       expect(rows.length).toBe(2);
       expect(rows[0].author.name).toBe('user1000');
@@ -393,7 +393,7 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports({
-        sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'],
+        sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nin': [9999],
       });
       expect(rows.length).toBe(6);
       expect(rows[0].collaborators[0].name).toBe('user1000');
@@ -404,7 +404,7 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports({
-        sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'],
+        sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': [9999],
       });
       expect(rows.length).toBe(7);
       expect(rows[0].regionId).toBe(2);
@@ -412,7 +412,7 @@ describe('Activity Reports DB service', () => {
 
     it('retrieves reports sorted by activity recipients', async () => {
       const { rows } = await activityReports({
-        sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'],
+        sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': [9999],
       });
       expect(rows.length).toBe(7);
       expect(rows[0].activityRecipients[0].grantId).toBe(firstGrant.id);
@@ -423,7 +423,7 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports({
-        sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'],
+        sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': [9999],
       });
       expect(rows.length).toBe(7);
       expect(rows[0].sortedTopics[0]).toBe('topic a');

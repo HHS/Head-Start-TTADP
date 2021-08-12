@@ -16,16 +16,20 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
 
-function Dashboard({ user }) {
-  const [appliedRegion, updateAppliedRegion] = useState(0);
-  const [regions, updateRegions] = useState([]);
-  const [regionsFetched, updateRegionsFetched] = useState(false);
+export default function RegionalDashboard({ user }) {
+  const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
+  const regions = getUserRegions(user);
+
+  // eslint-disable-next-line max-len
+  const [appliedRegion, updateAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(1);
-  const [hasCentralOffice, updateHasCentralOffice] = useState(false);
-  const [dateRange, updateDateRange] = useState('');
+
+  const [dateRange, updateDateRange] = useState(formatDateRange({
+    lastThirtyDays: selectedDateRangeOption === 1,
+    forDateTime: true,
+  }));
   const [gainFocus, setGainFocus] = useState(false);
   const [dateTime, setDateTime] = useState({ timestamp: '', label: '' });
-  const [dateRangeLoaded, setDateRangeLoaded] = useState(false);
 
   /*
     *    the idea is that this filters variable, which roughly matches
@@ -34,38 +38,6 @@ function Dashboard({ user }) {
     */
 
   const [filters, updateFilters] = useState([]);
-
-  /**
-   * sets whether a user has central office(14) amongst their permissions
-   */
-  useEffect(() => {
-    if (user) {
-      updateHasCentralOffice(!!user.permissions.find((permission) => permission.regionId === 14));
-    }
-  }, [user]);
-
-  /**
-  * if a user has not applied a region, we apply the first region
-  * if they have central office, we apply that instead
-  */
-  useEffect(() => {
-    if (appliedRegion === 0) {
-      if (hasCentralOffice) {
-        updateAppliedRegion(14);
-      } else if (regions[0]) {
-        updateAppliedRegion(regions[0]);
-      }
-    }
-  }, [appliedRegion, hasCentralOffice, regions]);
-
-  // if the regions have been fetched, this smooths out errors around async fetching
-  // of regions vs rendering
-  useEffect(() => {
-    if (!regionsFetched && regions.length < 1) {
-      updateRegionsFetched(true);
-      updateRegions(getUserRegions(user));
-    }
-  }, [regions, regionsFetched, user]);
 
   useEffect(() => {
     /**
@@ -86,17 +58,6 @@ function Dashboard({ user }) {
 
     setDateTime({ timestamp, label });
   }, [selectedDateRangeOption, dateRange]);
-
-  useEffect(() => {
-    if (!dateRangeLoaded) {
-      updateDateRange(formatDateRange({
-        lastThirtyDays: selectedDateRangeOption === 1,
-        forDateTime: true,
-      }));
-
-      setDateRangeLoaded(true);
-    }
-  }, [dateRangeLoaded, selectedDateRangeOption]);
 
   useEffect(() => {
     if (!user) {
@@ -155,27 +116,27 @@ function Dashboard({ user }) {
 
   return (
     <div className="ttahub-dashboard">
-      <Helmet titleTemplate="%s - Dashboard - TTA Smart Hub" defaultTitle="TTA Smart Hub - Dashboard" />
+      <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
-        <Helmet titleTemplate="%s - Dashboard - TTA Smart Hub" defaultTitle="TTA Smart Hub - Dashboard" />
+        <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
         <Grid className="ttahub-dashboard--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
           <Grid col="auto" className="flex-wrap">
             <h1 className="ttahub--dashboard-title">
-              {appliedRegion === 14 ? 'Regional' : `Region ${appliedRegion}` }
+              {appliedRegion === 14 ? 'Regional' : `Region ${appliedRegion}`}
               {' '}
-              TTA Activity Analytics
+              TTA Activity Dashboard
             </h1>
           </Grid>
           <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 desktop:margin-top-0">
             {regions.length > 1
-                && (
+              && (
                 <RegionalSelect
                   regions={regions}
                   onApply={onApplyRegion}
                   hasCentralOffice={hasCentralOffice}
                   appliedRegion={appliedRegion}
                 />
-                )}
+              )}
             <DateRangeSelect
               selectedDateRangeOption={selectedDateRangeOption}
               onApply={onApplyDateRange}
@@ -241,11 +202,12 @@ function Dashboard({ user }) {
   );
 }
 
-Dashboard.propTypes = {
+RegionalDashboard.propTypes = {
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
+    homeRegionId: PropTypes.number,
     permissions: PropTypes.arrayOf(PropTypes.shape({
       userId: PropTypes.number,
       scopeId: PropTypes.number,
@@ -254,8 +216,6 @@ Dashboard.propTypes = {
   }),
 };
 
-Dashboard.defaultProps = {
+RegionalDashboard.defaultProps = {
   user: null,
 };
-
-export default Dashboard;

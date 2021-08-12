@@ -5,6 +5,7 @@ import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import DateTime from '../components/DateTime';
 import './ReasonList.css';
+import FormatNumber from './WidgetHelper';
 
 function ReasonList({ data, dateTime }) {
   const renderReasonList = () => {
@@ -15,7 +16,7 @@ function ReasonList({ data, dateTime }) {
             {reason.name}
           </td>
           <td>
-            {reason.count}
+            {FormatNumber(reason.count)}
           </td>
         </tr>
       ));
@@ -30,7 +31,7 @@ function ReasonList({ data, dateTime }) {
           <caption className="smart-hub--reason-list-caption">
             <div className="display-flex flex-wrap flex-align-center">
               <h2 className="smart-hub--reason-list-heading ttahub--dashboard-widget-heading margin-0">Reasons in Activity Reports</h2>
-              <DateTime classNames="padding-x-1 margin-left-3" timestamp={dateTime.timestamp} label={dateTime.label} />
+              <DateTime classNames="margin-left-1 padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
             </div>
           </caption>
           <thead>

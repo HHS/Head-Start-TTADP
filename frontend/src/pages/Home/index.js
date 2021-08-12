@@ -14,7 +14,7 @@ function Home() {
         {({ user }) => (
           <Container>
             <h1>
-              Welcome to the TTA Smart Hub
+              Welcome to the TTA Hub
               {' '}
               {user.name}
             </h1>

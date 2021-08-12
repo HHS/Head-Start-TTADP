@@ -6,7 +6,7 @@ import { DateRangePicker as DateRange, isInclusivelyBeforeDay } from 'react-date
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 
-import { DATE_FMT, EARLIEST_FILTER_DATE } from '../Constants';
+import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 
 const phrases = {
   focusStartDate: 'Interact with the calendar and add the dates for your date range',
@@ -66,12 +66,12 @@ function DateRangePicker({
   return (
     <>
       { showDateError ? (
-        <div className="usa-alert margin-1" role="alert">
+        <div className="usa-alert usa-alert--warning margin-1" role="alert">
           <div className="usa-alert__body">
             <p className="usa-alert__text">
-              Please enter a valid start date
+              Reports are available from 09/01/2020.
               <br />
-              in the DD/MM/YYYY format
+              Use the format MM/DD/YYYY.
             </p>
           </div>
         </div>
@@ -92,7 +92,7 @@ function DateRangePicker({
           numberOfMonths={1}
           hideKeyboardShortcutsPanel
           endDate={endDate}
-          isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_FILTER_DATE)}
+          isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)}
           onFocusChange={(focused) => {
             if (focusedInput !== null) {
               updateFocused(focused);

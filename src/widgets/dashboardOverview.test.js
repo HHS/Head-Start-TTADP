@@ -67,6 +67,7 @@ const regionOneReport = {
 
 const regionTwoReport = {
   ...reportObject,
+  numberOfParticipants: 8,
   regionId: 18,
   activityRecipients: [
     { activityRecipientId: GRANTEE_ID_TWO },
@@ -165,7 +166,7 @@ describe('Dashboard overview widget', () => {
     expect(data.numGrants).toBe('2');
     expect(data.inPerson).toBe('4');
     expect(data.sumDuration).toBe('12.0');
-    expect(data.nonGrantees).toBe('0');
+    expect(data.numParticipants).toBe('44');
   });
 
   it('accounts for different date ranges', async () => {
@@ -177,7 +178,7 @@ describe('Dashboard overview widget', () => {
     expect(data.numGrants).toBe('2');
     expect(data.inPerson).toBe('0');
     expect(data.sumDuration).toBe('6.0');
-    expect(data.nonGrantees).toBe('0');
+    expect(data.numParticipants).toBe('11');
   });
   it('accounts for different regions', async () => {
     const query = { 'region.in': [18], 'startDate.win': '2021/01/01-2021/01/01' };
@@ -187,7 +188,7 @@ describe('Dashboard overview widget', () => {
     expect(data.numReports).toBe('1');
     expect(data.numGrants).toBe('1');
     expect(data.inPerson).toBe('1');
-    expect(data.nonGrantees).toBe('0');
+    expect(data.numParticipants).toBe('8');
     expect(data.sumDuration).toBe('1.5');
   });
 });
