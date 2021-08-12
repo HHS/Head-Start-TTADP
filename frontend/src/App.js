@@ -13,7 +13,7 @@ import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import IdleModal from './components/IdleModal';
 import Admin from './pages/Admin';
-import Dashboard from './pages/Dashboard';
+import RegionalDashboard from './pages/RegionalDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -30,7 +30,7 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
-// import { SCOPE_IDS } from './Constants';
+import ApprovedActivityReport from './pages/ApprovedActivityReport';
 
 function App() {
   const [user, updateUser] = useState();
@@ -112,6 +112,12 @@ function App() {
         />
 
         <Route
+          path="/activity-reports/view/:activityReportId"
+          render={({ match, location }) => (
+            <ApprovedActivityReport location={location} match={match} user={user} />
+          )}
+        />
+        <Route
           path="/activity-reports/:activityReportId/:currentPage?"
           render={({ match, location }) => (
             <ActivityReport location={location} match={match} user={user} />
@@ -129,9 +135,9 @@ function App() {
           <>
             <Route
               exact
-              path="/dashboard"
+              path="/regional-dashboard"
               render={() => (
-                <Dashboard user={user} />
+                <RegionalDashboard user={user} />
               )}
             />
             <Route
@@ -151,7 +157,7 @@ function App() {
 
   return (
     <>
-      <Helmet titleTemplate="%s - TTA Smart Hub" defaultTitle="TTA Smart Hub">
+      <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
         <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>

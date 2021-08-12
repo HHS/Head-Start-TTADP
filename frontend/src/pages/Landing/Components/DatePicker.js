@@ -6,7 +6,7 @@ import { SingleDatePicker, isInclusivelyBeforeDay } from 'react-dates';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 
-import { DATE_FMT, EARLIEST_FILTER_DATE } from '../../../Constants';
+import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../../../Constants';
 
 function DatePicker({ query, onUpdateFilter, id }) {
   const [isFocused, updateIsFocused] = useState(false);
@@ -32,7 +32,7 @@ function DatePicker({ query, onUpdateFilter, id }) {
         focused={isFocused}
         numberOfMonths={1}
         hideKeyboardShortcutsPanel
-        isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_FILTER_DATE)}
+        isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)}
         onFocusChange={({ focused }) => {
           if (!focused) {
             updateIsFocused(focused);

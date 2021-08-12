@@ -106,7 +106,7 @@ const regionOneDraftReport = {
   status: REPORT_STATUSES.DRAFT,
 };
 
-describe('Overview widget', () => {
+describe('Reason list widget', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser });
     await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
