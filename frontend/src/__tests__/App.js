@@ -47,7 +47,7 @@ describe('App', () => {
     it('displays the "request permissions" page', async () => {
       fetchMock.get(userUrl, 403);
       render(<App />);
-      expect(await screen.findByText('You need permission to access the TTA Smart Hub.')).toBeVisible();
+      expect(await screen.findByText('You need permission to access the TTA Hub.')).toBeVisible();
       expect(await screen.findByText('Request Permission')).toBeVisible();
     });
   });
