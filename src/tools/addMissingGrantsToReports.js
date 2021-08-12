@@ -40,7 +40,8 @@ export default async function addMissingGrantsToReports(filename) {
     const oldNames = granteeName.split('\n');
 
     const newGranteeNames = missingRecipients[report.id.toString()];
-    const allNames = union(oldNames, newGranteeNames);
+    // filter removes empty strings
+    const allNames = union(oldNames, newGranteeNames).filter((name) => name);
     const updatedGranteeName = allNames.join('\n');
     return report.update({ imported: { ...report.imported, granteeName: updatedGranteeName } });
   });
