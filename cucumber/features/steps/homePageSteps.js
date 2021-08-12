@@ -28,7 +28,7 @@ Given('I am logged in', async () => {
   await page.waitForSelector('.smart-hub-title'); // Page title
   const name = await page.$eval('.smart-hub-title', (el) => el.innerText);
 
-  assert.equal(name, 'Office of Head Start TTA Smart Hub');
+  assert.equal(name, 'Office of Head Start TTA Hub');
   // Check if actually logged in. If not login
   const result = await page.$(loginLinkSelector);
 

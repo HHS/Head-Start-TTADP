@@ -10,16 +10,16 @@ import './DashboardOverview.css';
 import FormatNumber from './WidgetHelper';
 
 function Field({
-  label, labelExt, data, icon, iconColor, backgroundColor, labelCssClasses, decimalPlaces,
+  label, labelExt, data, icon, iconColor, backgroundColor, decimalPlaces,
 }) {
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-x-2 padding-bottom-2 padding-top-1">
+    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-2">
       <span className="smart-hub--dashboard-overview-field-icon flex-1 display-flex flex-justify-center flex-align-center">
         <span className="smart-hub--dashboard-overview-field-icon-background display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
           <FontAwesomeIcon color={iconColor} icon={icon} />
         </span>
       </span>
-      <span className={`smart-hub--dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center ${labelCssClasses}`}>
+      <span className="smart-hub--dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center">
         <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
         {label}
         {' '}
@@ -42,12 +42,10 @@ Field.propTypes = {
   }).isRequired,
   iconColor: PropTypes.string.isRequired,
   backgroundColor: PropTypes.string.isRequired,
-  labelCssClasses: PropTypes.string,
 };
 
 Field.defaultProps = {
   labelExt: '',
-  labelCssClasses: '',
   decimalPlaces: 0,
 };
 
@@ -60,7 +58,7 @@ export function DashboardOverviewWidget({ data }) {
     <Grid row className="smart-hub--dashboard-overview margin-bottom-3">
       <Field icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />
       <Field icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />
-      <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} labelCssClasses="padding-top-2" />
+      <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />
       <Field icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
       <Field icon={faUser} iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />
     </Grid>
