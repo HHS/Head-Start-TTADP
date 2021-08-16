@@ -39,13 +39,13 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     {
-      name: 'Training', x: [], y: [], month: null,
+      name: 'Hours of Training', x: [], y: [], month: null,
     },
     {
-      name: 'Technical Assistance', x: [], y: [], month: null,
+      name: 'Hours of Technical Assistance', x: [], y: [], month: null,
     },
     {
-      name: 'Both', x: [], y: [], month: null,
+      name: 'Hours of Both', x: [], y: [], month: null,
     },
   ];
 
