@@ -135,6 +135,8 @@ export default function ApprovedActivityReport({ match, user }) {
   const [creatorNotes, setCreatorNotes] = useState('');
   const [successfullyCopiedClipboard, setSuccessfullyCopiedClipboard] = useState(false);
   const [somethingWentWrongWithClipboard, setSomethingWentWrongWithClipboard] = useState(false);
+  const [granteeNextSteps, setGranteeNextSteps] = useState([]);
+  const [specialistNextSteps, setSpecialistNextSteps] = useState([]);
 
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
@@ -179,13 +181,17 @@ export default function ApprovedActivityReport({ match, user }) {
       setNonECLKCResourcesUsed(createResourceMarkup(report.nonECLKCResourcesUsed));
       setAttachments(mapAttachments(report.attachments));
 
-      // // third table
+      // third table
       setContext(report.context);
       const [goalHeadings, goals] = calculateGoalsAndObjectives(report);
       setGoalsAndObjectiveHeadings(goalHeadings);
       setGoalsAndObjectives(goals);
 
-      // fourth table
+      // next steps table
+      setSpecialistNextSteps(report.specialistNextSteps.map((step) => step.note));
+      setGranteeNextSteps(report.granteeNextSteps.map((step) => step.note));
+
+      // review and submit table
       setManagerNotes(report.managerNotes);
       setCreatorNotes(report.additionalNotes);
     }).catch((err) => {
@@ -370,6 +376,21 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               context,
               ...goalsAndObjectives,
+            ]
+          }
+        />
+        <ViewTable
+          caption="Next steps"
+          headings={
+            [
+              'Specialist next steps',
+              "Grantee's next steps",
+            ]
+          }
+          data={
+            [
+              specialistNextSteps,
+              granteeNextSteps,
             ]
           }
         />
