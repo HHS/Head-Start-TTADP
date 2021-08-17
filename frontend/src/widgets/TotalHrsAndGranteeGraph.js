@@ -33,7 +33,6 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         mode: 'lines+markers',
         x: data[0].x,
         y: data[0].y,
-        hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
           dash: 'solid',
@@ -53,7 +52,6 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         mode: 'lines+markers',
         x: data[1].x,
         y: data[1].y,
-        hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
           dash: 'solid',
@@ -73,7 +71,6 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         mode: 'lines+markers',
         x: data[2].x,
         y: data[2].y,
-        hovertemplate: ' %{y}<extra></extra> ',
         hoverinfo: 'y',
         line: {
           dash: 'solid',
@@ -128,7 +125,13 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       },
       yaxis: {
         automargin: true,
-        tickformat: ',.0d',
+        tickformat: (n) => {
+          // if not a whole number, round to 1 decimal place
+          if (n % 1 !== 0) {
+            return '.1f';
+          }
+          return ',';
+        },
         title: {
           standoff: 20,
           text: 'Number of Hours',
@@ -150,7 +153,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       return;
     }
 
-    const headings = ['', ...data[0].x.map((x) => {
+    const headings = ['TTA Provided', ...data[0].x.map((x) => {
       if (data[0].month) {
         return `${data[0].month} ${x}`;
       }
@@ -160,12 +163,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
 
     const rows = data.map((row) => ({
       heading: row.name,
-      data: row.y.map((y) => {
-        if (y === 1) {
-          return `${y.toString()} hour`;
-        }
-        return `${y.toString()} hours`;
-      }),
+      data: row.y.map((y) => `${(Math.round(y * 10) / 10).toString()}`),
     }));
 
     setColumnHeadings(headings);
