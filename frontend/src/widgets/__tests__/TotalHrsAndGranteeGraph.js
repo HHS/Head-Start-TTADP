@@ -6,7 +6,7 @@ import { TotalHrsAndGranteeGraph } from '../TotalHrsAndGranteeGraph';
 const TEST_DATA_MONTHS = [
   { name: 'Grantee Rec TTA', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [1, 2, 3, 4, 5, 6] },
   { name: 'Hours of Training', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [7, 8, 9, 0, 0, 0] },
-  { name: 'Hours of Technical Assistance', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 0, 0, 10, 11, 12] },
+  { name: 'Hours of Technical Assistance', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 0, 0, 10, 11.2348732847, 12] },
   { name: 'Hours of Both', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 13, 0, 14, 0, 0] },
 ];
 
@@ -97,9 +97,11 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     const cells = [];
 
     // eslint-disable-next-line no-plusplus
-    for (let index = 2; index < 15; index++) {
-      cells.push(screen.getByRole('cell', { name: `${index.toString()} hours` }));
+    for (let index = 2; index < 10; index++) {
+      cells.push(screen.getByRole('cell', { name: `${index.toString()}` }));
     }
+
+    expect(screen.getByRole('cell', { name: '11.2' })).toBeInTheDocument();
 
     cells.forEach((cell) => expect(cell).toBeInTheDocument());
 
