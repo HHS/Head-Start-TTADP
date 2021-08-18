@@ -29,4 +29,5 @@ node_modules
 # Temp files
 .tmp
 
+# New Relic Logs
 newrelic_agent.log
