@@ -244,6 +244,13 @@ export default (sequelize, DataTypes) => {
         },
       },
     },
+    scopes: {
+      all: {
+        where: {
+
+        },
+      },
+    },
     sequelize,
     modelName: 'ActivityReport',
   });
