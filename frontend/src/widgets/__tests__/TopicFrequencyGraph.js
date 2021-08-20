@@ -1,9 +1,18 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
-  TopicFrequencyGraphWidget, reasonsWithLineBreaks, filterData, sortData, Tooltip,
+  TopicFrequencyGraphWidget,
+  reasonsWithLineBreaks,
+  filterData,
+  sortData,
+  SORT_ORDER,
+  ROLES_MAP,
 } from '../TopicFrequencyGraph';
 
 const TEST_DATA = [{
@@ -14,7 +23,7 @@ const TEST_DATA = [{
 {
   reason: 'Community and Self-Assessment',
   count: 155,
-  roles: [],
+  roles: ['System Specialist'],
 },
 {
   reason: 'Family Support Services',
@@ -39,7 +48,7 @@ const TEST_DATA = [{
 
 const renderArGraphOverview = async (props) => (
   render(
-    <TopicFrequencyGraphWidget data={props.data} dateTime={{ dateInExpectedFormat: '', prettyPrintedQuery: '05/27/1967-08/21/1968' }} />,
+    <TopicFrequencyGraphWidget data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
@@ -53,81 +62,109 @@ describe('Topic & Frequency Graph Widget', () => {
 
   it('correctly filters data', () => {
     const data = [...TEST_DATA];
-    const filteredData = filterData(data, [{ value: 'System Specialist' }]);
 
-    expect(filteredData).toStrictEqual([
+    const filter = [ROLES_MAP.find((role) => role.value === 'System Specialist').selectValue];
+    const filteredData = filterData(data, filter);
+    expect(filteredData).toStrictEqual([{
+      reason: 'CLASS: Instructional Support',
+      count: 0,
+      roles: [],
+    },
+    {
+      reason: 'Community and Self-Assessment',
+      count: 155,
+      roles: ['System Specialist'],
+    },
+    {
+      reason: 'Family Support Services',
+      count: 0,
+      roles: [],
+    },
+    {
+      reason: 'Fiscal / Budget',
+      count: 0,
+      roles: [],
+    },
+    {
+      reason: 'Five-Year Grant',
+      count: 0,
+      roles: [],
+    },
+    {
+      reason: 'Human Resources',
+      count: 0,
+      roles: ['System Specialist'],
+    }]);
+  });
+
+  it('correctly sorts data by count', () => {
+    const data = [...TEST_DATA];
+    sortData(data, SORT_ORDER.DESC);
+
+    expect(data).toStrictEqual([
+      {
+        reason: 'Community and Self-Assessment',
+        count: 155,
+        roles: ['System Specialist'],
+      },
+      {
+        reason: 'Family Support Services',
+        count: 53,
+        roles: [],
+      },
+      {
+        reason: 'Five-Year Grant',
+        count: 33,
+        roles: [],
+      },
+      {
+        reason: 'CLASS: Instructional Support',
+        count: 12,
+        roles: [],
+      },
+      {
+        reason: 'Fiscal / Budget',
+        count: 0,
+        roles: [],
+      },
       {
         reason: 'Human Resources',
         count: 0,
         roles: ['System Specialist'],
       },
+
     ]);
   });
 
-  it('correctly sorts data', () => {
+  it('correctly sorts data alphabetically', () => {
     const data = [...TEST_DATA];
-    // const filteredData = filterData(data, [{ label: 'Gene' }]);
-    sortData(data, 'asc');
+
+    sortData(data, SORT_ORDER.ALPHA);
 
     expect(data).toStrictEqual([
       {
-        reason: 'Fiscal / Budget',
-        count: 0,
+        reason: 'CLASS: Instructional Support',
+        count: 12,
         roles: [],
       },
       {
-        reason: 'Human Resources',
-        count: 0,
+        reason: 'Community and Self-Assessment',
+        count: 155,
         roles: ['System Specialist'],
       },
       {
-        reason: 'CLASS: Instructional Support',
-        count: 12,
-        roles: [],
-      },
-      {
-        reason: 'Five-Year Grant',
-        count: 33,
-        roles: [],
-      },
-      {
         reason: 'Family Support Services',
         count: 53,
-        roles: [],
-      },
-      {
-        reason: 'Community and Self-Assessment',
-        count: 155,
-        roles: [],
-      },
-    ]);
-
-    sortData(data, 'desc');
-
-    expect(data).toStrictEqual([
-      {
-        reason: 'Community and Self-Assessment',
-        count: 155,
-        roles: [],
-      },
-      {
-        reason: 'Family Support Services',
-        count: 53,
-        roles: [],
-      },
-      {
-        reason: 'Five-Year Grant',
-        count: 33,
-        roles: [],
-      },
-      {
-        reason: 'CLASS: Instructional Support',
-        count: 12,
         roles: [],
       },
       {
         reason: 'Fiscal / Budget',
         count: 0,
+        roles: [],
+      },
+      {
+        reason: 'Five-Year Grant',
+        count: 33,
         roles: [],
       },
       {
@@ -150,39 +187,46 @@ describe('Topic & Frequency Graph Widget', () => {
     expect(formattedReason).toBe(' Equity,<br />Culture<br />&amp;<br />Language');
   });
 
-  it('shows current order', () => {
-    renderArGraphOverview({ data: TEST_DATA });
+  it('the filter control works', async () => {
+    renderArGraphOverview({ data: [...TEST_DATA] });
 
-    const order = screen.getByRole('combobox', { name: /change topic data order/i });
-    userEvent.selectOptions(order, ['asc']);
+    const button = screen.getByRole('button', { name: /change filter by specialists/i });
+    userEvent.click(button);
 
-    const applyFiltersButton = screen.getByRole('button', { name: 'Apply filters' });
-    fireEvent.click(applyFiltersButton);
+    const barSelector = 'g.point';
 
-    expect(order.value).toBe('asc');
+    // eslint-disable-next-line no-underscore-dangle
+    let height = document.querySelectorAll(barSelector)[0].__data__.y;
+    expect(height).toBe(155);
+
+    const systemSpecialist = screen.getByRole('checkbox', { name: /select system specialist \(ss\)/i });
+
+    userEvent.click(systemSpecialist);
+
+    const apply = screen.getByRole('button', { name: /apply filters/i });
+    userEvent.click(apply);
+
+    // eslint-disable-next-line no-underscore-dangle
+    height = document.querySelectorAll(barSelector)[0].__data__.y;
+    expect(height).toBe(0);
   });
 
-  it('tooltip props', () => {
-    render(<Tooltip x={0} text="Test" show />);
+  it('the sort control works', async () => {
+    renderArGraphOverview({ data: [...TEST_DATA] });
+    const button = screen.getByRole('button', { name: /change topic graph order/i });
+    userEvent.click(button);
+    const aZ = screen.getByRole('button', { name: /select to view data from a to z\. select apply filters button to apply selection/i });
+    userEvent.click(aZ);
+    const buttonGroup = screen.getByTestId('data-sort');
+    const apply = within(buttonGroup).getByRole('button', { name: 'Apply filters' });
 
-    expect(screen.getByText(/test/i)).toBeInTheDocument();
-  });
+    const point1 = document.querySelector('g.xtick');
+    // eslint-disable-next-line no-underscore-dangle
+    expect(point1.__data__.text).toBe(' Community<br />and<br />Self-Assessment');
+    userEvent.click(apply);
 
-  it('select styles', () => {
-    renderArGraphOverview({ data: TEST_DATA });
-
-    const select = document.querySelector('.ar__control');
-
-    userEvent.click(select);
-
-    expect(select.classList.contains('ar__control--is-focused')).toBe(true);
-
-    let louise = screen.getByText(/system specialist/i);
-
-    userEvent.click(louise);
-
-    louise = screen.getByText(/system specialist/i);
-
-    expect(louise.classList.contains('ar__multi-value__label')).toBe(true);
+    const point2 = document.querySelector('g.xtick');
+    // eslint-disable-next-line no-underscore-dangle
+    expect(point2.__data__.text).toBe(' CLASS:<br />Instructional<br />Support');
   });
 });

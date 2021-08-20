@@ -124,6 +124,7 @@ const ReviewSection = () => {
         <ReviewItem
           label="Topics"
           name="topics"
+          sortValues
         />
       </Section>
       <Section

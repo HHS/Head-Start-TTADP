@@ -11,6 +11,7 @@ function ButtonSelect(props) {
     options,
     onApply,
     labelId,
+    styleAsSelect,
     initialValue,
     applied,
     labelText,
@@ -112,63 +113,66 @@ function ButtonSelect(props) {
   // get label text
   const label = options.find((option) => option.value === applied);
 
+  const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
+
   return (
-    <div className="margin-left-1" onBlur={onBlur}>
+    <div className="margin-left-1" onBlur={onBlur} data-testid="data-sort">
       <button
         onClick={setMenuIsOpen}
         onKeyDown={onKeyDown}
-        className="usa-button smart-hub--button-select-toggle-btn display-flex"
+        className={`${buttonClasses} smart-hub--button-select-toggle-btn display-flex`}
         aria-label={ariaLabel}
         type="button"
       >
         {label ? label.label : options[0].label}
-        <img src={triangleDown} alt="" aria-hidden="true" />
+        {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
       { menuIsOpen
         ? (
           <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
             <span className="sr-only" id={labelId}>{labelText}</span>
-            { options.map((option) => (
-              <button
-                type="button"
-                aria-pressed={option === selectedItem}
-                className="smart-hub--button smart-hub--button-select-range-button"
-                key={option.value}
-                onKeyDown={onKeyDown}
-                data-value={option.value}
-                aria-label={`Select to view data from ${option.label}. Select Apply filters button to apply selection`}
-                onClick={() => {
-                  setSelectedItem(option);
-                }}
-              >
-                {option.label}
-                { option.value === applied ? <img className="smart-hub--button-select-checkmark" src={check} alt="" aria-hidden="true" /> : null }
-              </button>
-            ))}
+            <fieldset className="border-0">
+              { options.map((option) => (
+                <button
+                  type="button"
+                  aria-pressed={option === selectedItem}
+                  className="smart-hub--button smart-hub--button-select-range-button"
+                  key={option.value}
+                  onKeyDown={onKeyDown}
+                  data-value={option.value}
+                  aria-label={`Select to view data from ${option.label}. Select Apply filters button to apply selection`}
+                  onClick={() => {
+                    setSelectedItem(option);
+                  }}
+                >
+                  {option.label}
+                  { option.value === applied ? <img className="smart-hub--button-select-checkmark" src={check} alt="" aria-hidden="true" /> : null }
+                </button>
+              ))}
 
-            { hasDateRange && selectedItem && selectedItem.value === CUSTOM_DATE_RANGE
-              ? (
-                <>
-                  { showDateError ? (
-                    <div className="usa-alert usa-alert--error margin-1" role="alert">
-                      <div className="usa-alert__body">
-                        <p className="usa-alert__text">
-                          Please enter a valid date range
-                        </p>
+              { hasDateRange && selectedItem && selectedItem.value === CUSTOM_DATE_RANGE
+                ? (
+                  <>
+                    { showDateError ? (
+                      <div className="usa-alert usa-alert--error margin-1" role="alert">
+                        <div className="usa-alert__body">
+                          <p className="usa-alert__text">
+                            Please enter a valid date range
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ) : null }
-                  <DateRangePicker
-                    id={dateRangePickerId}
-                    query={dateRange}
-                    onUpdateFilter={onUpdateDateRange}
-                    classNames={['display-flex']}
-                    gainFocus={dateRangeShouldGainFocus}
-                  />
-                </>
-              ) : null }
-
+                    ) : null }
+                    <DateRangePicker
+                      id={dateRangePickerId}
+                      query={dateRange}
+                      onUpdateFilter={onUpdateDateRange}
+                      classNames={['display-flex']}
+                      gainFocus={dateRangeShouldGainFocus}
+                    />
+                  </>
+                ) : null }
+            </fieldset>
             <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label="Apply filters">Apply</button>
           </div>
         )
@@ -179,20 +183,22 @@ function ButtonSelect(props) {
   );
 }
 
+const optionProp = PropTypes.shape({
+  value: PropTypes.number,
+  label: PropTypes.string,
+});
+
 ButtonSelect.propTypes = {
-  options: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })).isRequired,
+  options: PropTypes.arrayOf(optionProp).isRequired,
   labelId: PropTypes.string.isRequired,
   labelText: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  initialValue: PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  }).isRequired,
+  initialValue: optionProp.isRequired,
   applied: PropTypes.number.isRequired,
   ariaLabel: PropTypes.string.isRequired,
+
+  // style as a select box
+  styleAsSelect: PropTypes.bool,
 
   // props for handling the date range select
   hasDateRange: PropTypes.bool,
@@ -203,6 +209,7 @@ ButtonSelect.propTypes = {
 };
 
 ButtonSelect.defaultProps = {
+  styleAsSelect: false,
   hasDateRange: false,
   dateRangeShouldGainFocus: false,
   updateDateRange: () => {},
