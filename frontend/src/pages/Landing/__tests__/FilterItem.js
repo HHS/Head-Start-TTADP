@@ -9,7 +9,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import FilterItem from '../FilterItem';
+import FilterItem, { selectRoleInput } from '../FilterItem';
 
 const RenderFilterItem = ({
   onUpdateFilter = () => {},
@@ -75,7 +75,7 @@ describe('FilterItem', () => {
       render(<RenderFilterItem />);
       const topic = await screen.findByRole('combobox', { name: 'topic' });
       const options = await within(topic).findAllByRole('option');
-      expect(options.length).toBe(7);
+      expect(options.length).toBe(8);
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
@@ -83,6 +83,7 @@ describe('FilterItem', () => {
         'Start date',
         'Creator',
         'Collaborator',
+        'Role',
         'Topic',
         'Last saved',
       ];
@@ -96,7 +97,7 @@ describe('FilterItem', () => {
       render(<RenderFilterItem forMyAlerts />);
       const topic = await screen.findByRole('combobox', { name: 'topic' });
       const options = await within(topic).findAllByRole('option');
-      expect(options.length).toBe(6);
+      expect(options.length).toBe(7);
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
@@ -104,10 +105,21 @@ describe('FilterItem', () => {
         'Start date',
         'Creator',
         'Collaborator',
+        'Role',
         'Status',
       ];
 
       expect(text).toEqual(expectedOptions);
+    });
+  });
+
+  describe('role filter', () => {
+    it('renders the custom select and calls the correct functions', async () => {
+      const onUpdateFilter = jest.fn();
+      render(<>{selectRoleInput('', onUpdateFilter)}</>);
+      const select = screen.getByRole('combobox');
+      userEvent.selectOptions(select, 'Health Specialist (HS)');
+      expect(onUpdateFilter).toHaveBeenCalledWith('query', 'Health Specialist');
     });
   });
 
