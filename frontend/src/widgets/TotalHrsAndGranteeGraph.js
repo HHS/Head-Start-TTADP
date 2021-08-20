@@ -157,7 +157,6 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       if (data[0].month) {
         return `${data[0].month} ${x}`;
       }
-
       return x;
     })];
 
