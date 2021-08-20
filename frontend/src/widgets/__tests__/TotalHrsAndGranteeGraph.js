@@ -11,7 +11,9 @@ const TEST_DATA_MONTHS = [
 ];
 
 const TEST_DATA_DAYS = [
-  { name: 'Grantee Rec TTA', x: ['1', '2', '3', '4'], y: [1, 2, 3, 4] },
+  {
+    name: 'Grantee Rec TTA', x: ['1', '2', '3', '4'], y: [1, 2, 3, 4], month: 'January',
+  },
   { name: 'Hours of Training', x: ['1', '2', '3', '4'], y: [5, 6, 7, 0] },
   { name: 'Hours of Technical Assistance', x: ['1', '2', '3', '4'], y: [8, 9, 0, 0] },
   { name: 'Hours of Both', x: ['1', '2', '3', '4'], y: [10, 0, 0, 0] },
@@ -83,6 +85,14 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
+  it('displays table data correctly', async () => {
+    renderTotalHrsAndGranteeGraph({ data: TEST_DATA_DAYS });
+    const button = screen.getByRole('button', { name: /show accessible data/i });
+    fireEvent.click(button);
+    const jan1 = screen.getByRole('columnheader', { name: /january 1/i });
+    expect(jan1).toBeInTheDocument();
+  });
+
   it('handles switching contexts', async () => {
     renderTotalHrsAndGranteeGraph({ data: TEST_DATA_MONTHS });
     const button = screen.getByRole('button', { name: /show accessible data/i });
@@ -91,6 +101,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
     const randomRowHeader = screen.getByRole('rowheader', { name: /grantee rec tta/i });
     expect(randomRowHeader).toBeInTheDocument();
+
     const randomColumnHeader = screen.getByRole('columnheader', { name: /apr/i });
     expect(randomColumnHeader).toBeInTheDocument();
 
@@ -102,7 +113,6 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     }
 
     expect(screen.getByRole('cell', { name: '11.2' })).toBeInTheDocument();
-
     cells.forEach((cell) => expect(cell).toBeInTheDocument());
 
     expect(table).toBeInTheDocument();

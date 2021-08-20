@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
 import { filtersToScopes } from '.';
 
@@ -6,12 +7,16 @@ import db, {
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 
-const mockUser = {
-  id: 2000,
+const userBluePrint = {
   homeRegionId: 1,
   name: 'u2000',
   hsesUsername: 'u2000',
   hsesUserId: '2000',
+};
+
+const mockUser = {
+  id: 2000,
+  ...userBluePrint,
 };
 
 const reportObject = {
@@ -630,6 +635,103 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcluded.id]));
+    });
+  });
+
+  describe('role', () => {
+    const possibleIds = [777, 778, 779];
+
+    beforeAll(async () => {
+      await User.create({
+        id: 777, name: 'u777', hsesUsername: 'u777', hsesUserId: '777', role: ['System Specialist', 'Grantee Specialist'],
+      });
+      await User.create({
+        id: 778, name: 'u778', hsesUsername: 'u778', hsesUserId: '778', role: ['Grantee Specialist'],
+      });
+      await User.create({
+        id: 779, name: 'u779', hsesUsername: 'u779', hsesUserId: '779', role: ['Grants Specialist'],
+      });
+      await ActivityReport.create({ ...approvedReport, id: 777, userId: 777 });
+      await ActivityReport.create({ ...approvedReport, id: 778, userId: 779 });
+      await ActivityReport.create({ ...approvedReport, id: 779, userId: 779 });
+      await ActivityReportCollaborator.create({
+        id: 777,
+        activityReportId: 778,
+        userId: 778,
+      });
+    });
+
+    afterAll(async () => {
+      await User.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+
+      await ActivityReportCollaborator.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+
+      await ActivityReport.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+    });
+    it('finds reports based on author role', async () => {
+      const filters = { 'role.in': ['System Specialist'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toStrictEqual([777]);
+    });
+
+    it('filters out reports based on author role', async () => {
+      const filters = { 'role.nin': ['System Specialist'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toStrictEqual([778, 779]);
+    });
+
+    it('finds reports based on collaborator role', async () => {
+      const filters = { 'role.in': ['Grantee Specialist'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.map((f) => f.id)).toStrictEqual([777, 778]);
+    });
+
+    it('filters out reports based on collaborator role', async () => {
+      const filters = { 'role.nin': ['Grantee Specialist'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.map((f) => f.id)).toStrictEqual([779]);
+    });
+
+    it('only allows valid roles to be passed', async () => {
+      let filters = { 'role.in': ['DROP * FROM *'] };
+      let scope = filtersToScopes(filters);
+      let found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
+
+      filters = { 'role.nin': ['Grantee Specialist & Potato Salesman'] };
+      scope = filtersToScopes(filters);
+      found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
     });
   });
 

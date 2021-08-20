@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form/dist/index.ie11';
 import userEvent from '@testing-library/user-event';
 import { Label } from '@trussworks/react-uswds';
 
-import MultiSelect from '../MultiSelect';
+import MultiSelect, { sortSelect } from '../MultiSelect';
 
 const options = [
   { label: 'one', value: 'one' },
@@ -69,5 +69,46 @@ describe('MultiSelect', () => {
       userEvent.click(screen.getByTestId('submit'));
     });
     expect(onSubmit).toHaveBeenCalledWith({ name: [] });
+  });
+
+  it('sorts correctly!', () => {
+    const data = [
+      {
+        label: 'spinach',
+      },
+      {
+        label: 'Hamburger',
+      },
+      {
+        label: 'Cheeseburger',
+      },
+      {
+        label: 'Happy meal',
+      },
+      {
+        label: 'Arugula',
+      },
+    ];
+
+    data.sort(sortSelect);
+
+    expect(data).toStrictEqual([
+      {
+        label: 'Arugula',
+      },
+      {
+        label: 'Cheeseburger',
+      },
+      {
+        label: 'Hamburger',
+      },
+      {
+        label: 'Happy meal',
+      },
+
+      {
+        label: 'spinach',
+      },
+    ]);
   });
 });

@@ -7,7 +7,9 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { ExternalLink } from '../../../../components/ExternalResourceModal';
 import { isValidURL, isExternalURL, isInternalGovernmentLink } from '../../../../utils';
 
-const ReviewItem = ({ label, name, path }) => {
+const ReviewItem = ({
+  label, name, path, sortValues,
+}) => {
   const { watch } = useFormContext();
   const value = watch(name);
   let values = value;
@@ -18,6 +20,10 @@ const ReviewItem = ({ label, name, path }) => {
 
   if (path) {
     values = values.map((v) => _.get(v, path));
+  }
+
+  if (sortValues) {
+    values.sort();
   }
 
   values = values.map((v) => {
@@ -57,10 +63,12 @@ ReviewItem.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   path: PropTypes.string,
+  sortValues: PropTypes.bool,
 };
 
 ReviewItem.defaultProps = {
   path: '',
+  sortValues: false,
 };
 
 export default ReviewItem;

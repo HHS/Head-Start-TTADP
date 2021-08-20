@@ -16,6 +16,7 @@ const sections = [
       {
         label: 'array',
         name: 'array',
+        sort: true,
       },
       {
         label: 'single value',
@@ -40,7 +41,7 @@ const sections = [
 ];
 
 const values = {
-  array: ['one', 'two'],
+  array: ['two', 'one'],
   single: 'value',
   object: { test: 'test' },
   link: 'https://www.google.com/awesome',
