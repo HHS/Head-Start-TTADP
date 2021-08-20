@@ -12,7 +12,7 @@
     margin-top: 8px;
     position: absolute;
     min-width: 200px;
-    z-index: 1;
+    z-index: 2;
     box-sizing: border-box;
 }
 
@@ -44,4 +44,17 @@
 
 .smart-hub--button-select-menu .DateInput {
     width: 97px;
+}
+
+/**
+* The styles for the "style as select" prop
+*/
+.smart-hub--button-select-toggle-btn.usa-select {
+    border-radius: 5px;
+    border: 1px solid black;
+    box-shadow: none;
+    color: black;
+    padding: 0.5em 1em 0.5em 0.5em;
+    -webkit-appearance: none;
+    appearance: none;
 }
