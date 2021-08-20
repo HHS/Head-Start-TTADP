@@ -32,6 +32,7 @@ const ReviewPage = ({ sections, path }) => {
                 label={item.label}
                 path={item.path}
                 name={item.name}
+                sortValues={item.sort}
               />
             ))}
           </Section>
