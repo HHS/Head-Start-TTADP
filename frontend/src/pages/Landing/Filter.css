@@ -94,3 +94,7 @@
     padding-left: 4px;
   }
 }
+
+.smart-hub--filter-input-role-select {
+    width: 200px;  
+}

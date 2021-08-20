@@ -6,8 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
-
-import './Filter.css';
 import DatePicker from './Components/DatePicker';
 import DateRangePicker from '../../components/DateRangePicker';
 import FilterInput from './Components/FilterInput';
@@ -17,6 +15,25 @@ import {
   DATE_CONDITIONS,
   WITHIN,
 } from './constants';
+
+export const selectRoleInput = (query, onUpdateFilter) => (
+  <select
+    name="query"
+    className="smart-hub--filter-input smart-hub--filter-input-role-select"
+    onChange={(e) => {
+      onUpdateFilter('query', e.target.value);
+    }}
+    value={query}
+    aria-label="Select specialist role to filter by"
+  >
+    <option value="Early Childhood Specialist">Early Childhood Specialist (ECS)</option>
+    <option value="Family Engagement Specialist">Family Engagement Specialist (FES)</option>
+    <option value="Grantee Specialist">Grantee Specialist (GS)</option>
+    <option value="Health Specialist">Health Specialist (HS)</option>
+    <option value="System Specialist">System Specialist (SS)</option>
+
+  </select>
+);
 
 const singleSelectInput = (query, onUpdateFilter) => (
   <FilterInput
@@ -77,6 +94,12 @@ const commonFilters = [
     display: 'Collaborator',
     conditions: SELECT_CONDITIONS,
     renderInput: singleSelectInput,
+  },
+  {
+    id: 'role',
+    display: 'Role',
+    conditions: SELECT_CONDITIONS,
+    renderInput: selectRoleInput,
   },
 ];
 
