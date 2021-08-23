@@ -9,3 +9,12 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.smart-hub--checkbox-select-toggle-all:after {
+    background: #eee;
+    content: '';
+    display: block;
+    height: 1px;
+    margin: 1em auto;
+    width: 100%;
+}
