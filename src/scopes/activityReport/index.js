@@ -9,6 +9,7 @@ import { beforeLastSaveDate, afterLastSaveDate, withinLastSaveDates } from './up
 import { withAuthor, withoutAuthor } from './author';
 import { withCollaborators, withoutCollaborators } from './collaborators';
 import { withoutStatus, withStatus } from './status';
+import { withRole, withoutRole } from './role';
 import withRegion from './region';
 
 export const topicToQuery = {
@@ -35,6 +36,10 @@ export const topicToQuery = {
       const [startDate, endDate] = query.split('-');
       return withinLastSaveDates(startDate, endDate);
     },
+  },
+  role: {
+    in: (query) => withRole(query),
+    nin: (query) => withoutRole(query),
   },
   creator: {
     in: (query) => withAuthor(query),

@@ -1,0 +1,11 @@
+.smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select {
+    max-width: 180px;
+    overflow:hidden;
+    padding-right: 1.5em;
+}
+
+.smart-hub--checkbox-select span{    
+    overflow:hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

@@ -433,20 +433,21 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Grantee or Non-grantee', name: 'activityRecipientType' },
+      { label: 'Grantee or Non-grantee', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
-      { label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name' },
+      {
+        label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
+      },
       { label: 'Program type(s)', name: 'programTypes' },
-      { label: 'Target Populations addressed', name: 'targetPopulations' },
+      { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],
   },
   {
     title: 'Reason for activity',
     anchor: 'reasons',
     items: [
-
       { label: 'Requested by', name: 'requester' },
-      { label: 'reason(s)', name: 'reason' },
+      { label: 'reason(s)', name: 'reason', sort: true },
     ],
   },
   {
@@ -470,7 +471,7 @@ const sections = [
     title: 'Other participants',
     anchor: 'other-participants',
     items: [
-      { label: 'Grantee participants', name: 'participants' },
+      { label: 'Grantee participants', name: 'participants', sort: true },
       { label: 'Number of participants', name: 'numberOfParticipants' },
     ],
   },
