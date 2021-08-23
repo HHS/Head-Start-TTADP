@@ -5,6 +5,7 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import DateTime from '../components/DateTime';
+import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
 import CheckboxSelect from '../components/CheckboxSelect';
@@ -105,8 +106,16 @@ export function reasonsWithLineBreaks(reason) {
 }
 
 export function TopicFrequencyGraphWidget({ data, dateTime }) {
+  // whether to show the data as accessible widget data or not
+  const [showAccessibleData, setShowAccessibleData] = useState(false);
+
+  // where the table data lives
+  const [columnHeadings, setColumnHeadings] = useState([]);
+  const [tableRows, setTableRows] = useState([]);
+
   // the order the data is displayed in the chart
   const [order, setOrder] = useState(SORT_ORDER.DESC);
+
   // this is roles selected in the multiselect
   const [roles, setRoles] = useState(ROLES_MAP.map((r) => r.selectValue));
 
@@ -126,11 +135,24 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
 
     const reasons = [];
     const counts = [];
+    const rows = [];
 
     filteredData.forEach((dataPoint) => {
-      reasons.push(dataPoint.reason);
-      counts.push(dataPoint.count);
+      if (!showAccessibleData) {
+        reasons.push(dataPoint.reason);
+        counts.push(dataPoint.count);
+      } else {
+        rows.push({
+          data: [dataPoint.reason, dataPoint.count],
+        });
+      }
     });
+
+    if (showAccessibleData) {
+      setColumnHeadings(['Reason', 'Count']);
+      setTableRows(rows);
+      return;
+    }
 
     const trace = {
       type: 'bar',
@@ -174,7 +196,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
 
     // draw the plot
     Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, hovermode: 'none' });
-  }, [data, roles, order]);
+  }, [data, order, roles, showAccessibleData]);
 
   if (!data) {
     return <p>Loading...</p>;
@@ -196,6 +218,11 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
     // we may get these as a string, so we cast them to ints
     setRoles(selected.map((s) => parseInt(s, 10)));
   };
+
+  // toggle the data table
+  function toggleType() {
+    setShowAccessibleData(!showAccessibleData);
+  }
 
   return (
     <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3}>
@@ -247,8 +274,15 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
             }
           />
         </Grid>
+        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+          <button type="button" className="usa-button--unstyled margin-top-2" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
+        </Grid>
+
       </Grid>
-      <div data-testid="bars" className="tta-dashboard--bar-graph-container" ref={bars} />
+      { showAccessibleData
+        ? <AccessibleWidgetData caption="Number of Activity Reports by Topic Table" columnHeadings={columnHeadings} rows={tableRows} />
+        : <div data-testid="bars" className="tta-dashboard--bar-graph-container" ref={bars} /> }
+
     </Container>
   );
 }
