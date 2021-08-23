@@ -229,4 +229,24 @@ describe('Topic & Frequency Graph Widget', () => {
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe(' CLASS:<br />Instructional<br />Support');
   });
+
+  it('handles switching display contexts', async () => {
+    renderArGraphOverview({ data: [...TEST_DATA] });
+    const button = screen.getByRole('button', { name: /show accessible data/i });
+    userEvent.click(button);
+
+    const firstRowHeader = screen.getByRole('cell', {
+      name: /community and self-assessment/i,
+    });
+    expect(firstRowHeader).toBeInTheDocument();
+
+    const firstTableCell = screen.getByRole('cell', { name: /155/i });
+    expect(firstTableCell).toBeInTheDocument();
+
+    const viewGraph = screen.getByRole('button', { name: /view graph/i });
+    userEvent.click(viewGraph);
+
+    expect(firstRowHeader).not.toBeInTheDocument();
+    expect(firstTableCell).not.toBeInTheDocument();
+  });
 });
