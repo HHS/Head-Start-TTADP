@@ -1,4 +1,5 @@
 .ttahub--topic-frequency-graph {
+    padding-bottom: 3em; /* to make sure the entire dropdown is visible */
     width: 100%;
 }
 

@@ -34,6 +34,10 @@ export const DropdownIndicator = (props) => (
   </components.DropdownIndicator>
 );
 
+export function sortSelect(a, b) {
+  return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+}
+
 function MultiSelect({
   name,
   options,
@@ -113,6 +117,9 @@ function MultiSelect({
    * the values in the format to be used outside of this component (not the react-select format)
    */
   const onChange = (event, controllerOnChange) => {
+    // sorts alphabetically by label
+    event.sort(sortSelect);
+
     if (simple) {
       controllerOnChange(event.map((v) => v.value));
     } else {

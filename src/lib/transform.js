@@ -5,7 +5,8 @@
 function transformSimpleValue(instance, field) {
   let value = instance[field];
   if (value && Array.isArray(value)) {
-    value = value.join('\n');
+    // sort the values
+    value = value.sort().join('\n');
   }
   const obj = {};
   Object.defineProperty(obj, field, {
@@ -29,7 +30,8 @@ function transformRelatedModel(field, prop) {
       if (!Array.isArray(records)) {
         records = [records];
       }
-      const value = records.map((r) => (r[prop] || '')).join('\n');
+      // we sort the values
+      const value = records.map((r) => (r[prop] || '')).sort().join('\n');
       Object.defineProperty(obj, field, {
         value,
         enumerable: true,

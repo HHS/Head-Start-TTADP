@@ -106,6 +106,10 @@ function createResourceMarkup(resources) {
   });
 }
 
+function formatSimpleArray(arr) {
+  return arr.sort().join(', ');
+}
+
 export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
@@ -158,17 +162,17 @@ export default function ApprovedActivityReport({ match, user }) {
         recipientTypeLabel = `${recipientTypeLabel}s`;
       }
       setRecipientType(recipientTypeLabel);
-      const arRecipients = report.activityRecipients.map((arRecipient) => arRecipient.name).join(', ');
+      const arRecipients = report.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
       setRecipients(arRecipients);
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
       setApprovingManagers(report.approvingManager.fullName);
-      setAttendees(report.participants.join(', '));
+      setAttendees(formatSimpleArray(report.participants));
       const newCount = report.numberOfParticipants.toString();
       setParticipantCount(newCount);
-      setReasons(report.reason.join(', '));
-      setProgramType(report.programTypes.join(', '));
+      setReasons(formatSimpleArray(report.reason));
+      setProgramType(formatSimpleArray(report.programTypes));
       setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
       setEndDate(moment(report.endDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
       setDuration(`${report.duration} hours`);
@@ -176,7 +180,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setRequester(formatRequester(report.requester));
 
       // second table
-      setTopics(report.topics.join(', '));
+      setTopics(formatSimpleArray(report.topics));
       setECLKCResources(createResourceMarkup(report.ECLKCResourcesUsed));
       setNonECLKCResourcesUsed(createResourceMarkup(report.nonECLKCResourcesUsed));
       setAttachments(mapAttachments(report.attachments));
