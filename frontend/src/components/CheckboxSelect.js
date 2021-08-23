@@ -108,6 +108,10 @@ export default function CheckboxSelect(props) {
     setPreventBlur(e.type === 'mouseenter');
   }
 
+  function onFocusHandler() {
+    setPreventBlur(true);
+  }
+
   const label = toggleAllChecked ? toggleAllText : `${options.filter((option) => checkboxes[option.value]).map((option) => option.label).join(', ')}`;
   // html id for toggle all
   const toggleAllHtmlId = `${labelId}-toggle-all`;
@@ -115,7 +119,7 @@ export default function CheckboxSelect(props) {
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
 
   return (
-    <div className="margin-left-1" onBlur={onBlur} onMouseEnter={onMouseHandler} onMouseLeave={onMouseHandler}>
+    <div className="margin-left-1" onBlur={onBlur} onMouseEnter={onMouseHandler} onMouseLeave={onMouseHandler} onFocus={onFocusHandler}>
       <button
         onClick={setMenuIsOpen}
         onKeyDown={onKeyDown}
@@ -131,7 +135,7 @@ export default function CheckboxSelect(props) {
           <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
             <span className="sr-only" id={labelId}>{labelText}</span>
             <fieldset className="border-0">
-              <div className="usa-checkbox" onBlur={onBlur}>
+              <div className="usa-checkbox smart-hub--checkbox-select-toggle-all" onBlur={onBlur}>
                 <input
                   className="usa-checkbox__input"
                   type="checkbox"
