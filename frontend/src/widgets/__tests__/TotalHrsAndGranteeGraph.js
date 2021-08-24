@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { TotalHrsAndGranteeGraph } from '../TotalHrsAndGranteeGraph';
+import { TotalHrsAndGranteeGraph, LegendControl } from '../TotalHrsAndGranteeGraph';
 
 const TEST_DATA_MONTHS = [
   { name: 'Grantee Rec TTA', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [1, 2, 3, 4, 5, 6] },
@@ -66,9 +66,6 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     await expect(nodes[0].childNodes.length).toEqual(3);
 
     // Verify Number of 'Grantee Rec TTA' Trace Points.
-    // await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(4);
-
-    // Verify Number of 'Grantee Rec TTA' Trace Points.
     await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(4);
 
     // Verify Number of 'Hours of Training' Trace Points.
@@ -76,6 +73,15 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
     // Verify Number of 'Hours of Technical Assistance' Trace Points.
     await expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(4);
+
+    expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
+    const training = screen.getByRole('checkbox', { name: /training/i });
+
+    fireEvent.click(training);
+    expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(8);
+
+    fireEvent.click(training);
+    expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
   });
 
   it('handles null data', async () => {
@@ -83,6 +89,14 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     renderTotalHrsAndGranteeGraph({ data });
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  it('handles checkbox clicks', async () => {
+    const setSelected = jest.fn();
+    render(<LegendControl label="test" id="test" selected setSelected={setSelected} />);
+    const checkbox = screen.getByRole('checkbox', { name: /test/i });
+    fireEvent.click(checkbox);
+    expect(setSelected).toHaveBeenCalled();
   });
 
   it('displays table data correctly', async () => {

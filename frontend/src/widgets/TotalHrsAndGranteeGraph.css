@@ -1,3 +1,4 @@
+
 @media(min-width: 1090px){
   .ttahub--show-accessible-data-button {
     flex: 1;
@@ -6,35 +7,75 @@
 }
 
 
-.ttahub--total-hrs-grantee-graph-legend {
-  text-align: center;
-}
-
-.ttahub--total-hrs-grantee-graph-legend span {
+.ttahub--total-hrs-grantee-graph-legend label {
   font-size: 16px;
   padding-right: 32px;
 }
 
-.ttahub--total-hrs-grantee-graph-legend span::after {
+
+.ttahub--total-hrs-grantee-graph-legend label::after {
   height: 3px;
   content: " ";
   width: 80px;
   display: inline-block;
-  background-color: #264a64;
   margin-left: 10px;
   margin-bottom: 2px;
 }
 
-.ttahub--total-hrs-grantee-graph-legend div:nth-child(2) span::after {
-  background-color: #e29f4d;
+.ttahub--total-hrs-grantee-graph-legend div:nth-child(2) label::after {
+  background-color: #2e4a62; /* Technical assistance */
 }
 
-.ttahub--total-hrs-grantee-graph-legend div:nth-child(3) span::after {
-  background-color: #148439;
-}
-
-.ttahub--total-hrs-grantee-graph-legend div:nth-child(4) span::after {
-  border-top: 3px dashed #0166ab;
+.ttahub--total-hrs-grantee-graph-legend div:nth-child(3) label::after {
+  border-top: 3px dashed #d9a15b; /* training */
   height: 3px;
   background-color: #ffffff00;
+}
+
+.ttahub--total-hrs-grantee-graph-legend div:nth-child(4) label::after {
+  border-top: 3px dashed #3d8142; /* both */
+  height: 3px;
+  background-color: #ffffff00;
+}
+
+.ttahub--total-hrs-grantee-graph-legend .usa-checkbox::after {  
+  content: '';
+  height: 9px;
+  position: absolute;
+  top: 1.2rem;
+  right: 4.2rem;
+  width: 9px;
+}
+
+/* both */
+.ttahub--total-hrs-grantee-graph-legend .usa-checkbox.square::after {
+  background: #3d8142;
+}
+
+/* technical assistance */
+.ttahub--total-hrs-grantee-graph-legend .usa-checkbox.circle::after {
+  background: #2e4a62;
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+  top: 1.1rem;
+}
+
+/* training */
+.ttahub--total-hrs-grantee-graph-legend .usa-checkbox.triangle::after {
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;  
+  border-bottom: 10px solid #d9a15b;
+  height: 0;
+  width: 0;
+  right: 4rem;   
+  top: 17px;
+}
+
+
+
+@media(max-width: 1500px){
+  .ttahub--total-hrs-grantee-graph-apply-filters-container {
+    width: 100%;
+  }
 }
