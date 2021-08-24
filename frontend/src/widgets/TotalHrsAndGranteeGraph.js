@@ -8,6 +8,11 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import './TotalHrsAndGranteeGraph.css';
 
 export function TotalHrsAndGranteeGraph({ data, dateTime }) {
+  // the state for which lines to show
+  const [showTA, setShowTA] = useState(true);
+  const [showTraining, setShowTraining] = useState(true);
+  const [showBoth, setShowBoth] = useState(true);
+
   // the dom el for drawing the chart
   const lines = useRef();
 
@@ -27,27 +32,10 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       data[2]: Hours of Both
     */
 
+    // these are ordered from left to right how they appear in the checkboxes/legend
     const traces = [
       {
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[0].x,
-        y: data[0].y,
-        hoverinfo: 'y',
-        line: {
-          dash: 'solid',
-          width: 3,
-          color: '#e29f4d',
-        },
-        marker: {
-          size: 7,
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: '#21272d',
-        },
-      },
-      {
+        // Technical Assistance
         type: 'scatter',
         mode: 'lines+markers',
         x: data[1].x,
@@ -56,10 +44,10 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         line: {
           dash: 'solid',
           width: 3,
-          color: '#264a64',
+          color: '#2e4a62',
         },
         marker: {
-          size: 7,
+          size: 12,
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
@@ -67,18 +55,20 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         },
       },
       {
+        // Training
         type: 'scatter',
         mode: 'lines+markers',
-        x: data[2].x,
-        y: data[2].y,
+        x: data[0].x,
+        y: data[0].y,
         hoverinfo: 'y',
         line: {
-          dash: 'solid',
+          dash: 'dash',
           width: 3,
-          color: '#148439',
+          color: '#d9a15b',
         },
         marker: {
-          size: 7,
+          size: 14,
+          symbol: 'triangle-up',
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
@@ -86,7 +76,27 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         },
       },
 
-    ];
+      // Both
+      {
+        type: 'scatter',
+        mode: 'lines+markers',
+        x: data[2].x,
+        y: data[2].y,
+        hoverinfo: 'y',
+        line: {
+          dash: 'longdash',
+          width: 3,
+          color: '#3d8142',
+        },
+        marker: {
+          symbol: 'square',
+          size: 12,
+        },
+        hoverlabel: {
+          font: { color: '#ffffff', size: '16' },
+          bgcolor: '#21272d',
+        },
+      }];
 
     // Specify Chart Layout.
     const layout = {
@@ -144,9 +154,17 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
       },
     };
 
+    //  showTA, showTraining, showBoth
+    // if false, then its a null for me dude
+    // and then away it goes
+    // these are ordered in the same order as the legend
+    const tracesToDraw = [showTA, showTraining, showBoth]
+      .map((trace, index) => (trace ? traces[index] : null))
+      .filter((trace) => trace !== null);
+
     // draw the plot
-    Plotly.newPlot(lines.current, traces, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data, showAccessibleData]);
+    Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
+  }, [data, showAccessibleData, showBoth, showTA, showTraining]);
 
   useEffect(() => {
     if (!lines || !data || !Array.isArray(data) || !showAccessibleData) {
@@ -193,20 +211,12 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
         ? <AccessibleWidgetData caption="Total TTA Hours by Date and Type" columnHeadings={columnHeadings} rows={tableRows} />
         : (
           <>
-            <div className="grid-row ttahub--total-hrs-grantee-graph-legend margin-bottom-3">
-
-              <div className="grid-col flex-auto">
-                <span>TA</span>
-              </div>
-
-              <div className="grid-col flex-auto">
-                <span>Training</span>
-              </div>
-
-              <div className="grid-col flex-auto">
-                <span>Both</span>
-              </div>
-            </div>
+            <fieldset className="grid-row ttahub--total-hrs-grantee-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
+              <legend className="margin-bottom-1">Toggle individual lines by checking or unchecking a legend item.</legend>
+              <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
+              <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
+              <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />
+            </fieldset>
 
             <div data-testid="lines" ref={lines} />
           </>
@@ -233,4 +243,46 @@ TotalHrsAndGranteeGraph.propTypes = {
 TotalHrsAndGranteeGraph.defaultProps = {
   dateTime: { timestamp: '', label: '' },
 };
+
+/**
+   * the legend control for the graph (input, span, line)
+   * @param {props} object
+   * @returns A jsx element
+   */
+export function LegendControl({
+  label, id, selected, setSelected, shape,
+}) {
+  function handleChange() {
+    setSelected(!selected);
+  }
+
+  return (
+    <div className={`usa-checkbox grid-col flex-auto ${shape}`}>
+      <input
+        className="usa-checkbox__input"
+        id={id}
+        type="checkbox"
+        name={id}
+        checked={selected}
+        onChange={handleChange}
+      />
+      <label
+        className="usa-checkbox__label padding-right-3"
+        htmlFor={id}
+      >
+        {' '}
+        {label}
+      </label>
+    </div>
+  );
+}
+
+LegendControl.propTypes = {
+  label: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  selected: PropTypes.bool.isRequired,
+  setSelected: PropTypes.func.isRequired,
+  shape: PropTypes.string.isRequired,
+};
+
 export default withWidgetData(TotalHrsAndGranteeGraph, 'totalHrsAndGranteeGraph');
