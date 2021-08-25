@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartBar, faBorderAll } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 
 import './SiteNav.css';
 
@@ -88,16 +88,28 @@ const SiteNav = ({
                   </li>
                   {admin
                     ? (
-                      <li>
-                        <NavLink
-                          to="/regional-dashboard"
-                        >
-                          <span className="padding-right-105">
-                            <FontAwesomeIcon color="white" icon={faBorderAll} />
-                          </span>
-                          Regional Dashboard
-                        </NavLink>
-                      </li>
+                      <>
+                        <li>
+                          <NavLink
+                            to="/regional-dashboard"
+                          >
+                            <span className="padding-right-105">
+                              <FontAwesomeIcon color="white" icon={faBorderAll} />
+                            </span>
+                            Regional Dashboard
+                          </NavLink>
+                        </li>
+                        <li>
+                          <NavLink
+                            to="/grantee-search"
+                          >
+                            <span className="padding-right-1">
+                              <FontAwesomeIcon color="white" icon={faUserFriends} />
+                            </span>
+                            Grantees
+                          </NavLink>
+                        </li>
+                      </>
                     ) : null }
                 </ul>
               </div>

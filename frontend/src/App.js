@@ -31,6 +31,7 @@ import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
+import GranteeSearch from './pages/GranteeSearch';
 
 function App() {
   const [user, updateUser] = useState();
@@ -138,6 +139,13 @@ function App() {
               path="/regional-dashboard"
               render={() => (
                 <RegionalDashboard user={user} />
+              )}
+            />
+            <Route
+              exact
+              path="/grantee-search"
+              render={() => (
+                <GranteeSearch user={user} />
               )}
             />
             <Route
