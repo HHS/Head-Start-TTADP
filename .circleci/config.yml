@@ -234,7 +234,7 @@ jobs:
       - store_artifacts:
           path: coverage/
   test_frontend:
-    executor: docker-postgres-executor
+    executor: docker-executor
     steps:
       - attach_workspace:
           at: .
