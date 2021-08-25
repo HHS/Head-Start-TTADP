@@ -70,8 +70,20 @@
   width: 0;
   right: 4rem;   
   top: 17px;
+  z-index: 2;
 }
-
+.ttahub--total-hrs-grantee-graph-legend .usa-checkbox.triangle::before {
+  content: '';
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;  
+  border-bottom: 11px solid white;
+  height: 0;
+  width: 0;
+  position: absolute;
+  right: calc(4rem - 1px);   
+  top: 16px;  
+  z-index: 2;
+}
 
 
 @media(max-width: 1500px){
