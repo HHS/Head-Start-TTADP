@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-import Container from '../../components/Container';
+
 import RegionalSelect from '../../components/RegionalSelect';
 import DateRangeSelect from './components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
@@ -156,7 +156,6 @@ export default function RegionalDashboard({ user }) {
             region={appliedRegion}
             allRegions={regions}
             dateRange={dateRange}
-            skipLoading
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
@@ -165,21 +164,17 @@ export default function RegionalDashboard({ user }) {
                 region={appliedRegion}
                 allRegions={getUserRegions(user)}
                 dateRange={dateRange}
-                skipLoading
                 dateTime={dateTime}
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-              <Container className="ttahub-total-hours-container shadow-2" padding={3}>
-                <TotalHrsAndGrantee
-                  filters={filters}
-                  region={appliedRegion}
-                  allRegions={regions}
-                  dateRange={dateRange}
-                  skipLoading
-                  dateTime={dateTime}
-                />
-              </Container>
+              <TotalHrsAndGrantee
+                filters={filters}
+                region={appliedRegion}
+                allRegions={regions}
+                dateRange={dateRange}
+                dateTime={dateTime}
+              />
             </Grid>
           </Grid>
           <Grid row>
@@ -188,7 +183,6 @@ export default function RegionalDashboard({ user }) {
               region={appliedRegion}
               allRegions={regions}
               dateRange={dateRange}
-              skipLoading
               dateTime={dateTime}
             />
           </Grid>

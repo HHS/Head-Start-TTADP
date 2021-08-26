@@ -202,7 +202,8 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
 
 function Landing() {
   const history = useHistory();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [alertsLoading, setAlertsLoading] = useState(true);
   const [reports, updateReports] = useState([]);
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
@@ -320,6 +321,7 @@ function Landing() {
 
   useEffect(() => {
     async function fetchReports() {
+      setLoading(true);
       const filterQuery = filtersToQueryString(filters, appliedRegion);
       try {
         const { count, rows } = await getReports(
@@ -336,13 +338,14 @@ function Landing() {
         console.log(e);
         updateError('Unable to fetch reports');
       }
-      setIsLoaded(true);
+      setLoading(false);
     }
     fetchReports();
   }, [sortConfig, offset, perPage, filters, appliedRegion]);
 
   useEffect(() => {
     async function fetchAlertReports() {
+      setAlertsLoading(true);
       const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
@@ -362,7 +365,7 @@ function Landing() {
         console.log(e);
         updateError('Unable to fetch reports');
       }
-      setIsLoaded(true);
+      setAlertsLoading(false);
     }
     fetchAlertReports();
   }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters, appliedRegion]);
@@ -454,10 +457,6 @@ function Landing() {
     setActivePage(pageNumber);
     setOffset((pageNumber - 1) * perPage);
   };
-
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
 
   let msg;
   const message = history.location.state && history.location.state.message;
@@ -554,6 +553,7 @@ function Landing() {
                 )}
               </Grid>
               <MyAlerts
+                loading={alertsLoading}
                 reports={reportAlerts}
                 newBtn={hasReadWrite(user)}
                 alertsSortConfig={alertsSortConfig}
@@ -568,8 +568,7 @@ function Landing() {
                 setAlertReportsCount={setAlertReportsCount}
                 handleDownloadAllAlerts={handleDownloadAllAlerts}
               />
-
-              <Container className="landing inline-size maxw-full" padding={0}>
+              <Container className="landing inline-size maxw-full" padding={0} loading={loading}>
                 <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
                   {numberOfSelectedReports > 0
                   && (

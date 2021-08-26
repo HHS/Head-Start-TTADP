@@ -49,13 +49,14 @@ Field.defaultProps = {
   decimalPlaces: 0,
 };
 
-export function DashboardOverviewWidget({ data }) {
-  if (!data || Object.keys(data).length < 1) {
-    return <p>Loading...</p>;
-  }
-
+export function DashboardOverviewWidget({ data, loading }) {
   return (
-    <Grid row className="smart-hub--dashboard-overview margin-bottom-3">
+    <Grid row className="smart-hub--dashboard-overview margin-bottom-3 position-relative">
+      {loading && (
+      <div className="overlay">
+        <div className="loader" style={{ 'margin-top': '0px', 'font-size': '8px' }} />
+      </div>
+      )}
       <Field icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />
       <Field icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />
       <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />
@@ -73,7 +74,18 @@ DashboardOverviewWidget.propTypes = {
     numGrants: PropTypes.string,
     sumDuration: PropTypes.string,
     inPerson: PropTypes.string,
-  }).isRequired,
+  }),
+  loading: PropTypes.bool.isRequired,
+};
+
+DashboardOverviewWidget.defaultProps = {
+  data: {
+    numParticipants: '0',
+    numReports: '0',
+    numGrants: '0',
+    sumDuration: '0',
+    inPerson: '0',
+  },
 };
 
 export default withWidgetData(DashboardOverviewWidget, 'dashboardOverview');
