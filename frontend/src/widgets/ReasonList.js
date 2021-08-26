@@ -7,7 +7,7 @@ import DateTime from '../components/DateTime';
 import './ReasonList.css';
 import FormatNumber from './WidgetHelper';
 
-function ReasonList({ data, dateTime }) {
+function ReasonList({ data, dateTime, loading }) {
   const renderReasonList = () => {
     if (data && Array.isArray(data) && data.length > 0) {
       return data.map((reason) => (
@@ -25,7 +25,7 @@ function ReasonList({ data, dateTime }) {
   };
 
   return (
-    <Container className="reason-list shadow-2" padding={3}>
+    <Container className="reason-list shadow-2" padding={3} loading={loading}>
       <div className="usa-table-container--scrollable margin-top-0">
         <Table className="smart-hub--reason-list-table" fullWidth>
           <caption className="smart-hub--reason-list-caption">
@@ -59,11 +59,12 @@ ReasonList.propTypes = {
         count: PropTypes.number,
       }),
     ), PropTypes.shape({}),
-  ]).isRequired,
+  ]),
   dateTime: PropTypes.shape({
     timestamp: PropTypes.string,
     label: PropTypes.string,
   }),
+  loading: PropTypes.bool.isRequired,
 };
 
 ReasonList.defaultProps = {
@@ -71,6 +72,7 @@ ReasonList.defaultProps = {
     timestamp: '',
     label: '',
   },
+  data: [],
 };
 
 export default withWidgetData(ReasonList, 'reasonList');

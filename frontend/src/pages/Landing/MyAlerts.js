@@ -171,6 +171,7 @@ function MyAlerts(props) {
     updateReportAlerts,
     setAlertReportsCount,
     handleDownloadAllAlerts,
+    loading,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -217,7 +218,7 @@ function MyAlerts(props) {
   return (
     <>
       {reports && reports.length === 0 && !hasFilters && (
-        <Container className="landing" padding={0}>
+        <Container className="landing" padding={0} loading={loading}>
           <div id="caughtUp">
             <div>
               <h2>You&apos;re all caught up!</h2>
@@ -233,7 +234,7 @@ function MyAlerts(props) {
       )}
 
       {reports && (reports.length > 0 || hasFilters) && (
-      <Container className="landing inline-size maxw-full" padding={0}>
+      <Container className="landing inline-size maxw-full" padding={0} loading={loading}>
         <span className="smart-hub--alerts-table-controls display-flex flex-row flex-align-center">
           <Filter applyFilters={updateReportFilters} forMyAlerts />
           <ReportMenu
@@ -302,6 +303,7 @@ MyAlerts.propTypes = {
   updateReportAlerts: PropTypes.func.isRequired,
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
+  loading: PropTypes.bool.isRequired,
 };
 
 MyAlerts.defaultProps = {
