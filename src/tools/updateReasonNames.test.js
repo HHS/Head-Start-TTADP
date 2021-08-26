@@ -8,11 +8,11 @@ const GRANTEE_ID = 30;
 const GRANTEE_ID_TWO = 31;
 
 const mockUser = {
-  id: 1000,
+  id: 1005,
   homeRegionId: 1,
-  name: 'chud',
-  hsesUsername: 'chud',
-  hsesUserId: '1000',
+  name: 'chud1005',
+  hsesUsername: 'chud1005',
+  hsesUserId: '1005',
 };
 
 const reportObject = {
