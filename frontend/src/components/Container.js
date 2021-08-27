@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Loader from './Loader';
+
 const classes = 'bg-white radius-md shadow-2 margin-bottom-3';
 
 function Container({
@@ -10,11 +12,7 @@ function Container({
   const skipBottom = skipBottomPadding ? 'padding-bottom-0' : '';
   return (
     <div className={`${classes} ${className} position-relative`}>
-      {loading && (
-      <div className="overlay">
-        <div className="loader" />
-      </div>
-      )}
+      <Loader loading={loading} />
       <div className={`padding-${padding} ${skipTop} ${skipBottom}`}>
         {children}
       </div>

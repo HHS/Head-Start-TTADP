@@ -454,8 +454,10 @@ function Landing() {
   };
 
   const handlePageChange = (pageNumber) => {
-    setActivePage(pageNumber);
-    setOffset((pageNumber - 1) * perPage);
+    if (!loading) {
+      setActivePage(pageNumber);
+      setOffset((pageNumber - 1) * perPage);
+    }
   };
 
   let msg;

@@ -16,20 +16,41 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
 
+/**
+ *
+ * format the date range for display
+ */
+function getDateTimeObject(selectedOption, dateRange) {
+  const timestamp = formatDateRange({
+    lastThirtyDays: selectedOption === 1,
+    forDateTime: true,
+    string: dateRange,
+  });
+  const label = formatDateRange({
+    lastThirtyDays: selectedOption === 1,
+    withSpaces: true,
+    string: dateRange,
+  });
+
+  return { timestamp, label };
+}
+
 export default function RegionalDashboard({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
+  const defaultDate = formatDateRange({
+    lastThirtyDays: true,
+    forDateTime: true,
+  });
+
   const regions = getUserRegions(user);
 
   // eslint-disable-next-line max-len
   const [appliedRegion, updateAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(1);
 
-  const [dateRange, updateDateRange] = useState(formatDateRange({
-    lastThirtyDays: selectedDateRangeOption === 1,
-    forDateTime: true,
-  }));
+  const [dateRange, updateDateRange] = useState(defaultDate);
   const [gainFocus, setGainFocus] = useState(false);
-  const [dateTime, setDateTime] = useState({ timestamp: '', label: '' });
+  const [dateTime, setDateTime] = useState(getDateTimeObject(1, defaultDate));
 
   /*
     *    the idea is that this filters variable, which roughly matches
@@ -40,23 +61,7 @@ export default function RegionalDashboard({ user }) {
   const [filters, updateFilters] = useState([]);
 
   useEffect(() => {
-    /**
-     *
-     * format the date range for display
-     */
-
-    const timestamp = formatDateRange({
-      lastThirtyDays: selectedDateRangeOption === 1,
-      forDateTime: true,
-      string: dateRange,
-    });
-    const label = formatDateRange({
-      lastThirtyDays: selectedDateRangeOption === 1,
-      withSpaces: true,
-      string: dateRange,
-    });
-
-    setDateTime({ timestamp, label });
+    setDateTime(getDateTimeObject(selectedDateRangeOption, dateRange));
   }, [selectedDateRangeOption, dateRange]);
 
   useEffect(() => {
