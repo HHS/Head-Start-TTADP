@@ -71,7 +71,7 @@ DashboardOverviewWidget.propTypes = {
     sumDuration: PropTypes.string,
     inPerson: PropTypes.string,
   }),
-  loading: PropTypes.bool.isRequired,
+  loading: PropTypes.bool,
 };
 
 DashboardOverviewWidget.defaultProps = {
@@ -82,6 +82,7 @@ DashboardOverviewWidget.defaultProps = {
     sumDuration: '0',
     inPerson: '0',
   },
+  loading: false,
 };
 
 export default withWidgetData(DashboardOverviewWidget, 'dashboardOverview');

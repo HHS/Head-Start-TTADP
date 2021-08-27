@@ -4,14 +4,15 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { DashboardOverviewWidget } from '../DashboardOverview';
 
-const renderDashboardOverview = (props) => (render(<DashboardOverviewWidget data={props.data} />));
+const renderDashboardOverview = (props) => (
+  render(<DashboardOverviewWidget loading={props.loading} data={props.data} />)
+);
 
 describe('Dashboard Overview Widget', () => {
-  it.skip('handles null data', async () => {
-    const data = null;
-    renderDashboardOverview({ data });
+  it('handles undefined data', async () => {
+    renderDashboardOverview({ data: undefined });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText('Activity reports')).toBeInTheDocument();
   });
 
   it('shows the correct data', async () => {
@@ -35,9 +36,9 @@ describe('Dashboard Overview Widget', () => {
     expect(screen.getByText(/in-person activities/i)).toBeInTheDocument();
   });
 
-  it.skip('renders loading when data is not present', async () => {
-    renderDashboardOverview({ data: {} });
+  it('renders loading when loading', async () => {
+    renderDashboardOverview({ loading: true });
 
-    expect(screen.getByText(/loading.../i)).toBeInTheDocument();
+    expect(screen.getByLabelText('loading')).toBeInTheDocument();
   });
 });

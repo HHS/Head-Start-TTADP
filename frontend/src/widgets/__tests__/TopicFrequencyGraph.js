@@ -49,7 +49,7 @@ const TEST_DATA = [{
 
 const renderArGraphOverview = async (props) => (
   render(
-    <TopicFrequencyGraphWidget data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
+    <TopicFrequencyGraphWidget loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
@@ -176,11 +176,16 @@ describe('Topic & Frequency Graph Widget', () => {
     ]);
   });
 
-  it.skip('handles null data', async () => {
-    const data = null;
+  it('handles undefined data', async () => {
+    const data = undefined;
     renderArGraphOverview({ data });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(await screen.findByText('Number of Activity Reports by Topic')).toBeInTheDocument();
+  });
+
+  it('handles loading', async () => {
+    renderArGraphOverview({ loading: true });
+    expect(await screen.findByLabelText('loading')).toBeInTheDocument();
   });
 
   it('correctly inserts line breaks', () => {
