@@ -60,10 +60,12 @@ describe('Goals DB service', () => {
       Goal.findAll = jest.fn().mockResolvedValue([]);
       Goal.findOne = jest.fn().mockResolvedValue();
       Goal.destroy = jest.fn();
+      Goal.upsert = jest.fn();
       Objective.destroy = jest.fn();
       ActivityReportObjective.create = jest.fn();
       Goal.create = jest.fn().mockResolvedValue({ id: 1 });
       Objective.create = jest.fn().mockResolvedValue({ id: 1 });
+      Objective.upsert = jest.fn().mockResolvedValue([{ id: 1 }]);
     });
 
     describe('with removed goals', () => {
@@ -133,10 +135,10 @@ describe('Goals DB service', () => {
 
     it('creates new goals', async () => {
       await saveGoalsForReport([{ id: 'new', name: 'name', objectives: [] }], { id: 1 });
-      expect(Goal.create).toHaveBeenCalledWith({
+      expect(Goal.upsert).toHaveBeenCalledWith({
         name: 'name',
         objectives: [],
-      }, { transaction: undefined });
+      }, { returning: true, transaction: undefined });
     });
 
     it('can use existing goals', async () => {
@@ -144,12 +146,9 @@ describe('Goals DB service', () => {
         id: 1,
         name: 'name',
         objectives: [],
-        update: jest.fn(),
       };
-      Goal.findOne.mockResolvedValue(existingGoal);
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Goal.create).not.toHaveBeenCalled();
-      expect(existingGoal.update).toHaveBeenCalled();
+      expect(Goal.upsert).toHaveBeenCalledWith({ id: 1, name: 'name', objectives: [] }, { returning: true, transaction: undefined });
     });
 
     test.todo('can update an existing goal');
@@ -161,37 +160,32 @@ describe('Goals DB service', () => {
         objectives: [],
         update: jest.fn(),
       };
-      Goal.findOne.mockResolvedValue(existingGoal);
+
+      Goal.upsert.mockResolvedValue([{ id: 1 }]);
 
       const goalWithNewObjective = {
         ...existingGoal,
-        objectives: [{ title: 'title', new: true }],
+        objectives: [{ title: 'title' }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
-      expect(Objective.create).toHaveBeenCalledWith({
+      expect(Objective.upsert).toHaveBeenCalledWith({
         goalId: 1,
         title: 'title',
-      }, { transaction: undefined });
+      }, { returning: true, transaction: undefined });
     });
 
     it('can update existing objectives', async () => {
-      const objective = {};
-      objective.update = jest.fn();
-      Objective.findOne = jest.fn().mockResolvedValue(objective);
-
       const existingGoal = {
         id: 1,
         name: 'name',
         objectives: [{ title: 'title', id: 1 }],
         update: jest.fn(),
       };
-      Goal.findOne.mockResolvedValue(existingGoal);
+
+      Goal.upsert.mockResolvedValue([{ id: 1 }]);
 
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Objective.findOne).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
-      expect(objective.update).toHaveBeenCalledWith({ goalId: 1, title: 'title' }, { transaction: undefined });
+      expect(Objective.upsert).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' }, { returning: true, transaction: undefined });
     });
   });
 });

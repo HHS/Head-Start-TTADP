@@ -149,7 +149,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime }) {
     });
 
     if (showAccessibleData) {
-      setColumnHeadings(['Reason', 'Count']);
+      setColumnHeadings(['Topic', 'Count']);
       setTableRows(rows);
       return;
     }

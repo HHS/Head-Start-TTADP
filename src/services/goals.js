@@ -97,6 +97,7 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, tra
       }
     }),
   );
+
   await removeActivityReportObjectivesFromReport(reportId, transaction);
   await removeObjectives(objectiveIdsToRemove, transaction);
   await removeGoals(goalIdsToRemove, transaction);
@@ -106,35 +107,33 @@ export async function saveGoalsForReport(goals, report, transaction) {
   await removeUnusedObjectivesGoalsFromReport(report.id, goals, transaction);
 
   return Promise.all(goals.map(async (goal) => {
-    let goalId = goal.id;
+    const goalId = goal.id;
+    const fields = goal;
+
     if (!Number.isInteger(goalId)) {
-      const { id, ...newGoal } = goal;
-      const savedGoal = await Goal.create(newGoal, { transaction });
-      goalId = savedGoal.id;
-    } else {
-      const savedGoal = await Goal.findOne({ where: { id: goalId } });
-      await savedGoal.update(goal);
+      delete fields.id;
     }
 
-    return Promise.all(goal.objectives.map(async (objective) => {
-      const { id, new: isNew, ...updatedFields } = objective;
-      const updatedObjective = { ...updatedFields, goalId };
-      let savedObjective;
+    // using upsert here and below
+    // - add returning: true to options to get an array of [<Model>,<created>] (postgres only)
+    // - https://sequelize.org/v5/class/lib/model.js~Model.html#static-method-upsert
 
-      if (isNew) {
-        savedObjective = await Objective.create(
-          updatedObjective,
-          { transaction },
-        );
-      } else {
-        // Cannot use upsert here because we need the objective id and upsert does
-        // not return the record that was updated/created
-        savedObjective = await Objective.findOne({ where: { id } });
-        await savedObjective.update(updatedObjective, { transaction });
+    const newGoal = await Goal.upsert(fields, { returning: true, transaction });
+
+    return Promise.all(goal.objectives.map(async (objective) => {
+      const { id, ...updatedFields } = objective;
+      const updatedObjective = { ...updatedFields, goalId: newGoal[0].id };
+
+      if (Number.isInteger(id)) {
+        updatedObjective.id = id;
       }
 
+      const savedObjective = await Objective.upsert(
+        updatedObjective, { returning: true, transaction },
+      );
+
       return ActivityReportObjective.create({
-        objectiveId: savedObjective.id,
+        objectiveId: savedObjective[0].id,
         activityReportId: report.id,
       }, { transaction });
     }));
