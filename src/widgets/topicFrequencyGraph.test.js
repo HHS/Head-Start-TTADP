@@ -1,16 +1,16 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, Grant, NextStep, Region,
+  ActivityReport,
+  ActivityRecipient,
+  ActivityReportCollaborator,
+  User,
+  Grantee,
+  Grant,
+  NextStep,
+  Region,
 } from '../models';
 import { filtersToScopes } from '../scopes/activityReport';
 import { REPORT_STATUSES } from '../constants';
-import { createOrUpdate } from '../services/activityReports';
-import topicFrequencyGraph, { topics } from './topicFrequencyGraph';
-
-const BASE_REASONS = topics.map((topic) => ({
-  reason: topic,
-  count: 0,
-  roles: [],
-}));
+import topicFrequencyGraph from './topicFrequencyGraph';
 
 const GRANTEE_ID = 30;
 
@@ -20,6 +20,24 @@ const mockUser = {
   name: 'user1000',
   hsesUsername: 'user1000',
   hsesUserId: '1000',
+  role: ['Grants Specialist'],
+};
+
+const mockUserTwo = {
+  id: 2001,
+  homeRegionId: 1,
+  name: 'user2001',
+  hsesUsername: 'user2001',
+  hsesUserId: '2001',
+  role: ['System Specialist'],
+};
+
+const mockUserThree = {
+  id: 3001,
+  homeRegionId: 1,
+  name: 'user3001',
+  hsesUsername: 'user2001',
+  hsesUserId: '3001',
   role: ['Grants Specialist'],
 };
 
@@ -50,6 +68,7 @@ const reportObject = {
 const regionOneReport = {
   ...reportObject,
   regionId: 17,
+  id: 17772,
 };
 
 const regionOneReportDistinctDate = {
@@ -57,16 +76,28 @@ const regionOneReportDistinctDate = {
   startDate: '2000-06-01T12:00:00Z',
   endDate: '2000-06-02T12:00:00Z',
   regionId: 17,
+  id: 17773,
+  topics: ['Program Planning and Services', 'Recordkeeping and Reporting'],
 };
 
 const regionTwoReport = {
   ...reportObject,
   regionId: 18,
+  id: 17774,
+};
+
+const regionOneReportWithDifferentTopics = {
+  ...reportObject,
+  topics: ['Coaching'],
+  regionId: 17,
+  id: 17775,
 };
 
 describe('Topics and frequency graph widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
+    await User.create(mockUserTwo);
+    await User.create(mockUserThree);
     await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -76,24 +107,42 @@ describe('Topics and frequency graph widget', () => {
       },
     });
 
-    const reportOne = await ActivityReport.findOne({ where: { duration: 1 } });
-    await createOrUpdate(regionOneReport, reportOne);
+    await ActivityReport.create(regionOneReport);
+    await ActivityReport.create(regionOneReportDistinctDate);
+    await ActivityReport.create(regionTwoReport);
+    await ActivityReport.create(regionOneReportWithDifferentTopics);
 
-    const reportTwo = await ActivityReport.findOne({ where: { duration: 2 } });
-    await createOrUpdate({ ...regionOneReportDistinctDate, duration: 2, topics: ['Program Planning and Services', 'Recordkeeping and Reporting'] }, reportTwo);
+    await ActivityReportCollaborator.create({
+      id: 2000,
+      activityReportId: 17772,
+      userId: mockUserTwo.id,
+    });
 
-    const reportThree = await ActivityReport.findOne({ where: { duration: 3 } });
-    await createOrUpdate({ ...regionTwoReport, duration: 3 }, reportThree);
+    await ActivityReportCollaborator.create({
+      id: 2001,
+      activityReportId: 17772,
+      userId: mockUserThree.id,
+    });
+
+    await ActivityReportCollaborator.create({
+      id: 2002,
+      activityReportId: 17773,
+      userId: mockUserTwo.id,
+    });
+
+    await ActivityReportCollaborator.create({
+      id: 2003,
+      activityReportId: 17774,
+      userId: mockUserThree.id,
+    });
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
-    const ids = reports.map((report) => report.id);
+    const ids = [17772, 17773, 17774, 17775];
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
-    await User.destroy({ where: { id: [mockUser.id] } });
+    await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
       where:
       { id: [GRANTEE_ID] },
@@ -104,6 +153,9 @@ describe('Topics and frequency graph widget', () => {
     });
     await Region.destroy({ where: { id: 17 } });
     await Region.destroy({ where: { id: 18 } });
+    await ActivityReportCollaborator.destroy(
+      { where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
+    );
     await db.sequelize.close();
   });
 
@@ -116,25 +168,313 @@ describe('Topics and frequency graph widget', () => {
     const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
 
-    const reasons = [...BASE_REASONS];
-    const reasonToModify = reasons.find((reason) => reason.reason === 'Program Planning and Services');
-
-    reasonToModify.count = 1;
-    reasonToModify.roles = ['Grants Specialist'];
-
-    expect(data).toStrictEqual(reasons);
+    expect(data).toStrictEqual([
+      {
+        topic: 'Behavioral / Mental Health / Trauma',
+        count: 0,
+      },
+      {
+        topic: 'Child Assessment, Development, Screening',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Classroom Organization',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Emotional Support',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Instructional Support',
+        count: 0,
+      },
+      {
+        topic: 'Coaching',
+        count: 1,
+      },
+      {
+        topic: 'Communication',
+        count: 0,
+      },
+      {
+        topic: 'Community and Self-Assessment',
+        count: 0,
+      },
+      {
+        topic: 'Culture & Language',
+        count: 0,
+      },
+      {
+        topic: 'Curriculum (Instructional or Parenting)',
+        count: 0,
+      },
+      {
+        topic: 'Data and Evaluation',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
+        count: 0,
+      },
+      {
+        topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'Facilities',
+        count: 0,
+      },
+      {
+        topic: 'Family Support Services',
+        count: 0,
+      },
+      {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+      {
+        topic: 'Five-Year Grant',
+        count: 0,
+      },
+      {
+        topic: 'Home Visiting',
+        count: 0,
+      },
+      {
+        topic: 'Human Resources',
+        count: 0,
+      },
+      {
+        topic: 'Leadership / Governance',
+        count: 0,
+      },
+      {
+        topic: 'Learning Environments',
+        count: 0,
+      },
+      {
+        topic: 'Nutrition',
+        count: 0,
+      },
+      {
+        topic: 'Oral Health',
+        count: 0,
+      },
+      {
+        topic: 'Parent and Family Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Partnerships and Community Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Physical Health and Screenings',
+        count: 0,
+      },
+      {
+        topic: 'Pregnancy Services / Expectant Families',
+        count: 0,
+      },
+      {
+        topic: 'Program Planning and Services',
+        count: 1,
+      },
+      {
+        topic: 'Quality Improvement Plan / QIP',
+        count: 0,
+      },
+      {
+        topic: 'Recordkeeping and Reporting',
+        count: 0,
+      },
+      {
+        topic: 'Safety Practices',
+        count: 0,
+      },
+      {
+        topic: 'Staff Wellness',
+        count: 0,
+      },
+      {
+        topic: 'Teaching Practices / Teacher-Child Interactions',
+        count: 0,
+      },
+      {
+        topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Transition Practices',
+        count: 0,
+      },
+      {
+        topic: 'Transportation',
+        count: 0,
+      },
+    ]);
   });
 
   it('respects the region scope', async () => {
     const query = { 'region.in': [18], 'startDate.win': '2000/01/01-2000/01/01' };
     const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
-    const reasons = [...BASE_REASONS];
-    const reasonToModify = reasons.find((reason) => reason.reason === 'Program Planning and Services');
-    reasonToModify.count = 1;
-    reasonToModify.roles = ['Grants Specialist'];
 
-    expect(data).toStrictEqual(reasons);
+    expect(data).toStrictEqual([
+      {
+        topic: 'Behavioral / Mental Health / Trauma',
+        count: 0,
+      },
+      {
+        topic: 'Child Assessment, Development, Screening',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Classroom Organization',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Emotional Support',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Instructional Support',
+        count: 0,
+      },
+      {
+        topic: 'Coaching',
+        count: 0,
+      },
+      {
+        topic: 'Communication',
+        count: 0,
+      },
+      {
+        topic: 'Community and Self-Assessment',
+        count: 0,
+      },
+      {
+        topic: 'Culture & Language',
+        count: 0,
+      },
+      {
+        topic: 'Curriculum (Instructional or Parenting)',
+        count: 0,
+      },
+      {
+        topic: 'Data and Evaluation',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
+        count: 0,
+      },
+      {
+        topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'Facilities',
+        count: 0,
+      },
+      {
+        topic: 'Family Support Services',
+        count: 0,
+      },
+      {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+      {
+        topic: 'Five-Year Grant',
+        count: 0,
+      },
+      {
+        topic: 'Home Visiting',
+        count: 0,
+      },
+      {
+        topic: 'Human Resources',
+        count: 0,
+      },
+      {
+        topic: 'Leadership / Governance',
+        count: 0,
+      },
+      {
+        topic: 'Learning Environments',
+        count: 0,
+      },
+      {
+        topic: 'Nutrition',
+        count: 0,
+      },
+      {
+        topic: 'Oral Health',
+        count: 0,
+      },
+      {
+        topic: 'Parent and Family Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Partnerships and Community Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Physical Health and Screenings',
+        count: 0,
+      },
+      {
+        topic: 'Pregnancy Services / Expectant Families',
+        count: 0,
+      },
+      {
+        topic: 'Program Planning and Services',
+        count: 1,
+      },
+      {
+        topic: 'Quality Improvement Plan / QIP',
+        count: 0,
+      },
+      {
+        topic: 'Recordkeeping and Reporting',
+        count: 0,
+      },
+      {
+        topic: 'Safety Practices',
+        count: 0,
+      },
+      {
+        topic: 'Staff Wellness',
+        count: 0,
+      },
+      {
+        topic: 'Teaching Practices / Teacher-Child Interactions',
+        count: 0,
+      },
+      {
+        topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Transition Practices',
+        count: 0,
+      },
+      {
+        topic: 'Transportation',
+        count: 0,
+      },
+    ]);
   });
 
   it('respects the date scope', async () => {
@@ -142,16 +482,312 @@ describe('Topics and frequency graph widget', () => {
     const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
 
-    const reasons = [...BASE_REASONS];
-    const reasonToModify = reasons.find((reason) => reason.reason === 'Program Planning and Services');
+    expect(data).toStrictEqual([
+      {
+        topic: 'Behavioral / Mental Health / Trauma',
+        count: 0,
+      },
+      {
+        topic: 'Child Assessment, Development, Screening',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Classroom Organization',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Emotional Support',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Instructional Support',
+        count: 0,
+      },
+      {
+        topic: 'Coaching',
+        count: 1,
+      },
+      {
+        topic: 'Communication',
+        count: 0,
+      },
+      {
+        topic: 'Community and Self-Assessment',
+        count: 0,
+      },
+      {
+        topic: 'Culture & Language',
+        count: 0,
+      },
+      {
+        topic: 'Curriculum (Instructional or Parenting)',
+        count: 0,
+      },
+      {
+        topic: 'Data and Evaluation',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
+        count: 0,
+      },
+      {
+        topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'Facilities',
+        count: 0,
+      },
+      {
+        topic: 'Family Support Services',
+        count: 0,
+      },
+      {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+      {
+        topic: 'Five-Year Grant',
+        count: 0,
+      },
+      {
+        topic: 'Home Visiting',
+        count: 0,
+      },
+      {
+        topic: 'Human Resources',
+        count: 0,
+      },
+      {
+        topic: 'Leadership / Governance',
+        count: 0,
+      },
+      {
+        topic: 'Learning Environments',
+        count: 0,
+      },
+      {
+        topic: 'Nutrition',
+        count: 0,
+      },
+      {
+        topic: 'Oral Health',
+        count: 0,
+      },
+      {
+        topic: 'Parent and Family Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Partnerships and Community Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Physical Health and Screenings',
+        count: 0,
+      },
+      {
+        topic: 'Pregnancy Services / Expectant Families',
+        count: 0,
+      },
+      {
+        topic: 'Program Planning and Services',
+        count: 2,
+      },
+      {
+        topic: 'Quality Improvement Plan / QIP',
+        count: 0,
+      },
+      {
+        topic: 'Recordkeeping and Reporting',
+        count: 1,
+      },
+      {
+        topic: 'Safety Practices',
+        count: 0,
+      },
+      {
+        topic: 'Staff Wellness',
+        count: 0,
+      },
+      {
+        topic: 'Teaching Practices / Teacher-Child Interactions',
+        count: 0,
+      },
+      {
+        topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Transition Practices',
+        count: 0,
+      },
+      {
+        topic: 'Transportation',
+        count: 0,
+      },
+    ]);
+  });
 
-    reasonToModify.count = 2;
-    reasonToModify.roles = ['Grants Specialist'];
+  it('respects the role scope', async () => {
+    const query = { 'region.in': [17], 'role.in': ['System Specialist'] };
+    const scopes = filtersToScopes(query);
+    const data = await topicFrequencyGraph(scopes);
 
-    const secondReasonToModify = reasons.find((reason) => reason.reason === 'Recordkeeping and Reporting');
-    secondReasonToModify.count = 1;
-    secondReasonToModify.roles = ['Grants Specialist'];
-
-    expect(data).toStrictEqual(reasons);
+    expect(data).toStrictEqual([
+      {
+        topic: 'Behavioral / Mental Health / Trauma',
+        count: 0,
+      },
+      {
+        topic: 'Child Assessment, Development, Screening',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Classroom Organization',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Emotional Support',
+        count: 0,
+      },
+      {
+        topic: 'CLASS: Instructional Support',
+        count: 0,
+      },
+      {
+        topic: 'Coaching',
+        count: 0,
+      },
+      {
+        topic: 'Communication',
+        count: 0,
+      },
+      {
+        topic: 'Community and Self-Assessment',
+        count: 0,
+      },
+      {
+        topic: 'Culture & Language',
+        count: 0,
+      },
+      {
+        topic: 'Curriculum (Instructional or Parenting)',
+        count: 0,
+      },
+      {
+        topic: 'Data and Evaluation',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety / EPRR',
+        count: 0,
+      },
+      {
+        topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'Facilities',
+        count: 0,
+      },
+      {
+        topic: 'Family Support Services',
+        count: 0,
+      },
+      {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+      {
+        topic: 'Five-Year Grant',
+        count: 0,
+      },
+      {
+        topic: 'Home Visiting',
+        count: 0,
+      },
+      {
+        topic: 'Human Resources',
+        count: 0,
+      },
+      {
+        topic: 'Leadership / Governance',
+        count: 0,
+      },
+      {
+        topic: 'Learning Environments',
+        count: 0,
+      },
+      {
+        topic: 'Nutrition',
+        count: 0,
+      },
+      {
+        topic: 'Oral Health',
+        count: 0,
+      },
+      {
+        topic: 'Parent and Family Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Partnerships and Community Engagement',
+        count: 0,
+      },
+      {
+        topic: 'Physical Health and Screenings',
+        count: 0,
+      },
+      {
+        topic: 'Pregnancy Services / Expectant Families',
+        count: 0,
+      },
+      {
+        topic: 'Program Planning and Services',
+        count: 2,
+      },
+      {
+        topic: 'Quality Improvement Plan / QIP',
+        count: 0,
+      },
+      {
+        topic: 'Recordkeeping and Reporting',
+        count: 1,
+      },
+      {
+        topic: 'Safety Practices',
+        count: 0,
+      },
+      {
+        topic: 'Staff Wellness',
+        count: 0,
+      },
+      {
+        topic: 'Teaching Practices / Teacher-Child Interactions',
+        count: 0,
+      },
+      {
+        topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Transition Practices',
+        count: 0,
+      },
+      {
+        topic: 'Transportation',
+        count: 0,
+      },
+    ]);
   });
 });

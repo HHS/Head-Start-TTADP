@@ -3,6 +3,8 @@ import React from 'react';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import RegionalDashboard from '../index';
 import formatDateRange from '../formatDateRange';
 
@@ -63,5 +65,27 @@ describe('Regional Dashboard page', () => {
     expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /# of activities/i })).toBeInTheDocument();
+  });
+
+  it('filters by role correctly', async () => {
+    renderDashboard(user);
+
+    const thirtyDays = formatDateRange(
+      { lastThirtyDays: true, withSpaces: false, forDateTime: true },
+    );
+
+    const params = `?&region.in[]=14&startDate.win=${thirtyDays}&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist`;
+    const widgetUrl = join('/', 'api', 'widgets', 'topicFrequencyGraph', params);
+    fetchMock.get(widgetUrl, []);
+
+    const specFilter = screen.getByRole('button', { name: /change filter by specialists/i });
+    fireEvent.click(specFilter);
+    const ecs = screen.getByRole('checkbox', { name: /select early childhood specialist \(ecs\)/i });
+    fireEvent.click(ecs);
+    const apply = screen.getByRole('button', { name: /apply filters/i });
+    fireEvent.click(apply);
+
+    expect(fetchMock.called()).toBeTruthy();
+    fetchMock.reset();
   });
 });
