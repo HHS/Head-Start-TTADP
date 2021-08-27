@@ -7,7 +7,7 @@ import Container from '../../components/Container';
 import RegionalSelect from '../../components/RegionalSelect';
 import DateRangeSelect from './components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
-import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
+import TopicFrequencyGraph, { ROLES_MAP } from '../../widgets/TopicFrequencyGraph';
 import DateTime from '../../components/DateTime';
 import { getUserRegions } from '../../permissions';
 import { CUSTOM_DATE_RANGE } from './constants';
@@ -38,6 +38,7 @@ export default function RegionalDashboard({ user }) {
     */
 
   const [filters, updateFilters] = useState([]);
+  const [roleFilter, updateRoleFilter] = useState('');
 
   useEffect(() => {
     /**
@@ -101,6 +102,10 @@ export default function RegionalDashboard({ user }) {
   const onApplyRegion = (region) => {
     const regionId = region ? region.value : appliedRegion;
     updateAppliedRegion(regionId);
+  };
+
+  const updateRoles = (selectedRoles) => {
+    updateRoleFilter(selectedRoles.map((role) => ROLES_MAP.find((r) => r.selectValue === role)).map((r) => r.value).join(','));
   };
 
   const onApplyDateRange = (range) => {
@@ -184,10 +189,12 @@ export default function RegionalDashboard({ user }) {
           </Grid>
           <Grid row>
             <TopicFrequencyGraph
-              filters={filters}
+              filters={[...filters, roleFilter]}
               region={appliedRegion}
               allRegions={regions}
               dateRange={dateRange}
+              roles={roleFilter}
+              updateRoles={updateRoles}
               skipLoading
               dateTime={dateTime}
             />

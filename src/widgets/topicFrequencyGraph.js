@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import {
-  ActivityReport, User,
+  ActivityReport,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -50,18 +50,6 @@ export default async function topicFrequencyGraph(scopes) {
     attributes: [
       'topics',
     ],
-    include: [
-      {
-        model: User,
-        attributes: [['role', 'authorRole'], 'id', 'role'],
-        as: 'author',
-      },
-      {
-        model: User,
-        attributes: [['role', 'collaboratorRole']],
-        as: 'collaborators',
-      },
-    ],
     where: {
       [Op.and]: [scopes],
       status: REPORT_STATUSES.APPROVED,
@@ -70,48 +58,17 @@ export default async function topicFrequencyGraph(scopes) {
     raw: true,
   });
 
-  const reasons = topics.map((topic) => ({
-    reason: topic,
+  const topicsResponse = topics.map((topic) => ({
+    topic,
     count: 0,
-    roles: [],
   }));
 
   topicsAndParticipants.forEach((topicAndParticipant) => {
-    topicAndParticipant.topics.forEach((topic) => {
-      // filter our array for our 1 matching reason
-      const selectedReason = reasons.find((reason) => reason.reason === topic);
-
-      // assuming it's a reason we know what to do with
-      if (selectedReason) {
-        // increment the count
-        selectedReason.count += 1;
-
-        if (
-          topicAndParticipant.author
-          && topicAndParticipant.author.authorRole
-        ) {
-          selectedReason.roles = [
-            ...selectedReason.roles,
-            ...topicAndParticipant.author.authorRole,
-          ];
-        }
-
-        if (
-          topicAndParticipant.collaborators
-          && topicAndParticipant.collaborators.collaboratorRole
-        ) {
-        // add that reason to the participants
-          selectedReason.roles = [
-            ...selectedReason.roles,
-            ...topicAndParticipant.collaborators.collaboratorRole,
-          ];
-        }
-
-        // remove dupes from the participants
-        selectedReason.roles = Array.from(new Set(selectedReason.roles));
+    topics.forEach((topic, index) => {
+      if (topicAndParticipant.topics.includes(topic)) {
+        topicsResponse[index].count += 1;
       }
     });
   });
-
-  return reasons;
+  return topicsResponse;
 }
