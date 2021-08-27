@@ -17,6 +17,9 @@ node_modules
 **/.terraform.lock.hcl
 **/.terraform/*
 
+# new relic logs
+newrelic_agent.log
+
 # transient deploy configs
 /terraform/transient
 /deployment_config/transient_vars.yml
@@ -28,6 +31,3 @@ node_modules
 
 # Temp files
 .tmp
-
-# New Relic Logs
-newrelic_agent.log
