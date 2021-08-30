@@ -7,7 +7,7 @@ function Loader({ loading }) {
   return (
     <>
       {loading && (
-      <div role="status" className="overlay" aria-label="loading" />
+        <div role="status" className="overlay" aria-label="loading" />
       )}
     </>
   );
