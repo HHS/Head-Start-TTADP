@@ -12,6 +12,9 @@
   padding-right: 32px;
 }
 
+.ttahub-total-hours-container {
+  height: calc( 100% - 1.5rem);
+}
 
 .ttahub--total-hrs-grantee-graph-legend label::after {
   height: 3px;
@@ -70,7 +73,7 @@
   width: 0;
   right: 4rem;   
   top: 17px;
-  z-index: 2;
+  z-index: 1;
 }
 .ttahub--total-hrs-grantee-graph-legend .usa-checkbox.triangle::before {
   content: '';
@@ -82,7 +85,7 @@
   position: absolute;
   right: calc(4rem - 1px);   
   top: 16px;  
-  z-index: 2;
+  z-index: 1;
 }
 
 

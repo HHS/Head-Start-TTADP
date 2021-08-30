@@ -6,6 +6,7 @@
 
 .reason-list .usa-table-container--scrollable {
   min-height: 393px;
+  max-height: 393px;
   overflow-y: auto;
   overflow-x: auto;
 }
