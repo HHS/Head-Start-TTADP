@@ -9,42 +9,34 @@ import {
 import userEvent from '@testing-library/user-event';
 import {
   TopicFrequencyGraphWidget,
-  reasonsWithLineBreaks,
-  filterData,
+  topicsWithLineBreaks,
   sortData,
   SORT_ORDER,
-  ROLES_MAP,
 } from '../TopicFrequencyGraph';
 
 const TEST_DATA = [{
-  reason: 'CLASS: Instructional Support',
+  topic: 'CLASS: Instructional Support',
   count: 12,
-  roles: [],
 },
 {
-  reason: 'Community and Self-Assessment',
+  topic: 'Community and Self-Assessment',
   count: 155,
-  roles: ['System Specialist'],
 },
 {
-  reason: 'Family Support Services',
+  topic: 'Family Support Services',
   count: 53,
-  roles: [],
 },
 {
-  reason: 'Fiscal / Budget',
+  topic: 'Fiscal / Budget',
   count: 0,
-  roles: [],
 },
 {
-  reason: 'Five-Year Grant',
+  topic: 'Five-Year Grant',
   count: 33,
-  roles: [],
 },
 {
-  reason: 'Human Resources',
+  topic: 'Human Resources',
   count: 0,
-  roles: ['System Specialist'],
 }];
 
 const renderArGraphOverview = async (props) => (
@@ -61,77 +53,34 @@ describe('Topic & Frequency Graph Widget', () => {
     await expect(document.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('correctly filters data', () => {
-    const data = [...TEST_DATA];
-
-    const filter = [ROLES_MAP.find((role) => role.value === 'System Specialist').selectValue];
-    const filteredData = filterData(data, filter);
-    expect(filteredData).toStrictEqual([{
-      reason: 'CLASS: Instructional Support',
-      count: 0,
-      roles: [],
-    },
-    {
-      reason: 'Community and Self-Assessment',
-      count: 155,
-      roles: ['System Specialist'],
-    },
-    {
-      reason: 'Family Support Services',
-      count: 0,
-      roles: [],
-    },
-    {
-      reason: 'Fiscal / Budget',
-      count: 0,
-      roles: [],
-    },
-    {
-      reason: 'Five-Year Grant',
-      count: 0,
-      roles: [],
-    },
-    {
-      reason: 'Human Resources',
-      count: 0,
-      roles: ['System Specialist'],
-    }]);
-  });
-
   it('correctly sorts data by count', () => {
     const data = [...TEST_DATA];
     sortData(data, SORT_ORDER.DESC);
 
     expect(data).toStrictEqual([
       {
-        reason: 'Community and Self-Assessment',
+        topic: 'Community and Self-Assessment',
         count: 155,
-        roles: ['System Specialist'],
       },
       {
-        reason: 'Family Support Services',
+        topic: 'Family Support Services',
         count: 53,
-        roles: [],
       },
       {
-        reason: 'Five-Year Grant',
+        topic: 'Five-Year Grant',
         count: 33,
-        roles: [],
       },
       {
-        reason: 'CLASS: Instructional Support',
+        topic: 'CLASS: Instructional Support',
         count: 12,
-        roles: [],
       },
       {
-        reason: 'Fiscal / Budget',
+        topic: 'Fiscal / Budget',
         count: 0,
-        roles: [],
       },
       {
-        reason: 'Human Resources',
+        topic: 'Human Resources',
         count: 0,
-        roles: ['System Specialist'],
       },
 
     ]);
@@ -144,34 +93,28 @@ describe('Topic & Frequency Graph Widget', () => {
 
     expect(data).toStrictEqual([
       {
-        reason: 'CLASS: Instructional Support',
+        topic: 'CLASS: Instructional Support',
         count: 12,
-        roles: [],
       },
       {
-        reason: 'Community and Self-Assessment',
+        topic: 'Community and Self-Assessment',
         count: 155,
-        roles: ['System Specialist'],
       },
       {
-        reason: 'Family Support Services',
+        topic: 'Family Support Services',
         count: 53,
-        roles: [],
       },
       {
-        reason: 'Fiscal / Budget',
+        topic: 'Fiscal / Budget',
         count: 0,
-        roles: [],
       },
       {
-        reason: 'Five-Year Grant',
+        topic: 'Five-Year Grant',
         count: 33,
-        roles: [],
       },
       {
-        reason: 'Human Resources',
+        topic: 'Human Resources',
         count: 0,
-        roles: ['System Specialist'],
       },
     ]);
   });
@@ -189,32 +132,8 @@ describe('Topic & Frequency Graph Widget', () => {
   });
 
   it('correctly inserts line breaks', () => {
-    const formattedReason = reasonsWithLineBreaks('Equity, Culture &amp; Language');
-    expect(formattedReason).toBe(' Equity,<br />Culture<br />&amp;<br />Language');
-  });
-
-  it('the filter control works', async () => {
-    renderArGraphOverview({ data: [...TEST_DATA] });
-
-    const button = screen.getByRole('button', { name: /change filter by specialists/i });
-    userEvent.click(button);
-
-    const barSelector = 'g.point';
-
-    // eslint-disable-next-line no-underscore-dangle
-    let height = document.querySelectorAll(barSelector)[0].__data__.y;
-    expect(height).toBe(155);
-
-    const systemSpecialist = screen.getByRole('checkbox', { name: /select system specialist \(ss\)/i });
-
-    userEvent.click(systemSpecialist);
-
-    const apply = screen.getByRole('button', { name: /apply filters/i });
-    userEvent.click(apply);
-
-    // eslint-disable-next-line no-underscore-dangle
-    height = document.querySelectorAll(barSelector)[0].__data__.y;
-    expect(height).toBe(0);
+    const formattedtopic = topicsWithLineBreaks('Equity, Culture &amp; Language');
+    expect(formattedtopic).toBe(' Equity,<br />Culture<br />&amp;<br />Language');
   });
 
   it('the sort control works', async () => {

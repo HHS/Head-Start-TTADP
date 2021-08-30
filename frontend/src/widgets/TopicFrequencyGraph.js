@@ -10,11 +10,6 @@ import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
 import CheckboxSelect from '../components/CheckboxSelect';
 
-export const SORT_ORDER = {
-  DESC: 1,
-  ALPHA: 2,
-};
-
 export const ROLES_MAP = [
   {
     selectValue: 1,
@@ -43,34 +38,14 @@ export const ROLES_MAP = [
   },
 ];
 
-export function filterData(data, roles) {
-  const selectedRoles = roles.map((role) => ROLES_MAP.find((r) => r.selectValue === role));
-
-  const copyOfData = data.map((object) => ({ ...object }));
-
-  return copyOfData.map((dataPoint) => {
-    let setToZero = true;
-
-    if (selectedRoles.length > 0) {
-      selectedRoles.forEach((selectedRole) => {
-        if (dataPoint.roles.includes(selectedRole.value)) {
-          setToZero = false;
-        }
-      });
-    }
-
-    if (setToZero) {
-      // eslint-disable-next-line no-param-reassign
-      dataPoint.count = 0;
-    }
-
-    return dataPoint;
-  });
-}
+export const SORT_ORDER = {
+  DESC: 1,
+  ALPHA: 2,
+};
 
 export function sortData(data, order) {
   if (order === SORT_ORDER.ALPHA) {
-    data.sort((a, b) => a.reason.localeCompare(b.reason));
+    data.sort((a, b) => a.topic.localeCompare(b.topic));
   } else {
     data.sort((a, b) => b.count - a.count);
   }
@@ -82,13 +57,13 @@ export function sortData(data, order) {
  * provided for an activity report and intersperses it with line breaks
  * depending on the length
  *
- * @param {string} reason
+ * @param {string} topic
  * @returns string with line breaks
  */
-export function reasonsWithLineBreaks(reason) {
-  const arrayOfReasons = reason.split(' ');
+export function topicsWithLineBreaks(reason) {
+  const arrayOfTopics = reason.split(' ');
 
-  return arrayOfReasons.reduce((accumulator, currentValue) => {
+  return arrayOfTopics.reduce((accumulator, currentValue) => {
     const lineBreaks = accumulator.match(/<br \/>/g);
     const allowedLength = lineBreaks ? lineBreaks.length * 6 : 6;
 
@@ -105,7 +80,9 @@ export function reasonsWithLineBreaks(reason) {
   }, '');
 }
 
-export function TopicFrequencyGraphWidget({ data, dateTime, loading }) {
+export function TopicFrequencyGraphWidget({
+  data, dateTime, updateRoles, loading,
+}) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
 
@@ -116,9 +93,6 @@ export function TopicFrequencyGraphWidget({ data, dateTime, loading }) {
   // the order the data is displayed in the chart
   const [order, setOrder] = useState(SORT_ORDER.DESC);
 
-  // this is roles selected in the multiselect
-  const [roles, setRoles] = useState(ROLES_MAP.map((r) => r.selectValue));
-
   // the dom el for drawing the chart
   const bars = useRef();
 
@@ -127,23 +101,20 @@ export function TopicFrequencyGraphWidget({ data, dateTime, loading }) {
       return;
     }
 
-    // here is where we can filter array for participants
-    const filteredData = filterData(data, roles);
-
     // sort the api response based on the dropdown choices
-    sortData(filteredData, order);
+    sortData(data, order);
 
-    const reasons = [];
+    const topics = [];
     const counts = [];
     const rows = [];
 
-    filteredData.forEach((dataPoint) => {
+    data.forEach((dataPoint) => {
       if (!showAccessibleData) {
-        reasons.push(dataPoint.reason);
+        topics.push(dataPoint.topic);
         counts.push(dataPoint.count);
       } else {
         rows.push({
-          data: [dataPoint.reason, dataPoint.count],
+          data: [dataPoint.topic, dataPoint.count],
         });
       }
     });
@@ -156,12 +127,12 @@ export function TopicFrequencyGraphWidget({ data, dateTime, loading }) {
 
     const trace = {
       type: 'bar',
-      x: reasons.map((reason) => reasonsWithLineBreaks(reason)),
+      x: topics.map((topic) => topicsWithLineBreaks(topic)),
       y: counts,
       hoverinfo: 'y',
     };
 
-    const width = reasons.length * 180;
+    const width = topics.length * 180;
 
     const layout = {
       bargap: 0.5,
@@ -196,7 +167,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime, loading }) {
 
     // draw the plot
     Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, hovermode: 'none' });
-  }, [data, order, roles, showAccessibleData]);
+  }, [data, order, setOrder, showAccessibleData]);
 
   /**
    * takes in the react-select style data structure and extracts the number value
@@ -212,7 +183,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime, loading }) {
 
   const onApplyRoles = (selected) => {
     // we may get these as a string, so we cast them to ints
-    setRoles(selected.map((s) => parseInt(s, 10)));
+    updateRoles(selected.map((s) => parseInt(s, 10)));
   };
 
   // toggle the data table
@@ -290,13 +261,13 @@ TopicFrequencyGraphWidget.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
-        reason: PropTypes.string,
+        topic: PropTypes.string,
         count: PropTypes.number,
-        roles: PropTypes.arrayOf(PropTypes.string),
       }),
     ), PropTypes.shape({}),
   ]).isRequired,
   loading: PropTypes.bool.isRequired,
+  updateRoles: PropTypes.func.isRequired,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {
