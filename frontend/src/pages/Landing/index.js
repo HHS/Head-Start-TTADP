@@ -553,7 +553,7 @@ function Landing({ user }) {
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
         />
-        <Container className="landing inline-size maxw-full" padding={0} loading={loading}>
+        <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
           <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
             {numberOfSelectedReports > 0
                   && (
