@@ -94,7 +94,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
   it('handles loading', async () => {
     renderTotalHrsAndGranteeGraph({ loading: true });
-    expect(await screen.findByLabelText('loading')).toBeInTheDocument();
+    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
   });
 
   it('handles checkbox clicks', async () => {
