@@ -25,7 +25,7 @@ function ReasonList({ data, dateTime, loading }) {
   };
 
   return (
-    <Container className="reason-list shadow-2" padding={3} loading={loading} loadingLabel="Reason list widget loading">
+    <Container className="reason-list shadow-2" padding={3} loading={loading} loadingLabel="Reason list loading">
       <div className="usa-table-container--scrollable margin-top-0">
         <Table className="smart-hub--reason-list-table" fullWidth>
           <caption className="smart-hub--reason-list-caption">

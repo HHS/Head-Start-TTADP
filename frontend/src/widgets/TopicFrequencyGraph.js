@@ -192,7 +192,7 @@ export function TopicFrequencyGraphWidget({
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3} loading={loading} loadingLabel="Topic frequency widget loading">
+    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3} loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>

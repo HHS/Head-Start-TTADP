@@ -47,7 +47,7 @@ Field.defaultProps = {
 */
 function Overview({ data, regionLabel, loading }) {
   return (
-    <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview widget loading">
+    <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
         <h2>
           Region
