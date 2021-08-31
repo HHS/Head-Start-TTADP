@@ -131,15 +131,15 @@ function App() {
             )}
           />
         )}
+        <Route
+          exact
+          path="/regional-dashboard"
+          render={() => (
+            <RegionalDashboard user={user} />
+          )}
+        />
         {admin && (
           <>
-            <Route
-              exact
-              path="/regional-dashboard"
-              render={() => (
-                <RegionalDashboard user={user} />
-              )}
-            />
             <Route
               path="/admin"
               render={() => (
