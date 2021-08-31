@@ -53,7 +53,7 @@ Field.defaultProps = {
 export function DashboardOverviewWidget({ data, loading }) {
   return (
     <Grid row className="smart-hub--dashboard-overview margin-bottom-3 position-relative">
-      <Loader loading={loading} loadingLabel="Overview widget loading" />
+      <Loader loading={loading} loadingLabel="Overview loading" />
       <Field icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />
       <Field icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />
       <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />
