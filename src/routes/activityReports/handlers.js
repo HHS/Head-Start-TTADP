@@ -458,7 +458,7 @@ export async function saveReport(req, res) {
 
     newReport.lastUpdatedById = userId;
 
-    const savedReport = await createOrUpdate(newReport, report);
+    const savedReport = await createOrUpdate({ ...report, ...newReport }, report);
     if (savedReport.collaborators) {
     // only include collaborators that aren't already in the report
       const newCollaborators = savedReport.collaborators.filter((c) => {
