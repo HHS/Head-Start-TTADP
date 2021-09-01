@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
@@ -20,10 +21,13 @@ const oldWindowLocation = window.location;
 const mockAnnounce = jest.fn();
 
 const withRegionOne = '&region.in[]=1';
-const defaultBaseAlertsUrl = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
-const defaultBaseUrl = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
-const defaultBaseAlertsUrlWithRegionOne = `${defaultBaseAlertsUrl}${withRegionOne}`;
-const defaultBaseUrlWithRegionOne = `${defaultBaseUrl}${withRegionOne}`;
+const withAllRegions = '&region.in[]=14';
+const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
+const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
+const defaultBaseAlertsUrl = `${baseAlerts}${withAllRegions}`;
+const defaultBaseUrl = `${base}${withAllRegions}`;
+const defaultBaseAlertsUrlWithRegionOne = `${baseAlerts}${withRegionOne}`;
+const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
 const defaultOverviewUrl = '/api/widgets/overview';
 const overviewUrlWithRegionOne = `${defaultOverviewUrl}?${withRegionOne}`;
 
@@ -41,7 +45,7 @@ const renderLanding = (user) => {
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <Landing authenticated />
+          <Landing authenticated user={user} />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
     </MemoryRouter>,
@@ -99,7 +103,7 @@ describe('Landing Page', () => {
     await render(
       <MemoryRouter initialEntries={pastLocations}>
         <UserContext.Provider value={{ user }}>
-          <Landing authenticated />
+          <Landing authenticated user={user} />
         </UserContext.Provider>
       </MemoryRouter>,
     );
@@ -429,6 +433,7 @@ describe('Landing Page sorting', () => {
     );
     const user = {
       name: 'test@test.com',
+      homeRegionId: 14,
       permissions: [
         {
           scopeId: 3,
@@ -541,6 +546,7 @@ describe('Landing page table menus & selections', () => {
       );
       const user = {
         name: 'test@test.com',
+        homeRegionId: 14,
         permissions: [
           {
             scopeId: 3,
@@ -581,6 +587,7 @@ describe('Landing page table menus & selections', () => {
       );
       const user = {
         name: 'test@test.com',
+        homeRegionId: 14,
         permissions: [
           {
             scopeId: 3,
@@ -637,6 +644,7 @@ describe('Landing page table menus & selections', () => {
       );
       const user = {
         name: 'test@test.com',
+        homeRegionId: 14,
         permissions: [
           {
             scopeId: 3,
@@ -646,6 +654,7 @@ describe('Landing page table menus & selections', () => {
       };
 
       renderLanding(user);
+      await screen.findByText('Activity Reports');
       const selectAllCheckbox = await screen.findByLabelText(/select or de-select all reports/i);
       userEvent.click(selectAllCheckbox);
       await waitFor(() => {
@@ -882,6 +891,7 @@ describe('Landing Page error', () => {
     fetchMock.get(defaultBaseUrl, 500);
     const user = {
       name: 'test@test.com',
+      homeRegionId: 14,
       permissions: [
         {
           scopeId: 3,
@@ -982,12 +992,11 @@ describe('handleApplyFilters', () => {
 
 describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
-    fetchMock.get(defaultBaseAlertsUrl, {
+    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
       count: 10,
       alerts: generateXFakeReports(10),
     });
-    fetchMock.get(defaultBaseUrl, { count: 0, rows: [] });
-    mockFetchWithRegionOne();
+    fetchMock.get(defaultBaseUrlWithRegionOne, { count: 1, rows: generateXFakeReports(1) });
   });
 
   afterEach(() => fetchMock.restore());
@@ -995,15 +1004,17 @@ describe('handleApplyAlertFilters', () => {
   it('calls AriaLiveContext.announce', async () => {
     const user = {
       name: 'test@test.com',
+      homeRegionId: 1,
       permissions: [
         {
-          scopeId: 2,
+          scopeId: 3,
           regionId: 1,
         },
       ],
     };
     renderLanding(user);
 
+    await screen.findByText(/My activity report alerts/i);
     // Both alerts and AR tables' buttons should appear
     const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
     expect(allFilterButtons.length).toBe(2);

@@ -5,9 +5,12 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import DateTime from '../components/DateTime';
 import AccessibleWidgetData from './AccessibleWidgetData';
+
+import Container from '../components/Container';
+
 import './TotalHrsAndGranteeGraph.css';
 
-export function TotalHrsAndGranteeGraph({ data, dateTime }) {
+export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
   // the state for which lines to show
   const [showTA, setShowTA] = useState(true);
   const [showTraining, setShowTraining] = useState(true);
@@ -187,41 +190,39 @@ export function TotalHrsAndGranteeGraph({ data, dateTime }) {
     setTableRows(rows);
   }, [data, showAccessibleData]);
 
-  if (!data) {
-    return <p>Loading...</p>;
-  }
-
   function toggleType() {
     setShowAccessibleData(!showAccessibleData);
   }
 
   return (
-    <div className="ttahub--total-hrs-grantee-graph">
-      <Grid row className="position-relative margin-bottom-2">
-        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
-        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
-          <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
+    <Container className="ttahub-total-hours-container shadow-2" padding={3} loading={loading} loadingLabel="Total hours loading">
+      <div className="ttahub--total-hrs-grantee-graph">
+        <Grid row className="position-relative margin-bottom-2">
+          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
+          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
+            <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
+          </Grid>
+          <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+            <button type="button" className="usa-button--unstyled" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
+          </Grid>
         </Grid>
-        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-          <button type="button" className="usa-button--unstyled" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
-        </Grid>
-      </Grid>
 
-      { showAccessibleData
-        ? <AccessibleWidgetData caption="Total TTA Hours by Date and Type" columnHeadings={columnHeadings} rows={tableRows} />
-        : (
-          <>
-            <fieldset className="grid-row ttahub--total-hrs-grantee-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
-              <legend className="margin-bottom-1">Toggle individual lines by checking or unchecking a legend item.</legend>
-              <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
-              <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
-              <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />
-            </fieldset>
+        { showAccessibleData
+          ? <AccessibleWidgetData caption="Total TTA Hours by Date and Type" columnHeadings={columnHeadings} rows={tableRows} />
+          : (
+            <>
+              <fieldset className="grid-row ttahub--total-hrs-grantee-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
+                <legend className="margin-bottom-1">Toggle individual lines by checking or unchecking a legend item.</legend>
+                <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
+                <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
+                <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />
+              </fieldset>
 
-            <div data-testid="lines" ref={lines} />
-          </>
-        )}
-    </div>
+              <div data-testid="lines" ref={lines} />
+            </>
+          )}
+      </div>
+    </Container>
   );
 }
 
@@ -237,11 +238,23 @@ TotalHrsAndGranteeGraph.propTypes = {
         y: PropTypes.arrayOf(PropTypes.number),
       }),
     ), PropTypes.shape({}),
-  ]).isRequired,
+  ]),
+  loading: PropTypes.bool.isRequired,
 };
 
 TotalHrsAndGranteeGraph.defaultProps = {
   dateTime: { timestamp: '', label: '' },
+  data: [
+    {
+      name: 'Hours of Training', x: [], y: [], month: '',
+    },
+    {
+      name: 'Hours of Technical Assistance', x: [], y: [], month: '',
+    },
+    {
+      name: 'Hours of Both', x: [], y: [], month: '',
+    },
+  ],
 };
 
 /**
