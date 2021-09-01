@@ -80,7 +80,9 @@ export function topicsWithLineBreaks(reason) {
   }, '');
 }
 
-export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
+export function TopicFrequencyGraphWidget({
+  data, dateTime, updateRoles, loading,
+}) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
 
@@ -167,10 +169,6 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
     Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, hovermode: 'none' });
   }, [data, order, setOrder, showAccessibleData]);
 
-  if (!data) {
-    return <p>Loading...</p>;
-  }
-
   /**
    * takes in the react-select style data structure and extracts the number value
    * which is how we want it in our component
@@ -194,7 +192,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3}>
+    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3} loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
@@ -268,6 +266,7 @@ TopicFrequencyGraphWidget.propTypes = {
       }),
     ), PropTypes.shape({}),
   ]).isRequired,
+  loading: PropTypes.bool.isRequired,
   updateRoles: PropTypes.func.isRequired,
 };
 
