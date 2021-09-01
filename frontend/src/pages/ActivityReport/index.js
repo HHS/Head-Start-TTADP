@@ -4,7 +4,9 @@
 */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import _, { startCase } from 'lodash';
+import {
+  keyBy, mapValues, startCase, isEqual,
+} from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
@@ -63,8 +65,20 @@ const defaultValues = {
   topics: [],
 };
 
-const pagesByPos = _.keyBy(pages.filter((p) => !p.review), (page) => page.position);
-const defaultPageState = _.mapValues(pagesByPos, () => NOT_STARTED);
+const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
+const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
+
+const findWhatsChanged = (object, base) => {
+  function reduction(accumulator, current) {
+    if (!isEqual(base[current], object[current])) {
+      accumulator[current] = object[current];
+    }
+
+    return accumulator;
+  }
+
+  return Object.keys(object).reduce(reduction, {});
+};
 
 export const unflattenResourcesUsed = (array) => {
   if (!array) {
@@ -215,7 +229,8 @@ function ActivityReport({
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
-      await saveReport(reportId.current, data, {});
+      const updatedFields = findWhatsChanged(data, formData);
+      await saveReport(reportId.current, updatedFields);
     }
   };
 
