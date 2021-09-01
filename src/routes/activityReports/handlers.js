@@ -30,7 +30,7 @@ import {
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 
-const { APPROVE_REPORTS, ADMIN } = SCOPES;
+const { APPROVE_REPORTS } = SCOPES;
 
 const namespace = 'SERVICE:ACTIVITY_REPORTS';
 
@@ -38,7 +38,7 @@ const logContext = {
   namespace,
 };
 
-async function sendActivityReportCSV(reports, res, userId) {
+async function sendActivityReportCSV(reports, res) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
 
   // base options
@@ -51,8 +51,6 @@ async function sendActivityReportCSV(reports, res, userId) {
   // if we have some rows, we need to extract a list of goals and objectives and format the columns
   if (csvRows.length > 0) {
     const goalsAndObjectives = extractListOfGoalsAndObjectives(csvRows);
-    const user = await userById(userId);
-    const isAdmin = user.permissions.find((permission) => permission.scopeId === ADMIN);
 
     options = {
       ...options,
@@ -145,6 +143,12 @@ async function sendActivityReportCSV(reports, res, userId) {
           key: 'context',
           header: 'Context',
         },
+        ...goalsAndObjectives.map((objective) => (
+          {
+            key: objective,
+            // capitalize each word and space them out (no '-' in there)
+            header: objective.split('-').map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join(' '),
+          })),
         {
           key: 'specialistNextSteps',
           header: 'Specialist next steps',
@@ -160,19 +164,6 @@ async function sendActivityReportCSV(reports, res, userId) {
 
       ],
     };
-
-    // Feature flag (goal fields for admins only)...
-    if (isAdmin) {
-      const contextPosition = 22;
-
-      goalsAndObjectives.forEach((obj, index) => {
-        options.columns.splice(contextPosition + index, 0, {
-          key: obj,
-          // capitalize each word and space them out (no '-' in there)
-          header: obj.split('-').map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join(' '),
-        });
-      });
-    }
   }
 
   const csvData = stringify(
@@ -533,7 +524,7 @@ export async function downloadReports(req, res) {
     if (!reportsWithCount) {
       res.sendStatus(404);
     } else if (format === 'csv') {
-      await sendActivityReportCSV(reportsWithCount.rows, res, req.session.userId);
+      await sendActivityReportCSV(reportsWithCount.rows, res);
     } else {
       res.json(reportsWithCount);
     }
@@ -553,7 +544,7 @@ export async function downloadAllReports(req, res) {
     );
 
     const rows = reportsWithCount ? reportsWithCount.rows : [];
-    await sendActivityReportCSV(rows, res, req.session.userId);
+    await sendActivityReportCSV(rows, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -567,7 +558,7 @@ export async function downloadAllAlerts(req, res) {
 
     const rows = alertsWithCount ? alertsWithCount.rows : [];
 
-    await sendActivityReportCSV(rows, res, userId);
+    await sendActivityReportCSV(rows, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

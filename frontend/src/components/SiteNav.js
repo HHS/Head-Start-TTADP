@@ -86,19 +86,16 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  {admin
-                    ? (
-                      <li>
-                        <NavLink
-                          to="/regional-dashboard"
-                        >
-                          <span className="padding-right-105">
-                            <FontAwesomeIcon color="white" icon={faBorderAll} />
-                          </span>
-                          Regional Dashboard
-                        </NavLink>
-                      </li>
-                    ) : null }
+                  <li>
+                    <NavLink
+                      to="/regional-dashboard"
+                    >
+                      <span className="padding-right-105">
+                        <FontAwesomeIcon color="white" icon={faBorderAll} />
+                      </span>
+                      Regional Dashboard
+                    </NavLink>
+                  </li>
                 </ul>
               </div>
               <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
