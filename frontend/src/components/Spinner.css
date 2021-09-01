@@ -4,6 +4,12 @@
   text-align: center;
 }
 
+@media (prefers-reduced-motion) {
+  .spinner {
+    display: none;
+  }
+}
+
 .spinner > div {
   width: 18px;
   height: 18px;
