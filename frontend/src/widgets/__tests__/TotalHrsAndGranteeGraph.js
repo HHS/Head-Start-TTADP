@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -21,7 +22,7 @@ const TEST_DATA_DAYS = [
 
 const renderTotalHrsAndGranteeGraph = async (props) => (
   render(
-    <TotalHrsAndGranteeGraph data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
+    <TotalHrsAndGranteeGraph loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
@@ -84,11 +85,16 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
   });
 
-  it('handles null data', async () => {
-    const data = null;
+  it('handles undefined data', async () => {
+    const data = undefined;
     renderTotalHrsAndGranteeGraph({ data });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(await screen.findByText('Total TTA Hours')).toBeInTheDocument();
+  });
+
+  it('handles loading', async () => {
+    renderTotalHrsAndGranteeGraph({ loading: true });
+    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
   });
 
   it('handles checkbox clicks', async () => {
