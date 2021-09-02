@@ -33,7 +33,7 @@ export default function DateRangeSelect(props) {
       dateRangeShouldGainFocus={gainFocus}
       dateRange={dateRange}
       dateRangePickerId="dashboard-date-range-picker"
-      ariaLabel="open date range options menu"
+      ariaName="date range options menu"
     />
   );
 }

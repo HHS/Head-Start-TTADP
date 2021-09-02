@@ -205,7 +205,7 @@ export function TopicFrequencyGraphWidget({
             styleAsSelect
             labelId="tfGraphOrder"
             labelText="Change topic graph order"
-            ariaLabel="Change topic graph order"
+            ariaName="Change topic graph order menu"
             initialValue={{
               value: SORT_ORDER.DESC,
               label: 'High to Low',
@@ -231,7 +231,7 @@ export function TopicFrequencyGraphWidget({
             toggleAllInitial
             labelId="tfRoleFilter"
             labelText="Filter by specialists"
-            ariaLabel="Change filter by specialists"
+            ariaName="Change filter by specialists menu"
             onApply={onApplyRoles}
             options={
               ROLES_MAP.map((role) => ({
@@ -242,7 +242,14 @@ export function TopicFrequencyGraphWidget({
           />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-          <button type="button" className="usa-button--unstyled margin-top-2" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
+          <button
+            type="button"
+            className="usa-button--unstyled margin-top-2"
+            aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
+            onClick={toggleType}
+          >
+            {showAccessibleData ? 'Display graph' : 'Display table'}
+          </button>
         </Grid>
 
       </Grid>
