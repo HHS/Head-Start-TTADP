@@ -107,7 +107,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
   it('displays table data correctly', async () => {
     renderTotalHrsAndGranteeGraph({ data: TEST_DATA_DAYS });
-    const button = screen.getByRole('button', { name: /show accessible data/i });
+    const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
     fireEvent.click(button);
     const jan1 = screen.getByRole('columnheader', { name: /january 1/i });
     expect(jan1).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
   it('handles switching contexts', async () => {
     renderTotalHrsAndGranteeGraph({ data: TEST_DATA_MONTHS });
-    const button = screen.getByRole('button', { name: /show accessible data/i });
+    const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
     fireEvent.click(button);
     const table = screen.getByRole('table', { name: /total tta hours by date and type/i });
 

@@ -203,7 +203,14 @@ export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
             <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
           </Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-            <button type="button" className="usa-button--unstyled" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
+            <button
+              type="button"
+              className="usa-button--unstyled"
+              aria-label={showAccessibleData ? 'display total training and technical assistance hours as graph' : 'display total training and technical assistance hours as table'}
+              onClick={toggleType}
+            >
+              {showAccessibleData ? 'Display graph' : 'Display table'}
+            </button>
           </Grid>
         </Grid>
 

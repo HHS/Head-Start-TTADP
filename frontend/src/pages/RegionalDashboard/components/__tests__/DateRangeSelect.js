@@ -38,7 +38,7 @@ describe('DateRangeSelect', () => {
     const thirtyDays = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
     fireEvent.click(thirtyDays);
 
-    const applyFilters = screen.getByRole('button', { name: 'Apply filters' });
+    const applyFilters = screen.getByRole('button', { name: 'Apply filters for the date range options menu' });
     fireEvent.click(applyFilters);
 
     expect(onApplyDateRange).toHaveBeenCalledWith({ label: 'Last 30 Days', value: 1 });
