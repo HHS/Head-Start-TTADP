@@ -24,7 +24,7 @@ export default function DateRangeSelect(props) {
       onApply={onApply}
       initialValue={initialValue}
       labelId="dateRangeOptionsLabel"
-      labelText="Date range options"
+      labelText="Select the date range for TTA activities"
       options={DATE_OPTIONS}
       applied={selectedDateRangeOption}
       hasDateRange
