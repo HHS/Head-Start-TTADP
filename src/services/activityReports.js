@@ -576,9 +576,27 @@ export async function createOrUpdate(newActivityReport, report) {
       await saveNotes(id, specialistNextSteps, false, transaction);
     }
 
-    if (allFields.activityRecipientType === 'non-grantee' && objectivesWithoutGoals) {
+    /**
+     * since on partial updates, a new value for activity recipient type may not be passed,
+     * we use the old one in that case
+     */
+
+    const recipientType = () => {
+      if (allFields.activityRecipientType) {
+        return allFields.activityRecipientType;
+      }
+      if (report.activityRecipientType) {
+        return report.activityRecipientType;
+      }
+
+      return '';
+    };
+
+    const activityRecipientType = recipientType();
+
+    if (activityRecipientType === 'non-grantee' && objectivesWithoutGoals) {
       await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
-    } else if (allFields.activityRecipientType === 'grantee' && goals) {
+    } else if (activityRecipientType === 'grantee' && goals) {
       await saveGoalsForReport(goals, savedReport, transaction);
     }
   });

@@ -34,7 +34,7 @@ const renderButtonSelect = (onApply) => {
         onApply={onApply}
         initialValue={initialValue}
         applied={applied}
-        ariaLabel="open menu"
+        ariaName="menu"
         hasDateRange
       />
 
@@ -78,7 +78,7 @@ describe('The Button Select component', () => {
     expect(startDate).toBeInTheDocument();
 
     const apply = screen.getByRole('button', {
-      name: 'Apply filters',
+      name: 'Apply filters for the menu',
     });
 
     fireEvent.click(apply);

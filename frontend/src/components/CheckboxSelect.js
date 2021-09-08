@@ -38,7 +38,7 @@ export default function CheckboxSelect(props) {
     toggleAllInitial,
     styleAsSelect,
     labelText,
-    ariaLabel,
+    ariaName,
   } = props;
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
@@ -117,6 +117,7 @@ export default function CheckboxSelect(props) {
   const toggleAllHtmlId = `${labelId}-toggle-all`;
 
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
+  const ariaLabel = `${menuIsOpen ? 'press escape to close' : 'Open'} the ${ariaName}`;
 
   return (
     <div className="margin-left-1" onBlur={onBlur} onMouseEnter={onMouseHandler} onMouseLeave={onMouseHandler} onFocus={onFocusHandler}>
@@ -148,7 +149,7 @@ export default function CheckboxSelect(props) {
               </div>
               {renderCheckboxes(options, checkboxes, labelId, handleCheckboxSelect, onBlur)}
             </fieldset>
-            <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label="Apply filters">Apply</button>
+            <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label={`Apply filters for ${ariaName}`}>Apply</button>
           </div>
         )
         : null }
@@ -170,7 +171,7 @@ CheckboxSelect.propTypes = {
   labelId: PropTypes.string.isRequired,
   labelText: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  ariaLabel: PropTypes.string.isRequired,
+  ariaName: PropTypes.string.isRequired,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,

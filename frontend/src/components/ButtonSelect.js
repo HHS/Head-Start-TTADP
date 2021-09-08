@@ -15,7 +15,7 @@ function ButtonSelect(props) {
     initialValue,
     applied,
     labelText,
-    ariaLabel,
+    ariaName,
     hasDateRange,
     updateDateRange,
     dateRangeShouldGainFocus,
@@ -115,6 +115,8 @@ function ButtonSelect(props) {
 
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
 
+  const ariaLabel = `${menuIsOpen ? 'press escape to close ' : 'Open '} ${ariaName}`;
+
   return (
     <div className="margin-left-1" onBlur={onBlur} data-testid="data-sort">
       <button
@@ -131,8 +133,8 @@ function ButtonSelect(props) {
       { menuIsOpen
         ? (
           <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
-            <span className="sr-only" id={labelId}>{labelText}</span>
-            <fieldset className="border-0">
+            <span className={hasDateRange ? 'smart-hub--button-select-menu-label' : 'smart-hub--button-select-menu-label sr-only'} id={labelId}><strong>{labelText}</strong></span>
+            <fieldset className="margin-0 border-0">
               { options.map((option) => (
                 <button
                   type="button"
@@ -173,7 +175,7 @@ function ButtonSelect(props) {
                   </>
                 ) : null }
             </fieldset>
-            <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label="Apply filters">Apply</button>
+            <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label={`Apply filters for the ${ariaName}`}>Apply</button>
           </div>
         )
         : null }
@@ -195,7 +197,7 @@ ButtonSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   initialValue: optionProp.isRequired,
   applied: PropTypes.number.isRequired,
-  ariaLabel: PropTypes.string.isRequired,
+  ariaName: PropTypes.string.isRequired,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,

@@ -180,7 +180,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     // Hours of Training.
     expect(data[0].x).toEqual(['Feb', 'Jun', 'Jul']);
     expect(data[0].y).toStrictEqual([0, 6.3, 6]);
-    expect(data[0].month).toBe(null);
+    expect(data[0].month).toStrictEqual([false, false, false]);
 
     // Hours of Technical Assistance.
     expect(data[1].x).toEqual(['Feb', 'Jun', 'Jul']);
@@ -226,7 +226,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     // Hours of Training.
     expect(data[0].x).toEqual(['10', '15', '20']);
     expect(data[0].y).toStrictEqual([1, 0, 0]);
-    expect(data[0].month).toBe('Jun');
+    expect(data[0].month).toStrictEqual(['Jun', 'Jun', 'Jun']);
 
     // Hours of Technical Assistance.
     expect(data[1].x).toEqual(['10', '15', '20']);
