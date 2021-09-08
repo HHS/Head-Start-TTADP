@@ -133,8 +133,8 @@ function ButtonSelect(props) {
       { menuIsOpen
         ? (
           <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
-            <span className="sr-only" id={labelId}>{labelText}</span>
-            <fieldset className="border-0">
+            <span className={hasDateRange ? 'smart-hub--button-select-menu-label' : 'smart-hub--button-select-menu-label sr-only'} id={labelId}><strong>{labelText}</strong></span>
+            <fieldset className="margin-0 border-0">
               { options.map((option) => (
                 <button
                   type="button"

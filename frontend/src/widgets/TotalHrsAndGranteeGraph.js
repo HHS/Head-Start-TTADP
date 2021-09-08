@@ -174,9 +174,9 @@ export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
       return;
     }
 
-    const headings = ['TTA Provided', ...data[0].x.map((x) => {
-      if (data[0].month) {
-        return `${data[0].month} ${x}`;
+    const headings = ['TTA Provided', ...data[0].x.map((x, index) => {
+      if (data[0].month[index]) {
+        return `${data[0].month[index]} ${x}`;
       }
       return x;
     })];

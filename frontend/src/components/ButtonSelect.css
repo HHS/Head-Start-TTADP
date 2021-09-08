@@ -16,6 +16,13 @@
     box-sizing: border-box;
 }
 
+.smart-hub--button-select-menu-label:not(.sr-only) {
+    display: block;
+    margin-top: 1em;
+    max-width: 240px;
+    padding: 0 1em;
+}
+
 .smart-hub--button-select-range-button {
     background: white;
     border: 0;
@@ -39,7 +46,7 @@
     width: 32px;
 }
 .smart-hub--button-select-menu .ttahub-date-range-picker {
-    margin: 0.5em;
+    margin: 0.5em 0;
 }
 
 .smart-hub--button-select-menu .DateInput {
