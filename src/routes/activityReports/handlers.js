@@ -458,7 +458,9 @@ export async function saveReport(req, res) {
 
     newReport.lastUpdatedById = userId;
 
-    const savedReport = await createOrUpdate(newReport, report);
+    // join the updated report with the model object retrieved from the API
+    // since we may not get all fields in the request body
+    const savedReport = await createOrUpdate({ ...report, ...newReport }, report);
     if (savedReport.collaborators) {
     // only include collaborators that aren't already in the report
       const newCollaborators = savedReport.collaborators.filter((c) => {

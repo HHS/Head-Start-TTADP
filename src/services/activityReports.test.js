@@ -136,9 +136,12 @@ describe('Activity Reports DB service', () => {
 
   describe('createOrUpdate', () => {
     it('updates an already saved report', async () => {
-      const report = await ActivityReport.create(reportObject);
-      const newReport = await createOrUpdate({ ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
-      expect(newReport.ECLKCResourcesUsed).toEqual(['updated']);
+      const report = await ActivityReport.create({ ...reportObject, id: 3334 });
+      await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
+      expect(report.activityRecipientType).toEqual('grantee');
+      expect(report.status).toEqual('draft');
+      expect(report.ECLKCResourcesUsed).toEqual(['updated']);
+      expect(report.id).toEqual(3334);
     });
 
     it('creates a new report', async () => {
