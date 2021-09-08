@@ -166,7 +166,7 @@
     "@babel/runtime": "^7.12.1",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "bull": "^3.20.1",
     "client-oauth2": "^4.3.3",
     "cookie-session": "^1.4.0",
