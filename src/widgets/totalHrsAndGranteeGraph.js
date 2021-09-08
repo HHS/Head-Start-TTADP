@@ -3,7 +3,7 @@ import moment from 'moment';
 import { ActivityReport } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
-function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd) {
+function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
   // If report is missing duration set value to 0.
   let cleanValue = valueToAdd;
   if (cleanValue === null) {
@@ -15,14 +15,15 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd) {
   res.forEach((responseObject, index) => {
     if (index === traceIndex) {
       if (responseObject.x.includes(xValue)) {
-        // Update existing Y value.
+        // Update existing x value.
         const indexToUpdate = res[traceIndex].x.indexOf(xValue);
         // eslint-disable-next-line no-param-reassign
         responseObject.y[indexToUpdate] += valueToUse;
       } else {
-        // Add X value and Update Y value.
+        // Add X value, month value, & Y value.
         responseObject.x.push(xValue);
         responseObject.y.push(valueToUse);
+        responseObject.month.push(month);
       }
     } else {
       // Add X axis entry with 0 value.
@@ -31,6 +32,7 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd) {
       }
       responseObject.x.push(xValue);
       responseObject.y.push(0);
+      responseObject.month.push(month);
     }
   });
 }
@@ -39,13 +41,13 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     {
-      name: 'Hours of Training', x: [], y: [], month: null,
+      name: 'Hours of Training', x: [], y: [], month: [],
     },
     {
-      name: 'Hours of Technical Assistance', x: [], y: [], month: null,
+      name: 'Hours of Technical Assistance', x: [], y: [], month: [],
     },
     {
-      name: 'Hours of Both', x: [], y: [], month: null,
+      name: 'Hours of Both', x: [], y: [], month: [],
     },
   ];
 
@@ -90,14 +92,6 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
     multipleYrs = moment(sdDate).format('YY') !== moment(edDate).format('YY');
   }
 
-  if (useDays) {
-    const month = moment(startDate).format('MMM');
-    res.forEach((r) => {
-      // eslint-disable-next-line no-param-reassign
-      r.month = month;
-    });
-  }
-
   // Query Approved AR's.
   const reports = await ActivityReport.findAll({
     attributes: [
@@ -125,17 +119,19 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
       const xValue = useDays ? moment(r.startDate).format('D')
         : multipleYrs ? moment(r.startDate).format('MMM-YY') : moment(r.startDate).format('MMM');
 
+      const month = useDays ? moment(r.startDate).format('MMM') : false;
+
       // Check if we have added this activity report for this date.
       if (!arDates.find((cache) => cache.id === r.id && cache.date === r.startDate)) {
         // Populate Both.
         if ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) || r.ttaType.includes('Both')) {
-          addOrUpdateResponse(2, res, xValue, r.duration);
+          addOrUpdateResponse(2, res, xValue, r.duration, month);
         } else if (r.ttaType.includes('training') || r.ttaType.includes('Training')) {
           // Hours of Training.
-          addOrUpdateResponse(0, res, xValue, r.duration);
+          addOrUpdateResponse(0, res, xValue, r.duration, month);
         } else {
           // Hours of Technical Assistance.
-          addOrUpdateResponse(1, res, xValue, r.duration);
+          addOrUpdateResponse(1, res, xValue, r.duration, month);
         }
 
         // Populate used AR Id's and Dates.
