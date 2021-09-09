@@ -1,6 +1,5 @@
 import { Grant, Grantee } from '../models';
 
-// eslint-disable-next-line import/prefer-default-export
 export async function allGrantees() {
   return Grantee.findAll({
     include: [
@@ -10,5 +9,17 @@ export async function allGrantees() {
         as: 'grants',
       },
     ],
+  });
+}
+
+export async function granteeByIdAndRegion(granteeId) {
+  return Grantee.findOne({
+    attributes: [
+      'name',
+    ],
+    where: {
+      id: granteeId,
+    },
+    raw: true,
   });
 }

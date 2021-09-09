@@ -1,5 +1,5 @@
 import db, { Grantee } from '../models';
-import { allGrantees } from './grantee';
+import { allGrantees, granteeByIdAndRegion } from './grantee';
 
 describe('Grantee DB service', () => {
   afterEach(() => {
@@ -40,6 +40,13 @@ describe('Grantee DB service', () => {
       expect(foundIds).toContain(60);
       expect(foundIds).toContain(61);
       expect(foundIds).toContain(62);
+    });
+
+    it('returns a grantee by id', async () => {
+      const grantee3 = await granteeByIdAndRegion(62);
+      expect(grantee3).toStrictEqual({ name: 'grantee 3' });
+      const grantee2 = await granteeByIdAndRegion(61);
+      expect(grantee2).toStrictEqual({ name: 'grantee 2' });
     });
   });
 });
