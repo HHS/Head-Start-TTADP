@@ -31,6 +31,7 @@ import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
+import GranteeRecord from './pages/GranteeRecord';
 
 function App() {
   const [user, updateUser] = useState();
@@ -124,13 +125,19 @@ function App() {
           )}
         />
         {enableWidgets && (
-          <Route
-            path="/widgets"
-            render={() => (
-              <Widgets />
-            )}
-          />
+        <Route
+          path="/widgets"
+          render={() => (
+            <Widgets />
+          )}
+        />
         )}
+        <Route
+          path="/region/:regionId/grantee/:granteeId"
+          render={({ match }) => (
+            <GranteeRecord match={match} user={user} />
+          )}
+        />
         <Route
           exact
           path="/regional-dashboard"
@@ -139,14 +146,14 @@ function App() {
           )}
         />
         {admin && (
-          <>
-            <Route
-              path="/admin"
-              render={() => (
-                <Admin />
-              )}
-            />
-          </>
+        <>
+          <Route
+            path="/admin"
+            render={() => (
+              <Admin />
+            )}
+          />
+        </>
         )}
         <Route
           render={() => <NotFound />}
