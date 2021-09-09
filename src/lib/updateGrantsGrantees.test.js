@@ -98,6 +98,20 @@ describe('Update grants and grantees', () => {
     expect(totalGrants.length).toBe(11);
   });
 
+  it('includes the grant specialists name and email', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { number: '02CH01111' } });
+    expect(grant.grantSpecialistName).toBe('grant');
+    expect(grant.grantSpecialistEmail).toBe('grant@test.org');
+  });
+
+  it('includes the program specialists name and email', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { number: '02CH01111' } });
+    expect(grant.programSpecialistName).toBe('program specialists');
+    expect(grant.programSpecialistEmail).toBe(null);
+  });
+
   it('should not exclude grantees with only inactive grants', async () => {
     await processFiles();
     const grantee = await Grantee.findOne({ where: { id: 119 } });
