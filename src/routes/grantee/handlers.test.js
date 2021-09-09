@@ -1,6 +1,9 @@
-import db, { Grantee } from '../../models';
 import { getGrantee } from './handlers';
 import { granteeByIdAndRegion } from '../../services/grantee';
+
+jest.mock('../../services/grantee', () => ({
+  granteeByIdAndRegion: jest.fn(),
+}));
 
 describe('getGrantee', () => {
   const granteeWhere = { name: 'Mr Thaddeus Q Grantee' };
@@ -14,22 +17,13 @@ describe('getGrantee', () => {
       end: jest.fn(),
     })),
   };
-
-  afterAll(async () => {
-    await Grantee.destroy({
-      where: granteeWhere,
-    });
-
-    await db.sequelize.close();
-  });
   it('retrieves a grantee', async () => {
-    await Grantee.create(granteeWhere);
-    const grantee = await Grantee.findOne({ where: granteeWhere });
     const req = {
       params: {
-        granteeId: grantee.id,
+        granteeId: 100000,
       },
     };
+    granteeByIdAndRegion.mockResolvedValue(granteeWhere);
     await getGrantee(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(granteeWhere);
   });
