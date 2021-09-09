@@ -11,6 +11,7 @@ export async function getGrantee(req, res) {
       res.sendStatus(404);
       return;
     }
+
     res.json(grantee);
   } catch (err) {
     res.sendStatus(500);
