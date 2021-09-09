@@ -112,6 +112,15 @@ describe('Update grants and grantees', () => {
     expect(grant.programSpecialistEmail).toBe(null);
   });
 
+  it('should have null for grant/program specialists names if null from HSES', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { number: '90CI4444' } });
+    expect(grant.programSpecialistName).toBe(null);
+    expect(grant.programSpecialistEmail).toBe(null);
+    expect(grant.grantSpecialistName).toBe(null);
+    expect(grant.grantSpecialistEmail).toBe(null);
+  });
+
   it('should not exclude grantees with only inactive grants', async () => {
     await processFiles();
     const grantee = await Grantee.findOne({ where: { id: 119 } });
