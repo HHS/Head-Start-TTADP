@@ -11,7 +11,6 @@ export default function DateRangeSelect(props) {
     updateDateRange,
     dateRange,
     customDateRangeOption,
-    gainFocus,
   } = props;
 
   const initialValue = {
@@ -24,15 +23,15 @@ export default function DateRangeSelect(props) {
       onApply={onApply}
       initialValue={initialValue}
       labelId="dateRangeOptionsLabel"
-      labelText="Select the date range for TTA activities"
+      labelText="Choose activity start date range."
       options={DATE_OPTIONS}
       applied={selectedDateRangeOption}
       hasDateRange
       customDateRangeOption={customDateRangeOption}
       updateDateRange={updateDateRange}
-      dateRangeShouldGainFocus={gainFocus}
       dateRange={dateRange}
-      dateRangePickerId="dashboard-date-range-picker"
+      startDatePickerId="dashboardStartDatePicker"
+      endDatePickerId="dashboardEndDatePicker"
       ariaName="date range options menu"
     />
   );
@@ -42,7 +41,6 @@ DateRangeSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   selectedDateRangeOption: PropTypes.number.isRequired,
   updateDateRange: PropTypes.func.isRequired,
-  gainFocus: PropTypes.bool.isRequired,
   dateRange: PropTypes.string.isRequired,
   customDateRangeOption: PropTypes.number.isRequired,
 };
