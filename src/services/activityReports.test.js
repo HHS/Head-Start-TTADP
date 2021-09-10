@@ -160,6 +160,53 @@ describe('Activity Reports DB service', () => {
       expect(report.id).toEqual(3334);
     });
 
+    it('creates a report with no recipient type', async () => {
+      const emptyReport = {
+        ECLKCResourcesUsed: [{ value: '' }],
+        activityRecipientType: null,
+        activityRecipients: [],
+        activityType: [],
+        additionalNotes: null,
+        approvingManagerId: null,
+        attachments: [],
+        collaborators: [],
+        context: '',
+        deliveryMethod: null,
+        duration: null,
+        endDate: null,
+        goals: [],
+        granteeNextSteps: [],
+        grantees: [],
+        nonECLKCResourcesUsed: [{ value: '' }],
+        numberOfParticipants: null,
+        objectivesWithoutGoals: [],
+        otherResources: [],
+        participantCategory: '',
+        participants: [],
+        programTypes: [],
+        reason: [],
+        requester: null,
+        specialistNextSteps: [],
+        startDate: null,
+        status: 'draft',
+        targetPopulations: [],
+        topics: [],
+        pageState: {
+          1: 'Not started',
+          2: 'Not started',
+          3: 'Not started',
+          4: 'Not started',
+        },
+        userId: mockUser.id,
+        regionId: 1,
+        ttaType: [],
+        lastUpdatedById: 1,
+      };
+
+      const report = await createOrUpdate(emptyReport);
+      expect(report.status).toEqual('draft');
+    });
+
     it('creates a new report', async () => {
       const beginningARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
       const report = await createOrUpdate(reportObject);
