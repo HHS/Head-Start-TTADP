@@ -532,8 +532,11 @@ describe('Activity Report handlers', () => {
 
     it('returns a csv', async () => {
       getAllDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [report] });
-      setReadRegions.mockResolvedValue([1]);
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
+      setReadRegions.mockResolvedValue([1]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canSeeBehindFeatureFlags: () => true,
+      }));
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
@@ -541,7 +544,9 @@ describe('Activity Report handlers', () => {
     it('handles a list of reports that are not found', async () => {
       getAllDownloadableActivityReports.mockResolvedValue(null);
       getUserReadRegions.mockResolvedValue([1]);
-
+      ActivityReport.mockImplementationOnce(() => ({
+        canSeeBehindFeatureFlags: () => true,
+      }));
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
@@ -572,6 +577,16 @@ describe('Activity Report handlers', () => {
   });
 
   describe('downloadReports', () => {
+    beforeAll(() => {
+      ActivityReport.mockImplementation(() => ({
+        canSeeBehindFeatureFlags: () => false,
+      }));
+    });
+
+    afterAll(() => {
+      jest.clearAllMocks();
+    });
+
     it('returns a csv with appropriate headers when format=csv', async () => {
       const request = {
         ...mockRequest,
@@ -589,6 +604,7 @@ describe('Activity Report handlers', () => {
       getDownloadableActivityReportsByIds.mockResolvedValue({
         count: 1, rows: [downloadableReport],
       });
+
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalled();
 
@@ -626,6 +642,7 @@ describe('Activity Report handlers', () => {
       getDownloadableActivityReportsByIds.mockResolvedValue({
         count: 1, rows: [downloadableReport],
       });
+
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).not.toHaveBeenCalled();
 
@@ -650,6 +667,7 @@ describe('Activity Report handlers', () => {
       };
 
       getDownloadableActivityReportsByIds.mockResolvedValue({ count: 0, rows: [] });
+
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalled();
       expect(mockResponse.send).toHaveBeenCalled();
