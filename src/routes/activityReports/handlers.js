@@ -520,7 +520,17 @@ export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
 
-    const reportsWithCount = await getDownloadableActivityReportsByIds(readRegions, req.query);
+    const user = await userById(req.session.userId);
+
+    const policy = new ActivityReport(user);
+    const canSeeBehindFeatureFlags = policy.canSeeBehindFeatureFlags();
+
+    const reportsWithCount = await getDownloadableActivityReportsByIds(
+      readRegions,
+      req.query,
+      canSeeBehindFeatureFlags,
+    );
+
     const { format = 'json' } = req.query || {};
 
     if (!reportsWithCount) {
@@ -538,11 +548,14 @@ export async function downloadReports(req, res) {
 export async function downloadAllReports(req, res) {
   try {
     const readRegions = await setReadRegions(req.query, req.session.userId);
+    const user = await userById(req.session.userId);
+    const policy = new ActivityReport(user);
+    const canSeeBehindFeatureFlags = policy.canSeeBehindFeatureFlags();
 
     const reportsWithCount = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
-      true,
+      canSeeBehindFeatureFlags,
     );
 
     const rows = reportsWithCount ? reportsWithCount.rows : [];
