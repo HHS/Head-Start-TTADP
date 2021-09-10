@@ -1,27 +1,42 @@
+/* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TotalHrsAndGranteeGraph, LegendControl } from '../TotalHrsAndGranteeGraph';
 
 const TEST_DATA_MONTHS = [
-  { name: 'Grantee Rec TTA', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [1, 2, 3, 4, 5, 6] },
-  { name: 'Hours of Training', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [7, 8, 9, 0, 0, 0] },
-  { name: 'Hours of Technical Assistance', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 0, 0, 10, 11.2348732847, 12] },
-  { name: 'Hours of Both', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 13, 0, 14, 0, 0] },
+  {
+    name: 'Grantee Rec TTA', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [1, 2, 3, 4, 5, 6], month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+  },
+  {
+    name: 'Hours of Training', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [7, 8, 9, 0, 0, 0], month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+  },
+  {
+    name: 'Hours of Technical Assistance', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 0, 0, 10, 11.2348732847, 12], month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+  },
+  {
+    name: 'Hours of Both', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [0, 13, 0, 14, 0, 0], month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+  },
 ];
 
 const TEST_DATA_DAYS = [
   {
-    name: 'Grantee Rec TTA', x: ['1', '2', '3', '4'], y: [1, 2, 3, 4], month: 'January',
+    name: 'Grantee Rec TTA', x: ['1', '2', '3', '4'], y: [1, 2, 3, 4], month: ['Jan', 'Jan', 'Jan', 'Feb'],
   },
-  { name: 'Hours of Training', x: ['1', '2', '3', '4'], y: [5, 6, 7, 0] },
-  { name: 'Hours of Technical Assistance', x: ['1', '2', '3', '4'], y: [8, 9, 0, 0] },
-  { name: 'Hours of Both', x: ['1', '2', '3', '4'], y: [10, 0, 0, 0] },
+  {
+    name: 'Hours of Training', x: ['1', '2', '3', '4'], y: [5, 6, 7, 0], month: ['Jan', 'Jan', 'Jan', 'Feb'],
+  },
+  {
+    name: 'Hours of Technical Assistance', x: ['1', '2', '3', '4'], y: [8, 9, 0, 0], month: ['Jan', 'Jan', 'Jan', 'Feb'],
+  },
+  {
+    name: 'Hours of Both', x: ['1', '2', '3', '4'], y: [10, 0, 0, 0], month: ['Jan', 'Jan', 'Jan', 'Feb'],
+  },
 ];
 
 const renderTotalHrsAndGranteeGraph = async (props) => (
   render(
-    <TotalHrsAndGranteeGraph data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
+    <TotalHrsAndGranteeGraph loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
@@ -84,11 +99,16 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
   });
 
-  it('handles null data', async () => {
-    const data = null;
+  it('handles undefined data', async () => {
+    const data = undefined;
     renderTotalHrsAndGranteeGraph({ data });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(await screen.findByText('Total TTA Hours')).toBeInTheDocument();
+  });
+
+  it('handles loading', async () => {
+    renderTotalHrsAndGranteeGraph({ loading: true });
+    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
   });
 
   it('handles checkbox clicks', async () => {
@@ -101,15 +121,17 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
   it('displays table data correctly', async () => {
     renderTotalHrsAndGranteeGraph({ data: TEST_DATA_DAYS });
-    const button = screen.getByRole('button', { name: /show accessible data/i });
+    const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
     fireEvent.click(button);
-    const jan1 = screen.getByRole('columnheader', { name: /january 1/i });
+    const jan1 = screen.getByRole('columnheader', { name: /jan 1/i });
+    const feb4 = screen.getByRole('columnheader', { name: /feb 4/i });
     expect(jan1).toBeInTheDocument();
+    expect(feb4).toBeInTheDocument();
   });
 
   it('handles switching contexts', async () => {
     renderTotalHrsAndGranteeGraph({ data: TEST_DATA_MONTHS });
-    const button = screen.getByRole('button', { name: /show accessible data/i });
+    const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
     fireEvent.click(button);
     const table = screen.getByRole('table', { name: /total tta hours by date and type/i });
 

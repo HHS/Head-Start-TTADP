@@ -8,6 +8,7 @@ import {
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
 import FormatNumber from './WidgetHelper';
+import Loader from '../components/Loader';
 
 function Field({
   label, labelExt, data, icon, iconColor, backgroundColor, decimalPlaces,
@@ -49,20 +50,16 @@ Field.defaultProps = {
   decimalPlaces: 0,
 };
 
-export function DashboardOverviewWidget({ data }) {
-  if (!data || Object.keys(data).length < 1) {
-    return <p>Loading...</p>;
-  }
-
+export function DashboardOverviewWidget({ data, loading }) {
   return (
-    <Grid row className="smart-hub--dashboard-overview margin-bottom-3">
+    <Grid row className="smart-hub--dashboard-overview margin-bottom-3 position-relative">
+      <Loader loading={loading} loadingLabel="Overview loading" />
       <Field icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />
       <Field icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />
       <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />
       <Field icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />
       <Field icon={faUser} iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />
     </Grid>
-
   );
 }
 
@@ -73,7 +70,19 @@ DashboardOverviewWidget.propTypes = {
     numGrants: PropTypes.string,
     sumDuration: PropTypes.string,
     inPerson: PropTypes.string,
-  }).isRequired,
+  }),
+  loading: PropTypes.bool,
+};
+
+DashboardOverviewWidget.defaultProps = {
+  data: {
+    numParticipants: '0',
+    numReports: '0',
+    numGrants: '0',
+    sumDuration: '0',
+    inPerson: '0',
+  },
+  loading: false,
 };
 
 export default withWidgetData(DashboardOverviewWidget, 'dashboardOverview');

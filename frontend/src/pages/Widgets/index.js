@@ -8,7 +8,6 @@ import Filter, { filtersToQueryString } from '../Landing/Filter';
 function Widgets() {
   const [appliedFilters, updateAppliedFilters] = useState('');
   const [errorOverride, updateErrorOverride] = useState(false);
-  const [loadingOverride, updateLoadingOverride] = useState(false);
 
   const applyFilters = (filters) => {
     const filterQuery = filtersToQueryString(filters);
@@ -25,14 +24,12 @@ function Widgets() {
         <span className="margin-left-2">
           <Filter applyFilters={applyFilters} forMyAlerts />
         </span>
-        <Button onClick={() => updateLoadingOverride((old) => !old)}>Toggle loading</Button>
         <Button onClick={() => updateErrorOverride((old) => !old)}>Toggle error</Button>
       </Container>
       <Example
         filters={appliedFilters}
         region={1}
         errorOverride={errorOverride}
-        loadingOverride={loadingOverride}
       />
     </>
   );

@@ -26,7 +26,7 @@ describe('Checkbox select', () => {
         toggleAllInitial
         labelId="dogs"
         labelText="Filter by dogs"
-        ariaLabel="Change filter by dogs"
+        ariaName="dogs"
         onApply={onApply}
         options={dogs}
       />,
@@ -36,7 +36,7 @@ describe('Checkbox select', () => {
   it('renders properly and calls the on apply function', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /change filter by dogs/i });
+    const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
     userEvent.click(pom);
@@ -48,7 +48,7 @@ describe('Checkbox select', () => {
   it('toggles all off', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /change filter by dogs/i });
+    const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
     expect(pom).toBeChecked();
@@ -60,7 +60,7 @@ describe('Checkbox select', () => {
   it('closes on escape button', () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /change filter by dogs/i });
+    const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
     expect(pom).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('Checkbox select', () => {
   it('handles blur', () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /change filter by dogs/i });
+    const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const allDogs = screen.getByRole('checkbox', { name: /all dogs/i });
     expect(allDogs).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('Checkbox select', () => {
   it('toggles all on', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /change filter by dogs/i });
+    const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const allDogs = screen.getByRole('checkbox', { name: /all dogs/i });
     userEvent.click(allDogs);
@@ -102,7 +102,7 @@ describe('Checkbox select', () => {
   it('checks and unchecks and passes the right parameters to onApply', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /change filter by dogs/i });
+    const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const allDogs = screen.getByRole('checkbox', { name: /all dogs/i });
     userEvent.click(allDogs);
