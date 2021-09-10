@@ -84,6 +84,11 @@ export default class ActivityReport {
     return !_.isUndefined(adminScope);
   }
 
+  canSeeBehindFeatureFlags() {
+    // we can build upon this at some point
+    return this.isAdmin();
+  }
+
   isAuthor() {
     return this.user.id === this.activityReport.userId;
   }
