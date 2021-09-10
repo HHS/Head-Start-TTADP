@@ -80,7 +80,9 @@ export function topicsWithLineBreaks(reason) {
   }, '');
 }
 
-export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
+export function TopicFrequencyGraphWidget({
+  data, dateTime, updateRoles, loading,
+}) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
 
@@ -167,10 +169,6 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
     Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, hovermode: 'none' });
   }, [data, order, setOrder, showAccessibleData]);
 
-  if (!data) {
-    return <p>Loading...</p>;
-  }
-
   /**
    * takes in the react-select style data structure and extracts the number value
    * which is how we want it in our component
@@ -194,7 +192,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3}>
+    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3} loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
@@ -207,7 +205,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
             styleAsSelect
             labelId="tfGraphOrder"
             labelText="Change topic graph order"
-            ariaLabel="Change topic graph order"
+            ariaName="Change topic graph order menu"
             initialValue={{
               value: SORT_ORDER.DESC,
               label: 'High to Low',
@@ -233,7 +231,7 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
             toggleAllInitial
             labelId="tfRoleFilter"
             labelText="Filter by specialists"
-            ariaLabel="Change filter by specialists"
+            ariaName="Change filter by specialists menu"
             onApply={onApplyRoles}
             options={
               ROLES_MAP.map((role) => ({
@@ -244,7 +242,14 @@ export function TopicFrequencyGraphWidget({ data, dateTime, updateRoles }) {
           />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-          <button type="button" className="usa-button--unstyled margin-top-2" onClick={toggleType}>{showAccessibleData ? 'View Graph' : 'Show Accessible Data'}</button>
+          <button
+            type="button"
+            className="usa-button--unstyled margin-top-2"
+            aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
+            onClick={toggleType}
+          >
+            {showAccessibleData ? 'Display graph' : 'Display table'}
+          </button>
         </Grid>
 
       </Grid>
@@ -268,6 +273,7 @@ TopicFrequencyGraphWidget.propTypes = {
       }),
     ), PropTypes.shape({}),
   ]).isRequired,
+  loading: PropTypes.bool.isRequired,
   updateRoles: PropTypes.func.isRequired,
 };
 

@@ -24,7 +24,7 @@ export default function DateRangeSelect(props) {
       onApply={onApply}
       initialValue={initialValue}
       labelId="dateRangeOptionsLabel"
-      labelText="Date range options"
+      labelText="Select the date range for TTA activities"
       options={DATE_OPTIONS}
       applied={selectedDateRangeOption}
       hasDateRange
@@ -33,7 +33,7 @@ export default function DateRangeSelect(props) {
       dateRangeShouldGainFocus={gainFocus}
       dateRange={dateRange}
       dateRangePickerId="dashboard-date-range-picker"
-      ariaLabel="open date range options menu"
+      ariaName="date range options menu"
     />
   );
 }

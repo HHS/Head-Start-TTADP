@@ -2,8 +2,13 @@
     width: 100%;
 }
 
-.ttahub--accessible-widget-data.usa-table tr:nth-child(2n+1) {
-    background-color: transparent;
+.ttahub--accessible-widget-data.usa-table thead tr {
+    background-color: white;
+}
+
+.ttahub--accessible-widget-data.usa-table tbody tr:nth-child(odd) td,
+.ttahub--accessible-widget-data.usa-table tbody tr:nth-child(odd) th{
+    background-color: #F8F8F8;
 }
 
 .ttahub--accessible-widget-data.usa-table tbody th,

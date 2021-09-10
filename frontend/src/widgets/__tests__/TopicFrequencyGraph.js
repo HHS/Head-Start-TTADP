@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
@@ -40,7 +41,7 @@ const TEST_DATA = [{
 
 const renderArGraphOverview = async (props) => (
   render(
-    <TopicFrequencyGraphWidget data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
+    <TopicFrequencyGraphWidget loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
@@ -118,11 +119,16 @@ describe('Topic & Frequency Graph Widget', () => {
     ]);
   });
 
-  it('handles null data', async () => {
-    const data = null;
+  it('handles undefined data', async () => {
+    const data = undefined;
     renderArGraphOverview({ data });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(await screen.findByText('Number of Activity Reports by Topic')).toBeInTheDocument();
+  });
+
+  it('handles loading', async () => {
+    renderArGraphOverview({ loading: true });
+    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
   });
 
   it('correctly inserts line breaks', () => {
@@ -137,7 +143,7 @@ describe('Topic & Frequency Graph Widget', () => {
     const aZ = screen.getByRole('button', { name: /select to view data from a to z\. select apply filters button to apply selection/i });
     userEvent.click(aZ);
     const buttonGroup = screen.getByTestId('data-sort');
-    const apply = within(buttonGroup).getByRole('button', { name: 'Apply filters' });
+    const apply = within(buttonGroup).getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
     const point1 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
@@ -151,7 +157,7 @@ describe('Topic & Frequency Graph Widget', () => {
 
   it('handles switching display contexts', async () => {
     renderArGraphOverview({ data: [...TEST_DATA] });
-    const button = screen.getByRole('button', { name: /show accessible data/i });
+    const button = screen.getByRole('button', { name: 'display number of activity reports by topic data as table' });
     userEvent.click(button);
 
     const firstRowHeader = screen.getByRole('cell', {
@@ -162,7 +168,7 @@ describe('Topic & Frequency Graph Widget', () => {
     const firstTableCell = screen.getByRole('cell', { name: /155/i });
     expect(firstTableCell).toBeInTheDocument();
 
-    const viewGraph = screen.getByRole('button', { name: /view graph/i });
+    const viewGraph = screen.getByRole('button', { name: 'display number of activity reports by topic data as graph' });
     userEvent.click(viewGraph);
 
     expect(firstRowHeader).not.toBeInTheDocument();

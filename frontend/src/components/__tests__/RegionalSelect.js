@@ -47,7 +47,7 @@ describe('Regional Select', () => {
       name: /select to view data from region 2\. select apply filters button to apply selection/i,
     }));
 
-    const applyButton = screen.getByRole('button', { name: 'Apply filters' });
+    const applyButton = screen.getByRole('button', { name: 'Apply filters for the regional select menu' });
     fireEvent.click(applyButton);
 
     expect(onApplyRegion).toHaveBeenCalled();

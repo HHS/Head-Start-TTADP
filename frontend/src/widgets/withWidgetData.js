@@ -13,10 +13,10 @@ const withWidgetData = (Widget, widgetId) => {
   const WidgetWrapper = (props) => {
     const [loading, updateLoading] = useState(true);
     const [error, updateError] = useState('');
-    const [data, updateData] = useState({});
+    const [data, updateData] = useState();
 
     const {
-      dateRange, region, allRegions, loadingOverride, skipLoading, errorOverride, roles,
+      dateRange, region, allRegions, errorOverride, roles,
     } = props;
 
     const selectedRegion = region || allRegions[0];
@@ -38,14 +38,6 @@ const withWidgetData = (Widget, widgetId) => {
       fetch();
     }, [selectedRegion, dateRange, roles]);
 
-    if ((loading || loadingOverride) && !skipLoading) {
-      return (
-        <div>
-          loading...
-        </div>
-      );
-    }
-
     if (error || errorOverride) {
       return (
         <div>
@@ -54,15 +46,13 @@ const withWidgetData = (Widget, widgetId) => {
       );
     }
 
-    return <Widget data={data} {...props} />;
+    return <Widget data={data} loading={loading} {...props} />;
   };
 
   WidgetWrapper.propTypes = {
     region: PropTypes.number,
     allRegions: PropTypes.arrayOf(PropTypes.number).isRequired,
     errorOverride: PropTypes.bool,
-    loadingOverride: PropTypes.bool,
-    skipLoading: PropTypes.bool,
     startDate: PropTypes.string,
     dateRange: PropTypes.string,
     roles: PropTypes.string,
@@ -70,8 +60,6 @@ const withWidgetData = (Widget, widgetId) => {
 
   WidgetWrapper.defaultProps = {
     errorOverride: false,
-    loadingOverride: false,
-    skipLoading: false,
     region: 0,
     startDate: '',
     dateRange: '',
