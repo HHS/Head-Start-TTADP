@@ -736,7 +736,11 @@ async function getDownloadableActivityReports(where) {
   );
 }
 
-export async function getAllDownloadableActivityReports(readRegions, filters) {
+export async function getAllDownloadableActivityReports(
+  readRegions,
+  filters,
+  canSeeBehindFeatureFlags = false,
+) {
   const regions = readRegions || [];
 
   const scopes = filtersToScopes(filters);
@@ -746,9 +750,12 @@ export async function getAllDownloadableActivityReports(readRegions, filters) {
       [Op.in]: regions,
     },
     status: REPORT_STATUSES.APPROVED,
-    imported: null,
     [Op.and]: scopes,
   };
+
+  if (!canSeeBehindFeatureFlags) {
+    return getDownloadableActivityReports({ ...where, imported: null });
+  }
 
   return getDownloadableActivityReports(where);
 }
@@ -794,12 +801,16 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
  */
 export async function getDownloadableActivityReportsByIds(readRegions, {
   report = [],
-}) {
+}, canSeeBehindFeatureFlags = false) {
   const regions = readRegions || [];
   // Create a Set to ensure unique ordered values
   const reportSet = Array.isArray(report) ? new Set(report) : new Set([report]);
   const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
-  const where = { regionId: regions, imported: null, id: { [Op.in]: reportIds } };
+  const where = { regionId: regions, id: { [Op.in]: reportIds } };
+
+  if (!canSeeBehindFeatureFlags) {
+    return getDownloadableActivityReports({ ...where, imported: null });
+  }
 
   return getDownloadableActivityReports(where);
 }
