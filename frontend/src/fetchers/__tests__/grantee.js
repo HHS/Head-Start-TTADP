@@ -13,7 +13,8 @@ describe('grantee fetcher', () => {
     expect(res.name).toBe('Tim Johnson the Grantee');
   });
   it('tests that it requires a int for grantee id', async () => {
-    const res = await getGrantee('tim');
-    expect(res).toStrictEqual({});
+    await expect(async () => {
+      await getGrantee('tim');
+    }).rejects.toEqual(Error('Error: Grantee ID must be a number'));
   });
 });
