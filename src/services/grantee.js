@@ -12,7 +12,7 @@ export async function allGrantees() {
   });
 }
 
-export async function granteeByIdAndRegion(granteeId) {
+export async function granteeByIdAndRegion(granteeId, regionId) {
   return Grantee.findOne({
     attributes: [
       'name',
@@ -20,6 +20,17 @@ export async function granteeByIdAndRegion(granteeId) {
     where: {
       id: granteeId,
     },
+    include: [
+      {
+        // eslint-disable-next-line array-bracket-spacing
+        attributes: ['id', 'number', 'regionId', 'granteId', 'startDate', 'endDate' /* , 'programSpecialist' */],
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId,
+        },
+      },
+    ],
     raw: true,
   });
 }
