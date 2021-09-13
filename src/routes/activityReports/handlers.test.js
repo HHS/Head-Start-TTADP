@@ -597,7 +597,16 @@ describe('Activity Report handlers', () => {
         id: 616,
         author: {
           name: 'Arty',
+          role: ['Grantee Specialist'],
+          fullName: 'Arty, GS',
         },
+        collaborators: [
+          {
+            name: 'Jarty',
+            role: ['System Specialist', 'Grantee Specialist'],
+            fullName: 'Jarty, SS, GS',
+          },
+        ],
       };
 
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
@@ -612,7 +621,9 @@ describe('Activity Report handlers', () => {
       const [[value]] = mockResponse.send.mock.calls;
       /* eslint-disable no-useless-escape */
       expect(value).toContain('\"Creator\"');
-      expect(value).toContain('\"Arty\"');
+      expect(value).toContain('\"Arty, GS\"');
+      expect(value).toContain('\"Collaborators\"');
+      expect(value).toContain('\"Jarty, SS, GS\"');
       /* eslint-enable no-useless-escape */
     });
 
