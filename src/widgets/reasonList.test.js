@@ -200,9 +200,9 @@ describe('Reason list widget', () => {
 
     expect(res[0].name).toBe('Second Reason');
     expect(res[0].count).toBe(2);
-    expect(res[1].name).toBe('Third Reason');
+    expect(res[1].name).toBe('Fourth Reason');
     expect(res[1].count).toBe(1);
-    expect(res[2].name).toBe('Fourth Reason');
+    expect(res[2].name).toBe('Third Reason');
     expect(res[2].count).toBe(1);
 
     scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/02/01-2021/04/30' });
