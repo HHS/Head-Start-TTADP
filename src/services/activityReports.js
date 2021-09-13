@@ -582,10 +582,10 @@ export async function createOrUpdate(newActivityReport, report) {
      */
 
     const recipientType = () => {
-      if (allFields.activityRecipientType) {
+      if (allFields && allFields.activityRecipientType) {
         return allFields.activityRecipientType;
       }
-      if (report.activityRecipientType) {
+      if (report && report.activityRecipientType) {
         return report.activityRecipientType;
       }
 
