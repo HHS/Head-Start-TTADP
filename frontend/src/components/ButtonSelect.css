@@ -20,7 +20,7 @@
     display: block;
     margin-top: 1em;
     max-width: 240px;
-    padding: 0 1em;
+    padding: 0 1rem;
 }
 
 .smart-hub--button-select-range-button {
@@ -29,29 +29,49 @@
     display: block;
     outline: 0.25rem transparent;
     outline-offset: 0;
-    padding: 11px;    
+    padding: 1rem;    
     text-align: left;    
     width: 100%;
 }
 
+.smart-hub--button-select-range-button:hover{
+    background: #F8F8F8; 
+}
+
 .smart-hub--button-select-range-button[aria-pressed="true"] {
-    background: #F8F8F8;  
     color: #0166AB;
     font-weight: bold;
 }
 
 .smart-hub--button-select-checkmark {
     float: right;
-    margin-top: -9px;
-    width: 32px;
 }
-.smart-hub--button-select-menu .ttahub-date-range-picker {
-    margin: 0.5em 0;
+
+/**
+** Date range picker styles
+*/
+
+.smart-hub--button-select-menu-date-picker {
+    border-top: 1px solid #eceef1;
+    padding: 0 1rem;    
+}
+
+.smart-hub--button-select-menu-date-picker-single {
+    display: flex;
+}
+
+.smart-hub--button-select-menu-date-picker-single .SingleDatePicker{
+    flex: 2;
+}
+.smart-hub--button-select-menu-date-picker-single .SingleDatePickerInput {
+    display: block;
 }
 
 .smart-hub--button-select-menu .DateInput {
-    width: 97px;
+    width: 100%;
 }
+
+
 
 /**
 * The styles for the "style as select" prop

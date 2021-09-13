@@ -47,9 +47,7 @@ export default function RegionalDashboard({ user }) {
   // eslint-disable-next-line max-len
   const [appliedRegion, updateAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(1);
-
   const [dateRange, updateDateRange] = useState(defaultDate);
-  const [gainFocus, setGainFocus] = useState(false);
   const [dateTime, setDateTime] = useState(getDateTimeObject(1, defaultDate));
 
   /*
@@ -92,15 +90,9 @@ export default function RegionalDashboard({ user }) {
 
   useEffect(() => {
     const isCustom = selectedDateRangeOption === CUSTOM_DATE_RANGE;
-
     if (!isCustom) {
       const newRange = formatDateRange({ lastThirtyDays: true, forDateTime: true });
       updateDateRange(newRange);
-    }
-
-    if (isCustom) {
-      // set focus to DateRangePicker 1st input
-      setGainFocus(true);
     }
   }, [selectedDateRangeOption]);
 
@@ -154,7 +146,6 @@ export default function RegionalDashboard({ user }) {
               customDateRangeOption={CUSTOM_DATE_RANGE}
               dateRange={dateRange}
               updateDateRange={updateDateRange}
-              gainFocus={gainFocus}
               dateTime={dateTime}
             />
             <DateTime classNames="display-flex flex-align-center" timestamp={dateTime.timestamp} label={dateTime.label} />

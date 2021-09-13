@@ -92,12 +92,28 @@ describe('Activity Reports DB service', () => {
 
   afterAll(async () => {
     const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
+      .findAll({
+        where: {
+          userId:
+        [
+          mockUser.id,
+          mockUserTwo.id,
+          mockUserThree.id,
+        ],
+        },
+      });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
-    await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id] } });
+    await User.destroy({
+      where: {
+        id: [
+          mockUser.id,
+          mockUserTwo.id,
+          mockUserThree.id],
+      },
+    });
     await Permission.destroy({ where: { userId: mockUserTwo.id } });
     await NonGrantee.destroy({ where: { id: GRANTEE_ID } });
     await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
@@ -142,6 +158,53 @@ describe('Activity Reports DB service', () => {
       expect(report.status).toEqual('draft');
       expect(report.ECLKCResourcesUsed).toEqual(['updated']);
       expect(report.id).toEqual(3334);
+    });
+
+    it('creates a report with no recipient type', async () => {
+      const emptyReport = {
+        ECLKCResourcesUsed: [{ value: '' }],
+        activityRecipientType: null,
+        activityRecipients: [],
+        activityType: [],
+        additionalNotes: null,
+        approvingManagerId: null,
+        attachments: [],
+        collaborators: [],
+        context: '',
+        deliveryMethod: null,
+        duration: null,
+        endDate: null,
+        goals: [],
+        granteeNextSteps: [],
+        grantees: [],
+        nonECLKCResourcesUsed: [{ value: '' }],
+        numberOfParticipants: null,
+        objectivesWithoutGoals: [],
+        otherResources: [],
+        participantCategory: '',
+        participants: [],
+        programTypes: [],
+        reason: [],
+        requester: null,
+        specialistNextSteps: [],
+        startDate: null,
+        status: 'draft',
+        targetPopulations: [],
+        topics: [],
+        pageState: {
+          1: 'Not started',
+          2: 'Not started',
+          3: 'Not started',
+          4: 'Not started',
+        },
+        userId: mockUser.id,
+        regionId: 1,
+        ttaType: [],
+        lastUpdatedById: 1,
+      };
+
+      const report = await createOrUpdate(emptyReport);
+      expect(report.status).toEqual('draft');
     });
 
     it('creates a new report', async () => {
@@ -536,6 +599,19 @@ describe('Activity Reports DB service', () => {
       const { rows } = result;
       const ids = rows.map((row) => row.id);
       expect(ids).not.toContain(legacyReport.id);
+    });
+
+    it('will return legacy reports', async () => {
+      const result = await getAllDownloadableActivityReports([14], {}, true);
+      const { rows } = result;
+      const ids = rows.map((row) => row.id);
+      expect(ids).toContain(legacyReport.id);
+
+      const secondResult = await getDownloadableActivityReportsByIds([14],
+        { report: [legacyReport.id] }, true);
+
+      expect(secondResult.rows.length).toEqual(1);
+      expect(secondResult.rows[0].id).toEqual(legacyReport.id);
     });
 
     it('excludes non-approved reports', async () => {
