@@ -23,7 +23,7 @@ export async function granteeByIdAndRegion(granteeId, regionId) {
     include: [
       {
         // eslint-disable-next-line array-bracket-spacing
-        attributes: ['id', 'number', 'regionId', 'granteId', 'startDate', 'endDate' /* , 'programSpecialist' */],
+        attributes: ['id', 'number', 'regionId', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
         model: Grant,
         as: 'grants',
         where: {

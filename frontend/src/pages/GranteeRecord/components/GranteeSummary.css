@@ -1,0 +1,9 @@
+.usa-table.ttahub--grantee-summary-table tr:nth-child(2n+1) {
+    background-color: transparent;
+}
+
+.usa-table.ttahub--grantee-summary-table td,
+.usa-table.ttahub--grantee-summary-table th {
+    border: 0;
+    border-top: 0;
+}
