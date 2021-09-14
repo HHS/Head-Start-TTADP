@@ -23,6 +23,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
+import Creatable from 'react-select/creatable';
 import { Controller } from 'react-hook-form/dist/index.ie11';
 
 import arrowBoth from '../images/arrow-both.svg';
@@ -51,6 +52,8 @@ function MultiSelect({
   multiSelectOptions,
   onItemSelected,
   singleRowInput,
+  canCreate,
+  onCreateOption,
   components: componentReplacements,
 }) {
   const styles = {
@@ -137,6 +140,36 @@ function MultiSelect({
     <Controller
       render={({ onChange: controllerOnChange, value }) => {
         const values = value ? getValues(value) : value;
+        if (canCreate) {
+          return (
+            <Creatable
+              className="margin-top-1"
+              id={name}
+              value={values}
+              onChange={(event) => {
+                if (onItemSelected) {
+                  onItemSelected(event);
+                } else if (event) {
+                  onChange(event, controllerOnChange);
+                } else {
+                  controllerOnChange([]);
+                }
+              }}
+              styles={styles}
+              components={{ ...componentReplacements, DropdownIndicator }}
+              options={options}
+              isDisabled={disabled}
+              tabSelectsValue={false}
+              isClearable={multiSelectOptions.isClearable}
+              closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
+              controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+              hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
+              placeholder=""
+              onCreateOption={onCreateOption}
+              isMulti
+            />
+          );
+        }
         return (
           <Select
             className="margin-top-1"
@@ -202,6 +235,8 @@ MultiSelect.propTypes = {
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,
+  canCreate: PropTypes.bool,
+  onCreateOption: PropTypes.func,
   // eslint-disable-next-line react/forbid-prop-types
   control: PropTypes.object.isRequired,
   components: PropTypes.shape({}),
@@ -219,6 +254,7 @@ MultiSelect.propTypes = {
 };
 
 MultiSelect.defaultProps = {
+  canCreate: false,
   disabled: false,
   singleRowInput: false,
   required: 'Please select at least one item',
@@ -229,6 +265,7 @@ MultiSelect.defaultProps = {
   components: {},
   rules: {},
   onItemSelected: null,
+  onCreateOption: null,
 };
 
 export default MultiSelect;
