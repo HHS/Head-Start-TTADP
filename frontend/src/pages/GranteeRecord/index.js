@@ -3,15 +3,24 @@ import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
+import GranteeSummary from './components/GranteeSummary';
 
 export default function GranteeRecord({ match }) {
   const [granteeName, setGranteeName] = useState(` - Region ${match.params.regionId}`);
+  const [granteeSummary, setGranteeSummary] = useState({
+    'grants.programSpecialistName': '',
+    'grants.id': '',
+    'grants.startDate': '',
+    'grants.endDate': '',
+    'grants.number': '',
+  });
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchGrantee(granteeId, regionId) {
       const grantee = await getGrantee(granteeId, regionId);
       setGranteeName(`${grantee.name} - Region ${regionId}`);
+      setGranteeSummary(grantee);
     }
 
     try {
@@ -41,6 +50,7 @@ export default function GranteeRecord({ match }) {
     <>
       <span>Grantee TTA Record</span>
       <h1 className="landing margin-top-1">{granteeName}</h1>
+      <GranteeSummary summary={granteeSummary} />
     </>
   );
 }
