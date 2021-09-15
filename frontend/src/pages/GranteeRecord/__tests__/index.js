@@ -29,6 +29,17 @@ describe('grantee record page', () => {
     ],
   };
 
+  const theMightyGrantee = {
+    name: 'the Mighty Grantee',
+    'grants.id': 10,
+    'grants.number': 'GRANTEE_NUMBER',
+    'grants.regionId': 45,
+    'grants.startDate': null,
+    'grants.endDate': null,
+    'grants.programSpecialistName': 'The Mighty Program Specialist',
+    'grants.granteeId': 9,
+  };
+
   function renderGranteeRecord() {
     const match = {
       path: '',
@@ -44,17 +55,24 @@ describe('grantee record page', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/user', user);
-    fetchMock.get('/api/grantee/1?region=45', { name: 'Charles the Grantee' });
+    fetchMock.get('/api/grantee/1?region=45', theMightyGrantee);
+    act(() => renderGranteeRecord());
   });
   afterEach(() => {
     fetchMock.restore();
   });
 
   it('shows the subtitle and grantee name', async () => {
-    act(() => renderGranteeRecord());
-    expect(screen.getByText(/grantee tta record/i)).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByText('Charles the Grantee - Region 45')).toBeInTheDocument();
+      expect(screen.getByText(/grantee tta record/i)).toBeInTheDocument();
+      expect(screen.getByText('the Mighty Grantee - Region 45')).toBeInTheDocument();
+    });
+  });
+
+  it('shows the grantee summary widget', async () => {
+    await waitFor(() => {
+      expect(screen.getByText(theMightyGrantee['grants.number'])).toBeInTheDocument();
+      expect(screen.getByText(theMightyGrantee['grants.programSpecialistName'])).toBeInTheDocument();
     });
   });
 });
