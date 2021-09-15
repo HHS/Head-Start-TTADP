@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { Grid } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeSummary from './components/GranteeSummary';
+import './index.css';
 
 export default function GranteeRecord({ match }) {
   const [granteeName, setGranteeName] = useState(` - Region ${match.params.regionId}`);
@@ -19,6 +21,11 @@ export default function GranteeRecord({ match }) {
   useEffect(() => {
     async function fetchGrantee(granteeId, regionId) {
       const grantee = await getGrantee(granteeId, regionId);
+
+      if (!grantee) {
+        setError('Grantee record not found');
+      }
+
       setGranteeName(`${grantee.name} - Region ${regionId}`);
       setGranteeSummary(grantee);
     }
@@ -30,7 +37,7 @@ export default function GranteeRecord({ match }) {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
-      setError('Grantee record not found');
+      setError('There was error ');
     }
   }, [match.params]);
 
@@ -48,9 +55,13 @@ export default function GranteeRecord({ match }) {
 
   return (
     <>
-      <span>Grantee TTA Record</span>
+      <span className="text-bold">Grantee TTA Record</span>
       <h1 className="landing margin-top-1">{granteeName}</h1>
-      <GranteeSummary summary={granteeSummary} />
+      <Grid row>
+        <Grid col={6}>
+          <GranteeSummary summary={granteeSummary} />
+        </Grid>
+      </Grid>
     </>
   );
 }
