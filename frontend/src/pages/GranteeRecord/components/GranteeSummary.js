@@ -42,7 +42,7 @@ export default function GranteeSummary({ summary }) {
 
 GranteeSummary.propTypes = {
   summary: PropTypes.shape({
-    'grants.regionId': PropTypes.string,
+    'grants.regionId': PropTypes.number,
     'grants.programSpecialistName': PropTypes.string,
     'grants.number': PropTypes.string,
   }).isRequired,
