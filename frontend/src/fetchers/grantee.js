@@ -23,6 +23,7 @@ export const getGrantee = async (granteeId, regionId = '') => {
 
     return grantee.json();
   } catch (e) {
+    // todo - this should probably not throw an error, so it doesn't crash the frontend on a 404
     throw new Error(e);
   }
 };
