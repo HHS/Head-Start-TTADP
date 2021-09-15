@@ -37,14 +37,10 @@ describe('Grantee DB service', () => {
     ]);
   });
 
-  afterEach(async () => {
-    jest.clearAllMocks();
-  });
-
   afterAll(async () => {
     await Grantee.destroy({ where: { id: grantees.map((g) => g.id) } });
     await Grant.destroy({ where: { id: grantees.map((g) => g.id) } });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
 
   describe('allGrantees', () => {
