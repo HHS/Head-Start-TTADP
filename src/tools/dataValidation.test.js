@@ -12,7 +12,7 @@ describe('dataValidation', () => {
 
   describe('run basic query', () => {
     it('should return the data in an object', async () => {
-      const query = 'SELECT "regionId", "status", count(*) FROM "Grants" GROUP BY "regionId", "status" ORDER BY "regionId", "status"';
+      const query = 'SELECT "regionId", "status", count(*) FROM "Grants" WHERE "id" NOT IN (64,65) GROUP BY "regionId", "status" ORDER BY "regionId", "status"';
       const [
         { regionId: firstRowRegion, status: firstRowStatus, count: firstRowCount },
         { regionId: secondRowRegion, status: secondRowStatus, count: secondRowCount },
