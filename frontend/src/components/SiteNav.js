@@ -91,16 +91,6 @@ const SiteNav = ({
                       <>
                         <li>
                           <NavLink
-                            to="/regional-dashboard"
-                          >
-                            <span className="padding-right-105">
-                              <FontAwesomeIcon color="white" icon={faBorderAll} />
-                            </span>
-                            Regional Dashboard
-                          </NavLink>
-                        </li>
-                        <li>
-                          <NavLink
                             to="/grantee-search"
                           >
                             <span className="padding-right-1">
@@ -111,6 +101,16 @@ const SiteNav = ({
                         </li>
                       </>
                     ) : null }
+                  <li>
+                    <NavLink
+                      to="/regional-dashboard"
+                    >
+                      <span className="padding-right-105">
+                        <FontAwesomeIcon color="white" icon={faBorderAll} />
+                      </span>
+                      Regional Dashboard
+                    </NavLink>
+                  </li>
                 </ul>
               </div>
               <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">

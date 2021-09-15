@@ -45,9 +45,9 @@ Field.defaultProps = {
   API. Note the `example` passed as a 2nd parameter to `withWidgetData` must match the widget
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
-function Overview({ data, regionLabel }) {
+function Overview({ data, regionLabel, loading }) {
   return (
-    <Container className="smart-hub--overview-border">
+    <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
         <h2>
           Region
@@ -77,8 +77,20 @@ Overview.propTypes = {
     numTotalGrants: PropTypes.string,
     numParticipants: PropTypes.string,
     sumDuration: PropTypes.string,
-  }).isRequired,
+  }),
   regionLabel: PropTypes.string.isRequired,
+  loading: PropTypes.bool.isRequired,
+};
+
+Overview.defaultProps = {
+  data: PropTypes.shape({
+    numReports: '0',
+    numGrants: '0',
+    numNonGrantees: '0',
+    numTotalGrants: '0',
+    numParticipants: '0',
+    sumDuration: '0',
+  }),
 };
 
 export default withWidgetData(Overview, 'overview');

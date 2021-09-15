@@ -21,8 +21,3 @@
 .ttahub--dashboard-widget-heading {
   font-size: 1.25em;
 }
-
-.ttahub-total-hours-container {
-  height: calc( 100% - 1.5rem);
-}
-

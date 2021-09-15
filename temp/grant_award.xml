@@ -75,6 +75,11 @@
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Active</grant_status>
+  <grants_specialist_first_name>grant</grants_specialist_first_name>
+  <grants_specialist_last_name xsi:nil="true"/>
+  <grants_specialist_email>grant@test.org</grants_specialist_email>
+  <program_specialist_first_name>program</program_specialist_first_name>
+  <program_specialist_last_name>specialists</program_specialist_last_name>
 </grant_award>
 <grant_award>
   <grant_award_id>5151</grant_award_id>
