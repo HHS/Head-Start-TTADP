@@ -1,3 +1,4 @@
+import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { getGrantee } from './handlers';
 import { granteeByIdAndRegion } from '../../services/grantee';
 
@@ -22,6 +23,9 @@ describe('getGrantee', () => {
       params: {
         granteeId: 100000,
       },
+      query: {
+        region: 1,
+      },
     };
     granteeByIdAndRegion.mockResolvedValue(granteeWhere);
     await getGrantee(req, mockResponse);
@@ -33,6 +37,9 @@ describe('getGrantee', () => {
       params: {
         granteeId: 14565,
       },
+      query: {
+        region: 1,
+      },
     };
     granteeByIdAndRegion.mockResolvedValue(null);
     await getGrantee(req, mockResponse);
@@ -42,6 +49,6 @@ describe('getGrantee', () => {
   it('returns a 500 on error', async () => {
     const req = {};
     await getGrantee(req, mockResponse);
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(500);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
