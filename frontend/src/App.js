@@ -103,7 +103,7 @@ function App() {
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <LandingLayout><Landing match={match} /></LandingLayout>
+            <LandingLayout><Landing match={match} user={user} /></LandingLayout>
           )}
         />
         <Route
@@ -132,15 +132,15 @@ function App() {
             )}
           />
         )}
+        <Route
+          exact
+          path="/regional-dashboard"
+          render={() => (
+            <RegionalDashboard user={user} />
+          )}
+        />
         {admin && (
           <>
-            <Route
-              exact
-              path="/regional-dashboard"
-              render={() => (
-                <RegionalDashboard user={user} />
-              )}
-            />
             <Route
               exact
               path="/grantee-search"

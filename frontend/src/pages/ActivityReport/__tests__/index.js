@@ -11,7 +11,7 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
-import ActivityReport, { unflattenResourcesUsed } from '../index';
+import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
 const formData = () => ({
@@ -157,6 +157,20 @@ describe('ActivityReport', () => {
       userEvent.click(button);
 
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+    });
+
+    it('finds whats changed', () => {
+      const old = {
+        beans: 'kidney', dog: 'brown', beetle: ['what', 'yeah'], boat: { length: 1, color: 'green' },
+      };
+      const young = {
+        beans: 'black', dog: 'brown', beetle: ['what'], time: 1, boat: { length: 1, color: 'red' },
+      };
+
+      const changed = findWhatsChanged(young, old);
+      expect(changed).toEqual({
+        beans: 'black', beetle: ['what'], time: 1, boat: { length: 1, color: 'red' },
+      });
     });
 
     it('calls "report update"', async () => {
