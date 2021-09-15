@@ -38,8 +38,8 @@ describe('Grantee DB service', () => {
   });
 
   afterAll(async () => {
-    await Grantee.destroy({ where: { id: grantees.map((g) => g.id) } });
     await Grant.destroy({ where: { id: grantees.map((g) => g.id) } });
+    await Grantee.destroy({ where: { id: grantees.map((g) => g.id) } });
     await db.sequelize.close();
   });
 
