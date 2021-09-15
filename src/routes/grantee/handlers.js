@@ -1,5 +1,12 @@
 import { DECIMAL_BASE } from '../../constants';
 import { granteeByIdAndRegion } from '../../services/grantee';
+import handleErrors from '../../lib/apiErrorHandler';
+
+const namespace = 'SERVICE:GRANTEE';
+
+const logContext = {
+  namespace,
+};
 
 // eslint-disable-next-line import/prefer-default-export
 export async function getGrantee(req, res) {
@@ -16,7 +23,7 @@ export async function getGrantee(req, res) {
     }
 
     res.json(grantee);
-  } catch (err) {
-    res.sendStatus(500);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
   }
 }
