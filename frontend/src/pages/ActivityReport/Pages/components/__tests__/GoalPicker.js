@@ -54,28 +54,53 @@ describe('GoalPicker', () => {
   });
 
   describe('new goals', () => {
-    beforeEach(async () => {
-      const availableGoals = [{ id: 1, name: 'label' }];
-      const selectedGoals = [];
-
+    it('shows a created goal', async () => {
+      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
       render(
         <RenderGoal
           availableGoals={availableGoals}
-          selectedGoals={selectedGoals}
+          selectedGoals={[]}
         />,
       );
 
-      const input = await screen.findByRole('textbox', { name: 'Create a new goal' });
-      userEvent.type(input, 'test');
-      const button = await screen.findByRole('button', { name: 'Save Goal' });
-      userEvent.click(button);
+      const select = await screen.findByText('Select goal(s)');
+      userEvent.type(select, 'Unfettered');
+      fireEvent.click(document.querySelector('#react-select-3-option-2'));
+      expect(screen.getByText(/unfettered/i)).toBeInTheDocument();
     });
 
-    it('are shown in the display section', async () => {
-      expect(await screen.findByText(withText('Goal: test'))).toBeVisible();
+    it('allows deselection', async () => {
+      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={[]}
+        />,
+      );
+
+      const select = await screen.findByText('Select goal(s)');
+      userEvent.type(select, 'Unfettered');
+      fireEvent.click(document.querySelector('#react-select-4-option-2'));
+      const unfetteredlabel = screen.getByText(/unfettered/i);
+      expect(unfetteredlabel).toBeInTheDocument();
+      userEvent.type(select, 'a');
+      const unfett = document.querySelector('#react-select-4-option-0');
+      fireEvent.click(unfett);
+      expect(unfetteredlabel).not.toBeInTheDocument();
     });
 
     it('can be unselected', async () => {
+      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={[]}
+        />,
+      );
+
+      const select = await screen.findByText('Select goal(s)');
+      userEvent.type(select, 'Unfettered');
+      fireEvent.click(document.querySelector('#react-select-5-option-2'));
       const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
 
       await waitFor(() => expect(menuButton).toBeVisible());
@@ -84,15 +109,6 @@ describe('GoalPicker', () => {
       const removeButton = await screen.findByRole('button', { name: 'Remove' });
       userEvent.click(removeButton);
       expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
-    });
-
-    it('does nothing if there is no goal text', async () => {
-      const first = await screen.findByRole('button', { name: 'add objective to goal 1' });
-      expect(first).toBeVisible();
-      const button = await screen.findByRole('button', { name: 'Save Goal' });
-      userEvent.click(button);
-      const second = screen.queryByRole('button', { name: 'add objective to goal 2' });
-      await waitFor(() => expect(second).toBeNull());
     });
   });
 
