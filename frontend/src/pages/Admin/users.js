@@ -171,7 +171,12 @@ function Admin(props) {
                 onChange={() => updateLockedFilter('to-disable')}
               />
             </Fieldset>
-            <Label htmlFor="input-filter-users">Filter Users</Label>
+            <Label htmlFor="feature-flag-filter-users">Filter users by feature</Label>
+            <select className="usa-select" id="feature-flag-filter-users">
+              <option>Feature 1</option>
+              <option>Feature 2</option>
+            </select>
+            <Label htmlFor="input-filter-users">Filter users by name</Label>
             <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
             <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
               <SideNav items={renderUserNav(filteredUsers)} />

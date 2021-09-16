@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
+import Flags from './Flags';
 
 function Admin() {
   return (
@@ -20,6 +21,9 @@ function Admin() {
         <Link className="usa-button" to="/admin/diag">
           Diag
         </Link>
+        <Link className="usa-button" to="/admin/flags">
+          Feature flags
+        </Link>
       </div>
       <Switch>
         <Route
@@ -33,6 +37,10 @@ function Admin() {
         <Route
           path="/admin/diag/"
           render={({ match }) => <Diag match={match} />}
+        />
+        <Route
+          path="/admin/flags/"
+          render={({ match }) => <Flags match={match} />}
         />
       </Switch>
     </>

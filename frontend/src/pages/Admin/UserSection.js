@@ -6,6 +6,7 @@ import {
 
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
+import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
 import { DECIMAL_BASE } from '../../Constants';
 
@@ -98,6 +99,7 @@ function UserSection({ user, onSave }) {
         regionalPermissions={userRegionalPermissions(formUser)}
         onRegionalPermissionChange={onRegionalPermissionChange}
       />
+      <UserFeatureFlags />
       <Button>
         Save
       </Button>
