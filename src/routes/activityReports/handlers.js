@@ -161,7 +161,6 @@ async function sendActivityReportCSV(reports, res) {
           key: 'lastSaved',
           header: 'Last saved',
         },
-
       ],
     };
   }
