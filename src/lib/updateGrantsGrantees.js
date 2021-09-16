@@ -8,6 +8,20 @@ import {
 import { logger, auditLogger } from '../logger';
 
 const fs = require('mz/fs');
+
+function valueFromXML(value) {
+  const isObject = typeof value === 'object';
+  const isUndefined = value === undefined;
+  return isObject || isUndefined ? null : value;
+}
+
+function combineNames(firstName, lastName) {
+  const names = [valueFromXML(firstName), valueFromXML(lastName)];
+  // filter removes null names (if a user has a firstname but no lastname)
+  const joinedName = names.filter((name) => name).join(' ');
+  return joinedName === '' ? null : joinedName;
+}
+
 /**
  * Reads HSES data files that were previously extracted to the "temp" directory.
  * The files received from HSES are:
@@ -57,6 +71,16 @@ export async function processFiles() {
       let { grant_start_date: startDate, grant_end_date: endDate } = g;
       if (typeof startDate === 'object') { startDate = null; }
       if (typeof endDate === 'object') { endDate = null; }
+
+      const programSpecialistName = combineNames(
+        g.program_specialist_first_name,
+        g.program_specialist_last_name,
+      );
+      const grantSpecialistName = combineNames(
+        g.grants_specialist_first_name,
+        g.grants_specialist_last_name,
+      );
+
       const regionId = parseInt(g.region_id, 10);
       const cdi = regionId === 13;
       return {
@@ -68,6 +92,10 @@ export async function processFiles() {
         endDate,
         regionId,
         cdi,
+        programSpecialistName,
+        programSpecialistEmail: valueFromXML(g.program_specialist_email),
+        grantSpecialistName,
+        grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
       };
     });
 
@@ -77,12 +105,12 @@ export async function processFiles() {
     logger.debug(`updateGrantsGrantees: calling bulkCreate for ${grantsForDb.length} grants`);
     await Grant.bulkCreate(nonCdiGrants,
       {
-        updateOnDuplicate: ['number', 'regionId', 'granteeId', 'status', 'startDate', 'endDate', 'updatedAt'],
+        updateOnDuplicate: ['number', 'regionId', 'granteeId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
       });
 
     await Grant.bulkCreate(cdiGrants,
       {
-        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt'],
+        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
       });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);
