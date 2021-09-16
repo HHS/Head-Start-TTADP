@@ -27,6 +27,8 @@ get:
           schema:
             type: object
             $ref: '../../index.yaml#/components/schemas/shortActivityReport'
+    400:
+      description: activityReportId param is missing or malformed
 post:
   tags:
     - activity-reports

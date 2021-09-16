@@ -38,6 +38,8 @@ const logContext = {
   namespace,
 };
 
+export const LEGACY_WARNING = 'Reports done before March 1, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
+
 async function sendActivityReportCSV(reports, res) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
 
@@ -47,6 +49,8 @@ async function sendActivityReportCSV(reports, res) {
     quoted: true,
     quoted_empty: true,
   };
+
+  let warning = '';
 
   // if we have some rows, we need to extract a list of goals and objectives and format the columns
   if (csvRows.length > 0) {
@@ -161,9 +165,11 @@ async function sendActivityReportCSV(reports, res) {
           key: 'lastSaved',
           header: 'Last saved',
         },
-
       ],
     };
+
+    warning = `"${LEGACY_WARNING}"${options.columns.map(() => ',')}`;
+    warning = `${warning.substring(0, warning.length - 1)}\n`;
   }
 
   const csvData = stringify(
@@ -172,7 +178,7 @@ async function sendActivityReportCSV(reports, res) {
   );
 
   res.attachment('activity-reports.csv');
-  res.send(csvData);
+  res.send(`${warning}${csvData}`);
 }
 
 export async function updateLegacyFields(req, res) {
@@ -520,15 +526,9 @@ export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
 
-    const user = await userById(req.session.userId);
-
-    const policy = new ActivityReport(user);
-    const canSeeBehindFeatureFlags = policy.canSeeBehindFeatureFlags();
-
     const reportsWithCount = await getDownloadableActivityReportsByIds(
       readRegions,
       req.query,
-      canSeeBehindFeatureFlags,
     );
 
     const { format = 'json' } = req.query || {};
@@ -548,14 +548,10 @@ export async function downloadReports(req, res) {
 export async function downloadAllReports(req, res) {
   try {
     const readRegions = await setReadRegions(req.query, req.session.userId);
-    const user = await userById(req.session.userId);
-    const policy = new ActivityReport(user);
-    const canSeeBehindFeatureFlags = policy.canSeeBehindFeatureFlags();
 
     const reportsWithCount = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
-      canSeeBehindFeatureFlags,
     );
 
     const rows = reportsWithCount ? reportsWithCount.rows : [];
