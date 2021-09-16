@@ -15,6 +15,7 @@ import {
   softDeleteReport,
   downloadAllReports,
   downloadAllAlerts,
+  LEGACY_WARNING,
 } from './handlers';
 import {
   activityReportById,
@@ -534,9 +535,6 @@ describe('Activity Report handlers', () => {
       getAllDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [report] });
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
       setReadRegions.mockResolvedValue([1]);
-      ActivityReport.mockImplementationOnce(() => ({
-        canSeeBehindFeatureFlags: () => true,
-      }));
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
@@ -544,9 +542,6 @@ describe('Activity Report handlers', () => {
     it('handles a list of reports that are not found', async () => {
       getAllDownloadableActivityReports.mockResolvedValue(null);
       getUserReadRegions.mockResolvedValue([1]);
-      ActivityReport.mockImplementationOnce(() => ({
-        canSeeBehindFeatureFlags: () => true,
-      }));
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
@@ -577,12 +572,6 @@ describe('Activity Report handlers', () => {
   });
 
   describe('downloadReports', () => {
-    beforeAll(() => {
-      ActivityReport.mockImplementation(() => ({
-        canSeeBehindFeatureFlags: () => false,
-      }));
-    });
-
     afterAll(() => {
       jest.clearAllMocks();
     });
@@ -624,6 +613,7 @@ describe('Activity Report handlers', () => {
       expect(value).toContain('\"Arty, GS\"');
       expect(value).toContain('\"Collaborators\"');
       expect(value).toContain('\"Jarty, SS, GS\"');
+      expect(value).toContain(LEGACY_WARNING);
       /* eslint-enable no-useless-escape */
     });
 
