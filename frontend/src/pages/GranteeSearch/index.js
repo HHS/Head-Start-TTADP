@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import RegionalSelect from '../../components/RegionalSelect';
 import { getUserRegions } from '../../permissions';
+import { searchGrantees } from '../../fetchers/grantee';
 import './index.css';
 
 function GranteeSearch({ user }) {
@@ -15,13 +16,21 @@ function GranteeSearch({ user }) {
   // eslint-disable-next-line max-len
   const [appliedRegion, setAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [query, setQuery] = useState('');
+  const [granteeResults, setGranteeResults] = useState([]);
 
   function onApplyRegion(region) {
     setAppliedRegion(region.value);
   }
 
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
+
+    if (!query) {
+      return;
+    }
+
+    const results = await searchGrantees(query, appliedRegion);
+    setGranteeResults(results);
   }
 
   return (
@@ -43,7 +52,7 @@ function GranteeSearch({ user }) {
                   />
                 </div>
               )}
-          <form className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
+          <form role="search" className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
             <input type="search" name="search" value={query} className="ttahub-grantee-search--search-input" onChange={(e) => setQuery(e.target.value)} />
             <button type="submit" className="ttahub-grantee-search--submit-button usa-button">
               <FontAwesomeIcon color="white" icon={faSearch} />
@@ -52,6 +61,9 @@ function GranteeSearch({ user }) {
             </button>
           </form>
         </Grid>
+        <div>
+          {granteeResults.map((grantee) => <h1>{grantee.name}</h1>)}
+        </div>
       </div>
     </>
   );
