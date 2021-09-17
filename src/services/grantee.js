@@ -80,5 +80,6 @@ export async function granteesByNameAndRegion(query, regionId) {
         },
       },
     ],
+    limit: 12,
   });
 }
