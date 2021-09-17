@@ -39,7 +39,7 @@ describe('the grantee search page', () => {
     };
     renderGranteeSearch(user);
     expect(screen.getByRole('heading', { name: /grantee records/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /open the regional select menu/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open regional select menu/i })).toBeInTheDocument();
   });
 
   it('you can interact with the search box', () => {
