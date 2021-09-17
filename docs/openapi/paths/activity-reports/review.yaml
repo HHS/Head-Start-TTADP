@@ -44,3 +44,5 @@ put:
                   - needs_action
               managerNotes:
                 type: string
+    400:
+      description: activityReportId param is missing or malformed

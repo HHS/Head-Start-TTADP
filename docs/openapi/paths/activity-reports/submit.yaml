@@ -29,3 +29,5 @@ post:
         application/json:
           schema:
             $ref: '../../index.yaml#/components/schemas/activityReport'
+    400:
+      description: activityReportId param is missing or malformed
