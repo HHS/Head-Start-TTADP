@@ -76,7 +76,7 @@ describe('the grantee search page', () => {
 
     renderGranteeSearch(user);
     const query = 'ground control';
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region=1');
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region=2');
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
@@ -85,6 +85,12 @@ describe('the grantee search page', () => {
     expect(button).toBeInTheDocument();
     expect(searchBox).toBeInTheDocument();
 
+    const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
+    fireEvent.click(regionalSelect);
+    const region2 = screen.getByRole('button', { name: /select to view data from region 2\. select apply filters button to apply selection/i });
+    fireEvent.click(region2);
+    const applyFilters = screen.getByRole('button', { name: /apply filters for the regional select menu/i });
+    fireEvent.click(applyFilters);
     userEvent.type(searchBox, query);
 
     await act(async () => {
