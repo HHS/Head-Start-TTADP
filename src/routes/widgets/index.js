@@ -1,16 +1,9 @@
 import express from 'express';
 import { getWidget } from './handlers';
-
-const nr = require('newrelic');
+import { nameTransactionByPath } from '../../middleware/newRelicMiddleware';
 
 const router = express.Router();
 
-// Middleware to set transaction name
-function nameWidgetTransactions(req, res, next) {
-  nr.setTransactionName(`GET /api/widgets/${req.params.widgetId}`);
-  next();
-}
-
-router.get('/:widgetId', nameWidgetTransactions, getWidget);
+router.get('/:widgetId', nameTransactionByPath, getWidget);
 
 export default router;
