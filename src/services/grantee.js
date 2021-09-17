@@ -19,13 +19,17 @@ export async function allGrantees() {
  * @param {number} regionId
  * @param {string} sortBy
  *
- * @returns {object[]} grantee results
+ * @returns {Promise} grantee results
  */
 export async function granteesByNameAndRegion(query, regionId) {
+  // fix the query
+  const q = `%${query}%`;
+
+  // first get all grants with numbers that match the query string
   const matchingGrantNumbers = await Grant.findAll({
     where: {
       number: {
-        [Op.iLike]: `%${query}%`, // sequelize automatically escapes this
+        [Op.iLike]: q, // sequelize automatically escapes this
       },
       regionId,
     },
@@ -37,21 +41,24 @@ export async function granteesByNameAndRegion(query, regionId) {
     ],
   });
 
+  // create a base where clause for the grantees matching the name and the query string
   let granteeWhere = {
     name: {
-      [Op.iLike]: `%${query}%`, // sequelize automatically escapes this
+      [Op.iLike]: q, // sequelize automatically escapes this
     },
   };
 
-  console.log(matchingGrantNumbers);
-
+  // if we have any matching grant numbers
   if (matchingGrantNumbers) {
+    // we pull out the grantee ids
+    // and include them in the where clause, so either
+    // the grant number or the grant name matches the query string
     const matchingGrantNumbersGranteeIds = matchingGrantNumbers.map((grant) => grant.grantee.id);
     granteeWhere = {
       [Op.or]: [
         {
           name: {
-            [Op.iLike]: `%${query}%`, // sequelize automatically escapes this
+            [Op.iLike]: q, // sequelize automatically escapes this
           },
         },
         {
