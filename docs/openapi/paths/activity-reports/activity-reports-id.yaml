@@ -15,6 +15,8 @@ get:
         application/json:
           schema:
             $ref: '../../index.yaml#/components/schemas/activityReport'
+    400:
+      description: activityReportId param is missing or malformed
 put:
   tags:
     - activity-reports
@@ -39,6 +41,8 @@ put:
         application/json:
           schema:
             $ref: '../../index.yaml#/components/schemas/activityReport'
+    400:
+      description: activityReportId param is missing or malformed
 delete:
   tags:
     - activity-reports
@@ -52,5 +56,7 @@ delete:
   responses:
     204:
       description: activity report status was changed to deleted
+    400:
+      description: activityReportId param is missing or malformed
     403:
       description: User is not authorized to delete this activity report
