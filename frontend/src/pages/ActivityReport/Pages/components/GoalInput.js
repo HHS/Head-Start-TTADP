@@ -38,7 +38,7 @@ const Input = ({
   if (value !== '') {
     message = '';
   } else if (selectedGoals === 0) {
-    message = 'Select goal(s)';
+    message = 'Select goal(s) or type here to create a new goal';
   } else if (selectedGoals === 1) {
     message = '1 goal selected';
   } else {
