@@ -468,8 +468,7 @@ describe('Activity Reports DB service', () => {
     });
 
     it('retrieves reports sorted by id', async () => {
-      reportObject.regionId = 2;
-      await ActivityReport.create(reportObject);
+      await ActivityReport.create({ ...reportObject, regionId: 1 });
 
       const { rows } = await activityReports({
         sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
@@ -590,15 +589,8 @@ describe('Activity Reports DB service', () => {
       const { rows } = result;
       const ids = rows.map((row) => row.id);
 
-      expect(ids.length).toEqual(2);
+      expect(ids.length).toEqual(3);
       expect(ids).toContain(report.id);
-    });
-
-    it('excludes legacy reports', async () => {
-      const result = await getAllDownloadableActivityReports([14]);
-      const { rows } = result;
-      const ids = rows.map((row) => row.id);
-      expect(ids).not.toContain(legacyReport.id);
     });
 
     it('will return legacy reports', async () => {
@@ -679,7 +671,7 @@ describe('Activity Reports DB service', () => {
       expect(rows[0].id).toEqual(report.id);
     });
 
-    it('excludes legacy reports', async () => {
+    it('includes legacy reports', async () => {
       const mockLegacyReport = {
         ...reportObject,
         imported: { foo: 'bar' },
@@ -694,10 +686,11 @@ describe('Activity Reports DB service', () => {
 
       const result = await getDownloadableActivityReportsByIds([1],
         { report: [report.id, legacyReport.id] });
+
       const { rows } = result;
 
-      expect(rows.length).toEqual(1);
-      expect(rows[0].id).not.toEqual(legacyReport.id);
+      expect(rows.length).toEqual(2);
+      expect(rows.map((row) => row.id)).toContain(legacyReport.id);
     });
 
     it('ignores invalid report ids', async () => {

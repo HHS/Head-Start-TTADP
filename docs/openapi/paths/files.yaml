@@ -40,6 +40,6 @@ delete:
     204:
       description: file was successfully deleted
     400:
-      description: request did not contain reportId/fileId in the path
+      description: reportId/fileId params are missing or malformed
     403:
       description: User is not authorized to delete this file
