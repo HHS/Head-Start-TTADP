@@ -62,7 +62,7 @@ function GranteeSearch({ user }) {
           </form>
         </Grid>
         <div>
-          {granteeResults.map((grantee) => <h1>{grantee.name}</h1>)}
+          {granteeResults.map((grantee) => <h2>{grantee.name}</h2>)}
         </div>
       </div>
     </>

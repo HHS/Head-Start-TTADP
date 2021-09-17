@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Grant, Grantee, sequelize } from '../models';
+import { Grant, Grantee } from '../models';
 
 export async function allGrantees() {
   return Grantee.findAll({
@@ -21,31 +21,56 @@ export async function allGrantees() {
  *
  * @returns {object[]} grantee results
  */
-export async function granteesByNameAndRegion(query) {
-  const q = sequelize.escape(query);
+export async function granteesByNameAndRegion(query, regionId) {
+  const matchingGrantNumbers = await Grant.findAll({
+    where: {
+      number: {
+        [Op.iLike]: `%${query}%`, // sequelize automatically escapes this
+      },
+      regionId,
+    },
+    include: [
+      {
+        model: Grantee,
+        as: 'grantee',
+      },
+    ],
+  });
 
-  console.log('[query]', q);
+  let granteeWhere = {
+    name: {
+      [Op.iLike]: `%${query}%`, // sequelize automatically escapes this
+    },
+  };
+
+  console.log(matchingGrantNumbers);
+
+  if (matchingGrantNumbers) {
+    const matchingGrantNumbersGranteeIds = matchingGrantNumbers.map((grant) => grant.grantee.id);
+    granteeWhere = {
+      [Op.or]: [
+        {
+          name: {
+            [Op.iLike]: `%${query}%`, // sequelize automatically escapes this
+          },
+        },
+        {
+          id: matchingGrantNumbersGranteeIds,
+        },
+      ],
+    };
+  }
 
   return Grantee.findAll({
-    where: {
-      // [Op.or]: [
-      //  {
-      name: {
-        [Op.iLike]: q,
-      },
-      //   },
-      //   {
-      //     'grants.id': {
-      //       [Op.iLike]: q,
-      //     },
-      //   },
-      // ],
-    },
+    where: granteeWhere,
     include: [
       {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
+        where: {
+          regionId,
+        },
       },
     ],
   });
