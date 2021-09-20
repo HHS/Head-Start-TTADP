@@ -63,6 +63,7 @@ function MultiSelect({
       return {
         ...provided,
         outline,
+        zIndex: 2,
       };
     },
     groupHeading: (provided) => ({
