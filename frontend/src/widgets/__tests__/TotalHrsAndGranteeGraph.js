@@ -113,7 +113,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
   it('handles checkbox clicks', async () => {
     const setSelected = jest.fn();
-    render(<LegendControl label="test" id="test" selected setSelected={setSelected} />);
+    render(<LegendControl shape="circle" label="test" id="test" selected setSelected={setSelected} />);
     const checkbox = screen.getByRole('checkbox', { name: /test/i });
     fireEvent.click(checkbox);
     expect(setSelected).toHaveBeenCalled();

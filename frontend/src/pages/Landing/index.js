@@ -228,7 +228,13 @@ function Landing({ user }) {
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [filters, setFilters] = useState([]);
   const [alertFilters, setAlertFilters] = useState([]);
-  const [appliedRegion, updateAppliedRegion] = useState(user.homeRegionId === 14 ? 14 : regions[0]);
+
+  const defaultRegion = regions[0] || user.homeRegionId || 0;
+
+  const [
+    appliedRegion,
+    updateAppliedRegion,
+  ] = useState(user.homeRegionId === 14 ? 14 : defaultRegion);
 
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
@@ -363,7 +369,7 @@ function Landing({ user }) {
   }, [reports]);
 
   useEffect(() => {
-    setRegionLabel(appliedRegion === 14 ? 'All' : appliedRegion);
+    setRegionLabel(appliedRegion === 14 ? 'All' : appliedRegion.toString());
   }, [appliedRegion]);
 
   useEffect(() => {
