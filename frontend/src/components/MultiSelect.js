@@ -63,7 +63,6 @@ function MultiSelect({
       return {
         ...provided,
         outline,
-        zIndex: 2,
       };
     },
     groupHeading: (provided) => ({
@@ -93,6 +92,10 @@ function MultiSelect({
       marginRight: '4px',
     }),
     indicatorSeparator: () => ({ display: 'none' }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 2,
+    }),
   };
 
   /*
