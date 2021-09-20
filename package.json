@@ -110,6 +110,9 @@
       "<rootDir>/frontend/"
     ],
     "testTimeout": 30000,
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/src/middleware/newRelicMiddleware.js"
+    ],
     "coverageThreshold": {
       "global": {
         "statements": 90,
