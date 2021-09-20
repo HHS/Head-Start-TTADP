@@ -7,6 +7,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import RegionalDashboard from '../index';
 import formatDateRange from '../formatDateRange';
+import { SCOPE_IDS } from '../../../Constants';
 
 describe('Regional Dashboard page', () => {
   const renderDashboard = (user) => render(<RegionalDashboard user={user} />);
@@ -28,6 +29,38 @@ describe('Regional Dashboard page', () => {
     renderDashboard(user);
     const dateRange = await screen.findByRole('button', { name: /open date range options menu/i });
     expect(dateRange).toBeInTheDocument();
+  });
+
+  it('shows the selected region', async () => {
+    renderDashboard({
+      ...user,
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 14,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
+    });
+
+    expect(screen.getByText('Regional TTA Activity Dashboard')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Open regional select menu' });
+    fireEvent.click(button);
+
+    const region1 = screen.getByRole('button', { name: 'Select to view data from Region 1. Select Apply filters button to apply selection' });
+    fireEvent.click(region1);
+
+    const apply = screen.getByRole('button', { name: 'Apply filters for the regional select menu' });
+    fireEvent.click(apply);
+
+    expect(screen.getByText('Region 1 TTA Activity Dashboard')).toBeInTheDocument();
   });
 
   it('shows the currently selected date range', async () => {
