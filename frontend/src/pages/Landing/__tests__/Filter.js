@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 
 import Filter, { filtersToQueryString } from '../Filter';
 
-const RenderFilterItem = ({ applyFilters = () => {} }) => (
+const RenderFilterItem = ({ applyFilters = () => { } }) => (
   <Filter applyFilters={applyFilters} />
 );
 
@@ -111,6 +111,40 @@ describe('filter', () => {
         topic: 'reportId',
         condition: 'Contains',
         query: 'test',
+      },
+    ]);
+  });
+
+  it('condition is reset when the topic is changed', async () => {
+    const applyFilters = jest.fn();
+    render(<RenderFilterItem applyFilters={applyFilters} />);
+    const button = await screen.findByRole('button');
+    userEvent.click(button);
+
+    const addFilter = await screen.findByRole('button', { name: 'Add New Filter' });
+    userEvent.click(addFilter);
+
+    let topic = await screen.findByRole('combobox', { name: 'topic' });
+    userEvent.selectOptions(topic, 'startDate');
+
+    const condition = await screen.findByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, 'Is before');
+
+    const query = await screen.findByRole('textbox', { name: /date/i });
+    userEvent.type(query, '09/15/2021');
+
+    topic = await screen.findByRole('combobox', { name: 'topic' });
+    userEvent.selectOptions(topic, 'reportId');
+
+    const apply = await screen.findByRole('button', { name: 'Apply Filters' });
+    userEvent.click(apply);
+
+    expect(applyFilters).toHaveBeenCalledWith([
+      {
+        id: expect.anything(),
+        topic: 'reportId',
+        condition: '',
+        query: '',
       },
     ]);
   });
