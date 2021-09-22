@@ -75,7 +75,7 @@ describe('FilterItem', () => {
       render(<RenderFilterItem />);
       const topic = await screen.findByRole('combobox', { name: 'topic' });
       const options = await within(topic).findAllByRole('option');
-      expect(options.length).toBe(8);
+      expect(options.length).toBe(9);
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
@@ -84,6 +84,7 @@ describe('FilterItem', () => {
         'Creator',
         'Collaborator',
         'Role',
+        'Program Specialist',
         'Topic',
         'Last saved',
       ];
@@ -97,7 +98,7 @@ describe('FilterItem', () => {
       render(<RenderFilterItem forMyAlerts />);
       const topic = await screen.findByRole('combobox', { name: 'topic' });
       const options = await within(topic).findAllByRole('option');
-      expect(options.length).toBe(7);
+      expect(options.length).toBe(8);
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
@@ -106,6 +107,7 @@ describe('FilterItem', () => {
         'Creator',
         'Collaborator',
         'Role',
+        'Program Specialist',
         'Status',
       ];
 
