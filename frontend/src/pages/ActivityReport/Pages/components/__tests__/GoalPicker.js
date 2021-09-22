@@ -43,7 +43,7 @@ describe('GoalPicker', () => {
         />,
       );
 
-      const select = await screen.findByText('Select goal(s)');
+      const select = await screen.findByText('Select goal(s) or type here to create a new goal');
       await selectEvent.select(select, ['first', 'second']);
 
       const first = await screen.findByRole('button', { name: 'add objective to goal 1' });
@@ -63,9 +63,10 @@ describe('GoalPicker', () => {
         />,
       );
 
-      const select = await screen.findByText('Select goal(s)');
+      const select = await screen.findByText('Select goal(s) or type here to create a new goal');
       userEvent.type(select, 'Unfettered');
-      fireEvent.click(document.querySelector('#react-select-3-option-2'));
+      const newGoal = await screen.findByText('Create "Unfettered"');
+      fireEvent.click(newGoal);
       expect(screen.getByText(/unfettered/i)).toBeInTheDocument();
     });
 
@@ -78,14 +79,20 @@ describe('GoalPicker', () => {
         />,
       );
 
-      const select = await screen.findByText('Select goal(s)');
+      const select = await screen.findByText('Select goal(s) or type here to create a new goal');
       userEvent.type(select, 'Unfettered');
-      fireEvent.click(document.querySelector('#react-select-4-option-2'));
-      const unfetteredlabel = screen.getByText(/unfettered/i);
+
+      const newGoal = await screen.findByText('Create "Unfettered"');
+      fireEvent.click(newGoal);
+      let unfetteredlabel = await screen.findByText(/unfettered/i);
       expect(unfetteredlabel).toBeInTheDocument();
-      userEvent.type(select, 'a');
-      const unfett = document.querySelector('#react-select-4-option-0');
-      fireEvent.click(unfett);
+
+      selectEvent.openMenu(select);
+      // Ignore the "Goal: Unfettered" element that isn't in the multi-select menu
+      const selected = await screen.findByText(/unfettered/i, { ignore: 'p' });
+      userEvent.click(selected);
+
+      unfetteredlabel = screen.queryByText(/unfettered/i);
       expect(unfetteredlabel).not.toBeInTheDocument();
     });
 
@@ -98,9 +105,10 @@ describe('GoalPicker', () => {
         />,
       );
 
-      const select = await screen.findByText('Select goal(s)');
+      const select = await screen.findByText('Select goal(s) or type here to create a new goal');
       userEvent.type(select, 'Unfettered');
-      fireEvent.click(document.querySelector('#react-select-5-option-2'));
+      const newGoal = await screen.findByText('Create "Unfettered"');
+      fireEvent.click(newGoal);
       const menuButton = await screen.findByRole('button', { name: /actions for goal 1/i });
 
       await waitFor(() => expect(menuButton).toBeVisible());
@@ -108,7 +116,7 @@ describe('GoalPicker', () => {
 
       const removeButton = await screen.findByRole('button', { name: 'Remove' });
       userEvent.click(removeButton);
-      expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
+      expect(await screen.findByText(withText('Select goal(s) or type here to create a new goal'))).toBeVisible();
     });
   });
 
@@ -132,7 +140,7 @@ describe('GoalPicker', () => {
 
       const removeButton = await screen.findByRole('button', { name: 'Remove' });
       userEvent.click(removeButton);
-      expect(await screen.findByText(withText('Select goal(s)'))).toBeVisible();
+      expect(await screen.findByText(withText('Select goal(s) or type here to create a new goal'))).toBeVisible();
     });
 
     it('can be updated, if new', async () => {
@@ -257,7 +265,7 @@ describe('GoalPicker', () => {
           selectedGoals={selectedGoals}
         />,
       );
-      const goal = await screen.findByText(withText('Select goal(s)'));
+      const goal = await screen.findByText(withText('Select goal(s) or type here to create a new goal'));
       expect(goal).toBeVisible();
     });
 

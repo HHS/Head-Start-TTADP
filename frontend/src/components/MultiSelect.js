@@ -92,6 +92,10 @@ function MultiSelect({
       marginRight: '4px',
     }),
     indicatorSeparator: () => ({ display: 'none' }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 2,
+    }),
   };
 
   /*
