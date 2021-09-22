@@ -8,6 +8,7 @@ import { withoutTopics, withTopics } from './topic';
 import { beforeLastSaveDate, afterLastSaveDate, withinLastSaveDates } from './updatedAt';
 import { withAuthor, withoutAuthor } from './author';
 import { withCollaborators, withoutCollaborators } from './collaborators';
+import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withoutStatus, withStatus } from './status';
 import { withRole, withoutRole } from './role';
 import withRegion from './region';
@@ -52,6 +53,10 @@ export const topicToQuery = {
   collaborators: {
     in: (query) => withCollaborators(query),
     nin: (query) => withoutCollaborators(query),
+  },
+  programSpecialist: {
+    in: (query) => withProgramSpecialist(query),
+    nin: (query) => withoutProgramSpecialist(query),
   },
   status: {
     in: (query) => withStatus(query),
