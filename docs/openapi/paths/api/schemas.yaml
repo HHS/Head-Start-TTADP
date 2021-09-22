@@ -1,0 +1,85 @@
+components:
+  schemas:
+    userObject:
+      type: object
+      description: Basic details about a user
+      properties:
+        id:
+          type: number
+          description: The user's id
+        name:
+          type: string
+          description: User's display name
+    activityReport:
+      type: object
+      description: >
+        This object represents a report on an activity that a specialist has completed
+        with 1 to many grants or non-grantees
+      properties:
+        id:
+          description: Activity Report identifier
+          type: number
+        type:
+          description: This is the type of resource
+          type: string
+          enum: ["activityReports"]
+        attributes:
+          type: object
+          properties:
+            author:
+              description: The creator of this activity report
+              $ref: "#/components/schemas/userObject"
+            collaborators:
+              description: Collaborating user ids
+              type: array
+              items:
+                $ref: "#/components/schemas/userObject"
+            displayId:
+              type: string
+              description: >
+                A human readable report ID, of the form `R[Region]-AR-[ID]`. A report with
+                the ID of 20 in region 8 would have a displayId of `R08-AR-20`
+            duration:
+              type: number
+              description: How long the activity took to complete, in hours
+            endDate:
+              type: string
+              format: date
+            reason:
+              type: array
+              description: Why the activity was conducted
+              items:
+                type: string
+            recipient:
+              type: string
+            region:
+              type: integer
+              minimum: 0
+              maximum: 13
+            reportCreationDate:
+              type: string
+              format: date-time
+            reportLastSaved:
+              type: string
+              format: date-time
+            # is there an important distinction between last updated vs last saved?
+            reportLastUpdated:
+              type: string
+              format: date-time
+            startDate:
+              type: string
+              format: date
+            topics:
+              type: array
+              description: Topics covered during the TTA
+              items:
+                type: string
+        links:
+          type: object
+          properties:
+            self:
+              description: The api URL to retrieve information about this activity report
+              type: string
+            html:
+              description: The display URL within TTAHub to view more details about this activity report
+              type: string
