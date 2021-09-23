@@ -1,10 +1,14 @@
-import { DECIMAL_BASE } from '../../constants';
+import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
-const grantee = '(SELECT UNNEST(ARRAY_AGG("Grantee"."id")) FROM "Grantees" AS "Grantee" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Grantee"."id" = "Grants"."granteeId" GROUP BY "ActivityReport"."id")';
-
 export default function withGranteeId(id) {
-  const [g] = id; // we're only parsing the first one right now
-  const granteeId = sequelize.escape(parseInt(g, DECIMAL_BASE));
-  return sequelize.literal(`${granteeId} = ANY ${grantee}`);
+  function reportInSubQuery(baseQuery, searchTerms, operator) {
+    return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} = ${sequelize.escape(term)})`));
+  }
+
+  const query = 'SELECT "ActivityRecipients"."activityReportId" FROM "Grantees" INNER JOIN "Grants" ON "Grants"."granteeId" = "Grantees"."id" INNER JOIN "ActivityRecipients" ON "ActivityRecipients"."grantId" = "Grants"."id" WHERE "Grantees".id';
+
+  return {
+    [Op.and]: reportInSubQuery(query, id, 'IN'),
+  };
 }
