@@ -55,7 +55,7 @@ const withWidgetData = (Widget, widgetId) => {
       id: PropTypes.string,
       topic: PropTypes.string,
       condition: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     })),
   };
 
