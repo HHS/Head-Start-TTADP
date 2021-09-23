@@ -56,6 +56,14 @@ describe('grantee record page', () => {
   beforeEach(() => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/grantee/1?region=45', theMightyGrantee);
+    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1', {
+      duration: '',
+      deliveryMethod: '',
+      numberOfParticipants: '',
+      inPerson: '',
+      sumDuration: '',
+      numParticipants: '',
+    });
     act(() => renderGranteeRecord());
   });
   afterEach(() => {

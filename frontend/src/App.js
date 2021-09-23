@@ -20,8 +20,6 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import Widgets from './pages/Widgets';
-
 import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
@@ -81,7 +79,6 @@ function App() {
   }
 
   const admin = isAdmin(user);
-  const enableWidgets = process.env.REACT_APP_ENABLE_WIDGETS === 'true';
 
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
@@ -124,14 +121,6 @@ function App() {
             <ActivityReport location={location} match={match} user={user} />
           )}
         />
-        {enableWidgets && (
-        <Route
-          path="/widgets"
-          render={() => (
-            <Widgets />
-          )}
-        />
-        )}
         <Route
           path="/region/:regionId/grantee/:granteeId"
           render={({ match }) => (

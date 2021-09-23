@@ -306,6 +306,82 @@ describe('filtersToScopes', () => {
           .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcluded.id]));
       });
     });
+
+    describe('for granteeId', () => {
+      let reportIncluded;
+      let reportExcluded;
+
+      let granteeIncluded;
+      let granteeExcluded;
+
+      let grantIncluded;
+      let grantExcluded;
+
+      let activityRecipientIncluded;
+      let activityRecipientExcluded;
+
+      let possibleIds;
+
+      beforeAll(async () => {
+        granteeIncluded = await Grantee.create({ id: 54, name: '1234' });
+        granteeExcluded = await Grantee.create({ id: 56, name: '4321' });
+
+        grantIncluded = await Grant.create({
+          id: granteeIncluded.id, number: 2234, granteeId: granteeIncluded.id,
+        });
+        grantExcluded = await Grant.create({
+          id: granteeExcluded.id, number: 2236, granteeId: granteeExcluded.id,
+        });
+
+        reportIncluded = await ActivityReport.create({ ...reportObject });
+        reportExcluded = await ActivityReport.create({ ...reportObject });
+
+        activityRecipientIncluded = await ActivityRecipient.create({
+          activityReportId: reportIncluded.id,
+          grantId: grantIncluded.id,
+        });
+        activityRecipientExcluded = await ActivityRecipient.create({
+          activityReportId: reportExcluded.id,
+          grantId: grantExcluded.id,
+        });
+        possibleIds = [
+          reportIncluded.id,
+          reportExcluded.id,
+          globallyExcluded.id,
+        ];
+      });
+
+      afterAll(async () => {
+        await ActivityRecipient.destroy({
+          where: {
+            id: [
+              activityRecipientIncluded.id,
+              activityRecipientExcluded.id,
+            ],
+          },
+        });
+        await ActivityReport.destroy({
+          where: { id: [reportIncluded.id, reportExcluded.id] },
+        });
+        await Grant.destroy({
+          where: { id: [grantIncluded.id, grantExcluded.id] },
+        });
+        await Grantee.destroy({
+          where: { id: [granteeIncluded.id, granteeExcluded.id] },
+        });
+      });
+
+      it('includes grantees with a matching id', async () => {
+        const filters = { 'granteeId.in': [granteeIncluded.id] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportIncluded.id]));
+      });
+    });
   });
 
   describe('startDate', () => {

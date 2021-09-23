@@ -31,6 +31,5 @@ export async function granteeByIdAndRegion(granteeId, regionId = null) {
       },
     ],
     raw: true,
-    logging: true,
   });
 }
