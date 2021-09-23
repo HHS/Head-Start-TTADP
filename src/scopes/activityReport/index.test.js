@@ -735,6 +735,108 @@ describe('filtersToScopes', () => {
     });
   });
 
+  describe('program specialist', () => {
+    let reportIncluded1;
+    let reportIncluded2;
+    let reportExcluded;
+
+    let granteeIncluded1;
+    let granteeIncluded2;
+    let granteeExcluded;
+
+    let grantIncluded1;
+    let grantIncluded2;
+    let grantExcluded;
+
+    let activityRecipientIncluded1;
+    let activityRecipientIncluded2;
+    let activityRecipientExcluded;
+
+    let possibleIds;
+
+    beforeAll(async () => {
+      granteeIncluded1 = await Grantee.create({ id: 120, name: 'Grantee 1 PS' });
+      granteeIncluded2 = await Grantee.create({ id: 121, name: 'Grantee 2 PS' });
+      granteeExcluded = await Grantee.create({ id: 122, name: 'Grantee 3 PS' });
+
+      grantIncluded1 = await Grant.create({
+        id: granteeIncluded1.id, number: 64968, granteeId: granteeIncluded1.id, programSpecialistName: 'Pat Bowman',
+      });
+      grantIncluded2 = await Grant.create({
+        id: granteeIncluded2.id, number: 85248, granteeId: granteeIncluded2.id, programSpecialistName: 'Patton Blake',
+      });
+      grantExcluded = await Grant.create({
+        id: granteeExcluded.id, number: 45877, granteeId: granteeExcluded.id, programSpecialistName: 'Jon Jones',
+      });
+
+      reportIncluded1 = await ActivityReport.create({ ...reportObject });
+      reportIncluded2 = await ActivityReport.create({ ...reportObject });
+      reportExcluded = await ActivityReport.create({ ...reportObject });
+
+      activityRecipientIncluded1 = await ActivityRecipient.create({
+        activityReportId: reportIncluded1.id,
+        grantId: grantIncluded1.id,
+      });
+      activityRecipientIncluded2 = await ActivityRecipient.create({
+        activityReportId: reportIncluded2.id,
+        grantId: grantIncluded2.id,
+      });
+      activityRecipientExcluded = await ActivityRecipient.create({
+        activityReportId: reportExcluded.id,
+        grantId: grantExcluded.id,
+      });
+      possibleIds = [
+        reportIncluded1.id,
+        reportIncluded2.id,
+        reportExcluded.id,
+        globallyExcluded.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityRecipient.destroy({
+        where: {
+          id: [
+            activityRecipientIncluded1.id,
+            activityRecipientIncluded2.id,
+            activityRecipientExcluded.id,
+          ],
+        },
+      });
+      await ActivityReport.destroy({
+        where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+      });
+      await Grant.destroy({
+        where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+      });
+      await Grantee.destroy({
+        where: { id: [granteeIncluded1.id, granteeIncluded2.id, granteeExcluded.id] },
+      });
+    });
+
+    it('includes program specialist with a partial match', async () => {
+      const filters = { 'programSpecialist.in': ['pat'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+    });
+
+    it('excludes grantees that do not partial match or have no grantees', async () => {
+      const filters = { 'programSpecialist.nin': ['pat'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcluded.id]));
+    });
+  });
+
   describe('defaultScope', () => {
     it('excludes deleted reports', async () => {
       const beginningARCount = await ActivityReport.count();
