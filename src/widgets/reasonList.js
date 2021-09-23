@@ -15,7 +15,6 @@ export default async function reasonList(scopes) {
       ],
     },
     raw: true,
-    includeIgnoreAttributes: false,
   });
 
   // Get counts for each reason.
@@ -48,5 +47,5 @@ export default async function reasonList(scopes) {
   });
 
   // Return only top 14.
-  return reasons.slice(0, 13);
+  return reasons;
 }
