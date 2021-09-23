@@ -3,8 +3,8 @@ import React from 'react';
 import {
   render, screen, fireEvent,
 } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
-import join from 'url-join';
 import RegionalDashboard from '../index';
 import formatDateRange from '../formatDateRange';
 
@@ -74,16 +74,18 @@ describe('Regional Dashboard page', () => {
       { lastThirtyDays: true, withSpaces: false, forDateTime: true },
     );
 
-    const params = `?&region.in[]=14&startDate.win=${thirtyDays}&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist`;
-    const widgetUrl = join('/', 'api', 'widgets', 'topicFrequencyGraph', params);
-    fetchMock.get(widgetUrl, []);
+    const url = `/api/widgets/topicFrequencyGraph?region.in[]=14&startDate.win=${thirtyDays}&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist`;
+    fetchMock.get(url, []);
 
     const specFilter = screen.getByRole('button', { name: /change filter by specialists/i });
     fireEvent.click(specFilter);
     const ecs = screen.getByRole('checkbox', { name: /select early childhood specialist \(ecs\)/i });
     fireEvent.click(ecs);
     const apply = screen.getByRole('button', { name: /apply filters/i });
-    fireEvent.click(apply);
+
+    act(() => {
+      fireEvent.click(apply);
+    });
 
     expect(fetchMock.called()).toBeTruthy();
     fetchMock.reset();
