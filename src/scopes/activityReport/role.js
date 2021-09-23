@@ -1,6 +1,35 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
+function userQuery(escapedRoles) {
+  return `SELECT "ActivityReports"."id" FROM "Users" INNER JOIN "ActivityReports" ON "ActivityReports"."userId" = "Users"."id" WHERE ARRAY[${escapedRoles}] <@ "Users".role::text[]`;
+}
+
+function collaboratorQuery(escapedRoles) {
+  return `SELECT "ActivityReportCollaborators"."activityReportId" FROM "Users" INNER JOIN "ActivityReportCollaborators" ON "ActivityReportCollaborators"."userId" = "Users"."id" WHERE ARRAY[${escapedRoles}] <@ "Users".role::text[]`;
+}
+
+function generateWhere(escapedSearchTerms, exclude) {
+  const userSubQuery = userQuery(escapedSearchTerms);
+  const collaboratorSubQuery = collaboratorQuery(escapedSearchTerms);
+
+  if (exclude) {
+    return {
+      [Op.and]: [
+        sequelize.literal(`("ActivityReport"."id" NOT IN (${userSubQuery}))`),
+        sequelize.literal(`("ActivityReport"."id" NOT IN (${collaboratorSubQuery}))`),
+      ],
+    };
+  }
+
+  return {
+    [Op.or]: [
+      sequelize.literal(`("ActivityReport"."id" IN (${userSubQuery}))`),
+      sequelize.literal(`("ActivityReport"."id" IN (${collaboratorSubQuery}))`),
+    ],
+  };
+}
+
 function escapeRole(role) {
   // our values (which doesn't include all db roles, only the roles selectable on the front end)
   const acceptableRoles = [
@@ -21,32 +50,25 @@ function escapeRole(role) {
 }
 
 export function withRole(roles) {
-  const rolesString = roles.map((role) => escapeRole(role)).join(',');
+  // filter removes empty strings
+  const acceptableRoles = roles.map((role) => escapeRole(role)).filter((role) => role);
 
   // we shan't pass sequelize an empty array
-  if (!rolesString) {
+  if (acceptableRoles.length === 0) {
     return {};
   }
 
-  return {
-    [Op.or]: [
-      sequelize.literal(`SELECT ARRAY((SELECT unnest("role") FROM "Users" where "ActivityReport"."userId" = "Users"."id"))::text[] && ARRAY[${rolesString}]`),
-      sequelize.literal(` (SELECT ARRAY ((SELECT unnest("role") FROM "Users" INNER JOIN "ActivityReportCollaborators" ON "Users"."id" = "ActivityReportCollaborators"."userId" AND "ActivityReport"."id" = "ActivityReportCollaborators"."activityReportId"))::text[] && ARRAY[${rolesString}])`),
-    ],
-  };
+  return generateWhere(acceptableRoles, false);
 }
 
 export function withoutRole(roles) {
-  const rolesString = roles.map((role) => escapeRole(role)).join(',');
+  // filter removes empty strings
+  const acceptableRoles = roles.map((role) => escapeRole(role)).filter((role) => role);
 
   // we shan't pass sequelize an empty array
-  if (!rolesString) {
+  if (acceptableRoles.length === 0) {
     return {};
   }
 
-  return {
-    [Op.not]: [
-      sequelize.literal(`(SELECT ARRAY((SELECT unnest("role") FROM "Users" where "ActivityReport"."userId" = "Users"."id"))::text[] && ARRAY[${rolesString}]) OR  (SELECT ARRAY ((SELECT unnest("role") FROM "Users" INNER JOIN "ActivityReportCollaborators" ON "Users"."id" = "ActivityReportCollaborators"."userId" AND "ActivityReport"."id" = "ActivityReportCollaborators"."activityReportId"))::text[] && ARRAY[${rolesString}])`),
-    ],
-  };
+  return generateWhere(acceptableRoles, true);
 }
