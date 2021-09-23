@@ -101,6 +101,12 @@ const commonFilters = [
     conditions: SELECT_CONDITIONS,
     renderInput: selectRoleInput,
   },
+  {
+    id: 'programSpecialist',
+    display: 'Program Specialist',
+    conditions: SELECT_CONDITIONS,
+    renderInput: singleSelectInput,
+  },
 ];
 
 const myAlertsFilters = [
