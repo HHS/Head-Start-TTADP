@@ -54,6 +54,7 @@ function Filter({ applyFilters, forMyAlerts }) {
     // Topic or condition has changed so we need to clear out the query
     if (name !== 'query') {
       filter.query = '';
+      filter.condition = '';
     }
 
     filter[name] = value;
