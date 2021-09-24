@@ -80,14 +80,14 @@ export default function GranteeRecord({ match }) {
     <>
       <span className="text-bold">Grantee TTA Record</span>
       <h1 className="landing margin-top-1">{granteeName}</h1>
-      <GranteeOverview
-        filters={filters}
-      />
       <Grid row>
         <Grid col={6}>
           <GranteeSummary summary={granteeSummary} />
         </Grid>
       </Grid>
+      <GranteeOverview
+        filters={filters}
+      />
     </>
   );
 }
