@@ -47,6 +47,7 @@ export default function GranteeResults(
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
+          disabled={loading}
         >
           {displayName}
         </button>
