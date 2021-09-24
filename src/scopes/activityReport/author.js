@@ -1,11 +1,11 @@
-import filterArray from './utils';
+import { filterAssociation } from './utils';
 
-const author = '(SELECT STRING_AGG("Users".name, \',\') FROM "Users" where "ActivityReport"."userId" = "Users"."id" GROUP BY "ActivityReport"."id")';
+const author = 'SELECT "ActivityReports"."id" FROM "Users" INNER JOIN "ActivityReports" ON "ActivityReports"."userId" = "Users"."id" WHERE "Users".name';
 
-export function withAuthor(names, sequelize) {
-  return filterArray(author, names, false, sequelize);
+export function withAuthor(names) {
+  return filterAssociation(author, names, false);
 }
 
-export function withoutAuthor(names, sequelize) {
-  return filterArray(author, names, true, sequelize);
+export function withoutAuthor(names) {
+  return filterAssociation(author, names, true);
 }
