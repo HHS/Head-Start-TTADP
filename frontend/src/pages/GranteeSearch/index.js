@@ -13,7 +13,6 @@ function GranteeSearch({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
 
-  // eslint-disable-next-line max-len
   const [appliedRegion, setAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [query, setQuery] = useState('');
   const [granteeResults, setGranteeResults] = useState([]);
@@ -61,9 +60,9 @@ function GranteeSearch({ user }) {
             </button>
           </form>
         </Grid>
-        <div>
+        <main>
           {granteeResults.map((grantee) => <h2 key={grantee.id}>{grantee.name}</h2>)}
-        </div>
+        </main>
       </div>
     </>
   );
