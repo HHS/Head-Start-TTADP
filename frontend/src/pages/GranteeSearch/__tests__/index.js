@@ -6,6 +6,8 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
@@ -21,18 +23,31 @@ const userBluePrint = {
   permissions: [],
 };
 
+const history = createMemoryHistory();
+
+const res = {
+  count: 1,
+  rows: [
+    {
+      id: 2,
+      name: 'major tom',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+  ],
+};
+
 const granteeUrl = join('/', 'api', 'grantee');
 
 describe('the grantee search page', () => {
   const renderGranteeSearch = (user) => {
-    render(<GranteeSearch user={user} />);
+    render(<Router history={history}><GranteeSearch user={user} /></Router>);
   };
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('renders the heading and the region select', async () => {
+  beforeEach(() => {
     const user = {
       ...userBluePrint,
       permissions: [
@@ -48,38 +63,24 @@ describe('the grantee search page', () => {
         },
       ],
     };
+
     renderGranteeSearch(user);
+    const query = 'ground control';
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region=1&sortBy=name&direction=desc&offset=0');
+    fetchMock.get(url, res);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    fetchMock.reset();
+  });
+
+  it('renders the heading and the region select', async () => {
     expect(screen.getByRole('heading', { name: /grantee records/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open regional select menu/i })).toBeInTheDocument();
   });
 
   it('the regional select works', async () => {
-    const user = {
-      ...userBluePrint,
-      homeRegionId: 14,
-      permissions: [
-        {
-          userId: 1,
-          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-          regionId: 1,
-        },
-        {
-          userId: 1,
-          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-          regionId: 2,
-        },
-      ],
-    };
-
-    const res = [{
-      id: 2, name: 'major tom',
-    }];
-
-    renderGranteeSearch(user);
-    const query = 'ground control';
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region=2');
-    fetchMock.get(url, res);
-
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
@@ -96,52 +97,48 @@ describe('the grantee search page', () => {
     fireEvent.click(region2);
     const applyFilters = screen.getByRole('button', { name: /apply filters for the regional select menu/i });
     fireEvent.click(applyFilters);
-    userEvent.type(searchBox, query);
+    userEvent.type(searchBox, 'ground control');
+
+    fetchMock.get('/api/grantee/search?s=ground%20control&region=2&sortBy=name&direction=desc&offset=0', res);
 
     await act(async () => {
       fireEvent.click(button);
     });
 
-    await waitFor(() => expect(screen.getByText(res[0].name)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('major tom')).toBeInTheDocument());
   });
 
   it('the search bar works', async () => {
-    const user = {
-      ...userBluePrint,
-      permissions: [
-        {
-          userId: 1,
-          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-          regionId: 1,
-        },
-        {
-          userId: 1,
-          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-          regionId: 2,
-        },
-      ],
-    };
-
-    const res = [{
-      id: 2, name: 'major tom',
-    }];
-
-    renderGranteeSearch(user);
-    const query = 'your circuits dead';
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region=1');
-    fetchMock.get(url, res);
-
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
     expect(button).toBeInTheDocument();
     expect(searchBox).toBeInTheDocument();
-    userEvent.type(searchBox, query);
+    userEvent.type(searchBox, 'ground control');
 
     await act(async () => {
       fireEvent.click(button);
     });
 
-    await waitFor(() => expect(screen.getByText(res[0].name)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('major tom')).toBeInTheDocument());
+  });
+
+  it('calls for a sort', async () => {
+    const sortButton = screen.getByRole('button', { name: 'Program Specialist. Activate to sort ascending' });
+    const searchBox = screen.getByRole('searchbox');
+    const button = screen.getByRole('button', { name: /search for matching grantees/i });
+
+    expect(button).toBeInTheDocument();
+    expect(searchBox).toBeInTheDocument();
+    userEvent.type(searchBox, 'ground control');
+
+    fetchMock.get('/api/grantee/search?s=ground%20control&region=1&sortBy=programSpecialist&direction=desc&offset=0', res);
+
+    await act(async () => {
+      fireEvent.click(button);
+      sortButton.click(button);
+    });
+
+    await waitFor(() => expect(screen.getByText('major tom')).toBeInTheDocument());
   });
 });
