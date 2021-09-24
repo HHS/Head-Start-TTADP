@@ -28,6 +28,7 @@ Cons:
 
 * API is highly coupled to TTA Hub UI needs, will become more difficult to change rapidly
 * authentication is based on sessions stored in browser cookies
+* authorization fully limited to existing TTA Hub roles
 
 #### Create a new API layer for external partners
 
@@ -38,6 +39,7 @@ Pros:
 * existing API can continue to be optimized for UI considerations
 * new API can be more rigidly backwards-compatible
 * authentication schemes can be easily customized for each use
+* authorization can be scope-based and integrated into the full HSES OAuth implementation
 
 Cons:
 

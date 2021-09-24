@@ -30,7 +30,7 @@ components:
               description: The creator of this activity report
               $ref: "#/components/schemas/userObject"
             collaborators:
-              description: Collaborating user ids
+              description: Collaborating users
               type: array
               items:
                 $ref: "#/components/schemas/userObject"
@@ -50,8 +50,6 @@ components:
               description: Why the activity was conducted
               items:
                 type: string
-            recipient:
-              type: string
             region:
               type: integer
               minimum: 0
@@ -59,10 +57,6 @@ components:
             reportCreationDate:
               type: string
               format: date-time
-            reportLastSaved:
-              type: string
-              format: date-time
-            # is there an important distinction between last updated vs last saved?
             reportLastUpdated:
               type: string
               format: date-time
