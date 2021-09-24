@@ -5,8 +5,10 @@ import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import RegionalSelect from '../../components/RegionalSelect';
+import GranteeResults from './components/GranteeResults';
 import { getUserRegions } from '../../permissions';
 import { searchGrantees } from '../../fetchers/grantee';
+import { GRANTEES_PER_PAGE } from '../../Constants';
 import './index.css';
 
 function GranteeSearch({ user }) {
@@ -14,22 +16,66 @@ function GranteeSearch({ user }) {
   const regions = getUserRegions(user);
 
   const [appliedRegion, setAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
+  const [granteeCount, setGranteeCount] = useState(0);
   const [query, setQuery] = useState('');
-  const [granteeResults, setGranteeResults] = useState([]);
+  const [results, setResults] = useState([]);
+  const [activePage, setActivePage] = useState(1);
+  const [offset, setOffset] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [sortConfig, setSortConfig] = useState({
+    sortBy: 'name',
+    direction: 'desc',
+  });
+
+  async function fetchGrantees() {
+    if (!query || loading) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { rows, count } = await searchGrantees(query, appliedRegion, { ...sortConfig, offset });
+      setResults(rows);
+      setGranteeCount(count);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      setResults([]);
+      setGranteeCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function onApplyRegion(region) {
     setAppliedRegion(region.value);
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
-
-    if (!query) {
+  async function requestSort(sortBy) {
+    const config = sortConfig;
+    if (config.sortBy === sortBy) {
+      config.direction = config.direction === 'asc' ? 'desc' : 'asc';
+      setSortConfig(config);
+      await fetchGrantees();
       return;
     }
 
-    const results = await searchGrantees(query, appliedRegion);
-    setGranteeResults(results);
+    config.sortBy = sortBy;
+    setSortConfig(config);
+    await fetchGrantees();
+  }
+
+  async function handlePageChange(pageNumber) {
+    if (!loading) {
+      setActivePage(pageNumber);
+      setOffset((pageNumber - 1) * GRANTEES_PER_PAGE);
+    }
+    await fetchGrantees();
+  }
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    await fetchGrantees();
   }
 
   return (
@@ -53,7 +99,7 @@ function GranteeSearch({ user }) {
               )}
           <form role="search" className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
             <input type="search" name="search" value={query} className="ttahub-grantee-search--search-input" onChange={(e) => setQuery(e.target.value)} />
-            <button type="submit" className="ttahub-grantee-search--submit-button usa-button">
+            <button type="submit" className="ttahub-grantee-search--submit-button usa-button" disabled={loading}>
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}
               <span className="sr-only">Search for matching grantees</span>
@@ -61,7 +107,18 @@ function GranteeSearch({ user }) {
           </form>
         </Grid>
         <main>
-          {granteeResults.map((grantee) => <h2 key={grantee.id}>{grantee.name}</h2>)}
+          <GranteeResults
+            region={appliedRegion}
+            grantees={results}
+            loading={loading}
+            activePage={activePage}
+            offset={offset}
+            perPage={GRANTEES_PER_PAGE}
+            count={granteeCount}
+            handlePageChange={handlePageChange}
+            requestSort={requestSort}
+            sortConfig={sortConfig}
+          />
         </main>
       </div>
     </>

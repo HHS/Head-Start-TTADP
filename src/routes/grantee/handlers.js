@@ -11,11 +11,12 @@ const logContext = {
 // eslint-disable-next-line import/prefer-default-export
 export async function searchGrantees(req, res) {
   try {
-    const { s, region, sortBy } = req.query;
+    const {
+      s, region, sortBy, direction, offset,
+    } = req.query;
     const regionId = region ? parseInt(region, DECIMAL_BASE) : null;
-    const sort = sortBy || 'name';
 
-    const grantees = await granteesByNameAndRegion(s, regionId, sort);
+    const grantees = await granteesByNameAndRegion(s, regionId, sortBy, direction, offset);
     if (!grantees) {
       res.sendStatus(404);
       return;

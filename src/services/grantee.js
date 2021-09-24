@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
 import { Grant, Grantee } from '../models';
+import orderGranteesBy from '../lib/orderGranteesBy';
+import { GRANTEES_PER_PAGE } from '../constants';
 
 export async function allGrantees() {
   return Grantee.findAll({
@@ -21,7 +23,7 @@ export async function allGrantees() {
  *
  * @returns {Promise} grantee results
  */
-export async function granteesByNameAndRegion(query, regionId) {
+export async function granteesByNameAndRegion(query, regionId, sortBy, direction, offset) {
   // fix the query
   const q = `%${query}%`;
 
@@ -68,11 +70,13 @@ export async function granteesByNameAndRegion(query, regionId) {
     };
   }
 
-  return Grantee.findAll({
+  const limit = GRANTEES_PER_PAGE;
+
+  return Grantee.findAndCountAll({
     where: granteeWhere,
     include: [
       {
-        attributes: ['id', 'number', 'regionId'],
+        attributes: ['id', 'number', 'regionId', 'programSpecialistName'],
         model: Grant,
         as: 'grants',
         where: {
@@ -80,6 +84,8 @@ export async function granteesByNameAndRegion(query, regionId) {
         },
       },
     ],
-    limit: 12,
+    limit,
+    offset,
+    order: orderGranteesBy(sortBy, direction),
   });
 }

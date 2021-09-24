@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Table } from '@trussworks/react-uswds';
 import Pagination from 'react-js-pagination';
 import Container from '../../../components/Container';
 import { renderTotal } from '../../Landing';
+import './GranteeResults.css';
 
 export default function GranteeResults(
   {
@@ -43,8 +43,7 @@ export default function GranteeResults(
           onClick={() => {
             requestSort(name);
           }}
-          onKeyPress={() => requestSort(name)}
-          className={`sortable ${sortClassName}`}
+          className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
@@ -56,7 +55,7 @@ export default function GranteeResults(
   };
 
   return (
-    <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
+    <Container className="landing ttahub-grantee-results maxw-desktop" padding={0} loading={loading} loadingLabel="Grantee search results loading">
       <span className="smart-hub--table-nav">
         <span aria-label="Pagination for activity reports">
           <span
@@ -85,30 +84,28 @@ export default function GranteeResults(
           </span>
         </span>
       </span>
-      <div className="usa-table-container--scrollable">
-        <Table className="usa-table usa-table--borderless usa-table--striped">
-          <caption>
-            Grantees
-            <p className="usa-sr-only">with sorting and pagination</p>
-          </caption>
-          <thead>
-            <tr>
-              {renderColumnHeader('Region', 'regionId')}
-              {renderColumnHeader('Grantee Name', 'name')}
-              {renderColumnHeader('Program Specialist', 'programSpecialist')}
+      <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full">
+        <caption>
+          Grantees
+          <p className="usa-sr-only">with sorting and pagination</p>
+        </caption>
+        <thead>
+          <tr>
+            {renderColumnHeader('Region', 'regionId')}
+            {renderColumnHeader('Grantee Name', 'name')}
+            {renderColumnHeader('Program Specialist', 'programSpecialist')}
+          </tr>
+        </thead>
+        <tbody>
+          {grantees.map((grantee) => (
+            <tr key={grantee.id}>
+              <td>{region}</td>
+              <td><Link to={`/region/${region}/grantee/${grantee.id}`}>{grantee.name}</Link></td>
+              <td>{Array.from(new Set(grantee.grants.map((grant) => grant.programSpecialistName))).join('\n')}</td>
             </tr>
-          </thead>
-          <tbody>
-            {grantees.map((grantee) => (
-              <tr>
-                <td>{region}</td>
-                <td><Link to={`/region/${region}/grantee/${grantee.id}`}>{grantee.name}</Link></td>
-                <td>{grantee.programSpecialist}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </Container>
   );
 }
@@ -119,7 +116,7 @@ GranteeResults.propTypes = {
     name: PropTypes.string,
     id: PropTypes.number,
     programSpecialist: PropTypes.string,
-  })).isRequired,
+  })),
   loading: PropTypes.bool.isRequired,
   activePage: PropTypes.number.isRequired,
   offset: PropTypes.number.isRequired,
@@ -131,4 +128,8 @@ GranteeResults.propTypes = {
     sortBy: PropTypes.string,
     direction: PropTypes.string,
   }).isRequired,
+};
+
+GranteeResults.defaultProps = {
+  grantees: [],
 };
