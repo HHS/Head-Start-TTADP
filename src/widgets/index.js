@@ -4,6 +4,7 @@ import totalHrsAndGranteeGraph from './totalHrsAndGranteeGraph';
 import reasonList from './reasonList';
 import dashboardOverview from './dashboardOverview';
 import topicFrequencyGraph from './topicFrequencyGraph';
+import grantsList from './grantsList';
 
 /*
   All widgets need to be added to this object
@@ -15,4 +16,5 @@ export default {
   reasonList,
   dashboardOverview,
   topicFrequencyGraph,
+  grantsList,
 };
