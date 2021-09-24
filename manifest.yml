@@ -2,7 +2,7 @@
 applications:
   - name: tta-smarthub-((env))
     buildpacks:
-      - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.7.54
+      - nodejs_buildpack
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
