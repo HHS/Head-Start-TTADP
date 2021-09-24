@@ -1,9 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import widgets from '../../widgets';
-import { filtersToScopes } from '../../scopes/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
+import { determineFiltersToScopes } from '../../scopes';
 
 const namespace = 'SERVICE:WIDGETS';
 
@@ -14,6 +14,7 @@ const logContext = {
 export async function getWidget(req, res) {
   try {
     const { widgetId } = req.params;
+    const { widgetType } = req.params;
     const getWidgetData = widgets[widgetId];
 
     if (!getWidgetData) {
@@ -24,8 +25,8 @@ export async function getWidget(req, res) {
     // This returns the query object with "region" property filtered by user permissions
     const query = await setReadRegions(req.query, req.session.userId, true);
 
-    // convert the query to scopes
-    const scopes = filtersToScopes(query);
+    // Determine what scopes we need.
+    const scopes = determineFiltersToScopes(widgetType, query);
 
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
