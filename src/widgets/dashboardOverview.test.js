@@ -1,7 +1,7 @@
 import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
-import { filtersToScopes } from '../scopes/activityReport';
+import determineFiltersToScopes from '../scopes';
 import dashboardOverview from './dashboardOverview';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
@@ -159,7 +159,7 @@ describe('Dashboard overview widget', () => {
 
   it('retrieves data', async () => {
     const query = { 'region.in': [17], 'startDate.win': '2021/01/01-2021/01/01' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await dashboardOverview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('4');
@@ -171,7 +171,7 @@ describe('Dashboard overview widget', () => {
 
   it('accounts for different date ranges', async () => {
     const query = { 'region.in': [17], 'startDate.win': '2021/06/01-2021/06/02' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await dashboardOverview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('1');
@@ -182,7 +182,7 @@ describe('Dashboard overview widget', () => {
   });
   it('accounts for different regions', async () => {
     const query = { 'region.in': [18], 'startDate.win': '2021/01/01-2021/01/01' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await dashboardOverview(scopes, formatQuery(query));
 
     expect(data.numReports).toBe('1');
