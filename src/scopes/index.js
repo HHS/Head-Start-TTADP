@@ -1,14 +1,11 @@
-import { filtersToScopes } from './activityReport';
-import { granteeReportFiltersToScopes } from './grantees';
+import { activityReportsFiltersToScopes as activityReport } from './activityReport';
+import { granteeReportFiltersToScopes as grantee } from './grantees';
 
-// eslint-disable-next-line import/prefer-default-export
-export function determineFiltersToScopes(widgetType, filters) {
-  // Convert the query to scopes.
-  if (widgetType === 'grantee') {
-    // Grantee.
-    return granteeReportFiltersToScopes(filters);
-  }
+const widgetTypes = {
+  activityReport,
+  grantee,
+};
 
-  // Activity Report.
-  return filtersToScopes(filters);
+export default function determineFiltersToScopes(widgetType = 'activityReport', filters) {
+  return widgetTypes[widgetType](filters);
 }

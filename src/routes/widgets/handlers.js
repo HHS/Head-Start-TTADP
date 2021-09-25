@@ -3,7 +3,7 @@ import widgets from '../../widgets';
 import handleErrors from '../../lib/apiErrorHandler';
 import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
-import { determineFiltersToScopes } from '../../scopes';
+import determineFiltersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:WIDGETS';
 
