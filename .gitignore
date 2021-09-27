@@ -31,3 +31,6 @@ newrelic_agent.log
 
 # Temp files
 .tmp
+
+# DB files
+*.sql
