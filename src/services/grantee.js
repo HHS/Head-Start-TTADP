@@ -33,8 +33,6 @@ export async function granteeByScopes(granteeId, grantScopes) {
     ],
   });
 
-  console.log('\n\n\n\n\nFindOne:', granteeRes);
-
   // Get Grants.
   const grantsToUse = granteeRes ? granteeRes.grants : [];
 

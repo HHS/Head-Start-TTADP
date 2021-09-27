@@ -1,5 +1,5 @@
 import { DECIMAL_BASE } from '../../constants';
-import { granteeByIdAndRegion } from '../../services/grantee';
+import { granteeByScopes } from '../../services/grantee';
 import handleErrors from '../../lib/apiErrorHandler';
 
 const namespace = 'SERVICE:GRANTEE';
@@ -14,7 +14,7 @@ export async function getGrantee(req, res) {
     const { granteeId } = req.params;
     const { region } = req.query;
     const regionId = region ? parseInt(region, DECIMAL_BASE) : null;
-    const grantee = await granteeByIdAndRegion(granteeId, regionId);
+    const grantee = await granteeByScopes(granteeId, regionId);
     if (!grantee) {
       res.sendStatus(404);
       return;
