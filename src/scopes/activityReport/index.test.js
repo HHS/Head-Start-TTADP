@@ -816,7 +816,7 @@ describe('determineFiltersToScopes', () => {
 
     it('includes program specialist with a partial match', async () => {
       const filters = { 'programSpecialist.in': ['pat'] };
-      const scope = filtersToScopes(filters);
+      const scope = determineFiltersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
@@ -827,7 +827,7 @@ describe('determineFiltersToScopes', () => {
 
     it('excludes grantees that do not partial match or have no grantees', async () => {
       const filters = { 'programSpecialist.nin': ['pat'] };
-      const scope = filtersToScopes(filters);
+      const scope = determineFiltersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });

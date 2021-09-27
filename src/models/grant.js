@@ -48,8 +48,6 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        console.log('MODEL Grantee ID:', this.granteeId);
-        console.log('MODEL Grantee Created At:', this.createdAt);
         return `${this.grantee.name} - ${this.number}`;
       },
     },
