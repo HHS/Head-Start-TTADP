@@ -91,7 +91,7 @@ function App() {
       />
       <Switch>
         <Route
-          path="/activity-reports/legacy/:legacyId"
+          path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
             <LegacyReport
               match={match}
@@ -112,13 +112,13 @@ function App() {
         />
 
         <Route
-          path="/activity-reports/view/:activityReportId"
+          path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
             <ApprovedActivityReport location={location} match={match} user={user} />
           )}
         />
         <Route
-          path="/activity-reports/:activityReportId/:currentPage?"
+          path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <ActivityReport location={location} match={match} user={user} />
           )}
