@@ -9,12 +9,12 @@ import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import moment from 'moment';
-
-import Users from '../users';
+import Users, { setFeatureFromURL } from '../users';
 import { SCOPE_IDS } from '../../../Constants';
 
 describe('User Page', () => {
   const usersUrl = join('/api', 'admin', 'users');
+  const featuresUrl = join('/api', 'admin', 'users', 'features');
   const userPatchUrl = join(usersUrl, '3');
 
   const history = createMemoryHistory();
@@ -22,6 +22,7 @@ describe('User Page', () => {
 
   it('displays an error if users are not "fetch-able"', async () => {
     fetchMock.get(usersUrl, 500);
+    fetchMock.get(featuresUrl, []);
     render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Unable to fetch users');
@@ -41,6 +42,7 @@ describe('User Page', () => {
           scopeId: SCOPE_IDS.SITE_ACCESS,
           regionId: 14,
         }],
+        flags: [],
       },
       {
         id: 3,
@@ -54,6 +56,7 @@ describe('User Page', () => {
           scopeId: SCOPE_IDS.SITE_ACCESS,
           regionId: 14,
         }],
+        flags: [],
       },
       {
         id: 4,
@@ -67,21 +70,37 @@ describe('User Page', () => {
           scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
           regionId: 1,
         }],
+        flags: ['part_goat'],
       },
     ];
 
+    const renderUsers = () => {
+      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+    };
+
     beforeEach(() => {
       fetchMock.get(usersUrl, users);
+      fetchMock.get(featuresUrl, ['part_goat']);
+    });
+
+    describe('with fetched users, url filtering works', () => {
+      it('filters by url param', async () => {
+        const spy = jest.fn();
+        setFeatureFromURL('?flag=part_goat', spy);
+        expect(spy).toHaveBeenCalled();
+      });
+
+      it('doesn\'t filter with no params', () => {
+        const spy = jest.fn();
+        setFeatureFromURL('', spy);
+        expect(spy).not.toHaveBeenCalled();
+      });
     });
 
     describe('with no user selected', () => {
-      const renderUsers = () => {
-        render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
-      };
-
       it('user list is filterable by name', async () => {
         renderUsers();
-        const filter = await screen.findByLabelText('Filter Users');
+        const filter = await screen.findByLabelText('Filter users by name');
         userEvent.type(filter, 'Harry');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
@@ -91,7 +110,7 @@ describe('User Page', () => {
 
       it('User list is filterable by email', async () => {
         renderUsers();
-        const filter = await screen.findByLabelText('Filter Users');
+        const filter = await screen.findByLabelText('Filter users by name');
         userEvent.type(filter, '@hogwarts.com');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
@@ -100,7 +119,7 @@ describe('User Page', () => {
 
       it('user filtering is case-insentive', async () => {
         renderUsers();
-        const filter = await screen.findByLabelText('Filter Users');
+        const filter = await screen.findByLabelText('Filter users by name');
         userEvent.type(filter, 'harry');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
@@ -126,6 +145,33 @@ describe('User Page', () => {
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);
         expect(links[0]).toHaveTextContent('Hermione Granger');
+      });
+
+      it('User list feature \'all\' filter works', async () => {
+        renderUsers();
+        const featureSelect = await screen.findByRole('combobox', { name: /filter users by feature/i });
+        userEvent.selectOptions(featureSelect, 'all');
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(1);
+      });
+
+      it('User list feature \'none\' filter works', async () => {
+        renderUsers();
+        const featureSelect = await screen.findByRole('combobox', { name: /filter users by feature/i });
+        userEvent.selectOptions(featureSelect, 'none');
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(3);
+      });
+
+      it('User list feature specific filter works', async () => {
+        renderUsers();
+        const featureSelect = await screen.findByRole('combobox', { name: /filter users by feature/i });
+        userEvent.selectOptions(featureSelect, 'part_goat');
+        const sideNav = screen.getByTestId('sidenav');
+        const links = within(sideNav).getAllByRole('link');
+        expect(links.length).toBe(1);
       });
 
       it('allows a user to be selected', async () => {
@@ -160,6 +206,7 @@ describe('User Page', () => {
           homeRegionId: 1,
           role: ['Grantee Specialist'],
           permissions: [],
+          flags: ['my_tummy_hurts'],
         });
         render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
         const save = await screen.findByRole('button', { name: 'Save' });

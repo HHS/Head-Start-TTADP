@@ -1,8 +1,9 @@
 import db, {
   User, Permission,
 } from '../../models';
+import { featureFlags } from '../../models/user';
 import {
-  getUsers, getUser, deleteUser, createUser, updateUser,
+  getUsers, getUser, deleteUser, createUser, updateUser, getFeatures,
 } from './user';
 import handleErrors from '../../lib/apiErrorHandler';
 
@@ -31,6 +32,7 @@ const mockUser = {
       scopeId: 1,
     },
   ],
+  flags: [],
 };
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
@@ -98,6 +100,11 @@ describe('User route handler', () => {
     await getUsers(mockRequest, mockResponse);
 
     expect(mockResponse.json).toHaveBeenCalled();
+  });
+
+  it('properly fetches features', async () => {
+    await getFeatures(mockRequest, mockResponse);
+    expect(mockResponse.json).toHaveBeenCalledWith(featureFlags);
   });
 
   it('Creates a new user', async () => {

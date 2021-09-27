@@ -265,6 +265,9 @@ components:
           type: string
         lastLogin:
           type: string
+        flags:
+          type: array
+          description: List of applicable feature flags
         permissions:
           type: array
           items:
