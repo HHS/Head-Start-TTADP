@@ -2,6 +2,7 @@ import express from 'express';
 import {
   User, Permission, sequelize,
 } from '../../models';
+import { featureFlags } from '../../models/user';
 import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
@@ -116,8 +117,17 @@ export async function deleteUser(req, res) {
   }
 }
 
+export async function getFeatures(req, res) {
+  try {
+    res.json(featureFlags);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 const router = express.Router();
 
+router.get('/features', getFeatures);
 router.get('/:userId', getUser);
 router.get('/', getUsers);
 router.post('/', createUser);

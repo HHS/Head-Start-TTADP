@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-
 import UserContext from '../../UserContext';
+
 import Container from '../../components/Container';
 
 function Home() {
