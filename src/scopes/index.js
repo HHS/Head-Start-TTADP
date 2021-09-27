@@ -1,9 +1,9 @@
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { granteeReportFiltersToScopes as grantee } from './grantees';
+import { grantsReportFiltersToScopes as grant } from './grantees';
 
 const widgetTypes = {
   activityReport,
-  grantee,
+  grant,
 };
 
 export default function determineFiltersToScopes(widgetType = 'activityReport', filters) {

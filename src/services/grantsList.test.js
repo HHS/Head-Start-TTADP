@@ -3,7 +3,7 @@ import db, {
 } from '../models';
 import determineFiltersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
-import grantsList from './grantsList';
+import { granteeByScopes } from './grantee';
 
 const GRANTEE_ID = 102370;
 const GRANT_ID_ONE = 881037;
@@ -91,37 +91,37 @@ describe('Grant list widget', () => {
     jest.clearAllMocks();
   });
   it('retrieves grants list for specified grantee', async () => {
-    const query = { 'region.in': ['8'], 'grantee.in': [GRANTEE_ID], 'startDate.win': '2021/01/01-2021/02/28' };
-    const scopes = determineFiltersToScopes('grantee', query);
-    const res = await grantsList(scopes, query);
+    const query = { 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' };
+    const grantScopes = determineFiltersToScopes('grant', query);
+    const res = await granteeByScopes([GRANTEE_ID], grantScopes);
 
     // Grant 1.
-    expect(res.length).toBe(2);
-    expect(res[0].id).toBe(GRANT_ID_ONE);
-    expect(res[0].status).toBe('Active');
-    expect(res[0].regionId).toBe(8);
+    expect(res.grantsToReturn.length).toBe(2);
+    expect(res.grantsToReturn[0].id).toBe(GRANT_ID_ONE);
+    expect(res.grantsToReturn[0].status).toBe('Active');
+    expect(res.grantsToReturn[0].regionId).toBe(8);
 
     // Grant 1 Program Types.
-    expect(res[0].programTypes.length).toBe(3);
-    expect(res[0].programTypes[0]).toBe('Early Head Start (ages 0-3)');
-    expect(res[0].programTypes[1]).toBe('Head Start (ages 3-5)');
-    expect(res[0].programTypes[2]).toBe('EHS-CCP');
+    expect(res.grantsToReturn[0].programTypes.length).toBe(3);
+    expect(res.grantsToReturn[0].programTypes[0]).toBe('Early Head Start (ages 0-3)');
+    expect(res.grantsToReturn[0].programTypes[1]).toBe('Head Start (ages 3-5)');
+    expect(res.grantsToReturn[0].programTypes[2]).toBe('EHS-CCP');
 
     // Grant 2.
-    expect(res[1].id).toBe(GRANT_ID_TWO);
-    expect(res[1].status).toBe('Inactive');
-    expect(res[1].regionId).toBe(8);
+    expect(res.grantsToReturn[1].id).toBe(GRANT_ID_TWO);
+    expect(res.grantsToReturn[1].status).toBe('Inactive');
+    expect(res.grantsToReturn[1].regionId).toBe(8);
 
     // Grant 2 Program Types.
-    expect(res[1].programTypes.length).toBe(3);
-    expect(res[1].programTypes[0]).toBe('Early Head Start (ages 0-3)');
-    expect(res[1].programTypes[1]).toBe('Head Start (ages 3-5)');
-    expect(res[1].programTypes[2]).toBe('EHS-CCP');
+    expect(res.grantsToReturn[1].programTypes.length).toBe(3);
+    expect(res.grantsToReturn[1].programTypes[0]).toBe('Early Head Start (ages 0-3)');
+    expect(res.grantsToReturn[1].programTypes[1]).toBe('Head Start (ages 3-5)');
+    expect(res.grantsToReturn[1].programTypes[2]).toBe('EHS-CCP');
   });
   it('does not retrieve grants list when outside of range and region', async () => {
-    const query = { 'region.in': ['8'], 'grantee.in': [GRANTEE_ID], 'startDate.win': '2021/03/01-2021/03/31' };
-    const scopes = determineFiltersToScopes('grantee', query);
-    const res = await grantsList(scopes, query);
-    expect(res.length).toBe(0);
+    const query = { 'region.in': ['8'], 'granteeId.in': [GRANTEE_ID], 'startDate.win': '2021/03/01-2021/03/31' };
+    const scopes = determineFiltersToScopes('grant', query);
+    const res = await granteeByScopes(GRANTEE_ID, scopes);
+    expect(res.grantsToReturn.length).toBe(0);
   });
 });

@@ -1,5 +1,6 @@
 import db, { Grantee, Grant } from '../models';
-import { allGrantees, granteeByIdAndRegion } from './grantee';
+import { allGrantees, granteeByScopes } from './grantee';
+import determineFiltersToScopes from '../scopes';
 
 describe('Grantee DB service', () => {
   const grantees = [
@@ -53,22 +54,22 @@ describe('Grantee DB service', () => {
     });
   });
 
-  describe('granteeByIdAndRegion', () => {
+  describe('granteeByScopes', () => {
     it('returns a grantee by grantee id and region id', async () => {
-      const grantee3 = await granteeByIdAndRegion(65, 1);
+      const query = { 'region.in': ['1'], 'granteeId.in': [65] };
+      const grantScopes = determineFiltersToScopes('grant', query);
+      const grantee3 = await granteeByScopes(65, grantScopes);
+
+      console.log('\n\n\n\n\nReturn1: ', grantee3);
+      console.log('\n\n\n\n\nReturn2: ', grantee3.grantsToReturn);
       expect(grantee3).toStrictEqual({
-        'grants.endDate': null,
-        'grants.granteeId': 65,
-        'grants.id': 65,
-        'grants.number': '1145543',
-        'grants.programSpecialistName': null,
-        'grants.regionId': 1,
-        'grants.startDate': null,
         name: 'grantee 3',
       });
     });
     it('returns grantee and grants without a region specified', async () => {
-      const grantee2 = await granteeByIdAndRegion(64);
+      const query = { 'granteeId.in': [65] };
+      const grantScopes = determineFiltersToScopes('grant', query);
+      const grantee2 = await granteeByScopes(64, grantScopes);
       expect(grantee2).toStrictEqual({
         'grants.endDate': null,
         'grants.granteeId': 64,

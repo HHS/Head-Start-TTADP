@@ -61,6 +61,9 @@ export default function GranteeRecord({ match }) {
         <Grid col={6}>
           <GranteeSummary summary={granteeSummary} />
         </Grid>
+        <Grid col={6}>
+          <GranteeSummary summary={granteeSummary} />
+        </Grid>
       </Grid>
     </>
   );
