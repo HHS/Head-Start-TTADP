@@ -131,7 +131,7 @@ function GranteeSearch({ user }) {
                 <div className="margin-right-2">
                   <RegionalSelect
                     regions={regions}
-                    onApply={onApplyRegion}
+                    // onApply={onApplyRegion}
                     hasCentralOffice={hasCentralOffice}
                     appliedRegion={appliedRegion}
                   />
