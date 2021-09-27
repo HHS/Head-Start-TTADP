@@ -47,7 +47,7 @@ describe('Grantee DB service', () => {
     const grantees = [
       {
         id: 63,
-        name: 'Apple',
+        name: 'Apple Juice',
       },
       {
         id: 64,
@@ -57,6 +57,10 @@ describe('Grantee DB service', () => {
         id: 65,
         name: 'Banana',
       },
+      {
+        id: 66,
+        name: 'Apple Sauce',
+      },
     ];
 
     const grants = [
@@ -65,36 +69,49 @@ describe('Grantee DB service', () => {
         granteeId: 63,
         regionId: 1,
         number: '12345',
+        programSpecialistName: 'George',
       },
       {
         id: 51,
         granteeId: 63,
         regionId: 1,
         number: '12346',
+        programSpecialistName: 'Belle',
       },
       {
         id: 52,
         granteeId: 64,
         regionId: 1,
         number: '55557',
+        programSpecialistName: 'Caesar',
       },
       {
         id: 53,
         granteeId: 64,
         regionId: 1,
         number: '55558',
+        programSpecialistName: 'Doris',
       },
       {
         id: 54,
         granteeId: 65,
         regionId: 1,
         number: '12349',
+        programSpecialistName: 'Eugene',
       },
       {
         id: 55,
         granteeId: 65,
         regionId: 2,
         number: '12350',
+        programSpecialistName: 'Farrah',
+      },
+      {
+        id: 56,
+        granteeId: 66,
+        regionId: 1,
+        number: '12351',
+        programSpecialistName: 'Aaron',
       },
     ];
 
@@ -109,21 +126,45 @@ describe('Grantee DB service', () => {
     });
 
     it('finds based on grantee name', async () => {
-      const foundGrantees = await granteesByNameAndRegion('apple', 1);
-      expect(foundGrantees.length).toBe(1);
-      expect(foundGrantees.map((g) => g.id)).toContain(63);
+      const foundGrantees = await granteesByNameAndRegion('apple', 1, 'name', 'asc', 0);
+      expect(foundGrantees.rows.length).toBe(2);
+      expect(foundGrantees.rows.map((g) => g.id)).toContain(63);
     });
 
     it('finds based on grantee id', async () => {
-      const foundGrantees = await granteesByNameAndRegion('5555', 1);
-      expect(foundGrantees.length).toBe(1);
-      expect(foundGrantees.map((g) => g.id)).toContain(64);
+      const foundGrantees = await granteesByNameAndRegion('5555', 1, 'name', 'asc', 0);
+      expect(foundGrantees.rows.length).toBe(1);
+      expect(foundGrantees.rows.map((g) => g.id)).toContain(64);
     });
 
     it('finds based on region', async () => {
-      const foundGrantees = await granteesByNameAndRegion('banana', 2);
-      expect(foundGrantees.length).toBe(1);
-      expect(foundGrantees.map((g) => g.id)).toContain(65);
+      const foundGrantees = await granteesByNameAndRegion('banana', 2, 'name', 'asc', 0);
+      expect(foundGrantees.rows.length).toBe(1);
+      expect(foundGrantees.rows.map((g) => g.id)).toContain(65);
+    });
+
+    it('sorts based on name', async () => {
+      const foundGrantees = await granteesByNameAndRegion('apple', 1, 'name', 'asc', 0);
+      expect(foundGrantees.rows.length).toBe(2);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66]);
+    });
+
+    it('sorts based on program specialist', async () => {
+      const foundGrantees = await granteesByNameAndRegion('apple', 1, 'programSpecialist', 'asc', 0);
+      expect(foundGrantees.rows.length).toBe(2);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63]);
+    });
+
+    it('respects sort order', async () => {
+      const foundGrantees = await granteesByNameAndRegion('apple', 1, 'name', 'desc', 0);
+      expect(foundGrantees.rows.length).toBe(2);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63]);
+    });
+
+    it('respects the offset passed in', async () => {
+      const foundGrantees = await granteesByNameAndRegion('apple', 1, 'name', 'asc', 1);
+      expect(foundGrantees.rows.length).toBe(1);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66]);
     });
   });
 });
