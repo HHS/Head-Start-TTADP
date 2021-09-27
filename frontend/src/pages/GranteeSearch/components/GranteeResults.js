@@ -35,14 +35,15 @@ export default function GranteeResults(
         fullAriaSort = 'none';
         break;
     }
+
+    const onClickRequestSort = () => requestSort(name);
+
     return (
       <th scope="col" aria-sort={fullAriaSort}>
         <button
           type="button"
           tabIndex={0}
-          onClick={() => {
-            requestSort(name);
-          }}
+          onClick={onClickRequestSort}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
