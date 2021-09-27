@@ -2,7 +2,6 @@ import {} from 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
 import axios from 'axios';
-import cookieSession from 'cookie-session';
 import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
@@ -10,6 +9,7 @@ import isEmail from 'validator/lib/isEmail';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
+import cookieSession from './middleware/sessionMiddleware';
 import updateGrantsGrantees from './lib/updateGrantsGrantees';
 import findOrCreateUser from './services/accessValidation';
 import { logger, auditLogger, requestLogger } from './logger';
@@ -33,23 +33,16 @@ app.use(helmet({
   },
 }));
 
-app.use(cookieSession({
-  name: 'session',
-  keys: [process.env.SESSION_SECRET],
-
-  // Cookie Options. httpOnly is set by default to true for https
-  sameSite: 'lax',
-  secureProxy: (process.env.NODE_ENV === 'production'),
-}));
-
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')));
 }
 
+app.use('/api/v1', require('./routes/externalApi').default);
+
 app.use('/api', require('./routes/apiDirectory').default);
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
-app.get(oauth2CallbackPath, async (req, res) => {
+app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
   try {
     const user = await hsesAuth.code.getToken(req.originalUrl);
     // user will have accessToken and refreshToken
