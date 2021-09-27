@@ -26,11 +26,119 @@ const userBluePrint = {
 const history = createMemoryHistory();
 
 const res = {
-  count: 1,
+  count: 13,
   rows: [
     {
       id: 2,
       name: 'major tom',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 3,
+      name: 'major bob',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 4,
+      name: 'major sara',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 5,
+      name: 'major tara',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 6,
+      name: 'major jim',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 7,
+      name: 'major xi',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 1,
+      name: 'major larry',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 8,
+      name: 'major maggie',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 10,
+      name: 'major brian',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 11,
+      name: 'major chumley',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 12,
+      name: 'major karen',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 13,
+      name: 'major superhero',
+      grants: [
+        {
+          programSpecialistName: 'someone else',
+        },
+      ],
+    },
+    {
+      id: 14,
+      name: 'major barack',
       grants: [
         {
           programSpecialistName: 'someone else',
@@ -148,12 +256,31 @@ describe('the grantee search page', () => {
     await waitFor(() => expect(screen.getByText('major tom')).toBeInTheDocument());
   });
 
-  it('handles an error', async () => {
+  it('requests the next page', async () => {
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
     expect(button).toBeInTheDocument();
     expect(searchBox).toBeInTheDocument();
+    userEvent.type(searchBox, 'ground control');
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    const next = await screen.findByRole('link', { name: /go to page number 2/i });
+
+    await act(async () => {
+      fireEvent.click(next);
+    });
+
+    screen.logTestingPlaygroundURL();
+    expect(true).toBe(false);
+  });
+
+  it('handles an error', async () => {
+    const searchBox = screen.getByRole('searchbox');
+    const button = screen.getByRole('button', { name: /search for matching grantees/i });
     userEvent.type(searchBox, 'ground control');
 
     await act(async () => {
@@ -167,10 +294,13 @@ describe('the grantee search page', () => {
       expect(majorTom).toBeInTheDocument();
     });
 
-    fetchMock.get('/api/grantee/search?s=ground%20control&region=1&sortBy=programSpecialist&direction=desc&offset=0', 500);
+    fetchMock.get('/api/grantee/search?s=ground%20controls&region=1&sortBy=name&direction=desc&offset=0', 404);
+    userEvent.clear(searchBox);
+    userEvent.type(searchBox, 'ground controls');
+
     await act(async () => {
       fireEvent.click(button);
     });
-    expect(majorTom).not.toBeInTheDocument();
+    await waitFor(() => expect(majorTom).not.toBeInTheDocument());
   });
 });
