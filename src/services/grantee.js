@@ -15,16 +15,13 @@ export async function allGrantees() {
 
 export async function granteeByScopes(granteeId, grantScopes) {
   const granteeRes = await Grantee.findOne({
-    attributes: [
-      'id',
-    ],
+    attributes: ['id', 'name'],
     where: {
       id: granteeId,
     },
     include: [
       {
-        //attributes: ['id', 'name', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
-        attributes: ['id', 'granteeId'],
+        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
         model: Grant,
         as: 'grants',
         where: {
@@ -36,9 +33,10 @@ export async function granteeByScopes(granteeId, grantScopes) {
     ],
   });
 
+  console.log('\n\n\n\n\nFindOne:', granteeRes);
+
   // Get Grants.
   const grantsToUse = granteeRes ? granteeRes.grants : [];
-  console.log('Grants Use:', grantsToUse);
 
   // Get List of Grant Ids.
   const grantIds = (grantsToUse && grantsToUse.length > 0 ? [...new Set(grantsToUse.map((grant) => grant.id))] : [0]).join(', ');
@@ -50,31 +48,15 @@ export async function granteeByScopes(granteeId, grantScopes) {
     WHERE "ActivityRecipients"."grantId" IN (${grantIds})`;
   const programTypes = await sequelize.query(arQuery);
 
-  // Grants to Return.
-  const grantsToReturn = [];
-
   // Combine Grants and Program Types.
-  grantsToUse.forEach((g) => {
-    const grantToAdd = {
-      id: g.id,
-      name: g.name,
-      granteeId: g.granteeId,
-      regionId: g.regionId,
-      number: g.number,
-      status: g.status,
-      startDate: g.startDate,
-      endDate: g.endDate,
-      programSpecialistName: g.programSpecialistName,
-      programTypes: [],
-    };
-    const matchingProgramTypes = programTypes[0].find((e) => g.id === e.grantId);
-    if (matchingProgramTypes) {
-      grantToAdd.programTypes = matchingProgramTypes.programTypes;
-    }
-    grantsToReturn.push(grantToAdd);
-  });
-
-  console.log('After Loop:', grantsToReturn);
-
-  return { name: !granteeRes ? '' : grantsToReturn, grantsToReturn };
+  if (grantsToUse.length > 0) {
+    granteeRes.grants.forEach((g) => {
+      const matchingProgramTypes = programTypes[0].find((e) => g.id === e.grantId);
+      if (matchingProgramTypes) {
+        // eslint-disable-next-line no-param-reassign
+        g.programTypes = matchingProgramTypes.programTypes;
+      }
+    });
+  }
+  return { name: !granteeRes ? '' : granteeRes.name, grantsToReturn: grantsToUse.length > 0 ? granteeRes.grants : [] };
 }

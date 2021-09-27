@@ -51,7 +51,7 @@ const submittedReport = {
 describe('Grant list widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
-    await Grantee.create({ name: 'grantee', id: GRANTEE_ID });
+    await Grantee.create({ name: 'grantee123', id: GRANTEE_ID });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE, number: GRANT_ID_ONE, granteeId: GRANTEE_ID, regionId: 8, status: 'Active', startDate: '01/15/2021', endDate: '01/20/2021',
     },
@@ -66,13 +66,11 @@ describe('Grant list widget', () => {
     await ActivityRecipient.create({
       activityReportId: reportOne.id,
       grantId: GRANT_ID_ONE,
-      granteeId: GRANTEE_ID,
     });
 
     await ActivityRecipient.create({
       activityReportId: reportOne.id,
       grantId: GRANT_ID_TWO,
-      granteeId: GRANTEE_ID,
     });
   });
   afterAll(async () => {
@@ -94,6 +92,9 @@ describe('Grant list widget', () => {
     const query = { 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' };
     const grantScopes = determineFiltersToScopes('grant', query);
     const res = await granteeByScopes([GRANTEE_ID], grantScopes);
+
+    // Grantee Name.
+    expect(res.name).toBe('grantee123');
 
     // Grant 1.
     expect(res.grantsToReturn.length).toBe(2);
@@ -119,7 +120,7 @@ describe('Grant list widget', () => {
     expect(res.grantsToReturn[1].programTypes[2]).toBe('EHS-CCP');
   });
   it('does not retrieve grants list when outside of range and region', async () => {
-    const query = { 'region.in': ['8'], 'granteeId.in': [GRANTEE_ID], 'startDate.win': '2021/03/01-2021/03/31' };
+    const query = { 'region.in': ['8'], 'startDate.win': '2021/03/01-2021/03/31' };
     const scopes = determineFiltersToScopes('grant', query);
     const res = await granteeByScopes(GRANTEE_ID, scopes);
     expect(res.grantsToReturn.length).toBe(0);

@@ -60,26 +60,42 @@ describe('Grantee DB service', () => {
       const grantScopes = determineFiltersToScopes('grant', query);
       const grantee3 = await granteeByScopes(65, grantScopes);
 
-      console.log('\n\n\n\n\nReturn1: ', grantee3);
-      console.log('\n\n\n\n\nReturn2: ', grantee3.grantsToReturn);
-      expect(grantee3).toStrictEqual({
-        name: 'grantee 3',
-      });
+      // Grantee Name.
+      expect(grantee3.name).toBe('grantee 3');
+
+      // Number of Grants.
+      expect(grantee3.grantsToReturn.length).toBe(1);
+
+      // Grants.
+      expect(grantee3.grantsToReturn[0].id).toBe(65);
+      expect(grantee3.grantsToReturn[0].granteeId).toBe(65);
+      expect(grantee3.grantsToReturn[0].regionId).toBe(1);
+      expect(grantee3.grantsToReturn[0].number).toBe('1145543');
+      expect(grantee3.grantsToReturn[0].status).toBe('Active');
+      expect(grantee3.grantsToReturn[0].programSpecialistName).toBe(null);
+      expect(grantee3.grantsToReturn[0].startDate).toBe(null);
+      expect(grantee3.grantsToReturn[0].endDate).toBe(null);
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [65] };
       const grantScopes = determineFiltersToScopes('grant', query);
       const grantee2 = await granteeByScopes(64, grantScopes);
-      expect(grantee2).toStrictEqual({
-        'grants.endDate': null,
-        'grants.granteeId': 64,
-        'grants.id': 64,
-        'grants.number': '1145341',
-        'grants.programSpecialistName': null,
-        'grants.regionId': 1,
-        'grants.startDate': null,
-        name: 'grantee 2',
-      });
+
+      // Grantee Name.
+      expect(grantee2.name).toBe('grantee 2');
+
+      // Number of Grants.
+      expect(grantee2.grantsToReturn.length).toBe(1);
+
+      // Grants.
+      expect(grantee2.grantsToReturn[0].id).toBe(64);
+      expect(grantee2.grantsToReturn[0].granteeId).toBe(64);
+      expect(grantee2.grantsToReturn[0].regionId).toBe(1);
+      expect(grantee2.grantsToReturn[0].number).toBe('1145341');
+      expect(grantee2.grantsToReturn[0].status).toBe('Active');
+      expect(grantee2.grantsToReturn[0].programSpecialistName).toBe(null);
+      expect(grantee2.grantsToReturn[0].startDate).toBe(null);
+      expect(grantee2.grantsToReturn[0].endDate).toBe(null);
     });
   });
 });
