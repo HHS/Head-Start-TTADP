@@ -26,7 +26,7 @@ export async function getWidget(req, res) {
     const query = await setReadRegions(req.query, req.session.userId, true);
 
     // Determine what scopes we need.
-    const scopes = determineFiltersToScopes(widgetType, query);
+    const scopes = determineFiltersToScopes(query, widgetType);
 
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);

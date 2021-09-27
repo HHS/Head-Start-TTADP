@@ -57,7 +57,7 @@ describe('Grantee DB service', () => {
   describe('granteeByScopes', () => {
     it('returns a grantee by grantee id and region id', async () => {
       const query = { 'region.in': ['1'], 'granteeId.in': [65] };
-      const grantScopes = determineFiltersToScopes('grant', query);
+      const grantScopes = determineFiltersToScopes(query, 'grant');
       const grantee3 = await granteeByScopes(65, grantScopes);
 
       // Grantee Name.
@@ -78,7 +78,7 @@ describe('Grantee DB service', () => {
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [65] };
-      const grantScopes = determineFiltersToScopes('grant', query);
+      const grantScopes = determineFiltersToScopes(query, 'grant');
       const grantee2 = await granteeByScopes(64, grantScopes);
 
       // Grantee Name.
