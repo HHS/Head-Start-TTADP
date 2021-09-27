@@ -16,6 +16,7 @@ export const userAttributes = [
   'homeRegionId',
   'role',
   'lastLogin',
+  'flags',
 ];
 
 export async function userById(userId) {
