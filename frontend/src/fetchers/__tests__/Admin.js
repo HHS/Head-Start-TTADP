@@ -2,7 +2,7 @@ import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
 import {
-  getUsers, updateUser, getCDIGrants, getGrantees, assignCDIGrant,
+  getUsers, updateUser, getCDIGrants, getGrantees, assignCDIGrant, getFeatures,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -34,6 +34,13 @@ describe('Admin', () => {
       const fetchedUsers = await getUsers();
       expect(fetchedUsers).toEqual(users);
     });
+  });
+
+  it('fetches features', async () => {
+    const res = ['grantee_record_page'];
+    fetchMock.get(join('api', 'admin', 'users', 'features'), res);
+    const features = await getFeatures();
+    expect(features).toEqual(res);
   });
 
   describe('updateUser', () => {

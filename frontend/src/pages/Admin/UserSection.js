@@ -6,6 +6,7 @@ import {
 
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
+import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
 import { DECIMAL_BASE } from '../../Constants';
 
@@ -19,7 +20,7 @@ const NUMBER_FIELDS = [
  * are not created in this component, nor anywhere in the Admin UI. New users are created
  * automatically the first time they attempt to login to the Smart Hub
  */
-function UserSection({ user, onSave }) {
+function UserSection({ user, onSave, features }) {
   const [formUser, updateUser] = useState();
 
   useEffect(() => {
@@ -39,6 +40,23 @@ function UserSection({ user, onSave }) {
       ...formUser,
       [name]: NUMBER_FIELDS.includes(name) ? parseInt(value, DECIMAL_BASE) : value,
     });
+  };
+
+  const onFeaturesChange = (e, flag) => {
+    if (e.target.checked) {
+      updateUser({
+        ...formUser,
+        flags: [
+          ...formUser.flags,
+          flag,
+        ],
+      });
+    } else {
+      updateUser({
+        ...formUser,
+        flags: formUser.flags.filter((f) => f !== flag),
+      });
+    }
   };
 
   const onPermissionChange = (e, strRegion) => {
@@ -98,6 +116,11 @@ function UserSection({ user, onSave }) {
         regionalPermissions={userRegionalPermissions(formUser)}
         onRegionalPermissionChange={onRegionalPermissionChange}
       />
+      <UserFeatureFlags
+        onFeaturesChange={onFeaturesChange}
+        features={features}
+        flags={formUser.flags}
+      />
       <Button>
         Save
       </Button>
@@ -115,11 +138,20 @@ UserSection.propTypes = {
     phoneNumber: PropTypes.string,
     homeRegionId: PropTypes.number,
     title: PropTypes.string,
+    flags: PropTypes.arrayOf(PropTypes.string),
     permissions: PropTypes.arrayOf(PropTypes.shape({
       regionId: PropTypes.number.isRequired,
       scopeId: PropTypes.number.isRequired,
     })),
   }).isRequired,
+  features: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.string,
+  })),
+};
+
+UserSection.defaultProps = {
+  features: [],
 };
 
 export default UserSection;

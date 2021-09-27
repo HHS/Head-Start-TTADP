@@ -7,6 +7,11 @@ export const getUsers = async () => {
   return users.json();
 };
 
+export const getFeatures = async () => {
+  const features = await get((join('/', 'api', 'admin', 'users', 'features')));
+  return features.json();
+};
+
 export const updateUser = async (userId, data) => {
   const user = await put((join('/', 'api', 'admin', 'users', userId.toString(DECIMAL_BASE))), data);
   return user.json();
