@@ -18,7 +18,7 @@ describe('orderGranteesBy', () => {
         'desc',
       ]]);
 
-    const three = orderGranteesBy('', 'asc');
+    const three = orderGranteesBy('programSpecialist', 'asc');
 
     expect(three).toStrictEqual([
       [

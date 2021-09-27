@@ -136,9 +136,41 @@ describe('the grantee search page', () => {
 
     await act(async () => {
       fireEvent.click(button);
-      sortButton.click(button);
+      fireEvent.click(sortButton);
+    });
+
+    fetchMock.get('/api/grantee/search?s=ground%20control&region=1&sortBy=programSpecialist&direction=asc&offset=0', res);
+
+    await act(async () => {
+      fireEvent.click(sortButton);
     });
 
     await waitFor(() => expect(screen.getByText('major tom')).toBeInTheDocument());
+  });
+
+  it('handles an error', async () => {
+    const searchBox = screen.getByRole('searchbox');
+    const button = screen.getByRole('button', { name: /search for matching grantees/i });
+
+    expect(button).toBeInTheDocument();
+    expect(searchBox).toBeInTheDocument();
+    userEvent.type(searchBox, 'ground control');
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    let majorTom;
+
+    await waitFor(() => {
+      majorTom = screen.getByText('major tom');
+      expect(majorTom).toBeInTheDocument();
+    });
+
+    fetchMock.get('/api/grantee/search?s=ground%20control&region=1&sortBy=programSpecialist&direction=desc&offset=0', 500);
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(majorTom).not.toBeInTheDocument();
   });
 });
