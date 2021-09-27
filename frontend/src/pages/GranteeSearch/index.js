@@ -37,10 +37,7 @@ function GranteeSearch({ user }) {
       const { rows, count } = await searchGrantees(query, appliedRegion, { ...sortConfig, offset });
       setResults(rows);
       setGranteeCount(count);
-      console.log(rows);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
       setResults([]);
       setGranteeCount(0);
     } finally {
@@ -68,10 +65,12 @@ function GranteeSearch({ user }) {
 
   async function handlePageChange(pageNumber) {
     if (!loading) {
+      console.log(offset, pageNumber);
       setActivePage(pageNumber);
       setOffset((pageNumber - 1) * GRANTEES_PER_PAGE);
+
+      await fetchGrantees();
     }
-    await fetchGrantees();
   }
 
   async function onSubmit(e) {
