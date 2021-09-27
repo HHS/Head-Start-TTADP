@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -27,55 +27,93 @@ function GranteeSearch({ user }) {
     direction: 'desc',
   });
 
-  async function fetchGrantees() {
-    if (!query || loading) {
-      return;
+  const inputRef = useRef();
+
+  useEffect(() => {
+    async function fetchGrantees() {
+      /**
+       * get up to date query
+       */
+      if (inputRef.current) {
+        setQuery(inputRef.current.value);
+      }
+      /**
+       * We assume the function that changed the state also changed loading.
+       * That's why, if the app is not in a loading state, we return
+       */
+
+      if (!query || !loading) {
+        return;
+      }
+
+      /**
+       * if we have no query, the form was submitted in error (extra button press, etc)
+       */
+      if (!query) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const {
+          rows,
+          count,
+        } = await searchGrantees(query, appliedRegion, { ...sortConfig, offset });
+        setResults(rows);
+        setGranteeCount(count);
+      } catch (err) {
+        setResults([]);
+        setGranteeCount(0);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    try {
-      setLoading(true);
-      const { rows, count } = await searchGrantees(query, appliedRegion, { ...sortConfig, offset });
-      setResults(rows);
-      setGranteeCount(count);
-    } catch (err) {
-      setResults([]);
-      setGranteeCount(0);
-    } finally {
-      setLoading(false);
-    }
-  }
+    fetchGrantees();
+  }, [appliedRegion, loading, offset, query, sortConfig]);
 
   function onApplyRegion(region) {
     setAppliedRegion(region.value);
+    setLoading(true);
   }
 
   async function requestSort(sortBy) {
+    if (loading) {
+      return;
+    }
+
     const config = sortConfig;
     if (config.sortBy === sortBy) {
       config.direction = config.direction === 'asc' ? 'desc' : 'asc';
       setSortConfig(config);
-      await fetchGrantees();
       return;
     }
 
     config.sortBy = sortBy;
     setSortConfig(config);
-    await fetchGrantees();
+    setLoading(true);
   }
 
   async function handlePageChange(pageNumber) {
     if (!loading) {
-      console.log(offset, pageNumber);
       setActivePage(pageNumber);
       setOffset((pageNumber - 1) * GRANTEES_PER_PAGE);
-
-      await fetchGrantees();
+      setLoading(true);
     }
   }
 
   async function onSubmit(e) {
     e.preventDefault();
-    await fetchGrantees();
+
+    if (loading) {
+      return;
+    }
+
+    if (inputRef.current) {
+      setQuery(inputRef.current.value);
+    }
+
+    setLoading(true);
   }
 
   return (
@@ -98,7 +136,7 @@ function GranteeSearch({ user }) {
                 </div>
               )}
           <form role="search" className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
-            <input type="search" name="search" value={query} className="ttahub-grantee-search--search-input" onChange={(e) => setQuery(e.target.value)} />
+            <input type="search" required name="search" className="ttahub-grantee-search--search-input" ref={inputRef} />
             <button type="submit" className="ttahub-grantee-search--submit-button usa-button" disabled={loading}>
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}
