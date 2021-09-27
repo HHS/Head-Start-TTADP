@@ -86,6 +86,7 @@ function GranteeSearch({ user }) {
     if (config.sortBy === sortBy) {
       config.direction = config.direction === 'asc' ? 'desc' : 'asc';
       setSortConfig(config);
+      setLoading(true);
       return;
     }
 
