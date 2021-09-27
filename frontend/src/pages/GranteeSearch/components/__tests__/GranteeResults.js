@@ -58,7 +58,17 @@ const grantees = [
 ];
 
 describe('Grantee Search > GranteeResults', () => {
-  const renderGranteeResults = (handlePageChange, requestSort, loading = false) => (
+  const config = {
+    sortBy: 'name',
+    direction: 'desc',
+  };
+
+  const renderGranteeResults = (
+    handlePageChange,
+    requestSort,
+    loading = false,
+    sortConfig = config,
+  ) => (
     render(
       <Router history={history}>
         <GranteeResults
@@ -71,10 +81,7 @@ describe('Grantee Search > GranteeResults', () => {
           count={grantees.length}
           handlePageChange={handlePageChange}
           requestSort={requestSort}
-          sortConfig={{
-            sortBy: 'name',
-            direction: 'desc',
-          }}
+          sortConfig={sortConfig}
         />
       </Router>,
     )
@@ -108,5 +115,21 @@ describe('Grantee Search > GranteeResults', () => {
     renderGranteeResults(handlePageChange, requestSort, true);
     const button = screen.getByRole('button', { name: /program specialist\. activate to sort ascending/i });
     expect(button).toBeDisabled();
+  });
+
+  it('sorts in reverse', async () => {
+    const sortConfig = {
+      sortBy: 'name',
+      direction: 'asc',
+    };
+
+    const handlePageChange = jest.fn();
+    const requestSort = jest.fn();
+    renderGranteeResults(handlePageChange, requestSort, false, sortConfig);
+    const tds = document.querySelectorAll('td');
+    expect(tds[1]).toHaveTextContent('Agency 2 in region 1, Inc.');
+    const button = screen.getByRole('button', { name: /grantee name\. activate to sort descending/i });
+    fireEvent.click(button);
+    expect(requestSort).toHaveBeenCalledWith('name');
   });
 });
