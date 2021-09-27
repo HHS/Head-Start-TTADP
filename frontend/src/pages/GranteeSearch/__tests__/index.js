@@ -136,15 +136,6 @@ const res = {
         },
       ],
     },
-    {
-      id: 14,
-      name: 'major barack',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-        },
-      ],
-    },
   ],
 };
 
@@ -198,22 +189,17 @@ describe('the grantee search page', () => {
 
     expect(button).toBeInTheDocument();
     expect(searchBox).toBeInTheDocument();
-
+    userEvent.type(searchBox, 'ground control');
+    await act(async () => fireEvent.click(button));
     const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
     fireEvent.click(regionalSelect);
     const region2 = screen.getByRole('button', { name: /select to view data from region 2\. select apply filters button to apply selection/i });
     fireEvent.click(region2);
     const applyFilters = screen.getByRole('button', { name: /apply filters for the regional select menu/i });
-    fireEvent.click(applyFilters);
-    userEvent.type(searchBox, 'ground control');
-
     fetchMock.get('/api/grantee/search?s=ground%20control&region=2&sortBy=name&direction=desc&offset=0', res);
-
-    await act(async () => {
-      fireEvent.click(button);
-    });
-
+    await act(async () => fireEvent.click(applyFilters));
     await waitFor(() => expect(screen.getByText('major tom')).toBeInTheDocument());
+    expect(fetchMock.called()).toBeTruthy();
   });
 
   it('the search bar works', async () => {
@@ -270,12 +256,27 @@ describe('the grantee search page', () => {
 
     const next = await screen.findByRole('link', { name: /go to page number 2/i });
 
+    fetchMock.get('/api/grantee/search?s=ground%20control&region=1&sortBy=name&direction=desc&offset=12',
+      {
+        count: 13,
+        rows: [
+          {
+            id: 14,
+            name: 'major barack',
+            grants: [
+              {
+                programSpecialistName: 'someone else',
+              },
+            ],
+          },
+        ],
+      });
+
     await act(async () => {
       fireEvent.click(next);
     });
 
-    screen.logTestingPlaygroundURL();
-    expect(true).toBe(false);
+    await waitFor(() => expect(screen.getByText('major barack')).toBeInTheDocument());
   });
 
   it('handles an error', async () => {
