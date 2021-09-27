@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -89,13 +90,13 @@ export default function GranteeResults(
           Grantees
           <p className="usa-sr-only">with sorting and pagination</p>
         </caption>
-        <thead>
+        {/* <thead>
           <tr>
             {renderColumnHeader('Region', 'regionId')}
             {renderColumnHeader('Grantee Name', 'name')}
             {renderColumnHeader('Program Specialist', 'programSpecialist')}
           </tr>
-        </thead>
+        </thead> */}
         <tbody>
           {grantees.map((grantee) => (
             <tr key={grantee.id}>
