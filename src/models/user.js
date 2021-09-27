@@ -19,6 +19,10 @@ const roles = [
   'System Specialist',
 ];
 
+export const featureFlags = [
+  'grantee_record_page',
+];
+
 const generateFullName = (name, role) => {
   const combinedRoles = Array.isArray(role) ? role.reduce((result, val) => {
     if (val) {
@@ -81,6 +85,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     role: DataTypes.ARRAY(DataTypes.ENUM(roles)),
+    flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
