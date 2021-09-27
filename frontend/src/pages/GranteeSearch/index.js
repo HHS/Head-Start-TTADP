@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable react/jsx-no-bind */
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -131,7 +131,7 @@ function GranteeSearch({ user }) {
                 <div className="margin-right-2">
                   <RegionalSelect
                     regions={regions}
-                    // onApply={onApplyRegion}
+                    onApply={onApplyRegion}
                     hasCentralOffice={hasCentralOffice}
                     appliedRegion={appliedRegion}
                   />
@@ -147,7 +147,7 @@ function GranteeSearch({ user }) {
           </form>
         </Grid>
         <main>
-          {/* <GranteeResults
+          <GranteeResults
             region={appliedRegion}
             grantees={results}
             loading={loading}
@@ -158,7 +158,7 @@ function GranteeSearch({ user }) {
             handlePageChange={handlePageChange}
             requestSort={requestSort}
             sortConfig={sortConfig}
-          /> */}
+          />
         </main>
       </div>
     </>
