@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -146,7 +147,7 @@ function GranteeSearch({ user }) {
           </form>
         </Grid>
         <main>
-          <GranteeResults
+          {/* <GranteeResults
             region={appliedRegion}
             grantees={results}
             loading={loading}
@@ -157,7 +158,7 @@ function GranteeSearch({ user }) {
             handlePageChange={handlePageChange}
             requestSort={requestSort}
             sortConfig={sortConfig}
-          />
+          /> */}
         </main>
       </div>
     </>

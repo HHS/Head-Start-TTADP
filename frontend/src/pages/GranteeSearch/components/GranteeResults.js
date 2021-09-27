@@ -90,13 +90,13 @@ export default function GranteeResults(
           Grantees
           <p className="usa-sr-only">with sorting and pagination</p>
         </caption>
-        {/* <thead>
+        <thead>
           <tr>
             {renderColumnHeader('Region', 'regionId')}
             {renderColumnHeader('Grantee Name', 'name')}
             {renderColumnHeader('Program Specialist', 'programSpecialist')}
           </tr>
-        </thead> */}
+        </thead>
         <tbody>
           {grantees.map((grantee) => (
             <tr key={grantee.id}>
