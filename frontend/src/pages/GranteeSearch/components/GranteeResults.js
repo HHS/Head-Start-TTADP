@@ -21,7 +21,7 @@ export default function GranteeResults(
   },
 ) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name) => {
+  const renderColumnHeader = (displayName, name, sort) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -36,14 +36,12 @@ export default function GranteeResults(
         break;
     }
 
-    const onClickRequestSort = () => requestSort(name);
-
     return (
       <th scope="col" aria-sort={fullAriaSort}>
         <button
           type="button"
           tabIndex={0}
-          onClick={onClickRequestSort}
+          onClick={sort}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
@@ -55,6 +53,10 @@ export default function GranteeResults(
       </th>
     );
   };
+
+  const sortByName = () => requestSort('name');
+  const sortByProgramSpecialist = () => requestSort('programSpecialist');
+  const sortByRegion = () => requestSort('regionId');
 
   return (
     <Container className="landing ttahub-grantee-results maxw-desktop" padding={0} loading={loading} loadingLabel="Grantee search results loading">
@@ -93,9 +95,9 @@ export default function GranteeResults(
         </caption>
         <thead>
           <tr>
-            {renderColumnHeader('Region', 'regionId')}
-            {renderColumnHeader('Grantee Name', 'name')}
-            {renderColumnHeader('Program Specialist', 'programSpecialist')}
+            {renderColumnHeader('Region', 'regionId', sortByRegion)}
+            {renderColumnHeader('Grantee Name', 'name', sortByName)}
+            {renderColumnHeader('Program Specialist', 'programSpecialist', sortByProgramSpecialist)}
           </tr>
         </thead>
         <tbody>
