@@ -37,6 +37,7 @@ function GranteeSearch({ user }) {
       const { rows, count } = await searchGrantees(query, appliedRegion, { ...sortConfig, offset });
       setResults(rows);
       setGranteeCount(count);
+      console.log(rows);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
