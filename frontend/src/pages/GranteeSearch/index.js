@@ -121,7 +121,7 @@ function GranteeSearch({ user }) {
       <Helmet>
         <title>Grantee Records Search</title>
       </Helmet>
-      <div className="ttahub-grantee-search">
+      <div className="ttahub-grantee-search t">
         <h1 className="landing">Grantee Records</h1>
         <Grid className="ttahub-grantee-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
           {regions.length > 1
