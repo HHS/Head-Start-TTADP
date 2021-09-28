@@ -9,7 +9,7 @@ import moment from 'moment';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
-import { updateUser, getUsers } from '../../fetchers/Admin';
+import { updateUser, getUsers, getFeatures } from '../../fetchers/Admin';
 import { SCOPE_IDS, DECIMAL_BASE } from '../../Constants';
 
 /**
@@ -29,6 +29,19 @@ function renderUserNav(users) {
   });
 }
 
+export const setFeatureFromURL = (location, setter) => {
+  try {
+    const params = new URLSearchParams(location);
+    const flagSearch = params.get('flag');
+    if (flagSearch) {
+      setter(flagSearch);
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log(e);
+  }
+};
+
 /**
  * Admin UI page component. It is split into two main sections, the user list and the
  * user section. The user list can be filtered to make searching for users easier. The
@@ -45,6 +58,12 @@ function Admin(props) {
   const [userSearch, updateUserSearch] = useState('');
   const [lockedFilter, updateLockedFilter] = useState(false);
   const [saved, updateSaved] = useState(false);
+  const [features, setFeatures] = useState();
+  const [selectedFeature, setSelectedFeature] = useState('none');
+
+  useEffect(() => {
+    setFeatureFromURL(window.location.search, setSelectedFeature);
+  }, []);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -59,6 +78,19 @@ function Admin(props) {
       setIsLoaded(true);
     }
     fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    async function fetchFeatures() {
+      try {
+        const featureOptions = await getFeatures();
+        setFeatures(featureOptions.map((option) => ({ label: option, value: option })));
+      } catch (e) {
+        updateError('Unable to fetch features');
+      }
+    }
+
+    fetchFeatures();
   }, []);
 
   const onUserSearchChange = (e) => {
@@ -85,9 +117,22 @@ function Admin(props) {
 
   const filteredUsers = useMemo(() => (
     _.filter(users, (u) => {
-      const { email, name, permissions } = u;
+      const {
+        email, name, permissions, flags,
+      } = u;
       const lastLogin = moment(u.lastLogin);
-      const userMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
+      const userNameMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
+
+      let userFlagMatchesFilter = true;
+
+      if (selectedFeature && selectedFeature !== 'none') {
+        if (selectedFeature === 'all') {
+          userFlagMatchesFilter = flags.length > 0;
+        } else {
+          userFlagMatchesFilter = flags.find((f) => f === selectedFeature);
+        }
+      }
+
       let userMatchesLockFilter = true;
       if (lockedFilter === 'recent') {
         userMatchesLockFilter = lastLogin.isAfter(lockThreshold)
@@ -98,9 +143,9 @@ function Admin(props) {
       } else if (lockedFilter === 'to-disable') {
         userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
       }
-      return userMatchesFilter && userMatchesLockFilter;
+      return userNameMatchesFilter && userFlagMatchesFilter && userMatchesLockFilter;
     })
-  ), [users, userSearch, lockedFilter, disableThreshold, lockThreshold]);
+  ), [users, userSearch, selectedFeature, lockedFilter, lockThreshold, disableThreshold]);
 
   if (!isLoaded) {
     return (
@@ -130,6 +175,10 @@ function Admin(props) {
     updateSelectedUser(updatedUser);
     updateError();
     updateSaved(true);
+  };
+
+  const onUpdateSelectedFeature = (e) => {
+    setSelectedFeature(e.target.value);
   };
 
   return (
@@ -171,7 +220,16 @@ function Admin(props) {
                 onChange={() => updateLockedFilter('to-disable')}
               />
             </Fieldset>
-            <Label htmlFor="input-filter-users">Filter Users</Label>
+            <Label htmlFor="feature-flag-filter-users">Filter users by feature</Label>
+            <select className="usa-select" id="feature-flag-filter-users" value={selectedFeature} onChange={onUpdateSelectedFeature}>
+              {features
+                ? [
+                  { label: 'No filter', value: 'none' },
+                  { label: 'All Users with a Feature Flag', value: 'all' },
+                  ...features].map((f) => <option key={f.value} value={f.value}>{f.label}</option>)
+                : <option> --- </option>}
+            </select>
+            <Label htmlFor="input-filter-users">Filter users by name</Label>
             <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
             <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
               <SideNav items={renderUserNav(filteredUsers)} />
@@ -198,7 +256,7 @@ function Admin(props) {
           )}
             {selectedUser
           && (
-            <UserSection onSave={onSave} user={selectedUser} />
+            <UserSection onSave={onSave} user={selectedUser} features={features} />
           )}
           </Grid>
         </Grid>
