@@ -30,6 +30,7 @@ import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
+import TooltipWithEllipsis from './Components/TooltipWithEllipsis';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
@@ -76,33 +77,8 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       </Tag>
     ));
 
-    const topicsTitle = (topics || []).reduce(
-      (result, topic) => `${result + topic}\n`,
-      '',
-    );
-
-    const topicsWithTags = (topics || []).map((topic) => (
-      <Tag
-        key={topic.slice(1, 13)}
-        className="smart-hub--table-collection"
-      >
-        {topic}
-      </Tag>
-    ));
-
-    const collaboratorsTitle = collaborators && collaborators.reduce(
-      (result, collaborator) => `${result + collaborator.fullName}\n`,
-      '',
-    );
-
-    const collaboratorsWithTags = collaborators && collaborators.map((collaborator) => (
-      <Tag
-        key={collaborator.fullName.slice(1, 13)}
-        className="smart-hub--table-collection"
-      >
-        {collaborator.fullName}
-      </Tag>
-    ));
+    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
+      collaborator.fullName));
 
     const viewOrEditLink = status === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
 
@@ -163,14 +139,10 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </span>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={topicsTitle}>
-            {topicsWithTags}
-          </span>
+          <TooltipWithEllipsis collection={topics} />
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
+          <TooltipWithEllipsis collection={collaboratorNames} />
         </td>
         <td>{lastSaved}</td>
         <td>
