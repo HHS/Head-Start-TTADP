@@ -3,7 +3,7 @@ import { getGrantee } from './handlers';
 import { granteeByScopes } from '../../services/grantee';
 
 jest.mock('../../services/grantee', () => ({
-  granteeByIdAndRegion: jest.fn(),
+  granteeByScopes: jest.fn(),
 }));
 
 describe('getGrantee', () => {
@@ -24,7 +24,8 @@ describe('getGrantee', () => {
         granteeId: 100000,
       },
       query: {
-        region: 1,
+        'region.in': 1,
+        widgetType: 'grant',
       },
     };
     granteeByScopes.mockResolvedValue(granteeWhere);
@@ -38,7 +39,8 @@ describe('getGrantee', () => {
         granteeId: 14565,
       },
       query: {
-        region: 1,
+        'region.in': 1,
+        widgetType: 'grant',
       },
     };
     granteeByScopes.mockResolvedValue(null);
