@@ -33,9 +33,10 @@ describe('UserSection', () => {
           scopeId: READ_ACTIVITY_REPORTS,
         },
       ],
+      flags: ['moon_man'],
     };
 
-    render(<UserSection user={user} onSave={onSave} />);
+    render(<UserSection user={user} onSave={onSave} features={[{ value: 'half_goat', label: 'Half goat' }]} />);
   });
 
   it('properly controls user info', () => {
@@ -46,7 +47,7 @@ describe('UserSection', () => {
   });
 
   it('properly controls global permissions', () => {
-    const checkbox = screen.getByRole('checkbox', { checked: true });
+    const checkbox = screen.getByRole('checkbox', { name: /admin : user can view the admin panel and change user permissions \(including their own\)/i });
     expect(checkbox).toBeChecked();
     userEvent.click(checkbox);
     expect(checkbox).not.toBeChecked();
@@ -67,6 +68,13 @@ describe('UserSection', () => {
     userEvent.selectOptions(within(permissions).getByLabelText('Region'), '1');
     const checkbox = within(permissions).getByRole('checkbox', { name: fieldName });
 
+    expect(checkbox).not.toBeChecked();
+    userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+  });
+
+  it('checking a feature selects that feature', () => {
+    const checkbox = screen.getByRole('checkbox', { name: /half goat/i });
     expect(checkbox).not.toBeChecked();
     userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
