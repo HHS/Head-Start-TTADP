@@ -1,3 +1,5 @@
+'/api/v1/activity-reports/display/{displayId}':
+  $ref: './api/activityReportByDisplay.yaml'
 '/user':
   $ref: './user.yaml'
 '/users/collaborators':
@@ -46,7 +48,7 @@
   $ref: './grantee/grantee-id.yaml'
 '/widgets/dashboardOverview':
   $ref: './widgets/dashboardOverview.yaml'
-'/widgets/overview':  
+'/widgets/overview':
   $ref: './widgets/overview.yaml'
 '/widgets/reasonList':
   $ref: './widgets/reasonList.yaml'
