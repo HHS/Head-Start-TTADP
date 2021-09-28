@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
+import { Link } from 'react-router-dom';
+import { Table } from '@trussworks/react-uswds'
 import './GranteeSummary.css';
 
 export default function GrantsList({ summary }) {
@@ -22,12 +24,20 @@ export default function GrantsList({ summary }) {
     return shortProgramTypes.join(', ');
   };
 
+  /*
+     <a style={{ display: "table-cell" }} href="https://hses.ohs.acf.hhs.gov/grant-summary/?grant=01CD004051" target="_blank">
+              {grant.number}
+            </a>
+  */
+
   const renderGrantsList = () => {
     if (summary && summary.grantsToReturn && Array.isArray(summary.grantsToReturn)) {
       return summary.grantsToReturn.map((grant) => (
         <tr key={`grant_list_row_${grant.name}`}>
           <td>
-            {grant.number}
+            <Link to={{ pathname: 'https://hses.ohs.acf.hhs.gov/grant-summary/?grant=01CD004051' }} target="_blank">
+              {grant.number}
+            </Link>
           </td>
           <td>
             {grant.status}
@@ -38,9 +48,7 @@ export default function GrantsList({ summary }) {
           <td>
             {moment(grant.endDate).format('MM/DD/yyyy')}
           </td>
-          <td />
-          <td />
-        </tr>
+        </tr >
       ));
     }
     return null;
@@ -49,27 +57,24 @@ export default function GrantsList({ summary }) {
   return (
     <Container padding={0} className="padding-bottom-2">
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grants</h2>
-      <table className="usa-table ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless margin-x-1 margin-y-2">
-        <caption className="padding-x-3 padding-y-1 sr-only">
-          Grants summary table data
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Grant Number</th>
-            <th scope="col">Status</th>
-            <th scope="col">Programs</th>
-            <th scope="col">Project End Date</th>
-            <th scope="col">AFM</th>
-            <th scope="col">Cycle Year</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            renderGrantsList()
-          }
-        </tbody>
-      </table>
-
+      <table className="usa-table usa-table--striped ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless width-full margin-y-1 maxh-15">
+          <caption className="padding-x-3 padding-y-1 sr-only">
+            Grants summary table data
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Grant Number</th>
+              <th scope="col">Status</th>
+              <th scope="col">Programs</th>
+              <th scope="col">Project End Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              renderGrantsList()
+            }
+          </tbody>
+        </table>
     </Container>
   );
 }
