@@ -29,6 +29,7 @@ describe('grantee record page', () => {
     ],
   };
 
+  /*
   const theMightyGrantee = {
     name: 'the Mighty Grantee',
     'grants.id': 10,
@@ -38,6 +39,25 @@ describe('grantee record page', () => {
     'grants.endDate': null,
     'grants.programSpecialistName': 'The Mighty Program Specialist',
     'grants.granteeId': 9,
+  };
+  */
+
+  const theMightyGrantee = {
+    name: 'the Mighty Grantee',
+    grantsToReturn: [
+      {
+        name: 'Grant Name 1',
+        number: 'GRANTEE_NUMBER',
+        status: 'Active',
+        programTypes: ['Early Head Start (ages 0-3)', 'Head Start (ages 3-5)'],
+        startDate: null,
+        endDate: null,
+        id: 10,
+        regionId: 45,
+        programSpecialistName: 'The Mighty Program Specialist',
+        granteeId: 9,
+      },
+    ],
   };
 
   function renderGranteeRecord() {
@@ -55,7 +75,7 @@ describe('grantee record page', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/user', user);
-    fetchMock.get('/api/grantee/1?region=45', theMightyGrantee);
+    fetchMock.get('/api/grantee/1?region.in[]=45&widgetType=grant', theMightyGrantee);
     act(() => renderGranteeRecord());
   });
   afterEach(() => {
@@ -71,8 +91,10 @@ describe('grantee record page', () => {
 
   it('shows the grantee summary widget', async () => {
     await waitFor(() => {
-      expect(screen.getByText(theMightyGrantee['grants.number'])).toBeInTheDocument();
-      expect(screen.getByText(theMightyGrantee['grants.programSpecialistName'])).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /region 45/i })).toBeInTheDocument();
+      expect(screen.getByText(
+        theMightyGrantee.grantsToReturn[0].programSpecialistName,
+      )).toBeInTheDocument();
     });
   });
 });
