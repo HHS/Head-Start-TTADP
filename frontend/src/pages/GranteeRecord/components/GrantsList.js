@@ -1,9 +1,51 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import Container from '../../../components/Container';
 import './GranteeSummary.css';
 
 export default function GrantsList({ summary }) {
+  const getGrantPrograms = (programs) => {
+    let shortProgramTypes = [];
+    if (programs && Array.isArray(programs) && programs.length > 0) {
+      shortProgramTypes = programs.map((p) => {
+        if (p === 'Early Head Start (ages 0-3)') {
+          return 'EHS';
+        }
+        if (p === 'Head Start (ages 3-5)') {
+          return 'HS';
+        }
+
+        return 'EHS-CCP';
+      });
+    }
+    return shortProgramTypes.join(', ');
+  };
+
+  const renderGrantsList = () => {
+    if (summary && summary.grantsToReturn && Array.isArray(summary.grantsToReturn)) {
+      return summary.grantsToReturn.map((grant) => (
+        <tr key={`grant_list_row_${grant.name}`}>
+          <td>
+            {grant.number}
+          </td>
+          <td>
+            {grant.status}
+          </td>
+          <td>
+            {getGrantPrograms(grant.programTypes)}
+          </td>
+          <td>
+            {moment(grant.endDate).format('MM/DD/yyyy')}
+          </td>
+          <td />
+          <td />
+        </tr>
+      ));
+    }
+    return null;
+  };
+
   return (
     <Container padding={0} className="padding-bottom-2">
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grants</h2>
@@ -13,26 +55,18 @@ export default function GrantsList({ summary }) {
         </caption>
         <thead>
           <tr>
-            <th scope="col">Region</th>
-            <th scope="col">Grantee Type</th>
-            <th scope="col">Grantee ID</th>
-            <th scope="col">Program Specialist</th>
+            <th scope="col">Grant Number</th>
+            <th scope="col">Status</th>
+            <th scope="col">Programs</th>
+            <th scope="col">Project End Date</th>
+            <th scope="col">AFM</th>
+            <th scope="col">Cycle Year</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>
-              Region
-              {' '}
-              {summary['grants.regionId']}
-            </td>
-            <td />
-            <td>
-              {' '}
-              {summary['grants.number']}
-            </td>
-            <td>{summary['grants.programSpecialistName']}</td>
-          </tr>
+          {
+            renderGrantsList()
+          }
         </tbody>
       </table>
 
@@ -41,9 +75,15 @@ export default function GrantsList({ summary }) {
 }
 
 GrantsList.propTypes = {
-  summary: PropTypes.shape({
-    'grants.regionId': PropTypes.number,
-    'grants.programSpecialistName': PropTypes.string,
-    'grants.number': PropTypes.string,
-  }).isRequired,
+  summary:
+    PropTypes.shape({
+      grantsToReturn: PropTypes.arrayOf(
+        PropTypes.shape({
+          number: PropTypes.string,
+          status: PropTypes.string,
+          endDate: PropTypes.string,
+        }),
+      ),
+    }).isRequired,
+
 };
