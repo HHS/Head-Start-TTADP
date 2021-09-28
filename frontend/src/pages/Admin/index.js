@@ -1,25 +1,29 @@
 import React from 'react';
 import { Switch, Route } from 'react-router';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
+import Flags from './Flags';
 
 function Admin() {
   return (
     <>
       <h1>Admin UI</h1>
       <div className="margin-bottom-2">
-        <Link className="usa-button" to="/admin/cdi">
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
-        </Link>
-        <Link className="usa-button" to="/admin/users">
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
-        </Link>
-        <Link className="usa-button" to="/admin/diag">
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
           Diag
-        </Link>
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/flags">
+          Feature flags
+        </NavLink>
       </div>
       <Switch>
         <Route
@@ -33,6 +37,10 @@ function Admin() {
         <Route
           path="/admin/diag/"
           render={({ match }) => <Diag match={match} />}
+        />
+        <Route
+          path="/admin/flags/"
+          render={({ match }) => <Flags match={match} />}
         />
       </Switch>
     </>
