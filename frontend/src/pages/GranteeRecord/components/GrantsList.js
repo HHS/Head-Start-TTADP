@@ -49,24 +49,26 @@ export default function GrantsList({ summary }) {
   return (
     <Container padding={0} className="padding-bottom-2">
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grants</h2>
-      <table className="usa-table usa-table--striped ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless width-full margin-y-1">
-        <caption className="padding-x-3 padding-y-1 sr-only">
-          Grants summary table data
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Grant Number</th>
-            <th scope="col">Status</th>
-            <th scope="col">Programs</th>
-            <th scope="col">Project End Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
+      <div className="usa-table-container--scrollable margin-0">
+        <table className="usa-table usa-table--striped ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless width-full margin-y-1">
+          <caption className="padding-x-3 padding-y-1 sr-only">
+            Grants summary table data
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Grant Number</th>
+              <th scope="col">Status</th>
+              <th scope="col">Programs</th>
+              <th scope="col">Project End Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
               renderGrantsList()
             }
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
     </Container>
   );
 }
