@@ -4,6 +4,27 @@ import Container from '../../../components/Container';
 import './GranteeSummary.css';
 
 export default function GranteeSummary({ summary }) {
+  const renderGranteeList = () => {
+    if (summary && summary.grantsToReturn && Array.isArray(summary.grantsToReturn)) {
+      return summary.grantsToReturn.map((grant) => (
+        <tr key={`grantee_list_row_${grant.name}`}>
+          <td>
+            Region
+            {' '}
+            {grant.regionId}
+          </td>
+          <td />
+          <td>
+            {' '}
+            {grant.number}
+          </td>
+          <td>{grant.programSpecialistName}</td>
+        </tr>
+      ));
+    }
+    return null;
+  };
+
   return (
     <Container padding={0} className="padding-bottom-2">
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grantee Summary</h2>
@@ -21,19 +42,9 @@ export default function GranteeSummary({ summary }) {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>
-                Region
-                {' '}
-                {summary['grants.regionId']}
-              </td>
-              <td />
-              <td>
-                {' '}
-                {summary['grants.number']}
-              </td>
-              <td>{summary['grants.programSpecialistName']}</td>
-            </tr>
+            {
+              renderGranteeList()
+            }
           </tbody>
         </table>
       </div>
@@ -43,9 +54,14 @@ export default function GranteeSummary({ summary }) {
 }
 
 GranteeSummary.propTypes = {
-  summary: PropTypes.shape({
-    'grants.regionId': PropTypes.number,
-    'grants.programSpecialistName': PropTypes.string,
-    'grants.number': PropTypes.string,
-  }).isRequired,
+  summary:
+    PropTypes.shape({
+      grantsToReturn: PropTypes.arrayOf(
+        PropTypes.shape({
+          number: PropTypes.string,
+          status: PropTypes.string,
+          endDate: PropTypes.string,
+        }),
+      ),
+    }).isRequired,
 };
