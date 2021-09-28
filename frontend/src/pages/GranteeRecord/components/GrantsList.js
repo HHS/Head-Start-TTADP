@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import './GranteeSummary.css';
 
@@ -28,9 +27,9 @@ export default function GrantsList({ summary }) {
       return summary.grantsToReturn.map((grant) => (
         <tr key={`grant_list_row_${grant.name}`}>
           <td>
-            <Link to={{ pathname: `https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}` }} target="_blank">
+            <a style={{ display: 'table-cell' }} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
               {grant.number}
-            </Link>
+            </a>
           </td>
           <td>
             {grant.status}
