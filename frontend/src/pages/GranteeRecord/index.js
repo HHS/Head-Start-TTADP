@@ -5,6 +5,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeSummary from './components/GranteeSummary';
+import GrantList from './components/GrantsList';
 import './index.css';
 
 export default function GranteeRecord({ match }) {
@@ -57,9 +58,12 @@ export default function GranteeRecord({ match }) {
     <>
       <span className="text-bold">Grantee TTA Record</span>
       <h1 className="landing margin-top-1">{granteeName}</h1>
-      <Grid row>
+      <Grid row gap={4}>
         <Grid col={6}>
           <GranteeSummary summary={granteeSummary} />
+        </Grid>
+        <Grid col={6}>
+          <GrantList summary={granteeSummary} />
         </Grid>
       </Grid>
     </>

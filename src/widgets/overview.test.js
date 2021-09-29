@@ -1,7 +1,7 @@
 import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
-import { filtersToScopes } from '../scopes/activityReport';
+import determineFiltersToScopes from '../scopes';
 import { formatQuery } from '../routes/widgets/utils';
 import overview from './overview';
 import { REPORT_STATUSES } from '../constants';
@@ -133,7 +133,7 @@ describe('Overview widget', () => {
     await createOrUpdate({ ...regionTwoReport, duration: 1.5 }, reportOneR2);
 
     const query = { 'region.in': ['17'] };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
     const {
       numReports,

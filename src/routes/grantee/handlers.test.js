@@ -1,9 +1,9 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { getGrantee } from './handlers';
-import { granteeByIdAndRegion } from '../../services/grantee';
+import { granteeByScopes } from '../../services/grantee';
 
 jest.mock('../../services/grantee', () => ({
-  granteeByIdAndRegion: jest.fn(),
+  granteeByScopes: jest.fn(),
 }));
 
 describe('getGrantee', () => {
@@ -24,10 +24,11 @@ describe('getGrantee', () => {
         granteeId: 100000,
       },
       query: {
-        region: 1,
+        'region.in': 1,
+        widgetType: 'grant',
       },
     };
-    granteeByIdAndRegion.mockResolvedValue(granteeWhere);
+    granteeByScopes.mockResolvedValue(granteeWhere);
     await getGrantee(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(granteeWhere);
   });
@@ -38,10 +39,11 @@ describe('getGrantee', () => {
         granteeId: 14565,
       },
       query: {
-        region: 1,
+        'region.in': 1,
+        widgetType: 'grant',
       },
     };
-    granteeByIdAndRegion.mockResolvedValue(null);
+    granteeByScopes.mockResolvedValue(null);
     await getGrantee(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
   });

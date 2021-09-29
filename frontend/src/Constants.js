@@ -82,6 +82,11 @@ export const REPORT_STATUSES = {
   APPROVED: 'approved',
 };
 
+export const WIDGET_TYPES = {
+  ACTIVITY_REPORT: 'activityReport',
+  GRANTEE: 'grantee',
+};
+
 export const REPORTS_PER_PAGE = 10;
 export const ALERTS_PER_PAGE = 10;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';

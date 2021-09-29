@@ -9,8 +9,8 @@ const granteeUrl = join('/', 'api', 'grantee');
 // eslint-disable-next-line import/prefer-default-export
 export const getGrantee = async (granteeId, regionId = '') => {
   try {
-    const regionSearch = regionId ? `?region=${regionId.toString(DECIMAL_BASE)}` : '';
-
+    const regionSearch = regionId ? `?region.in[]=${regionId.toString(DECIMAL_BASE)}` : '';
+    const widgetType = '&widgetType=grant';
     const id = parseInt(granteeId, DECIMAL_BASE);
 
     if (Number.isNaN(id)) {
@@ -18,7 +18,7 @@ export const getGrantee = async (granteeId, regionId = '') => {
     }
 
     const grantee = await get(
-      join(granteeUrl, id.toString(DECIMAL_BASE), regionSearch),
+      join(granteeUrl, id.toString(DECIMAL_BASE), regionSearch, widgetType),
     );
 
     return grantee.json();

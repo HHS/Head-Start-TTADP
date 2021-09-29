@@ -1,7 +1,7 @@
 import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
-import { filtersToScopes } from '../scopes/activityReport';
+import determineFiltersToScopes from '../scopes';
 import totalHrsAndGranteeGraph from './totalHrsAndGranteeGraph';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
@@ -114,7 +114,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
 
   it('handles no filters', async () => {
     const query = { };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await totalHrsAndGranteeGraph(scopes, query);
     expect(data.length).toBe(3);
   });
@@ -171,7 +171,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     await createOrUpdate({ ...regionTwoReport, duration: 1.5 }, reportOneR2);
 
     const query = { 'region.in': ['17'], 'startDate.win': '2021/02/01-2021/07/31' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
@@ -217,7 +217,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     }, reportFour);
 
     const query = { 'region.in': ['18'], 'startDate.win': '2021/06/01-2021/06/30' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
@@ -262,7 +262,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     }, legacyReportFour);
 
     const query = { 'region.in': ['17'], 'startDate.win': '2020/01/01-2020/03/31' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
@@ -311,7 +311,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     }, reportFive);
 
     const query = { 'region.in': ['17'], 'startDate.win': '2021/11/01-2023/06/01' };
-    const scopes = filtersToScopes(query);
+    const scopes = determineFiltersToScopes(query);
     const data = await totalHrsAndGranteeGraph(scopes, query);
 
     // Overall trace categories.
