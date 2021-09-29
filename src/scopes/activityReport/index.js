@@ -2,6 +2,7 @@
 import { map, pickBy } from 'lodash';
 
 import { withGranteeName, withoutGranteeName } from './grantee';
+import withGranteeId from './granteeId';
 import { withoutReportIds, withReportIds } from './reportId';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withoutTopics, withTopics } from './topic';
@@ -21,6 +22,9 @@ export const topicToQuery = {
   grantee: {
     in: (query) => withGranteeName(query),
     nin: (query) => withoutGranteeName(query),
+  },
+  granteeId: {
+    in: (query) => withGranteeId(query),
   },
   startDate: {
     bef: (query) => beforeStartDate(query),

@@ -29,19 +29,6 @@ describe('grantee record page', () => {
     ],
   };
 
-  /*
-  const theMightyGrantee = {
-    name: 'the Mighty Grantee',
-    'grants.id': 10,
-    'grants.number': 'GRANTEE_NUMBER',
-    'grants.regionId': 45,
-    'grants.startDate': null,
-    'grants.endDate': null,
-    'grants.programSpecialistName': 'The Mighty Program Specialist',
-    'grants.granteeId': 9,
-  };
-  */
-
   const theMightyGrantee = {
     name: 'the Mighty Grantee',
     grantsToReturn: [
@@ -76,6 +63,14 @@ describe('grantee record page', () => {
   beforeEach(() => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/grantee/1?region.in[]=45&widgetType=grant', theMightyGrantee);
+    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1', {
+      duration: '',
+      deliveryMethod: '',
+      numberOfParticipants: '',
+      inPerson: '',
+      sumDuration: '',
+      numParticipants: '',
+    });
     act(() => renderGranteeRecord());
   });
   afterEach(() => {

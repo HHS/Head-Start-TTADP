@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import fetchWidget from '../fetchers/Widgets';
+import { filtersToQueryString } from '../pages/Landing/Filter';
 
 /*
   `withWidgetData` wraps widgets providing the widget with data
@@ -16,16 +17,15 @@ const withWidgetData = (Widget, widgetId) => {
     const [data, updateData] = useState();
 
     const {
-      dateRange, region, allRegions, errorOverride, roles,
+      filters, errorOverride,
     } = props;
-
-    const selectedRegion = region || allRegions[0];
 
     useEffect(() => {
       const fetch = async () => {
         try {
           updateLoading(true);
-          const fetchedData = await fetchWidget(widgetId, selectedRegion, dateRange, roles);
+          const query = filtersToQueryString(filters);
+          const fetchedData = await fetchWidget(widgetId, query);
           updateData(fetchedData);
           updateError('');
         } catch (e) {
@@ -36,7 +36,7 @@ const withWidgetData = (Widget, widgetId) => {
       };
 
       fetch();
-    }, [selectedRegion, dateRange, roles]);
+    }, [filters]);
 
     if (error || errorOverride) {
       return (
@@ -50,20 +50,18 @@ const withWidgetData = (Widget, widgetId) => {
   };
 
   WidgetWrapper.propTypes = {
-    region: PropTypes.number,
-    allRegions: PropTypes.arrayOf(PropTypes.number).isRequired,
     errorOverride: PropTypes.bool,
-    startDate: PropTypes.string,
-    dateRange: PropTypes.string,
-    roles: PropTypes.string,
+    filters: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })),
   };
 
   WidgetWrapper.defaultProps = {
     errorOverride: false,
-    region: 0,
-    startDate: '',
-    dateRange: '',
-    roles: '',
+    filters: [],
   };
 
   return WidgetWrapper;

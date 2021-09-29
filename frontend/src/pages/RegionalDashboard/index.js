@@ -57,7 +57,7 @@ export default function RegionalDashboard({ user }) {
     */
 
   const [filters, updateFilters] = useState([]);
-  const [roleFilter, updateRoleFilter] = useState('');
+  const [roleFilter, updateRoleFilter] = useState();
 
   useEffect(() => {
     setDateTime(getDateTimeObject(selectedDateRangeOption, dateRange));
@@ -71,9 +71,9 @@ export default function RegionalDashboard({ user }) {
     // The number and nature of the filters is static, so we can just update them like so
     const filtersToApply = [
       {
-        id: uuidv4(), // note to self- is this just for unique keys/.map?
+        id: uuidv4(),
         topic: 'region',
-        condition: 'Is equal to',
+        condition: 'Contains',
         query: appliedRegion,
       },
       {
@@ -154,43 +154,35 @@ export default function RegionalDashboard({ user }) {
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
             filters={filters}
-            region={appliedRegion}
-            allRegions={regions}
-            dateRange={dateRange}
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
               <ReasonList
                 filters={filters}
-                region={appliedRegion}
-                allRegions={getUserRegions(user)}
-                dateRange={dateRange}
                 dateTime={dateTime}
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
               <TotalHrsAndGrantee
                 filters={filters}
-                region={appliedRegion}
-                allRegions={regions}
-                dateRange={dateRange}
                 dateTime={dateTime}
               />
             </Grid>
           </Grid>
           <Grid row>
             <TopicFrequencyGraph
-              filters={[...filters, roleFilter]}
-              region={appliedRegion}
-              allRegions={regions}
-              dateRange={dateRange}
-              roles={roleFilter}
+              filters={
+                roleFilter
+                  ? [...filters, {
+                    id: uuidv4(),
+                    topic: 'role',
+                    condition: 'Contains',
+                    query: roleFilter,
+                  }] : filters
+              }
               updateRoles={updateRoles}
               dateTime={dateTime}
             />
-          </Grid>
-          <Grid row>
-            <Grid col="auto" />
           </Grid>
         </GridContainer>
       </>
