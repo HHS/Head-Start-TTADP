@@ -5,15 +5,15 @@ import determineFiltersToScopes from '../scopes';
 describe('Grantee DB service', () => {
   const grantees = [
     {
-      id: 63,
+      id: 73,
       name: 'grantee 1',
     },
     {
-      id: 64,
+      id: 74,
       name: 'grantee 2',
     },
     {
-      id: 65,
+      id: 75,
       name: 'grantee 3',
     },
   ];
@@ -22,17 +22,17 @@ describe('Grantee DB service', () => {
     await Promise.all([
       ...grantees.map((g) => Grantee.create(g)),
       await Grant.create({
-        id: 65,
+        id: 75,
         number: '1145543',
         regionId: 1,
-        granteeId: 65,
+        granteeId: 75,
         status: 'Active',
       }),
       await Grant.create({
-        id: 64,
+        id: 74,
         number: '1145341',
         regionId: 1,
-        granteeId: 64,
+        granteeId: 74,
         status: 'Active',
       }),
     ]);
@@ -48,17 +48,17 @@ describe('Grantee DB service', () => {
     it('returns all grantees', async () => {
       const foundGrantees = await allGrantees();
       const foundIds = foundGrantees.map((g) => g.id);
-      expect(foundIds).toContain(63);
-      expect(foundIds).toContain(64);
-      expect(foundIds).toContain(65);
+      expect(foundIds).toContain(73);
+      expect(foundIds).toContain(74);
+      expect(foundIds).toContain(75);
     });
   });
 
   describe('granteeByScopes', () => {
     it('returns a grantee by grantee id and region id', async () => {
-      const query = { 'region.in': ['1'], 'granteeId.in': [65] };
+      const query = { 'region.in': ['1'], 'granteeId.in': [75] };
       const grantScopes = determineFiltersToScopes(query, 'grant');
-      const grantee3 = await granteeByScopes(65, grantScopes);
+      const grantee3 = await granteeByScopes(75, grantScopes);
 
       // Grantee Name.
       expect(grantee3.name).toBe('grantee 3');
@@ -67,8 +67,8 @@ describe('Grantee DB service', () => {
       expect(grantee3.grantsToReturn.length).toBe(1);
 
       // Grants.
-      expect(grantee3.grantsToReturn[0].id).toBe(65);
-      expect(grantee3.grantsToReturn[0].granteeId).toBe(65);
+      expect(grantee3.grantsToReturn[0].id).toBe(75);
+      expect(grantee3.grantsToReturn[0].granteeId).toBe(75);
       expect(grantee3.grantsToReturn[0].regionId).toBe(1);
       expect(grantee3.grantsToReturn[0].number).toBe('1145543');
       expect(grantee3.grantsToReturn[0].status).toBe('Active');
@@ -77,9 +77,9 @@ describe('Grantee DB service', () => {
       expect(grantee3.grantsToReturn[0].endDate).toBe(null);
     });
     it('returns grantee and grants without a region specified', async () => {
-      const query = { 'granteeId.in': [65] };
+      const query = { 'granteeId.in': [75] };
       const grantScopes = determineFiltersToScopes(query, 'grant');
-      const grantee2 = await granteeByScopes(64, grantScopes);
+      const grantee2 = await granteeByScopes(74, grantScopes);
 
       // Grantee Name.
       expect(grantee2.name).toBe('grantee 2');
@@ -88,8 +88,8 @@ describe('Grantee DB service', () => {
       expect(grantee2.grantsToReturn.length).toBe(1);
 
       // Grants.
-      expect(grantee2.grantsToReturn[0].id).toBe(64);
-      expect(grantee2.grantsToReturn[0].granteeId).toBe(64);
+      expect(grantee2.grantsToReturn[0].id).toBe(74);
+      expect(grantee2.grantsToReturn[0].granteeId).toBe(74);
       expect(grantee2.grantsToReturn[0].regionId).toBe(1);
       expect(grantee2.grantsToReturn[0].number).toBe('1145341');
       expect(grantee2.grantsToReturn[0].status).toBe('Active');
