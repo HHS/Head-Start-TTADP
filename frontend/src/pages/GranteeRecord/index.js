@@ -7,7 +7,7 @@ import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeSummary from './components/GranteeSummary';
 import GrantList from './components/GrantsList';
-import GranteeOverview from '../../widgets/GranteeOverview';
+import Overview from '../../widgets/DashboardOverview';
 import './index.css';
 
 export default function GranteeRecord({ match }) {
@@ -37,6 +37,12 @@ export default function GranteeRecord({ match }) {
         condition: 'Contains',
         query: granteeId,
       },
+      {
+        id: uuidv4(),
+        topic: 'modelType',
+        condition: 'Is',
+        query: 'grantee',
+      },
     ];
 
     setFilters(filtersToApply);
@@ -59,9 +65,7 @@ export default function GranteeRecord({ match }) {
       const region = parseInt(regionId, DECIMAL_BASE);
       fetchGrantee(id, region);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-      setError('There was error ');
+      setError('There was an error fetching grantee data');
     }
   }, [granteeId, match.params, regionId]);
 
@@ -89,7 +93,7 @@ export default function GranteeRecord({ match }) {
           <GrantList summary={granteeSummary} />
         </Grid>
       </Grid>
-      <GranteeOverview
+      <Overview
         filters={filters}
       />
     </>

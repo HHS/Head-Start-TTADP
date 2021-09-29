@@ -82,6 +82,12 @@ export default function RegionalDashboard({ user }) {
         condition: 'Is within',
         query: dateRange,
       },
+      {
+        id: uuidv4(),
+        topic: 'modelType',
+        condition: 'Is',
+        query: 'activityReport',
+      },
     ];
 
     updateFilters(filtersToApply);
@@ -118,6 +124,7 @@ export default function RegionalDashboard({ user }) {
 
   return (
     <div className="ttahub-dashboard">
+
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
