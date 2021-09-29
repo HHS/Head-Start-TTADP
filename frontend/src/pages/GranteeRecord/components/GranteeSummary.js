@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
-import './GranteeSummary.css';
 
 export default function GranteeSummary({ summary }) {
   const renderGranteeList = () => {
@@ -26,9 +25,9 @@ export default function GranteeSummary({ summary }) {
   };
 
   return (
-    <Container padding={0} className="padding-bottom-2">
+    <Container padding={0}>
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grantee Summary</h2>
-      <div className="usa-table-container--scrollable">
+      <div className="ttahub-grantee-record-table-container usa-table-container--scrollable margin-0">
         <table className="usa-table ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless margin-x-1 margin-y-2">
           <caption className="padding-x-3 padding-y-1 sr-only">
             Grantee summary table data
