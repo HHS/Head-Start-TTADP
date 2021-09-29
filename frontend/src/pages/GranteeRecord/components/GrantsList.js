@@ -38,7 +38,7 @@ export default function GrantsList({ summary }) {
             {getGrantPrograms(grant.programTypes)}
           </td>
           <td>
-            {moment(grant.endDate).format('MM/DD/yyyy')}
+            {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
           </td>
         </tr>
       ));
