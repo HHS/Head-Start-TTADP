@@ -63,18 +63,8 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
 
     const authorName = author ? author.fullName : '';
 
-    const recipientsTitle = activityRecipients && activityRecipients.reduce(
-      (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
-      '',
-    );
-
     const recipients = activityRecipients && activityRecipients.map((ar) => (
-      <Tag
-        key={`${ar.name.slice(1, 3)}_${ar.id}`}
-        className="smart-hub--table-collection"
-      >
-        {ar.grant ? ar.grant.grantee.name : ar.name}
-      </Tag>
+      ar.grant ? ar.grant.grantee.name : ar.name
     ));
 
     const collaboratorNames = collaborators && collaborators.map((collaborator) => (
@@ -128,9 +118,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </Link>
         </th>
         <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
+          <TooltipWithEllipsis collection={recipients} />
         </td>
         <td>{startDate}</td>
         <td>
