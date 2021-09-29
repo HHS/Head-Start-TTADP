@@ -122,7 +122,7 @@ function App() {
             <ActivityReport location={location} match={match} user={user} />
           )}
         />
-        <FeatureFlag user={user} flag="grantee_record_page">
+        <FeatureFlag user={user} flag="grantee_record_page" admin={admin}>
           <Route
             path="/region/:regionId/grantee/:granteeId"
             render={({ match }) => (
