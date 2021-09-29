@@ -8,7 +8,7 @@ import db, {
   NextStep,
   Region,
 } from '../models';
-import determineFiltersToScopes from '../scopes';
+import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
@@ -165,7 +165,7 @@ describe('Topics and frequency graph widget', () => {
 
   it('returns data in the correct format', async () => {
     const query = { 'region.in': [17], 'startDate.win': '2000/01/01-2000/01/01' };
-    const scopes = determineFiltersToScopes(query);
+    const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
 
     expect(data).toStrictEqual([
@@ -322,7 +322,7 @@ describe('Topics and frequency graph widget', () => {
 
   it('respects the region scope', async () => {
     const query = { 'region.in': [18], 'startDate.win': '2000/01/01-2000/01/01' };
-    const scopes = determineFiltersToScopes(query);
+    const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
 
     expect(data).toStrictEqual([
@@ -479,7 +479,7 @@ describe('Topics and frequency graph widget', () => {
 
   it('respects the date scope', async () => {
     const query = { 'region.in': [17], 'startDate.win': '2000/01/01-2000/06/02' };
-    const scopes = determineFiltersToScopes(query);
+    const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
 
     expect(data).toStrictEqual([
@@ -636,7 +636,7 @@ describe('Topics and frequency graph widget', () => {
 
   it('respects the role scope', async () => {
     const query = { 'region.in': [17], 'role.in': ['System Specialist'] };
-    const scopes = determineFiltersToScopes(query);
+    const scopes = filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
 
     expect(data).toStrictEqual([

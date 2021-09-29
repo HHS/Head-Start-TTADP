@@ -1,6 +1,6 @@
 import db, { Grantee, Grant } from '../models';
 import { allGrantees, granteeByScopes } from './grantee';
-import determineFiltersToScopes from '../scopes';
+import filtersToScopes from '../scopes';
 
 describe('Grantee DB service', () => {
   const grantees = [
@@ -57,7 +57,7 @@ describe('Grantee DB service', () => {
   describe('granteeByScopes', () => {
     it('returns a grantee by grantee id and region id', async () => {
       const query = { 'region.in': ['1'], 'granteeId.in': [75] };
-      const grantScopes = determineFiltersToScopes(query, 'grant');
+      const grantScopes = filtersToScopes(query, 'grant');
       const grantee3 = await granteeByScopes(75, grantScopes);
 
       // Grantee Name.
@@ -78,7 +78,7 @@ describe('Grantee DB service', () => {
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [75] };
-      const grantScopes = determineFiltersToScopes(query, 'grant');
+      const grantScopes = filtersToScopes(query, 'grant');
       const grantee2 = await granteeByScopes(74, grantScopes);
 
       // Grantee Name.
