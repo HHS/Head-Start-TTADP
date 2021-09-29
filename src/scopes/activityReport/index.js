@@ -67,7 +67,7 @@ export const topicToQuery = {
   },
 };
 
-export function filtersToScopes(filters) {
+export function activityReportsFiltersToScopes(filters) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic] = topicAndCondition.split('.');
     return topic in topicToQuery;

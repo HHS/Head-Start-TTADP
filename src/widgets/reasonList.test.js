@@ -1,7 +1,7 @@
 import db, {
   ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
 } from '../models';
-import { filtersToScopes } from '../scopes/activityReport';
+import determineFiltersToScopes from '../scopes';
 import reasonList from './reasonList';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
@@ -182,7 +182,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list within small date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/01/01-2021/02/28' });
+    const scopes = determineFiltersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/01/01-2021/02/28' });
     const res = await reasonList(scopes);
 
     expect(res.length).toBe(14);
@@ -197,7 +197,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list for longer date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/01/01-2021/03/31' });
+    const scopes = determineFiltersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/01/01-2021/03/31' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(14);
     expect(res[0].name).toBe('First Reason');
@@ -209,7 +209,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list for later date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/03/01-2021/04/30' });
+    const scopes = determineFiltersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/03/01-2021/04/30' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(3);
 
@@ -222,7 +222,7 @@ describe('Reason list widget', () => {
   });
 
   it('retreives reason list for longer date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/02/01-2021/04/30' });
+    const scopes = determineFiltersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/02/01-2021/04/30' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(14);
     expect(res[0].name).toBe('Second Reason');
@@ -235,11 +235,11 @@ describe('Reason list widget', () => {
     expect(res[2].count).toBe(2);
   });
   it('does not retrieve reason list outside of date range for specified region', async () => {
-    let scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2020/01/01-2020/12/31' });
+    let scopes = determineFiltersToScopes({ 'region.in': ['1'], 'startDate.win': '2020/01/01-2020/12/31' });
     let res = await reasonList(scopes);
     expect(res.length).toBe(0);
 
-    scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/05/01-2021/06/23' });
+    scopes = determineFiltersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/05/01-2021/06/23' });
 
     res = await reasonList(scopes);
     expect(res.length).toBe(0);
