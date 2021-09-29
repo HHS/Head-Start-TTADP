@@ -1,11 +1,11 @@
-import filterArray from './utils';
+import { filterAssociation } from './utils';
 
-const collaborators = '(SELECT STRING_AGG("Users".name, \',\') FROM "Users" INNER JOIN "ActivityReportCollaborators" ON "Users"."id" = "ActivityReportCollaborators"."userId" AND "ActivityReport"."id" = "ActivityReportCollaborators"."activityReportId" GROUP BY "ActivityReport"."id")';
+const collaborators = 'SELECT "ActivityReportCollaborators"."activityReportId" FROM "Users" INNER JOIN "ActivityReportCollaborators" ON "ActivityReportCollaborators"."userId" = "Users"."id" WHERE "Users".name';
 
 export function withCollaborators(names) {
-  return filterArray(collaborators, names, false);
+  return filterAssociation(collaborators, names, false);
 }
 
 export function withoutCollaborators(names) {
-  return filterArray(collaborators, names, true);
+  return filterAssociation(collaborators, names, true);
 }
