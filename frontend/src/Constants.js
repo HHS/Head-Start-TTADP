@@ -82,7 +82,7 @@ export const REPORT_STATUSES = {
   APPROVED: 'approved',
 };
 
-export const WIDGET_TYPES = {
+export const MODEL_TYPES = {
   ACTIVITY_REPORT: 'activityReport',
   GRANTEE: 'grantee',
 };

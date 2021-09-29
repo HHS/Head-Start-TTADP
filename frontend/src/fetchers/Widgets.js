@@ -1,8 +1,8 @@
 import join from 'url-join';
 import { get } from './index';
-import { WIDGET_TYPES } from '../Constants';
+import { MODEL_TYPES } from '../Constants';
 
-const fetchWidget = async (widgetId, region, dateRange = '', roles = '', widgetType = WIDGET_TYPES.ACTIVITY_REPORT) => {
+const fetchWidget = async (widgetId, region, dateRange = '', roles = '', widgetType = MODEL_TYPES.ACTIVITY_REPORT) => {
   const regionStr = region ? `&region.in[]=${region}` : '';
   const rolesStr = roles ? `&role.in[]=${roles}` : '';
   const dateRangeStr = dateRange !== '' ? `&startDate.win=${dateRange}` : '';
