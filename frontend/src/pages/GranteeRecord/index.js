@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeSummary from './components/GranteeSummary';
 import GrantList from './components/GrantsList';
+import GranteeOverview from '../../widgets/GranteeOverview';
 import './index.css';
 
 export default function GranteeRecord({ match }) {
-  const [granteeName, setGranteeName] = useState(` - Region ${match.params.regionId}`);
+  const { regionId, granteeId } = match.params;
+  const [granteeName, setGranteeName] = useState(` - Region ${regionId}`);
   const [granteeSummary, setGranteeSummary] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -17,11 +20,31 @@ export default function GranteeRecord({ match }) {
     'grants.endDate': '',
     'grants.number': '',
   });
+  const [filters, setFilters] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    async function fetchGrantee(granteeId, regionId) {
-      const grantee = await getGrantee(granteeId, regionId);
+    const filtersToApply = [
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'Contains',
+        query: regionId,
+      },
+      {
+        id: uuidv4(),
+        topic: 'granteeId',
+        condition: 'Contains',
+        query: granteeId,
+      },
+    ];
+
+    setFilters(filtersToApply);
+  }, [granteeId, regionId]);
+
+  useEffect(() => {
+    async function fetchGrantee(id, region) {
+      const grantee = await getGrantee(id, region);
 
       if (!grantee) {
         setError('Grantee record not found');
@@ -32,15 +55,15 @@ export default function GranteeRecord({ match }) {
     }
 
     try {
-      const granteeId = parseInt(match.params.granteeId, DECIMAL_BASE);
-      const regionId = parseInt(match.params.regionId, DECIMAL_BASE);
-      fetchGrantee(granteeId, regionId);
+      const id = parseInt(granteeId, DECIMAL_BASE);
+      const region = parseInt(regionId, DECIMAL_BASE);
+      fetchGrantee(id, region);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
       setError('There was error ');
     }
-  }, [match.params]);
+  }, [granteeId, match.params, regionId]);
 
   if (error) {
     return (
@@ -66,6 +89,9 @@ export default function GranteeRecord({ match }) {
           <GrantList summary={granteeSummary} />
         </Grid>
       </Grid>
+      <GranteeOverview
+        filters={filters}
+      />
     </>
   );
 }
