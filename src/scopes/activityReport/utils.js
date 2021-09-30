@@ -32,6 +32,6 @@ export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 
   }
 
   return {
-    [Op.and]: reportInSubQuery(baseQuery, searchTerms, 'IN'),
+    [Op.and]: reportInSubQuery(baseQuery, searchTerms, 'IN', comparator),
   };
 }
