@@ -8265,6 +8265,11 @@ puppeteer@^8.0.0:
     unbzip2-stream "^1.3.3"
     ws "^7.2.3"
 
+q@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/q/-/q-1.5.1.tgz#7e32f75b41381291d04611f1bf14109ac00651d7"
+  integrity sha1-fjL3W0E4EpHQRhHxvxQQmsAGUdc=
+
 qs@6.7.0:
   version "6.7.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.7.0.tgz#41dc1a015e3d581f1621776be31afb2876a9b1bc"
@@ -10080,7 +10085,7 @@ underscore.deep@~0.5.1:
   resolved "https://registry.yarnpkg.com/underscore.deep/-/underscore.deep-0.5.1.tgz#072671f48d68735c34223fcfef63e69e5276cc2b"
   integrity sha1-ByZx9I1oc1w0Ij/P72PmnlJ2zCs=
 
-underscore@~1.13.1:
+underscore@^1.13.1, underscore@~1.13.1:
   version "1.13.1"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.13.1.tgz#0c1c6bd2df54b6b69f2314066d65b6cde6fcf9d1"
   integrity sha512-hzSoAVtJF+3ZtiFX0VgfFPHEDRm7Y/QPjGyNo4TVdnDTdft3tr8hEkD25a1jC+TjTuE7tkHGKkhwCgs9dgBB2g==
@@ -10717,3 +10722,12 @@ yauzl@^2.10.0:
   dependencies:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
+
+yayson@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/yayson/-/yayson-2.1.0.tgz#f261cb4269a16d80001938d96a2050d5e5f70e3b"
+  integrity sha512-VhLT75PkrPnvB3wjP1/VsTUfOHhlcIshTDYBiTvnNODVN4y7o5jq4YkrNo2oJkbN5VEFQcZheLCwkS64V0ut7g==
+  optionalDependencies:
+    lodash "^4.17.21"
+    q "^1.5.1"
+    underscore "^1.13.1"

@@ -1,4 +1,5 @@
 import httpCodes from 'http-codes';
+import { currentUserId } from '../services/currentUser';
 import { validateUserAuthForAdmin } from '../services/accessValidation';
 import { auditLogger } from '../logger';
 import handleErrors from '../lib/apiErrorHandler';
@@ -15,7 +16,7 @@ import handleErrors from '../lib/apiErrorHandler';
  */
 export default async function userAdminAccessMiddleware(req, res, next) {
   try {
-    const { userId } = req.session;
+    const userId = currentUserId(req, res);
     if (!(await validateUserAuthForAdmin(userId))) {
       auditLogger.error(`User ${userId} attempted to access an ADMIN route without permission`);
       // consider sending a 404 rather than a 403 (Forbidden) to avoid confirming route
