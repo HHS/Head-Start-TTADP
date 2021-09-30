@@ -1,0 +1,34 @@
+get:
+  security:
+    - bearerAuth: []
+  tags:
+    - external-api
+  summary: Retrieve an activity report by display ID
+  description: >
+    Retrieve a single activity report by display ID.
+    This endpoint has not yet been implemented.
+  operationId: getActivityReportByDisplayID
+  parameters:
+    - in: path
+      name: displayId
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: The activity report with a Display ID of {displayId}
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: './schemas.yaml#/components/schemas/activityReport'
+    401:
+      description: Authorization information is invalid
+    403:
+      description: User is not authorized
+    404:
+      description: Activity Record is not found
+    500:
+      description: Unexpected error
