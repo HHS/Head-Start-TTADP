@@ -48,11 +48,15 @@ const requestLogger = expressWinston.logger({
     format.label({ label: 'REQUEST' }),
     formatter,
   ),
-  dynamicMeta: (req) => {
+  dynamicMeta: (req, res) => {
     if (req && req.session) {
-      const { userId } = req.session;
       return {
-        userId,
+        userId: req.session.userId,
+      };
+    }
+    if (res && res.locals) {
+      return {
+        userId: res.locals.userId,
       };
     }
     return {};
