@@ -14,7 +14,17 @@ servers:
   - url: https://tta-smarthub-staging.app.cloud.gov
 paths:
   $ref: "./paths/index.yaml"
+security:
+  - cookieAuth: []
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     grant:
       type: object
