@@ -125,7 +125,7 @@ function App() {
         <Route
           path="/region/:regionId/grantee/:granteeId"
           render={({ match }) => (
-            <FeatureFlag user={user} flag="grantee_record_page" admin={admin}><GranteeRecord match={match} user={user} /></FeatureFlag>
+            <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeRecord match={match} user={user} /></FeatureFlag>
           )}
         />
         <Route
