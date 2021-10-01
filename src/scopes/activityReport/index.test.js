@@ -307,7 +307,7 @@ describe('filtersToScopes', () => {
       });
     });
 
-    describe('for granteeId', () => {
+    describe('granteeId', () => {
       let reportIncluded;
       let reportExcluded;
 
