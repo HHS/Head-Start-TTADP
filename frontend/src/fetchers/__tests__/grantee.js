@@ -15,6 +15,6 @@ describe('grantee fetcher', () => {
   it('tests that it requires a int for grantee id', async () => {
     await expect(async () => {
       await getGrantee('tim');
-    }).rejects.toEqual(Error('Error: Grantee ID must be a number'));
+    }).rejects.toEqual(Error('Grantee ID must be a number'));
   });
 });

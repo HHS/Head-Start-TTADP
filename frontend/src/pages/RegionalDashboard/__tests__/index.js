@@ -75,7 +75,8 @@ describe('Regional Dashboard page', () => {
       { lastThirtyDays: true, withSpaces: false, forDateTime: true },
     );
 
-    const params = `?&region.in[]=14&startDate.win=${thirtyDays}&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist&modelType=activityReport`;
+
+    const params = `?region.in[]=14&startDate.win=${thirtyDays}&modelType.is=activityReport&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist`;
     const widgetUrl = join('/', 'api', 'widgets', 'topicFrequencyGraph', params);
     fetchMock.get(widgetUrl, []);
 
