@@ -22,9 +22,9 @@ export default function GrantsList({ summary }) {
   };
 
   const renderGrantsList = () => {
-    if (summary && summary.grantsToReturn && Array.isArray(summary.grantsToReturn)) {
-      return summary.grantsToReturn.map((grant) => (
-        <tr key={`grant_list_row_${grant.name}`}>
+    if (summary && summary.grants) {
+      return summary.grants.map((grant) => (
+        <tr key={grant.id}>
           <td>
             <a style={{ display: 'table-cell' }} className="padding-2" href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
               {grant.number}
@@ -75,7 +75,7 @@ export default function GrantsList({ summary }) {
 GrantsList.propTypes = {
   summary:
     PropTypes.shape({
-      grantsToReturn: PropTypes.arrayOf(
+      grants: PropTypes.arrayOf(
         PropTypes.shape({
           number: PropTypes.string,
           status: PropTypes.string,

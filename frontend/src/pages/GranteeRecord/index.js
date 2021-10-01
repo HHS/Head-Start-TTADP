@@ -51,7 +51,6 @@ export default function GranteeRecord({ match }) {
   useEffect(() => {
     async function fetchGrantee(id, region) {
       const grantee = await getGrantee(id, region);
-
       if (!grantee) {
         setError('Grantee record not found');
       }

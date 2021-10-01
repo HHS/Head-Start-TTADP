@@ -1,11 +1,11 @@
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { grantsReportFiltersToScopes as grant } from './grantees';
+import { grantsReportFiltersToScopes as grant } from './grants';
 
-const widgetTypes = {
+const modelTypes = {
   activityReport,
   grant,
 };
 
-export default function filtersToScopes(filters, widgetType = 'activityReport') {
-  return widgetTypes[widgetType](filters);
+export default function filtersToScopes(filters, model = 'activityReport') {
+  return modelTypes[model](filters);
 }

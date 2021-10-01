@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
-import { Grant, Grantee, sequelize } from '../models';
+import {
+  Grant, Grantee, ActivityReport, ActivityRecipient,
+} from '../models';
 
 export async function allGrantees() {
   return Grantee.findAll({
@@ -14,14 +16,14 @@ export async function allGrantees() {
 }
 
 export async function granteeByScopes(granteeId, grantScopes) {
-  const granteeRes = await Grantee.findOne({
+  const grantee = await Grantee.findOne({
     attributes: ['id', 'name'],
     where: {
       id: granteeId,
     },
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
+        attributes: ['id'],
         model: Grant,
         as: 'grants',
         where: {
@@ -33,56 +35,76 @@ export async function granteeByScopes(granteeId, grantScopes) {
     ],
   });
 
-  // Get Grants.
-  const grantsToUse = granteeRes ? granteeRes.grants : [];
-
-  // Get List of Grant Ids.
-  const grantIds = (grantsToUse && grantsToUse.length > 0 ? [...new Set(grantsToUse.map((grant) => grant.id))] : [0]).join(', ');
-
-  // Get Program Types.
-  const arQuery = `SELECT "ActivityRecipients"."grantId", "ActivityReports"."programTypes"
-    FROM "ActivityRecipients"
-    JOIN "ActivityReports" ON "ActivityRecipients"."activityReportId" = "ActivityReports"."id"
-    WHERE "ActivityRecipients"."grantId" IN (${grantIds})`;
-  const programTypes = await sequelize.query(arQuery);
-
-  // Grants to Return.
-  const grantsToReturn = [];
-  // Combine Grants and Program Types.
-  if (grantsToUse.length > 0) {
-    /*
-    granteeRes.grants.forEach((g) => {
-      const matchingProgramTypes = programTypes[0].find((e) => g.id === e.grantId);
-      if (matchingProgramTypes) {
-        // eslint-disable-next-line no-param-reassign
-        g.programTypes = matchingProgramTypes.programTypes;
-      }
-    });
-    */
-    granteeRes.grants.forEach((g) => {
-      const grantToAdd = {
-        id: g.id,
-        number: g.number,
-        regionId: g.regionId,
-        status: g.status,
-        startDate: g.startDate,
-        endDate: g.endDate,
-        programSpecialistName: g.programSpecialistName,
-        granteeId: g.granteeId,
-        programTypes: [],
-      };
-
-      const matchingProgramTypes = programTypes[0].find((e) => g.id === e.grantId);
-      if (matchingProgramTypes) {
-        // eslint-disable-next-line no-param-reassign
-        grantToAdd.programTypes = matchingProgramTypes.programTypes;
-      }
-
-      grantsToReturn.push(grantToAdd);
-    });
+  if (!grantee) {
+    return null;
   }
 
-  // eslint-disable-next-line max-len
-  // return { name: !granteeRes ? '' : granteeRes.name, grantsToReturn: grantsToUse.length > 0 ? granteeRes.grants : [] };
-  return { name: !granteeRes ? '' : granteeRes.name, grantsToReturn: grantsToReturn.length > 0 ? grantsToReturn : [] };
+  if (grantee.grants.length < 1) {
+    return {
+      name: grantee.name,
+      grants: [],
+    };
+  }
+
+  const grantIds = [...new Set(grantee.grants.map((grant) => grant.id))];
+
+  const recipients = await ActivityRecipient.findAll({
+    attributes: ['grantId'],
+    include: [
+      {
+        model: Grant,
+        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
+        as: 'grant',
+        where: {
+          id: grantIds,
+        },
+      },
+      {
+        model: ActivityReport,
+        attributes: ['programTypes'],
+        as: 'ActivityReport',
+      },
+    ],
+  });
+
+  const grants = new Map();
+  recipients.forEach((recipient) => {
+    if (grants.has(recipient.grantId)) {
+      const grant = grants.get(recipient.grantId);
+      const programTypes = Array.from(
+        new Set(
+          [...recipient.ActivityReport.programTypes, ...grant.programTypes],
+        ),
+      );
+      grants.set(recipient.grantId, { ...grant, programTypes });
+    } else {
+      const {
+        id,
+        number,
+        regionId,
+        status,
+        startDate,
+        endDate,
+        programSpecialistName,
+      } = recipient.grant;
+
+      const grant = {
+        id,
+        number,
+        regionId,
+        status,
+        startDate,
+        endDate,
+        programSpecialistName,
+        programTypes: recipient.ActivityReport.programTypes,
+      };
+
+      grants.set(recipient.grantId, grant);
+    }
+  });
+
+  return {
+    name: grantee.name,
+    grants: Array.from(grants.values()),
+  };
 }
