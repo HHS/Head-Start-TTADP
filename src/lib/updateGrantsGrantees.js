@@ -55,12 +55,13 @@ export async function processFiles() {
     const granteesForDb = granteesNonDelegates.map((g) => ({
       id: parseInt(g.agency_id, 10),
       name: g.agency_name,
+      granteeType: valueFromXML(g.agency_type),
     }));
 
     logger.debug(`updateGrantsGrantees: calling bulkCreate for ${granteesForDb.length} grantees`);
     await Grantee.bulkCreate(granteesForDb,
       {
-        updateOnDuplicate: ['name', 'updatedAt'],
+        updateOnDuplicate: ['name', 'granteeType', 'updatedAt'],
       });
 
     // process grants
