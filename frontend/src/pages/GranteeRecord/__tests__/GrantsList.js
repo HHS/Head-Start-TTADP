@@ -19,7 +19,7 @@ describe('Grants List Widget', () => {
   it('renders correctly with data', async () => {
     const summary = {
       name: 'Test Grantee',
-      grantsToReturn: [
+      grants: [
         {
           name: 'Grant Name 1',
           number: 'Grant Number 1',

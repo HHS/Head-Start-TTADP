@@ -7,7 +7,7 @@ const granteeUrl = join('/', 'api', 'grantee');
 describe('grantee fetcher', () => {
   beforeEach(() => fetchMock.reset());
   it('test that it retrieves a grantee', async () => {
-    const url = join(granteeUrl, '1', '?region.in[]=1', '&widgetType=grant');
+    const url = join(granteeUrl, '1', '?region.in[]=1', '&modelType=grant');
     fetchMock.getOnce(url, { name: 'Tim Johnson the Grantee' });
     const res = await getGrantee(1, 1);
     expect(res.name).toBe('Tim Johnson the Grantee');

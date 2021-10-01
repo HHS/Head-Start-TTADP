@@ -25,7 +25,7 @@ describe('getGrantee', () => {
       },
       query: {
         'region.in': 1,
-        widgetType: 'grant',
+        modelType: 'grant',
       },
     };
     granteeByScopes.mockResolvedValue(granteeWhere);
@@ -40,7 +40,7 @@ describe('getGrantee', () => {
       },
       query: {
         'region.in': 1,
-        widgetType: 'grant',
+        modelType: 'grant',
       },
     };
     granteeByScopes.mockResolvedValue(null);

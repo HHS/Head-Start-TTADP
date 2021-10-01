@@ -31,7 +31,7 @@ describe('grantee record page', () => {
 
   const theMightyGrantee = {
     name: 'the Mighty Grantee',
-    grantsToReturn: [
+    grants: [
       {
         name: 'Grant Name 1',
         number: 'GRANTEE_NUMBER',
@@ -62,7 +62,7 @@ describe('grantee record page', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/user', user);
-    fetchMock.get('/api/grantee/1?region.in[]=45&widgetType=grant', theMightyGrantee);
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
     fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1', {
       duration: '',
       deliveryMethod: '',
@@ -88,7 +88,7 @@ describe('grantee record page', () => {
     await waitFor(() => {
       expect(screen.getByRole('cell', { name: /region 45/i })).toBeInTheDocument();
       expect(screen.getByText(
-        theMightyGrantee.grantsToReturn[0].programSpecialistName,
+        theMightyGrantee.grants[0].programSpecialistName,
       )).toBeInTheDocument();
     });
   });

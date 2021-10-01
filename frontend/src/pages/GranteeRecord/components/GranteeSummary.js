@@ -4,9 +4,9 @@ import Container from '../../../components/Container';
 
 export default function GranteeSummary({ summary }) {
   const renderGranteeList = () => {
-    if (summary && summary.grantsToReturn && Array.isArray(summary.grantsToReturn)) {
-      return summary.grantsToReturn.map((grant) => (
-        <tr key={`grantee_list_row_${grant.name}`}>
+    if (summary && summary.grants) {
+      return summary.grants.map((grant) => (
+        <tr key={grant.id}>
           <td>
             Region
             {' '}
@@ -55,7 +55,7 @@ export default function GranteeSummary({ summary }) {
 GranteeSummary.propTypes = {
   summary:
     PropTypes.shape({
-      grantsToReturn: PropTypes.arrayOf(
+      grants: PropTypes.arrayOf(
         PropTypes.shape({
           number: PropTypes.string,
           status: PropTypes.string,
