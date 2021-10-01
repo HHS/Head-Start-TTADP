@@ -31,6 +31,9 @@ export async function granteeByScopes(granteeId, grantScopes) {
         },
       },
     ],
+    order: [
+      [{ model: Grant, as: 'grants' }, 'endDate', 'DESC'], [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
+    ],
   });
 
   // Get Grants.
