@@ -122,14 +122,12 @@ function App() {
             <ActivityReport location={location} match={match} user={user} />
           )}
         />
-        <FeatureFlag user={user} flag="grantee_record_page" admin={admin}>
-          <Route
-            path="/region/:regionId/grantee/:granteeId"
-            render={({ match }) => (
-              <GranteeRecord match={match} user={user} />
-            )}
-          />
-        </FeatureFlag>
+        <Route
+          path="/region/:regionId/grantee/:granteeId"
+          render={({ match }) => (
+            <FeatureFlag user={user} flag="grantee_record_page" admin={admin}><GranteeRecord match={match} user={user} /></FeatureFlag>
+          )}
+        />
         <Route
           exact
           path="/regional-dashboard"

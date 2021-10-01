@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
-import determineFiltersToScopes from '../scopes';
+import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 
 import {
@@ -312,7 +312,7 @@ export function activityReports(
   },
   excludeLegacy = false,
 ) {
-  const scopes = determineFiltersToScopes(filters);
+  const scopes = filtersToScopes(filters);
 
   const where = {
     status: REPORT_STATUSES.APPROVED,
@@ -413,7 +413,7 @@ export async function activityReportAlerts(userId, {
   sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
-  const scopes = determineFiltersToScopes(updatedFilters);
+  const scopes = filtersToScopes(updatedFilters);
   return ActivityReport.findAndCountAll({
     where: {
       [Op.and]: scopes,
@@ -742,7 +742,7 @@ export async function getAllDownloadableActivityReports(
 ) {
   const regions = readRegions || [];
 
-  const scopes = determineFiltersToScopes(filters);
+  const scopes = filtersToScopes(filters);
 
   const where = {
     regionId: {
@@ -756,7 +756,7 @@ export async function getAllDownloadableActivityReports(
 }
 
 export async function getAllDownloadableActivityReportAlerts(userId, filters) {
-  const scopes = determineFiltersToScopes(filters);
+  const scopes = filtersToScopes(filters);
   const where = {
     [Op.and]: scopes,
     [Op.or]: [

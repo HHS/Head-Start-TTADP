@@ -3,7 +3,7 @@ import widgets from '../../widgets';
 import handleErrors from '../../lib/apiErrorHandler';
 import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
-import determineFiltersToScopes from '../../scopes';
+import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:WIDGETS';
 
@@ -13,8 +13,7 @@ const logContext = {
 
 export async function getWidget(req, res) {
   try {
-    const { widgetId } = req.params;
-    const { widgetType } = req.params;
+    const { widgetId, modelType } = req.params;
     const getWidgetData = widgets[widgetId];
 
     if (!getWidgetData) {
@@ -26,7 +25,7 @@ export async function getWidget(req, res) {
     const query = await setReadRegions(req.query, req.session.userId, true);
 
     // Determine what scopes we need.
-    const scopes = determineFiltersToScopes(query, widgetType);
+    const scopes = filtersToScopes(query, modelType);
 
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);

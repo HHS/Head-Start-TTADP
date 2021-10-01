@@ -1,6 +1,6 @@
 import { granteeByScopes } from '../../services/grantee';
 import handleErrors from '../../lib/apiErrorHandler';
-import determineFiltersToScopes from '../../scopes';
+import filtersToScopes from '../../scopes';
 
 const namespace = 'SERVICE:GRANTEE';
 
@@ -14,7 +14,7 @@ export async function getGrantee(req, res) {
     const { granteeId } = req.params;
     const { widgetType } = req.query;
 
-    const scopes = determineFiltersToScopes(req.query, widgetType);
+    const scopes = filtersToScopes(req.query, widgetType);
     const grantee = await granteeByScopes(granteeId, scopes);
 
     if (!grantee) {
