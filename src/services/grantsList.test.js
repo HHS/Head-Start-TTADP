@@ -1,7 +1,7 @@
 import db, {
   User, Grantee, Grant, ActivityReport, ActivityRecipient, NextStep,
 } from '../models';
-import determineFiltersToScopes from '../scopes';
+import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 import { granteeByScopes } from './grantee';
 
@@ -90,7 +90,7 @@ describe('Grant list widget', () => {
   });
   it('retrieves grants list for specified grantee', async () => {
     const query = { 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' };
-    const grantScopes = determineFiltersToScopes(query, 'grant');
+    const grantScopes = filtersToScopes(query, 'grant');
     const res = await granteeByScopes([GRANTEE_ID], grantScopes);
 
     // Grantee Name.
@@ -121,7 +121,7 @@ describe('Grant list widget', () => {
   });
   it('does not retrieve grants list when outside of range and region', async () => {
     const query = { 'region.in': ['8'], 'startDate.win': '2021/03/01-2021/03/31' };
-    const scopes = determineFiltersToScopes(query, 'grant');
+    const scopes = filtersToScopes(query, 'grant');
     const res = await granteeByScopes(GRANTEE_ID, scopes);
     expect(res.grantsToReturn.length).toBe(0);
   });

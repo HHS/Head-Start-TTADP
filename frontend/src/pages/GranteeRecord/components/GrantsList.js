@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
-import './GrantsList.css';
 
 export default function GrantsList({ summary }) {
   const getGrantPrograms = (programs) => {
@@ -49,7 +48,7 @@ export default function GrantsList({ summary }) {
   return (
     <Container padding={0}>
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grants</h2>
-      <div className="usa-table-container--scrollable margin-0 grants-list-container">
+      <div className="usa-table-container--scrollable margin-0 ttahub-grantee-record-table-container">
         <table className="usa-table usa-table--striped ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless width-full margin-y-1">
           <caption className="padding-x-3 padding-y-1 sr-only">
             Grants summary table data

@@ -6,6 +6,6 @@ const widgetTypes = {
   grant,
 };
 
-export default function determineFiltersToScopes(filters, widgetType = 'activityReport') {
+export default function filtersToScopes(filters, widgetType = 'activityReport') {
   return widgetTypes[widgetType](filters);
 }

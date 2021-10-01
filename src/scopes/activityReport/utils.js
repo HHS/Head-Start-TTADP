@@ -5,8 +5,8 @@ function expandArray(column, searchTerms, operator) {
   return searchTerms.map((term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(term)}`));
 }
 
-function reportInSubQuery(baseQuery, searchTerms, operator) {
-  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ~* ${sequelize.escape(term)})`));
+function reportInSubQuery(baseQuery, searchTerms, operator, comparator) {
+  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term)})`));
 }
 
 export default function filterArray(column, searchTerms, exclude) {
@@ -23,11 +23,11 @@ export default function filterArray(column, searchTerms, exclude) {
   };
 }
 
-export function filterAssociation(baseQuery, searchTerms, exclude) {
+export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {
   if (exclude) {
     return {
       [Op.and]:
-        reportInSubQuery(baseQuery, searchTerms, 'NOT IN'),
+        reportInSubQuery(baseQuery, searchTerms, 'NOT IN', comparator),
     };
   }
 
