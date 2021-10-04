@@ -1,6 +1,7 @@
 .smart-hub--tooltip-with-ellipsis button {
     position: relative;
 }
+.smart-hub--tooltip-with-ellipsis button:hover [role="tooltip"],
 .smart-hub--tooltip-with-ellipsis.show-tooltip button [role="tooltip"]{
     display: block;
     position: absolute;
