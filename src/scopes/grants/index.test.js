@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import filtersToScopes from '../index';
-import db, { Grantee, Grant } from '../../models';
+import { Grantee, Grant, sequelize } from '../../models';
 
 const grantees = [
   {
@@ -56,17 +56,17 @@ describe('granteeFiltersToScopes', () => {
   afterAll(async () => {
     await Grant.destroy({
       where: {
-        ids: possibleIds,
+        id: possibleIds,
       },
     });
 
     await Grantee.destroy({
       where: {
-        ids: possibleIds,
+        id: possibleIds,
       },
     });
 
-    db.sequelize.close();
+    await sequelize.close();
   });
 
   describe('startDate', () => {
