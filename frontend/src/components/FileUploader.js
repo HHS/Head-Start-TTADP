@@ -47,12 +47,60 @@ export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => 
   });
 };
 
+export const FileRejections = ({
+  fileRejections,
+}) => {
+  const fileRejectionItems = fileRejections.map(({ file, errors }) => (
+    <span key={file.path}>
+      <strong>{file.path}</strong>
+      {` (${(file.size / 1000000).toFixed(2)} MB)`}
+      <span>
+        <br />
+        <span>This file cannot be uploaded for the following reasons:</span>
+        <ul className="margin-0 margin-bottom-1">
+          {errors.map((e) => (
+            <li key={e.code}>{e.code === 'file-too-large' ? 'File is larger than 30 MB' : e.message}</li>
+          ))}
+        </ul>
+      </span>
+    </span>
+  ));
+
+  return (
+    <div>
+      {
+        fileRejectionItems
+      }
+    </div>
+  );
+};
+
+FileRejections.propTypes = {
+  fileRejections: PropTypes.oneOfType([
+    PropTypes.arrayOf(
+      PropTypes.shape({
+        errors: PropTypes.arrayOf(
+          PropTypes.shape({
+            code: PropTypes.string.isRequired,
+            message: PropTypes.string.isRequired,
+          }),
+        ),
+      }),
+    ),
+  ]).isRequired,
+};
+
 function Dropzone(props) {
   const { onChange, id, reportId } = props;
   const [errorMessage, setErrorMessage] = useState();
   const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage);
+  const maxSize = 30000000;
 
-  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip' });
+  const {
+    fileRejections, getRootProps, getInputProps,
+  } = useDropzone({
+    onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip',
+  });
 
   return (
     <div
@@ -63,11 +111,17 @@ function Dropzone(props) {
         Upload Resources
       </button>
       {errorMessage
-        && (
-          <Alert type="error" slim noIcon className="smart-hub--save-alert">
-            {errorMessage}
-          </Alert>
-        )}
+          && (
+            <Alert type="error" slim noIcon className="smart-hub--save-alert">
+              This is an error
+            </Alert>
+          )}
+      {fileRejections.length > 0
+          && (
+            <Alert className="files-table--upload-alert" type="error" slim noIcon>
+              <FileRejections fileRejections={fileRejections} />
+            </Alert>
+          )}
     </div>
   );
 }
@@ -126,7 +180,7 @@ const DeleteFileModal = ({
               Delete
             </Button>
           </>
-    )}
+          )}
       >
         <p>
           Are you sure you want to delete
@@ -218,7 +272,7 @@ const FileTable = ({ onFileRemoved, files }) => {
           ))}
         </tbody>
       </table>
-      { files.length === 0 && (
+      {files.length === 0 && (
       <p className="files-table--empty">No files uploaded</p>
       )}
     </div>

@@ -4,7 +4,7 @@ import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
 import * as fileFetcher from '../../fetchers/File';
-import FileUploader, { getStatus, upload } from '../FileUploader';
+import FileUploader, { FileRejections, getStatus, upload } from '../FileUploader';
 
 describe('getStatus tests', () => {
   it('returns the correct statuses', () => {
@@ -96,7 +96,7 @@ describe('FileUploader', () => {
   });
 
   it('files are properly displayed', () => {
-    render(<FileUploader reportId="new" id="attachment" onChange={() => {}} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
+    render(<FileUploader reportId="new" id="attachment" onChange={() => { }} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
@@ -118,5 +118,46 @@ describe('FileUploader', () => {
     const cancelButton = screen.getByText('Cancel');
     fireEvent.click(cancelButton);
     expect(mockOnChange).not.toHaveBeenCalled();
+  });
+
+  describe('file rejections', () => {
+    it('render rejections', () => {
+      const rejectionList = [
+        {
+          file: {
+            path: 'File Rejection 1',
+          },
+          errors: [
+            {
+              code: 'file-too-large',
+              message: 'File Size Rejection Message',
+            },
+            {
+              code: 'file-type-not-supported',
+              message: 'File type not supported',
+            },
+          ],
+        },
+        {
+          file: {
+            path: 'File Rejection 2',
+          },
+          errors: [
+            {
+              code: 'file-corrupted',
+              message: 'File is incomplete',
+            },
+          ],
+        },
+      ];
+
+      render(<FileRejections fileRejections={rejectionList} />);
+      expect(screen.getByText(/file rejection 1/i)).toBeVisible();
+      expect(screen.getByText(/file is larger than 30 mb/i)).toBeVisible();
+      expect(screen.getByText(/file type not supported/i)).toBeVisible();
+
+      expect(screen.getByText(/file rejection 2/i)).toBeVisible();
+      expect(screen.getByText(/file is incomplete/i)).toBeVisible();
+    });
   });
 });
