@@ -318,6 +318,20 @@ You can run psql commands directly against a deployed database by following thes
 	On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
 	This indicates you are in an open psql session, the command-line interface to PostgreSQL.
 
+**Refreshing data in non-production environments**
+
+In order to keep the non-production environments as close to production as possible we developed a way to transform a restored
+version of the production database locally if using local database. The script can be run using the following:
+
+```
+	yarn processData:local
+
+```
+The transformed database can then be restored in the non-production environments.
+For details on how to perform a backup and restore, there is information on the cloud.gov site:
+
+<https://cloud.gov/docs/management/database-backup-restore/>
+
 **Using Maintenance Mode**
 
 if you need to put the application into maintenance mode, you can run the maintenance script located at `bin/maintenance`.
