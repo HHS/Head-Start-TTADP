@@ -8,23 +8,23 @@ import db, {
 const request = require('supertest');
 
 const mockUser = {
-  id: 110,
-  hsesUserId: '110',
-  hsesUsername: 'user110',
+  id: 110110,
+  hsesUserId: '110110',
+  hsesUsername: 'user110110',
   homeRegionId: 1,
   permissions: [
     {
-      userId: 110,
+      userId: 110110,
       regionId: 5,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
     {
-      userId: 110,
+      userId: 110110,
       regionId: 6,
       scopeId: SCOPES.READ_WRITE_REPORTS,
     },
     {
-      userId: 110,
+      userId: 110110,
       regionId: 14,
       scopeId: SCOPES.SITE_ACCESS,
     },
@@ -36,7 +36,7 @@ describe('apiDirectory tests', () => {
     await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
-    process.env.CURRENT_USER_ID = 110;
+    process.env.CURRENT_USER_ID = 110110;
   });
   afterAll(async () => {
     await User.destroy({ where: { id: mockUser.id } });
