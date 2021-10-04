@@ -13,6 +13,7 @@ import Admin from '../index';
 const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true');
 const granteesUrl = join('/', 'api', 'admin', 'grantees');
 const usersUrl = join('/', 'api', 'admin', 'users');
+const featuresUrl = join('/api', 'admin', 'users', 'features');
 
 describe('Admin landing page', () => {
   const history = createMemoryHistory();
@@ -23,6 +24,7 @@ describe('Admin landing page', () => {
     fetchMock.get(grantsUrl, []);
     fetchMock.get(granteesUrl, []);
     fetchMock.get(usersUrl, []);
+    fetchMock.get(featuresUrl, []);
   });
 
   it('displays the cdi page', async () => {
