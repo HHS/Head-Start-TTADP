@@ -1,5 +1,5 @@
-import db, {
-  Grantee, Grant, ActivityReport, ActivityRecipient,
+import {
+  Grantee, Grant, ActivityReport, ActivityRecipient, sequelize,
 } from '../models';
 import { allGrantees, granteeByScopes } from './grantee';
 import filtersToScopes from '../scopes';
@@ -94,7 +94,7 @@ describe('Grantee DB service', () => {
     await Grant.destroy({ where: { id: grantees.map((g) => g.id) } });
     await Grantee.destroy({ where: { id: grantees.map((g) => g.id) } });
     await ActivityReport.destroy({ where: { id: [61905, 61906] } });
-    await db.sequelize.close();
+    await sequelize.close();
   });
 
   describe('allGrantees', () => {
