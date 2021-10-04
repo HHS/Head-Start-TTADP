@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
 import { Tag } from '@trussworks/react-uswds';
 import './TooltipWithEllipsis.css';
 
@@ -33,15 +31,17 @@ export default function TooltipWithEllipsis({ collection, limit }) {
 
   const onClick = () => {
     setShowTooltip(!showTooltip);
+    setTimeout(() => {
+      setShowTooltip(false);
+    }, 1000);
   };
 
   return (
     <span className={cssClasses}>
-      <span className="smart-hub--ellipsis">
-        {tags}
-      </span>
       <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
-        <FontAwesomeIcon icon={faEllipsisH} color="black" />
+        <span className="smart-hub--ellipsis">
+          {tags}
+        </span>
         <span className="usa-tooltip__body usa-tooltip__body--right" role="tooltip">{tooltip}</span>
       </button>
     </span>
