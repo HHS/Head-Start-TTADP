@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 
 import './SiteNav.css';
+import FeatureFlag from './FeatureFlag';
 
 const navLinkClasses = [
   'display-block',
@@ -86,21 +87,18 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  {admin
-                    ? (
-                      <>
-                        <li>
-                          <NavLink
-                            to="/grantee-search"
-                          >
-                            <span className="padding-right-1">
-                              <FontAwesomeIcon color="white" icon={faUserFriends} />
-                            </span>
-                            Grantees
-                          </NavLink>
-                        </li>
-                      </>
-                    ) : null }
+                  <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
+                    <li>
+                      <NavLink
+                        to="/grantee-search"
+                      >
+                        <span className="padding-right-1">
+                          <FontAwesomeIcon color="white" icon={faUserFriends} />
+                        </span>
+                        Grantee TTA Records
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/regional-dashboard"
