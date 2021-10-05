@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './TooltipWithEllipsis.css';
 
 export default function TooltipWithEllipsis({ collection, limit }) {
-  const [showTooltip, setShowTooltip] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(false);
   const [cssClasses, setCssClasses] = useState('smart-hub--tooltip-with-ellipsis');
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function TooltipWithEllipsis({ collection, limit }) {
     setShowTooltip(!showTooltip);
     setTimeout(() => {
       setShowTooltip(false);
-    }, 1000);
+    }, 1500);
   };
 
   return (
