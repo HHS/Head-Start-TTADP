@@ -12,7 +12,6 @@ import { userById } from '../services/users';
 import { auditLogger } from '../logger';
 import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
-import granteeRouter from './grantee';
 
 export const loginPath = '/login';
 
