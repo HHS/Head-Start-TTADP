@@ -1,15 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import './TooltipWithEllipsis.css';
 
 export default function TooltipWithEllipsis({ collection, limit }) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(true);
   const [cssClasses, setCssClasses] = useState('smart-hub--tooltip-with-ellipsis');
-  const [tooltipTop, setTooltipTop] = useState({
-    top: 0,
-  });
-
-  const tooltipRef = useRef();
 
   useEffect(() => {
     setCssClasses(showTooltip ? 'smart-hub--tooltip-with-ellipsis show-tooltip' : 'smart-hub--tooltip-with-ellipsis');
@@ -40,14 +35,6 @@ export default function TooltipWithEllipsis({ collection, limit }) {
     );
   }
 
-  const onHover = () => {
-    if (tooltipRef.current) {
-      setTooltipTop({
-        top: (tooltipRef.current.offsetHeight) * -1,
-      });
-    }
-  };
-
   const onClick = () => {
     setShowTooltip(!showTooltip);
     setTimeout(() => {
@@ -56,13 +43,14 @@ export default function TooltipWithEllipsis({ collection, limit }) {
   };
 
   return (
-    <span className={cssClasses} onHover={onHover}>
-      <button type="button" className="usa-button usa-button--unstyled" onClick={onClick} onHover={onHover}>
+    <span className={cssClasses}>
+      <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
         <span className="smart-hub--ellipsis">
           {tags}
         </span>
-        <span className="usa-tooltip__body usa-tooltip__body--top" role="tooltip" ref={tooltipRef} style={tooltipTop}>{tooltip}</span>
+        <span className="sr-only">Button visually reveals this content</span>
       </button>
+      <div aria-hidden="true" data-testid="tooltip-with-ellipsis" className="usa-tooltip__body usa-tooltip__body--bottom">{tooltip}</div>
     </span>
   );
 }

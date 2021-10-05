@@ -573,7 +573,7 @@ function Landing({ user }) {
               </span>
             </span>
           </span>
-          <div className="usa-table-container--scrollable">
+          <div className="usa-table-container--scrollable overflow-y-visible">
             <Table className="usa-table usa-table--borderless usa-table--striped">
               <caption>
                 { `Region ${regionLabel} Activity reports` }
