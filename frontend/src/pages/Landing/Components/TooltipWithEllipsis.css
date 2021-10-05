@@ -26,7 +26,7 @@
 }
 
 .smart-hub--tooltip-with-ellipsis:hover .usa-tooltip__body,
-.smart-hub--tooltip-with-ellipsis.show-tooltip button + .usa-tooltip__body{        
+.smart-hub--tooltip-with-ellipsis.show-tooltip .usa-tooltip__body{        
     animation: fadein;
     animation-duration: 500ms;
     animation-iteration-count: 1;

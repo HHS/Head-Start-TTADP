@@ -1,13 +1,15 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import {
+  render, screen, fireEvent, act,
+} from '@testing-library/react';
 
 import TooltipWithEllipsis from '../TooltipWithEllipsis';
 
 describe('TooltipWithEllipsis', () => {
   const renderTooltip = () => {
     const collection = ['Teddy', 'Cathy', 'Bobby', 'G-berg'];
-    render(<TooltipWithEllipsis collection={collection} />);
+    render(<TooltipWithEllipsis collection={collection} collectionTitle="people who something" />);
   };
 
   it('correctly modifies the dom when the button is clicked', async () => {
@@ -18,9 +20,16 @@ describe('TooltipWithEllipsis', () => {
     expect(teddy).toBeVisible();
     expect(cathy).toBeVisible();
 
-    const button = screen.getByRole('button', { name: /teddy cathy bobby g-berg button visually reveals this content/i });
+    screen.logTestingPlaygroundURL();
+    const button = screen.getByRole('button', { name: 'Teddy Cathy Bobby G-berg click to visually reveal the people who something' });
     await act(async () => fireEvent.click(button));
 
-    expect(teddy.parentNode.parentNode.parentNode).toHaveClass('show-tooltip');
+    const tooltip = await screen.findByTestId('tooltip');
+
+    expect(tooltip).toHaveClass('show-tooltip');
+
+    await act(async () => fireEvent.click(button));
+
+    expect(tooltip).not.toHaveClass('show-tooltip');
   });
 });

@@ -118,7 +118,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </Link>
         </th>
         <td>
-          <TooltipWithEllipsis collection={recipients} />
+          <TooltipWithEllipsis collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -127,10 +127,10 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </span>
         </td>
         <td>
-          <TooltipWithEllipsis collection={topics} />
+          <TooltipWithEllipsis collection={topics} collectionTitle={`topics for ${displayId}`} />
         </td>
         <td>
-          <TooltipWithEllipsis collection={collaboratorNames} />
+          <TooltipWithEllipsis collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>{lastSaved}</td>
         <td>
