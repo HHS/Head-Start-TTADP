@@ -89,8 +89,9 @@ function App() {
         logoutUser={logout}
       />
       <Switch>
+
         <Route
-          path="/activity-reports/legacy/:legacyId"
+          path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
             <LegacyReport
               match={match}
@@ -109,21 +110,20 @@ function App() {
           path="/"
           render={() => <Home />}
         />
-
         <Route
-          path="/activity-reports/view/:activityReportId"
+          path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
             <ApprovedActivityReport location={location} match={match} user={user} />
           )}
         />
         <Route
-          path="/activity-reports/:activityReportId/:currentPage?"
+          path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <ActivityReport location={location} match={match} user={user} />
           )}
         />
         <Route
-          path="/region/:regionId/grantee/:granteeId"
+          path="/region/:regionId([0-9]*)/grantee/:granteeId([0-9]*)"
           render={({ match }) => (
             <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeRecord match={match} user={user} /></FeatureFlag>
           )}
@@ -136,14 +136,12 @@ function App() {
           )}
         />
         {admin && (
-        <>
-          <Route
-            path="/admin"
-            render={() => (
-              <Admin />
-            )}
-          />
-        </>
+        <Route
+          path="/admin"
+          render={() => (
+            <Admin />
+          )}
+        />
         )}
         <Route
           render={() => <NotFound />}
