@@ -122,7 +122,7 @@ export async function granteeByScopes(granteeId, grantScopes) {
  *
  * @returns {Promise} grantee results
  */
-export async function granteesByNameAndRegion(query, regionId, sortBy, direction, offset) {
+export async function granteesByNameAndRegion(query, scopes, sortBy, direction, offset) {
   // fix the query
   const q = `%${query}%`;
 
@@ -132,7 +132,7 @@ export async function granteesByNameAndRegion(query, regionId, sortBy, direction
       number: {
         [Op.iLike]: q, // sequelize automatically escapes this
       },
-      regionId,
+      [Op.and]: scopes,
     },
     include: [
       {
@@ -179,7 +179,7 @@ export async function granteesByNameAndRegion(query, regionId, sortBy, direction
         model: Grant,
         as: 'grants',
         where: {
-          regionId,
+          [Op.and]: scopes,
         },
       },
     ],
