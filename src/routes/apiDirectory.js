@@ -7,6 +7,7 @@ import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
+import granteeRouter from './grantee';
 import { userById } from '../services/users';
 import { auditLogger } from '../logger';
 import handleErrors from '../lib/apiErrorHandler';

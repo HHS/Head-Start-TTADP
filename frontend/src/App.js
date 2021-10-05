@@ -31,6 +31,7 @@ import AriaLiveRegion from './components/AriaLiveRegion';
 import FeatureFlag from './components/FeatureFlag';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import GranteeRecord from './pages/GranteeRecord';
+import GranteeSearch from './pages/GranteeSearch';
 
 function App() {
   const [user, updateUser] = useState();
@@ -143,6 +144,13 @@ function App() {
           )}
         />
         )}
+        <Route
+          exact
+          path="/grantee-search"
+          render={() => (
+            <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeSearch user={user} /></FeatureFlag>
+          )}
+        />
         <Route
           render={() => <NotFound />}
         />
