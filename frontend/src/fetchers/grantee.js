@@ -1,12 +1,9 @@
 import join from 'url-join';
-import {
-  get,
-} from './index';
+import { get } from './index';
 import { DECIMAL_BASE } from '../Constants';
 
 const granteeUrl = join('/', 'api', 'grantee');
 
-// eslint-disable-next-line import/prefer-default-export
 export const getGrantee = async (granteeId, regionId = '') => {
   const regionSearch = regionId ? `?region.in[]=${regionId.toString(DECIMAL_BASE)}` : '';
   const modelType = '&modelType=grant';
@@ -22,4 +19,18 @@ export const getGrantee = async (granteeId, regionId = '') => {
   );
 
   return grantee.json();
+};
+
+export const searchGrantees = async (query, regionId = '', params = { sortBy: 'name', direction: 'asc', offset: 0 }) => {
+  if (!query) {
+    throw new Error('Please provide a query string to search grantees');
+  }
+
+  const querySearch = `?s=${query}`;
+  const regionSearch = regionId ? `&region=${regionId.toString(DECIMAL_BASE)}` : '';
+
+  const grantees = await get(
+    join(granteeUrl, 'search', querySearch, regionSearch, `&sortBy=${params.sortBy}&direction=${params.direction}&offset=${params.offset}`),
+  );
+  return grantees.json();
 };

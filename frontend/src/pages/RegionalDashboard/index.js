@@ -103,7 +103,7 @@ export default function RegionalDashboard({ user }) {
   }, [selectedDateRangeOption]);
 
   const onApplyRegion = (region) => {
-    const regionId = region ? region.value : appliedRegion;
+    const regionId = region.value;
     updateAppliedRegion(regionId);
   };
 
@@ -112,7 +112,7 @@ export default function RegionalDashboard({ user }) {
   };
 
   const onApplyDateRange = (range) => {
-    const rangeId = range ? range.value : selectedDateRangeOption;
+    const rangeId = range.value;
     updateSelectedDateRangeOption(rangeId);
   };
 
