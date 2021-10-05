@@ -20,8 +20,6 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import Widgets from './pages/Widgets';
-
 import isAdmin from './permissions';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
@@ -80,7 +78,6 @@ function App() {
   }
 
   const admin = isAdmin(user);
-  const enableWidgets = process.env.REACT_APP_ENABLE_WIDGETS === 'true';
 
   const renderAuthenticatedRoutes = () => (
     <div role="main" id="main-content">
@@ -90,8 +87,9 @@ function App() {
         logoutUser={logout}
       />
       <Switch>
+
         <Route
-          path="/activity-reports/legacy/:legacyId"
+          path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
             <LegacyReport
               match={match}
@@ -110,27 +108,18 @@ function App() {
           path="/"
           render={() => <Home />}
         />
-
         <Route
-          path="/activity-reports/view/:activityReportId"
+          path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
             <ApprovedActivityReport location={location} match={match} user={user} />
           )}
         />
         <Route
-          path="/activity-reports/:activityReportId/:currentPage?"
+          path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <ActivityReport location={location} match={match} user={user} />
           )}
         />
-        {enableWidgets && (
-          <Route
-            path="/widgets"
-            render={() => (
-              <Widgets />
-            )}
-          />
-        )}
         <Route
           exact
           path="/regional-dashboard"
@@ -139,14 +128,12 @@ function App() {
           )}
         />
         {admin && (
-          <>
-            <Route
-              path="/admin"
-              render={() => (
-                <Admin />
-              )}
-            />
-          </>
+        <Route
+          path="/admin"
+          render={() => (
+            <Admin />
+          )}
+        />
         )}
         <Route
           render={() => <NotFound />}
