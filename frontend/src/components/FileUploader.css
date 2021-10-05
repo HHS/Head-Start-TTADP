@@ -43,3 +43,9 @@
 .files-table--empty {
   text-align: center;
 }
+
+.files-table--upload-alert.usa-alert--error.usa-alert--no-icon .usa-alert__body {
+  padding-left: 20px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
