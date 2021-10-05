@@ -5,7 +5,7 @@ import {
 } from './handlers';
 
 const router = express.Router();
-router.get('/:granteeId', getGrantee);
 router.get('/search', searchGrantees);
+router.get('/:granteeId', getGrantee);
 
 export default router;

@@ -41,7 +41,7 @@ export default function GranteeRecord({ match }) {
         id: uuidv4(),
         topic: 'modelType',
         condition: 'Is',
-        query: 'grantee',
+        query: 'grant',
       },
     ];
 

@@ -1,7 +1,6 @@
 import { granteeByScopes, granteesByNameAndRegion } from '../../services/grantee';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
-import { DECIMAL_BASE } from '../../constants';
 
 const namespace = 'SERVICE:GRANTEE';
 
@@ -29,13 +28,13 @@ export async function getGrantee(req, res) {
 }
 
 export async function searchGrantees(req, res) {
-  try {
-    const {
-      s, region, sortBy, direction, offset,
-    } = req.query;
-    const regionId = region ? parseInt(region, DECIMAL_BASE) : null;
+  const {
+    s, sortBy, direction, offset,
+  } = req.query;
+  const scopes = filtersToScopes(req.query, 'grant');
 
-    const grantees = await granteesByNameAndRegion(s, regionId, sortBy, direction, offset);
+  try {
+    const grantees = await granteesByNameAndRegion(s, scopes, sortBy, direction, offset);
     if (!grantees) {
       res.sendStatus(404);
       return;

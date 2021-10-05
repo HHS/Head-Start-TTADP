@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
+import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import RegionalSelect from '../../components/RegionalSelect';
@@ -15,7 +16,6 @@ import './index.css';
 function GranteeSearch({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
-
   const [appliedRegion, setAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [granteeCount, setGranteeCount] = useState(0);
   const [query, setQuery] = useState('');
@@ -38,12 +38,13 @@ function GranteeSearch({ user }) {
       if (inputRef.current) {
         setQuery(inputRef.current.value);
       }
+
       /**
        * We assume the function that changed the state also changed loading.
        * That's why, if the app is not in a loading state, we return
        */
 
-      if (!query || !loading) {
+      if (!query && !loading) {
         return;
       }
 
@@ -55,11 +56,26 @@ function GranteeSearch({ user }) {
         return;
       }
 
+      const filters = [
+        {
+          id: uuidv4(),
+          topic: 'region',
+          condition: 'Contains',
+          query: appliedRegion,
+        },
+        {
+          id: uuidv4(),
+          topic: 'modelType',
+          condition: 'Is',
+          query: 'grant',
+        },
+      ];
+
       try {
         const {
           rows,
           count,
-        } = await searchGrantees(query, appliedRegion, { ...sortConfig, offset });
+        } = await searchGrantees(query, filters, { ...sortConfig, offset });
         setResults(rows);
         setGranteeCount(count);
       } catch (err) {
