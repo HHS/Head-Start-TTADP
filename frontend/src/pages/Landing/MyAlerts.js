@@ -17,6 +17,7 @@ import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
 import ReportMenu from './ReportMenu';
+import TooltipWithEllipsis from './Components/TooltipWithEllipsis';
 
 function ReportsRow({ reports, removeAlert }) {
   const history = useHistory();
@@ -42,33 +43,12 @@ function ReportsRow({ reports, removeAlert }) {
       status,
     } = report;
 
-    const recipientsTitle = activityRecipients.reduce(
-      (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
-      '',
-    );
-
-    const recipients = activityRecipients.map((ar) => (
-      <Tag
-        key={ar.name.slice(1, 3) + ar.id}
-        className="smart-hub--table-collection"
-      >
-        {ar.grant ? ar.grant.grantee.name : ar.name}
-      </Tag>
+    const recipients = activityRecipients && activityRecipients.map((ar) => (
+      ar.grant ? ar.grant.grantee.name : ar.name
     ));
 
-    const collaboratorsTitle = collaborators ? collaborators.reduce(
-      (result, collaborator) => `${result + collaborator.fullName}\n`,
-      '',
-    ) : '';
-
-    const collaboratorsWithTags = collaborators ? collaborators.map((collaborator) => (
-      <Tag
-        key={collaborator.id + Math.random().toString(36).substring(7)}
-        className="smart-hub--table-collection"
-      >
-        {collaborator.fullName}
-      </Tag>
-    )) : '';
+    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
+      collaborator.fullName));
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
@@ -96,9 +76,7 @@ function ReportsRow({ reports, removeAlert }) {
           </Link>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
+          <TooltipWithEllipsis collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -107,9 +85,7 @@ function ReportsRow({ reports, removeAlert }) {
           </span>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
+          <TooltipWithEllipsis collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>
           <Tag
