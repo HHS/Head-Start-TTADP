@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, fireEvent, waitFor, act,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -175,9 +175,7 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct grantees', async () => {
-    const grantee = await screen.findByRole('cell', {
-      name: /johnston-romaguera\njohnston-romaguera\ngrantee name/i,
-    });
+    const grantee = await screen.findByRole('button', { name: /johnston\-romaguera johnston\-romaguera grantee name click to visually reveal the recipients for r14\-ar\-1/i });
     const nonGrantee = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -195,27 +193,22 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct topics', async () => {
-    const topics = await screen.findByRole('cell', {
-      name: /behavioral \/ mental health\nclass: instructional support/i,
-    });
+    const topics = await screen.findByRole('button', { name: /behavioral \/ mental health class: instructional support click to visually reveal the topics for r14-ar-1/i });
 
     expect(topics).toBeVisible();
     expect(topics.firstChild).toHaveClass('smart-hub--ellipsis');
-    expect(topics.firstChild.firstChild).toHaveClass('usa-tag smart-hub--table-collection');
-    expect(topics.firstChild).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support');
+    expect(topics.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
+    expect(topics.firstChild).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support');
   });
 
   test('displays the correct collaborators', async () => {
-    const collaborators = await screen.findByRole('cell', {
-      name: /cucumber user, gs\nhermione granger, ss/i,
-    });
+    const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14\-ar\-1/i });
 
     expect(collaborators).toBeVisible();
-    expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
+    expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip-with-ellipsis');
     expect(collaborators.firstChild.children.length).toBe(2);
-    expect(collaborators.firstChild.firstChild).toHaveClass('usa-tag smart-hub--table-collection');
-    expect(collaborators.firstChild.firstChild).toHaveTextContent('Cucumber User');
-    expect(collaborators.firstChild.lastChild).toHaveTextContent('Hermione Granger');
+    expect(collaborators.firstChild.firstChild.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
+    expect(collaborators.firstChild.firstChild.firstChild.firstChild).toHaveTextContent('Orange, GS');
   });
 
   test('displays the correct last saved dates', async () => {
@@ -280,7 +273,7 @@ describe('Landing Page sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    fireEvent.click(statusColumnHeader);
+    await act(async () => fireEvent.click(statusColumnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
 
@@ -289,7 +282,7 @@ describe('Landing Page sorting', () => {
       { count: 2, rows: activityReports },
     );
 
-    fireEvent.click(statusColumnHeader);
+    await act(async () => fireEvent.click(statusColumnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
   });
@@ -315,9 +308,9 @@ describe('Landing Page sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent('Cucumber User, GSHermione Granger, SS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent('Orange, GSHermione Granger, SS'));
+    await act(async () => fireEvent.click(columnHeader));
+    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
   });
 
   it('clicking Topics column header will sort by topics', async () => {
@@ -328,9 +321,9 @@ describe('Landing Page sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    fireEvent.click(columnHeader);
+    await act(async () => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(''));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent('Behavioral / Mental HealthCLASS: Instructional Support'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1Behavioral / Mental Health CLASS: Instructional Support'));
   });
 
   it('clicking Creator column header will sort by author', async () => {
@@ -370,7 +363,7 @@ describe('Landing Page sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-RomagueraJohnston-RomagueraGrantee Name'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Grantee Name'));
   });
 
   it('clicking Report id column header will sort by region and id', async () => {

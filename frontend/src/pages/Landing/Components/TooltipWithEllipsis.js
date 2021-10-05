@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
+
 import './TooltipWithEllipsis.css';
 
-export default function TooltipWithEllipsis({ collection, limit }) {
+export default function TooltipWithEllipsis({ collection, collectionTitle, limit }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [cssClasses, setCssClasses] = useState('smart-hub--tooltip-with-ellipsis');
 
@@ -21,7 +23,7 @@ export default function TooltipWithEllipsis({ collection, limit }) {
 
   const tags = (collection || []).map((member) => (
     <span
-      key={member.slice(1, limit)}
+      key={uuidv4()}
       className="smart-hub--tooltip-truncated"
     >
       {member}
@@ -31,7 +33,7 @@ export default function TooltipWithEllipsis({ collection, limit }) {
 
   if (collection.length === 1) {
     return (
-      <span>{tooltip}</span>
+      <span className="smarthub-ellipsis">{tooltip}</span>
     );
   }
 
@@ -43,20 +45,25 @@ export default function TooltipWithEllipsis({ collection, limit }) {
   };
 
   return (
-    <span className={cssClasses}>
+    <span className={cssClasses} data-testid="tooltip">
       <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
         <span className="smart-hub--ellipsis">
           {tags}
         </span>
-        <span className="sr-only">Button visually reveals this content</span>
+        <span className="sr-only">
+          click to visually reveal the
+          &nbsp;
+          {collectionTitle}
+        </span>
       </button>
-      <div aria-hidden="true" data-testid="tooltip-with-ellipsis" className="usa-tooltip__body usa-tooltip__body--bottom">{tooltip}</div>
+      <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--bottom">{tooltip}</div>
     </span>
   );
 }
 
 TooltipWithEllipsis.propTypes = {
   collection: PropTypes.arrayOf(PropTypes.string).isRequired,
+  collectionTitle: PropTypes.string.isRequired,
   limit: PropTypes.number,
 };
 
