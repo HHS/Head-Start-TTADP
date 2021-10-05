@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import './TooltipWithEllipsis.css';
 
-export default function TooltipWithEllipsis({ collection, collectionTitle, limit }) {
+export default function TooltipWithEllipsis({ collection, collectionTitle }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [cssClasses, setCssClasses] = useState('smart-hub--tooltip-with-ellipsis');
 
@@ -64,9 +64,4 @@ export default function TooltipWithEllipsis({ collection, collectionTitle, limit
 TooltipWithEllipsis.propTypes = {
   collection: PropTypes.arrayOf(PropTypes.string).isRequired,
   collectionTitle: PropTypes.string.isRequired,
-  limit: PropTypes.number,
-};
-
-TooltipWithEllipsis.defaultProps = {
-  limit: 13,
 };
