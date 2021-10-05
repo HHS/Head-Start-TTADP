@@ -9,7 +9,6 @@ const logContext = {
   namespace,
 };
 
-
 export async function getGrantee(req, res) {
   try {
     const { granteeId } = req.params;
@@ -27,7 +26,7 @@ export async function getGrantee(req, res) {
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
-};
+}
 
 export async function searchGrantees(req, res) {
   try {
