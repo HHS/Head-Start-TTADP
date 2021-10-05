@@ -80,9 +80,8 @@ describe('My Alerts', () => {
 
   test('displays the correct grantees', async () => {
     renderMyAlerts();
-    const grantees = await screen.findByRole('cell', {
-      name: /johnston-romaguera\njohnston-romaguera\ngrantee name/i,
-    });
+    screen.logTestingPlaygroundURL();
+    const grantees = await screen.findByRole('button', { name: /johnston\-romaguera johnston\-romaguera grantee name click to visually reveal the recipients for r14\-ar\-1/i })
     const nonGrantees = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -102,15 +101,13 @@ describe('My Alerts', () => {
 
   test('displays the correct collaborators', async () => {
     renderMyAlerts();
-    const collaborators = await screen.findByRole('cell', {
-      name: /cucumber user, gs\nhermione granger, ss/i,
-    });
+    const collaborators = await screen.findByRole('button', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14\-ar\-1/i })
 
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
     expect(collaborators.firstChild.children.length).toBe(2);
-    expect(collaborators.firstChild.firstChild).toHaveClass('usa-tag smart-hub--table-collection');
-    expect(collaborators.firstChild.firstChild).toHaveTextContent('Cucumber User');
+    expect(collaborators.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
+    expect(collaborators.firstChild.firstChild).toHaveTextContent('Orange, GS');
     expect(collaborators.firstChild.lastChild).toHaveTextContent('Hermione Granger');
   });
 
@@ -209,6 +206,7 @@ describe('My Alerts', () => {
         role: 'Grants Specialist',
         homeRegionId: 14,
       },
+      collaborators: [],
     };
 
     renderMyAlerts(report);
