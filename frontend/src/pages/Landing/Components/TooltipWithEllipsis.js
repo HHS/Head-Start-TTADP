@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Tag } from '@trussworks/react-uswds';
 import './TooltipWithEllipsis.css';
 
 export default function TooltipWithEllipsis({ collection, limit }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [cssClasses, setCssClasses] = useState('smart-hub--tooltip-with-ellipsis');
+  const [tooltipTop, setTooltipTop] = useState({
+    top: 0,
+  });
+
+  const tooltipRef = useRef();
 
   useEffect(() => {
     setCssClasses(showTooltip ? 'smart-hub--tooltip-with-ellipsis show-tooltip' : 'smart-hub--tooltip-with-ellipsis');
@@ -21,13 +25,28 @@ export default function TooltipWithEllipsis({ collection, limit }) {
   );
 
   const tags = (collection || []).map((member) => (
-    <Tag
+    <span
       key={member.slice(1, limit)}
-      className="smart-hub--table-collection"
+      className="smart-hub--tooltip-truncated"
     >
       {member}
-    </Tag>
+      &nbsp;
+    </span>
   ));
+
+  if (collection.length === 1) {
+    return (
+      <span>{tooltip}</span>
+    );
+  }
+
+  const onHover = () => {
+    if (tooltipRef.current) {
+      setTooltipTop({
+        top: (tooltipRef.current.offsetHeight) * -1,
+      });
+    }
+  };
 
   const onClick = () => {
     setShowTooltip(!showTooltip);
@@ -37,12 +56,12 @@ export default function TooltipWithEllipsis({ collection, limit }) {
   };
 
   return (
-    <span className={cssClasses}>
-      <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
+    <span className={cssClasses} onHover={onHover}>
+      <button type="button" className="usa-button usa-button--unstyled" onClick={onClick} onHover={onHover}>
         <span className="smart-hub--ellipsis">
           {tags}
         </span>
-        <span className="usa-tooltip__body usa-tooltip__body--right" role="tooltip">{tooltip}</span>
+        <span className="usa-tooltip__body usa-tooltip__body--top" role="tooltip" ref={tooltipRef} style={tooltipTop}>{tooltip}</span>
       </button>
     </span>
   );

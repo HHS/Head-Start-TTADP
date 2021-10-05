@@ -172,15 +172,6 @@ h1.landing {
   background-color:#F8F8F8;
 }
 
-.smart-hub--table-collection {
-  background: #ECEEF1;
-  color: #21272D;
-  text-align: center;
-  font-weight: normal;
-  text-transform: none;
-  font-size: 14px;
-}
-
 .smart-hub--status-draft {
   background: #E2EFF7;
   color: #0166AB;
@@ -215,14 +206,7 @@ h1.landing {
   text-transform: capitalize;
 }
 
-.smart-hub--ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  width: 173.5px;
-  vertical-align: middle;
-}
+
 
 .usa-button.smart-hub--button__no-margin {
   margin-left: 0px;
