@@ -175,7 +175,7 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct grantees', async () => {
-    const grantee = await screen.findByRole('button', { name: /johnston\-romaguera johnston\-romaguera grantee name click to visually reveal the recipients for r14\-ar\-1/i });
+    const grantee = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera grantee name click to visually reveal the recipients for r14-ar-1/i });
     const nonGrantee = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -202,7 +202,7 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct collaborators', async () => {
-    const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14\-ar\-1/i });
+    const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
 
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip-with-ellipsis');
