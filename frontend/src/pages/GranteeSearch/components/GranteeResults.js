@@ -20,6 +20,15 @@ export default function GranteeResults(
   },
 ) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+
+  const renderGrants = (grantee) => grantee.grants.map((grant) => (
+    <tr key={grantee.id + grant.number}>
+      <td>{grant.regionId}</td>
+      <td><Link to={`/region/${grant.regionId}/grantee/${grantee.id}`}>{grantee.name}</Link></td>
+      <td>{grant.programSpecialistName}</td>
+    </tr>
+  ));
+
   const renderColumnHeader = (displayName, name) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
@@ -96,13 +105,7 @@ export default function GranteeResults(
           </tr>
         </thead>
         <tbody>
-          {grantees.map((grantee) => (
-            <tr key={grantee.id}>
-              <td>{grantee.grants[0].regionId}</td>
-              <td><Link to={`/region/region/grantee/${grantee.id}`}>{grantee.name}</Link></td>
-              <td>{Array.from(new Set(grantee.grants.map((grant) => grant.programSpecialistName))).join('\n')}</td>
-            </tr>
-          ))}
+          {grantees.map((grantee) => renderGrants(grantee))}
         </tbody>
       </table>
     </Container>
@@ -113,7 +116,10 @@ GranteeResults.propTypes = {
   grantees: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     id: PropTypes.number,
-    programSpecialist: PropTypes.string,
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      regionId: PropTypes.number,
+      programSpecialistName: PropTypes.string,
+    })),
   })),
   loading: PropTypes.bool.isRequired,
   activePage: PropTypes.number.isRequired,
