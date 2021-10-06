@@ -53,8 +53,10 @@ export default function GranteeRecord({ match }) {
     async function fetchGrantee(id, region) {
       try {
         const grantee = await getGrantee(id, region);
-        setGranteeName(`${grantee.name} - Region ${regionId}`);
-        setGranteeSummary(grantee);
+        if (grantee) {
+          setGranteeName(`${grantee.name} - Region ${regionId}`);
+          setGranteeSummary(grantee);
+        }
       } catch (e) {
         if (e instanceof HTTPError) {
           if (e.status === 404) {

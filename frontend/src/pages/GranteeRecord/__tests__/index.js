@@ -100,4 +100,18 @@ describe('grantee record page', () => {
       )).toBeInTheDocument();
     });
   });
+
+  it('handles grantee not found', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 404);
+    act(() => renderGranteeRecord());
+    const error = await screen.findByText('Grantee record not found');
+    expect(error).toBeInTheDocument();
+  });
+
+  it('handles fetch error', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 500);
+    act(() => renderGranteeRecord());
+    const error = await screen.findByText('There was an error fetching grantee data');
+    expect(error).toBeInTheDocument();
+  });
 });
