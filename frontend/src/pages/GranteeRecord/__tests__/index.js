@@ -6,7 +6,6 @@ import {
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 import GranteeRecord from '../index';
-// import { HTTPError } from '../../../fetchers';
 
 describe('grantee record page', () => {
   const user = {
@@ -100,19 +99,5 @@ describe('grantee record page', () => {
         theMightyGrantee.grants[0].programSpecialistName,
       )).toBeInTheDocument();
     });
-  });
-
-  it('handles grantee not found', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 404);
-    act(() => renderGranteeRecord());
-    const error = await screen.findByText('Grantee record not found');
-    expect(error).toBeInTheDocument();
-  });
-
-  it('handles fetch error', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 500);
-    act(() => renderGranteeRecord());
-    const error = await screen.findByText('There was an error fetching grantee data');
-    expect(error).toBeInTheDocument();
   });
 });
