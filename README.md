@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 14.16.1 installed.
+2. Make sure you have Node 14.17.6 installed.
 4. Copy `.env.example` to `.env`.
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
@@ -317,6 +317,20 @@ You can run psql commands directly against a deployed database by following thes
 
 	On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
 	This indicates you are in an open psql session, the command-line interface to PostgreSQL.
+
+**Refreshing data in non-production environments**
+
+In order to keep the non-production environments as close to production as possible we developed a way to transform a restored
+version of the production database locally if using local database. The script can be run using the following:
+
+```
+	yarn processData:local
+
+```
+The transformed database can then be restored in the non-production environments.
+For details on how to perform a backup and restore, there is information on the cloud.gov site:
+
+<https://cloud.gov/docs/management/database-backup-restore/>
 
 **Using Maintenance Mode**
 

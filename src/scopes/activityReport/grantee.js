@@ -1,28 +1,23 @@
 import { Op } from 'sequelize';
-import filterArray from './utils';
+import { filterAssociation } from './utils';
 
-const granteeName = '(SELECT STRING_AGG("Grantees".name, \',\') FROM "Grantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Grantees"."id" = "Grants"."granteeId" GROUP BY "ActivityRecipients"."activityReportId")';
-const nonGranteeName = '(SELECT STRING_AGG("NonGrantees".name, \',\') FROM "NonGrantees" INNER JOIN "ActivityRecipients" ON "NonGrantees"."id" = "ActivityRecipients"."nonGranteeId" AND "ActivityRecipients"."activityReportId" = "ActivityReport"."id" GROUP BY "ActivityRecipients"."activityReportId")';
+const granteeName = 'SELECT "ActivityRecipients"."activityReportId" FROM "Grantees" INNER JOIN "Grants" ON "Grants"."granteeId" = "Grantees"."id" INNER JOIN "ActivityRecipients" ON "ActivityRecipients"."grantId" = "Grants"."id" WHERE "Grantees".NAME';
+const nonGranteeName = 'SELECT "ActivityRecipients"."activityReportId" FROM "NonGrantees" INNER JOIN "ActivityRecipients" ON "ActivityRecipients"."nonGranteeId" = "NonGrantees"."id" WHERE "NonGrantees".NAME';
 
 export function withGranteeName(names) {
-  const grantees = filterArray(granteeName, names, false);
-  const nonGrantees = filterArray(nonGranteeName, names, false);
-
   return {
     [Op.or]: [
-      grantees,
-      nonGrantees,
+      filterAssociation(granteeName, names, false),
+      filterAssociation(nonGranteeName, names, false),
     ],
   };
 }
 
 export function withoutGranteeName(names) {
-  const grantees = filterArray(granteeName, names, true);
-  const nonGrantees = filterArray(nonGranteeName, names, true);
   return {
     [Op.and]: [
-      grantees,
-      nonGrantees,
+      filterAssociation(granteeName, names, true),
+      filterAssociation(nonGranteeName, names, true),
     ],
   };
 }
