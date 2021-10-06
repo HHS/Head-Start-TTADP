@@ -57,14 +57,7 @@ function GranteeSearch({ user }) {
         return;
       }
 
-      const filters = [
-        {
-          id: uuidv4(),
-          topic: 'modelType',
-          condition: 'Is',
-          query: 'grant',
-        },
-      ];
+      const filters = [];
 
       if (appliedRegion === 14) {
         regions.forEach((region) => {
