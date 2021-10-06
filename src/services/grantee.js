@@ -73,6 +73,7 @@ export async function granteeByScopes(granteeId, grantScopes) {
   });
 
   const grants = new Map();
+
   recipients.forEach((recipient) => {
     if (grants.has(recipient.grantId)) {
       const grant = grants.get(recipient.grantId);
@@ -81,6 +82,7 @@ export async function granteeByScopes(granteeId, grantScopes) {
           [...recipient.ActivityReport.programTypes, ...grant.programTypes],
         ),
       );
+
       grants.set(recipient.grantId, { ...grant, programTypes });
     } else {
       const {
