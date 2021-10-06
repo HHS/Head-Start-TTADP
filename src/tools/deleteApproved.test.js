@@ -19,7 +19,7 @@ const GRANT_ID_TWO = 88886;
 
 const mockUser = {
   id: 3004,
-  homeRegionId: 1,
+  homeRegionId: 2,
   name: 'user3004',
   hsesUsername: 'user3004',
   hsesUserId: '3004',
@@ -28,7 +28,7 @@ const mockUser = {
 
 const mockCollaboratorOne = {
   id: 3006,
-  homeRegionId: 1,
+  homeRegionId: 2,
   name: 'user3006',
   hsesUsername: 'user3006',
   hsesUserId: '3006',
@@ -37,7 +37,7 @@ const mockCollaboratorOne = {
 
 const mockCollaboratorTwo = {
   id: 3007,
-  homeRegionId: 1,
+  homeRegionId: 2,
   name: 'user3007',
   hsesUsername: 'user3007',
   hsesUserId: '3007',
@@ -47,7 +47,7 @@ const mockCollaboratorTwo = {
 const reportObject = {
   activityRecipientType: 'grantee',
   userId: mockUser.id,
-  regionId: 1,
+  regionId: 2,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
@@ -79,12 +79,12 @@ describe('deleteApproved', () => {
     await Grantee.findOrCreate({ where: { name: 'Agency Four', id: GRANTEE_ID_TWO } });
     await Grant.findOrCreate({
       where: {
-        id: GRANT_ID_ONE, number: '01GN011312', granteeId: GRANTEE_ID_ONE, regionId: 1, status: 'Active',
+        id: GRANT_ID_ONE, number: '01GN011312', granteeId: GRANTEE_ID_ONE, regionId: 2, status: 'Active',
       },
     });
     await Grant.findOrCreate({
       where: {
-        id: GRANT_ID_TWO, number: '01GN011412', granteeId: GRANTEE_ID_TWO, regionId: 1, status: 'Active',
+        id: GRANT_ID_TWO, number: '01GN011412', granteeId: GRANTEE_ID_TWO, regionId: 2, status: 'Active',
       },
     });
   });
