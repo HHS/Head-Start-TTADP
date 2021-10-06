@@ -81,7 +81,7 @@ describe('My Alerts', () => {
   test('displays the correct grantees', async () => {
     renderMyAlerts();
     screen.logTestingPlaygroundURL();
-    const grantees = await screen.findByRole('button', { name: /johnston\-romaguera johnston\-romaguera grantee name click to visually reveal the recipients for r14\-ar\-1/i })
+    const grantees = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera grantee name click to visually reveal the recipients for r14-ar-1/i });
     const nonGrantees = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -101,7 +101,7 @@ describe('My Alerts', () => {
 
   test('displays the correct collaborators', async () => {
     renderMyAlerts();
-    const collaborators = await screen.findByRole('button', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14\-ar\-1/i })
+    const collaborators = await screen.findByRole('button', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
 
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
