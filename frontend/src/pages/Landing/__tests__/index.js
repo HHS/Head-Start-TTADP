@@ -818,7 +818,8 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
 
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(/Johnston-RomagueraJohnston-RomagueraGrantee Name/i));
+    const textContent = 'Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1Johnston-Romaguera Johnston-Romaguera Grantee Name';
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
     await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/qris system/i));
   });
 
@@ -868,8 +869,10 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
 
-    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(/cucumber user, gshermione granger, ss/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/orange, gshermione granger, ss/i));
+    const firstCell = 'Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2Cucumber User, GS Hermione Granger, SS';
+    const secondCell = 'Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1Orange, GS Hermione Granger, SS';
+    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(firstCell));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(secondCell));
   });
 });
 
