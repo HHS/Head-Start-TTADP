@@ -6,6 +6,7 @@ import {
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 import GranteeRecord from '../index';
+// import { HTTPError } from '../../../fetchers';
 
 describe('grantee record page', () => {
   const user = {
@@ -60,24 +61,30 @@ describe('grantee record page', () => {
     render(<GranteeRecord user={user} match={match} />);
   }
 
+  const overview = {
+    duration: '',
+    deliveryMethod: '',
+    numberOfParticipants: '',
+    inPerson: '',
+    sumDuration: '',
+    numParticipants: '',
+    numReports: '',
+    numGrants: '',
+  };
+
   beforeEach(() => {
     fetchMock.get('/api/user', user);
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
-    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1', {
-      duration: '',
-      deliveryMethod: '',
-      numberOfParticipants: '',
-      inPerson: '',
-      sumDuration: '',
-      numParticipants: '',
-    });
-    act(() => renderGranteeRecord());
+    fetchMock.get('/api/widgets/dashboardOverview', overview);
+    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1&modelType.is=grant', overview);
   });
   afterEach(() => {
     fetchMock.restore();
   });
 
   it('shows the subtitle and grantee name', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
+    act(() => renderGranteeRecord());
+
     await waitFor(() => {
       expect(screen.getByText(/grantee tta record/i)).toBeInTheDocument();
       expect(screen.getByText('the Mighty Grantee - Region 45')).toBeInTheDocument();
@@ -85,11 +92,27 @@ describe('grantee record page', () => {
   });
 
   it('shows the grantee summary widget', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
+    act(() => renderGranteeRecord());
     await waitFor(() => {
       expect(screen.getByRole('cell', { name: /region 45/i })).toBeInTheDocument();
       expect(screen.getByText(
         theMightyGrantee.grants[0].programSpecialistName,
       )).toBeInTheDocument();
     });
+  });
+
+  it('handles grantee not found', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 404);
+    act(() => renderGranteeRecord());
+    const error = await screen.findByText('Grantee record not found');
+    expect(error).toBeInTheDocument();
+  });
+
+  it('handles fetch error', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 500);
+    act(() => renderGranteeRecord());
+    const error = await screen.findByText('There was an error fetching grantee data');
+    expect(error).toBeInTheDocument();
   });
 });
