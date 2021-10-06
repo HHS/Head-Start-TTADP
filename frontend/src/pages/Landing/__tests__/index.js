@@ -946,8 +946,6 @@ describe('Landing Page error', () => {
   });
 });
 
-//  107,350-361,402
-//
 describe('handleApplyFilters', () => {
   beforeEach(() => {
     mockFetchWithRegionOne();
