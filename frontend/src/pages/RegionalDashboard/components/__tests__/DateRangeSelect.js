@@ -7,7 +7,13 @@ import DateRangeSelect from '../DateRangeSelect';
 
 describe('DateRangeSelect', () => {
   const renderDateRangeSelect = (onApplyDateRange) => {
-    render(<DateRangeSelect onApply={onApplyDateRange} />);
+    render(<DateRangeSelect
+      selectedDateRangeOption={0}
+      updateDateRange={() => {}}
+      dateRange="2020/01/01-2020/01/01"
+      customDateRangeOption={0}
+      onApply={onApplyDateRange}
+    />);
   };
 
   it('renders correctly', () => {
