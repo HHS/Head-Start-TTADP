@@ -8,7 +8,6 @@ import './GranteeResults.css';
 
 export default function GranteeResults(
   {
-    region,
     grantees,
     loading,
     activePage,
@@ -99,8 +98,8 @@ export default function GranteeResults(
         <tbody>
           {grantees.map((grantee) => (
             <tr key={grantee.id}>
-              <td>{region}</td>
-              <td><Link to={`/region/${region}/grantee/${grantee.id}`}>{grantee.name}</Link></td>
+              <td>{grantee.grants[0].regionId}</td>
+              <td><Link to={`/region/region/grantee/${grantee.id}`}>{grantee.name}</Link></td>
               <td>{Array.from(new Set(grantee.grants.map((grant) => grant.programSpecialistName))).join('\n')}</td>
             </tr>
           ))}
@@ -111,7 +110,6 @@ export default function GranteeResults(
 }
 
 GranteeResults.propTypes = {
-  region: PropTypes.number.isRequired,
   grantees: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     id: PropTypes.number,

@@ -59,17 +59,29 @@ function GranteeSearch({ user }) {
       const filters = [
         {
           id: uuidv4(),
-          topic: 'region',
-          condition: 'Contains',
-          query: appliedRegion,
-        },
-        {
-          id: uuidv4(),
           topic: 'modelType',
           condition: 'Is',
           query: 'grant',
         },
       ];
+
+      if (appliedRegion === 14) {
+        regions.forEach((region) => {
+          filters.push({
+            id: uuidv4(),
+            topic: 'region',
+            condition: 'One of',
+            query: region,
+          });
+        });
+      } else {
+        filters.push({
+          id: uuidv4(),
+          topic: 'region',
+          condition: 'Contains',
+          query: appliedRegion,
+        });
+      }
 
       try {
         const {
@@ -87,7 +99,7 @@ function GranteeSearch({ user }) {
     }
 
     fetchGrantees();
-  }, [appliedRegion, loading, offset, query, sortConfig]);
+  }, [appliedRegion, loading, offset, query, regions, sortConfig]);
 
   function onApplyRegion(region) {
     setAppliedRegion(region.value);
@@ -164,7 +176,6 @@ function GranteeSearch({ user }) {
         </Grid>
         <main>
           <GranteeResults
-            region={appliedRegion}
             grantees={results}
             loading={loading}
             activePage={activePage}
