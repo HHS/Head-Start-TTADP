@@ -1,9 +1,10 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
-import { getGrantee } from './handlers';
-import { granteeByScopes } from '../../services/grantee';
+import { getGrantee, searchGrantees } from './handlers';
+import { granteeByScopes, granteesByNameAndRegion } from '../../services/grantee';
 
 jest.mock('../../services/grantee', () => ({
   granteeByScopes: jest.fn(),
+  granteesByNameAndRegion: jest.fn(),
 }));
 
 describe('getGrantee', () => {
@@ -51,6 +52,61 @@ describe('getGrantee', () => {
   it('returns a 500 on error', async () => {
     const req = {};
     await getGrantee(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('searchGrantee', () => {
+  const granteeResults = [
+    {
+      name: 'City of Florida Mr Thaddeus Q Grantee',
+    },
+  ];
+
+  const mockResponse = {
+    attachment: jest.fn(),
+    json: jest.fn(),
+    send: jest.fn(),
+    sendStatus: jest.fn(),
+    status: jest.fn(() => ({
+      end: jest.fn(),
+    })),
+  };
+  it('retrieves matching grantees', async () => {
+    const req = {
+      query: {
+        s: 'City of Florida',
+        'region.in': 1,
+        modelType: 'grant',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: 0,
+      },
+    };
+    granteesByNameAndRegion.mockResolvedValue(granteeResults);
+    await searchGrantees(req, mockResponse);
+    expect(mockResponse.json).toHaveBeenCalledWith(granteeResults);
+  });
+
+  it('returns a 404 when a grantee can\'t be found', async () => {
+    const req = {
+      query: {
+        s: 'City of Florida',
+        'region.in': 1,
+        modelType: 'grant',
+        sortBy: 'name',
+        direction: 'asc',
+        offset: 0,
+      },
+    };
+    granteesByNameAndRegion.mockResolvedValue(null);
+    await searchGrantees(req, mockResponse);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+  });
+
+  it('returns a 500 on error', async () => {
+    const req = {};
+    await searchGrantees(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });

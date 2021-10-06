@@ -60,6 +60,24 @@ describe('Grantee DB service', () => {
         ttaType: ['type'],
         id: 61906,
       }),
+      await ActivityReport.create({
+        regionId: 1,
+        status: REPORT_STATUSES.APPROVED,
+        approvingManagerId: 1,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 0,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        requester: 'requester',
+        programTypes: ['type2'],
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        id: 61907,
+      }),
       await Grant.create({
         id: 75,
         number: '1145543',
@@ -86,14 +104,18 @@ describe('Grantee DB service', () => {
         activityReportId: 61906,
         grantId: 75,
       }),
+      await ActivityRecipient.create({
+        activityReportId: 61907,
+        grantId: 75,
+      }),
     ]);
   });
 
   afterAll(async () => {
-    await ActivityRecipient.destroy({ where: { activityReportId: [61905, 61906] } });
+    await ActivityRecipient.destroy({ where: { activityReportId: [61905, 61906, 61907] } });
     await Grant.destroy({ where: { id: grantees.map((g) => g.id) } });
     await Grantee.destroy({ where: { id: grantees.map((g) => g.id) } });
-    await ActivityReport.destroy({ where: { id: [61905, 61906] } });
+    await ActivityReport.destroy({ where: { id: [61905, 61906, 61907] } });
     await sequelize.close();
   });
 
@@ -127,6 +149,7 @@ describe('Grantee DB service', () => {
       expect(grantee3.grants[0].programSpecialistName).toBe(null);
       expect(grantee3.grants[0].startDate).toBeTruthy();
       expect(grantee3.grants[0].endDate).toBeTruthy();
+      expect(grantee3.grants[0].programTypes).toBe(['type2', 'type']);
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [74] };
@@ -147,6 +170,14 @@ describe('Grantee DB service', () => {
       expect(grantee2.grants[0].programSpecialistName).toBe(null);
       expect(grantee2.grants[0].startDate).toBeTruthy();
       expect(grantee2.grants[0].endDate).toBeTruthy();
+    });
+
+    it('returns null when nothing is found', async () => {
+      const query = { 'granteeId.in': [100] };
+      const grantScopes = filtersToScopes(query, 'grant');
+      const grantee = await granteeByScopes(100, grantScopes);
+
+      expect(grantee).toBeNull();
     });
   });
 
