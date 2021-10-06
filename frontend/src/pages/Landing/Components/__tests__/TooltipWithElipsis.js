@@ -20,7 +20,6 @@ describe('TooltipWithEllipsis', () => {
     expect(teddy).toBeVisible();
     expect(cathy).toBeVisible();
 
-    screen.logTestingPlaygroundURL();
     const button = screen.getByRole('button', { name: 'Teddy Cathy Bobby G-berg click to visually reveal the people who something' });
     await act(async () => fireEvent.click(button));
 

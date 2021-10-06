@@ -80,7 +80,6 @@ describe('My Alerts', () => {
 
   test('displays the correct grantees', async () => {
     renderMyAlerts();
-    screen.logTestingPlaygroundURL();
     const grantees = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera grantee name click to visually reveal the recipients for r14-ar-1/i });
     const nonGrantees = await screen.findByRole('cell', {
       name: /qris system/i,
