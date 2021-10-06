@@ -15,11 +15,14 @@ export const getGrantee = async (granteeId, regionId = '') => {
     throw new Error('Grantee ID must be a number');
   }
 
-  const grantee = await get(
-    join(granteeUrl, id.toString(DECIMAL_BASE), regionSearch, modelType),
-  );
-
-  return grantee.json();
+  try {
+    const grantee = await get(
+      join(granteeUrl, id.toString(DECIMAL_BASE), regionSearch, modelType),
+    );
+    return grantee.json();
+  } catch (err) {
+    throw new Error(err);
+  }
 };
 
 export const searchGrantees = async (query, filters, params = { sortBy: 'name', direction: 'asc', offset: 0 }) => {

@@ -8,6 +8,7 @@ import { getGrantee } from '../../fetchers/grantee';
 import GranteeSummary from './components/GranteeSummary';
 import GrantList from './components/GrantsList';
 import Overview from '../../widgets/DashboardOverview';
+import { HTTPError } from '../../fetchers';
 import './index.css';
 
 export default function GranteeRecord({ match }) {
@@ -21,7 +22,7 @@ export default function GranteeRecord({ match }) {
     'grants.number': '',
   });
   const [filters, setFilters] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState();
 
   useEffect(() => {
     const filtersToApply = [
@@ -50,13 +51,19 @@ export default function GranteeRecord({ match }) {
 
   useEffect(() => {
     async function fetchGrantee(id, region) {
-      const grantee = await getGrantee(id, region);
-      if (!grantee) {
-        setError('Grantee record not found');
+      try {
+        const grantee = await getGrantee(id, region);
+        setGranteeName(`${grantee.name} - Region ${regionId}`);
+        setGranteeSummary(grantee);
+      } catch (e) {
+        if (e instanceof HTTPError) {
+          if (e.status === 404) {
+            setError('Grantee record not found');
+          } else {
+            setError('There was an error fetching grantee data');
+          }
+        }
       }
-
-      setGranteeName(`${grantee.name} - Region ${regionId}`);
-      setGranteeSummary(grantee);
     }
 
     try {
