@@ -44,7 +44,8 @@ function GranteeSearch({ user }) {
        * That's why, if the app is not in a loading state, we return
        */
 
-      if (!query && !loading) {
+      if (!loading) {
+        setLoading(false);
         return;
       }
 
@@ -84,6 +85,7 @@ function GranteeSearch({ user }) {
       }
 
       try {
+        setLoading(false);
         const {
           rows,
           count,
@@ -93,8 +95,6 @@ function GranteeSearch({ user }) {
       } catch (err) {
         setResults([]);
         setGranteeCount(0);
-      } finally {
-        setLoading(false);
       }
     }
 
