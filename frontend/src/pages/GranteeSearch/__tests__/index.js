@@ -169,7 +169,7 @@ describe('the grantee search page', () => {
     };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&modelType.is=grant&region.in[]=1&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=0');
     act(() => {
       fetchMock.get(url, res);
     });
@@ -194,7 +194,7 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search?s=ground%20control&modelType.is=grant&region.in[]=1&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=desc&offset=0');
 
     fetchMock.get(url, res);
 
@@ -219,7 +219,7 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search?s=ground%20control&modelType.is=grant&region.in[]=2&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=2&sortBy=name&direction=desc&offset=0');
 
     fetchMock.get(url, res);
 
@@ -252,7 +252,7 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint, homeRegionId: 14 };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search?s=ground%20control&modelType.is=grant&region.in=1&region.in=2&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search?s=ground%20control&region.in=1&region.in=2&sortBy=name&direction=desc&offset=0');
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
@@ -271,7 +271,7 @@ describe('the grantee search page', () => {
 
     renderGranteeSearch(user);
 
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&modelType.is=grant&region.in[]=1&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=0');
 
     fetchMock.get(url, res);
 
@@ -284,13 +284,13 @@ describe('the grantee search page', () => {
       fireEvent.click(button);
     });
 
-    fetchMock.get('/api/grantee/search?s=ground%20control&modelType.is=grant&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0', res);
+    fetchMock.get('/api/grantee/search?s=ground%20control&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0', res);
 
     act(() => {
       fireEvent.click(sortButton);
     });
 
-    fetchMock.get('/api/grantee/search?s=ground%20control&modelType.is=grant&region.in[]=1&sortBy=programSpecialist&direction=asc&offset=0', res);
+    fetchMock.get('/api/grantee/search?s=ground%20control&region.in[]=1&sortBy=programSpecialist&direction=asc&offset=0', res);
 
     act(() => {
       fireEvent.click(sortButton);
@@ -320,7 +320,7 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint };
     renderGranteeSearch(user);
 
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&modelType.is=grant&region.in[]=1&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=0');
     fetchMock.get(url, res);
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
@@ -335,7 +335,7 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint };
     renderGranteeSearch(user);
 
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&modelType.is=grant&region.in[]=1&sortBy=name&direction=desc&offset=0');
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=0');
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
@@ -347,7 +347,7 @@ describe('the grantee search page', () => {
     });
 
     const next = await screen.findByRole('link', { name: /go to page number 2/i });
-    const nextUrl = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&modelType.is=grant&region.in[]=1&sortBy=name&direction=desc&offset=12');
+    const nextUrl = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=12');
 
     fetchMock.get(nextUrl,
       {
