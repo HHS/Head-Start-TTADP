@@ -1,0 +1,17 @@
+.ttahub-grantee-record--tabs_link, .ttahub-grantee-record--tabs_link:visited {
+    color: #21272d;
+    text-decoration: none;
+}
+
+.ttahub-grantee-record--tabs_tab {
+    min-width: 6rem;
+    text-align:center;
+}
+
+.ttahub-grantee-record--tabs_link--active{
+    border-bottom: 4px solid #0166ab;
+}
+
+.ttahub-grantee-record--tabs_back-to-search, .ttahub-grantee-record--tabs_back-to-search :visited {
+    color: #0166ab;
+}

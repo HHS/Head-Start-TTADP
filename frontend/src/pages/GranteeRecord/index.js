@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { v4 as uuidv4 } from 'uuid';
+import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
-import GranteeSummary from './components/GranteeSummary';
-import GrantList from './components/GrantsList';
-import Overview from '../../widgets/DashboardOverview';
+import GranteeTabs from './components/GranteeTabs';
 import { HTTPError } from '../../fetchers';
 import './index.css';
+import Profile from './components/Profile';
+import TTAHistory from './components/TTAHistory';
 
 export default function GranteeRecord({ match }) {
   const { regionId, granteeId } = match.params;
@@ -77,8 +77,11 @@ export default function GranteeRecord({ match }) {
     }
   }, [granteeId, match.params, regionId]);
 
-  if (error) {
-    return (
+  return (
+    <>
+      <GranteeTabs region={regionId} granteeId={granteeId} />
+      {
+    error ? (
       <div className="usa-alert usa-alert--error" role="alert">
         <div className="usa-alert__body">
           <p className="usa-alert__text">
@@ -86,24 +89,22 @@ export default function GranteeRecord({ match }) {
           </p>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <>
-      <span className="text-bold">Grantee TTA Record</span>
-      <h1 className="landing margin-top-1">{granteeName}</h1>
-      <Grid row gap={4}>
-        <Grid col={6}>
-          <GranteeSummary summary={granteeSummary} />
-        </Grid>
-        <Grid col={6}>
-          <GrantList summary={granteeSummary} />
-        </Grid>
-      </Grid>
-      <Overview
-        filters={filters}
-      />
+    ) : (
+      <>
+        <h1 className="landing margin-top-1 margin-left-2">{granteeName}</h1>
+        <Switch>
+          <Route
+            path="/region/:regionId/grantee/:granteeId/tta-history"
+            render={() => <TTAHistory filters={filters} />}
+          />
+          <Route
+            path="/region/:regionId/grantee/:granteeId/profile"
+            render={() => <Profile granteeSummary={granteeSummary} />}
+          />
+        </Switch>
+      </>
+    )
+}
     </>
   );
 }
