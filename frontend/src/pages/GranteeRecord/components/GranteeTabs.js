@@ -11,7 +11,7 @@ export default function GranteeTabs({ region, granteeId }) {
 
   return (
     <div className="ttahub-grantee-record--tabs">
-      <nav className="bg-white">
+      <nav className="ttahub-grantee-record--tabs_nav bg-white">
         <ul className="display-flex margin-0 margin-bottom-2 padding-0">
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/region/${region}/grantee/${granteeId}/profile`}>Profile</NavLink>
@@ -28,6 +28,6 @@ export default function GranteeTabs({ region, granteeId }) {
 }
 
 GranteeTabs.propTypes = {
-  region: PropTypes.number.isRequired,
-  granteeId: PropTypes.number.isRequired,
+  region: PropTypes.string.isRequired,
+  granteeId: PropTypes.string.isRequired,
 };

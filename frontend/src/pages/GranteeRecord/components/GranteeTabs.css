@@ -1,3 +1,7 @@
+.ttahub-grantee-record--tabs_nav {
+    margin-left: -1rem;
+}
+
 .ttahub-grantee-record--tabs_link, .ttahub-grantee-record--tabs_link:visited {
     color: #21272d;
     text-decoration: none;

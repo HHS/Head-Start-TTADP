@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
+import './GrantsList.css';
 
 export default function GrantsList({ summary }) {
   const getGrantPrograms = (programs) => {
@@ -26,7 +27,7 @@ export default function GrantsList({ summary }) {
       return summary.grants.map((grant) => (
         <tr key={grant.id}>
           <td>
-            <a style={{ display: 'table-cell' }} className="padding-2" href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
+            <a style={{ display: 'table-cell' }} className="padding-y-3" href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
               {grant.number}
             </a>
           </td>
@@ -46,7 +47,7 @@ export default function GrantsList({ summary }) {
   };
 
   return (
-    <Container padding={0}>
+    <Container className="ttahub-grantee-record--grants-list" padding={0}>
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grants</h2>
       <div className="usa-table-container--scrollable margin-0 ttahub-grantee-record-table-container">
         <table className="usa-table usa-table--striped ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless width-full margin-y-1">
