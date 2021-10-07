@@ -81,6 +81,7 @@ describe('Update grants and grantees', () => {
     const grantee = await Grantee.findOne({ where: { id: 1335 } });
     expect(grantee).toBeDefined();
     expect(grantee.name).toBe('Agency 1, Inc.');
+    expect(grantee.granteeType).toBe('Community Action Agency (CAA)');
   });
 
   it('should import or update grants', async () => {

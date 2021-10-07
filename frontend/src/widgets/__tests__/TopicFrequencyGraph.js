@@ -41,7 +41,7 @@ const TEST_DATA = [{
 
 const renderArGraphOverview = async (props) => (
   render(
-    <TopicFrequencyGraphWidget loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
+    <TopicFrequencyGraphWidget updateRoles={() => {}} loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
