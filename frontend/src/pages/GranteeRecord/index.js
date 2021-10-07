@@ -20,6 +20,7 @@ export default function GranteeRecord({ match }) {
     'grants.startDate': '',
     'grants.endDate': '',
     'grants.number': '',
+    granteeId,
   });
   const [filters, setFilters] = useState([]);
   const [error, setError] = useState();
@@ -55,7 +56,7 @@ export default function GranteeRecord({ match }) {
         const grantee = await getGrantee(id, region);
         if (grantee) {
           setGranteeName(`${grantee.name} - Region ${regionId}`);
-          setGranteeSummary(grantee);
+          setGranteeSummary({ granteeId, ...grantee });
         }
       } catch (e) {
         if (e instanceof HTTPError) {

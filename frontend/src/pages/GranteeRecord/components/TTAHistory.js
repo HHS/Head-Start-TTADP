@@ -4,7 +4,7 @@ import Overview from '../../../widgets/DashboardOverview';
 
 export default function TTAHistory({ filters }) {
   return (
-    <div className="margin-left-2"><Overview filters={filters} /></div>
+    <div className="margin-right-3"><Overview filters={filters} /></div>
   );
 }
 

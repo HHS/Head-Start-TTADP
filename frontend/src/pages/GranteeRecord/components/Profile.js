@@ -6,14 +6,16 @@ import GrantList from './GrantsList';
 
 export default function Profile({ granteeSummary }) {
   return (
-    <Grid row gap={4} className="margin-left-2">
-      <Grid col={6}>
-        <GranteeSummary summary={granteeSummary} />
+    <div className="margin-right-1">
+      <Grid row gap={4}>
+        <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+          <GranteeSummary summary={granteeSummary} />
+        </Grid>
+        <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+          <GrantList summary={granteeSummary} />
+        </Grid>
       </Grid>
-      <Grid col={6}>
-        <GrantList summary={granteeSummary} />
-      </Grid>
-    </Grid>
+    </div>
   );
 }
 
