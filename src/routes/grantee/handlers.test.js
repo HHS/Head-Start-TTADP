@@ -1,4 +1,4 @@
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { getGrantee, searchGrantees } from './handlers';
 import { granteeByScopes, granteesByNameAndRegion } from '../../services/grantee';
 
@@ -46,7 +46,7 @@ describe('getGrantee', () => {
     };
     granteeByScopes.mockResolvedValue(null);
     await getGrantee(req, mockResponse);
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
 
   it('returns a 500 on error', async () => {
