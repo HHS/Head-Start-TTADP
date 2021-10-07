@@ -1,29 +1,27 @@
 /* eslint-disable no-restricted-syntax */
-import { REPORT_STATUSES } from '../constants';
 import {
   ActivityReport,
 } from '../models';
 import { auditLogger } from '../logger';
 
 /**
- * deleteApproved script soft deletes activity reports based on ids. The
- * reports' status are chanaged to 'deleted'. The script expects a comma
- * separated ids.
+ * changeReportStatus script changes status of activity reports based on ids and status.
+ * The script expects a comma separated ids and the new status.
  */
 
-export default async function deleteApproved(ids) {
+export default async function changeReportStatus(ids, status) {
   const idsArray = ids.split(',');
 
   const promises = [];
 
   for await (const id of idsArray) {
-    const report = await ActivityReport.findOne({ where: { id } });
+    const report = await ActivityReport.unscoped().findOne({ where: { id } });
 
     if (report) {
-      auditLogger.info(`Deleting report: ${id}`);
+      auditLogger.info(`Changing status of report: ${id} to ${status}`);
       promises.push(
         report.update({
-          status: REPORT_STATUSES.DELETED,
+          status,
         }),
       );
     } else {
