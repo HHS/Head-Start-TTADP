@@ -25,7 +25,7 @@ function GranteeSearch({ user }) {
   const [loading, setLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     sortBy: 'name',
-    direction: 'desc',
+    direction: 'asc',
   });
 
   const inputRef = useRef();
