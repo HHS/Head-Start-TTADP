@@ -204,12 +204,12 @@ describe('Landing Page', () => {
 
   test('displays the correct collaborators', async () => {
     const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
-
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip-with-ellipsis');
     expect(collaborators.firstChild.children.length).toBe(2);
-    expect(collaborators.firstChild.firstChild.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
-    expect(collaborators.firstChild.firstChild.firstChild.firstChild).toHaveTextContent('Orange, GS');
+    const truncated = collaborators.firstChild.children[1].firstChild.firstChild;
+    expect(truncated).toHaveClass('smart-hub--tooltip-truncated');
+    expect(truncated).toHaveTextContent('Orange, GS');
   });
 
   test('displays the correct last saved dates', async () => {
@@ -324,7 +324,7 @@ describe('Landing Page sorting', () => {
 
     await act(async () => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(''));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1Behavioral / Mental Health CLASS: Instructional Support'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
   });
 
   it('clicking Creator column header will sort by author', async () => {
@@ -856,7 +856,7 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
 
-    const textContent = 'Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1Johnston-Romaguera Johnston-Romaguera Grantee Name';
+    const textContent = /Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
     await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/qris system/i));
   });
@@ -907,8 +907,8 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
 
-    const firstCell = 'Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2Cucumber User, GS Hermione Granger, SS';
-    const secondCell = 'Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1Orange, GS Hermione Granger, SS';
+    const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
+    const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(firstCell));
     await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(secondCell));
   });
