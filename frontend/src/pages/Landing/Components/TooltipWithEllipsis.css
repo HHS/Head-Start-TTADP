@@ -30,6 +30,7 @@
     animation: fadein;
     animation-duration: 500ms;
     animation-iteration-count: 1;
+    bottom: 1rem;
     display: inline-block;
     line-height: 1;
     position: absolute;

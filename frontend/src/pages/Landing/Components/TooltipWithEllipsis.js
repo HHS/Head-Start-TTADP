@@ -46,6 +46,7 @@ export default function TooltipWithEllipsis({ collection, collectionTitle }) {
 
   return (
     <span className={cssClasses} data-testid="tooltip">
+      <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltip}</div>
       <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
         <span className="smart-hub--ellipsis">
           {tags}
@@ -56,7 +57,6 @@ export default function TooltipWithEllipsis({ collection, collectionTitle }) {
           {collectionTitle}
         </span>
       </button>
-      <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--bottom">{tooltip}</div>
     </span>
   );
 }
