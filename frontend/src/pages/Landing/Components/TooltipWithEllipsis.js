@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -6,11 +6,8 @@ import './TooltipWithEllipsis.css';
 
 export default function TooltipWithEllipsis({ collection, collectionTitle }) {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [cssClasses, setCssClasses] = useState('smart-hub--tooltip-with-ellipsis');
 
-  useEffect(() => {
-    setCssClasses(showTooltip ? 'smart-hub--tooltip-with-ellipsis show-tooltip' : 'smart-hub--tooltip-with-ellipsis');
-  }, [showTooltip]);
+  const cssClasses = showTooltip ? 'smart-hub--tooltip-with-ellipsis show-tooltip' : 'smart-hub--tooltip-with-ellipsis';
 
   if (!collection || collection.length === 0) {
     return null;

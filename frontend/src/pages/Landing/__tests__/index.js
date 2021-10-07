@@ -274,7 +274,7 @@ describe('Landing Page sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    await act(async () => fireEvent.click(statusColumnHeader));
+    fireEvent.click(statusColumnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
 
@@ -283,7 +283,7 @@ describe('Landing Page sorting', () => {
       { count: 2, rows: activityReports },
     );
 
-    await act(async () => fireEvent.click(statusColumnHeader));
+    fireEvent.click(statusColumnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
   });
