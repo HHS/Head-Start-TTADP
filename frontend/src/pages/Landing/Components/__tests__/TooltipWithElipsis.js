@@ -12,6 +12,15 @@ describe('TooltipWithEllipsis', () => {
     render(<TooltipWithEllipsis collection={collection} collectionTitle="people who something" />);
   };
 
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
   it('correctly modifies the dom when the button is clicked', async () => {
     renderTooltip();
     const teddy = screen.getByText('Teddy');
@@ -21,13 +30,29 @@ describe('TooltipWithEllipsis', () => {
     expect(cathy).toBeVisible();
 
     const button = screen.getByRole('button', { name: 'Teddy Cathy Bobby G-berg click to visually reveal the people who something' });
-    await act(async () => fireEvent.click(button));
+    act(() => {
+      fireEvent.click(button);
+    });
 
     const tooltip = await screen.findByTestId('tooltip');
 
     expect(tooltip).toHaveClass('show-tooltip');
 
-    await act(async () => fireEvent.click(button));
+    act(() => {
+      fireEvent.click(button);
+    });
+
+    expect(tooltip).not.toHaveClass('show-tooltip');
+
+    act(() => {
+      fireEvent.click(button);
+    });
+
+    expect(tooltip).toHaveClass('show-tooltip');
+
+    act(() => {
+      jest.runAllTimers();
+    });
 
     expect(tooltip).not.toHaveClass('show-tooltip');
   });
