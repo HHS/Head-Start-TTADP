@@ -7,9 +7,8 @@ import {
 import TooltipWithEllipsis from '../TooltipWithEllipsis';
 
 describe('TooltipWithEllipsis', () => {
-  const renderTooltip = () => {
-    const collection = ['Teddy', 'Cathy', 'Bobby', 'G-berg'];
-    render(<TooltipWithEllipsis collection={collection} collectionTitle="people who something" />);
+  const renderTooltip = (collection = ['Teddy', 'Cathy', 'Bobby', 'G-berg']) => {
+    render(<div data-testid="tooltip-container"><TooltipWithEllipsis collection={collection} collectionTitle="people who something" /></div>);
   };
 
   beforeAll(() => {
@@ -55,5 +54,19 @@ describe('TooltipWithEllipsis', () => {
     });
 
     expect(tooltip).not.toHaveClass('show-tooltip');
+  });
+
+  it('renders nothing when passed an empty collection', async () => {
+    renderTooltip([]);
+    const container = screen.getByTestId('tooltip-container');
+
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('renders a single span when passed a one item array', async () => {
+    renderTooltip(['Jimbo']);
+    const jimbo = screen.getByText('Jimbo');
+    expect(jimbo).toBeVisible();
+    expect(jimbo).toHaveClass('smarthub-ellipsis');
   });
 });
