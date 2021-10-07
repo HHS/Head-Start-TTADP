@@ -83,14 +83,14 @@ Overview.propTypes = {
 };
 
 Overview.defaultProps = {
-  data: PropTypes.shape({
+  data: {
     numReports: '0',
     numGrants: '0',
     numNonGrantees: '0',
     numTotalGrants: '0',
     numParticipants: '0',
     sumDuration: '0',
-  }),
+  },
 };
 
 export default withWidgetData(Overview, 'overview');

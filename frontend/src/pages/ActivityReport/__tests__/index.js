@@ -54,7 +54,7 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
           state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
         }}
         user={{
-          id: userId, name: 'Walter Burns', role: 'Reporter', permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
         }}
       />
     </Router>,
@@ -211,7 +211,7 @@ describe('ActivityReport', () => {
       let information = await screen.findByRole('group', { name: 'Who was the activity for?' });
 
       const grantee = within(information).getByLabelText('Grantee');
-      await fireEvent.click(grantee);
+      fireEvent.click(grantee);
 
       let granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
       reactSelectEvent.openMenu(granteeSelectbox);
@@ -220,8 +220,8 @@ describe('ActivityReport', () => {
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const nonGrantee = within(information).getByLabelText('Non-Grantee');
-      await fireEvent.click(nonGrantee);
-      await fireEvent.click(grantee);
+      fireEvent.click(nonGrantee);
+      fireEvent.click(grantee);
 
       granteeSelectbox = await screen.findByLabelText(/grantee name\(s\)/i);
       expect(within(granteeSelectbox).queryByText('Grantee Name')).toBeNull();
@@ -255,6 +255,7 @@ describe('ActivityReport', () => {
 
       // expect everything to be ok
       expect(endDate).toBeEnabled();
+      await screen.findAllByDisplayValue('12/26/1967');
     });
 
     it('unflattens resources properly', async () => {
