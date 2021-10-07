@@ -12,16 +12,16 @@ export default function TooltipWithEllipsis({ collection, collectionTitle }) {
     setCssClasses(showTooltip ? 'smart-hub--tooltip-with-ellipsis show-tooltip' : 'smart-hub--tooltip-with-ellipsis');
   }, [showTooltip]);
 
-  if (collection.length === 0) {
+  if (!collection || collection.length === 0) {
     return null;
   }
 
-  const tooltip = (collection || []).reduce(
+  const tooltip = (collection).reduce(
     (result, member) => `${result + member}\n`,
     '',
   );
 
-  const tags = (collection || []).map((member) => (
+  const tags = (collection).map((member) => (
     <span
       key={uuidv4()}
       className="smart-hub--tooltip-truncated"
