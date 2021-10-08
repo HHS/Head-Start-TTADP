@@ -8,8 +8,8 @@ import { getGrantee } from '../../fetchers/grantee';
 import GranteeTabs from './components/GranteeTabs';
 import { HTTPError } from '../../fetchers';
 import './index.css';
-import Profile from './components/Profile';
-import TTAHistory from './components/TTAHistory';
+import Profile from './pages/Profile';
+import TTAHistory from './pages/TTAHistory';
 
 export default function GranteeRecord({ match }) {
   const { regionId, granteeId } = match.params;

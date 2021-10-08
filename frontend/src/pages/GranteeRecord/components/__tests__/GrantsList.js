@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import GrantsList from '../components/GrantsList';
+import GrantsList from '../GrantsList';
 
 const renderGrantsList = (summary) => {
   render(<GrantsList summary={summary} skipLoading />);

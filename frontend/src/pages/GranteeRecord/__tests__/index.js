@@ -1,11 +1,13 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import GranteeRecord from '../index';
+
+const memoryHistory = createMemoryHistory();
 
 describe('grantee record page', () => {
   const user = {
@@ -47,17 +49,17 @@ describe('grantee record page', () => {
     ],
   };
 
-  function renderGranteeRecord() {
+  function renderGranteeRecord(history = memoryHistory) {
     const match = {
       path: '',
       url: '',
       params: {
-        granteeId: 1,
-        regionId: 45,
+        granteeId: '1',
+        regionId: '45',
       },
     };
 
-    render(<GranteeRecord user={user} match={match} />);
+    render(<Router history={history}><GranteeRecord user={user} match={match} /></Router>);
   }
 
   const overview = {
@@ -80,25 +82,22 @@ describe('grantee record page', () => {
     fetchMock.restore();
   });
 
-  it('shows the subtitle and grantee name', async () => {
+  it('shows the grantee name', async () => {
     fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
     act(() => renderGranteeRecord());
 
-    await waitFor(() => {
-      expect(screen.getByText(/grantee tta record/i)).toBeInTheDocument();
-      expect(screen.getByText('the Mighty Grantee - Region 45')).toBeInTheDocument();
-    });
+    const granteeName = await screen.findByText('the Mighty Grantee - Region 45');
+    expect(granteeName).toBeInTheDocument();
   });
 
-  it('shows the grantee summary widget', async () => {
+  it('renders the navigation', async () => {
     fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
     act(() => renderGranteeRecord());
-    await waitFor(() => {
-      expect(screen.getByRole('cell', { name: /region 45/i })).toBeInTheDocument();
-      expect(screen.getByText(
-        theMightyGrantee.grants[0].programSpecialistName,
-      )).toBeInTheDocument();
-    });
+
+    const backToSearch = await screen.findByRole('link', { name: /back to search/i });
+    const ttaHistory = await screen.findByRole('link', { name: /tta history/i });
+    expect(backToSearch).toBeVisible();
+    expect(ttaHistory).toBeVisible();
   });
 
   it('handles grantee not found', async () => {
@@ -113,5 +112,21 @@ describe('grantee record page', () => {
     act(() => renderGranteeRecord());
     const error = await screen.findByText('There was an error fetching grantee data');
     expect(error).toBeInTheDocument();
+  });
+
+  it('navigates to the profile page', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
+    memoryHistory.push('/region/1/grantee/45/profile');
+    act(() => renderGranteeRecord(memoryHistory));
+    const heading = await screen.findByRole('heading', { name: /grantee summary/i });
+    expect(heading).toBeInTheDocument();
+  });
+
+  it('navigates to the tta history page', async () => {
+    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
+    memoryHistory.push('/region/1/grantee/45/tta-history');
+    act(() => renderGranteeRecord(memoryHistory));
+    const arLabel = await screen.findByText(/activity reports/i);
+    expect(arLabel).toBeInTheDocument();
   });
 });
