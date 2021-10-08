@@ -1,17 +1,15 @@
 import {} from 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
-import axios from 'axios';
-import cookieSession from 'cookie-session';
 import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
-import isEmail from 'validator/lib/isEmail';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { hsesAuth } from './middleware/authMiddleware';
+import { retrieveUserDetails } from './services/currentUser';
+import cookieSession from './middleware/sessionMiddleware';
 import updateGrantsGrantees from './lib/updateGrantsGrantees';
-import findOrCreateUser from './services/accessValidation';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
@@ -33,63 +31,22 @@ app.use(helmet({
   },
 }));
 
-app.use(cookieSession({
-  name: 'session',
-  keys: [process.env.SESSION_SECRET],
-
-  // Cookie Options. httpOnly is set by default to true for https
-  sameSite: 'lax',
-  secureProxy: (process.env.NODE_ENV === 'production'),
-}));
-
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')));
 }
 
+app.use('/api/v1', require('./routes/externalApi').default);
+
 app.use('/api', require('./routes/apiDirectory').default);
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
-app.get(oauth2CallbackPath, async (req, res) => {
+app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
   try {
     const user = await hsesAuth.code.getToken(req.originalUrl);
     // user will have accessToken and refreshToken
-    const requestObj = user.sign({
-      method: 'get',
-      url: `${process.env.AUTH_BASE}/auth/user/me`,
-    });
+    logger.debug(`HSES AccessToken: ${user.accessToken}`);
 
-    const { url } = requestObj;
-    const { data } = await axios.get(url, requestObj);
-
-    logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
-
-    let name; let username; let userId; let
-      authorities;
-    if (data.principal.attributes) { // PIV card use response
-      name = data.name;
-      username = data.principal.attributes.user.username;
-      userId = data.principal.attributes.user.userId;
-      authorities = data.principal.attributes.user.authorities;
-    } else {
-      name = data.name;
-      username = data.principal.username;
-      userId = data.principal.userId;
-      authorities = data.principal.authorities;
-    }
-
-    let email = null;
-    if (isEmail(username)) {
-      email = username;
-    }
-
-    const dbUser = await findOrCreateUser({
-      name,
-      email,
-      hsesUsername: username,
-      hsesAuthorities: authorities.map(({ authority }) => authority),
-      hsesUserId: userId.toString(),
-    });
-
+    const dbUser = await retrieveUserDetails(user);
     req.session.userId = dbUser.id;
     auditLogger.info(`User ${dbUser.id} logged in`);
 
