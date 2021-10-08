@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
-import GranteeSummary from './GranteeSummary';
-import GrantList from './GrantsList';
+import GranteeSummary from '../components/GranteeSummary';
+import GrantList from '../components/GrantsList';
 
 export default function Profile({ granteeSummary }) {
   return (

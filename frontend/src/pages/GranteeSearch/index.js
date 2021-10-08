@@ -128,10 +128,6 @@ function GranteeSearch({ user }) {
   async function onSubmit(e) {
     e.preventDefault();
 
-    if (loading) {
-      return;
-    }
-
     if (inputRef.current) {
       setQuery(inputRef.current.value);
     }
