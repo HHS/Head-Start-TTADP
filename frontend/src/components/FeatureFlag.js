@@ -7,7 +7,7 @@ export default function FeatureFlag({
 }) {
   if (!admin && user.flags && !user.flags.includes(flag)) {
     if (renderNotFound) {
-      return NotFound;
+      return <NotFound />;
     }
     return <></>;
   }
