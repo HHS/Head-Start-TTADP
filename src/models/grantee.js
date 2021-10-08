@@ -21,6 +21,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: false,
     },
+    granteeType: {
+      type: DataTypes.STRING,
+    },
   }, {
     sequelize,
     modelName: 'Grantee',

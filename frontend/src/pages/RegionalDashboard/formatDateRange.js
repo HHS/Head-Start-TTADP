@@ -27,10 +27,10 @@ export default function formatDateRange(format = {
 
     if (dates && dates.length > 1) {
       if (format.withSpaces) {
-        return `${moment(dates[0]).format(selectedFormat)} ${sep} ${moment(dates[1]).format(selectedFormat)}`;
+        return `${moment(dates[0], DATETIME_DATE_FORMAT).format(selectedFormat)} ${sep} ${moment(dates[1], DATETIME_DATE_FORMAT).format(selectedFormat)}`;
       }
 
-      return `${moment(dates[0]).format(selectedFormat)}${sep}${moment(dates[1]).format(selectedFormat)}`;
+      return `${moment(dates[0], DATETIME_DATE_FORMAT).format(selectedFormat)}${sep}${moment(dates[1], DATETIME_DATE_FORMAT).format(selectedFormat)}`;
     }
   }
 
