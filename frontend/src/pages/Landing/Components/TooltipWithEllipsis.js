@@ -38,7 +38,7 @@ export default function TooltipWithEllipsis({ collection, collectionTitle }) {
     setShowTooltip(!showTooltip);
     setTimeout(() => {
       setShowTooltip(false);
-    }, 1500);
+    }, 2500);
   };
 
   return (
