@@ -317,7 +317,7 @@ jobs:
       - run:
           name: Run axe
           command: |
-            sleep 5
+            sleep 10
             yarn axe:ci
       - store_artifacts:
           path: reports/
