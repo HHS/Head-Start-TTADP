@@ -5,7 +5,7 @@ components:
       description: Basic details about a user
       properties:
         id:
-          type: number
+          type: string
           description: The user's id
         name:
           type: string
@@ -18,7 +18,7 @@ components:
       properties:
         id:
           description: Activity Report identifier
-          type: number
+          type: string
         type:
           description: This is the type of resource
           type: string
@@ -44,7 +44,7 @@ components:
               description: How long the activity took to complete, in hours
             endDate:
               type: string
-              format: date
+              format: date (YYYY-MM-DD)
             reason:
               type: array
               description: Why the activity was conducted
@@ -62,7 +62,7 @@ components:
               format: date-time
             startDate:
               type: string
-              format: date
+              format: date (YYYY-MM-DD)
             topics:
               type: array
               description: Topics covered during the TTA

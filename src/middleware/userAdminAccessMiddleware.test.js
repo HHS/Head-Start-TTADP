@@ -1,12 +1,9 @@
 import {} from 'dotenv/config';
 import db, { User, Permission } from '../models';
 import userAdminAccessMiddleware from './userAdminAccessMiddleware';
-import handleErrors from '../lib/apiErrorHandler';
 import SCOPES from './scopeConstants';
 
 const { ADMIN } = SCOPES;
-
-jest.mock('../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
 
 const mockNext = jest.fn();
 const mockSession = jest.fn();
@@ -40,7 +37,7 @@ describe('userAdminAccessMiddleware', () => {
   });
   afterAll(async () => {
     await User.destroy({ where: { id: user.id } });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
 
   it('should allow access if an user has an admin role', async () => {
@@ -62,15 +59,5 @@ describe('userAdminAccessMiddleware', () => {
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  it('should handle errors on error', async () => {
-    mockSession.userId = undefined;
-
-    await userAdminAccessMiddleware(mockRequest, mockResponse, mockNext);
-
-    expect(mockResponse.sendStatus).not.toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
-    expect(handleErrors).toHaveBeenCalled();
   });
 });
