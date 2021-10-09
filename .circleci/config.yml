@@ -157,11 +157,11 @@ parameters:
     type: string
   staging_git_branch:
     description: "Name of github branch that will deploy to staging"
-    default: "main"
+    default: "kw-delete-reports-script"
     type: string
   dev_git_branch:
     description: "Name of github branch that will deploy to dev"
-    default: "kw-delete-reports-script"
+    default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "sj-mult-approvers"
