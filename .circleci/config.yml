@@ -149,7 +149,7 @@ parameters:
     type: string
   dev_git_url:
     description: "URL of github repo that will deploy to dev"
-    default: "https://github.com/adhocteam/Head-Start-TTADP"
+    default: "https://github.com/HHS/Head-Start-TTADP"
     type: string
   prod_git_branch:
     description: "Name of github branch that will deploy to prod"
@@ -157,11 +157,11 @@ parameters:
     type: string
   staging_git_branch:
     description: "Name of github branch that will deploy to staging"
-    default: "kw-delete-reports-script"
+    default: "main"
     type: string
   dev_git_branch:
     description: "Name of github branch that will deploy to dev"
-    default: "main"
+    default: "kw-delete-reports-script"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "sj-mult-approvers"
