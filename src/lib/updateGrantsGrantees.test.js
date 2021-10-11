@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsGrantees, { processFiles } from './updateGrantsGrantees';
 import db, {
-  Grantee, Grant,
+  Grantee, Grant, Program,
 } from '../models';
 
 jest.mock('axios');
@@ -63,10 +63,12 @@ describe('Update HSES data', () => {
 
 describe('Update grants and grantees', () => {
   beforeAll(async () => {
+    await Program.destroy({ where: { id: [1, 2, 3] } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
+    await Program.destroy({ where: { id: [1, 2, 3] } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
@@ -166,5 +168,13 @@ describe('Update grants and grantees', () => {
     expect(grant.status).toBe('Active');
     expect(grant.regionId).toBe(5);
     expect(grant.granteeId).toBe(500);
+  });
+
+  it('should import programs', async () => {
+    await processFiles();
+    const program = await Program.findOne({ where: { id: 1 }, include: { model: Grant, as: 'grant' } });
+    expect(program.status).toBe('Inactive');
+    expect(program.grant.id).toBe(10567);
+    expect(program.programType).toBe('HS');
   });
 });
