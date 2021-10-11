@@ -272,13 +272,14 @@ TopicFrequencyGraphWidget.propTypes = {
         count: PropTypes.number,
       }),
     ), PropTypes.shape({}),
-  ]).isRequired,
+  ]),
   loading: PropTypes.bool.isRequired,
   updateRoles: PropTypes.func.isRequired,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {
   dateTime: { timestamp: '', label: '' },
+  data: [],
 };
 
 export default withWidgetData(TopicFrequencyGraphWidget, 'topicFrequencyGraph');

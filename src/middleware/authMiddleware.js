@@ -2,6 +2,7 @@ import {} from 'dotenv/config';
 import ClientOAuth2 from 'client-oauth2';
 import { auditLogger } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
+import { currentUserId } from '../services/currentUser';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
@@ -39,17 +40,8 @@ export function login(req, res) {
  * @param {*} res - response
  * @param {*} next - next middleware
  */
-
 export default async function authMiddleware(req, res, next) {
-  // bypass authorization, used for cucumber UAT and axe accessibility testing
-  if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${process.env.CURRENT_USER_ID}`);
-    req.session.userId = process.env.CURRENT_USER_ID;
-  }
-  let userId = null;
-  if (req.session) {
-    userId = req.session.userId;
-  }
+  const userId = currentUserId(req, res);
   if (!userId) {
     res.sendStatus(401);
   } else if (await validateUserAuthForAccess(userId)) {
