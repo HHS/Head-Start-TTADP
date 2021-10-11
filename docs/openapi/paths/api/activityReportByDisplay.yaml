@@ -26,9 +26,49 @@ get:
                 $ref: './schemas.yaml#/components/schemas/activityReport'
     401:
       description: Authorization information is invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: ["401"]
+              title:
+                type: string
+                enum: ["Unauthenticated User"]
+              detail:
+                type: string
+                enum: ["User token is missing or did not map to a known user"]
     403:
       description: User is not authorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: ["403"]
+              title:
+                type: string
+                enum: ["Unauthorized User"]
+              detail:
+                type: string
+                enum: ["User does not have appropriate permissions to view this resource"]
     404:
       description: Activity Record is not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: ["404"]
+              title:
+                type: string
+              detail:
+                type: string
     500:
       description: Unexpected error
