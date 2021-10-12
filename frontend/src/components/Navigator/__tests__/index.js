@@ -77,7 +77,7 @@ describe('Navigator', () => {
         formData={initialData}
         updateFormData={updateForm}
         onReview={() => {}}
-        approvingManager={false}
+        isApprover={false}
         defaultValues={{ first: '', second: '' }}
         pages={pages}
         currentPage={currentPage}

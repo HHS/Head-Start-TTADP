@@ -1,12 +1,16 @@
 import { createTransport } from 'nodemailer';
 import * as path from 'path';
 import {
-  notifyCollaborator, managerApprovalRequested, changesRequestedByManager, reportApproved,
+  notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
 } from '.';
 
 const mockManager = {
   name: 'Mock Manager',
   email: 'mockManager@test.gov',
+};
+const mockApprover = {
+  user: mockManager,
+  note: 'You are awesome! Nice work!',
 };
 const mockAuthor = {
   name: 'Mock Author',
@@ -25,9 +29,8 @@ const mockReport = {
   id: 1,
   displayId: 'mockReport-1',
   author: mockAuthor,
-  approvingManager: mockManager,
   collaborators: [mockCollaborator1, mockCollaborator2],
-  managerNotes: 'You are awesome! Nice work!',
+  approvers: [mockApprover],
 };
 
 const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(mockReport.id));
@@ -43,8 +46,8 @@ describe('mailer tests', () => {
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await changesRequestedByManager(
-        { data: { report: mockReport } }, jsonTransport,
+      const email = await notifyChangesRequested(
+        { data: { report: mockReport, approver: mockApprover } }, jsonTransport,
       );
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([
@@ -55,12 +58,12 @@ describe('mailer tests', () => {
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Changes were requested to Activity Report ${mockReport.displayId}`);
       expect(message.text).toContain(`${mockManager.name} has requested changed to report ${mockReport.displayId}`);
-      expect(message.text).toContain(mockReport.managerNotes);
+      expect(message.text).toContain(mockApprover.note);
       expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(changesRequestedByManager(
+      await expect(notifyChangesRequested(
         { data: { report: mockReport } }, jsonTransport,
       )).resolves.toBeNull();
     });
@@ -68,7 +71,7 @@ describe('mailer tests', () => {
   describe('Report Approved', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await reportApproved(
+      const email = await notifyReportApproved(
         { data: { report: mockReport } }, jsonTransport,
       );
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
@@ -79,12 +82,12 @@ describe('mailer tests', () => {
       ]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId} has been approved`);
-      expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved by ${mockManager.name}`);
+      expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved.`);
       expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(changesRequestedByManager(
+      await expect(notifyChangesRequested(
         { data: { report: mockReport } }, jsonTransport,
       )).resolves.toBeNull();
     });
@@ -92,8 +95,8 @@ describe('mailer tests', () => {
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await managerApprovalRequested(
-        { data: { report: mockReport } }, jsonTransport,
+      const email = await notifyApproverAssigned(
+        { data: { report: mockReport, newApprover: mockApprover } }, jsonTransport,
       );
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
@@ -106,7 +109,7 @@ describe('mailer tests', () => {
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(managerApprovalRequested(
+      await expect(notifyApproverAssigned(
         { data: { report: mockReport } }, jsonTransport,
       )).resolves.toBeNull();
     });
@@ -114,7 +117,7 @@ describe('mailer tests', () => {
   describe('Add Collaborators', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await notifyCollaborator(
+      const email = await notifyCollaboratorAssigned(
         { data: { report: mockReport, newCollaborator: mockCollaborator1 } }, jsonTransport,
       );
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
@@ -128,7 +131,7 @@ describe('mailer tests', () => {
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyCollaborator(
+      await expect(notifyCollaboratorAssigned(
         { data: { report: mockReport, newCollaborator: mockCollaborator1 } }, jsonTransport,
       )).resolves.toBeNull();
     });

@@ -19,8 +19,8 @@ export const getApprovers = async (region) => {
 
 export const submitReport = async (reportId, data) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'submit');
-  const report = await post(url, data);
-  return report.json();
+  const response = await put(url, data);
+  return response.json();
 };
 
 export const saveReport = async (reportId, data) => {

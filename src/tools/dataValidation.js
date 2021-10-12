@@ -42,7 +42,7 @@ const dataValidation = async () => {
   results = await runSelectQuery(query);
   auditLogger.info(`Grants data counts: ${JSON.stringify(results, null, 2)}`);
 
-  query = 'SELECT "regionId", "status", count(*) FROM "ActivityReports" GROUP BY "regionId", "status" ORDER BY "regionId", "status"';
+  query = 'SELECT "regionId", "submissionStatus", count(*) FROM "ActivityReports" GROUP BY "regionId", "submissionStatus" ORDER BY "regionId", "submissionStatus"';
   results = await runSelectQuery(query);
   auditLogger.info(`ActivityReports data counts: ${JSON.stringify(results, null, 2)}`);
 };

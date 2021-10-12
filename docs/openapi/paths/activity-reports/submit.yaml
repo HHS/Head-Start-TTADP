@@ -1,21 +1,24 @@
-post:
+put:
   tags:
     - activity-reports
-  summary: Submit an activity report for approval
+  summary: Add or remove approvers from an activity report
   requestBody:
-    description: The approving manager and any additional notes for the report
+    description: The approvers and any additional notes for the report
     required: true
     content:
       application/json:
         schema:
           type: object
           properties:
-            approvingManagerId:
-              type: string
-              description: The id of the manager assigned to approve the report
+            approverUserIds:
+              type: array
+              description: |
+                Array of userIds of all managers assigned to approve the report.
+                Failure to include a userId that was previously submitted will
+                remove the manager as an approver.
             additionalNotes:
               type: string
-              description: Any contextual information the author/collaborators want to provide the approving manager
+              description: Any contextual information the author/collaborators want to provide the approving manager(s)
   parameters:
     - in: path
       name: activityReportId
@@ -24,10 +27,26 @@ post:
         type: number
   responses:
     200:
-      description: The submitted activity report
+      description: approvers successfully updated
       content:
         application/json:
           schema:
-            $ref: '../../index.yaml#/components/schemas/activityReport'
+            type: object
+            properties:
+              id:
+                type: number
+                description: PK of submitted activity report
+              approvers:
+                type: array
+                description: Manager reviews of this report
+                items:
+                  $ref: '#/components/schemas/approver'
+              calculatedStatus:
+                type: string
+                enum: ['deleted', 'draft', 'submitted', 'needs_action', 'approved']
+                description: |
+                  Current state of the report calculated from submissionStatus
+                  and manager reviews. Value is calculated by sequelize logic,
+                  not a valid request field.
     400:
       description: activityReportId param is missing or malformed

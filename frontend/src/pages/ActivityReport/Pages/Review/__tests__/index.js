@@ -1,18 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render, screen, waitFor, within,
+} from '@testing-library/react';
+import reactSelectEvent from 'react-select-event';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import UserContext from '../../../../../UserContext';
 
 import ReviewSubmit from '../index';
 import { REPORT_STATUSES } from '../../../../../Constants';
 
-const approvers = [
-  { id: 1, name: 'user 1' },
-  { id: 2, name: 'user 2' },
+const availableApprovers = [
+  { id: 1, name: 'approver 1' },
+  { id: 2, name: 'approver 2' },
 ];
 
 const reportCreator = {
@@ -20,13 +24,25 @@ const reportCreator = {
   role: ['Reporter'],
 };
 
+const user = {
+  name: 'test@test.com',
+  permissions: [
+    {
+      scopeId: 3,
+      regionId: 1,
+    },
+  ],
+};
+
+const approversToPass = [{ id: 1, status: null, User: { id: 1, fullName: 'approver 1' } }];
+
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, approvingManagerId, approvingManager, pages,
+  allComplete, formData, onSubmit, onReview, onResetToDraft, isApprover, isPendingApprover, pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { ...formData, approvingManagerId },
+    defaultValues: { ...formData },
   });
 
   return (
@@ -35,15 +51,16 @@ const RenderReview = ({
         allComplete={allComplete}
         onSubmit={onSubmit}
         reviewItems={[]}
-        approvers={approvers}
+        availableApprovers={availableApprovers}
         formData={formData}
         onReview={onReview}
-        onResetToDraft={() => {}}
-        onSaveForm={() => {}}
-        approvingManager={approvingManager}
+        onResetToDraft={onResetToDraft}
+        onSaveForm={() => { }}
+        isApprover={isApprover}
+        isPendingApprover={isPendingApprover}
         pages={pages}
         reportCreator={reportCreator}
-        updateShowValidationErrors={() => {}}
+        updateShowValidationErrors={() => { }}
       />
     </FormProvider>
   );
@@ -63,30 +80,35 @@ const incompletePages = [{
 
 const renderReview = (
   allComplete,
-  approvingManager = false,
-  status = REPORT_STATUSES.DRAFT,
+  isApprover = false,
+  isPendingApprover = false,
+  calculatedStatus = REPORT_STATUSES.DRAFT,
   formData = { additionalNotes: '' },
-  onSubmit = () => {},
-  onReview = () => {},
-  approvingManagerId = null,
+  onSubmit = () => { },
+  onReview = () => { },
+  onResetToDraft = () => { },
   complete = true,
+  approvers = null,
 ) => {
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
 
   render(
     <Router history={history}>
-      <RenderReview
-        allComplete={allComplete}
-        onSubmit={onSubmit}
-        formData={{
-          ...formData, status, author: { name: 'user' }, id: 1, displayId: '1',
-        }}
-        approvingManager={approvingManager}
-        onReview={onReview}
-        approvingManagerId={approvingManagerId}
-        pages={pages}
-      />
+      <UserContext.Provider value={{ user }}>
+        <RenderReview
+          allComplete={allComplete}
+          onSubmit={onSubmit}
+          onResetToDraft={onResetToDraft}
+          formData={{
+            ...formData, calculatedStatus, submissionStatus: calculatedStatus, author: { name: 'user' }, approvers, id: 1, displayId: '1',
+          }}
+          isApprover={isApprover}
+          isPendingApprover={isPendingApprover}
+          onReview={onReview}
+          pages={pages}
+        />
+      </UserContext.Provider>
     </Router>,
   );
   return history;
@@ -97,14 +119,14 @@ const selectLabel = 'Approving manager (Required)';
 describe('ReviewSubmit', () => {
   describe('when the user is the approving manager', () => {
     it('shows the manager UI', async () => {
-      renderReview(true, true, REPORT_STATUSES.SUBMITTED);
+      renderReview(true, true, true, REPORT_STATUSES.SUBMITTED);
       const header = await screen.findByText('Review and approve report');
       expect(header).toBeVisible();
     });
 
     it('allows the manager to review the report', async () => {
       const onReview = jest.fn();
-      renderReview(true, true, REPORT_STATUSES.SUBMITTED, { additionalNotes: '' }, () => {}, onReview);
+      renderReview(true, true, true, REPORT_STATUSES.SUBMITTED, { additionalNotes: '' }, () => { }, onReview);
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
       const reviewButton = await screen.findByRole('button');
       userEvent.click(reviewButton);
@@ -117,7 +139,7 @@ describe('ReviewSubmit', () => {
         throw new Error();
       });
 
-      renderReview(true, true, REPORT_STATUSES.SUBMITTED, { additionalNotes: '' }, () => {}, onReview);
+      renderReview(true, true, false, REPORT_STATUSES.SUBMITTED, { additionalNotes: '' }, () => { }, onReview);
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
       const reviewButton = await screen.findByRole('button');
       userEvent.click(reviewButton);
@@ -128,7 +150,7 @@ describe('ReviewSubmit', () => {
 
   describe('when the form is not complete', () => {
     it('an error message is shown when the report is submitted', async () => {
-      renderReview(false, false);
+      renderReview(false, false, false);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       const error = await screen.findByTestId('errorMessage');
@@ -146,7 +168,8 @@ describe('ReviewSubmit', () => {
 
     it('the submit button calls onSubmit', async () => {
       const onSubmit = jest.fn();
-      renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
+      renderReview(true, false, false, REPORT_STATUSES.DRAFT,
+        {}, onSubmit, () => { }, () => { }, true, approversToPass);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
@@ -159,7 +182,8 @@ describe('ReviewSubmit', () => {
         throw new Error();
       });
 
-      renderReview(true, false, REPORT_STATUSES.DRAFT, {}, onSubmit, () => {}, 1);
+      renderReview(true, false, false, REPORT_STATUSES.DRAFT,
+        {}, onSubmit, () => { }, () => { }, true, approversToPass);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
@@ -169,15 +193,41 @@ describe('ReviewSubmit', () => {
   });
 
   it('Once submitted, user is redirected', async () => {
-    const history = renderReview(true, false, REPORT_STATUSES.DRAFT, {}, () => {}, () => {}, 1);
+    const history = renderReview(true, false, false, REPORT_STATUSES.DRAFT,
+      {}, () => { }, () => { }, () => { }, true, approversToPass);
     userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
-
     await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
   });
 
   it('initializes the form with "initialData"', async () => {
-    renderReview(true, false, REPORT_STATUSES.DRAFT, { }, () => {}, () => {}, 1);
-    const selectBox = await screen.findByLabelText('Approving manager (Required)');
-    await waitFor(() => expect(selectBox).toHaveValue('1'));
+    renderReview(true, false, false, REPORT_STATUSES.DRAFT,
+      {}, () => { }, () => { }, approversToPass);
+    const information = await screen.findByRole('group', { name: /review and submit report/i });
+    const approver = within(information).getByLabelText(/approving manager/i);
+    reactSelectEvent.openMenu(approver);
+    expect(await screen.findByText(/approver 1/i)).toBeVisible();
+    expect(await screen.findByText(/approver 2/i)).toBeVisible();
+  });
+
+  it('reset button works', async () => {
+    const mockReset = jest.fn();
+    renderReview(true, false, false, REPORT_STATUSES.SUBMITTED,
+      {}, () => { }, () => { }, mockReset, true, approversToPass);
+    const resetDraftButton = await screen.findByRole('button', { name: /reset to draft/i });
+    userEvent.click(resetDraftButton);
+    await waitFor(() => expect(mockReset).toHaveBeenCalled());
+  });
+
+  it('reset button handles errors', async () => {
+    const mockReset = jest.fn();
+    mockReset.mockImplementation(() => {
+      throw new Error();
+    });
+    renderReview(true, false, false, REPORT_STATUSES.SUBMITTED,
+      {}, () => { }, () => { }, mockReset, true, approversToPass);
+    const resetDraftButton = await screen.findByRole('button', { name: /reset to draft/i });
+    userEvent.click(resetDraftButton);
+    await waitFor(() => expect(mockReset).toHaveBeenCalled());
+    expect(await screen.findByText(/unable to reset activity report to draft/i)).toBeVisible();
   });
 });

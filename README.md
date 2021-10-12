@@ -272,15 +272,15 @@ If your env variable is secret or the value is dependent on the deployment envir
 	You're all done! In sandbox, `process.env.SECRET_FRUIT` will be `"strawberry"`. In dev, `process.env.SECRET_FRUIT` will be `"dewberry"`.  🎉
 
 
-**Interacting with a deployed database**
+### Interacting with a deployed application or database
 
 Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
 
 Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod). For instructions on how to create and modify databases instances within the cloud.gov ecosystem see the [terraform/README.md](terraform/README.md).
 
-You can run psql commands directly against a deployed database by following these directions.
+#### First, log into Cloud Foundry instance
 
-1. Install Version 7 of the Cloud Foundry CLI tool
+1. Install **Version 7** of the Cloud Foundry CLI tool
 
     - On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
     - On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
@@ -292,33 +292,88 @@ You can run psql commands directly against a deployed database by following thes
     # follow temporary authorization code prompts
     ```
 
-1. Install the cloud foundry plugin [cf-service-connect][cf-service-connect]
+1. Follow prompts to target the desired space
 
-	```bash
-	# Example install for macOS
-	cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
-	```
+#### Second, choose an interaction method
 
-1. Target the desired organization and space
+##### Option A: Run psql commands directly
 
-	```bash
-	cf target -o <org> -s <space>
-	# Example for sandbox
-	cf target -o hhs-acf-ohs-tta -s ttahub-sandbox
-	```
+1. If you haven't used the the cloud foundry plugin [cf-service-connect][cf-service-connect] before, install it now
 
-1. Connect to the desired database
+  	```bash
+  	# Example install for macOS
+  	cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
+  	```
 
-	```bash
-	cf connect-to-service <app_name> <service_instance_name>
-	# Example for sandbox
-	cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
-	```
+1. Connect to your desired database
 
-	On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
-	This indicates you are in an open psql session, the command-line interface to PostgreSQL.
+  	```bash
+  	cf connect-to-service <app_name> <service_instance_name>
+  	# Example for sandbox
+  	cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
+  	```
 
-**Refreshing data in non-production environments**
+  	On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
+  	This indicates you are in an open psql session, the command-line interface to PostgreSQL.
+
+##### Option B: Run script as task
+
+1. Use [cf run-task][cf-run-task] command
+
+    ```bash
+    cf run-task <app_name> --command "<yarn command>"
+    # Example 1: running data validation script against sandbox
+    cf run-task tta-smarthub-sandbox --command "yarn db:validation"
+    # Example 2: undo most recent database migration
+    cf run-task tta-smarthub-sandbox --command "yarn db:migrate:undo:prod:last"
+    ```
+
+1. Check log output, including those from task
+
+    ```bash
+    cf logs <app_name> --recent
+    # Example 1: checking sandbox logs
+    cf logs tta-smarthub-sandbox --recent
+    # Example 2: checking sandbox logs, grep just for task logs
+    cf logs tta-smarthub-sandbox --recent | grep APP/TASK/
+    ```
+
+##### Option C: Run script in an interactive shell
+
+1. If on prod, enable shh in space first
+
+    ```bash
+    cf allow-space-ssh ttahub-prod
+    ```
+
+1. Ssh into your desired application (to see application names run `cf apps`)
+
+    ```bash
+    cf ssh <app_name>
+    # ssh example for sandbox application
+    cf ssh tta-smarthub-sandbox
+    ```
+
+1. Open shell
+
+    ```bash
+    /tmp/lifecycle/shell
+    ```
+
+1. Run your desired command
+
+    ```bash
+    # example
+    node ./build/server/tools/dataValidationCLI.js
+    ```
+
+1. If on prod, disable ssh in space
+
+    ```bash
+    cf disallow-space-ssh ttahub-prod
+    ```
+
+### Refreshing data in non-production environments
 
 In order to keep the non-production environments as close to production as possible we developed a way to transform a restored
 version of the production database locally if using local database. The script can be run using the following:
@@ -332,7 +387,7 @@ For details on how to perform a backup and restore, there is information on the 
 
 <https://cloud.gov/docs/management/database-backup-restore/>
 
-**Using Maintenance Mode**
+### Using Maintenance Mode
 
 if you need to put the application into maintenance mode, you can run the maintenance script located at `bin/maintenance`.
 
@@ -361,6 +416,7 @@ If you are not logged into the cf cli, it will ask you for an sso temporary pass
 [cloudgov]: https://dashboard.fr.cloud.gov/home
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
 [cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
+[cf-run-task]: https://docs.cloudfoundry.org/devguide/using-tasks.html#run-tasks-v7
 [cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 [hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
 [hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production

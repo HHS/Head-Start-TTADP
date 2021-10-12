@@ -3,8 +3,14 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ReasonList from '../ReasonList';
 
-const renderReasonList = (props) => {
-  render(<ReasonList data={props.data} allRegions={[]} dateRange={props.dateRange} skipLoading />);
+const renderReasonList = ({ data, dateRange, errorOverride = null }) => {
+  render(<ReasonList
+    data={data}
+    allRegions={[]}
+    dateRange={dateRange}
+    errorOverride={errorOverride}
+    skipLoading
+  />);
 };
 
 describe('Reason List Widget', () => {
@@ -16,6 +22,14 @@ describe('Reason List Widget', () => {
     expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /# of activities/i })).toBeInTheDocument();
+  });
+
+  it('renders error correctly', async () => {
+    const data = [];
+    const dateRange = '2021/07/01-2021/04/01';
+    const errorOverride = true;
+    renderReasonList({ data, dateRange, errorOverride });
+    expect(await screen.findByText(/errors set to always show/i)).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
