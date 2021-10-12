@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent,
+  render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
@@ -9,6 +9,10 @@ import RegionalDashboard from '../index';
 import formatDateRange from '../formatDateRange';
 
 describe('Regional Dashboard page', () => {
+  beforeAll(() => {
+    fetchMock.mock('*', 200);
+  });
+
   const renderDashboard = (user) => render(<RegionalDashboard user={user} />);
 
   const user = {
@@ -41,13 +45,13 @@ describe('Regional Dashboard page', () => {
   it('shows the currently applied date range', async () => {
     renderDashboard(user);
 
-    const button = screen.getByRole('button', { name: /open date range options menu/i });
+    const button = await screen.findByRole('button', { name: /open date range options menu/i });
     fireEvent.click(button);
 
-    const custom = screen.getByRole('button', { name: /select to view data from custom date range\. select apply filters button to apply selection/i });
+    const custom = await screen.findByRole('button', { name: /select to view data from custom date range\. select apply filters button to apply selection/i });
     fireEvent.click(custom);
 
-    expect(screen.getByRole('textbox', { name: /start date/i })).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: /start date/i })).toBeInTheDocument();
   });
 
   it('formats a date range correctly with 0 as an option', async () => {
@@ -57,14 +61,15 @@ describe('Regional Dashboard page', () => {
 
   it('renders a loading div when no user is provided', async () => {
     renderDashboard(null);
-    expect(screen.getByText(/loading\.\.\./i)).toBeInTheDocument();
+    expect(await screen.findByText(/loading\.\.\./i)).toBeInTheDocument();
   });
 
   it('shows the reason list widget', async () => {
     renderDashboard(user);
-    expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /# of activities/i })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
+    });
   });
 
   it('filters by role correctly', async () => {
@@ -87,5 +92,6 @@ describe('Regional Dashboard page', () => {
 
     expect(fetchMock.called()).toBeTruthy();
     fetchMock.reset();
+    await waitFor(() => expect(screen.queryByText(/Loading data/i)).toBeNull());
   });
 });

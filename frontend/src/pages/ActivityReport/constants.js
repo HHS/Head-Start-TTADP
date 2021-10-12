@@ -48,6 +48,10 @@ export const nonGranteeParticipants = [
 ];
 
 export const targetPopulations = [
+  'Infants and Toddlers (ages birth to 3)',
+  'Preschool (ages 3-5)',
+  'Pregnant Women',
+  '--------------------',
   'Affected by Child Welfare Involvement',
   'Affected by Disaster',
   'Affected by Substance Use',
