@@ -21,7 +21,6 @@ const getDisplayStatus = (status) => {
   if (status && status === 'approved') {
     return 'Approved';
   }
-
   return 'Pending Approval';
 };
 
@@ -29,11 +28,11 @@ const ApproverStatusList = ({
   approverStatus,
 }) => {
   const displayApproverStatusList = () => approverStatus.map((s) => (
-    <li className="margin-bottom-205" key={s.approver}>
+    <li className="margin-bottom-205" key={s.User.fullName}>
       {getStatusIcon(s.status)}
       <b>{getDisplayStatus(s.status)}</b>
-      { s.status === 'approved' ? ' by ' : ' from ' }
-      {s.approver}
+      {s.status === 'approved' ? ' by ' : ' from '}
+      {s.User.fullName}
     </li>
   ));
 

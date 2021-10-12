@@ -72,8 +72,8 @@ describe('Update grants and grantees', () => {
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
-  afterAll(() => {
-    db.sequelize.close();
+  afterAll(async () => {
+    await db.sequelize.close();
   });
   it('should import or update grantees', async () => {
     const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });

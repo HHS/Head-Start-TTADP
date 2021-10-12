@@ -14,7 +14,7 @@ export default async function dashboardOverview(scopes) {
     ],
     where: {
       [Op.and]: [scopes],
-      status: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     raw: true,
     includeIgnoreAttributes: false,
@@ -41,7 +41,7 @@ export default async function dashboardOverview(scopes) {
     ],
     where: {
       [Op.and]: [scopes],
-      status: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     raw: true,
     includeIgnoreAttributes: false,

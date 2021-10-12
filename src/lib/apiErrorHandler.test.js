@@ -8,7 +8,7 @@ const mockUser = {
   name: 'Joe Green',
   title: null,
   phoneNumber: '555-555-554',
-  hsesUserId: '33',
+  hsesUserId: '331687',
   email: 'test@test.com',
   homeRegionId: 1,
   permissions: [],
@@ -42,7 +42,7 @@ describe('apiErrorHandler', () => {
   });
   afterAll(async () => {
     await RequestErrors.destroy({ where: {} });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
 
   it('handles a sequelize error', async () => {

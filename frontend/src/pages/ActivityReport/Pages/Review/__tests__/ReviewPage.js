@@ -45,7 +45,7 @@ const values = {
   single: 'value',
   object: { test: 'test' },
   link: 'https://www.google.com/awesome',
-  status: REPORT_STATUSES.DRAFT,
+  calculatedStatus: REPORT_STATUSES.DRAFT,
 };
 
 const RenderReviewPage = ({ defaultValues = values }) => {
@@ -68,7 +68,10 @@ const RenderReviewPage = ({ defaultValues = values }) => {
 
 describe('ReviewPage', () => {
   it('does not display the "edit" link if the report is not editable', async () => {
-    render(<RenderReviewPage defaultValues={{ ...values, status: REPORT_STATUSES.APPROVED }} />);
+    render(<RenderReviewPage defaultValues={
+      { ...values, calculatedStatus: REPORT_STATUSES.APPROVED }
+    }
+    />);
     await waitFor(() => expect(screen.queryByRole('link', { name: 'Edit form section "first"' })).toBeNull());
   });
 
@@ -109,6 +112,21 @@ describe('ReviewPage', () => {
     it('displays an objects value (via method call)', async () => {
       const value = await screen.findByLabelText('object 1');
       expect(value).toHaveTextContent('test');
+    });
+  });
+
+  describe('renders with goverment link', () => {
+    it('displays gov link values', async () => {
+      const govValues = {
+        array: ['one', 'two'],
+        single: 'value',
+        object: { test: 'test' },
+        link: 'https://awesome.ohs.acf.hhs.gov',
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      };
+      render(<RenderReviewPage defaultValues={govValues} />);
+      const value = await screen.findByLabelText('link 1');
+      expect(value).toHaveTextContent('https://awesome.ohs.acf.hhs.gov');
     });
   });
 });

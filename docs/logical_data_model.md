@@ -1,14 +1,14 @@
 Logical Data Model
 ==================
 
-<img src="http://www.plantuml.com/plantuml/png/nLZTRjis5BxNK_1kFsYCOhiOK0H5qymT0cok4QSFG8idCZkAHpiyIcCaUVUP8ao8YfmmrfRUED3v__a-aKhnmR4aRcjJk58Q46zdlxqjYX-4l46jH4EuDb0xyKtpHaXR6L2Y9Fpcn3K05-vlRHj9iXP6M-1j0mA9DrWKfP7EYIyEIDmLGlmij1BlXBOC5P0uFQt00aa6zVvzfzuuSDxwmfiv9cshH6vb3NsDbv-rl47IhC7jL998Ra-3WOyvz6WsQ67HrckWlXXggKrVm9eDl1DWszhdmHekeT9eBteD_FZhBp-9o_cd-ULySJvVYQPT6rtEWg6RQTNLRgJZFx7ITkV8kWR7icuwJKdWUp_ZHvgsKIEQX_r0GuQyaQO3Y25M9JPmJ0GX5BYITCCQRPHEQcS9L6ldibjg7L367ZnWuXReoEqvFwSCjswUtclgPlzfmV6S2CdbJ0CR_w3HzZVKaku_ri0RJ1X58Sr7LDjKx1gq3Wx9pr51b4zi5CqO_9w2x1KskiptYMc2NnQo24tEidtKk6lsuI_KSpvT5TC1yWTAapS38HnBRbrVuWDUqy1Ckq-4zQgMn6u3m5SibqPwGAqH3KWxhUAkyQVAhdQwZA7x4Dzfw0kuvHL3us8BQGUoP7sZUNi93H8_NzPPOhylpo93GYulkDesCCwuWpsCuuQaPO1Sw0XH1GUVVoBban8E5Z0yaezzO-yBpq5KiFIE8sJn4kBV9SEWKR1gH5egFPKnoQ0yt7DUMaSqd8ugryzx7S7NgTH36we-vh8oBNNAqfpq10vRAhkxQdBUIgKqQxJIB90XGLa0_kVhfIJMfMxyf1DkA33w1cZxrwDJNBNnw5TGwbgQ19s-kGJ6KIHZPxk46Yn7bgVt0w1ab2CSQGWhahNt7xjziwGAU8bDQxfAnsm8f4CxecYIYGpLuGWOLR3qzOneIhGCjvmq82jOSPZELuUUkRMqEo6bcphwuccauoy1Q1-t__EjTJBRFg-_WiT69jbUy2ReIWjVLN6cRyAobeGtMe5Av0EelVblgDmZMLw7mvDT77Eql-Wr6rniVErb-2sYyMG0fEMVep5oZIGPwRNczLAYUPS3vNlSlLRPH_3XKDcHXAzQE-wpPaI85Kx0cz-TkBy_mJiHNbv1ye0d9_TtlNy95DsNzOWyU8qfq4JxxWEWw7x5mtqdyjCl0b-YMVVOAVpF8sa8EPi9_xSVSbGKaiPe0qb8x3kFAVQj9B9qIpx8OMw6qJrfCX8lVjKycolfvP0gZ7UW3ggmveYQuX3Umzpp3LDrWgc1AdrCR99J8Up7wyVLlUleGPiFO5LRcty1" alt="logical data model diagram">
+<img src="http://www.plantuml.com/plantuml/png/pLZTRjis5BxNK_1kFrY2OSDsKGH5qzGTWhLf4ASFG8idCZkAXoEFt1fntdsc3YoBbfn8iPVjAj1t_dy-aaxs9f3qL9Kc2xaq87u-_VstBFjEo0Lg9Pp7cO4oYA-QvaBQme0IkSUlGTm1K1R-qjP9BqjXj0LQEX3eQOvPbXiPWlWSm8lxJ8WVXLRYbT2Me5X3PsS5MF2IGBr-NOld0KBKlengWRosHO9RMK9R4l7pQXtAQz8GrYBflLoUiKBqkMlXvcZXgYfduDimb5ARDa2Q3BmIOAioni4IRg3GQ2zR1Np_woy_Y9l9-ydDvEfYCXMkcXcTdx9YEDMgpjt8G1-mq7PjIBg4GB9qjIJt46i_fuwaSgf7yh1fA4SOrjAq0OsBQOuEdkD120KXzzgHHjkW1vLp3RxK8GmkgGhW1ymXBamp1V_CwONOfm5cTJ_Pwh39_bsjiOdtwCEGRg2B7nfjUqALr-tF4cYE2QCyXtcBQfd2mQ4Di0-_G0KDVc2XQFhMxx6LlKMdyr4s78Rj1csMHpDasD5hCskAxY_LKpPr5eSlo1yepR0U2158KXNQI7HuvtVKT7ZliPoMqbEO0z0joMiZuqBD40r8Ur36FBR7qYxMiW5DZox-ewPVmJUQ4hWj8zCAP4vweMbv0muzFPtMUQA_ISyYGMii3Dmk7VGpRcyD_NlZfIM0eQiZHC46CVvnACyfx4sWSoK_yyJU93vaerWp6dR8meYdTv9Wfr2mgWVDbJuIOxXHp9W1XzRuWjDM3RLZg_5yFP1wQ3dhvpnM3WkTidH8U0E5p9UNgXL_Sl7XpuiR25Zvl7x3ghv7AjgkNbTDAgL9evNc2WcINMNwVBgxbfvqhbsSLy8m1KOlm2y_Tju2gceU40foNKgJx7XiqGuP66gTUkk06YpnMT5vPQIqTXuBBykes_TU9-aBe6jqbQcpwjDPQ4-LDE-0I-g6bG5jZvrhDQShvZkbJv2Z9VX6IHMoW2bnExu4Z8H7epvAkyPzEXr-HbOpVkBQQUUSoQN9OxMWMDOI4KckBis9evqxvt6n_kQmev_4uv_HHWRwpAHvk_oNN-1iTZJwShE6_GxjNkXYv8q-liFjIwZDQwHZ7MUVPbyWPZdW81rvodFkfCbiS_s9j_SwRgW2bU1SPG8TOSwje-_bXZpk2cKJsrnf0-oszz-H2N61niWPUaduVoR5llJZthrescFui3_jb8GlbJjkeWxmq6HumBx5sOdLwWJl1H_cZ3pWoSdgllNldep_2zN5sQfFW6QZppyiC_vr_x2geTZzZFdIgDMVB41fEYYxF3qLyM_BPJ_4GRVUKeG3nygR49jI4YoTKdIodvlSkiTLklwQNwnFnU8Uf52TBDxlkK6pVfWRkn8nNUvDRoWMyRXsn2pYjMcsCDl37mutGZ4LjtQq8qe_MQVlbk5vHtc_U7jqxzTv0rPLfVa7" alt="logical data model diagram">
 
 UML Source
 ----------
 
 ```
 @startuml
-scale 0.70
+scale 0.65
 
 ' avoid problems with angled crows feet
 skinparam linetype ortho
@@ -146,7 +146,9 @@ class NonGrantee {
 
 class ActivityReport {
   * id : integer <<generated>>
-  resourcesUsed : string
+  legacyId: string
+  ECLKCResourcesUsed : array<string>
+  nonECLKCResourcesUsed: array<string>
   additionalNotes : string
   numberOfParticipants : integer
   deliveryMethod : string
@@ -155,19 +157,32 @@ class ActivityReport {
   startDate : date
   activityRecipientType : string
   requester : string
-  * status : string
   programTypes : array<string>
   targetPopulations : array<string>
+  virtualDeliveryType : string
   reason : array<string>
   participants : array<string>
   topics : array<string>
-  ttaType : array<string>
   context : string
   pageState : json
-  managerNotes : string
+  oldManagerNotes : string
+  * submissionStatus : string
+  calculatedStatus: string
+  ttaType : array<string>
+  oldApprovingManagerId : integer(32) REFERENCES public.Users.id
   * userId : integer(32) REFERENCES public.Users.id
-  * lastUpdatedById : integer(32) REFERENCES public.Users.id
+  lastUpdatedById : integer(32) REFERENCES public.Users.id
   * regionId : integer(32) REFERENCES public.Region.id
+  * createdAt : timestamp
+  * updatedAt : timestamp
+}
+
+class ActivityReportApprover {
+  * id : integer <<generated>>
+  * activityReportId : integer(32) REFERENCES public.ActivityReport.id
+  * userId : integer(32) REFERENCES public.User.id
+  status: string
+  note : string
   * createdAt : timestamp
   * updatedAt : timestamp
 }
@@ -229,6 +244,8 @@ ActivityReport .. ActivityReportCollaborator
 User .. ActivityReportCollaborator
 ActivityReport .. NextSteps
 ActivityReport .. ActivityReportGoal
+ActivityReport ||--o{ ActivityReportApprover
+ActivityReportApprover }o--|| User
 Goal .. ActivityReportGoal
 Goal }|--|{ ActivityReport
 Goal ||-o{ Objective
@@ -245,7 +262,7 @@ NonGrantee ||-{ ActivityParticipant
 Instructions
 ------------
 
-1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/nLZTRjis5BxNK_1kFsYCOhiOK0H5qymT0cok4QSFG8idCZkAHpiyIcCaUVUP8ao8YfmmrfRUED3v__a-aKhnmR4aRcjJk58Q46zdlxqjYX-4l46jH4EuDb0xyKtpHaXR6L2Y9Fpcn3K05-vlRHj9iXP6M-1j0mA9DrWKfP7EYIyEIDmLGlmij1BlXBOC5P0uFQt00aa6zVvzfzuuSDxwmfiv9cshH6vb3NsDbv-rl47IhC7jL998Ra-3WOyvz6WsQ67HrckWlXXggKrVm9eDl1DWszhdmHekeT9eBteD_FZhBp-9o_cd-ULySJvVYQPT6rtEWg6RQTNLRgJZFx7ITkV8kWR7icuwJKdWUp_ZHvgsKIEQX_r0GuQyaQO3Y25M9JPmJ0GX5BYITCCQRPHEQcS9L6ldibjg7L367ZnWuXReoEqvFwSCjswUtclgPlzfmV6S2CdbJ0CR_w3HzZVKaku_ri0RJ1X58Sr7LDjKx1gq3Wx9pr51b4zi5CqO_9w2x1KskiptYMc2NnQo24tEidtKk6lsuI_KSpvT5TC1yWTAapS38HnBRbrVuWDUqy1Ckq-4zQgMn6u3m5SibqPwGAqH3KWxhUAkyQVAhdQwZA7x4Dzfw0kuvHL3us8BQGUoP7sZUNi93H8_NzPPOhylpo93GYulkDesCCwuWpsCuuQaPO1Sw0XH1GUVVoBban8E5Z0yaezzO-yBpq5KiFIE8sJn4kBV9SEWKR1gH5egFPKnoQ0yt7DUMaSqd8ugryzx7S7NgTH36we-vh8oBNNAqfpq10vRAhkxQdBUIgKqQxJIB90XGLa0_kVhfIJMfMxyf1DkA33w1cZxrwDJNBNnw5TGwbgQ19s-kGJ6KIHZPxk46Yn7bgVt0w1ab2CSQGWhahNt7xjziwGAU8bDQxfAnsm8f4CxecYIYGpLuGWOLR3qzOneIhGCjvmq82jOSPZELuUUkRMqEo6bcphwuccauoy1Q1-t__EjTJBRFg-_WiT69jbUy2ReIWjVLN6cRyAobeGtMe5Av0EelVblgDmZMLw7mvDT77Eql-Wr6rniVErb-2sYyMG0fEMVep5oZIGPwRNczLAYUPS3vNlSlLRPH_3XKDcHXAzQE-wpPaI85Kx0cz-TkBy_mJiHNbv1ye0d9_TtlNy95DsNzOWyU8qfq4JxxWEWw7x5mtqdyjCl0b-YMVVOAVpF8sa8EPi9_xSVSbGKaiPe0qb8x3kFAVQj9B9qIpx8OMw6qJrfCX8lVjKycolfvP0gZ7UW3ggmveYQuX3Umzpp3LDrWgc1AdrCR99J8Up7wyVLlUleGPiFO5LRcty1)
+1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/pLZTRjis5BxNK_1kFrY2OSDsKGH5qzGTWhLf4ASFG8idCZkAXoEFt1fntdsc3YoBbfn8iPVjAj1t_dy-aaxs9f3qL9Kc2xaq87u-_VstBFjEo0Lg9Pp7cO4oYA-QvaBQme0IkSUlGTm1K1R-qjP9BqjXj0LQEX3eQOvPbXiPWlWSm8lxJ8WVXLRYbT2Me5X3PsS5MF2IGBr-NOld0KBKlengWRosHO9RMK9R4l7pQXtAQz8GrYBflLoUiKBqkMlXvcZXgYfduDimb5ARDa2Q3BmIOAioni4IRg3GQ2zR1Np_woy_Y9l9-ydDvEfYCXMkcXcTdx9YEDMgpjt8G1-mq7PjIBg4GB9qjIJt46i_fuwaSgf7yh1fA4SOrjAq0OsBQOuEdkD120KXzzgHHjkW1vLp3RxK8GmkgGhW1ymXBamp1V_CwONOfm5cTJ_Pwh39_bsjiOdtwCEGRg2B7nfjUqALr-tF4cYE2QCyXtcBQfd2mQ4Di0-_G0KDVc2XQFhMxx6LlKMdyr4s78Rj1csMHpDasD5hCskAxY_LKpPr5eSlo1yepR0U2158KXNQI7HuvtVKT7ZliPoMqbEO0z0joMiZuqBD40r8Ur36FBR7qYxMiW5DZox-ewPVmJUQ4hWj8zCAP4vweMbv0muzFPtMUQA_ISyYGMii3Dmk7VGpRcyD_NlZfIM0eQiZHC46CVvnACyfx4sWSoK_yyJU93vaerWp6dR8meYdTv9Wfr2mgWVDbJuIOxXHp9W1XzRuWjDM3RLZg_5yFP1wQ3dhvpnM3WkTidH8U0E5p9UNgXL_Sl7XpuiR25Zvl7x3ghv7AjgkNbTDAgL9evNc2WcINMNwVBgxbfvqhbsSLy8m1KOlm2y_Tju2gceU40foNKgJx7XiqGuP66gTUkk06YpnMT5vPQIqTXuBBykes_TU9-aBe6jqbQcpwjDPQ4-LDE-0I-g6bG5jZvrhDQShvZkbJv2Z9VX6IHMoW2bnExu4Z8H7epvAkyPzEXr-HbOpVkBQQUUSoQN9OxMWMDOI4KckBis9evqxvt6n_kQmev_4uv_HHWRwpAHvk_oNN-1iTZJwShE6_GxjNkXYv8q-liFjIwZDQwHZ7MUVPbyWPZdW81rvodFkfCbiS_s9j_SwRgW2bU1SPG8TOSwje-_bXZpk2cKJsrnf0-oszz-H2N61niWPUaduVoR5llJZthrescFui3_jb8GlbJjkeWxmq6HumBx5sOdLwWJl1H_cZ3pWoSdgllNldep_2zN5sQfFW6QZppyiC_vr_x2geTZzZFdIgDMVB41fEYYxF3qLyM_BPJ_4GRVUKeG3nygR49jI4YoTKdIodvlSkiTLklwQNwnFnU8Uf52TBDxlkK6pVfWRkn8nNUvDRoWMyRXsn2pYjMcsCDl37mutGZ4LjtQq8qe_MQVlbk5vHtc_U7jqxzTv0rPLfVa7)
 2. Copy and paste the final UML into the UML Source section
 3. Update the img src and edit link target to the current values
 
