@@ -6,7 +6,7 @@
 set -u
 
 
-cmd="yarn audit --level low --json"
+cmd="yarn audit --level low --json --groups dependencies"
 output=$($cmd)
 result=$?
 

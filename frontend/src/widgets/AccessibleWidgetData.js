@@ -37,6 +37,6 @@ AccessibleWidgetData.propTypes = {
   columnHeadings: PropTypes.arrayOf(PropTypes.string).isRequired,
   rows: PropTypes.arrayOf(PropTypes.shape({
     heading: PropTypes.string,
-    data: PropTypes.arrayOf(PropTypes.string),
+    data: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
   })).isRequired,
 };
