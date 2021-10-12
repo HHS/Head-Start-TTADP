@@ -2,8 +2,10 @@ import AdmZip from 'adm-zip';
 import { toJson } from 'xml2json';
 import {} from 'dotenv/config';
 import axios from 'axios';
+import { keyBy, mapValues } from 'lodash';
+
 import {
-  Grantee, Grant,
+  Grantee, Grant, Program,
 } from '../models';
 import { logger, auditLogger } from '../logger';
 
@@ -55,17 +57,21 @@ export async function processFiles() {
     const granteesForDb = granteesNonDelegates.map((g) => ({
       id: parseInt(g.agency_id, 10),
       name: g.agency_name,
+      granteeType: valueFromXML(g.agency_type),
     }));
 
     logger.debug(`updateGrantsGrantees: calling bulkCreate for ${granteesForDb.length} grantees`);
     await Grantee.bulkCreate(granteesForDb,
       {
-        updateOnDuplicate: ['name', 'updatedAt'],
+        updateOnDuplicate: ['name', 'granteeType', 'updatedAt'],
       });
 
     // process grants
     const grantData = await fs.readFile('./temp/grant_award.xml');
     const grant = JSON.parse(toJson(grantData));
+
+    const programData = await fs.readFile('./temp/grant_program.xml');
+    const programs = JSON.parse(toJson(programData));
 
     const grantsForDb = grant.grant_awards.grant_award.map((g) => {
       let { grant_start_date: startDate, grant_end_date: endDate } = g;
@@ -99,6 +105,27 @@ export async function processFiles() {
       };
     });
 
+    const grantIds = grantsForDb.map((g) => g.id);
+    const grantPrograms = grantGrantees.filter(
+      (ga) => grantIds.includes(parseInt(ga.grant_award_id, 10)),
+    );
+
+    const grantAgencyMap = mapValues(keyBy(grantPrograms, 'grant_agency_id'), 'grant_award_id');
+    const programsWithGrants = programs.grant_programs.grant_program.filter(
+      (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap,
+    );
+
+    const programsForDb = programsWithGrants.map((program) => ({
+      id: parseInt(program.grant_program_id, 10),
+      grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),
+      programType: valueFromXML(program.program_type),
+      startYear: valueFromXML(program.program_start_year),
+      startDate: valueFromXML(program.grant_program_start_date),
+      endDate: valueFromXML(program.grant_program_end_date),
+      status: valueFromXML(program.program_status),
+      name: valueFromXML(program.program_name),
+    }));
+
     const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
     const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
 
@@ -111,6 +138,10 @@ export async function processFiles() {
     await Grant.bulkCreate(cdiGrants,
       {
         updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
+      });
+    await Program.bulkCreate(programsForDb,
+      {
+        updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
       });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);

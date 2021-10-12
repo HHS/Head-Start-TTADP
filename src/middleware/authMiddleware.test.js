@@ -12,9 +12,13 @@ describe('authMiddleware', () => {
     process.env = { ...ORIGINAL_ENV }; // make a copy
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     process.env = ORIGINAL_ENV; // restore original env
-    db.sequelize.close();
+    await db.sequelize.close();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   const mockUser = {
