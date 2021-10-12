@@ -27,7 +27,7 @@ const RenderSubmitter = ({
         onResetToDraft={onResetToDraft}
         onSaveForm={onSave}
         formData={formData}
-        approvers={[{ name: 'test', id: 1 }]}
+        availableApprovers={[{ name: 'test', id: 1 }]}
       >
         <div />
       </Submitter>
@@ -48,16 +48,16 @@ const incompletePages = [{
 }];
 
 const renderReview = (
-  status,
+  calculatedStatus,
   onFormSubmit,
   complete = true,
-  onSave = () => {},
-  resetToDraft = () => {},
+  onSave = () => { },
+  resetToDraft = () => { },
+  approvers = [{ status: calculatedStatus, note: '', User: { fullName: 'name' } }],
 ) => {
   const formData = {
-    approvingManager: { name: 'name' },
-    approvingManagerId: 1,
-    status,
+    approvers,
+    calculatedStatus,
     displayId: '1',
     id: 1,
   };
@@ -83,7 +83,7 @@ const renderReview = (
 describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => {});
+      renderReview(REPORT_STATUSES.DRAFT, () => { });
       expect(await screen.findByText('Submit Report')).toBeVisible();
     });
 
@@ -96,13 +96,13 @@ describe('Submitter review page', () => {
     });
 
     it('displays an error if the report is not complete', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => {}, false);
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByTestId('alert');
       expect(alert.textContent).toContain('Incomplete report');
     });
 
     it('shows pages that are not completed', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => {}, false);
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
     });
@@ -126,7 +126,7 @@ describe('Submitter review page', () => {
 
     it('can be saved', async () => {
       const mockSave = jest.fn();
-      renderReview(REPORT_STATUSES.DRAFT, () => {}, true, mockSave);
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, mockSave);
       const button = await screen.findByRole('button', { name: 'Save Draft' });
       userEvent.click(button);
       await waitFor(() => expect(mockSave).toHaveBeenCalled());
@@ -135,14 +135,14 @@ describe('Submitter review page', () => {
 
   describe('when the report is approved', () => {
     it('displays the approved component', async () => {
-      renderReview(REPORT_STATUSES.APPROVED, () => {});
+      renderReview(REPORT_STATUSES.APPROVED, () => { });
       expect(await screen.findByText('Report approved')).toBeVisible();
     });
   });
 
   describe('when the report has been submitted', () => {
     it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
       const allAlerts = await screen.findAllByTestId('alert');
       const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
       expect(successAlert).toBeVisible();
@@ -150,23 +150,51 @@ describe('Submitter review page', () => {
 
     it('the reset to draft button works', async () => {
       const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true, () => {}, onReset);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, onReset);
       const button = await screen.findByRole('button', { name: 'Reset to Draft' });
       userEvent.click(button);
       await waitFor(() => expect(onReset).toHaveBeenCalled());
+    });
+
+    it('shows manager notes', async () => {
+      const approvers = [
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', User: { fullName: 'Needs Action 1' } },
+        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', User: { fullName: 'Approved User 1' } },
+        { status: REPORT_STATUSES.APPROVED, User: { fullName: 'Approved User 2' } },
+      ];
+      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, () => { }, approvers);
+      expect(await screen.findByText(/report needs action\./i)).toBeVisible();
+      expect(await screen.findByText(/report is approved 1\./i)).toBeVisible();
+      expect(await screen.findByText(/no manager notes/i)).toBeVisible();
     });
   });
 
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => {});
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
       expect(await screen.findByText('Review and re-submit report')).toBeVisible();
     });
 
-    it('shows pages that are not completed', async () => {
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => {}, false);
-      const alert = await screen.findByText('Incomplete report');
-      expect(alert).toBeVisible();
+    it('displays approvers requesting action', async () => {
+      const approvers = [
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', User: { fullName: 'Needs Action 1' } },
+        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved.', User: { fullName: 'Approved User' } },
+        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', User: { fullName: 'Needs Action 2' } },
+      ];
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
+      expect(await screen.findByText('Review and re-submit report')).toBeVisible();
+      expect(screen.getByText(
+        /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i,
+      )).toBeVisible();
+    });
+
+    it('displays correctly when no approver is requesting action', async () => {
+      const approvers = [
+        { status: null, note: 'Report is approved.', User: { fullName: 'Approved User 1' } },
+        { status: null, note: 'Report is approved.', User: { fullName: 'Approved User 2' } },
+      ];
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
+      expect(await screen.findByText(/the following approving manager\(s\) have requested changes to this activity report:/i)).toBeVisible();
     });
 
     it('fails to re-submit if there are pages that have not been completed', async () => {

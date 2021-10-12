@@ -16,7 +16,7 @@ export default async function overview(scopes, query) {
   const region = query['region.in'];
   const startDte = '2020-09-15';
   const grantsWhere = `WHERE "regionId" in (${region !== undefined ? region : '0'}) and "endDate" >= '${startDte}'`;
-  const baseWhere = `${grantsWhere} AND "status" = '${REPORT_STATUSES.APPROVED}' AND "startDate" >= '${startDte}'`;
+  const baseWhere = `${grantsWhere} AND "calculatedStatus" = '${REPORT_STATUSES.APPROVED}' AND "startDate" >= '${startDte}'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct
   // numbers for SUM
   // FIXME: see if there is a better way to get totals using SUM
@@ -33,7 +33,7 @@ export default async function overview(scopes, query) {
       {
         [Op.and]:
         [scopes,
-          { status: REPORT_STATUSES.APPROVED },
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
           { startDate: { [Op.gte]: startDte } },
         ],
       },

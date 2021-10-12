@@ -229,7 +229,7 @@ export default async function importActivityReports(fileKey, region) {
       const activityRecipientType = granteeActivity ? 'grantee' : 'nonGrantee';
 
       // Coerce values into appropriate data type
-      const status = coerceStatus(getValue(data, 'managerApproval'));
+      const submissionStatus = coerceStatus(getValue(data, 'managerApproval'));
       const duration = coerceDuration(getValue(data, 'duration'));
       const numberOfParticipants = coerceInt(getValue(data, 'numberOfParticipants'));
 
@@ -266,7 +266,7 @@ export default async function importActivityReports(fileKey, region) {
         // TODO: Are 'managerNotes' the smartsheet comments (which are a separate sheet in Excel)
         // managerNotes: ???
         additionalNotes: getValue(data, 'additionalNotesForThisActivity'),
-        status, // Enum restriction: REPORT_STATUSES
+        submissionStatus, // Enum restriction: REPORT_STATUSES
         ttaType, // Array of strings
         createdAt: getValue(data, 'created'), // DATE
         updatedAt: getValue(data, 'modified'), // DATE

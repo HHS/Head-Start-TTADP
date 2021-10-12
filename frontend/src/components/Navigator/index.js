@@ -38,7 +38,8 @@ function Navigator({
   additionalData,
   onSave,
   autoSaveInterval,
-  approvingManager,
+  isApprover,
+  isPendingApprover,
   reportId,
   updatePage,
   reportCreator,
@@ -145,7 +146,7 @@ function Navigator({
       stateOfPage = current ? IN_PROGRESS : pageState[p.position];
     }
 
-    const state = p.review ? formData.status : stateOfPage;
+    const state = p.review ? formData.calculatedStatus : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => {
@@ -177,7 +178,8 @@ function Navigator({
               onFormSubmit,
               additionalData,
               onReview,
-              approvingManager,
+              isApprover,
+              isPendingApprover,
               onResetToDraft,
               onSaveForm,
               navigatorPages,
@@ -234,7 +236,7 @@ Navigator.propTypes = {
   onResetToDraft: PropTypes.func.isRequired,
   editable: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
-    status: PropTypes.string,
+    calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
@@ -247,7 +249,8 @@ Navigator.propTypes = {
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
-  approvingManager: PropTypes.bool.isRequired,
+  isApprover: PropTypes.bool.isRequired,
+  isPendingApprover: PropTypes.bool.isRequired,
   updatePage: PropTypes.func.isRequired,
   pages: PropTypes.arrayOf(
     PropTypes.shape({

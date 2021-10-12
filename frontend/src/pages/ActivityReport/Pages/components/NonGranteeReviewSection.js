@@ -10,10 +10,10 @@ const NonGranteeReviewSection = () => {
   const { watch } = useFormContext();
   const {
     objectivesWithoutGoals,
-    status,
+    calculatedStatus,
   } = watch();
 
-  const canEdit = reportIsEditable(status);
+  const canEdit = reportIsEditable(calculatedStatus);
 
   return (
     <Section

@@ -39,7 +39,7 @@ const defaultValues = {
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
-  approvingManagerId: null,
+  oldApprovingManagerId: null,
   attachments: [],
   collaborators: [],
   context: '',
@@ -60,9 +60,10 @@ const defaultValues = {
   requester: '',
   specialistNextSteps: [],
   startDate: null,
-  status: REPORT_STATUSES.DRAFT,
+  calculatedStatus: REPORT_STATUSES.DRAFT,
   targetPopulations: [],
   topics: [],
+  approvers: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -103,7 +104,9 @@ function ActivityReport({
   const [loading, updateLoading] = useState(true);
   const [formData, updateFormData] = useState();
   const [initialAdditionalData, updateAdditionalData] = useState({});
-  const [approvingManager, updateApprovingManager] = useState(false);
+  const [isApprover, updateIsApprover] = useState(false);
+  // If the user is one of the approvers on this report and is still pending approval.
+  const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useState(false);
   const [lastSaveTime, updateLastSaveTime] = useState();
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
@@ -148,19 +151,35 @@ function ActivityReport({
           getApprovers(report.regionId),
         ];
 
-        const [recipients, collaborators, approvers] = await Promise.all(apiCalls);
+        const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
         reportId.current = activityReportId;
 
         const isCollaborator = report.collaborators
           && report.collaborators.find((u) => u.id === user.id);
         const isAuthor = report.userId === user.id;
-        const canWriteReport = (isCollaborator || isAuthor)
-          && (report.status === REPORT_STATUSES.DRAFT
-              || report.status === REPORT_STATUSES.NEEDS_ACTION);
 
-        updateAdditionalData({ recipients, collaborators, approvers });
+        // The report can be edited if its in draft OR needs_action state.
+        const canWriteReport = (isCollaborator || isAuthor)
+          && (report.calculatedStatus === REPORT_STATUSES.DRAFT
+            || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+
+        updateAdditionalData({ recipients, collaborators, availableApprovers });
         updateFormData(report);
-        updateApprovingManager(report.approvingManagerId === user.id);
+
+        // ***Determine if the current user matches any of the approvers for this activity report.
+        // If author or collab and the report is in EDIT state we are NOT currently an approver.
+        const matchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
+
+        if (matchingApprover && matchingApprover.length > 0 && !canWriteReport) {
+          // This user is an approver on the report.
+          updateIsApprover(true);
+
+          // This user is a approver on the report and has a pending approval.
+          if (matchingApprover[0].status === null || matchingApprover[0].status === 'pending') {
+            updateIsPendingApprover(true);
+          }
+        }
+
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
@@ -230,29 +249,38 @@ function ActivityReport({
   };
 
   const onSave = async (data) => {
+    const approverIds = data.approvers.map((a) => a.User.id);
     if (reportId.current === 'new') {
-      const savedReport = await createReport({ ...data, regionId: formData.regionId }, {});
+      const savedReport = await createReport(
+        { ...data, regionId: formData.regionId, approverUserIds: approverIds }, {},
+      );
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
       // if it isn't a new report, we compare it to the last response from the backend (formData)
       // and pass only the updated to save report
       const updatedFields = findWhatsChanged(data, formData);
-      await saveReport(reportId.current, updatedFields);
+      await saveReport(reportId.current, { ...updatedFields, approverUserIds: approverIds }, {});
     }
   };
 
   const onFormSubmit = async (data) => {
-    const fetchedReport = await submitReport(reportId.current, data);
-    const report = convertReportToFormData(fetchedReport);
-    updateFormData(report);
+    const approverIds = data.approvers.map((a) => a.User.id);
+    const reportToSubmit = { additionalNotes: data.additionalNotes, approverUserIds: approverIds };
+    const response = await submitReport(reportId.current, reportToSubmit);
+
+    updateFormData(
+      {
+        ...formData,
+        calculatedStatus: response.calculatedStatus,
+        approvers: response.approvers,
+      },
+    );
     updateEditable(false);
   };
 
   const onReview = async (data) => {
-    const fetchedReport = await reviewReport(reportId.current, data);
-    const report = convertReportToFormData(fetchedReport);
-    updateFormData(report);
+    await reviewReport(reportId.current, { note: data.note, status: data.status });
   };
 
   const onResetToDraft = async () => {
@@ -263,7 +291,7 @@ function ActivityReport({
   };
 
   const reportCreator = { name: user.name, role: user.role };
-  const tagClass = formData.status === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
+  const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
   return (
     <div className="smart-hub-activity-report">
@@ -277,8 +305,8 @@ function ActivityReport({
           </h1>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
-          {formData.status && (
-            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.status)}</div>
+          {formData.calculatedStatus && (
+            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
       </Grid>
@@ -300,7 +328,8 @@ function ActivityReport({
         onFormSubmit={onFormSubmit}
         onSave={onSave}
         onResetToDraft={onResetToDraft}
-        approvingManager={approvingManager}
+        isApprover={isApprover}
+        isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
         onReview={onReview}
         errorMessage={errorMessage}
         updateErrorMessage={updateErrorMessage}

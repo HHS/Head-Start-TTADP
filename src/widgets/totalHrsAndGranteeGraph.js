@@ -102,7 +102,7 @@ export default async function totalHrsAndGranteeGraph(scopes, query) {
     ],
     where: {
       [Op.and]: [scopes],
-      status: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
 
     },
     raw: true,

@@ -21,9 +21,17 @@ describe('Activity report print and share view', () => {
       fullName: 'Captain Tim Tina Boat',
     },
     collaborators: ['Test', 'Test 2'],
-    approvingManager: {
-      fullName: 'John Q Fullname',
-    },
+    approvers: [
+      {
+        id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
+      },
+
+      {
+        id: 2, status: '', note: 'note', User: { id: 2, fullName: 'John Smith' },
+      },
+    ],
+    specialistNextSteps: [],
+    granteeNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
     programTypes: ['Party'],
@@ -46,7 +54,6 @@ describe('Activity report print and share view', () => {
         ttaProvided: 'All of it',
       },
     ],
-    managerNotes: '',
     additionalNotes: '',
   };
 
@@ -133,7 +140,8 @@ describe('Activity report print and share view', () => {
 
     await waitFor(() => {
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
-      expect(screen.getByText(report.approvingManager.fullName)).toBeInTheDocument();
+      expect(screen.getByText(/john q fullname:/i)).toBeInTheDocument();
+      expect(screen.getByText(/john smith: note/i)).toBeInTheDocument();
       expect(screen.getByText(report.activityRecipients.map((arRecipient) => arRecipient.name).join(', '))).toBeInTheDocument();
       expect(screen.getByText(report.reason.join(', '))).toBeInTheDocument();
       expect(screen.getByText(report.programTypes.join(', '))).toBeInTheDocument();
