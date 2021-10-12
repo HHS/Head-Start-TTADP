@@ -9,7 +9,7 @@ import { reportIsEditable } from '../../../../utils';
 
 const ReviewPage = ({ sections, path }) => {
   const { getValues } = useFormContext();
-  const canEdit = reportIsEditable(getValues('status'));
+  const canEdit = reportIsEditable(getValues('calculatedStatus'));
 
   return (
     <>

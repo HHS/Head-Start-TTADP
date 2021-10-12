@@ -105,12 +105,12 @@ const ReviewSection = () => {
     nonECLKCResources,
     ECLKCResources,
     attachments,
-    status,
+    calculatedStatus,
     topics: formTopics,
   } = watch();
 
   const hasAttachments = attachments && attachments.length > 0;
-  const canEdit = reportIsEditable(status);
+  const canEdit = reportIsEditable(calculatedStatus);
 
   return (
     <>
