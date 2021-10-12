@@ -74,7 +74,7 @@ const reportObject = {
     { activityRecipientId: GRANTEE_ID_ONE },
     { activityRecipientId: GRANTEE_ID_TWO },
   ],
-  status: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.APPROVED,
   approvingManagerId: mockManager.id,
   numberOfParticipants: 1,
   deliveryMethod: 'method',

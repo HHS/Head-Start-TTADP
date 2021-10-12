@@ -52,7 +52,7 @@ export default async function topicFrequencyGraph(scopes) {
     ],
     where: {
       [Op.and]: [scopes],
-      status: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     nest: true,
     raw: true,

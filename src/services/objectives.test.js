@@ -6,15 +6,15 @@ import { REPORT_STATUSES } from '../constants';
 import { saveObjectivesForReport } from './objectives';
 
 const mockUser = {
-  id: 2000,
+  id: 8088,
   homeRegionId: 1,
-  name: 'user2000',
-  hsesUsername: 'user2000',
-  hsesUserId: '2000',
+  name: 'user8000',
+  hsesUsername: 'user8000',
+  hsesUserId: '8000',
 };
 
 const reportObject = {
-  status: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
@@ -65,10 +65,6 @@ describe('Objectives DB service', () => {
     await ActivityReport.destroy({ where: { id: report.id } });
     await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('saveObjectivesForReport', () => {

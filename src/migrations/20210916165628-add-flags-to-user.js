@@ -12,5 +12,6 @@ module.exports = {
   ),
   down: async (queryInterface) => {
     await queryInterface.removeColumn('Users', 'flags');
+    await queryInterface.sequelize.query('DROP TYPE public."enum_Users_flags";');
   },
 };

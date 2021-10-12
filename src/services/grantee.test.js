@@ -2,10 +2,6 @@ import db, { Grantee } from '../models';
 import { allGrantees } from './grantee';
 
 describe('Grantee DB service', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   afterAll(async () => {
     await db.sequelize.close();
   });

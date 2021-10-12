@@ -112,7 +112,7 @@ main() {
     log "Cleaning up test containers"
     docker-compose \
         -f 'docker-compose.test.yml' \
-        down --volumes
+        down --volumes --remove-orphans
     check_exit "$?"
 
     if [[ $exit_code -ne 0 ]]; then
