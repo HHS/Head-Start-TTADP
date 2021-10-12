@@ -15,7 +15,8 @@ const orderGranteesBy = (sortBy, sortDir) => {
         [
           'id',
           sortDir,
-        ]];
+        ],
+      ];
       break;
     case 'programSpecialist':
       result = [
