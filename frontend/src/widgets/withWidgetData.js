@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import fetchWidget from '../fetchers/Widgets';
-import { filtersToQueryString } from '../pages/Landing/Filter';
+import { filtersToQueryString } from '../components/Filter';
 
 /*
   `withWidgetData` wraps widgets providing the widget with data
