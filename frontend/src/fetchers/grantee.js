@@ -7,8 +7,6 @@ const granteeUrl = join('/', 'api', 'grantee');
 
 export const getGrantee = async (granteeId, regionId = '') => {
   const regionSearch = regionId ? `?region.in[]=${regionId.toString(DECIMAL_BASE)}` : '';
-  const modelType = '&modelType=grant';
-
   const id = parseInt(granteeId, DECIMAL_BASE);
 
   if (Number.isNaN(id)) {
@@ -16,7 +14,7 @@ export const getGrantee = async (granteeId, regionId = '') => {
   }
 
   const grantee = await get(
-    join(granteeUrl, id.toString(DECIMAL_BASE), regionSearch, modelType),
+    join(granteeUrl, id.toString(DECIMAL_BASE), regionSearch),
   );
   return grantee.json();
 };

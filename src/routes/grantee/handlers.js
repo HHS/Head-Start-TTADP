@@ -11,9 +11,8 @@ const logContext = {
 export async function getGrantee(req, res) {
   try {
     const { granteeId } = req.params;
-    const { modelType } = req.query;
 
-    const scopes = filtersToScopes(req.query, modelType);
+    const scopes = filtersToScopes(req.query, 'grant');
     const grantee = await granteeByScopes(granteeId, scopes);
 
     if (!grantee) {
