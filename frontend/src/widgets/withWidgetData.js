@@ -16,9 +16,7 @@ const withWidgetData = (Widget, widgetId) => {
     const [error, updateError] = useState('');
     const [data, updateData] = useState();
 
-    const {
-      filters, errorOverride,
-    } = props;
+    const { filters } = props;
 
     useEffect(() => {
       const fetch = async () => {
@@ -38,7 +36,7 @@ const withWidgetData = (Widget, widgetId) => {
       fetch();
     }, [filters]);
 
-    if (error || errorOverride) {
+    if (error) {
       return (
         <div>
           {error || 'Errors set to always show'}
@@ -50,7 +48,6 @@ const withWidgetData = (Widget, widgetId) => {
   };
 
   WidgetWrapper.propTypes = {
-    errorOverride: PropTypes.bool,
     filters: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.string,
       topic: PropTypes.string,
@@ -60,7 +57,6 @@ const withWidgetData = (Widget, widgetId) => {
   };
 
   WidgetWrapper.defaultProps = {
-    errorOverride: false,
     filters: [],
   };
 
