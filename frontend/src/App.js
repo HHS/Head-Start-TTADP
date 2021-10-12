@@ -127,11 +127,11 @@ function App() {
           )}
         />
         <Route
-          path="/region/:regionId([0-9]*)/grantee/:granteeId([0-9]*)"
-          render={({ match }) => (
+          path="/grantee/:granteeId([0-9]*)"
+          render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound>
-                <GranteeRecord match={match} user={user} />
+                <GranteeRecord location={location} match={match} user={user} />
               </FeatureFlag>
             </AppWrapper>
           )}
@@ -153,7 +153,7 @@ function App() {
         )}
         <Route
           exact
-          path="/grantee-search"
+          path="/grantees"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeSearch user={user} /></FeatureFlag>
