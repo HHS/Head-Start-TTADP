@@ -11,8 +11,9 @@ import './index.css';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 
-export default function GranteeRecord({ match }) {
-  const { regionId, granteeId } = match.params;
+export default function GranteeRecord({ match, location }) {
+  const { granteeId } = match.params;
+  const regionId = new URLSearchParams(location.search).get('region');
   const [granteeName, setGranteeName] = useState(` - Region ${regionId}`);
   const [granteeSummary, setGranteeSummary] = useState({
     'grants.programSpecialistName': '',
@@ -95,11 +96,11 @@ export default function GranteeRecord({ match }) {
         <h1 className="landing margin-top-1 margin-left-2">{granteeName}</h1>
         <Switch>
           <Route
-            path="/region/:regionId/grantee/:granteeId/tta-history"
+            path="/grantee/:granteeId/tta-history"
             render={() => <TTAHistory filters={filters} />}
           />
           <Route
-            path="/region/:regionId/grantee/:granteeId/profile"
+            path="/grantee/:granteeId/profile"
             render={() => <Profile granteeSummary={granteeSummary} />}
           />
         </Switch>
@@ -112,6 +113,7 @@ export default function GranteeRecord({ match }) {
 
 GranteeRecord.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
+  location: ReactRouterPropTypes.location.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

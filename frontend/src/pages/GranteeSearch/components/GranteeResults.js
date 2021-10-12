@@ -24,7 +24,7 @@ export default function GranteeResults(
   const renderGrants = (grantee) => grantee.grants.map((grant) => (
     <tr key={grantee.id + grant.number}>
       <td>{grant.regionId}</td>
-      <td><Link to={`/region/${grant.regionId}/grantee/${grantee.id}/profile`}>{grantee.name}</Link></td>
+      <td><Link to={`/grantee/${grantee.id}/profile?region=${grant.regionId}`}>{grantee.name}</Link></td>
       <td>{grant.programSpecialistName}</td>
     </tr>
   ));
