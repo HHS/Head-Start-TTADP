@@ -15,7 +15,7 @@
  .ttahub-activity-report-view-table tr:nth-child(even) th,
  .ttahub-activity-report-view-table tr:nth-child(even) td {
   background-color: #F8F8F8;
-}   
+}
 
  .ttahub-activity-report-view-table th,
  .ttahub-activity-report-view-table td {
@@ -23,9 +23,12 @@
     padding: 1rem;
 }
 
+.ttahub-activity-report-view-table td h2 {
+    font-size: 14px;
+}
+
 .ttahub-activity-report-view-table th {
     font-weight: bold;
-
 }
 
 .ttahub-activity-report-view-table ul {

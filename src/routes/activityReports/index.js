@@ -44,6 +44,6 @@ router.put('/:activityReportId', checkActivityReportIdParam, saveReport);
 router.delete('/:activityReportId', checkActivityReportIdParam, softDeleteReport);
 router.put('/:activityReportId/reset', checkActivityReportIdParam, resetToDraft);
 router.put('/:activityReportId/review', checkActivityReportIdParam, reviewReport);
-router.post('/:activityReportId/submit', checkActivityReportIdParam, submitReport);
+router.put('/:activityReportId/submit', checkActivityReportIdParam, submitReport);
 
 export default router;

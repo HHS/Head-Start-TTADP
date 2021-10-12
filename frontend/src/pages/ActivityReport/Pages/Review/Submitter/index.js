@@ -10,7 +10,7 @@ import Approved from './Approved';
 import Submitted from './Submitted';
 
 const Submitter = ({
-  approvers,
+  availableApprovers,
   onFormSubmit,
   formData,
   onResetToDraft,
@@ -20,37 +20,48 @@ const Submitter = ({
   pages,
 }) => {
   const {
-    approvingManager,
-    managerNotes,
     additionalNotes,
-    status,
     id,
     displayId,
+    calculatedStatus,
+    approvers,
   } = formData;
-  const draft = status === REPORT_STATUSES.DRAFT;
-  const submitted = status === REPORT_STATUSES.SUBMITTED;
-  const needsAction = status === REPORT_STATUSES.NEEDS_ACTION;
-  const approved = status === REPORT_STATUSES.APPROVED;
+  const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
+  const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
+  const needsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+  const approved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const [approverStatusList, updateApproverStatusList] = useState([]);
 
   useEffect(() => {
-    if (formData && approvingManager && status) {
-      updateApproverStatusList([{ approver: approvingManager.fullName, status }]);
+    const updatedApprovers = approvers ? approvers.filter((a) => a.User) : [];
+    if (updatedApprovers) {
+      updateApproverStatusList(updatedApprovers);
     }
-  }, [formData, approvingManager, status]);
+  }, [approvers, formData]);
 
   const resetToDraft = async () => {
     await onResetToDraft();
   };
+
+  const getNeedsActionApprovingMangers = () => {
+    const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
+    if (needActionApprovers && needActionApprovers.length > 0) {
+      return needActionApprovers.map((a) => a.User.fullName).join(', ');
+    }
+    return '';
+  };
+
+  const totalApprovers = approvers ? approvers.length : 0;
+  const pendingApprovals = approvers ? approvers.filter((a) => a.status === null || a.status === 'needs_action').length : 0;
 
   const renderTopAlert = () => (
     <>
       {needsAction && (
         <Alert type="error" noIcon slim className="margin-bottom-1 no-print">
           <span className="text-bold">
-            { approvingManager.name }
+            The following approving manager(s) have requested changes to this activity report:
             {' '}
-            has requested updates to this activity report.
+            {getNeedsActionApprovingMangers()}
           </span>
           <br />
           Please review the manager notes below and re-submit for approval.
@@ -65,7 +76,10 @@ const Submitter = ({
         <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
           <b>Report is not editable</b>
           <br />
-          This report is no longer editable while it is waiting for manager approval.
+          This report is no longer editable while it is waiting for manager approval&#40;s&#41;
+          <strong>{` (${pendingApprovals} of ${totalApprovers} reviews pending)`}</strong>
+          .
+          <br />
           If you wish to update this report click &quot;Reset to Draft&quot; below to
           move the report back to draft mode.
         </Alert>
@@ -82,54 +96,50 @@ const Submitter = ({
       {children}
       <Container skipTopPadding className="margin-top-2 padding-top-2 padding-bottom-1" skipBottomPadding>
         {error && (
-        <Alert noIcon className="margin-y-4" type="error">
-          <b>Error</b>
-          <br />
-          {error}
-        </Alert>
+          <Alert noIcon className="margin-y-4" type="error">
+            <b>Error</b>
+            <br />
+            {error}
+          </Alert>
         )}
         {draft
-        && (
-        <DraftReview
-          onSaveForm={onSaveForm}
-          incompletePages={incompletePages}
-          approvers={approvers}
-          onFormSubmit={onFormSubmit}
-          reportId={id}
-          displayId={displayId}
-          approverStatusList={approverStatusList}
-        />
-        )}
+          && (
+            <DraftReview
+              onSaveForm={onSaveForm}
+              incompletePages={incompletePages}
+              availableApprovers={availableApprovers}
+              onFormSubmit={onFormSubmit}
+              reportId={id}
+              displayId={displayId}
+              approverStatusList={approverStatusList}
+            />
+          )}
         {submitted
-        && (
-          <Submitted
-            additionalNotes={additionalNotes}
-            approvingManager={approvingManager}
-            resetToDraft={resetToDraft}
-            reportId={id}
-            displayId={displayId}
-            approverStatusList={approverStatusList}
-          />
-        )}
+          && (
+            <Submitted
+              additionalNotes={additionalNotes}
+              resetToDraft={resetToDraft}
+              reportId={id}
+              displayId={displayId}
+              approverStatusList={approverStatusList}
+            />
+          )}
         {needsAction
-        && (
-        <NeedsAction
-          additionalNotes={additionalNotes}
-          managerNotes={managerNotes}
-          onSubmit={onFormSubmit}
-          approvingManager={approvingManager}
-          incompletePages={incompletePages}
-          approverStatusList={approverStatusList}
-        />
-        )}
+          && (
+            <NeedsAction
+              additionalNotes={additionalNotes}
+              onSubmit={onFormSubmit}
+              incompletePages={incompletePages}
+              approverStatusList={approverStatusList}
+            />
+          )}
         {approved
-        && (
-        <Approved
-          additionalNotes={additionalNotes}
-          managerNotes={managerNotes}
-          approverStatusList={approverStatusList}
-        />
-        )}
+          && (
+            <Approved
+              additionalNotes={additionalNotes}
+              approverStatusList={approverStatusList}
+            />
+          )}
       </Container>
     </>
   );
@@ -145,21 +155,21 @@ Submitter.propTypes = {
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
-  approvers: PropTypes.arrayOf(PropTypes.shape({
+  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   formData: PropTypes.shape({
-    approvingManager: PropTypes.shape({
-      name: PropTypes.string,
-      fullName: PropTypes.string,
-    }),
-    managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
-    status: PropTypes.string,
+    calculatedStatus: PropTypes.string,
     id: PropTypes.number,
     displayId: PropTypes.string,
+    approvers: PropTypes.arrayOf(
+      PropTypes.shape({
+        status: PropTypes.string,
+      }),
+    ),
   }).isRequired,
 };
 

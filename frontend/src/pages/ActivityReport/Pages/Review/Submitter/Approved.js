@@ -3,14 +3,13 @@ import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../../utils';
 import ApproverStatusList from '../../components/ApproverStatusList';
+import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 
 const Approved = ({
   additionalNotes,
-  managerNotes,
   approverStatusList,
 }) => {
   const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
-  const managerNotesState = getEditorState(managerNotes || 'No manager notes');
 
   return (
     <div className="no-print">
@@ -25,7 +24,7 @@ const Approved = ({
         <p>
           <span className="text-bold">Manager notes</span>
         </p>
-        <Editor readOnly toolbarHidden defaultEditorState={managerNotesState} />
+        <DisplayApproverNotes approverStatusList={approverStatusList} />
       </div>
       <div className="margin-top-3">
         <ApproverStatusList approverStatus={approverStatusList} />
@@ -36,7 +35,6 @@ const Approved = ({
 
 Approved.propTypes = {
   additionalNotes: PropTypes.string,
-  managerNotes: PropTypes.string,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
@@ -45,7 +43,6 @@ Approved.propTypes = {
 
 Approved.defaultProps = {
   additionalNotes: '',
-  managerNotes: '',
 };
 
 export default Approved;

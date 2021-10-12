@@ -15,8 +15,9 @@ const ReviewSubmit = ({
   onSubmit,
   onReview,
   reviewItems,
-  approvers,
-  approvingManager,
+  availableApprovers,
+  isApprover,
+  isPendingApprover,
   reportCreator,
   formData,
   onResetToDraft,
@@ -24,7 +25,7 @@ const ReviewSubmit = ({
   pages,
   updateShowValidationErrors,
 }) => {
-  const { additionalNotes, status } = formData;
+  const { additionalNotes, calculatedStatus } = formData;
 
   useEffect(() => {
     updateShowValidationErrors(true);
@@ -62,7 +63,8 @@ const ReviewSubmit = ({
     }
   };
 
-  const editing = status === REPORT_STATUSES.DRAFT || status === REPORT_STATUSES.NEEDS_ACTION;
+  const editing = calculatedStatus === REPORT_STATUSES.DRAFT
+    || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const items = editing ? reviewItems : reviewItems.map((ri) => ({
     ...ri,
     expanded: true,
@@ -74,33 +76,32 @@ const ReviewSubmit = ({
         <title>Review and submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-      {!approvingManager
+      {!isApprover
         && (
-        <Submitter
-          status={status}
-          approvers={approvers}
-          pages={pages}
-          onFormSubmit={onFormSubmit}
-          onResetToDraft={onReset}
-          formData={formData}
-          error={error}
-          onSaveForm={onSaveForm}
-        >
-          <Accordion bordered={false} items={items} />
-        </Submitter>
+          <Submitter
+            availableApprovers={availableApprovers}
+            pages={pages}
+            onFormSubmit={onFormSubmit}
+            onResetToDraft={onReset}
+            formData={formData}
+            error={error}
+            onSaveForm={onSaveForm}
+          >
+            <Accordion bordered={false} items={items} />
+          </Submitter>
         )}
-      {approvingManager
+      {isApprover
         && (
-        <Approver
-          status={status}
-          reviewed={reviewed}
-          additionalNotes={additionalNotes}
-          onFormReview={onFormReview}
-          error={error}
-          formData={formData}
-        >
-          <Accordion bordered={false} items={items} />
-        </Approver>
+          <Approver
+            reviewed={reviewed}
+            additionalNotes={additionalNotes}
+            onFormReview={onFormReview}
+            error={error}
+            formData={formData}
+            isPendingApprover={isPendingApprover}
+          >
+            <Accordion bordered={false} items={items} />
+          </Approver>
         )}
     </>
   );
@@ -109,7 +110,7 @@ const ReviewSubmit = ({
 ReviewSubmit.propTypes = {
   updateShowValidationErrors: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
-  approvers: PropTypes.arrayOf(
+  availableApprovers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
@@ -118,10 +119,11 @@ ReviewSubmit.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
   onResetToDraft: PropTypes.func.isRequired,
-  approvingManager: PropTypes.bool.isRequired,
+  isApprover: PropTypes.bool.isRequired,
+  isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
-    status: PropTypes.string,
+    calculatedStatus: PropTypes.string,
   }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
