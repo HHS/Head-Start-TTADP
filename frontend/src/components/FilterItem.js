@@ -6,9 +6,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
-import DatePicker from './Components/DatePicker';
-import DateRangePicker from '../../components/DateRangePicker';
-import FilterInput from './Components/FilterInput';
+import DatePicker from './FilterDatePicker';
+import DateRangePicker from './DateRangePicker';
+import FilterInput from './FilterInput';
 
 import {
   SELECT_CONDITIONS,

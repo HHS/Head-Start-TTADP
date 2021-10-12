@@ -15,7 +15,7 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
-import Filter from './Filter';
+import Filter from '../../components/Filter';
 import ReportMenu from './ReportMenu';
 
 function ReportsRow({ reports, removeAlert }) {
