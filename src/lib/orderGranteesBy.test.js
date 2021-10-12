@@ -16,7 +16,8 @@ describe('orderGranteesBy', () => {
       [
         'id',
         'desc',
-      ]]);
+      ],
+    ]);
 
     const three = orderGranteesBy('programSpecialist', 'asc');
 
