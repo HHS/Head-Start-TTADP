@@ -4,11 +4,11 @@ import {
   render, screen, fireEvent, act,
 } from '@testing-library/react';
 
-import TooltipWithEllipsis from '../TooltipWithEllipsis';
+import TooltipWithCollection from '../TooltipWithCollection';
 
-describe('TooltipWithEllipsis', () => {
+describe('TooltipWithCollection', () => {
   const renderTooltip = (collection = ['Teddy', 'Cathy', 'Bobby', 'G-berg']) => {
-    render(<div data-testid="tooltip-container"><TooltipWithEllipsis collection={collection} collectionTitle="people who something" /></div>);
+    render(<div data-testid="tooltip-container"><TooltipWithCollection collection={collection} collectionTitle="people who something" /></div>);
   };
 
   beforeAll(() => {

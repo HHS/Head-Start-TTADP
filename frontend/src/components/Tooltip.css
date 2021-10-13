@@ -15,23 +15,24 @@
     vertical-align: middle;
 }
 
-.smart-hub--tooltip-with-ellipsis {
+.smart-hub--tooltip {
     display: inline-block;
     position: relative;
 }
 
-.smart-hub--tooltip-with-ellipsis button {
+.smart-hub--tooltip button {
     display: block;
     line-height: 1.7;    
 }
 
-.smart-hub--tooltip-with-ellipsis:hover .usa-tooltip__body,
-.smart-hub--tooltip-with-ellipsis.show-tooltip .usa-tooltip__body{        
+.smart-hub--tooltip:hover .usa-tooltip__body,
+.smart-hub--tooltip.show-tooltip .usa-tooltip__body{        
     animation: fadein;
     animation-duration: 500ms;
     animation-iteration-count: 1;
     bottom: 1rem;
     display: inline-block;
+    left: 10px;
     line-height: 1;
     position: absolute;
 }
