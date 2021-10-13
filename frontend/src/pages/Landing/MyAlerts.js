@@ -93,11 +93,15 @@ function ReportsRow({ reports, removeAlert }) {
           <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>
-          <Tooltip
-            displayText={<span className="smart-hub--tooltip-truncated">{pendingApprovals}</span>}
-            tooltipText={approversToolTipText.join('\n')}
-            buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
-          />
+          {approversToolTipText.length > 0
+            ? (
+              <Tooltip
+                displayText={<span className="smart-hub--tooltip-truncated">{pendingApprovals}</span>}
+                tooltipText={approversToolTipText.join('\n')}
+                buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
+              />
+            )
+            : '' }
         </td>
         <td>
           <Tag
