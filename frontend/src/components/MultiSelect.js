@@ -25,6 +25,7 @@ import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { Controller } from 'react-hook-form/dist/index.ie11';
+import _ from 'lodash';
 
 import arrowBoth from '../images/arrow-both.svg';
 
@@ -112,8 +113,8 @@ function MultiSelect({
     }
     return value.map((item) => ({
       ...item,
-      label: item[labelProperty],
-      value: item[valueProperty],
+      label: _.get(item, labelProperty),
+      value: _.get(item, valueProperty),
     }));
   };
 
@@ -131,11 +132,12 @@ function MultiSelect({
       controllerOnChange(event.map((v) => v.value));
     } else {
       controllerOnChange(
-        event.map((item) => ({
-          ...item,
-          [labelProperty]: item.label,
-          [valueProperty]: item.value,
-        })),
+        event.map((item) => {
+          const tempItem = { ...item };
+          _.set(tempItem, labelProperty, item.label);
+          _.set(tempItem, valueProperty, item.value);
+          return tempItem;
+        }),
       );
     }
   };

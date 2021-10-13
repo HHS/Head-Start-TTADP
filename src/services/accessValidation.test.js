@@ -116,8 +116,9 @@ describe('accessValidation', () => {
 
       const regions = await getUserReadRegions(mockUser.id);
 
-      expect(regions[0]).toBe(14);
-      expect(regions[1]).toBe(13);
+      expect(regions.length).toBe(2);
+      expect(regions).toContain(13);
+      expect(regions).toContain(14);
     });
 
     it('returns an empty array if user has no permissions', async () => {
@@ -191,7 +192,11 @@ describe('accessValidation', () => {
       ]).then(async () => {
         const query = { 'region.in': [14] };
         const queryWithCentralOffice = await setReadRegions(query, mockUser.id);
-        expect(queryWithCentralOffice).toStrictEqual({ 'region.in': [14, 1, 2, 3] });
+        const queryRegions = queryWithCentralOffice['region.in'];
+        expect(queryRegions.length).toBe(4);
+        [14, 1, 2, 3].forEach((region) => {
+          expect(queryRegions).toContain(region);
+        });
       });
     });
 
@@ -212,8 +217,12 @@ describe('accessValidation', () => {
       const query = {};
 
       const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
+      const queryRegions = queryWithFilteredRegions['region.in'];
+      expect(queryRegions.length).toBe(2);
 
-      expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [14, 13] });
+      [14, 13].forEach((region) => {
+        expect(queryRegions).toContain(region);
+      });
     });
 
     it('returns an empty array if user has no permissions', async () => {

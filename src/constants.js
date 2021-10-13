@@ -21,3 +21,8 @@ export const FILE_STATUSES = {
 export const DECIMAL_BASE = 10;
 
 export const REPORTS_PER_PAGE = 10;
+
+export const APPROVER_STATUSES = {
+  APPROVED: 'approved',
+  NEEDS_ACTION: 'needs_action',
+};

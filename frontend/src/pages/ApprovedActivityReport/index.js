@@ -167,7 +167,17 @@ export default function ApprovedActivityReport({ match, user }) {
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
-      setApprovingManagers(report.approvingManager.fullName);
+
+      // Approvers.
+      const approversNames = report.approvers.map((a) => a.User.fullName);
+      setApprovingManagers(approversNames.join(', '));
+
+      // Approver Notes.
+      const approversNotes = report.approvers.map((a) => `
+        <h2>${a.User.fullName}:</h2>
+        ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
+      setManagerNotes(approversNotes);
+
       setAttendees(formatSimpleArray(report.participants));
       const newCount = report.numberOfParticipants.toString();
       setParticipantCount(newCount);
@@ -196,7 +206,6 @@ export default function ApprovedActivityReport({ match, user }) {
       setGranteeNextSteps(report.granteeNextSteps.map((step) => step.note));
 
       // review and submit table
-      setManagerNotes(report.managerNotes);
       setCreatorNotes(report.additionalNotes);
     }).catch((err) => {
       // eslint-disable-next-line no-console
@@ -268,19 +277,19 @@ export default function ApprovedActivityReport({ match, user }) {
             <p className="usa-alert__text">Successfully copied URL</p>
           </div>
         </div>
-      ) : null }
+      ) : null}
       {somethingWentWrongWithClipboard
         ? (
           <div className="usa-alert usa-alert--warning no-print">
             <div className="usa-alert__body">
               <p className="usa-alert__text">
                 Sorry, something went wrong copying that url.
-                { window.location.href && (
-                <>
-                  {' '}
-                  Here it is
-                  {window.location.href }
-                </>
+                {window.location.href && (
+                  <>
+                    {' '}
+                    Here it is
+                    {window.location.href}
+                  </>
                 )}
               </p>
             </div>
@@ -290,7 +299,7 @@ export default function ApprovedActivityReport({ match, user }) {
       <Grid row>
         {navigator && navigator.clipboard
           ? <button type="button" className="usa-button no-print" onClick={handleCopyUrl}>Copy URL Link</button>
-          : null }
+          : null}
         <button type="button" className="usa-button no-print" onClick={() => window.print()}>Print to PDF</button>
       </Grid>
       <Container className="ttahub-activity-report-view margin-top-2">
@@ -320,54 +329,54 @@ export default function ApprovedActivityReport({ match, user }) {
         <ViewTable
           caption="Activity summary"
           headings={
-              [
-                recipientType,
-                'Reason',
-                'Program Type',
-                'Start date',
-                'End date',
-                'Topics',
-                'Duration',
-                'Number of participants',
-                'Attendees',
-                'Method of contact',
-                'Requested by',
-              ]
+            [
+              recipientType,
+              'Reason',
+              'Program Type',
+              'Start date',
+              'End date',
+              'Topics',
+              'Duration',
+              'Number of participants',
+              'Attendees',
+              'Method of contact',
+              'Requested by',
+            ]
           }
           className="activity-summary-table"
           data={
-              [
-                recipients,
-                reasons,
-                programType,
-                startDate,
-                endDate,
-                topics,
-                duration,
-                participantCount,
-                attendees,
-                method,
-                requester,
-              ]
+            [
+              recipients,
+              reasons,
+              programType,
+              startDate,
+              endDate,
+              topics,
+              duration,
+              participantCount,
+              attendees,
+              method,
+              requester,
+            ]
           }
 
         />
         <ViewTable
           caption="Resources"
           headings={
-              [
-                'OHS / ECLKC resources',
-                'Non-ECLKC resources',
-                'Supporting attachments',
-              ]
-            }
+            [
+              'OHS / ECLKC resources',
+              'Non-ECLKC resources',
+              'Supporting attachments',
+            ]
+          }
           data={
-              [
-                ECLKCResources,
-                nonECLKCResourcesUsed,
-                attachments,
-              ]
-            }
+            [
+              ECLKCResources,
+              nonECLKCResourcesUsed,
+              attachments,
+            ]
+          }
           allowBreakWithin={false}
         />
         <ViewTable
@@ -402,17 +411,17 @@ export default function ApprovedActivityReport({ match, user }) {
           className="no-print"
           caption="Review and Submit"
           headings={
-              [
-                'Creator notes',
-                'Manager notes',
-              ]
-            }
+            [
+              'Creator notes',
+              'Manager notes',
+            ]
+          }
           data={
-              [
-                creatorNotes,
-                managerNotes,
-              ]
-            }
+            [
+              creatorNotes,
+              managerNotes,
+            ]
+          }
         />
       </Container>
     </>

@@ -86,11 +86,12 @@ describe('activityReports fetcher', () => {
   });
 
   describe('submitReport', () => {
-    it('returns the report', async () => {
+    it('returns success', async () => {
       const report = { id: 1 };
-      fetchMock.post(join('api', 'activity-reports', '1', 'submit'), report);
-      const savedReport = await submitReport(1, report);
-      expect(savedReport).toEqual(report);
+      fetchMock.put(join('api', 'activity-reports', '1', 'submit'), report);
+      const submittedReport = await submitReport(1, report);
+      expect(fetchMock.called()).toBeTruthy();
+      expect(submittedReport).toEqual(report);
     });
   });
 
