@@ -179,7 +179,7 @@ function ButtonSelect(props) {
               { options.map((option) => (
                 <button
                   type="button"
-                  aria-pressed={option === selectedItem}
+                  aria-pressed={option.value === checked}
                   className="smart-hub--button smart-hub--button-select-range-button"
                   key={option.value}
                   onKeyDown={onKeyDown}
