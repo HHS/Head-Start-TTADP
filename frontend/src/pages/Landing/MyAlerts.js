@@ -18,7 +18,7 @@ import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
 import ReportMenu from './ReportMenu';
 
-function ReportsRow({ reports, removeAlert }) {
+function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
   const { isOpen, openModal, closeModal } = useModal();
   const ConnectModal = connectModal(DeleteReportModal);
@@ -43,6 +43,8 @@ function ReportsRow({ reports, removeAlert }) {
       pendingApprovals,
       approvers,
     } = report;
+
+    const justSubmitted = message && message.reportId === id;
 
     const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName).join(', ') : '';
 
@@ -77,8 +79,13 @@ function ReportsRow({ reports, removeAlert }) {
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
-    const statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
+    let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
+    let displayStatus = calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus;
 
+    if (justSubmitted && message.status !== calculatedStatus) {
+      displayStatus = message.status;
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status}`;
+    }
     const menuItems = [
       {
         label: 'View',
@@ -117,16 +124,19 @@ function ReportsRow({ reports, removeAlert }) {
         </td>
         <td>
           <span className="smart-hub--ellipsis" title={approversToolTipText}>
-            <Tag className="smart-hub--table-collection">
-              {pendingApprovals}
-            </Tag>
+            { pendingApprovals !== '0'
+              && (
+              <Tag className="smart-hub--table-collection">
+                { pendingApprovals}
+              </Tag>
+              )}
           </span>
         </td>
         <td>
           <Tag
             className={statusClassName}
           >
-            {calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus}
+            {displayStatus}
           </Tag>
         </td>
         <td>
@@ -153,6 +163,21 @@ function ReportsRow({ reports, removeAlert }) {
 ReportsRow.propTypes = {
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.string,
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
+};
+
+ReportsRow.defaultProps = {
+  message: {
+    time: '',
+    reportId: '',
+    displayId: '',
+    status: '',
+  },
 };
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
@@ -183,6 +208,7 @@ function MyAlerts(props) {
     setAlertReportsCount,
     handleDownloadAllAlerts,
     loading,
+    message,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -314,7 +340,7 @@ function MyAlerts(props) {
                 </tr>
               </thead>
               <tbody>
-                <ReportsRow reports={reports} removeAlert={removeAlert} />
+                <ReportsRow reports={reports} removeAlert={removeAlert} message={message} />
               </tbody>
             </Table>
           </div>
@@ -339,6 +365,12 @@ MyAlerts.propTypes = {
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.string,
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
 };
 
 MyAlerts.defaultProps = {
@@ -348,6 +380,12 @@ MyAlerts.defaultProps = {
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
   hasFilters: false,
+  message: {
+    time: '',
+    reportId: '',
+    displayId: '',
+    status: '',
+  },
 };
 
 export default MyAlerts;
