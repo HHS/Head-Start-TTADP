@@ -124,9 +124,12 @@ function ReportsRow({ reports, removeAlert, message }) {
         </td>
         <td>
           <span className="smart-hub--ellipsis" title={approversToolTipText}>
-            <Tag className="smart-hub--table-collection">
-              {justSubmitted ? '' : pendingApprovals}
-            </Tag>
+            { pendingApprovals !== '0'
+              && (
+              <Tag className="smart-hub--table-collection">
+                { pendingApprovals}
+              </Tag>
+              )}
           </span>
         </td>
         <td>
