@@ -205,7 +205,7 @@ describe('Landing Page', () => {
   test('displays the correct collaborators', async () => {
     const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
     expect(collaborators).toBeVisible();
-    expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip-with-ellipsis');
+    expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip');
     expect(collaborators.firstChild.children.length).toBe(2);
     const truncated = collaborators.firstChild.children[1].firstChild.firstChild;
     expect(truncated).toHaveClass('smart-hub--tooltip-truncated');
@@ -859,7 +859,7 @@ describe('My alerts sorting', () => {
 
     const textContent = /Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
-    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/qris system/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/qris system/i));
   });
 
   it('is enabled for Start date', async () => {
@@ -911,7 +911,7 @@ describe('My alerts sorting', () => {
     const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
     const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(firstCell));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(secondCell));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(secondCell));
   });
 });
 

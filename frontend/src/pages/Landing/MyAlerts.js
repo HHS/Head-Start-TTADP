@@ -50,7 +50,7 @@ function ReportsRow({ reports, removeAlert }) {
       ar.grant ? ar.grant.grantee.name : ar.name
     ));
 
-    const approversToolTipText = approvers.map((a) => a.User.fullName);
+    const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
 
     const collaboratorNames = collaborators && collaborators.map((collaborator) => (
       collaborator.fullName));
@@ -178,7 +178,7 @@ function MyAlerts(props) {
         break;
     }
     return (
-      <th scope="col" aria-sort={fullAriaSort} disableSortBy={disableSort}>
+      <th scope="col" aria-sort={fullAriaSort}>
         {
           disableSort
             ? displayName
