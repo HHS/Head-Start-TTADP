@@ -27,7 +27,6 @@ export default function Tooltip({
         <span className="sr-only">
           {buttonLabel}
         </span>
-
       </button>
     </span>
   );
