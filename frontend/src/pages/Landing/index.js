@@ -579,7 +579,7 @@ function Landing({ user }) {
             </span>
           </span>
           <div className="usa-table-container--scrollable">
-            <Table className="usa-table usa-table--borderless usa-table--striped">
+            <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
               <caption>
                 {`Region ${regionLabel} Activity reports`}
                 <p className="usa-sr-only">with sorting and pagination</p>

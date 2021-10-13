@@ -34,8 +34,9 @@ export default function Tooltip({
 }
 
 Tooltip.propTypes = {
-  tooltipText: PropTypes.arrayOf(PropTypes.string).isRequired,
+  tooltipText: PropTypes.string.isRequired,
   displayText: PropTypes.oneOfType([
+    PropTypes.node,
     PropTypes.string,
     PropTypes.arrayOf(PropTypes.node),
   ]).isRequired,
