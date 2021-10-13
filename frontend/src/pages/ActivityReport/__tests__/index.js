@@ -18,6 +18,7 @@ const formData = () => ({
   regionId: 1,
   deliveryMethod: 'in-person',
   ttaType: ['training'],
+  approvers: [],
   duration: '1',
   pageState: {
     1: 'in-progress',
@@ -34,7 +35,8 @@ const formData = () => ({
   participants: ['CEO / CFO / Executive'],
   programTypes: ['type 1'],
   requester: 'grantee',
-  status: REPORT_STATUSES.DRAFT,
+  calculatedStatus: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],

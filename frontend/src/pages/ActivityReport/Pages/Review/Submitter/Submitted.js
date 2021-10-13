@@ -6,12 +6,13 @@ import {
 } from '@trussworks/react-uswds';
 import { getEditorState } from '../../../../../utils';
 import ApproverStatusList from '../../components/ApproverStatusList';
+import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 
 const NotEditableAlert = () => (
   <Alert type="warning" noIcon slim className="margin-bottom-1 no-print">
     <b>Caution:</b>
     {' '}
-    Report has been submitted for manager approval.
+    Report has been submitted to manager(s) for approval.
     <br />
     If you wish to update this report,
     please check with your manager before clicking &quot;Reset to Draft&quot;.
@@ -37,6 +38,12 @@ const Submitted = ({
           <span className="text-bold">Creator notes</span>
         </p>
         <Editor readOnly toolbarHidden defaultEditorState={additionalNotesState} />
+      </div>
+      <div className="smart-hub--creator-notes margin-top-2">
+        <p>
+          <span className="text-bold">Manager notes</span>
+        </p>
+        <DisplayApproverNotes approverStatusList={approverStatusList} />
       </div>
       <div className="margin-top-205">
         <ApproverStatusList approverStatus={approverStatusList} />

@@ -40,12 +40,16 @@ function ReportsRow({ reports, removeAlert }) {
       startDate,
       author,
       collaborators,
-      status,
+      calculatedStatus,
+      pendingApprovals,
+      approvers,
     } = report;
 
     const recipients = activityRecipients && activityRecipients.map((ar) => (
       ar.grant ? ar.grant.grantee.name : ar.name
     ));
+
+    const approversToolTipText = approvers.map((a) => a.User.fullName);
 
     const collaboratorNames = collaborators && collaborators.map((collaborator) => (
       collaborator.fullName));
@@ -53,7 +57,7 @@ function ReportsRow({ reports, removeAlert }) {
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
-    const statusClassName = `smart-hub--table-tag-status smart-hub--status-${status}`;
+    const statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
 
     const menuItems = [
       {
@@ -88,10 +92,17 @@ function ReportsRow({ reports, removeAlert }) {
           <TooltipWithEllipsis collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>
+          <span className="smart-hub--ellipsis" title={approversToolTipText}>
+            <Tag className="smart-hub--table-collection">
+              {pendingApprovals}
+            </Tag>
+          </span>
+        </td>
+        <td>
           <Tag
             className={statusClassName}
           >
-            {status === 'needs_action' ? 'Needs action' : status}
+            {calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus}
           </Tag>
         </td>
         <td>
@@ -110,7 +121,7 @@ function ReportsRow({ reports, removeAlert }) {
         openModal={openModal}
         closeModal={closeModal}
       />
-      { tableRows }
+      {tableRows}
     </>
   );
 }
@@ -151,7 +162,7 @@ function MyAlerts(props) {
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
-  const renderColumnHeader = (displayName, name) => {
+  const renderColumnHeader = (displayName, name, disableSort = false) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -166,21 +177,26 @@ function MyAlerts(props) {
         break;
     }
     return (
-      <th scope="col" aria-sort={fullAriaSort}>
-        <a
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            sortHandler(name);
-          }}
-          onKeyPress={() => sortHandler(name)}
-          className={`sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
-        >
-          {displayName}
-        </a>
+      <th scope="col" aria-sort={fullAriaSort} disableSortBy={disableSort}>
+        {
+          disableSort
+            ? displayName
+            : (
+              <a
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  sortHandler(name);
+                }}
+                onKeyPress={() => sortHandler(name)}
+                className={`sortable ${sortClassName}`}
+                aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
+                }`}
+              >
+                {displayName}
+              </a>
+            )
+        }
       </th>
     );
   };
@@ -210,56 +226,75 @@ function MyAlerts(props) {
       )}
 
       {reports && (reports.length > 0 || hasFilters) && (
-      <Container className="landing maxw-full inline-size" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
-        <span className="smart-hub--alerts-table-controls display-flex flex-row flex-align-center">
-          <Filter applyFilters={updateReportFilters} forMyAlerts />
-          <ReportMenu
-            label="My Alerts report menu"
-            hasSelectedReports={false}
-            onExportAll={handleDownloadAllAlerts}
-          />
-        </span>
-        <span className="smart-hub--table-nav">
-          <span
-            id="alertsTotalCount"
-            aria-label={`Displaying rows ${renderTotal(
-              alertsOffset,
-              alertsPerPage,
-              alertsActivePage,
-              alertReportsCount,
-            )}`}
-          >
-            {renderTotal(
-              alertsOffset,
-              alertsPerPage,
-              alertsActivePage,
-              alertReportsCount,
-            )}
+        <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
+          <span className="smart-hub--alerts-table-controls display-flex flex-row flex-align-center">
+            <Filter applyFilters={updateReportFilters} forMyAlerts />
+            <ReportMenu
+              label="My Alerts report menu"
+              hasSelectedReports={false}
+              onExportAll={handleDownloadAllAlerts}
+            />
           </span>
-        </span>
-        <div className="usa-table-container--scrollable">
-          <Table className="usa-table usa-table--borderless" fullWidth>
-            <caption className="smart-hub--table-caption">
-              My activity report alerts
-              <p className="usa-sr-only">with sorting</p>
-            </caption>
-            <thead>
-              <tr>
-                {renderColumnHeader('Report ID', 'regionId')}
-                {renderColumnHeader('Grantee', 'activityRecipients')}
-                {renderColumnHeader('Start date', 'startDate')}
-                {renderColumnHeader('Creator', 'author')}
-                {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                {renderColumnHeader('Status', 'status')}
-                <th scope="col" aria-label="..." />
-              </tr>
-            </thead>
-            <tbody>
-              <ReportsRow reports={reports} removeAlert={removeAlert} />
-            </tbody>
-          </Table>
-        </div>
-      </Container>
+          <span className="smart-hub--table-nav">
+            <span
+              id="alertsTotalCount"
+              aria-label={`Displaying rows ${renderTotal(
+                alertsOffset,
+                alertsPerPage,
+                alertsActivePage,
+                alertReportsCount,
+              )}`}
+            >
+              {renderTotal(
+                alertsOffset,
+                alertsPerPage,
+                alertsActivePage,
+                alertReportsCount,
+              )}
+            </span>
+          </span>
+          <span className="smart-hub--table-nav">
+            <span
+              id="alertsTotalCount"
+              aria-label={`Displaying rows ${renderTotal(
+                alertsOffset,
+                alertsPerPage,
+                alertsActivePage,
+                alertReportsCount,
+              )}`}
+            >
+              {renderTotal(
+                alertsOffset,
+                alertsPerPage,
+                alertsActivePage,
+                alertReportsCount,
+              )}
+            </span>
+          </span>
+          <div className="usa-table-container--scrollable">
+            <Table className="usa-table usa-table--borderless" fullWidth>
+              <caption className="smart-hub--table-caption">
+                My activity report alerts
+                <p className="usa-sr-only">with sorting</p>
+              </caption>
+              <thead>
+                <tr>
+                  {renderColumnHeader('Report ID', 'regionId')}
+                  {renderColumnHeader('Grantee', 'activityRecipients')}
+                  {renderColumnHeader('Start date', 'startDate')}
+                  {renderColumnHeader('Creator', 'author')}
+                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                  {renderColumnHeader('Approvers(s)', 'approvals', true)}
+                  {renderColumnHeader('Status', 'calculatedStatus')}
+                  <th scope="col" aria-label="..." />
+                </tr>
+              </thead>
+              <tbody>
+                <ReportsRow reports={reports} removeAlert={removeAlert} />
+              </tbody>
+            </Table>
+          </div>
+        </Container>
       )}
     </>
   );

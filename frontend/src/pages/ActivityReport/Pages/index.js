@@ -31,7 +31,8 @@ const reviewPage = {
       onSubmit,
       additionalData,
       onReview,
-      approvingManager,
+      isApprover,
+      isPendingApprover,
       onResetToDraft,
       onSaveForm,
       allPages,
@@ -40,11 +41,12 @@ const reviewPage = {
     ) => (
       <ReviewSubmit
         updateShowValidationErrors={updateShowValidationErrors}
-        approvers={additionalData.approvers}
+        availableApprovers={additionalData.availableApprovers}
         onSubmit={onSubmit}
         onSaveForm={onSaveForm}
         onReview={onReview}
-        approvingManager={approvingManager}
+        isApprover={isApprover}
+        isPendingApprover={isPendingApprover}
         onResetToDraft={onResetToDraft}
         reviewItems={
           pages.map((p) => ({

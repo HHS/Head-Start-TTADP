@@ -42,7 +42,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
     topics: [],
     collaborators: [],
     lastSaved: '',
-    status: '',
+    calculatedStatus: '',
   };
 
   const displayReports = reports.length ? reports : [emptyReport];
@@ -57,7 +57,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       topics,
       collaborators,
       lastSaved,
-      status,
+      calculatedStatus,
       legacyId,
     } = report;
 
@@ -70,7 +70,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
     const collaboratorNames = collaborators && collaborators.map((collaborator) => (
       collaborator.fullName));
 
-    const viewOrEditLink = status === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
+    const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
 
     const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
 
@@ -135,9 +135,9 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
         <td>{lastSaved}</td>
         <td>
           <Tag
-            className={`smart-hub--table-tag-status smart-hub--status-${status}`}
+            className={`smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`}
           >
-            {status === 'needs_action' ? 'Needs action' : status}
+            {calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus}
           </Tag>
         </td>
         <td>
@@ -396,8 +396,7 @@ function Landing({ user }) {
           }}
           onKeyPress={() => requestSort(name)}
           className={`sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
           {displayName}
@@ -442,25 +441,25 @@ function Landing({ user }) {
       </Helmet>
       <>
         {showAlert && message && (
-        <Alert
-          type="success"
-          role="alert"
-          noIcon
-          cta={(
-            <Button
-              role="button"
-              unstyled
-              aria-label="dismiss alert"
-              onClick={() => updateShowAlert(false)}
-            >
-              <span className="fa-sm margin-right-2">
-                <FontAwesomeIcon color="black" icon={faTimesCircle} />
-              </span>
-            </Button>
-              )}
-        >
-          {msg}
-        </Alert>
+          <Alert
+            type="success"
+            role="alert"
+            noIcon
+            cta={(
+              <Button
+                role="button"
+                unstyled
+                aria-label="dismiss alert"
+                onClick={() => updateShowAlert(false)}
+              >
+                <span className="fa-sm margin-right-2">
+                  <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                </span>
+              </Button>
+            )}
+          >
+            {msg}
+          </Alert>
         )}
         <Grid row gap>
           <Grid>
@@ -468,21 +467,21 @@ function Landing({ user }) {
           </Grid>
           <Grid col={2} className="flex-align-self-center">
             {regions.length > 1
-                && (
+              && (
                 <RegionalSelect
                   regions={allRegionsUserHasPermissionTo(user)}
                   onApply={onApplyRegion}
                   appliedRegion={appliedRegion}
                   hasCentralOffice={user.homeRegionId === 14}
                 />
-                )}
+              )}
           </Grid>
           <Grid className="flex-align-self-center">
             {reportAlerts
-                  && reportAlerts.length > 0
-                  && hasReadWrite(user)
-                  && appliedRegion !== 14
-                  && <NewReport />}
+              && reportAlerts.length > 0
+              && hasReadWrite(user)
+              && appliedRegion !== 14
+              && <NewReport />}
           </Grid>
         </Grid>
         <Grid row gap className="smart-hub--overview">
@@ -498,9 +497,9 @@ function Landing({ user }) {
         </Grid>
         <Grid row>
           {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
+            <Alert type="error" role="alert">
+              {error}
+            </Alert>
           )}
         </Grid>
         <MyAlerts
@@ -522,28 +521,28 @@ function Landing({ user }) {
         <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
           <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
             {numberOfSelectedReports > 0
-                  && (
-                  <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
-                    {numberOfSelectedReports}
-                    {' '}
-                    selected
-                    {' '}
-                    <Button
-                      className="smart-hub--select-tag__button"
-                      unstyled
-                      aria-label="deselect all reports"
-                      onClick={() => {
-                        toggleSelectAll({ target: { checked: false } });
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        color="blue"
-                        inverse
-                        icon={faTimesCircle}
-                      />
-                    </Button>
-                  </span>
-                  )}
+              && (
+                <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
+                  {numberOfSelectedReports}
+                  {' '}
+                  selected
+                  {' '}
+                  <Button
+                    className="smart-hub--select-tag__button"
+                    unstyled
+                    aria-label="deselect all reports"
+                    onClick={() => {
+                      toggleSelectAll({ target: { checked: false } });
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      color="blue"
+                      inverse
+                      icon={faTimesCircle}
+                    />
+                  </Button>
+                </span>
+              )}
             <Filter applyFilters={handleApplyFilters} />
             <ReportMenu
               hasSelectedReports={numberOfSelectedReports > 0}
@@ -582,7 +581,7 @@ function Landing({ user }) {
           <div className="usa-table-container--scrollable">
             <Table className="usa-table usa-table--borderless usa-table--striped">
               <caption>
-                { `Region ${regionLabel} Activity reports` }
+                {`Region ${regionLabel} Activity reports`}
                 <p className="usa-sr-only">with sorting and pagination</p>
               </caption>
               <thead>
@@ -603,7 +602,7 @@ function Landing({ user }) {
                   {renderColumnHeader('Topic(s)', 'topics')}
                   {renderColumnHeader('Collaborator(s)', 'collaborators')}
                   {renderColumnHeader('Last saved', 'updatedAt')}
-                  {renderColumnHeader('Status', 'status')}
+                  {renderColumnHeader('Status', 'calculatedStatus')}
                   <th scope="col" aria-label="context menu" />
                 </tr>
               </thead>

@@ -1,34 +1,25 @@
-import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, Grant, NextStep,
-} from '../models';
+import db, { ActivityReport, User } from '../models';
 import { REPORT_STATUSES } from '../constants';
 import updateTopicNames from './updateTopicNames';
 
-const GRANTEE_ID = 30;
-const GRANTEE_ID_TWO = 31;
-
 const mockUser = {
-  id: 1000,
+  id: 6546180,
   homeRegionId: 1,
-  name: 'chud',
-  hsesUsername: 'chud',
-  hsesUserId: '1000',
+  name: 'user6546180',
+  hsesUsername: 'user6546180',
+  hsesUserId: '6546180',
 };
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: REPORT_STATUSES.APPROVED,
+  calculatedStatus: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.SUBMITTED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
-  activityRecipients: [
-    { activityRecipientId: GRANTEE_ID },
-    { activityRecipientId: GRANTEE_ID_TWO },
-  ],
-  approvingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'method',
-  duration: 1,
+  duration: 90,
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
@@ -42,40 +33,17 @@ const reportObject = {
 
 describe('update topic names job', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser });
-    await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
-
-    await Grant.findOrCreate({
-      where: {
-        id: GRANTEE_ID, number: '1', granteeId: GRANTEE_ID, regionId: 1, status: 'Active',
-      },
-    });
-    await Grant.findOrCreate({
-      where: {
-        id: GRANTEE_ID_TWO, number: '2', granteeId: GRANTEE_ID, regionId: 1, status: 'Active',
-      },
-    });
+    await User.create(mockUser);
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReport.destroy({ where: { id: ids } });
+    await ActivityReport.destroy({ where: { userId: [mockUser.id] } });
     await User.destroy({ where: { id: [mockUser.id] } });
-    await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_TWO] } });
-    await Grantee.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_TWO] } });
     await db.sequelize.close();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('updates the contents of the database', async () => {
-    ActivityReport.create({
+    await ActivityReport.create({
       ...reportObject,
       requester: 'Bruce',
       topics: [

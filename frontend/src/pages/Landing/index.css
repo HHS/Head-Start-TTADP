@@ -1,5 +1,5 @@
 .landing {
-  font-family: 'Merriweather', serif;
+  font-family: "Merriweather", serif;
 }
 
 .pagination {
@@ -15,10 +15,10 @@
 }
 
 .pagination li a {
-color: #3C4146;
-text-align: center;
-text-decoration: none;
-margin: 9px;
+  color: #3c4146;
+  text-align: center;
+  text-decoration: none;
+  margin: 9px;
 }
 
 .pagination li.active {
@@ -46,13 +46,13 @@ div.smart-hub--total-count {
 
 .smart-hub--link-next {
   text-decoration-line: underline !important;
-  color: #0166AB !important;
+  color: #0166ab !important;
   margin-left: 12px;
 }
 
 .smart-hub--link-prev {
   text-decoration-line: underline !important;
-  color: #0166AB !important;
+  color: #0166ab !important;
   padding-left: 20px;
   margin-right: 12px;
 }
@@ -79,7 +79,7 @@ div.smart-hub--total-count {
 }
 
 .smart-hub-bg-vivid {
-  background-color: #0166AB;
+  background-color: #0166ab;
 }
 
 .landing .smart-hub--table-nav {
@@ -87,7 +87,8 @@ div.smart-hub--total-count {
   float: right;
   font-size: 16px;
   font-weight: 500;
-  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
+    sans-serif;
   margin-right: 20px;
   margin-top: 27px;
   margin-bottom: -90px;
@@ -97,7 +98,8 @@ div.smart-hub--total-count {
   position: absolute;
   font-size: 16px;
   font-weight: 500;
-  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
+    sans-serif;
   margin-top: 27px;
   margin-left: 900px;
   display: none;
@@ -105,7 +107,7 @@ div.smart-hub--total-count {
 
 h1.landing {
   font-size: 40px;
-  font-family: 'Merriweather', serif;
+  font-family: "Merriweather", serif;
   font-weight: 700;
   white-space: nowrap;
   margin-right: 30px;
@@ -123,13 +125,17 @@ h1.landing {
   margin-top: 1px;
 }
 
+.landing .usa-table thead th a {
+  cursor: pointer;
+}
+
 .landing .usa-table thead th {
   white-space: nowrap;
   background-color: white;
   border-top: solid 1.5px;
-  border-color: #ECEEF1;
+  border-color: #eceef1;
   border-bottom: none;
-  cursor: pointer;
+
   padding-right: 0px;
 }
 
@@ -156,7 +162,7 @@ h1.landing {
 }
 
 .smart-hub--blue a {
-  color: #3C72AE;
+  color: #3c72ae;
 }
 
 .landing .usa-alert .usa-alert--error {
@@ -169,12 +175,12 @@ h1.landing {
 }
 
 .usa-table tr:nth-child(odd) {
-  background-color:#F8F8F8;
+  background-color: #f8f8f8;
 }
 
 .smart-hub--status-draft {
-  background: #E2EFF7;
-  color: #0166AB;
+  background: #e2eff7;
+  color: #0166ab;
 }
 
 .smart-hub--status-submitted {
@@ -229,19 +235,18 @@ h1.landing {
   max-height: 44px;
   border-radius: 5px;
   padding: 0.7rem 1.25rem 0.75rem 1.25rem;
-
 }
 
 .smart-hub--create-new-report {
   padding-top: 30px;
 }
-thead th > .sortable{
+thead th > .sortable {
   position: relative;
 }
-thead th > .sortable::after{
+thead th > .sortable::after {
   content: "";
   background-image: url(../../images/sort_both.png);
-  background-repeat:no-repeat;
+  background-repeat: no-repeat;
   background-position: center bottom;
   display: inline-block;
   position: absolute;

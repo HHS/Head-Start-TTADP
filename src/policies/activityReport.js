@@ -17,7 +17,8 @@ export default class ActivityReport {
   }
 
   canReview() {
-    return this.isApprovingManager();
+    // Ability to review is meant to be independent of report status per acceptance criteria
+    return this.isApprovingManager() && this.canApproveInRegion();
   }
 
   canCreate() {
@@ -32,12 +33,12 @@ export default class ActivityReport {
 
   canReset() {
     return (this.isAuthor() || this.isCollaborator())
-      && this.activityReport.status === REPORT_STATUSES.SUBMITTED;
+      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED;
   }
 
   canDelete() {
     return (this.isAdmin() || this.isAuthor())
-      && this.activityReport.status !== REPORT_STATUSES.APPROVED;
+      && this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
   }
 
   canViewLegacy() {
@@ -45,18 +46,25 @@ export default class ActivityReport {
   }
 
   canGet() {
-    const { status } = this.activityReport;
     const canReadUnapproved = this.isAuthor() || this.isCollaborator() || this.isApprovingManager();
 
     if (canReadUnapproved) {
       return canReadUnapproved;
     }
 
-    if (status === REPORT_STATUSES.APPROVED) {
+    if (this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       return this.canReadInRegion();
     }
 
     return false;
+  }
+
+  canApproveInRegion() {
+    const permissions = _.find(this.user.permissions,
+      (permission) => (
+        permission.scopeId === SCOPES.APPROVE_REPORTS
+        && permission.regionId === this.activityReport.regionId));
+    return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
@@ -71,8 +79,8 @@ export default class ActivityReport {
     const permissions = _.find(this.user.permissions,
       (permission) => (
         (permission.scopeId === SCOPES.READ_REPORTS
-        || permission.scopeId === SCOPES.APPROVE_REPORTS
-        || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
+          || permission.scopeId === SCOPES.APPROVE_REPORTS
+          || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
         && permission.regionId === this.activityReport.regionId));
     return !_.isUndefined(permissions);
   }
@@ -93,11 +101,15 @@ export default class ActivityReport {
   }
 
   isApprovingManager() {
-    return this.activityReport.approvingManagerId === this.user.id;
+    if (!this.activityReport.approvers) {
+      return false;
+    }
+    const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
+    return approverUserIds.includes(this.user.id);
   }
 
   reportHasEditableStatus() {
-    return this.activityReport.status === REPORT_STATUSES.DRAFT
-      || this.activityReport.status === REPORT_STATUSES.NEEDS_ACTION;
+    return this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
+      || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   }
 }
