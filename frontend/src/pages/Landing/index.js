@@ -30,7 +30,7 @@ import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
-import TooltipWithEllipsis from './Components/TooltipWithEllipsis';
+import TooltipWithCollection from '../../components/TooltipWithCollection';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
@@ -118,7 +118,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </Link>
         </th>
         <td>
-          <TooltipWithEllipsis collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+          <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -127,10 +127,10 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </span>
         </td>
         <td>
-          <TooltipWithEllipsis collection={topics} collectionTitle={`topics for ${displayId}`} />
+          <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
         </td>
         <td>
-          <TooltipWithEllipsis collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
+          <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>{lastSaved}</td>
         <td>

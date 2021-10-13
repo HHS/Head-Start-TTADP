@@ -17,7 +17,8 @@ import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
 import ReportMenu from './ReportMenu';
-import TooltipWithEllipsis from './Components/TooltipWithEllipsis';
+import TooltipWithCollection from '../../components/TooltipWithCollection';
+import Tooltip from '../../components/Tooltip';
 
 function ReportsRow({ reports, removeAlert }) {
   const history = useHistory();
@@ -80,7 +81,7 @@ function ReportsRow({ reports, removeAlert }) {
           </Link>
         </td>
         <td>
-          <TooltipWithEllipsis collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+          <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -89,14 +90,14 @@ function ReportsRow({ reports, removeAlert }) {
           </span>
         </td>
         <td>
-          <TooltipWithEllipsis collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
+          <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={approversToolTipText}>
-            <Tag className="smart-hub--table-collection">
-              {pendingApprovals}
-            </Tag>
-          </span>
+          <Tooltip
+            displayText={<span className="smart-hub--tooltip-truncated">{pendingApprovals}</span>}
+            tooltipText={approversToolTipText.join('\n')}
+            buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
+          />
         </td>
         <td>
           <Tag
