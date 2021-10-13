@@ -32,7 +32,7 @@
     animation-iteration-count: 1;
     bottom: 1rem;
     display: inline-block;
-    left: 10px;
+    left: 0;
     line-height: 1;
     position: absolute;
 }
