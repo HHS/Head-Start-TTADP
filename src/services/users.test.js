@@ -9,10 +9,6 @@ import {
 import SCOPES from '../middleware/scopeConstants';
 
 describe('Users DB service', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   afterAll(async () => {
     await db.sequelize.close();
   });

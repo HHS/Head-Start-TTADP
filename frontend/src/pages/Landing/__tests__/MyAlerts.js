@@ -36,9 +36,9 @@ const renderMyAlerts = (report = false) => {
         sortHandler={requestAlertsSort}
         updateReportAlerts={updateReportAlerts}
         setAlertReportsCount={setAlertReportsCount}
-        fetchReports={() => {}}
-        updateReportFilters={() => {}}
-        handleDownloadAllAlerts={() => {}}
+        fetchReports={() => { }}
+        updateReportFilters={() => { }}
+        handleDownloadAllAlerts={() => { }}
       />
     </Router>,
   );
@@ -68,6 +68,18 @@ describe('My Alerts', () => {
       name: /start date/i,
     });
     expect(startDateColumnHeader).toBeVisible();
+  });
+
+  test('displays approvers column', async () => {
+    renderMyAlerts();
+    const approverListToolTip1 = await screen.findByRole('cell', { name: /approver manager 1, approver manager 2, approver manager 3/i });
+    expect(approverListToolTip1).toBeVisible();
+    const approverListToolTip2 = await screen.findByRole('cell', { name: /approver manager 4, approver manager 5/i });
+    expect(approverListToolTip2).toBeVisible();
+    const reportIdColumnHeader = await screen.findByRole('columnheader', {
+      name: /report id/i,
+    });
+    expect(reportIdColumnHeader).toBeVisible();
   });
 
   test('displays creator column', async () => {

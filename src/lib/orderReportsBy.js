@@ -39,7 +39,7 @@ const orderReportsBy = (sortBy, sortDir) => {
           sequelize.literal(`nonGranteeName ${sortDir}`),
         ]];
       break;
-    case 'status':
+    case 'calculatedStatus':
     case 'startDate':
     case 'updatedAt':
       result = [[sortBy, sortDir]];

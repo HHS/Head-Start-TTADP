@@ -474,6 +474,7 @@ workflows:
             - build_and_lint
       - deploy:
           requires:
+            - build_and_lint
             - test_backend
             - test_frontend
             - cucumber_test

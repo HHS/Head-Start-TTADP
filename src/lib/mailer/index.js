@@ -33,20 +33,25 @@ const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 
 
 const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
 
-export const changesRequestedByManager = (job, transport = defaultTransport) => {
-  const { report } = job.data;
+/**
+ * Process function for changesRequested jobs added to notification queue
+ * Sends group email to report author and collaborators about a single approver's requested changes
+ */
+export const notifyChangesRequested = (job, transport = defaultTransport) => {
+  const { report, approver } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
-    logger.info(`MAILER: ${report.approvingManager.name} requested changes on report ${report.displayId}}`);
     const {
       id,
       author,
       displayId,
-      approvingManager,
       collaborators,
-      managerNotes,
     } = report;
+    const approverEmail = approver.user.email;
+    const approverName = approver.user.name;
+    const approverNote = approver.note;
+    logger.info(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
     const collabArray = collaborators.map((c) => c.email);
     const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
     const email = new Email({
@@ -65,10 +70,10 @@ export const changesRequestedByManager = (job, transport = defaultTransport) => 
         to: [author.email, ...collabArray],
       },
       locals: {
-        managerName: approvingManager.name,
+        managerName: approverName,
         reportPath,
         displayId,
-        comments: managerNotes,
+        comments: approverNote,
       },
     });
   }
@@ -76,19 +81,22 @@ export const changesRequestedByManager = (job, transport = defaultTransport) => 
   return Promise.resolve(null);
 };
 
-export const reportApproved = (job, transport = defaultTransport) => {
+/**
+ * Process function for reportApproved jobs added to notification queue
+ * Sends group email to report author and collaborators about approved status
+ */
+export const notifyReportApproved = (job, transport = defaultTransport) => {
   const { report } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
-    logger.info(`MAILER: ${report.approvingManager.name} approved report ${report.displayId}}`);
     const {
       id,
       author,
       displayId,
-      approvingManager,
       collaborators,
     } = report;
+    logger.info(`MAILER: Notifying users that report ${displayId}} was approved.`);
     const collaboratorEmailAddresses = collaborators.map((c) => c.email);
     const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
     const email = new Email({
@@ -107,7 +115,6 @@ export const reportApproved = (job, transport = defaultTransport) => {
         to: [author.email, ...collaboratorEmailAddresses],
       },
       locals: {
-        manager: approvingManager.name,
         reportPath,
         displayId,
       },
@@ -116,18 +123,21 @@ export const reportApproved = (job, transport = defaultTransport) => {
   return Promise.resolve(null);
 };
 
-export const managerApprovalRequested = (job, transport = defaultTransport) => {
+/**
+ * Process function for approverAssigned jobs added to notification queue
+ * Sends email to user about new ability to approve a report
+ */
+export const notifyApproverAssigned = (job, transport = defaultTransport) => {
 // Set these inside the function to allow easier testing
-  const { report } = job.data;
+  const { report, newApprover } = job.data;
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
-    logger.info(`MAILER: Notifying ${report.approvingManager.email} that they were requested to approve report ${report.displayId}`);
     const {
       id,
-      author,
       displayId,
-      approvingManager,
     } = report;
+    const approverEmail = newApprover.user.email;
+    logger.info(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
     const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
     const email = new Email({
       message: {
@@ -142,10 +152,9 @@ export const managerApprovalRequested = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
       message: {
-        to: [approvingManager.email],
+        to: [approverEmail],
       },
       locals: {
-        author: author.name,
         reportPath,
         displayId,
       },
@@ -154,7 +163,11 @@ export const managerApprovalRequested = (job, transport = defaultTransport) => {
   return Promise.resolve(null);
 };
 
-export const notifyCollaborator = (job, transport = defaultTransport) => {
+/**
+ * Process function for collaboratorAssigned jobs added to notification queue
+ * Sends email to user about new ability to edit a report
+ */
+export const notifyCollaboratorAssigned = (job, transport = defaultTransport) => {
   const { report, newCollaborator } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
@@ -189,32 +202,38 @@ export const notifyCollaborator = (job, transport = defaultTransport) => {
   return Promise.resolve(null);
 };
 
-export const collaboratorAddedNotification = (report, newCollaborators) => {
+export const collaboratorAssignedNotification = (report, newCollaborators) => {
+  // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
     try {
       const data = {
         report,
         newCollaborator: collaborator,
       };
-      notificationQueue.add('collaboratorAdded', data);
+      notificationQueue.add('collaboratorAssigned', data);
     } catch (err) {
       auditLogger.error(err);
     }
   });
 };
 
-export const managerApprovalNotification = (report) => {
-  try {
-    const data = {
-      report,
-    };
-    notificationQueue.add('managerApproval', data);
-  } catch (err) {
-    auditLogger.error(err);
-  }
+export const approverAssignedNotification = (report, newApprovers) => {
+  // Each approver will get an individual notification
+  newApprovers.forEach((approver) => {
+    try {
+      const data = {
+        report,
+        newApprover: approver,
+      };
+      notificationQueue.add('approverAssigned', data);
+    } catch (err) {
+      auditLogger.error(err);
+    }
+  });
 };
 
 export const reportApprovedNotification = (report) => {
+  // Send group notification to author and collaborators
   try {
     const data = {
       report,
@@ -225,10 +244,12 @@ export const reportApprovedNotification = (report) => {
   }
 };
 
-export const changesRequestedNotification = (report) => {
+export const changesRequestedNotification = (report, approver) => {
+  // Send group notification to author and collaborators
   try {
     const data = {
       report,
+      approver,
     };
     notificationQueue.add('changesRequested', data);
   } catch (err) {

@@ -74,11 +74,11 @@ const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
     context,
-    status,
+    calculatedStatus,
     activityRecipientType,
   } = watch();
 
-  const canEdit = reportIsEditable(status);
+  const canEdit = reportIsEditable(calculatedStatus);
   const nonGrantee = activityRecipientType === 'non-grantee';
 
   return (
