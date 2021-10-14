@@ -15,14 +15,21 @@ const Approver = ({
   formData,
   children,
   error,
+  isPendingApprover,
 }) => {
   const {
-    managerNotes, additionalNotes, status, approvingManager,
+    additionalNotes,
+    calculatedStatus,
+    approvers,
   } = formData;
-  const review = status === REPORT_STATUSES.SUBMITTED || status === REPORT_STATUSES.NEEDS_ACTION;
-  const approved = status === REPORT_STATUSES.APPROVED;
-  const approverStatusList = formData && approvingManager && status
-    ? [{ approver: approvingManager.fullName, status }] : [];
+
+  // Approvers should be able to change their review until the report is approved.
+  // isPendingApprover:
+  // Tells us if the person viewing the report is an approver AND if they have a pending review.
+  const review = (calculatedStatus === REPORT_STATUSES.SUBMITTED
+    || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+  const approved = calculatedStatus === REPORT_STATUSES.APPROVED;
+  const pendingOtherApprovals = review && !isPendingApprover;
 
   // NOTE: This is only an estimate of which timezone the user is in.
   // Not guaranteed to be 100% correct but is "good enough"
@@ -36,6 +43,9 @@ const Approver = ({
   };
   const { author } = formData;
 
+  const pendingApprovalCount = approvers ? approvers.filter((a) => a.status === null || a.status === 'needs_action').length : 0;
+  const approverCount = approvers ? approvers.length : 0;
+
   const renderTopAlert = () => (
     <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
       {review && (
@@ -43,10 +53,17 @@ const Approver = ({
           <span className="text-bold">
             {author.name}
             {' '}
-            has requested approval for this activity report.
+            has requested approval for this activity report (
+            <strong>
+              {`${pendingApprovalCount} of
+             ${approverCount}`}
+              {' '}
+              reviews pending
+            </strong>
+            ).
           </span>
           <br />
-          Please review all information in each section before submitting for approval.
+          Please review all information in each section before submitting.
         </>
       )}
       {approved && (
@@ -82,17 +99,17 @@ const Approver = ({
         {review
           && (
             <Review
+              pendingOtherApprovals={pendingOtherApprovals}
               additionalNotes={additionalNotes}
               onFormReview={onFormReview}
-              approverStatusList={approverStatusList}
+              approverStatusList={approvers}
             />
           )}
         {approved
           && (
             <Approved
               additionalNotes={additionalNotes}
-              managerNotes={managerNotes}
-              approverStatusList={approverStatusList}
+              approverStatusList={approvers}
             />
           )}
       </Container>
@@ -105,14 +122,15 @@ Approver.propTypes = {
   reviewed: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,
   error: PropTypes.string,
+  isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
-    approvingManager: PropTypes.shape({
-      name: PropTypes.string,
-      fullName: PropTypes.string,
-    }),
-    managerNotes: PropTypes.string,
     additionalNotes: PropTypes.string,
-    status: PropTypes.string,
+    calculatedStatus: PropTypes.string,
+    approvers: PropTypes.arrayOf(
+      PropTypes.shape({
+        status: PropTypes.string,
+      }),
+    ),
     author: PropTypes.shape({
       name: PropTypes.string,
     }),

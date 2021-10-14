@@ -12,17 +12,16 @@ put:
     content:
       application/json:
         schema:
-          type: object
           properties:
             status:
               type: string
-              description: The status of the report after review
+              description: The status of the approval
               enum:
                 - approved
                 - needs_action
-            managerNotes:
+            note:
               type: string
-              description: Any notes the manager needs to relay to the author/collaborators of the report
+              description: Manager feedback relating to the approval
   parameters:
     - in: path
       name: activityReportId
@@ -31,18 +30,10 @@ put:
         type: number
   responses:
     200:
-      description: The new status of the activity report
+      description: The new activity report approval
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              status:
-                type: string
-                enum:
-                  - approved
-                  - needs_action
-              managerNotes:
-                type: string
+            $ref: '../../index.yaml#/components/schemas/approver'
     400:
       description: activityReportId param is missing or malformed

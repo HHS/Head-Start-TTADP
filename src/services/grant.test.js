@@ -1,4 +1,4 @@
-import db, { Grantee, Grant } from '../models';
+import db, { Grant } from '../models';
 import { cdiGrants, grantById, assignCDIGrant } from './grant';
 
 const grants = [
@@ -31,12 +31,8 @@ describe('Grant DB service', () => {
   });
 
   afterAll(async () => {
-    await Grantee.destroy({ where: { id: grants.map((g) => g.id) } });
+    await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
     await db.sequelize.close();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('grantById', () => {
