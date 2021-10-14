@@ -6,7 +6,7 @@ These docs are verbose because this is technology with which developers will rar
 
 ## Set up
 
-1. **Install terraform**
+1. **Install Terraform**
 
     - On MacOS: `brew install terraform`
     - On other platforms: [Download and install terraform][tf]
@@ -29,10 +29,10 @@ These docs are verbose because this is technology with which developers will rar
 
     If you are already using git hooks, add the `.githooks/pre-commit` contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
-1. **Install Cloud Foundry CLI tool**
+1. **Install Version 7 of the Cloud Foundry CLI tool**
 
-    - On MacOS: `brew install cloudfoundry/tap/cf-cli`
-    - On other platforms: [Download and install cf][cf-install]
+    - On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
+    - On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
 
 1. **Add target environment credentials**
 
@@ -157,7 +157,6 @@ _Tip: You run terraform files from the directory in which they are stored. For e
 
 <!-- Links -->
 
-[TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations)
 [aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config
 [aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
 [cloudgov-bind]: https://cloud.gov/docs/deployment/managed-services/#bind-the-service-instance
