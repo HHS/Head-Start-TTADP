@@ -1,0 +1,58 @@
+.smart-hub--tooltip-truncated {
+    font-size: 15px;
+    position: relative;
+}
+
+.smart-hub--tooltip-truncated:first-child:before {
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='black' stroke-width='1' stroke-dasharray='6' stroke-dashoffset='5' stroke-linecap='square'/%3e%3c/svg%3e");
+  content: "";
+  height: 200%;
+  position: absolute;  
+  left: -10px;
+  right: 0;
+  bottom: 0px;
+  width: 300%;
+}
+
+.smart-hub--ellipsis {
+    color: #21272D;
+    display: inline-block;
+    overflow-x: hidden;
+    overflow-y: visible;
+    white-space: nowrap;
+    width: 173.5px;   
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.smart-hub--tooltip {
+    display: inline-block;
+    position: relative;
+}
+
+.smart-hub--tooltip button {
+    display: block;
+    line-height: 1.7;    
+}
+
+.smart-hub--tooltip:hover .usa-tooltip__body,
+.smart-hub--tooltip.show-tooltip .usa-tooltip__body{        
+    animation: fadein;
+    animation-duration: 500ms;
+    animation-iteration-count: 1;
+    bottom: 1.5rem;
+    display: inline-block;
+    left: -20px;
+    line-height: 1;
+    position: absolute;
+}
+
+@keyframes fadein {
+    0% {      
+        opacity: 0;
+    }
+
+    100% {    
+        opacity: 1;
+    }
+}
