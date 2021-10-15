@@ -149,6 +149,7 @@ function MultiSelect({
         if (canCreate) {
           return (
             <Creatable
+              menuIsOpen
               className="margin-top-1"
               id={name}
               value={values}

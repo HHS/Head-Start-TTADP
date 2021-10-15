@@ -11,6 +11,7 @@ import MultiSelect from '../../../../components/MultiSelect';
 import Option from './GoalOption';
 import Input from './GoalInput';
 import { validateGoals } from './goalValidator';
+import './GoalPicker.css';
 
 const components = {
   Input,
