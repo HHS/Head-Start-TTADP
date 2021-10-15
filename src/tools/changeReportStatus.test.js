@@ -32,7 +32,6 @@ describe('changeStatus', () => {
   });
 
   it('changes activity report(s) status to deleted', async () => {
-    expect(1).toBe(1);
     const report = await ActivityReport.create(reportObject);
 
     expect(report.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
