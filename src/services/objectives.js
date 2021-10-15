@@ -29,10 +29,8 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
   return Promise.all(objectives.map(async (objective) => {
     const { status, title, ttaProvided } = objective;
 
-    const statusForDb = status || 'Not Started';
-
     const createdObjective = await Objective.create(
-      { title, ttaProvided, status: statusForDb }, { transaction },
+      { title, ttaProvided, status }, { transaction },
     );
 
     return ActivityReportObjective.create({
