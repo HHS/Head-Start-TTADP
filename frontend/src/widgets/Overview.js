@@ -78,7 +78,7 @@ Overview.propTypes = {
     numParticipants: PropTypes.string,
     sumDuration: PropTypes.string,
   }),
-  regionLabel: PropTypes.string.isRequired,
+  regionLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   loading: PropTypes.bool.isRequired,
 };
 
