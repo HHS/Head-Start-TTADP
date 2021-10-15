@@ -168,7 +168,7 @@ parameters:
     default: "kw-delete-reports-script"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-delete-reports-script"
+    default: "main"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
