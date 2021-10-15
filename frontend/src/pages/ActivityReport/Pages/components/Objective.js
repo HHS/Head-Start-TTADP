@@ -132,7 +132,7 @@ const Objective = ({
                 <Dropdown
                   name="status"
                   onChange={onChange}
-                  value={status || 'Not Started'}
+                  value={status}
                   aria-label={`Status for objective ${objectiveAriaLabel}`}
                 >
                   {statuses.map((possibleStatus) => (
