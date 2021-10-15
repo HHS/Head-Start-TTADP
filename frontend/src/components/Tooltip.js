@@ -12,9 +12,6 @@ export default function Tooltip({
 
   const onClick = () => {
     setShowTooltip(!showTooltip);
-    setTimeout(() => {
-      setShowTooltip(false);
-    }, 5000);
   };
 
   return (
