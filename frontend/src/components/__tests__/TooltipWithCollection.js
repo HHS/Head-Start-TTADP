@@ -11,12 +11,7 @@ describe('TooltipWithCollection', () => {
     render(<div data-testid="tooltip-container"><TooltipWithCollection collection={collection} collectionTitle="people who something" /></div>);
   };
 
-  beforeAll(() => {
-    jest.useFakeTimers();
-  });
-
   afterAll(() => {
-    jest.useRealTimers();
     jest.clearAllMocks();
   });
 
@@ -39,18 +34,6 @@ describe('TooltipWithCollection', () => {
 
     act(() => {
       fireEvent.click(button);
-    });
-
-    expect(tooltip).not.toHaveClass('show-tooltip');
-
-    act(() => {
-      fireEvent.click(button);
-    });
-
-    expect(tooltip).toHaveClass('show-tooltip');
-
-    act(() => {
-      jest.runAllTimers();
     });
 
     expect(tooltip).not.toHaveClass('show-tooltip');
