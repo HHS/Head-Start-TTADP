@@ -11,7 +11,7 @@ const reportObject = {
   activityRecipientType: 'grantee',
   regionId: 1,
   ECLKCResourcesUsed: ['test'],
-  status: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.APPROVED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -35,12 +35,12 @@ describe('changeStatus', () => {
     expect(1).toBe(1);
     const report = await ActivityReport.create(reportObject);
 
-    expect(report.status).toBe(REPORT_STATUSES.APPROVED);
+    expect(report.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
     await changeReportStatus(report.id.toString(), 'deleted');
 
     const deletedReport = await ActivityReport.unscoped().findOne({ where: { id: report.id } });
 
-    expect(deletedReport.status).toBe(REPORT_STATUSES.DELETED);
+    expect(deletedReport.submissionStatus).toBe(REPORT_STATUSES.DELETED);
 
     await ActivityReport.destroy({ where: { id: deletedReport.id } });
   });
