@@ -14,7 +14,7 @@ export default function Tooltip({
     setShowTooltip(!showTooltip);
     setTimeout(() => {
       setShowTooltip(false);
-    }, 2500);
+    }, 5000);
   };
 
   return (
