@@ -17,7 +17,7 @@ export async function allGrantees() {
   });
 }
 
-export async function granteeByScopes(granteeId, grantScopes) {
+export async function granteeById(granteeId, grantScopes) {
   const grantee = await Grantee.findOne({
     attributes: ['id', 'name'],
     where: {

@@ -1,4 +1,4 @@
-import { granteeByScopes, granteesByNameAndRegion } from '../../services/grantee';
+import { granteeById, granteesByNameAndRegion } from '../../services/grantee';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 
@@ -13,7 +13,7 @@ export async function getGrantee(req, res) {
     const { granteeId } = req.params;
 
     const scopes = filtersToScopes(req.query, 'grant');
-    const grantee = await granteeByScopes(granteeId, scopes);
+    const grantee = await granteeById(granteeId, scopes);
 
     if (!grantee) {
       res.sendStatus(404);
