@@ -1,56 +1,86 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region, Permission,
+  ActivityReport, ActivityReportApprover, ActivityReportCollaborator, ActivityRecipient, User,
+  Grantee, NonGrantee, Grant, NextStep, Region, Permission,
 } from '../models';
 import {
   createOrUpdate,
   activityReportById,
   possibleRecipients,
-  review,
   activityReports,
   activityReportAlerts,
   activityReportByLegacyId,
   getDownloadableActivityReportsByIds,
   getAllDownloadableActivityReports,
   getAllDownloadableActivityReportAlerts,
+  setStatus,
 } from './activityReports';
-import { copyGoalsToGrants } from './goals';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
-
-jest.mock('./goals', () => ({
-  copyGoalsToGrants: jest.fn(),
-}));
+import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 const GRANTEE_ID = 30;
 const GRANTEE_ID_SORTING = 31;
+const ALERT_GRANTEE_ID = 345;
 
 const mockUser = {
-  id: 1000,
+  id: 1115665161,
   homeRegionId: 1,
-  name: 'user1000',
-  hsesUsername: 'user1000',
-  hsesUserId: '1000',
+  name: 'user1115665161',
+  hsesUsername: 'user1115665161',
+  hsesUserId: 'user1115665161',
 };
 
 const mockUserTwo = {
-  id: 1002,
+  id: 265157914,
   homeRegionId: 1,
-  name: 'user1002',
-  hsesUserId: 1002,
-  hsesUsername: 'Rex',
+  name: 'user265157914',
+  hsesUserId: 'user265157914',
+  hsesUsername: 'user265157914',
+  role: ['COR'],
 };
 
 const mockUserThree = {
-  id: 1003,
+  id: 39861962,
   homeRegionId: 1,
-  name: 'user1003',
-  hsesUserId: 1003,
-  hsesUsername: 'Tex',
+  name: 'user39861962',
+  hsesUserId: 'user39861962',
+  hsesUsername: 'user39861962',
+};
+
+const mockUserFour = {
+  id: 49861962,
+  homeRegionId: 1,
+  name: 'user49861962',
+  hsesUserId: 'user49861962',
+  hsesUsername: 'user49861962',
+};
+
+const mockUserFive = {
+  id: 55861962,
+  homeRegionId: 1,
+  name: 'user55861962',
+  hsesUserId: 'user55861962',
+  hsesUsername: 'user55861962',
+};
+
+const alertsMockUserOne = {
+  id: 16465416,
+  homeRegionId: 1,
+  name: 'a',
+  hsesUserId: 'a',
+  hsesUsername: 'a',
+};
+
+const alertsMockUserTwo = {
+  id: 21161130,
+  homeRegionId: 1,
+  name: 'b',
+  hsesUserId: 'b',
+  hsesUsername: 'b',
 };
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
@@ -61,8 +91,8 @@ const reportObject = {
 const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
-  status: REPORT_STATUSES.SUBMITTED,
-  approvingManagerId: 1,
+  submissionStatus: REPORT_STATUSES.SUBMITTED,
+  oldApprovingManagerId: 1,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -76,78 +106,183 @@ const submittedReport = {
   topics: ['topics'],
   ttaType: ['type'],
 };
+describe('Retrieve Alerts', () => {
+  beforeAll(async () => {
+    await Promise.all([
+      User.bulkCreate([
+        mockUserFour,
+        mockUserFive,
+      ]),
+      NonGrantee.create({ id: ALERT_GRANTEE_ID, name: 'alert nonGrantee' }),
+      Grantee.create({ name: 'alert grantee', id: ALERT_GRANTEE_ID }),
+      Region.create({ name: 'office 20', id: 20 }),
+    ]);
+    await Grant.create({
+      id: ALERT_GRANTEE_ID, number: 1, granteeId: ALERT_GRANTEE_ID, regionId: 20, status: 'Active',
+    });
+  });
+
+  afterAll(async () => {
+    const userIds = [
+      mockUserFour.id,
+      mockUserFive.id];
+    const reports = await ActivityReport.findAll({ where: { userId: userIds } });
+    const ids = reports.map((report) => report.id);
+    await NextStep.destroy({ where: { activityReportId: ids } });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
+    await ActivityReportCollaborator.destroy({ where: { activityReportId: ids }, force: true });
+    await ActivityReport.destroy({ where: { id: ids } });
+    await User.destroy({ where: { id: userIds } });
+    await Permission.destroy({ where: { userId: userIds } });
+    await NonGrantee.destroy({ where: { id: ALERT_GRANTEE_ID } });
+    await Grant.destroy({ where: { id: [ALERT_GRANTEE_ID] } });
+    await Grantee.destroy({ where: { id: [ALERT_GRANTEE_ID] } });
+    await Region.destroy({ where: { id: 20 } });
+  });
+
+  it('retrieves myalerts', async () => {
+    // Add User Permissions.
+    await Permission.create({
+      userId: mockUserFour.id,
+      regionId: 1,
+      scopeId: SCOPES.READ_REPORTS,
+    });
+
+    await Permission.create({
+      userId: mockUserFive.id,
+      regionId: 1,
+      scopeId: SCOPES.READ_WRITE_REPORTS,
+    });
+
+    // In Draft.
+    await ActivityReport.create({
+      ...reportObject,
+      lastUpdatedById: mockUserFour.id,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      userId: mockUserFour.id,
+      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+    });
+
+    // Submitted.
+    await ActivityReport.create({
+      ...submittedReport,
+      userId: mockUserFour.id,
+      lastUpdatedById: mockUserFour.id,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+    });
+
+    // Needs Action.
+    await ActivityReport.create({
+      ...submittedReport,
+      userId: mockUserFour.id,
+      lastUpdatedById: mockUserFour.id,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+    });
+
+    // Approved (Should be missing).
+    await ActivityReport.create({
+      ...submittedReport,
+      userId: mockUserFour.id,
+      lastUpdatedById: mockUserFour.id,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+    });
+
+    // Is Only Approver.
+    const isOnlyApproverReport = await ActivityReport.create({
+      ...submittedReport,
+      userId: mockUserFive.id,
+      lastUpdatedById: mockUserFive.id,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+    });
+
+    // Add Approver.
+    await ActivityReportApprover.create({
+      activityReportId: isOnlyApproverReport.id,
+      userId: mockUserFour.id,
+      status: null,
+    });
+
+    // Is Only Collaborator.
+    const isOnlyCollabReport = await ActivityReport.create({
+      ...submittedReport,
+      userId: mockUserFive.id,
+      lastUpdatedById: mockUserFive.id,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+    });
+
+    // Add Collaborator.
+    await ActivityReportCollaborator.create({
+      activityReportId: isOnlyCollabReport.id,
+      userId: mockUserFour.id,
+    });
+    const { count, rows } = await activityReportAlerts(mockUserFour.id, {});
+    expect(count).toBe(5);
+    expect(rows.length).toBe(5);
+    expect(rows[0].userId).toBe(mockUserFour.id);
+    expect(rows[1].userId).toBe(mockUserFour.id);
+    expect(rows[2].userId).toBe(mockUserFour.id);
+    expect(rows[3].userId).toBe(mockUserFive.id); // Approver Only.
+    expect(rows[4].userId).toBe(mockUserFive.id); // Collaborator Only.
+  });
+});
 
 const idsToExclude = [9999, 777, 778, 779];
 
 describe('Activity Reports DB service', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
-    await Region.create({ name: 'office 17', id: 17 });
+    await Promise.all([
+      User.bulkCreate([
+        mockUser,
+        mockUserTwo,
+        mockUserThree,
+        alertsMockUserOne,
+        alertsMockUserTwo,
+      ]),
+      NonGrantee.create({ id: GRANTEE_ID, name: 'nonGrantee' }),
+      Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } }),
+      Region.create({ name: 'office 19', id: 19 }),
+    ]);
     await Grant.create({
-      id: GRANTEE_ID, number: 1, granteeId: GRANTEE_ID, regionId: 17, status: 'Active',
+      id: GRANTEE_ID, number: 1, granteeId: GRANTEE_ID, regionId: 19, status: 'Active',
     });
-    await NonGrantee.create({ id: GRANTEE_ID, name: 'nonGrantee' });
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({
-        where: {
-          userId:
-        [
-          mockUser.id,
-          mockUserTwo.id,
-          mockUserThree.id,
-        ],
-        },
-      });
+    const userIds = [
+      mockUser.id,
+      mockUserTwo.id,
+      mockUserThree.id,
+      alertsMockUserOne.id,
+      alertsMockUserTwo.id,
+      mockUserFour.id,
+      mockUserFive.id];
+    const reports = await ActivityReport.findAll({ where: { userId: userIds } });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
+    await ActivityReportCollaborator.destroy({ where: { activityReportId: ids }, force: true });
     await ActivityReport.destroy({ where: { id: ids } });
-    await User.destroy({
-      where: {
-        id: [
-          mockUser.id,
-          mockUserTwo.id,
-          mockUserThree.id],
-      },
-    });
-    await Permission.destroy({ where: { userId: mockUserTwo.id } });
+    await User.destroy({ where: { id: userIds } });
+    await Permission.destroy({ where: { userId: userIds } });
     await NonGrantee.destroy({ where: { id: GRANTEE_ID } });
     await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
     await Grantee.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
-    await Region.destroy({ where: { id: 17 } });
+    await Region.destroy({ where: { id: 19 } });
+
     await db.sequelize.close();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('review', () => {
-    it('can set the report as needs action', async () => {
-      const report = await ActivityReport.create(submittedReport);
-      const savedReport = await review(report, REPORT_STATUSES.NEEDS_ACTION, 'notes');
-      expect(savedReport.status).toEqual(REPORT_STATUSES.NEEDS_ACTION);
-    });
-
-    describe('when setting the report to approved', () => {
-      it('does not copy goals if the report is for non-grantees', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, activityRecipientType: 'non-grantee' });
-        const savedReport = await review(report, REPORT_STATUSES.APPROVED, 'notes');
-        expect(savedReport.status).toEqual(REPORT_STATUSES.APPROVED);
-        expect(copyGoalsToGrants).not.toHaveBeenCalled();
-      });
-
-      it('copies goals if the report is for grantees', async () => {
-        const report = await ActivityReport.create(submittedReport, { include: [{ model: ActivityRecipient, as: 'activityRecipients' }] });
-        const savedReport = await review(report, REPORT_STATUSES.APPROVED, 'notes');
-        expect(savedReport.status).toEqual(REPORT_STATUSES.APPROVED);
-        expect(copyGoalsToGrants).toHaveBeenCalled();
-      });
-    });
   });
 
   describe('createOrUpdate', () => {
@@ -155,7 +290,7 @@ describe('Activity Reports DB service', () => {
       const report = await ActivityReport.create({ ...reportObject, id: 3334 });
       await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
       expect(report.activityRecipientType).toEqual('grantee');
-      expect(report.status).toEqual('draft');
+      expect(report.calculatedStatus).toEqual('draft');
       expect(report.ECLKCResourcesUsed).toEqual(['updated']);
       expect(report.id).toEqual(3334);
     });
@@ -188,7 +323,7 @@ describe('Activity Reports DB service', () => {
         requester: null,
         specialistNextSteps: [],
         startDate: null,
-        status: 'draft',
+        submissionStatus: REPORT_STATUSES.DRAFT,
         targetPopulations: [],
         topics: [],
         pageState: {
@@ -204,7 +339,7 @@ describe('Activity Reports DB service', () => {
       };
 
       const report = await createOrUpdate(emptyReport);
-      expect(report.status).toEqual('draft');
+      expect(report.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
     });
 
     it('creates a new report', async () => {
@@ -213,6 +348,8 @@ describe('Activity Reports DB service', () => {
       const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
       expect(endARCount.length - beginningARCount.length).toBe(1);
       expect(report.activityRecipients[0].grant.id).toBe(GRANTEE_ID);
+      // Check afterCreate copySubmissionStatus hook
+      expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
     });
 
     it('creates a new report with non-grantee recipient', async () => {
@@ -226,7 +363,7 @@ describe('Activity Reports DB service', () => {
         collaborators: [{ id: mockUser.id }],
       });
       expect(report.collaborators.length).toBe(1);
-      expect(report.collaborators[0].name).toBe('user1000');
+      expect(report.collaborators[0].name).toBe(mockUser.name);
     });
 
     it('handles notes being created', async () => {
@@ -238,7 +375,6 @@ describe('Activity Reports DB service', () => {
       };
       // When that report is created
       const report = await createOrUpdate(reportObjectWithNotes);
-
       // Then we see that it was saved correctly
       expect(report.specialistNextSteps.length).toBe(2);
       expect(report.granteeNextSteps.length).toBe(2);
@@ -371,6 +507,20 @@ describe('Activity Reports DB service', () => {
       expect(updatedReport.specialistNextSteps.map((n) => n.id))
         .toEqual(expect.arrayContaining(specialistsIds));
     });
+
+    it('calls syncApprovers appropriately', async () => {
+      const reportWithApprovers = {
+        ...reportObject,
+        approverUserIds: [mockUserTwo.id],
+      };
+      // Calls syncApprovers when approverUserIds is present
+      const report = await createOrUpdate(reportWithApprovers);
+      expect(report.approvers[0].User.id).toEqual(mockUserTwo.id);
+      // When syncApprovers is undefined, skip call, avoid removing approvers
+      const reportTwo = await createOrUpdate({ ...reportObject, regionId: 3 }, report);
+      expect(reportTwo.approvers[0].User.id).toEqual(mockUserTwo.id);
+      expect(reportTwo.regionId).toEqual(3);
+    });
   });
 
   describe('activityReportByLegacyId', () => {
@@ -389,6 +539,50 @@ describe('Activity Reports DB service', () => {
       expect(foundReport.id).toBe(report.id);
       expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
     });
+    it('includes approver with full name', async () => {
+      const report = await ActivityReport.create({ ...submittedReport, regionId: 5 });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockUserTwo.id,
+        status: APPROVER_STATUSES.APPROVED,
+        note: 'great job from user 2',
+      });
+      const foundReport = await activityReportById(report.id);
+      expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, ${mockUserTwo.role[0]}`);
+    });
+    it('excludes soft deleted approvers', async () => {
+      // To include deleted approvers in future add paranoid: false
+      // attribute to include object for ActivityReportApprover
+      // https://sequelize.org/master/manual/paranoid.html#behavior-with-other-queries
+      const report = await ActivityReport.create(submittedReport);
+      // Create needs_action approver
+      const toDeleteApproval = await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockUserTwo.id,
+        status: APPROVER_STATUSES.NEEDS_ACTION,
+        note: 'change x, y, z',
+      });
+      // Create approved approver
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockUserThree.id,
+        status: APPROVER_STATUSES.APPROVED,
+        note: 'great job',
+      });
+      // Soft delete needs_action approver
+      await ActivityReportApprover.destroy({
+        where: { id: toDeleteApproval.id },
+        individualHooks: true,
+      });
+      const foundReport = await activityReportById(report.id);
+      // Show both approvers
+      expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+      expect(foundReport.approvers.length).toEqual(1);
+      expect(foundReport.approvers[0]).toEqual(expect.objectContaining({
+        note: 'great job',
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+    });
   });
 
   describe('activityReports retrieval and sorting', () => {
@@ -401,32 +595,26 @@ describe('Activity Reports DB service', () => {
       const firstGrantee = await Grantee.create({ id: GRANTEE_ID_SORTING, name: 'aaaa' });
       firstGrant = await Grant.create({ id: GRANTEE_ID_SORTING, number: 'anumber', granteeId: firstGrantee.id });
 
-      await User.findOrCreate({
-        where: {
-          id: mockUserTwo.id,
-        },
-        defaults: mockUserTwo,
-      });
       await ActivityReport.create({
         ...submittedReport,
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
         userId: mockUserTwo.id,
         topics: topicsOne,
       });
       await createOrUpdate({
         ...submittedReport,
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
         collaborators: [{ id: mockUser.id }],
       });
       await ActivityReport.create({
         ...submittedReport,
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
         regionId: 2,
       });
       const report = await ActivityReport.create({
         ...submittedReport,
         activityRecipients: [{ grantId: firstGrant.id }],
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
         topics: topicsTwo,
       });
       await ActivityRecipient.create({
@@ -435,14 +623,14 @@ describe('Activity Reports DB service', () => {
       });
       latestReport = await ActivityReport.create({
         ...submittedReport,
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
         updatedAt: '1900-01-01T12:00:00Z',
       });
     });
 
     it('retrieves reports with default sort by updatedAt', async () => {
       const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nin': idsToExclude });
-      expect(rows.length).toBe(6);
+      expect(rows.length).toBe(5);
       expect(count).toBeDefined();
       expect(rows[0].id).toBe(latestReport.id);
     });
@@ -454,7 +642,7 @@ describe('Activity Reports DB service', () => {
         sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2, 'region.in': ['1'], 'reportId.nin': idsToExclude,
       });
       expect(rows.length).toBe(2);
-      expect(rows[0].author.name).toBe('user1000');
+      expect(rows[0].author.name).toBe(mockUser.name);
     });
 
     it('retrieves reports sorted by collaborators', async () => {
@@ -463,8 +651,8 @@ describe('Activity Reports DB service', () => {
       const { rows } = await activityReports({
         sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nin': idsToExclude,
       });
-      expect(rows.length).toBe(6);
-      expect(rows[0].collaborators[0].name).toBe('user1000');
+      expect(rows.length).toBe(5);
+      expect(rows[0].collaborators[0].name).toBe(mockUser.name);
     });
 
     it('retrieves reports sorted by id', async () => {
@@ -473,7 +661,7 @@ describe('Activity Reports DB service', () => {
       const { rows } = await activityReports({
         sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
       });
-      expect(rows.length).toBe(7);
+      expect(rows.length).toBe(6);
       expect(rows[0].regionId).toBe(2);
     });
 
@@ -481,7 +669,7 @@ describe('Activity Reports DB service', () => {
       const { rows } = await activityReports({
         sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
       });
-      expect(rows.length).toBe(7);
+      expect(rows.length).toBe(6);
       expect(rows[0].activityRecipients[0].grantId).toBe(firstGrant.id);
     });
 
@@ -492,7 +680,7 @@ describe('Activity Reports DB service', () => {
       const { rows } = await activityReports({
         sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
       });
-      expect(rows.length).toBe(7);
+      expect(rows.length).toBe(6);
       expect(rows[0].sortedTopics[0]).toBe('topic a');
       expect(rows[0].sortedTopics[1]).toBe('topic b');
       expect(rows[1].sortedTopics[0]).toBe('topic c');
@@ -500,40 +688,11 @@ describe('Activity Reports DB service', () => {
       expect(rows[0].topics[1]).toBe('topic b');
       expect(rows[1].topics[0]).toBe('topic c');
     });
-
-    it('retrieves myalerts', async () => {
-      await User.findOrCreate({
-        where: {
-          id: mockUserTwo.id,
-        },
-        defaults: mockUserTwo,
-      });
-
-      reportObject.userId = mockUserTwo.id;
-      await ActivityReport.create(reportObject);
-
-      await Permission.create({
-        userId: mockUserTwo.id,
-        regionId: 1,
-        scopeId: SCOPES.READ_REPORTS,
-      });
-
-      await Permission.create({
-        userId: mockUserTwo.id,
-        regionId: 2,
-        scopeId: SCOPES.READ_REPORTS,
-      });
-
-      const { count, rows } = await activityReportAlerts(mockUserTwo.id, {});
-      expect(count).toBe(5);
-      expect(rows.length).toBe(5);
-      expect(rows[0].userId).toBe(mockUserTwo.id);
-    });
   });
 
   describe('possibleRecipients', () => {
     it('retrieves correct recipients in region', async () => {
-      const region = 17;
+      const region = 19;
       const recipients = await possibleRecipients(region);
 
       expect(recipients.grants.length).toBe(1);
@@ -553,34 +712,36 @@ describe('Activity Reports DB service', () => {
   });
 
   describe('getAllDownloadableActivityReports', () => {
-    let report;
-    let legacyReport;
     let approvedReport;
+    let legacyReport;
+    let nonApprovedReport;
 
     beforeAll(async () => {
-      await User.findOrCreate({
-        where: {
-          id: mockUser.id,
-        },
-        defaults: mockUser,
-      });
       const mockLegacyReport = {
         ...submittedReport,
         imported: { foo: 'bar' },
         legacyId: 'R14-AR-123456',
         regionId: 14,
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       };
       const mockReport = {
         ...submittedReport,
         regionId: 14,
-        status: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       };
-      report = await ActivityReport.create(mockReport);
+      // create two approved
+      approvedReport = await ActivityReport.create(mockReport);
+      await ActivityReportApprover.create({
+        activityReportId: approvedReport.id,
+        userId: mockUserTwo.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
       await ActivityReport.create(mockReport);
+      // create one approved legacy
       legacyReport = await ActivityReport.create(mockLegacyReport);
-      approvedReport = await ActivityReport.create({
-        ...mockReport, status: REPORT_STATUSES.SUBMITTED,
+      // create one submitted
+      nonApprovedReport = await ActivityReport.create({
+        ...mockReport, calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
     });
 
@@ -588,9 +749,9 @@ describe('Activity Reports DB service', () => {
       const result = await getAllDownloadableActivityReports([14]);
       const { rows } = result;
       const ids = rows.map((row) => row.id);
-
       expect(ids.length).toEqual(3);
-      expect(ids).toContain(report.id);
+      expect(ids).toContain(approvedReport.id);
+      expect(ids).toContain(legacyReport.id);
     });
 
     it('will return legacy reports', async () => {
@@ -610,7 +771,7 @@ describe('Activity Reports DB service', () => {
       const result = await getAllDownloadableActivityReports([14]);
       const { rows } = result;
       const ids = rows.map((row) => row.id);
-      expect(ids).not.toContain(approvedReport.id);
+      expect(ids).not.toContain(nonApprovedReport.id);
     });
   });
 
@@ -618,50 +779,41 @@ describe('Activity Reports DB service', () => {
     let report;
 
     beforeAll(async () => {
-      await User.findOrCreate({
-        where: {
-          id: mockUserThree.id,
-        },
-        defaults: mockUserThree,
-      });
-      const mockReport = {
+      const mockSubmittedReport = {
         ...submittedReport,
         regionId: 14,
-        userId: mockUserThree.id,
+        userId: alertsMockUserOne.id,
       };
-      report = await ActivityReport.create(mockReport);
-      await ActivityReport.create(mockReport);
+      const mockNeedsActionReport = {
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        regionId: 14,
+        userId: alertsMockUserTwo.id,
+      };
+      await ActivityReport.create(mockSubmittedReport);
+      report = await ActivityReport.create(mockNeedsActionReport);
     });
 
-    it('returns all reports', async () => {
-      const result = await getAllDownloadableActivityReportAlerts(mockUserThree.id);
+    it('do not alert for submitted reports', async () => {
+      const result = await getAllDownloadableActivityReportAlerts(alertsMockUserOne.id);
+      const { rows } = result;
+      expect(rows.length).toEqual(0); // fails, rcvd 13
+    });
+    it('returns all reports that need action', async () => {
+      const result = await getAllDownloadableActivityReportAlerts(alertsMockUserTwo.id);
       const { rows } = result;
       const ids = rows.map((row) => row.id);
 
-      expect(ids.length).toEqual(2);
+      expect(ids.length).toEqual(1); // fails, rcvd 6
       expect(ids).toContain(report.id);
     });
   });
 
   describe('getDownloadableActivityReportsByIds', () => {
-    beforeAll(async () => {
-      await User.findOrCreate({
-        where: {
-          id: mockUser.id,
-        },
-        defaults: mockUser,
-      });
-      await User.findOrCreate({
-        where: {
-          id: mockUserTwo.id,
-        },
-        defaults: mockUserTwo,
-      });
-    });
-
     it('returns report when passed a single report id', async () => {
       const mockReport = {
         ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       };
       const report = await ActivityReport.create(mockReport);
       const result = await getDownloadableActivityReportsByIds([1], { report: report.id });
@@ -676,6 +828,7 @@ describe('Activity Reports DB service', () => {
         ...reportObject,
         imported: { foo: 'bar' },
         legacyId: 'R14-AR-abc123',
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       };
       const legacyReport = await ActivityReport.create(mockLegacyReport);
 
@@ -696,6 +849,7 @@ describe('Activity Reports DB service', () => {
     it('ignores invalid report ids', async () => {
       const mockReport = {
         ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       };
       const report = await ActivityReport.create(mockReport);
 
@@ -705,6 +859,17 @@ describe('Activity Reports DB service', () => {
 
       expect(rows.length).toEqual(1);
       expect(rows[0].id).toEqual(report.id);
+    });
+  });
+  describe('setStatus', () => {
+    it('sets report to draft', async () => {
+      const report = await ActivityReport.create(submittedReport);
+      expect(report.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+      await setStatus(report, REPORT_STATUSES.DRAFT);
+      // get report again so we're checking that the change is persisted to the database
+      const updatedReport = await ActivityReport.findOne({ where: { id: report.id } });
+      expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
     });
   });
 });

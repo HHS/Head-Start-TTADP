@@ -11,7 +11,7 @@ export default async function reasonList(scopes) {
     where: {
       [Op.and]: [
         scopes,
-        { status: REPORT_STATUSES.APPROVED },
+        { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
     raw: true,

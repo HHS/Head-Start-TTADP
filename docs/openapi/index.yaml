@@ -134,8 +134,20 @@ components:
           description: Topics covered during the TTA
           items:
             type: string
-        approvingManager:
-          $ref: '#/components/schemas/user'
+        approverUserIds:
+          type: array
+          description: |
+            Array of userIds of all managers assigned to approve the report.
+            When this parameter is defined, failure to include a userId that was
+            previously submitted will remove the manager as an approver. This is
+            only valid as a request param for POST and PUT activity report
+            and submit activity report endpoints, it is not a response field.
+        approvers:
+          type: array
+          description: Manager reviews of this report/. Returned
+            as response only, not a valid request field.
+          items:
+            $ref: '#/components/schemas/approver'
         pageState:
           type: object
           enum: ['Not Started', 'In progress', 'Completed']
@@ -149,14 +161,13 @@ components:
               type: string
             4:
               type: string
-        status:
+        calculatedStatus:
           type: string
-          enum:
-            - draft
-            - submitted
-            - approved
-            - needs_action
-          description: The current state of the report
+          enum: ['deleted', 'draft', 'submitted', 'needs_action', 'approved']
+          description: |
+            Current state of the report calculated from submissionStatus
+            and manager reviews. Value is calculated by sequelize logic. This is
+            only returned as a response field, it is not a valid request field.
         ttaType:
           type: array
           description: The type of the activity, Training or Technical Assistance (or both)
@@ -198,10 +209,13 @@ components:
           description: Collaborating user names
           items:
             type: object
-        status:
+        calculatedStatus:
           type: string
-          enum: ['approved', 'draft', 'submitted']
-          description: The current state of the report
+          enum: ['deleted', 'draft', 'submitted', 'needs_action', 'approved']
+          description: |
+            Current state of the report calculated from submissionStatus
+            and manager reviews. Value is calculated by sequelize logic. This is
+            only returned as a response field, it is not a valid request field.
     selectableUser:
       type: object
       description: >
@@ -309,6 +323,36 @@ components:
         isFromSmartsheetTtaPlan:
           type: boolean
           description: Flag indicating the origin of the goal, smartsheet or smarthub
+    approver:
+      type: object
+      description: A manager review of a report
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: number
+              description: User/approving manager's user id
+            name:
+              type: string
+              description: User/approving manager's first and last name
+            role:
+              type: array
+              description: List of User/approving manager's roles
+            fullName:
+              type: string
+              description: Combination of name and role
+              example: 'Hermione Granger, System Specialist'
+        id:
+          type: number
+        status:
+          description: The judgement of the activity report by the approver
+          type: string
+          enum: ['approved', 'needs_action', null]
+        note:
+          description: |
+            Manager feedback relating to the approval
+          type: string
   parameters:
     reportId.in:
       in: query
@@ -390,19 +434,19 @@ components:
       collectionFormat: multi
       items:
         type: string
-    status.in:
+    cacluatedStatus.in:
       in: query
-      name: status.in
+      name: cacluatedStatus.in
       type: array
-      description: Include reports with a status that partial match value
+      description: Include reports with a calculatedStatus that partial match value
       collectionFormat: multi
       items:
         type: string
-    status.nin:
+    cacluatedStatus.nin:
       in: query
-      name: status.nin
+      name: cacluatedStatus.nin
       type: array
-      description: Include reports with a status that does not partial match value
+      description: Include reports with a calculatedStatus that does not partial match value
       collectionFormat: multi
       items:
         type: string
