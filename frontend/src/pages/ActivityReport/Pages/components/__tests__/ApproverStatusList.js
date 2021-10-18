@@ -10,9 +10,16 @@ import ApproverStatusList from '../ApproverStatusList';
 describe('Approver Status List', () => {
   it('renders correctly with data', async () => {
     const approverStatus = [
-      { approver: 'Test Approver1', status: 'approved' },
-      { approver: 'Test Approver2', status: 'submitted' },
-      { approver: 'Test Approver3', status: 'needs_action' }];
+      {
+        id: 1, status: 'approved', note: '', User: { id: 1, fullName: 'Test Approver1' },
+      },
+      {
+        id: 2, status: 'submitted', note: '', User: { id: 2, fullName: 'Test Approver2' },
+      },
+      {
+        id: 3, status: 'needs_action', note: '', User: { id: 3, fullName: 'Test Approver3' },
+      },
+    ];
 
     render(<ApproverStatusList approverStatus={approverStatus} />);
     const items = screen.getAllByRole('listitem');

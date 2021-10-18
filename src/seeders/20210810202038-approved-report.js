@@ -15,12 +15,13 @@ const reports = [
     additionalNotes: '',
     numberOfParticipants: 1,
     deliveryMethod: 'virtual',
-    duration: 1,
+    duration: 99,
     endDate: new Date('1971/01/01'),
     startDate: new Date('1970/01/01'),
     activityRecipientType: 'grantee',
     requester: 'grantee',
-    status: 'approved',
+    calculatedStatus: 'approved',
+    submissionStatus: 'submitted',
     programTypes: ['Head Start (ages 3-5)'],
     reason: ['Child Incidents'],
     targetPopulations: ['Children with disabilities'],
@@ -35,9 +36,8 @@ const reports = [
     createdAt: new Date(),
     updatedAt: new Date(),
     context: '',
-    approvingManagerId: 1,
     regionId: 1,
-    managerNotes: '',
+    oldManagerNotes: '',
     nonECLKCResourcesUsed: ['http://www.website.com'],
     ECLKCResourcesUsed: ['https://www.website.com'],
     virtualDeliveryType: 'video',
@@ -46,11 +46,18 @@ const reports = [
   },
 ];
 
+const approvers = [{
+  activityReportId: 9999,
+  userId: 1,
+  status: 'approved',
+}];
+
 module.exports = {
   up: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.bulkInsert('ActivityReports', reports, { transaction });
       await queryInterface.bulkInsert('ActivityRecipients', recipients, { transaction });
+      await queryInterface.bulkInsert('ActivityReportApprovers', approvers, { transaction });
     });
   },
 
@@ -58,6 +65,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.bulkDelete('ActivityReports', null, { transaction });
       await queryInterface.bulkDelete('ActivityRecipients', null, { transaction });
+      await queryInterface.bulkDelete('ActivityReportApprovers', null, { transaction });
     });
   },
 };

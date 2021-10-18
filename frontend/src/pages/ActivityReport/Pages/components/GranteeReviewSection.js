@@ -10,10 +10,10 @@ const GranteeReviewSection = () => {
   const { watch } = useFormContext();
   const {
     goals,
-    status,
+    calculatedStatus,
   } = watch();
 
-  const canEdit = reportIsEditable(status);
+  const canEdit = reportIsEditable(calculatedStatus);
 
   return (
     <Section

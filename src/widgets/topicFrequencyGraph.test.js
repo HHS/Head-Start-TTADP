@@ -12,45 +12,47 @@ import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
-const GRANTEE_ID = 30;
+const GRANT_ID = 4040;
+const GRANTEE_ID = 5050;
 
 const mockUser = {
-  id: 2000,
+  id: 9945620,
   homeRegionId: 1,
-  name: 'user1000',
-  hsesUsername: 'user1000',
-  hsesUserId: '1000',
+  name: 'user9945620',
+  hsesUsername: 'user9945620',
+  hsesUserId: '9945620',
   role: ['Grants Specialist'],
 };
 
 const mockUserTwo = {
-  id: 2001,
+  id: 2245942,
   homeRegionId: 1,
-  name: 'user2001',
-  hsesUsername: 'user2001',
-  hsesUserId: '2001',
+  name: 'user2245942',
+  hsesUsername: 'user2245942',
+  hsesUserId: 'user2245942',
   role: ['System Specialist'],
 };
 
 const mockUserThree = {
-  id: 3001,
+  id: 33068305,
   homeRegionId: 1,
-  name: 'user3001',
-  hsesUsername: 'user2001',
-  hsesUserId: '3001',
+  name: 'user33068305',
+  hsesUsername: 'user33068305',
+  hsesUserId: 'user33068305',
   role: ['Grants Specialist'],
 };
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.SUBMITTED,
+  calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANTEE_ID },
+    { activityRecipientId: GRANT_ID },
   ],
-  approvingManagerId: 1,
+  oldApprovingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',
   duration: 1,
@@ -95,22 +97,28 @@ const regionOneReportWithDifferentTopics = {
 
 describe('Topics and frequency graph widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await User.create(mockUserTwo);
-    await User.create(mockUserThree);
-    await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
+    await User.bulkCreate([
+      mockUser,
+      mockUserTwo,
+      mockUserThree,
+    ]);
+    await Grantee.create({ name: 'grantee', id: GRANTEE_ID });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
-    await Grant.findOrCreate({
-      where: {
-        id: GRANTEE_ID, number: '1', granteeId: GRANTEE_ID, regionId: 17, status: 'Active', startDate: new Date('2000/01/01'),
-      },
+    await Grant.create({
+      id: GRANT_ID,
+      number: GRANT_ID,
+      granteeId: GRANTEE_ID,
+      regionId: 17,
+      status: 'Active',
+      startDate: new Date('2000/01/01'),
     });
-
-    await ActivityReport.create(regionOneReport);
-    await ActivityReport.create(regionOneReportDistinctDate);
-    await ActivityReport.create(regionTwoReport);
-    await ActivityReport.create(regionOneReportWithDifferentTopics);
+    await ActivityReport.bulkCreate([
+      regionOneReport,
+      regionOneReportDistinctDate,
+      regionTwoReport,
+      regionOneReportWithDifferentTopics,
+    ]);
 
     await ActivityReportCollaborator.create({
       id: 2000,
@@ -145,14 +153,13 @@ describe('Topics and frequency graph widget', () => {
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
       where:
-      { id: [GRANTEE_ID] },
+      { id: [GRANT_ID] },
     });
     await Grantee.destroy({
       where:
       { id: [GRANTEE_ID] },
     });
-    await Region.destroy({ where: { id: 17 } });
-    await Region.destroy({ where: { id: 18 } });
+    await Region.destroy({ where: { id: [17, 18] } });
     await ActivityReportCollaborator.destroy(
       { where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
     );

@@ -11,12 +11,30 @@ function formatDate(fieldName) {
   return null;
 }
 
+/**
+ * Helper function called by model hooks.
+ * Updates current model instance's calculatedStatus field.
+ * Background: calculatedStatus is updated to 'submitted', 'needs_review', and 'approved'
+ * based on hooks on the ActivityReportApprovers. Before submission though,
+ * we want calculatedStatus to function like submissionStatus so developers
+ * only have to check calculatedStatus to determine overall report status.
+ * @param {*} report - current model instance
+ */
+function copyStatus(report) {
+  const { submissionStatus } = report;
+  if (submissionStatus === REPORT_STATUSES.DRAFT
+    || submissionStatus === REPORT_STATUSES.DELETED) {
+    // eslint-disable-next-line no-param-reassign
+    report.calculatedStatus = submissionStatus;
+  }
+}
+
 export default (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
-      ActivityReport.belongsTo(models.User, { foreignKey: 'approvingManagerId', as: 'approvingManager' });
+      ActivityReport.belongsTo(models.User, { foreignKey: 'oldApprovingManagerId', as: 'oldApprovingManager' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
       ActivityReport.belongsToMany(models.User, {
         through: models.ActivityReportCollaborator,
@@ -31,6 +49,7 @@ export default (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
+      ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
           goalId: { [Op.is]: null },
@@ -54,6 +73,13 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportId',
         otherKey: 'objectiveId',
         as: 'objectives',
+      });
+      ActivityReport.addScope('defaultScope', {
+        where: {
+          submissionStatus: {
+            [Op.ne]: 'deleted',
+          },
+        },
       });
     }
   }
@@ -80,7 +106,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    approvingManagerId: {
+    oldApprovingManagerId: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
@@ -144,18 +170,16 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    managerNotes: {
+    oldManagerNotes: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    status: {
+    submissionStatus: {
       allowNull: false,
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
           const requiredForSubmission = [
-            this.approvingManagerId,
-            this.resourcesUsed,
             this.numberOfParticipants,
             this.deliveryMethod,
             this.duration,
@@ -171,7 +195,7 @@ export default (sequelize, DataTypes) => {
             this.ttaType,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
-          if (!draftStatuses.includes(this.status)) {
+          if (!draftStatuses.includes(this.submissionStatus)) {
             // Require fields when report is not a draft
             if (requiredForSubmission.includes(null)) {
               throw new Error('Missing required field(s)');
@@ -179,6 +203,10 @@ export default (sequelize, DataTypes) => {
           }
         },
       },
+    },
+    calculatedStatus: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
     },
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
@@ -237,15 +265,16 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
-    defaultScope: {
-      where: {
-        status: {
-          [Op.ne]: 'deleted',
-        },
-      },
-    },
     sequelize,
     modelName: 'ActivityReport',
+    hooks: {
+      beforeCreate: (report) => {
+        copyStatus(report);
+      },
+      beforeUpdate: (report) => {
+        copyStatus(report);
+      },
+    },
   });
   return ActivityReport;
 };

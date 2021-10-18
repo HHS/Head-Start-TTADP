@@ -30,6 +30,7 @@ import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
+import TooltipWithCollection from '../../components/TooltipWithCollection';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
@@ -41,7 +42,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
     topics: [],
     collaborators: [],
     lastSaved: '',
-    status: '',
+    calculatedStatus: '',
   };
 
   const displayReports = reports.length ? reports : [emptyReport];
@@ -56,55 +57,20 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
       topics,
       collaborators,
       lastSaved,
-      status,
+      calculatedStatus,
       legacyId,
     } = report;
 
     const authorName = author ? author.fullName : '';
 
-    const recipientsTitle = activityRecipients && activityRecipients.reduce(
-      (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
-      '',
-    );
-
     const recipients = activityRecipients && activityRecipients.map((ar) => (
-      <Tag
-        key={`${ar.name.slice(1, 3)}_${ar.id}`}
-        className="smart-hub--table-collection"
-      >
-        {ar.grant ? ar.grant.grantee.name : ar.name}
-      </Tag>
+      ar.grant ? ar.grant.grantee.name : ar.name
     ));
 
-    const topicsTitle = (topics || []).reduce(
-      (result, topic) => `${result + topic}\n`,
-      '',
-    );
+    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
+      collaborator.fullName));
 
-    const topicsWithTags = (topics || []).map((topic) => (
-      <Tag
-        key={topic.slice(1, 13)}
-        className="smart-hub--table-collection"
-      >
-        {topic}
-      </Tag>
-    ));
-
-    const collaboratorsTitle = collaborators && collaborators.reduce(
-      (result, collaborator) => `${result + collaborator.fullName}\n`,
-      '',
-    );
-
-    const collaboratorsWithTags = collaborators && collaborators.map((collaborator) => (
-      <Tag
-        key={collaborator.fullName.slice(1, 13)}
-        className="smart-hub--table-collection"
-      >
-        {collaborator.fullName}
-      </Tag>
-    ));
-
-    const viewOrEditLink = status === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
+    const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
 
     const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
 
@@ -152,9 +118,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </Link>
         </th>
         <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
+          <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -163,21 +127,17 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </span>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={topicsTitle}>
-            {topicsWithTags}
-          </span>
+          <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
+          <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>{lastSaved}</td>
         <td>
           <Tag
-            className={`smart-hub--table-tag-status smart-hub--status-${status}`}
+            className={`smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`}
           >
-            {status === 'needs_action' ? 'Needs action' : status}
+            {calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus}
           </Tag>
         </td>
         <td>
@@ -436,8 +396,7 @@ function Landing({ user }) {
           }}
           onKeyPress={() => requestSort(name)}
           className={`sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${
-            sortClassName === 'asc' ? 'descending' : 'ascending'
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
           {displayName}
@@ -482,25 +441,25 @@ function Landing({ user }) {
       </Helmet>
       <>
         {showAlert && message && (
-        <Alert
-          type="success"
-          role="alert"
-          noIcon
-          cta={(
-            <Button
-              role="button"
-              unstyled
-              aria-label="dismiss alert"
-              onClick={() => updateShowAlert(false)}
-            >
-              <span className="fa-sm margin-right-2">
-                <FontAwesomeIcon color="black" icon={faTimesCircle} />
-              </span>
-            </Button>
-              )}
-        >
-          {msg}
-        </Alert>
+          <Alert
+            type="success"
+            role="alert"
+            noIcon
+            cta={(
+              <Button
+                role="button"
+                unstyled
+                aria-label="dismiss alert"
+                onClick={() => updateShowAlert(false)}
+              >
+                <span className="fa-sm margin-right-2">
+                  <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                </span>
+              </Button>
+            )}
+          >
+            {msg}
+          </Alert>
         )}
         <Grid row gap>
           <Grid>
@@ -508,21 +467,21 @@ function Landing({ user }) {
           </Grid>
           <Grid col={2} className="flex-align-self-center">
             {regions.length > 1
-                && (
+              && (
                 <RegionalSelect
                   regions={allRegionsUserHasPermissionTo(user)}
                   onApply={onApplyRegion}
                   appliedRegion={appliedRegion}
                   hasCentralOffice={user.homeRegionId === 14}
                 />
-                )}
+              )}
           </Grid>
           <Grid className="flex-align-self-center">
             {reportAlerts
-                  && reportAlerts.length > 0
-                  && hasReadWrite(user)
-                  && appliedRegion !== 14
-                  && <NewReport />}
+              && reportAlerts.length > 0
+              && hasReadWrite(user)
+              && appliedRegion !== 14
+              && <NewReport />}
           </Grid>
         </Grid>
         <Grid row gap className="smart-hub--overview">
@@ -538,9 +497,9 @@ function Landing({ user }) {
         </Grid>
         <Grid row>
           {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
+            <Alert type="error" role="alert">
+              {error}
+            </Alert>
           )}
         </Grid>
         <MyAlerts
@@ -558,32 +517,33 @@ function Landing({ user }) {
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
+          message={message}
         />
         <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
           <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
             {numberOfSelectedReports > 0
-                  && (
-                  <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
-                    {numberOfSelectedReports}
-                    {' '}
-                    selected
-                    {' '}
-                    <Button
-                      className="smart-hub--select-tag__button"
-                      unstyled
-                      aria-label="deselect all reports"
-                      onClick={() => {
-                        toggleSelectAll({ target: { checked: false } });
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        color="blue"
-                        inverse
-                        icon={faTimesCircle}
-                      />
-                    </Button>
-                  </span>
-                  )}
+              && (
+                <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
+                  {numberOfSelectedReports}
+                  {' '}
+                  selected
+                  {' '}
+                  <Button
+                    className="smart-hub--select-tag__button"
+                    unstyled
+                    aria-label="deselect all reports"
+                    onClick={() => {
+                      toggleSelectAll({ target: { checked: false } });
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      color="blue"
+                      inverse
+                      icon={faTimesCircle}
+                    />
+                  </Button>
+                </span>
+              )}
             <Filter applyFilters={handleApplyFilters} />
             <ReportMenu
               hasSelectedReports={numberOfSelectedReports > 0}
@@ -620,9 +580,9 @@ function Landing({ user }) {
             </span>
           </span>
           <div className="usa-table-container--scrollable">
-            <Table className="usa-table usa-table--borderless usa-table--striped">
+            <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
               <caption>
-                { `Region ${regionLabel} Activity reports` }
+                {`Region ${regionLabel} Activity reports`}
                 <p className="usa-sr-only">with sorting and pagination</p>
               </caption>
               <thead>
@@ -643,7 +603,7 @@ function Landing({ user }) {
                   {renderColumnHeader('Topic(s)', 'topics')}
                   {renderColumnHeader('Collaborator(s)', 'collaborators')}
                   {renderColumnHeader('Last saved', 'updatedAt')}
-                  {renderColumnHeader('Status', 'status')}
+                  {renderColumnHeader('Status', 'calculatedStatus')}
                   <th scope="col" aria-label="context menu" />
                 </tr>
               </thead>

@@ -4,14 +4,12 @@ import { Button } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../../utils';
 import ApproverStatusList from '../../components/ApproverStatusList';
-
+import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import IncompletePages from './IncompletePages';
 
 const NeedsAction = ({
   additionalNotes,
-  managerNotes,
   onSubmit,
-  approvingManager,
   incompletePages,
   approverStatusList,
 }) => {
@@ -19,12 +17,11 @@ const NeedsAction = ({
 
   const submit = async () => {
     if (!hasIncompletePages) {
-      await onSubmit({ approvingManagerId: approvingManager.id, additionalNotes });
+      await onSubmit({ approvers: approverStatusList, additionalNotes });
     }
   };
 
   const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
-  const managerNotesState = getEditorState(managerNotes || 'No manager notes');
 
   return (
     <>
@@ -39,7 +36,7 @@ const NeedsAction = ({
         <p>
           <span className="text-bold">Manager notes</span>
         </p>
-        <Editor readOnly toolbarHidden defaultEditorState={managerNotesState} />
+        <DisplayApproverNotes approverStatusList={approverStatusList} />
       </div>
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <div className="margin-top-3">
@@ -52,13 +49,8 @@ const NeedsAction = ({
 
 NeedsAction.propTypes = {
   additionalNotes: PropTypes.string,
-  managerNotes: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
-  approvingManager: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-  }).isRequired,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
@@ -67,7 +59,6 @@ NeedsAction.propTypes = {
 
 NeedsAction.defaultProps = {
   additionalNotes: '',
-  managerNotes: '',
 };
 
 export default NeedsAction;

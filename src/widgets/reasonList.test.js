@@ -1,31 +1,33 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, NonGrantee, Grant, NextStep, Region,
+  ActivityReport, ActivityRecipient, User, Grantee, Grant, NextStep,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 
-const GRANTEE_ID = 30;
-const GRANTEE_ID_TWO = 31;
+const GRANTEE_ID = 462034;
+const GRANT_ID_ONE = 107863;
+const GRANT_ID_TWO = 204628;
 
 const mockUser = {
-  id: 1001,
+  id: 5426861,
   homeRegionId: 1,
-  name: 'user1001',
-  hsesUsername: 'user1001',
-  hsesUserId: '1001',
+  name: 'user5426861',
+  hsesUsername: 'user5426861',
+  hsesUserId: '5426861',
 };
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.SUBMITTED,
+  calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANTEE_ID },
-    { activityRecipientId: GRANTEE_ID_TWO },
+    { activityRecipientId: GRANT_ID_ONE },
+    { activityRecipientId: GRANT_ID_TWO },
   ],
   approvingManagerId: 1,
   numberOfParticipants: 11,
@@ -44,7 +46,7 @@ const reportObject = {
 
 const regionOneReportA = {
   ...reportObject,
-  regionId: 1,
+  regionId: 8,
   duration: 1,
   reason: ['First Reason'],
   startDate: '2021-01-01T12:00:00Z',
@@ -53,7 +55,7 @@ const regionOneReportA = {
 
 const regionOneReportB = {
   ...reportObject,
-  regionId: 1,
+  regionId: 8,
   duration: 2,
   reason: ['First Reason', 'Second Reason'],
   startDate: '2021-02-01T12:00:00Z',
@@ -62,7 +64,7 @@ const regionOneReportB = {
 
 const regionOneReportC = {
   ...reportObject,
-  regionId: 1,
+  regionId: 8,
   duration: 3,
   reason: [
     'First Reason',
@@ -86,7 +88,7 @@ const regionOneReportC = {
 
 const regionOneReportD = {
   ...reportObject,
-  regionId: 1,
+  regionId: 8,
   duration: 4,
   reason: ['Second Reason', 'Third Reason', 'Fourth Reason'],
   startDate: '2021-03-01T12:00:00Z',
@@ -95,7 +97,7 @@ const regionOneReportD = {
 
 const regionOneReportE = {
   ...reportObject,
-  regionId: 1,
+  regionId: 8,
   duration: 5,
   reason: ['Second Reason'],
   startDate: '2021-04-01T12:00:00Z',
@@ -113,31 +115,24 @@ const regionTwoReportA = {
 
 const regionOneDraftReport = {
   ...reportObject,
-  regionId: 1,
+  regionId: 8,
   duration: 7,
   reason: ['First Reason', 'Second Reason'],
   startDate: '2021-02-01T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
-  status: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  calculatedStatus: REPORT_STATUSES.DRAFT,
 };
 
 describe('Reason list widget', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser });
-    await Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } });
-    await Region.create({ name: 'office 17', id: 17 });
-    await Region.create({ name: 'office 18', id: 18 });
-    await Grant.findOrCreate({
-      where: {
-        id: GRANTEE_ID, number: '1', granteeId: GRANTEE_ID, regionId: 17, status: 'Active',
-      },
-    });
-    await Grant.findOrCreate({
-      where: {
-        id: GRANTEE_ID_TWO, number: '2', granteeId: GRANTEE_ID, regionId: 18, status: 'Active',
-      },
-    });
-    await NonGrantee.findOrCreate({ where: { id: GRANTEE_ID, name: 'nonGrantee' } });
+    await User.create(mockUser);
+    await Grantee.create({ name: 'grantee', id: GRANTEE_ID });
+    await Grant.bulkCreate([{
+      id: GRANT_ID_ONE, number: GRANT_ID_ONE, granteeId: GRANTEE_ID, regionId: 3, status: 'Active',
+    }, {
+      id: GRANT_ID_TWO, number: GRANT_ID_TWO, granteeId: GRANTEE_ID, regionId: 3, status: 'Active',
+    }]);
 
     const reportOne = await ActivityReport.findOne({ where: { duration: 1, reason: ['First Reason'] } });
     await createOrUpdate(regionOneReportA, reportOne);
@@ -157,7 +152,7 @@ describe('Reason list widget', () => {
     const reportSix = await ActivityReport.findOne({ where: { duration: 6, reason: ['First Reason', 'Second Reason'] } });
     await createOrUpdate(regionTwoReportA, reportSix);
 
-    const reportSeven = await ActivityReport.findOne({ where: { duration: 7, reason: ['First Reason', 'Second Reason'], status: REPORT_STATUSES.DRAFT } });
+    const reportSeven = await ActivityReport.findOne({ where: { duration: 7, reason: ['First Reason', 'Second Reason'], submissionStatus: REPORT_STATUSES.DRAFT } });
     await createOrUpdate(regionOneDraftReport, reportSeven);
   });
 
@@ -169,11 +164,8 @@ describe('Reason list widget', () => {
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id] } });
-    await NonGrantee.destroy({ where: { id: GRANTEE_ID } });
-    await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_TWO] } });
-    await Grantee.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_TWO] } });
-    await Region.destroy({ where: { id: 17 } });
-    await Region.destroy({ where: { id: 18 } });
+    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] } });
+    await Grantee.destroy({ where: { id: GRANTEE_ID } });
     await db.sequelize.close();
   });
 
@@ -182,7 +174,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list within small date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/01/01-2021/02/28' });
+    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' });
     const res = await reasonList(scopes);
 
     expect(res.length).toBe(14);
@@ -197,7 +189,7 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list for longer date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/01/01-2021/03/31' });
+    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/03/31' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(14);
     expect(res[0].name).toBe('First Reason');
@@ -209,10 +201,9 @@ describe('Reason list widget', () => {
   });
 
   it('retrieves reason list for later date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/03/01-2021/04/30' });
+    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/03/01-2021/04/30' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(3);
-
     expect(res[0].name).toBe('Second Reason');
     expect(res[0].count).toBe(2);
     expect(res[1].name).toBe('Fourth Reason');
@@ -222,7 +213,7 @@ describe('Reason list widget', () => {
   });
 
   it('retreives reason list for longer date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/02/01-2021/04/30' });
+    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/02/01-2021/04/30' });
     const res = await reasonList(scopes);
     expect(res.length).toBe(14);
     expect(res[0].name).toBe('Second Reason');
@@ -235,11 +226,11 @@ describe('Reason list widget', () => {
     expect(res[2].count).toBe(2);
   });
   it('does not retrieve reason list outside of date range for specified region', async () => {
-    let scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2020/01/01-2020/12/31' });
+    let scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2020/01/01-2020/12/31' });
     let res = await reasonList(scopes);
     expect(res.length).toBe(0);
 
-    scopes = filtersToScopes({ 'region.in': ['1'], 'startDate.win': '2021/05/01-2021/06/23' });
+    scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/05/01-2021/06/23' });
 
     res = await reasonList(scopes);
     expect(res.length).toBe(0);

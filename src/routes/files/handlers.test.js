@@ -37,7 +37,7 @@ const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() =>
 
 const reportObject = {
   activityRecipientType: 'grantee',
-  status: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',

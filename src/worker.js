@@ -4,15 +4,14 @@ require('newrelic');
 import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
-import reconcileLegacyReports, { reconciliationQueue } from './services/legacyreports';
 import { scanQueue } from './services/scanQueue';
 import processFile from './workers/files';
 import {
-  managerApprovalRequested,
-  changesRequestedByManager,
-  reportApproved,
+  notifyApproverAssigned,
+  notifyChangesRequested,
+  notifyReportApproved,
   notificationQueue,
-  notifyCollaborator,
+  notifyCollaboratorAssigned,
 } from './lib/mailer';
 
 // Number of workers to spawn
@@ -33,16 +32,6 @@ function start() {
   });
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
 
-  // Legacy report Reconcilliation
-  reconciliationQueue.on('failed', (job, error) => auditLogger
-    .error(`${job.data.key}: Legacy report reconciliation failed with error ${error}`));
-  reconciliationQueue.on('completed', () => logger
-    .info('Legacy report reconciliation completed successfully'));
-  reconciliationQueue.process('legacyReports', async (job) => {
-    logger.info(`starting ${job}`);
-    await reconcileLegacyReports();
-  });
-
   // Notifications
   notificationQueue.on('failed', (job, error) => auditLogger
     .error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`));
@@ -53,10 +42,11 @@ function start() {
       logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} because SEND_NOTIFICATIONS is not set`);
     }
   });
-  notificationQueue.process('changesRequested', changesRequestedByManager);
-  notificationQueue.process('managerApproval', managerApprovalRequested);
-  notificationQueue.process('reportApproved', reportApproved);
-  notificationQueue.process('collaboratorAdded', notifyCollaborator);
+
+  notificationQueue.process('changesRequested', notifyChangesRequested);
+  notificationQueue.process('approverAssigned', notifyApproverAssigned);
+  notificationQueue.process('reportApproved', notifyReportApproved);
+  notificationQueue.process('collaboratorAssigned', notifyCollaboratorAssigned);
 }
 
 // spawn workers and start them
