@@ -56,7 +56,7 @@ export async function granteeById(granteeId, grantScopes) {
  *
  * @returns {Promise} grantee results
  */
-export async function granteesByNameAndRegion(query, scopes, sortBy, direction, offset) {
+export async function granteesByName(query, scopes, sortBy, direction, offset) {
   // fix the query
   const q = `%${query}%`;
 
