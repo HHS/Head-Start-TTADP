@@ -149,6 +149,10 @@ parameters:
     type: string
   dev_git_url:
     description: "URL of github repo that will deploy to dev"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  sandbox_git_url:
+    description: "URL of github repo that will deploy to dev"
     default: "https://github.com/adhocteam/Head-Start-TTADP"
     type: string
   prod_git_branch:
@@ -159,12 +163,12 @@ parameters:
     description: "Name of github branch that will deploy to staging"
     default: "main"
     type: string
-  dev_git_branch:
+  dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "main"
+    default: "kw-delete-reports-script"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-369/phantom-objectives"
+    default: "kw-delete-reports-script"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -340,7 +344,7 @@ jobs:
       - when:  # sandbox: for short-term feature development, see README.md
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.sandbox_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
             - cf_deploy:
