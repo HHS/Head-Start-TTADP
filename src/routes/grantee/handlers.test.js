@@ -1,9 +1,9 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { getGrantee, searchGrantees } from './handlers';
-import { granteeByScopes, granteesByNameAndRegion } from '../../services/grantee';
+import { granteeById, granteesByNameAndRegion } from '../../services/grantee';
 
 jest.mock('../../services/grantee', () => ({
-  granteeByScopes: jest.fn(),
+  granteeById: jest.fn(),
   granteesByNameAndRegion: jest.fn(),
 }));
 
@@ -29,7 +29,7 @@ describe('getGrantee', () => {
         modelType: 'grant',
       },
     };
-    granteeByScopes.mockResolvedValue(granteeWhere);
+    granteeById.mockResolvedValue(granteeWhere);
     await getGrantee(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(granteeWhere);
   });
@@ -44,7 +44,7 @@ describe('getGrantee', () => {
         modelType: 'grant',
       },
     };
-    granteeByScopes.mockResolvedValue(null);
+    granteeById.mockResolvedValue(null);
     await getGrantee(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
