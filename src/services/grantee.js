@@ -68,7 +68,7 @@ export async function granteeById(granteeId, grantScopes) {
     }
 
     if (grant.dataValues.programs) {
-      grant.dataValues.programs = [new Set(...grant.dataValues.programs, program.name)];
+      grant.dataValues.programs = Array.from(new Set([...grant.dataValues.programs, program.name]));
     } else {
       grant.dataValues.programs = [program.name];
     }

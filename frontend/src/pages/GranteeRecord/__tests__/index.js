@@ -55,11 +55,20 @@ describe('grantee record page', () => {
       url: '',
       params: {
         granteeId: '1',
-        regionId: '45',
       },
     };
 
-    render(<Router history={history}><GranteeRecord user={user} match={match} /></Router>);
+    const location = {
+      search: '?region=45',
+      hash: '',
+      pathname: '',
+    };
+
+    render(
+      <Router history={history}>
+        <GranteeRecord user={user} match={match} location={location} />
+      </Router>,
+    );
   }
 
   const overview = {
@@ -76,14 +85,14 @@ describe('grantee record page', () => {
   beforeEach(() => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/widgets/dashboardOverview', overview);
-    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1&modelType.is=grant', overview);
+    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1', overview);
   });
   afterEach(() => {
     fetchMock.restore();
   });
 
   it('shows the grantee name', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
+    fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
     act(() => renderGranteeRecord());
 
     const granteeName = await screen.findByText('the Mighty Grantee - Region 45');
@@ -91,7 +100,7 @@ describe('grantee record page', () => {
   });
 
   it('renders the navigation', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
+    fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
     act(() => renderGranteeRecord());
 
     const backToSearch = await screen.findByRole('link', { name: /back to search/i });
@@ -101,30 +110,30 @@ describe('grantee record page', () => {
   });
 
   it('handles grantee not found', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 404);
+    fetchMock.get('/api/grantee/1?region.in[]=45', 404);
     act(() => renderGranteeRecord());
     const error = await screen.findByText('Grantee record not found');
     expect(error).toBeInTheDocument();
   });
 
   it('handles fetch error', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', 500);
+    fetchMock.get('/api/grantee/1?region.in[]=45', 500);
     act(() => renderGranteeRecord());
     const error = await screen.findByText('There was an error fetching grantee data');
     expect(error).toBeInTheDocument();
   });
 
   it('navigates to the profile page', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
-    memoryHistory.push('/region/1/grantee/45/profile');
+    fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
+    memoryHistory.push('/grantee/1/profile?region.=45');
     act(() => renderGranteeRecord(memoryHistory));
     const heading = await screen.findByRole('heading', { name: /grantee summary/i });
     expect(heading).toBeInTheDocument();
   });
 
   it('navigates to the tta history page', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45&modelType=grant', theMightyGrantee);
-    memoryHistory.push('/region/1/grantee/45/tta-history');
+    fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
+    memoryHistory.push('/grantee/1/tta-history?region=45');
     act(() => renderGranteeRecord(memoryHistory));
     const arLabel = await screen.findByText(/activity reports/i);
     expect(arLabel).toBeInTheDocument();
