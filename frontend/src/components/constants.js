@@ -10,7 +10,6 @@ export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const DATE_CONDITIONS = [BEFORE, AFTER, WITHIN];
 
 export const QUERY_CONDITIONS = {
-  [ONE_OF]: 'in',
   [CONTAINS]: 'in[]',
   [NOT_CONTAINS]: 'nin[]',
   [BEFORE]: 'bef',

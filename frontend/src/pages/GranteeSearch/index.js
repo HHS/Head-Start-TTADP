@@ -40,7 +40,7 @@ function GranteeSearch({ user }) {
           filters.push({
             id: uuidv4(),
             topic: 'region',
-            condition: 'One of',
+            condition: 'Contains',
             query: region,
           });
         });
