@@ -197,7 +197,6 @@ describe('the grantee search page', () => {
     const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0');
 
     fetchMock.get(url, res);
-
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
@@ -252,7 +251,7 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint, homeRegionId: 14 };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search?s=ground%20control&region.in=1&region.in=2&sortBy=name&direction=asc&offset=0');
+    const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
@@ -264,39 +263,6 @@ describe('the grantee search page', () => {
     });
 
     expect(fetchMock.called()).toBeTruthy();
-  });
-
-  it('sorts correctly', async () => {
-    const user = { ...userBluePrint };
-
-    renderGranteeSearch(user);
-
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=0');
-
-    fetchMock.get(url, res);
-
-    const sortButton = screen.getByRole('button', { name: 'Program Specialist. Activate to sort ascending' });
-    const searchBox = screen.getByRole('searchbox');
-    const button = screen.getByRole('button', { name: /search for matching grantees/i });
-
-    act(() => {
-      userEvent.type(searchBox, query);
-      fireEvent.click(button);
-    });
-
-    fetchMock.get('/api/grantee/search?s=ground%20control&region.in[]=1&sortBy=programSpecialist&direction=asc&offset=0', res);
-
-    act(() => {
-      fireEvent.click(sortButton);
-    });
-
-    fetchMock.get('/api/grantee/search?s=ground%20control&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0', res);
-
-    act(() => {
-      fireEvent.click(sortButton);
-    });
-
-    expect(fetchMock.calls().length).toBe(3);
   });
 
   it('handles an error', async () => {

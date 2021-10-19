@@ -17,9 +17,8 @@ function GranteeSearch({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
   const [appliedRegion, setAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
-  const [granteeCount, setGranteeCount] = useState(0);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState({ count: 0, rows: [] });
   const [activePage, setActivePage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({
@@ -30,6 +29,12 @@ function GranteeSearch({ user }) {
   const inputRef = useRef();
 
   const offset = (activePage - 1) * GRANTEES_PER_PAGE;
+
+  function setCurrentQuery() {
+    if (inputRef.current) {
+      setQuery(inputRef.current.value);
+    }
+  }
 
   useEffect(() => {
     async function fetchGrantees() {
@@ -56,18 +61,17 @@ function GranteeSearch({ user }) {
       setLoading(true);
 
       try {
-        const {
-          rows,
-          count,
-        } = await searchGrantees(query, filters, { ...sortConfig, offset });
-        setResults(rows);
-        setGranteeCount(count);
+        const response = await searchGrantees(query, filters, { ...sortConfig, offset });
+        setResults(response);
       } catch (err) {
-        setResults([]);
-        setGranteeCount(0);
+        setResults({ count: 0, rows: [] });
       } finally {
         setLoading(false);
       }
+    }
+
+    if (!query) {
+      return;
     }
 
     fetchGrantees();
@@ -79,8 +83,11 @@ function GranteeSearch({ user }) {
 
   async function requestSort(sortBy) {
     if (loading) {
+      console.log('still loading');
       return;
     }
+
+    console.log(sortBy);
 
     const config = { ...sortConfig };
     if (config.sortBy === sortBy) {
@@ -101,11 +108,10 @@ function GranteeSearch({ user }) {
 
   async function onSubmit(e) {
     e.preventDefault();
-
-    if (inputRef.current) {
-      setQuery(inputRef.current.value);
-    }
+    setCurrentQuery();
   }
+
+  const { count, rows } = results;
 
   return (
     <>
@@ -137,12 +143,12 @@ function GranteeSearch({ user }) {
         </Grid>
         <main>
           <GranteeResults
-            grantees={results}
+            grantees={rows}
             loading={loading}
             activePage={activePage}
             offset={offset}
             perPage={GRANTEES_PER_PAGE}
-            count={granteeCount}
+            count={count}
             handlePageChange={handlePageChange}
             requestSort={requestSort}
             sortConfig={sortConfig}
