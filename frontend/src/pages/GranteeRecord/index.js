@@ -40,12 +40,6 @@ export default function GranteeRecord({ match, location }) {
         condition: 'Contains',
         query: granteeId,
       },
-      {
-        id: uuidv4(),
-        topic: 'modelType',
-        condition: 'Is',
-        query: 'grant',
-      },
     ];
 
     setFilters(filtersToApply);

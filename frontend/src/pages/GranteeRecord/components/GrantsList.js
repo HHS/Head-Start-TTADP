@@ -5,23 +5,6 @@ import Container from '../../../components/Container';
 import './GrantsList.css';
 
 export default function GrantsList({ summary }) {
-  const getGrantPrograms = (programs) => {
-    let shortProgramTypes = [];
-    if (programs && Array.isArray(programs) && programs.length > 0) {
-      shortProgramTypes = programs.map((p) => {
-        if (p === 'Early Head Start (ages 0-3)') {
-          return 'EHS';
-        }
-        if (p === 'Head Start (ages 3-5)') {
-          return 'HS';
-        }
-
-        return 'EHS-CCP';
-      });
-    }
-    return shortProgramTypes.join(', ');
-  };
-
   const renderGrantsList = () => {
     if (summary && summary.grants) {
       return summary.grants.map((grant) => (
@@ -35,7 +18,7 @@ export default function GrantsList({ summary }) {
             {grant.status}
           </td>
           <td>
-            {getGrantPrograms(grant.programTypes)}
+            {grant.programs ? grant.programs.join(', ') : ''}
           </td>
           <td>
             {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
