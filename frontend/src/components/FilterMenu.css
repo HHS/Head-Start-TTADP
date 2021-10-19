@@ -1,0 +1,10 @@
+.ttahub-filter-menu {
+    position: relative;
+}
+.ttahub-filter-menu-filters {
+    background: white;
+    top: 100%;
+    left: 0;
+    position: absolute;
+    z-index: 1
+}
