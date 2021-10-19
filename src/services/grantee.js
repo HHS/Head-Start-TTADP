@@ -37,7 +37,8 @@ export async function granteeById(granteeId, grantScopes) {
           {
             model: Program,
             attributes: ['name'],
-            as: 'programs',
+            as: 'program',
+            required: false,
           },
         ],
       },
