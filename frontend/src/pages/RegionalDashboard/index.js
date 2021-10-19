@@ -82,12 +82,6 @@ export default function RegionalDashboard({ user }) {
         condition: 'Is within',
         query: dateRange,
       },
-      {
-        id: uuidv4(),
-        topic: 'modelType',
-        condition: 'Is',
-        query: 'activityReport',
-      },
     ];
 
     updateFilters(filtersToApply);
