@@ -21,7 +21,6 @@ function GranteeSearch({ user }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [activePage, setActivePage] = useState(1);
-  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     sortBy: 'name',
@@ -30,37 +29,14 @@ function GranteeSearch({ user }) {
 
   const inputRef = useRef();
 
+  const offset = (activePage - 1) * GRANTEES_PER_PAGE;
+
   useEffect(() => {
     async function fetchGrantees() {
-      /**
-       * get up to date query
-       */
-      if (inputRef.current) {
-        setQuery(inputRef.current.value);
-      }
-
-      /**
-       * We assume the function that changed the state also changed loading.
-       * That's why, if the app is not in a loading state, we return
-       */
-
-      if (!loading) {
-        setLoading(false);
-        return;
-      }
-
-      /**
-       * if we have no query, the form was submitted in error (extra button press, etc)
-       */
-      if (!query) {
-        setLoading(false);
-        return;
-      }
-
       const filters = [];
 
       if (appliedRegion === 14) {
-        regions.forEach((region) => {
+        getUserRegions(user).forEach((region) => {
           filters.push({
             id: uuidv4(),
             topic: 'region',
@@ -77,8 +53,9 @@ function GranteeSearch({ user }) {
         });
       }
 
+      setLoading(true);
+
       try {
-        setLoading(false);
         const {
           rows,
           count,
@@ -88,15 +65,16 @@ function GranteeSearch({ user }) {
       } catch (err) {
         setResults([]);
         setGranteeCount(0);
+      } finally {
+        setLoading(false);
       }
     }
 
     fetchGrantees();
-  }, [appliedRegion, loading, offset, query, regions, sortConfig]);
+  }, [query, appliedRegion, offset, sortConfig, user]);
 
   function onApplyRegion(region) {
     setAppliedRegion(region.value);
-    setLoading(true);
   }
 
   async function requestSort(sortBy) {
@@ -104,24 +82,20 @@ function GranteeSearch({ user }) {
       return;
     }
 
-    const config = sortConfig;
+    const config = { ...sortConfig };
     if (config.sortBy === sortBy) {
       config.direction = config.direction === 'asc' ? 'desc' : 'asc';
       setSortConfig(config);
-      setLoading(true);
       return;
     }
 
     config.sortBy = sortBy;
     setSortConfig(config);
-    setLoading(true);
   }
 
   async function handlePageChange(pageNumber) {
     if (!loading) {
       setActivePage(pageNumber);
-      setOffset((pageNumber - 1) * GRANTEES_PER_PAGE);
-      setLoading(true);
     }
   }
 
@@ -131,8 +105,6 @@ function GranteeSearch({ user }) {
     if (inputRef.current) {
       setQuery(inputRef.current.value);
     }
-
-    setLoading(true);
   }
 
   return (
