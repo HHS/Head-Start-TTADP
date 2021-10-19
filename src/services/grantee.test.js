@@ -1,9 +1,8 @@
 import {
-  Grantee, Grant, ActivityReport, ActivityRecipient, sequelize,
+  Grantee, Grant, Program, sequelize,
 } from '../models';
 import { allGrantees, granteeById, granteesByName } from './grantee';
 import filtersToScopes from '../scopes';
-import { REPORT_STATUSES } from '../constants';
 
 describe('Grantee DB service', () => {
   const grantees = [
@@ -24,60 +23,6 @@ describe('Grantee DB service', () => {
   beforeAll(async () => {
     await Promise.all([
       ...grantees.map((g) => Grantee.create(g)),
-      await ActivityReport.create({
-        regionId: 1,
-        status: REPORT_STATUSES.APPROVED,
-        approvingManagerId: 1,
-        numberOfParticipants: 1,
-        deliveryMethod: 'method',
-        duration: 0,
-        endDate: '2000-01-01T12:00:00Z',
-        startDate: '2000-01-01T12:00:00Z',
-        requester: 'requester',
-        programTypes: ['type'],
-        targetPopulations: ['pop'],
-        reason: ['reason'],
-        participants: ['participants'],
-        topics: ['topics'],
-        ttaType: ['type'],
-        id: 61905,
-      }),
-      await ActivityReport.create({
-        regionId: 1,
-        status: REPORT_STATUSES.APPROVED,
-        approvingManagerId: 1,
-        numberOfParticipants: 1,
-        deliveryMethod: 'method',
-        duration: 0,
-        endDate: '2000-01-01T12:00:00Z',
-        startDate: '2000-01-01T12:00:00Z',
-        requester: 'requester',
-        programTypes: ['type'],
-        targetPopulations: ['pop'],
-        reason: ['reason'],
-        participants: ['participants'],
-        topics: ['topics'],
-        ttaType: ['type'],
-        id: 61906,
-      }),
-      await ActivityReport.create({
-        regionId: 1,
-        status: REPORT_STATUSES.APPROVED,
-        approvingManagerId: 1,
-        numberOfParticipants: 1,
-        deliveryMethod: 'method',
-        duration: 0,
-        endDate: '2000-01-01T12:00:00Z',
-        startDate: '2000-01-01T12:00:00Z',
-        requester: 'requester',
-        programTypes: ['type2'],
-        targetPopulations: ['pop'],
-        reason: ['reason'],
-        participants: ['participants'],
-        topics: ['topics'],
-        ttaType: ['type'],
-        id: 61907,
-      }),
       await Grant.create({
         id: 75,
         number: '1145543',
@@ -96,26 +41,32 @@ describe('Grantee DB service', () => {
         startDate: new Date(),
         endDate: new Date(),
       }),
-      await ActivityRecipient.create({
-        activityReportId: 61905,
-        grantId: 74,
-      }),
-      await ActivityRecipient.create({
-        activityReportId: 61906,
+      await Program.create({
+        id: 74,
         grantId: 75,
+        name: 'type2',
+        startYear: 'Aeons ago',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
       }),
-      await ActivityRecipient.create({
-        activityReportId: 61907,
+      await Program.create({
+        id: 75,
         grantId: 75,
+        name: 'type',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
       }),
     ]);
   });
 
   afterAll(async () => {
-    await ActivityRecipient.destroy({ where: { activityReportId: [61905, 61906, 61907] } });
-    await Grant.destroy({ where: { id: grantees.map((g) => g.id) } });
-    await Grantee.destroy({ where: { id: grantees.map((g) => g.id) } });
-    await ActivityReport.destroy({ where: { id: [61905, 61906, 61907] } });
+    const id = grantees.map((g) => g.id);
+    await Program.destroy({ where: { id } });
+    await Grant.destroy({ where: { id } });
+    await Grantee.destroy({ where: { id } });
     await sequelize.close();
   });
 
@@ -149,7 +100,7 @@ describe('Grantee DB service', () => {
       expect(grantee3.grants[0].programSpecialistName).toBe(null);
       expect(grantee3.grants[0].startDate).toBeTruthy();
       expect(grantee3.grants[0].endDate).toBeTruthy();
-      expect(grantee3.grants[0].programTypes).toStrictEqual(['type2', 'type']);
+      expect(grantee3.grants[0].dataValues.programs).toStrictEqual(['type2', 'type']);
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [74] };
