@@ -83,11 +83,8 @@ function GranteeSearch({ user }) {
 
   async function requestSort(sortBy) {
     if (loading) {
-      console.log('still loading');
       return;
     }
-
-    console.log(sortBy);
 
     const config = { ...sortConfig };
     if (config.sortBy === sortBy) {
