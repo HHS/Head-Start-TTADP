@@ -8,3 +8,20 @@
     position: absolute;
     z-index: 1
 }
+
+.ttahub-filter-menu-item {
+    min-width: 600px;
+}
+
+.ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select,
+.ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select,
+.ttahub-dummy-select {
+    min-width: 200px;
+}
+
+.ttahub-filter-menu .SingleDatePicker .DateInput__small {
+    min-width: 160px;
+}
+.ttahub-filter-menu .SingleDatePicker .DateInput_input__small {
+    padding: 0.5rem;
+}

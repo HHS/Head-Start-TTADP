@@ -190,7 +190,7 @@ function ButtonSelect(props) {
                   }}
                 >
                   {option.label}
-                  { option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null }
+                  {option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null}
                 </button>
               ))}
 
