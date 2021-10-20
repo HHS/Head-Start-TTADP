@@ -45,6 +45,8 @@ export default function GranteeRecord({ match, location }) {
     setFilters(filtersToApply);
   }, [granteeId, regionId]);
 
+  const onApplyFilters = () => {};
+
   useEffect(() => {
     async function fetchGrantee(id, region) {
       try {
@@ -91,7 +93,12 @@ export default function GranteeRecord({ match, location }) {
         <Switch>
           <Route
             path="/grantee/:granteeId/tta-history"
-            render={() => <TTAHistory filters={filters} />}
+            render={() => (
+              <TTAHistory
+                filters={filters}
+                onApplyFilters={onApplyFilters}
+              />
+            )}
           />
           <Route
             path="/grantee/:granteeId/profile"

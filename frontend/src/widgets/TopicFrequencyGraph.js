@@ -8,35 +8,7 @@ import DateTime from '../components/DateTime';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
-import CheckboxSelect from '../components/CheckboxSelect';
-
-export const ROLES_MAP = [
-  {
-    selectValue: 1,
-    value: 'Early Childhood Specialist',
-    label: 'Early Childhood Specialist (ECS)',
-  },
-  {
-    selectValue: 2,
-    value: 'Family Engagement Specialist',
-    label: 'Family Engagement Specialist (FES)',
-  },
-  {
-    selectValue: 3,
-    value: 'Grantee Specialist',
-    label: 'Grantee Specialist (GS)',
-  },
-  {
-    selectValue: 4,
-    value: 'Health Specialist',
-    label: 'Health Specialist (HS)',
-  },
-  {
-    selectValue: 5,
-    value: 'System Specialist',
-    label: 'System Specialist (SS)',
-  },
-];
+import SpecialistSelect from '../components/SpecialistSelect';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -225,21 +197,7 @@ export function TopicFrequencyGraphWidget({
               ]
             }
           />
-          <CheckboxSelect
-            styleAsSelect
-            toggleAllText="All Specialists"
-            toggleAllInitial
-            labelId="tfRoleFilter"
-            labelText="Filter by specialists"
-            ariaName="Change filter by specialists menu"
-            onApply={onApplyRoles}
-            options={
-              ROLES_MAP.map((role) => ({
-                value: role.selectValue,
-                label: role.label,
-              }))
-            }
-          />
+          <SpecialistSelect onApplyRoles={onApplyRoles} />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button
