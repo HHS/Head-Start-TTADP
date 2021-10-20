@@ -76,7 +76,6 @@
 * The styles for the "style as select" prop
 */
 .smart-hub--button-select-toggle-btn.usa-select {
-    border-radius: 5px;
     border: 1px solid black;
     box-shadow: none;
     color: black;

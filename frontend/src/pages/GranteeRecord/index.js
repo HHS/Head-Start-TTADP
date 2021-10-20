@@ -23,6 +23,7 @@ export default function GranteeRecord({ match, location }) {
     'grants.number': '',
     granteeId,
   });
+  const [baseFilters, setBaseFilters] = useState([]);
   const [filters, setFilters] = useState([]);
   const [error, setError] = useState();
 
@@ -42,10 +43,12 @@ export default function GranteeRecord({ match, location }) {
       },
     ];
 
-    setFilters(filtersToApply);
+    setBaseFilters(filtersToApply);
   }, [granteeId, regionId]);
 
-  const onApplyFilters = () => {};
+  const onApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+  };
 
   useEffect(() => {
     async function fetchGrantee(id, region) {
@@ -95,6 +98,7 @@ export default function GranteeRecord({ match, location }) {
             path="/grantee/:granteeId/tta-history"
             render={() => (
               <TTAHistory
+                baseFilters={baseFilters}
                 filters={filters}
                 onApplyFilters={onApplyFilters}
               />
