@@ -3,15 +3,14 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-
 import RegionalSelect from '../../components/RegionalSelect';
-import DateRangeSelect from './components/DateRangeSelect';
+import DateRangeSelect, { formatDateRange } from '../../components/DateRangeSelect';
+import { ROLES_MAP } from '../../components/SpecialistSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
-import TopicFrequencyGraph, { ROLES_MAP } from '../../widgets/TopicFrequencyGraph';
+import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
 import DateTime from '../../components/DateTime';
 import { getUserRegions } from '../../permissions';
-import { CUSTOM_DATE_RANGE } from './constants';
-import formatDateRange from './formatDateRange';
+import { CUSTOM_DATE_RANGE } from '../../components/constants';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
@@ -148,6 +147,7 @@ export default function RegionalDashboard({ user }) {
               dateRange={dateRange}
               updateDateRange={updateDateRange}
               dateTime={dateTime}
+              styleAsSelect={false}
             />
             <DateTime classNames="display-flex flex-align-center" timestamp={dateTime.timestamp} label={dateTime.label} />
           </Grid>

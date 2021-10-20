@@ -6,7 +6,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
-import { CUSTOM_DATE_RANGE } from '../pages/RegionalDashboard/constants';
+import { CUSTOM_DATE_RANGE } from './constants';
 import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 import './ButtonSelect.css';
 import triangleDown from '../images/triange_down.png';
