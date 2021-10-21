@@ -85,6 +85,7 @@ function ReportMenu({
                     {count.toLocaleString('en-US')}
                     {' '}
                     records
+                    {' '}
                   </strong>
                   <br />
                   There is a

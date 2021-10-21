@@ -10,8 +10,10 @@ const RenderReportMenu = ({
   onExportAll = () => {},
   onExportSelected = () => {},
   hasSelectedReports = true,
+  count = 12,
 }) => (
   <ReportMenu
+    count={count}
     onExportAll={onExportAll}
     onExportSelected={onExportSelected}
     hasSelectedReports={hasSelectedReports}
@@ -32,7 +34,7 @@ describe('ReportMenu', () => {
     render(<RenderReportMenu onExportAll={onExport} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    const exportButton = await screen.findByRole('menuitem', { name: 'Export Table Data...' });
+    const exportButton = await screen.findByRole('menuitem', { name: 'Export table data...' });
     userEvent.click(exportButton);
     expect(onExport).toHaveBeenCalled();
   });
@@ -43,7 +45,7 @@ describe('ReportMenu', () => {
       render(<RenderReportMenu onExportSelected={onExport} hasSelectedReports />);
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      const exportButton = await screen.findByRole('menuitem', { name: 'Export Selected Reports...' });
+      const exportButton = await screen.findByRole('menuitem', { name: 'Export selected reports...' });
       userEvent.click(exportButton);
       expect(onExport).toHaveBeenCalled();
     });
@@ -68,6 +70,16 @@ describe('ReportMenu', () => {
     expect(report).not.toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).not.toBeInTheDocument();
+  });
+
+  it('disables the button and shows the error message when there are too many reports', async () => {
+    render(<RenderReportMenu count={5001} hasSelectedReports={false} />);
+    const button = await screen.findByRole('button');
+    userEvent.click(button);
+    screen.logTestingPlaygroundURL();
+    const label = /5,001 records There is a 5,000 record maximum export limit. For assistance, please contact support/i;
+    const exportButton = await screen.findByRole('menuitem', { name: label });
+    expect(exportButton).toBeDisabled();
   });
 
   it('closes when the Escape key is pressed', async () => {
