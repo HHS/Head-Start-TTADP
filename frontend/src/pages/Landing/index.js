@@ -30,6 +30,7 @@ import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
+import TooltipWithCollection from '../../components/TooltipWithCollection';
 
 function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
   const emptyReport = {
@@ -62,47 +63,12 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
 
     const authorName = author ? author.fullName : '';
 
-    const recipientsTitle = activityRecipients && activityRecipients.reduce(
-      (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
-      '',
-    );
-
     const recipients = activityRecipients && activityRecipients.map((ar) => (
-      <Tag
-        key={`${ar.name.slice(1, 3)}_${ar.id}`}
-        className="smart-hub--table-collection"
-      >
-        {ar.grant ? ar.grant.grantee.name : ar.name}
-      </Tag>
+      ar.grant ? ar.grant.grantee.name : ar.name
     ));
 
-    const topicsTitle = (topics || []).reduce(
-      (result, topic) => `${result + topic}\n`,
-      '',
-    );
-
-    const topicsWithTags = (topics || []).map((topic) => (
-      <Tag
-        key={topic.slice(1, 13)}
-        className="smart-hub--table-collection"
-      >
-        {topic}
-      </Tag>
-    ));
-
-    const collaboratorsTitle = collaborators && collaborators.reduce(
-      (result, collaborator) => `${result + collaborator.fullName}\n`,
-      '',
-    );
-
-    const collaboratorsWithTags = collaborators && collaborators.map((collaborator) => (
-      <Tag
-        key={collaborator.fullName.slice(1, 13)}
-        className="smart-hub--table-collection"
-      >
-        {collaborator.fullName}
-      </Tag>
-    ));
+    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
+      collaborator.fullName));
 
     const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
 
@@ -152,9 +118,7 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </Link>
         </th>
         <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
+          <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -163,14 +127,10 @@ function renderReports(reports, history, reportCheckboxes, handleReportSelect) {
           </span>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={topicsTitle}>
-            {topicsWithTags}
-          </span>
+          <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
+          <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>{lastSaved}</td>
         <td>
@@ -620,7 +580,7 @@ function Landing({ user }) {
             </span>
           </span>
           <div className="usa-table-container--scrollable">
-            <Table className="usa-table usa-table--borderless usa-table--striped">
+            <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
               <caption>
                 {`Region ${regionLabel} Activity reports`}
                 <p className="usa-sr-only">with sorting and pagination</p>
