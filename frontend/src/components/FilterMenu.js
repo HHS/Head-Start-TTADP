@@ -3,10 +3,11 @@
  * TO DO
  *
  * 1) Figure out where the double region & grantee Id filters are getting in there
- * 2) Fix date range picker interactions
- * 3) Polish the CSS (needs to match the mockup)
- * 4) Screen reader interaction test
- * 5) Everything else works, after that we just need unit tests!
+ * 2) Filters aren't persisting for some reason
+ * 3) Fix date range picker interactions
+ * 4) Polish the CSS (needs to match the mockup)
+ * 5) Screen reader interaction test
+ * 6) Everything else works, after that we just need unit tests!
  *
  * */
 
@@ -147,7 +148,7 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       <span className="margin-right-1">
         { selectedTopic
           ? selectedTopic.renderInput()
-          : (<select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" />)}
+          : (<select className="usa-select ttahub-dummy-select margin-left-1" disabled aria-label="select a topic and condition first and then select a query" />)}
       </span>
       <button
         type="button"
