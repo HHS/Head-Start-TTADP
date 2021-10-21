@@ -3,39 +3,55 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './GranteeSummary.css';
 
-export default function GranteeSummary({ summary }) {
+function GranteeInformationSection({ heading, grants, key }) {
+  return (
+    <div className="margin-bottom-2">
+      <p className="margin-y-1"><strong>{heading}</strong></p>
+      { grants.map((grant) => (
+        <p className="margin-y-1" key={`${grant.id}_${key}`}>
+          {grant[key]}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+GranteeInformationSection.propTypes = {
+  heading: PropTypes.string.isRequired,
+  key: PropTypes.string.isRequired,
+  grants: PropTypes.arrayOf(PropTypes.shape({
+    number: PropTypes.string,
+    status: PropTypes.string,
+    endDate: PropTypes.string,
+    id: PropTypes.number,
+  })).isRequired,
+};
+
+export default function GranteeSummary({ summary, regionId }) {
   if (!summary || !summary.grants) {
     return null;
   }
 
   return (
     <Container padding={0} className="ttahub--grantee-summary">
-      <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grantee Summary</h2>
+      <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3 margin-bottom-0">Grantee Summary</h2>
       <div className="padding-x-3 padding-bottom-3">
-        <p><strong>Region</strong></p>
-        { summary.grants.map((grant) => (
-          <p key={`${grant.id}_regionId`}>
+        <div className="margin-bottom-2">
+          <p className="margin-y-1"><strong>Region</strong></p>
+          <p className="margin-y-1">
             Region
             {' '}
-            {grant.regionId}
+            {regionId}
           </p>
-        ))}
-        <p><strong>Grantee ID</strong></p>
-        <p>
-          {summary.granteeId}
-        </p>
-        <p><strong>Grantee Type</strong></p>
-        { summary.grants.map((grant) => (
-          <p key={`${grant.id}_granteeType`}>
-            {grant.granteeType}
+        </div>
+        <div className="margin-bottom-2">
+          <p className="margin-y-1"><strong>Grantee ID</strong></p>
+          <p className="margin-y-1">
+            {summary.granteeId}
           </p>
-        ))}
-        <p><strong>Program Specialist</strong></p>
-        { summary.grants.map((grant) => (
-          <p key={`${grant.id}_programSpecialist`}>
-            {grant.programSpecialistName}
-          </p>
-        ))}
+        </div>
+        <GranteeInformationSection heading="Grantee Type" key="granteeType" grants={summary.grants} />
+        <GranteeInformationSection heading="Program Specialist" key="programSpecialistName" grants={summary.grants} />
       </div>
 
     </Container>
@@ -43,6 +59,7 @@ export default function GranteeSummary({ summary }) {
 }
 
 GranteeSummary.propTypes = {
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   summary: PropTypes.shape({
     granteeId: PropTypes.string,
     grants: PropTypes.arrayOf(
@@ -50,6 +67,7 @@ GranteeSummary.propTypes = {
         number: PropTypes.string,
         status: PropTypes.string,
         endDate: PropTypes.string,
+        id: PropTypes.number,
       }),
     ),
   }),
