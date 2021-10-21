@@ -26,6 +26,7 @@ function ButtonSelect(props) {
     startDatePickerId,
     endDatePickerId,
     dateRange,
+    disabled,
   } = props;
 
   const [checked, setChecked] = useState(applied);
@@ -166,12 +167,13 @@ function ButtonSelect(props) {
         className={`${buttonClasses} smart-hub--button-select-toggle-btn display-flex`}
         aria-label={ariaLabel}
         type="button"
+        disabled={disabled}
       >
         {label ? label.label : options[0].label}
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
-      { menuIsOpen
+      { menuIsOpen && !disabled
         ? (
           <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
             <span className={hasDateRange ? 'smart-hub--button-select-menu-label' : 'smart-hub--button-select-menu-label sr-only'} id={labelId}><strong>{labelText}</strong></span>
@@ -298,6 +300,7 @@ ButtonSelect.propTypes = {
   initialValue: optionProp.isRequired,
   applied: PropTypes.number.isRequired,
   ariaName: PropTypes.string.isRequired,
+  disabled: PropTypes.bool,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -317,6 +320,7 @@ ButtonSelect.defaultProps = {
   dateRange: '',
   startDatePickerId: '',
   endDatePickerId: '',
+  disabled: false,
 };
 
 export default ButtonSelect;
