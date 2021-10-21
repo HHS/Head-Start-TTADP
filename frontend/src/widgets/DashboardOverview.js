@@ -9,9 +9,10 @@ import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
 import FormatNumber from './WidgetHelper';
 import Loader from '../components/Loader';
+import Tooltip from '../components/Tooltip';
 
 function Field({
-  label, labelExt, data, icon, iconColor, backgroundColor, decimalPlaces,
+  label, data, icon, iconColor, backgroundColor, decimalPlaces, showTooltip, tooltipText,
 }) {
   return (
     <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-2">
@@ -22,9 +23,7 @@ function Field({
       </span>
       <span className="smart-hub--dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center">
         <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
-        {label}
-        {' '}
-        {labelExt}
+        {showTooltip ? <Tooltip displayText={label} tooltipText={tooltipText} /> : label}
       </span>
     </Grid>
   );
@@ -32,7 +31,6 @@ function Field({
 
 Field.propTypes = {
   label: PropTypes.string.isRequired,
-  labelExt: PropTypes.string,
   data: PropTypes.string.isRequired,
   decimalPlaces: PropTypes.number,
   icon: PropTypes.shape({
@@ -43,44 +41,49 @@ Field.propTypes = {
   }).isRequired,
   iconColor: PropTypes.string.isRequired,
   backgroundColor: PropTypes.string.isRequired,
+  tooltipText: PropTypes.string,
+  showTooltip: PropTypes.bool,
 };
 
 Field.defaultProps = {
-  labelExt: '',
   decimalPlaces: 0,
+  tooltipText: '',
+  showTooltip: false,
 };
 
 const DASHBOARD_FIELDS = [
   {
     key: 'Activity reports',
-    render: (data) => <Field icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />,
+    render: (data, showTooltip) => <Field showTooltip={showTooltip} tooltipText="The total number of approved activity reports." icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />,
   },
   {
     key: 'Grants served',
-    render: (data) => <Field icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />,
+    render: (data) => <Field showTooltip={false} icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />,
   },
   {
     key: 'Participants',
-    render: (data) => <Field icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
+    render: (data, showTooltip) => <Field showTooltip={showTooltip} tooltipText="The total number of people involved in all activities." icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
   },
   {
     key: 'Hours of TTA',
-    render: (data) => <Field icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />,
+    render: (data, showTooltip) => <Field showTooltip={showTooltip} tooltipText="The total number of hours spent on all TTA activities." icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />,
   },
   {
     key: 'In-person activities',
-    render: (data) => <Field icon={faUser} iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
+    render: (data, showTooltip) => <Field icon={faUser} showTooltip={showTooltip} tooltipText="Number of activities that were conducted in-person vs. virtual." iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
   },
 ];
 
-export function DashboardOverviewWidget({ data, loading, fields }) {
+export function DashboardOverviewWidget({
+  data, loading, fields, showTooltips,
+}) {
   return (
     <Grid row className="smart-hub--dashboard-overview margin-bottom-3 position-relative">
       <Loader loading={loading} loadingLabel="Overview loading" />
       { fields.map((field) => {
         const fieldToDisplay = DASHBOARD_FIELDS.find((dbField) => dbField.key === field);
         if (fieldToDisplay) {
-          return fieldToDisplay.render(data);
+          return fieldToDisplay.render(data, showTooltips);
         }
 
         return null;
@@ -99,6 +102,7 @@ DashboardOverviewWidget.propTypes = {
   }),
   loading: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.string),
+  showTooltips: PropTypes.bool,
 };
 
 DashboardOverviewWidget.defaultProps = {
@@ -110,6 +114,7 @@ DashboardOverviewWidget.defaultProps = {
     inPerson: '0',
   },
   loading: false,
+  showTooltips: false,
   fields: [
     'Activity reports',
     'Grants served',

@@ -8,10 +8,11 @@ export default function TTAHistory({ filters }) {
       <Overview
         fields={[
           'Activity reports',
-          'Participants',
           'Hours of TTA',
+          'Participants',
           'In-person activities',
         ]}
+        showTooltips
         filters={filters}
       />
 

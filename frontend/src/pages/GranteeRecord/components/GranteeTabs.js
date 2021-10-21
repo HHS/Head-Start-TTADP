@@ -7,7 +7,7 @@ import './GranteeTabs.css';
 
 export default function GranteeTabs({ region, granteeId }) {
   const linkClass = 'display-block padding-2 ttahub-grantee-record--tabs_link';
-  const liClass = 'ttahub-grantee-record--tabs_tab display-block margin-0 margin-top-1 padding-0';
+  const liClass = 'ttahub-grantee-record--tabs_tab display-block margin-0 padding-0';
 
   return (
     <div className="ttahub-grantee-record--tabs">
@@ -22,7 +22,7 @@ export default function GranteeTabs({ region, granteeId }) {
         </ul>
       </nav>
       <FontAwesomeIcon className="margin-left-2 margin-right-1" color="#0166ab" icon={faArrowLeft} />
-      <Link className="ttahub-grantee-record--tabs_back-to-search" to="/grantees">Back to search</Link>
+      <Link className="ttahub-grantee-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/grantees">Back to search</Link>
     </div>
   );
 }
