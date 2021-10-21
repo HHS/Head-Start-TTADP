@@ -87,6 +87,16 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
+                  <li>
+                    <NavLink
+                      to="/regional-dashboard"
+                    >
+                      <span className="padding-right-105">
+                        <FontAwesomeIcon color="white" icon={faBorderAll} />
+                      </span>
+                      Regional Dashboard
+                    </NavLink>
+                  </li>
                   <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
                     <li>
                       <NavLink
@@ -99,16 +109,6 @@ const SiteNav = ({
                       </NavLink>
                     </li>
                   </FeatureFlag>
-                  <li>
-                    <NavLink
-                      to="/regional-dashboard"
-                    >
-                      <span className="padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faBorderAll} />
-                      </span>
-                      Regional Dashboard
-                    </NavLink>
-                  </li>
                 </ul>
               </div>
               <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
