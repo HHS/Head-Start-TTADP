@@ -4,7 +4,18 @@ import Overview from '../../../widgets/DashboardOverview';
 
 export default function TTAHistory({ filters }) {
   return (
-    <div className="margin-right-3"><Overview filters={filters} /></div>
+    <div className="margin-right-3">
+      <Overview
+        fields={[
+          'Activity reports',
+          'Participants',
+          'Hours of TTA',
+          'In-person activities',
+        ]}
+        filters={filters}
+      />
+
+    </div>
   );
 }
 
