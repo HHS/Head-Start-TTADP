@@ -5,11 +5,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import Container from '../../components/Container';
 
+const MAXIMUM_EXPORTED_REPORTS = 5000;
+
 function ReportMenu({
   onExportAll,
   onExportSelected,
   hasSelectedReports,
   label,
+  count,
 }) {
   const [open, updateOpen] = useState(false);
 
@@ -65,14 +68,46 @@ function ReportMenu({
       {open && (
         <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute left-0 width-card-lg">
           <Container padding={2} className="margin-bottom-0">
-            <button
-              role="menuitem"
-              onClick={onExportAll}
-              type="button"
-              className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
-            >
-              Export Table Data...
-            </button>
+            {count > MAXIMUM_EXPORTED_REPORTS ? (
+              <>
+                <button
+                  role="menuitem"
+                  onClick={onExportAll}
+                  type="button"
+                  disabled
+                  className="usa-button usa-button--unstyled smart-hub--reports-button margin-bottom-1"
+                  aria-labelledby="no-exports-please"
+                >
+                  Export table data...
+                </button>
+                <span className="usa-hint" id="no-exports-please">
+                  <strong>
+                    {count.toLocaleString('en-US')}
+                    {' '}
+                    records
+                  </strong>
+                  <br />
+                  There is a
+                  {' '}
+                  {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-US')}
+                  {' '}
+                  record maximum export limit. For assistance, please
+                  {' '}
+                  <a href="mailto:ttasupport@adhocteam.us">contact support</a>
+                  .
+                </span>
+              </>
+            )
+              : (
+                <button
+                  role="menuitem"
+                  onClick={onExportAll}
+                  type="button"
+                  className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
+                >
+                  Export table data...
+                </button>
+              ) }
             {hasSelectedReports && onExportSelected && (
               <button
                 role="menuitem"
@@ -80,7 +115,7 @@ function ReportMenu({
                 type="button"
                 className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
               >
-                Export Selected Reports...
+                Export selected reports...
               </button>
             )}
           </Container>
@@ -95,9 +130,11 @@ ReportMenu.propTypes = {
   onExportSelected: PropTypes.func,
   hasSelectedReports: PropTypes.bool.isRequired,
   label: PropTypes.string,
+  count: PropTypes.number,
 };
 
 ReportMenu.defaultProps = {
+  count: 0,
   label: 'Reports menu',
   onExportSelected: null,
 };
