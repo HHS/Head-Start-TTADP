@@ -78,7 +78,6 @@
     "updateReasonNames:local": "./node_modules/.bin/babel-node ./src/tools/updateReasonNamesCLI.js",
     "addMissingGrantsToReports": "node ./build/server/tools/addMissingGrantsToReportsCLI.js",
     "addMissingGrantsToReports:local": "./node_modules/.bin/babel-node ./src/tools/addMissingGrantsToReportsCLI.js",
-    "processData": "node ./build/server/tools/processDataCLI.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js"
   },
   "repository": {
