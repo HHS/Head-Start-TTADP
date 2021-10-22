@@ -1,5 +1,4 @@
 .smart-hub--tooltip .smart-hub--ellipsis{
-    display: inline-block;
     font-size: 15px;
     position: relative;
 }
@@ -22,7 +21,6 @@
     display: inline-block;
     overflow-x: hidden;
     overflow-y: visible;
-    white-space: nowrap;
     width: 173.5px;   
     text-overflow: ellipsis;
     vertical-align: middle;
@@ -48,9 +46,11 @@
     animation-iteration-count: 1;
     bottom: 1.5rem;
     display: inline-block;
-    left: -50%;
+    left: -25%;
     line-height: 1; 
     position: absolute;
+    white-space: normal;
+    max-width: 200px;
 }
 
 @keyframes fadein {

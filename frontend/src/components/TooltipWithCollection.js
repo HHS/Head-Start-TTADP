@@ -9,8 +9,13 @@ export default function TooltipWithCollection({ collection, collectionTitle }) {
   }
 
   const tooltip = (collection).reduce(
-    (result, member) => `${result + member}\n`,
-    '',
+    (result, member) => (
+      <>
+        {result}
+        <span>{member}</span>
+        <br />
+      </>
+    ), <></>,
   );
 
   const tags = (collection).map((member) => (
@@ -31,7 +36,6 @@ export default function TooltipWithCollection({ collection, collectionTitle }) {
 
   return (
     <Tooltip
-      svgBackground
       displayText={tags}
       tooltipText={tooltip}
       buttonLabel={`click to visually reveal the ${collectionTitle}`}
