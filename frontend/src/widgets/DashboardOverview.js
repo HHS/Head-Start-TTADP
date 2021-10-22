@@ -23,7 +23,14 @@ function Field({
       </span>
       <span className="smart-hub--dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center">
         <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
-        {showTooltip ? <Tooltip displayText={label} tooltipText={tooltipText} /> : label}
+        {showTooltip ? (
+          <Tooltip
+            displayText={label}
+            screenReadDisplayText={false}
+            buttonLabel={`${tooltipText} click to visually reveal this information`}
+            tooltipText={tooltipText}
+          />
+        ) : label}
       </span>
     </Grid>
   );

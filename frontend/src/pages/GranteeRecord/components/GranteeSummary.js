@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './GranteeSummary.css';
 
-function GranteeInformationSection({ heading, grants, key }) {
+function GranteeInformationSection({ heading, grants, property }) {
   return (
     <div className="margin-bottom-2">
       <p className="margin-y-1"><strong>{heading}</strong></p>
       { grants.map((grant) => (
-        <p className="margin-y-1" key={`${grant.id}_${key}`}>
-          {grant[key]}
+        <p className="margin-y-1" key={`${grant.id}_${property}`}>
+          {grant[property]}
         </p>
       ))}
     </div>
@@ -18,7 +18,7 @@ function GranteeInformationSection({ heading, grants, key }) {
 
 GranteeInformationSection.propTypes = {
   heading: PropTypes.string.isRequired,
-  key: PropTypes.string.isRequired,
+  property: PropTypes.string.isRequired,
   grants: PropTypes.arrayOf(PropTypes.shape({
     number: PropTypes.string,
     status: PropTypes.string,
@@ -50,8 +50,8 @@ export default function GranteeSummary({ summary, regionId }) {
             {summary.granteeId}
           </p>
         </div>
-        <GranteeInformationSection heading="Grantee Type" key="granteeType" grants={summary.grants} />
-        <GranteeInformationSection heading="Program Specialist" key="programSpecialistName" grants={summary.grants} />
+        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={summary.grants} />
+        <GranteeInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} />
       </div>
 
     </Container>
