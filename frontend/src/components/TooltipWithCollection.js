@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import Tooltip from './Tooltip';
-import './TooltipWithCollection.css';
 
 export default function TooltipWithCollection({ collection, collectionTitle }) {
   if (!collection || collection.length === 0) {
@@ -32,6 +31,7 @@ export default function TooltipWithCollection({ collection, collectionTitle }) {
 
   return (
     <Tooltip
+      svgBackground
       displayText={tags}
       tooltipText={tooltip}
       buttonLabel={`click to visually reveal the ${collectionTitle}`}

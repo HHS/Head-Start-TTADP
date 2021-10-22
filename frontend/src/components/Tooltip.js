@@ -19,7 +19,19 @@ export default function Tooltip({
       <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltipText}</div>
       <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
         <span className="smart-hub--ellipsis">
-          {displayText}
+          <span>
+            {displayText}
+            <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1">
+              <path
+                d="M 0 5 L 190 5"
+                stroke="black"
+                strokeLinecap="round"
+                strokeWidth="1"
+                strokeDasharray="5,5"
+                fill="none"
+              />
+            </svg>
+          </span>
         </span>
         <span className="sr-only">
           {buttonLabel}

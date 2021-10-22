@@ -103,7 +103,7 @@ function ReportsRow({ reports, removeAlert, message }) {
           {approversToolTipText.length > 0
             ? (
               <Tooltip
-                displayText={<span className="smart-hub--tooltip-truncated">{pendingApprovals}</span>}
+                displayText={pendingApprovals}
                 tooltipText={approversToolTipText.join('\n')}
                 buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
               />
