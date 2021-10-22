@@ -21,13 +21,19 @@ export default function GranteeResults(
 ) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
-  const renderGrants = (grantee) => grantee.grants.map((grant) => (
-    <tr key={grantee.id + grant.number}>
-      <td>{grant.regionId}</td>
-      <td><Link to={`/grantee/${grantee.id}/profile?region=${grant.regionId}`}>{grantee.name}</Link></td>
-      <td>{grant.programSpecialistName}</td>
-    </tr>
-  ));
+  const renderGrantee = (grantee) => {
+    const grant = grantee.grants[0];
+
+    const { number, regionId, programSpecialistName } = grant;
+
+    return (
+      <tr key={grantee.id + number}>
+        <td>{regionId}</td>
+        <td><Link to={`/grantee/${grantee.id}/profile?region=${regionId}`}>{grantee.name}</Link></td>
+        <td>{programSpecialistName}</td>
+      </tr>
+    );
+  };
 
   const renderColumnHeader = (displayName, name) => {
     const sortClassName = getClassNamesFor(name);
@@ -105,7 +111,7 @@ export default function GranteeResults(
           </tr>
         </thead>
         <tbody>
-          {grantees.map((grantee) => renderGrants(grantee))}
+          {grantees.map((grantee) => renderGrantee(grantee))}
         </tbody>
       </table>
     </Container>
