@@ -121,7 +121,7 @@ function GranteeSearch({ user }) {
                 </div>
               )}
           <form role="search" className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
-            <input type="search" required name="search" className="ttahub-grantee-search--search-input" ref={inputRef} disabled={loading} />
+            <input type="search" name="search" className="ttahub-grantee-search--search-input" ref={inputRef} disabled={loading} />
             <button type="submit" className="ttahub-grantee-search--submit-button usa-button" disabled={loading}>
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}

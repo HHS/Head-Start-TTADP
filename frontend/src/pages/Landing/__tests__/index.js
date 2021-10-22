@@ -198,7 +198,7 @@ describe('Landing Page', () => {
 
     expect(topics).toBeVisible();
     expect(topics.firstChild).toHaveClass('smart-hub--ellipsis');
-    expect(topics.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
+    expect(topics.firstChild.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
     expect(topics.firstChild).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support');
   });
 
@@ -207,7 +207,7 @@ describe('Landing Page', () => {
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip');
     expect(collaborators.firstChild.children.length).toBe(2);
-    const truncated = collaborators.firstChild.children[1].firstChild.firstChild;
+    const truncated = collaborators.firstChild.children[1].firstChild.firstChild.firstChild;
     expect(truncated).toHaveClass('smart-hub--tooltip-truncated');
     expect(truncated).toHaveTextContent('Orange, GS');
   });
