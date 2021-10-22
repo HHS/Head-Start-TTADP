@@ -135,7 +135,7 @@ describe('grantee record page', () => {
     fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
     memoryHistory.push('/grantee/1/tta-history?region=45');
     act(() => renderGranteeRecord(memoryHistory));
-    const arLabel = await screen.findByText(/activity reports/i);
+    const arLabel = await screen.findByText(/the total number of approved activity reports\. click to visually reveal this information/i);
     expect(arLabel).toBeInTheDocument();
   });
 });
