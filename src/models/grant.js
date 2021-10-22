@@ -45,6 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    oldGrantId: DataTypes.INTEGER,
     name: {
       type: DataTypes.VIRTUAL,
       get() {
