@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Grid } from '@trussworks/react-uswds';
+import { Grid, useModal, connectModal } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
@@ -9,6 +10,8 @@ import './index.css';
 import ViewTable from './components/ViewTable';
 import { getReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
+import { SCOPE_IDS } from '../../Constants';
+import UnlockReportModal from '../../components/UnlockReportModal';
 
 /**
  *
@@ -113,6 +116,7 @@ function formatSimpleArray(arr) {
 export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
+  //const [reportId, setReportId] = useState(0);
   const [displayId, setDisplayId] = useState('');
   const [recipientType, setRecipientType] = useState('Grantee');
   const [creator, setCreator] = useState('');
@@ -142,6 +146,9 @@ export default function ApprovedActivityReport({ match, user }) {
   const [granteeNextSteps, setGranteeNextSteps] = useState([]);
   const [specialistNextSteps, setSpecialistNextSteps] = useState([]);
 
+  const { isOpen, openModal, closeModal } = useModal();
+  const ConnectModal = connectModal(UnlockReportModal);
+
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
@@ -164,6 +171,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setRecipientType(recipientTypeLabel);
       const arRecipients = report.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
       setRecipients(arRecipients);
+      //setReportId(report.id);
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
@@ -260,6 +268,17 @@ export default function ApprovedActivityReport({ match, user }) {
     );
   }
 
+  const canUnlockReports = (permissions) => (
+    _.some(permissions, (perm) => (perm.scopeId === SCOPE_IDS.UNLOCK_APPROVED_REPORTS))
+  );
+
+  const onUnlock = async () => {
+    // Do Report Unlock Async.
+
+    // reportId
+    closeModal();
+  };
+
   return (
     <>
       <Helmet>
@@ -301,7 +320,17 @@ export default function ApprovedActivityReport({ match, user }) {
           ? <button type="button" className="usa-button no-print" onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
         <button type="button" className="usa-button no-print" onClick={() => window.print()}>Print to PDF</button>
+        {user && user.permissions && canUnlockReports(user.permissions)
+          ? <button type="button" className="usa-button usa-button--accent-warm no-print" onClick={openModal}>Unlock Report</button>
+          : null}
       </Grid>
+      <ConnectModal
+        onUnlock={() => onUnlock()}
+        onClose={closeModal}
+        isOpen={isOpen}
+        openModal={openModal}
+        closeModal={closeModal}
+      />
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
           TTA Activity report
@@ -433,5 +462,9 @@ ApprovedActivityReport.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
+    permissions: PropTypes.arrayOf(PropTypes.shape({
+      regionId: PropTypes.number.isRequired,
+      scopeId: PropTypes.number.isRequired,
+    })),
   }).isRequired,
 };

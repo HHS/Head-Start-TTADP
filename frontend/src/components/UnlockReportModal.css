@@ -1,0 +1,26 @@
+#unlockDialog div {
+    border-style: none;
+    padding: 3px 0px 17px 15px;
+    margin: 7px 0px 0px 3px;
+    text-align: left;
+    line-height: 20px;
+    font-size: 14px;
+}
+
+#unlockDialog h2 {
+    font-size: 22px;
+    margin-top: 20px;
+    margin-bottom: -10px;
+}
+
+#unlockDialog button {
+    margin-left: 0px;
+    margin-right: 14px;
+    padding: 9px 38px 9px 38px;
+    font-size: medium;
+    font-weight: 600;
+}
+
+#unlockDialog .usa-button--secondary {
+    background-color: #D42240;
+}
