@@ -6,6 +6,7 @@ import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeTabs from './components/GranteeTabs';
+import { formatDateRange } from '../../components/DateRangeSelect';
 import { HTTPError } from '../../fetchers';
 import './index.css';
 import Profile from './pages/Profile';
@@ -23,28 +24,33 @@ export default function GranteeRecord({ match, location }) {
     'grants.number': '',
     granteeId,
   });
-  const [baseFilters, setBaseFilters] = useState([]);
-  const [filters, setFilters] = useState([]);
+
+  const defaultDate = formatDateRange({
+    lastThirtyDays: true,
+    forDateTime: true,
+  });
+
+  const [filters, setFilters] = useState([
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'Is within',
+      query: defaultDate,
+    },
+  ]);
   const [error, setError] = useState();
-
-  useEffect(() => {
-    const filtersToApply = [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'Contains',
-        query: regionId,
-      },
-      {
-        id: uuidv4(),
-        topic: 'granteeId',
-        condition: 'Contains',
-        query: granteeId,
-      },
-    ];
-
-    setBaseFilters(filtersToApply);
-  }, [granteeId, regionId]);
 
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);
@@ -98,7 +104,6 @@ export default function GranteeRecord({ match, location }) {
             path="/grantee/:granteeId/tta-history"
             render={() => (
               <TTAHistory
-                baseFilters={baseFilters}
                 filters={filters}
                 onApplyFilters={onApplyFilters}
               />
