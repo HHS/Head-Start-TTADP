@@ -234,10 +234,9 @@ Menu.propTypes = {
   toggleMenu: PropTypes.func.isRequired,
 };
 
-export default function FilterMenu({ filters, onApplyFilters, allowedFilterTopics }) {
+export default function FilterMenu({ filters, onApplyFilters }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const toggleMenu = () => setMenuIsOpen(!menuIsOpen);
-  const changeableFilters = filters.filter((filter) => allowedFilterTopics.includes(filter.topic));
 
   return (
     <div className="ttahub-filter-menu margin-bottom-1">
@@ -250,7 +249,7 @@ export default function FilterMenu({ filters, onApplyFilters, allowedFilterTopic
           menuIsOpen && (
           <Menu
             onApplyFilters={onApplyFilters}
-            filters={changeableFilters}
+            filters={filters}
             toggleMenu={toggleMenu}
           />
           )
@@ -262,9 +261,4 @@ export default function FilterMenu({ filters, onApplyFilters, allowedFilterTopic
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
-  allowedFilterTopics: PropTypes.arrayOf(PropTypes.string),
-};
-
-FilterMenu.defaultProps = {
-  allowedFilterTopics: ['programSpecialist', 'startDate'],
 };
