@@ -26,11 +26,14 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
   },
   { transaction });
 
-  await Promise.all(objectives.map(async (objective) => {
-    const { id, ...objectiveForDb } = objective;
-    const createdObjective = await Objective.create(objectiveForDb, { transaction });
+  return Promise.all(objectives.map(async (objective) => {
+    const { status, title, ttaProvided } = objective;
 
-    await ActivityReportObjective.create({
+    const createdObjective = await Objective.create(
+      { title, ttaProvided, status }, { transaction },
+    );
+
+    return ActivityReportObjective.create({
       objectiveId: createdObjective.id,
       activityReportId: report.id,
     },
