@@ -11,6 +11,7 @@ import MultiSelect from '../../../../components/MultiSelect';
 import Option from './GoalOption';
 import Input from './GoalInput';
 import { validateGoals } from './goalValidator';
+import './GoalPicker.css';
 
 const components = {
   Input,
@@ -104,7 +105,7 @@ const GoalPicker = ({
         fieldSetWrapper
       >
         <Label>
-          Select goal(s) or type here to create a new goal.
+          Select from existing goal(s), type to create a new goal, or press CTRL+V to paste.
           <MultiSelect
             name="goals"
             control={control}
