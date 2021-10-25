@@ -76,8 +76,7 @@ describe('ReportMenu', () => {
     render(<RenderReportMenu count={5001} hasSelectedReports={false} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    screen.logTestingPlaygroundURL();
-    const label = /5,001 records There is a 5,000 record maximum export limit. For assistance, please contact support/i;
+    const label = /There is a 5,000 record maximum export limit. For assistance, please contact support/i;
     const exportButton = await screen.findByRole('menuitem', { name: label });
     expect(exportButton).toBeDisabled();
   });
