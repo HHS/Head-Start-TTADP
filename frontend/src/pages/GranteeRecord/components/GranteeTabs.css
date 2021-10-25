@@ -14,6 +14,7 @@
 
 .ttahub-grantee-record--tabs_link--active{
     border-bottom: 4px solid #0166ab;
+    font-weight: bold;
 }
 
 .ttahub-grantee-record--tabs_back-to-search, .ttahub-grantee-record--tabs_back-to-search :visited {

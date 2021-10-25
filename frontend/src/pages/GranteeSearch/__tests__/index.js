@@ -4,12 +4,14 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
+import { v4 as uuidv4 } from 'uuid';
 import { act } from 'react-dom/test-utils';
 import GranteeSearch from '../index';
 import { SCOPE_IDS } from '../../../Constants';
@@ -46,6 +48,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -55,6 +58,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -64,6 +68,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -73,6 +78,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -82,6 +88,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -100,6 +107,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -109,6 +117,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -118,6 +127,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -127,6 +137,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -136,6 +147,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -145,6 +157,7 @@ const res = {
       grants: [
         {
           programSpecialistName: 'someone else',
+          number: uuidv4(),
         },
       ],
     },
@@ -158,9 +171,14 @@ const renderGranteeSearch = (user) => {
 };
 
 describe('the grantee search page', () => {
+  beforeEach(() => {
+    fetchMock.reset();
+    const url = join(granteeUrl, 'search', '?s=&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(url, res);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
-    fetchMock.reset();
   });
 
   it('shows the correct heading and regional select text', () => {
@@ -169,10 +187,6 @@ describe('the grantee search page', () => {
     };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=0');
-    act(() => {
-      fetchMock.get(url, res);
-    });
     expect(screen.getByRole('heading', { name: /grantee records/i })).toBeInTheDocument();
     const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
     expect(regionalSelect).toBeInTheDocument();
@@ -184,6 +198,7 @@ describe('the grantee search page', () => {
       homeRegionId: 14,
     };
 
+    fetchMock.get('/api/grantee/search?s=&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0', res);
     renderGranteeSearch(user);
 
     const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
@@ -194,24 +209,23 @@ describe('the grantee search page', () => {
     const user = { ...userBluePrint };
 
     renderGranteeSearch(user);
-    const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0');
 
-    fetchMock.get(url, res);
+    expect(fetchMock.calls().length).toBe(1);
+
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
+    await waitFor(() => expect(button).not.toBeDisabled());
+
+    const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(url, { ...res });
+
     act(() => {
+      userEvent.type(searchBox, query);
       fireEvent.click(button);
     });
 
-    expect(fetchMock.called()).toBe(false);
-
-    act(() => {
-      userEvent.type(searchBox, 'ground control');
-      fireEvent.click(button);
-    });
-
-    expect(fetchMock.called()).toBeTruthy();
+    expect(fetchMock.calls().length).toBe(2);
   });
 
   it('the regional select works', async () => {
@@ -225,6 +239,8 @@ describe('the grantee search page', () => {
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
     const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
+
+    await waitFor(() => expect(button).not.toBeDisabled());
 
     act(() => {
       userEvent.type(searchBox, 'ground control');
@@ -257,6 +273,8 @@ describe('the grantee search page', () => {
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
 
+    await waitFor(() => expect(button).not.toBeDisabled());
+
     act(() => {
       userEvent.type(searchBox, 'ground control');
       fireEvent.click(button);
@@ -282,21 +300,6 @@ describe('the grantee search page', () => {
     expect(document.querySelector('table.usa-table')).toBeInTheDocument();
   });
 
-  it('won\'t search if there is no query', async () => {
-    const user = { ...userBluePrint };
-    renderGranteeSearch(user);
-
-    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=0');
-    fetchMock.get(url, res);
-    const button = screen.getByRole('button', { name: /search for matching grantees/i });
-
-    act(() => {
-      fireEvent.click(button);
-    });
-
-    expect(fetchMock.called()).not.toBeTruthy();
-  });
-
   it('requests the next page', async () => {
     const user = { ...userBluePrint };
     renderGranteeSearch(user);
@@ -306,6 +309,8 @@ describe('the grantee search page', () => {
 
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
+
+    await waitFor(() => expect(button).not.toBeDisabled());
 
     act(() => {
       userEvent.type(searchBox, query);
@@ -325,11 +330,14 @@ describe('the grantee search page', () => {
             grants: [
               {
                 programSpecialistName: 'someone else',
+                number: uuidv4(),
               },
             ],
           },
         ],
       });
+
+    await waitFor(() => expect(next).not.toBeDisabled());
 
     act(() => {
       fireEvent.click(next);

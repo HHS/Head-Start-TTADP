@@ -92,7 +92,7 @@ export default function GranteeRecord({ match, location }) {
       </div>
     ) : (
       <>
-        <h1 className="landing margin-top-1 margin-left-2">{granteeName}</h1>
+        <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
         <Switch>
           <Route
             path="/grantee/:granteeId/tta-history"
@@ -106,7 +106,7 @@ export default function GranteeRecord({ match, location }) {
           />
           <Route
             path="/grantee/:granteeId/profile"
-            render={() => <Profile granteeSummary={granteeSummary} />}
+            render={() => <Profile regionId={regionId} granteeSummary={granteeSummary} />}
           />
         </Switch>
       </>

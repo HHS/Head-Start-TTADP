@@ -31,7 +31,7 @@ export default function GrantsList({ summary }) {
 
   return (
     <Container className="ttahub-grantee-record--grants-list" padding={0}>
-      <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3">Grants</h2>
+      <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3 margin-bottom-0">Grants</h2>
       <div className="usa-table-container--scrollable margin-0 ttahub-grantee-record-table-container">
         <table className="usa-table usa-table--striped ttahub-grantee-record--table ttahub--grantee-summary-table usa-table--borderless width-full margin-y-1">
           <caption className="padding-x-3 padding-y-1 sr-only">

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import './Tooltip.css';
 
 export default function Tooltip({
-  displayText, tooltipText, buttonLabel,
+  displayText, tooltipText, buttonLabel, screenReadDisplayText,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -19,7 +19,19 @@ export default function Tooltip({
       <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltipText}</div>
       <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
         <span className="smart-hub--ellipsis">
-          {displayText}
+          <span aria-hidden={!screenReadDisplayText}>
+            {displayText}
+            <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true">
+              <path
+                d="M 0 5 L 190 5"
+                stroke="black"
+                strokeLinecap="round"
+                strokeWidth="1"
+                strokeDasharray="5,5"
+                fill="none"
+              />
+            </svg>
+          </span>
         </span>
         <span className="sr-only">
           {buttonLabel}
@@ -30,11 +42,20 @@ export default function Tooltip({
 }
 
 Tooltip.propTypes = {
-  tooltipText: PropTypes.string.isRequired,
+  tooltipText: PropTypes.oneOfType([
+    PropTypes.node,
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.node),
+  ]).isRequired,
   displayText: PropTypes.oneOfType([
     PropTypes.node,
     PropTypes.string,
     PropTypes.arrayOf(PropTypes.node),
   ]).isRequired,
   buttonLabel: PropTypes.string.isRequired,
+  screenReadDisplayText: PropTypes.bool,
+};
+
+Tooltip.defaultProps = {
+  screenReadDisplayText: true,
 };

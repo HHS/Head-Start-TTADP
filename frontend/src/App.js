@@ -153,7 +153,7 @@ function App() {
         )}
         <Route
           exact
-          path="/grantees"
+          path="/grantee"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeSearch user={user} /></FeatureFlag>

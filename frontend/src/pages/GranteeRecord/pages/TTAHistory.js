@@ -40,7 +40,16 @@ export default function TTAHistory({ baseFilters, filters, onApplyFilters }) {
   return (
     <div className="margin-right-3">
       <FilterMenu filters={baseFilters} onApplyFilters={onApply} />
-      <Overview filters={filtersToApply} />
+      <Overview
+        fields={[
+          'Activity reports',
+          'Hours of TTA',
+          'Participants',
+          'In-person activities',
+        ]}
+        showTooltips
+        filters={filtersToApply}
+      />
     </div>
   );
 }

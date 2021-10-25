@@ -70,10 +70,6 @@ function GranteeSearch({ user }) {
       }
     }
 
-    if (!query) {
-      return;
-    }
-
     fetchGrantees();
   }, [query, appliedRegion, offset, sortConfig, user]);
 
@@ -82,10 +78,6 @@ function GranteeSearch({ user }) {
   }
 
   async function requestSort(sortBy) {
-    if (loading) {
-      return;
-    }
-
     const config = { ...sortConfig };
     if (config.sortBy === sortBy) {
       config.direction = config.direction === 'asc' ? 'desc' : 'asc';
@@ -98,9 +90,7 @@ function GranteeSearch({ user }) {
   }
 
   async function handlePageChange(pageNumber) {
-    if (!loading) {
-      setActivePage(pageNumber);
-    }
+    setActivePage(pageNumber);
   }
 
   async function onSubmit(e) {
@@ -126,11 +116,12 @@ function GranteeSearch({ user }) {
                     onApply={onApplyRegion}
                     hasCentralOffice={hasCentralOffice}
                     appliedRegion={appliedRegion}
+                    disabled={loading}
                   />
                 </div>
               )}
           <form role="search" className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
-            <input type="search" required name="search" className="ttahub-grantee-search--search-input" ref={inputRef} />
+            <input type="search" name="search" className="ttahub-grantee-search--search-input" ref={inputRef} disabled={loading} />
             <button type="submit" className="ttahub-grantee-search--submit-button usa-button" disabled={loading}>
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}

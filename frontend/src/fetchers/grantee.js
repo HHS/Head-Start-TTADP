@@ -20,10 +20,7 @@ export const getGrantee = async (granteeId, regionId = '') => {
 };
 
 export const searchGrantees = async (query, filters, params = { sortBy: 'name', direction: 'asc', offset: 0 }) => {
-  if (!query) {
-    throw new Error('Please provide a query string to search grantees');
-  }
-  const querySearch = `?s=${query}`;
+  const querySearch = `?s=${query || ''}`;
   const queryParams = filtersToQueryString(filters);
 
   const grantees = await get(
