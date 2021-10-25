@@ -4,8 +4,15 @@ import { Checkbox } from '@trussworks/react-uswds';
 import triangleDown from '../images/triange_down.png';
 import './CheckboxSelect.css';
 
-export function renderCheckboxes(options, checkboxes, prefix, handleCheckboxSelect, onBlur) {
-  return options.map((option) => {
+export function renderCheckboxes(
+  options,
+  checkboxes,
+  prefix,
+  handleCheckboxSelect,
+  onBlur,
+  initialValues,
+) {
+  return options.map((option, index) => {
     const { label, value } = option;
     const selectId = `${prefix}-${value}`;
     const isChecked = checkboxes[value] || false;
@@ -20,6 +27,7 @@ export function renderCheckboxes(options, checkboxes, prefix, handleCheckboxSele
         onChange={handleCheckboxSelect}
         aria-label={`Select ${label}`}
         onBlur={onBlur}
+        initialValue={initialValues[index]}
       />
     );
   });
@@ -39,6 +47,7 @@ export default function CheckboxSelect(props) {
     styleAsSelect,
     labelText,
     ariaName,
+    initialValues,
   } = props;
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
@@ -147,7 +156,14 @@ export default function CheckboxSelect(props) {
                 />
                 <label className="usa-checkbox__label" htmlFor={toggleAllHtmlId}>{toggleAllText}</label>
               </div>
-              {renderCheckboxes(options, checkboxes, labelId, handleCheckboxSelect, onBlur)}
+              {renderCheckboxes(
+                options,
+                checkboxes,
+                labelId,
+                handleCheckboxSelect,
+                onBlur,
+                initialValues,
+              )}
             </fieldset>
             <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label={`Apply filters for ${ariaName}`}>Apply</button>
           </div>
@@ -176,8 +192,11 @@ CheckboxSelect.propTypes = {
   // style as a select box
   styleAsSelect: PropTypes.bool,
 
+  initialValues: PropTypes.arrayOf(PropTypes.bool),
+
 };
 
 CheckboxSelect.defaultProps = {
   styleAsSelect: false,
+  initialValues: [true, true, true, true, true],
 };

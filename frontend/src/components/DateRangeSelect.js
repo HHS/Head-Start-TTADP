@@ -33,7 +33,7 @@ export function formatDateRange(format = {
 
   if (format.yearToDate) {
     const today = moment();
-    const firstDayOfYear = today.startOf('year');
+    const firstDayOfYear = moment().startOf('year');
 
     if (format.withSpaces) {
       return `${firstDayOfYear.format(selectedFormat)} ${sep} ${today.format(selectedFormat)}`;
