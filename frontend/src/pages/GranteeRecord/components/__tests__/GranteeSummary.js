@@ -5,7 +5,7 @@ import GranteeSummary from '../GranteeSummary';
 
 describe('GranteeSummary', () => {
   const renderGranteeSummary = (summary) => {
-    render(<div data-testid="grantee-summary-container"><GranteeSummary summary={summary} /></div>);
+    render(<div data-testid="grantee-summary-container"><GranteeSummary summary={summary} regionId={12} /></div>);
   };
 
   it('renders the grantee summary approriately', async () => {

@@ -100,7 +100,7 @@ const SiteNav = ({
                   <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
                     <li>
                       <NavLink
-                        to="/grantees"
+                        to="/grantee"
                       >
                         <span className="padding-right-1">
                           <FontAwesomeIcon color="white" icon={faUserFriends} />
