@@ -74,6 +74,16 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
           dateRange={Array.isArray(query) ? '' : query}
           updateDateRange={updateDateRange}
           styleAsSelect
+          options={[
+            {
+              label: 'Year to Date',
+              value: 1,
+            },
+            {
+              label: 'Custom Date Range',
+              value: 2,
+            },
+          ]}
         />
       );
     }

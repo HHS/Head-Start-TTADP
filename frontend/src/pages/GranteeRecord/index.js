@@ -26,7 +26,7 @@ export default function GranteeRecord({ match, location }) {
   });
 
   const defaultDate = formatDateRange({
-    lastThirtyDays: true,
+    yearToDate: true,
     forDateTime: true,
   });
 
