@@ -45,7 +45,7 @@ export default function SpecialistSelect({ onApplyRoles }) {
           value: role.selectValue,
           label: role.label,
         }))
-    }
+      }
     />
   );
 }
