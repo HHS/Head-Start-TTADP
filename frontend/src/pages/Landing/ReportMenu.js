@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
 import Container from '../../components/Container';
+
+import './ReportMenu.css';
 
 const MAXIMUM_EXPORTED_REPORTS = 5000;
 
@@ -66,28 +67,31 @@ function ReportMenu({
         />
       </button>
       {open && (
-        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute left-0 width-card-lg">
+        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="tta-report-menu z-400 position-absolute left-0 width-mobile">
           <Container padding={2} className="margin-bottom-0">
             {count > MAXIMUM_EXPORTED_REPORTS ? (
               <>
-                <button
-                  role="menuitem"
-                  onClick={onExportAll}
-                  type="button"
-                  disabled
-                  className="usa-button usa-button--unstyled smart-hub--reports-button margin-bottom-1"
-                  aria-labelledby="no-exports-please"
-                >
-                  Export table data...
-                </button>
-                <span className="usa-hint" id="no-exports-please">
-                  <strong>
+                <div className="display-flex">
+                  <button
+                    role="menuitem"
+                    onClick={onExportAll}
+                    type="button"
+                    disabled
+                    className="usa-button usa-button--unstyled smart-hub--reports-button margin-bottom-1"
+                    aria-labelledby="no-exports-please"
+                  >
+                    Export table data
+                  </button>
+                  <span className="padding-left-1 font-family-sans">
+                    (
                     {count.toLocaleString('en-US')}
                     {' '}
                     records
                     {' '}
-                  </strong>
-                  <br />
+                    )
+                  </span>
+                </div>
+                <div className="usa-hint" id="no-exports-please">
                   There is a
                   {' '}
                   {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-US')}
@@ -96,7 +100,7 @@ function ReportMenu({
                   {' '}
                   <a href="mailto:ttasupport@adhocteam.us">contact support</a>
                   .
-                </span>
+                </div>
               </>
             )
               : (
