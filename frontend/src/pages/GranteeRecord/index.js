@@ -33,18 +33,6 @@ export default function GranteeRecord({ match, location }) {
   const [filters, setFilters] = useState([
     {
       id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: regionId,
-    },
-    {
-      id: uuidv4(),
-      topic: 'granteeId',
-      condition: 'Contains',
-      query: granteeId,
-    },
-    {
-      id: uuidv4(),
       topic: 'startDate',
       condition: 'Is within',
       query: defaultDate,
@@ -53,6 +41,7 @@ export default function GranteeRecord({ match, location }) {
   const [error, setError] = useState();
 
   const onApplyFilters = (newFilters) => {
+    // save updated filters into state
     setFilters(newFilters);
   };
 
@@ -84,6 +73,21 @@ export default function GranteeRecord({ match, location }) {
     }
   }, [granteeId, match.params, regionId]);
 
+  const baseFilters = [
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
+  ];
+
   return (
     <>
       <GranteeTabs region={regionId} granteeId={granteeId} />
@@ -105,6 +109,7 @@ export default function GranteeRecord({ match, location }) {
             render={() => (
               <TTAHistory
                 filters={filters}
+                filtersForWidgets={baseFilters}
                 onApplyFilters={onApplyFilters}
               />
             )}

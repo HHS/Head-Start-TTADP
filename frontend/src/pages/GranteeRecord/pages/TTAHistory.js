@@ -24,7 +24,7 @@ function expandFilters(filters) {
   return arr;
 }
 
-export default function TTAHistory({ filters, onApplyFilters }) {
+export default function TTAHistory({ filters, onApplyFilters, filtersForWidgets }) {
   const onApply = (newFilters) => {
     onApplyFilters([
       ...newFilters,
@@ -33,6 +33,7 @@ export default function TTAHistory({ filters, onApplyFilters }) {
 
   const filtersToApply = [
     ...expandFilters(filters),
+    ...filtersForWidgets,
   ];
 
   return (
@@ -64,8 +65,10 @@ const filtersProp = PropTypes.arrayOf(PropTypes.shape({
 TTAHistory.propTypes = {
   filters: filtersProp,
   onApplyFilters: PropTypes.func.isRequired,
+  filtersForWidgets: filtersProp,
 };
 
 TTAHistory.defaultProps = {
   filters: [],
+  filtersForWidgets: [],
 };
