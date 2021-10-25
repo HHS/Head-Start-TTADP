@@ -26,6 +26,7 @@ const renderMyAlerts = (report = false) => {
   render(
     <Router history={history}>
       <MyAlerts
+        loading={false}
         reports={report ? [...activityReports, report] : activityReports}
         newBtn={newBtn}
         alertsSortConfig={alertsSortConfig}
@@ -72,9 +73,9 @@ describe('My Alerts', () => {
 
   test('displays approvers column', async () => {
     renderMyAlerts();
-    const approverListToolTip1 = await screen.findByRole('cell', { name: /approver manager 1, approver manager 2, approver manager 3/i });
+    const approverListToolTip1 = screen.getByRole('button', { name: /1 of 3 pending approvals: approver manager 1,approver manager 2,approver manager 3\. click button to visually reveal this information\./i });
     expect(approverListToolTip1).toBeVisible();
-    const approverListToolTip2 = await screen.findByRole('cell', { name: /approver manager 4, approver manager 5/i });
+    const approverListToolTip2 = screen.getByRole('button', { name: /2 of 2 pending approvals: approver manager 4,approver manager 5\. click button to visually reveal this information\./i });
     expect(approverListToolTip2).toBeVisible();
     const reportIdColumnHeader = await screen.findByRole('columnheader', {
       name: /report id/i,
@@ -92,9 +93,7 @@ describe('My Alerts', () => {
 
   test('displays the correct grantees', async () => {
     renderMyAlerts();
-    const grantees = await screen.findByRole('cell', {
-      name: /johnston-romaguera\njohnston-romaguera\ngrantee name/i,
-    });
+    const grantees = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera grantee name click to visually reveal the recipients for r14-ar-1/i });
     const nonGrantees = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -114,15 +113,13 @@ describe('My Alerts', () => {
 
   test('displays the correct collaborators', async () => {
     renderMyAlerts();
-    const collaborators = await screen.findByRole('cell', {
-      name: /cucumber user, gs\nhermione granger, ss/i,
-    });
+    const collaborators = await screen.findByRole('button', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
 
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
     expect(collaborators.firstChild.children.length).toBe(2);
-    expect(collaborators.firstChild.firstChild).toHaveClass('usa-tag smart-hub--table-collection');
-    expect(collaborators.firstChild.firstChild).toHaveTextContent('Cucumber User');
+    expect(collaborators.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
+    expect(collaborators.firstChild.firstChild).toHaveTextContent('Orange, GS');
     expect(collaborators.firstChild.lastChild).toHaveTextContent('Hermione Granger');
   });
 
@@ -174,6 +171,7 @@ describe('My Alerts', () => {
       regionId: 14,
       topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
       status: 'draft',
+      approvers: [],
       activityRecipients: [
         {
           activityRecipientId: 5,
@@ -221,6 +219,7 @@ describe('My Alerts', () => {
         role: 'Grants Specialist',
         homeRegionId: 14,
       },
+      collaborators: [],
     };
 
     renderMyAlerts(report);

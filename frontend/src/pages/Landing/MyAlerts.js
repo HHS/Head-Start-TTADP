@@ -17,6 +17,8 @@ import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import Filter from './Filter';
 import ReportMenu from './ReportMenu';
+import TooltipWithCollection from '../../components/TooltipWithCollection';
+import Tooltip from '../../components/Tooltip';
 
 function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -46,35 +48,14 @@ function ReportsRow({ reports, removeAlert, message }) {
 
     const justSubmitted = message && message.reportId === id;
 
-    const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName).join(', ') : '';
-
-    const recipientsTitle = activityRecipients.reduce(
-      (result, ar) => `${result + (ar.grant ? ar.grant.grantee.name : ar.name)}\n`,
-      '',
-    );
-
     const recipients = activityRecipients.map((ar) => (
-      <Tag
-        key={ar.name.slice(1, 3) + ar.id}
-        className="smart-hub--table-collection"
-      >
-        {ar.grant ? ar.grant.grantee.name : ar.name}
-      </Tag>
+      ar.grant ? ar.grant.grantee.name : ar.name
     ));
 
-    const collaboratorsTitle = collaborators ? collaborators.reduce(
-      (result, collaborator) => `${result + collaborator.fullName}\n`,
-      '',
-    ) : '';
+    const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
 
-    const collaboratorsWithTags = collaborators ? collaborators.map((collaborator) => (
-      <Tag
-        key={collaborator.id + Math.random().toString(36).substring(7)}
-        className="smart-hub--table-collection"
-      >
-        {collaborator.fullName}
-      </Tag>
-    )) : '';
+    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
+      collaborator.fullName));
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
@@ -107,9 +88,7 @@ function ReportsRow({ reports, removeAlert, message }) {
           </Link>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={recipientsTitle}>
-            {recipients}
-          </span>
+          <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
         <td>{startDate}</td>
         <td>
@@ -118,19 +97,18 @@ function ReportsRow({ reports, removeAlert, message }) {
           </span>
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={collaboratorsTitle}>
-            {collaboratorsWithTags}
-          </span>
+          <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td>
-          <span className="smart-hub--ellipsis" title={approversToolTipText}>
-            { pendingApprovals !== '0'
-              && (
-              <Tag className="smart-hub--table-collection">
-                { pendingApprovals}
-              </Tag>
-              )}
-          </span>
+          {approversToolTipText.length > 0
+            ? (
+              <Tooltip
+                displayText={<span className="smart-hub--tooltip-truncated">{pendingApprovals}</span>}
+                tooltipText={approversToolTipText.join('\n')}
+                buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
+              />
+            )
+            : '' }
         </td>
         <td>
           <Tag
@@ -227,7 +205,7 @@ function MyAlerts(props) {
         break;
     }
     return (
-      <th scope="col" aria-sort={fullAriaSort} disableSortBy={disableSort}>
+      <th scope="col" aria-sort={fullAriaSort}>
         {
           disableSort
             ? displayName
