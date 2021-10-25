@@ -14,7 +14,7 @@ describe('AriaLiveRegion', () => {
     expect(textMatches).toHaveLength(0);
   });
 
-  it('renders messages as paragrahs', async () => {
+  it('renders messages as paragraphs', async () => {
     const messages = [
       'Message One',
       'Message Two',

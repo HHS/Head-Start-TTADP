@@ -3,7 +3,7 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
-import { filtersToScopes } from '../scopes/activityReport';
+import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
 
