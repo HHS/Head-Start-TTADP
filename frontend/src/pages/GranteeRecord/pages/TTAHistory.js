@@ -24,22 +24,20 @@ function expandFilters(filters) {
   return arr;
 }
 
-export default function TTAHistory({ baseFilters, filters, onApplyFilters }) {
-  const filtersToApply = [
-    ...baseFilters,
-    ...expandFilters(filters),
-  ];
-
+export default function TTAHistory({ filters, onApplyFilters }) {
   const onApply = (newFilters) => {
     onApplyFilters([
-      ...baseFilters,
-      ...expandFilters(newFilters),
+      ...newFilters,
     ]);
   };
 
+  const filtersToApply = [
+    ...expandFilters(filters),
+  ];
+
   return (
     <div className="margin-right-3">
-      <FilterMenu filters={baseFilters} onApplyFilters={onApply} />
+      <FilterMenu filters={filters} onApplyFilters={onApply} />
       <Overview
         fields={[
           'Activity reports',
@@ -65,11 +63,9 @@ const filtersProp = PropTypes.arrayOf(PropTypes.shape({
 
 TTAHistory.propTypes = {
   filters: filtersProp,
-  baseFilters: filtersProp,
   onApplyFilters: PropTypes.func.isRequired,
 };
 
 TTAHistory.defaultProps = {
   filters: [],
-  baseFilters: [],
 };

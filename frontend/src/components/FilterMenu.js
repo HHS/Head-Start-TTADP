@@ -2,8 +2,6 @@
  *
  * TO DO
  *
- * 1) Figure out where the double region & grantee Id filters are getting in there
- * 2) Filters aren't persisting for some reason
  * 3) Fix date range picker interactions
  * 4) Polish the CSS (needs to match the mockup)
  * 5) Screen reader interaction test
@@ -29,8 +27,6 @@ import {
 } from './constants';
 
 import './FilterMenu.css';
-
-const allowedFilters = ['programSpecialist', 'startDate'];
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
@@ -238,18 +234,17 @@ Menu.propTypes = {
   toggleMenu: PropTypes.func.isRequired,
 };
 
-export default function FilterMenu({ filters, onApplyFilters }) {
+export default function FilterMenu({ filters, onApplyFilters, allowedFilterTopics }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-
   const toggleMenu = () => setMenuIsOpen(!menuIsOpen);
-  const changeableFilters = filters.filter((filter) => allowedFilters.includes(filter.topic));
+  const changeableFilters = filters.filter((filter) => allowedFilterTopics.includes(filter.topic));
 
   return (
     <div className="ttahub-filter-menu margin-bottom-1">
       <button type="button" className="usa-button" onClick={toggleMenu}>
         Filters
         {' '}
-        <FontAwesomeIcon color="white" icon={menuIsOpen ? faCaretUp : faCaretDown} />
+        <FontAwesomeIcon className="margin-left-1" color="white" icon={menuIsOpen ? faCaretUp : faCaretDown} />
       </button>
       {
           menuIsOpen && (
@@ -267,4 +262,9 @@ export default function FilterMenu({ filters, onApplyFilters }) {
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
+  allowedFilterTopics: PropTypes.arrayOf(PropTypes.string),
+};
+
+FilterMenu.defaultProps = {
+  allowedFilterTopics: ['programSpecialist', 'startDate'],
 };
