@@ -6,7 +6,12 @@ import ButtonSelect from './ButtonSelect';
 import { DATETIME_DATE_FORMAT, DATE_FORMAT, DATE_OPTIONS } from './constants';
 
 export function formatDateRange(format = {
-  lastThirtyDays: false, withSpaces: false, forDateTime: false, sep: '-', string: '',
+  lastThirtyDays: false,
+  yearToDate: false,
+  withSpaces: false,
+  forDateTime: false,
+  sep: '-',
+  string: '',
 }) {
   const selectedFormat = format.forDateTime ? DATETIME_DATE_FORMAT : DATE_FORMAT;
 
@@ -24,6 +29,17 @@ export function formatDateRange(format = {
     }
 
     return `${thirtyDaysAgo.format(selectedFormat)}${sep}${today.format(selectedFormat)}`;
+  }
+
+  if (format.yearToDate) {
+    const today = moment();
+    const firstDayOfYear = today.startOf('year');
+
+    if (format.withSpaces) {
+      return `${firstDayOfYear.format(selectedFormat)} ${sep} ${today.format(selectedFormat)}`;
+    }
+
+    return `${firstDayOfYear.format(selectedFormat)}${sep}${today.format(selectedFormat)}`;
   }
 
   if (format.string) {
@@ -49,12 +65,9 @@ export default function DateRangeSelect(props) {
     dateRange,
     customDateRangeOption,
     styleAsSelect,
+    initialValue,
+    options,
   } = props;
-
-  const initialValue = {
-    label: 'Last 30 Days',
-    value: 1,
-  };
 
   return (
     <ButtonSelect
@@ -62,7 +75,7 @@ export default function DateRangeSelect(props) {
       initialValue={initialValue}
       labelId="dateRangeOptionsLabel"
       labelText="Choose activity start date range."
-      options={DATE_OPTIONS}
+      options={options}
       applied={selectedDateRangeOption}
       hasDateRange
       customDateRangeOption={customDateRangeOption}
@@ -76,6 +89,11 @@ export default function DateRangeSelect(props) {
   );
 }
 
+const optionProp = PropTypes.shape({
+  label: PropTypes.string,
+  value: PropTypes.number,
+});
+
 DateRangeSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   selectedDateRangeOption: PropTypes.number.isRequired,
@@ -83,4 +101,14 @@ DateRangeSelect.propTypes = {
   dateRange: PropTypes.string.isRequired,
   customDateRangeOption: PropTypes.number.isRequired,
   styleAsSelect: PropTypes.bool.isRequired,
+  initialValue: optionProp,
+  options: PropTypes.arrayOf(optionProp),
+};
+
+DateRangeSelect.defaultProps = {
+  initialValue: {
+    label: 'Last 30 Days',
+    value: 1,
+  },
+  options: DATE_OPTIONS,
 };
