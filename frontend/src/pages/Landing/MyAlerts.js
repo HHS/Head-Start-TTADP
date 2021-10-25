@@ -15,7 +15,7 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
-import Filter from './Filter';
+import Filter from '../../components/Filter';
 import ReportMenu from './ReportMenu';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
@@ -103,7 +103,7 @@ function ReportsRow({ reports, removeAlert, message }) {
           {approversToolTipText.length > 0
             ? (
               <Tooltip
-                displayText={<span className="smart-hub--tooltip-truncated">{pendingApprovals}</span>}
+                displayText={pendingApprovals}
                 tooltipText={approversToolTipText.join('\n')}
                 buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
               />

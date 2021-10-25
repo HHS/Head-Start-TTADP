@@ -25,7 +25,7 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../../Constants';
-import Filter, { filtersToQueryString } from './Filter';
+import Filter, { filtersToQueryString } from '../../components/Filter';
 import ReportMenu from './ReportMenu';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';

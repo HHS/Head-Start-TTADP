@@ -44,6 +44,8 @@
   $ref: './activity-reports/reset.yaml'
 '/files':
   $ref: './files.yaml'
+'/grantee/{granteeId}':
+  $ref: './grantee/grantee-id.yaml'
 '/widgets/dashboardOverview':
   $ref: './widgets/dashboardOverview.yaml'
 '/widgets/overview':

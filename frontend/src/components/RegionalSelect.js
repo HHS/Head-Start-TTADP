@@ -6,7 +6,7 @@ export const getRegionOptions = (regions) => regions.map((region) => ({ value: r
 
 function RegionalSelect(props) {
   const {
-    regions, onApply, hasCentralOffice, appliedRegion,
+    regions, onApply, hasCentralOffice, appliedRegion, disabled,
   } = props;
 
   let options = [...getRegionOptions(regions)];
@@ -19,6 +19,7 @@ function RegionalSelect(props) {
 
   return (
     <ButtonSelect
+      disabled={disabled}
       options={options}
       onApply={onApply}
       initialValue={initialValue}
@@ -35,11 +36,13 @@ RegionalSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   hasCentralOffice: PropTypes.bool,
   appliedRegion: PropTypes.number,
+  disabled: PropTypes.bool,
 };
 
 RegionalSelect.defaultProps = {
   hasCentralOffice: false,
   appliedRegion: 0,
+  disabled: false,
 };
 
 export default RegionalSelect;
