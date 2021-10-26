@@ -152,7 +152,7 @@ parameters:
     default: "https://github.com/HHS/Head-Start-TTADP"
     type: string
   sandbox_git_url:
-    description: "URL of github repo that will deploy to dev"
+    description: "URL of github repo that will deploy to sandbox"
     default: "https://github.com/adhocteam/Head-Start-TTADP"
     type: string
   prod_git_branch:
@@ -165,7 +165,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-delete-reports-script"
+    default: "kw-disable-hses-staging"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-delete-reports-script"
