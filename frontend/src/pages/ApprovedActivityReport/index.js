@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Grid, useModal, connectModal } from '@trussworks/react-uswds';
+import { Redirect } from 'react-router-dom';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
 import './index.css';
 import ViewTable from './components/ViewTable';
-import { getReport } from '../../fetchers/activityReports';
+import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 import { SCOPE_IDS } from '../../Constants';
 import UnlockReportModal from '../../components/UnlockReportModal';
@@ -116,7 +117,7 @@ function formatSimpleArray(arr) {
 export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
-  //const [reportId, setReportId] = useState(0);
+  const [reportId, setReportId] = useState(0);
   const [displayId, setDisplayId] = useState('');
   const [recipientType, setRecipientType] = useState('Grantee');
   const [creator, setCreator] = useState('');
@@ -149,6 +150,8 @@ export default function ApprovedActivityReport({ match, user }) {
   const { isOpen, openModal, closeModal } = useModal();
   const ConnectModal = connectModal(UnlockReportModal);
 
+  const [justUnlocked, updatedJustUnlocked] = useState(false);
+
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
@@ -171,7 +174,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setRecipientType(recipientTypeLabel);
       const arRecipients = report.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
       setRecipients(arRecipients);
-      //setReportId(report.id);
+      setReportId(report.id);
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
@@ -273,14 +276,21 @@ export default function ApprovedActivityReport({ match, user }) {
   );
 
   const onUnlock = async () => {
-    // Do Report Unlock Async.
+    await unlockReport(reportId).then(closeModal()).then(updatedJustUnlocked(true));
+  };
 
-    // reportId
-    closeModal();
+  const timezone = moment.tz.guess();
+  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const message = {
+    time,
+    reportId,
+    displayId,
+    status: 'unlocked',
   };
 
   return (
     <>
+      {justUnlocked && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <Helmet>
         <title>
           {displayId}

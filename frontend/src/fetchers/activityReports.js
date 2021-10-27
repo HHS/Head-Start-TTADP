@@ -32,6 +32,12 @@ export const deleteReport = async (reportId) => {
   await destroy(join(activityReportUrl, reportId.toString(DECIMAL_BASE)));
 };
 
+export const unlockReport = async (reportId) => {
+  const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'unlock');
+  const response = await put(url);
+  return response.json();
+};
+
 export const createReport = async (data) => {
   const report = await post(activityReportUrl, data);
   return report.json();
