@@ -37,7 +37,7 @@ export default function TTAHistory({ filters, onApplyFilters, filtersForWidgets 
   ];
 
   return (
-    <div className="margin-right-3">
+    <div className="margin-x-2">
       <FilterMenu filters={filters} onApplyFilters={onApply} />
       <Overview
         fields={[

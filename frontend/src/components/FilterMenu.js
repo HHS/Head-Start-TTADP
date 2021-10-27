@@ -271,7 +271,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   const toggleMenu = () => setMenuIsOpen(!menuIsOpen);
 
   return (
-    <div className="ttahub-filter-menu margin-bottom-1">
+    <div className="ttahub-filter-menu margin-bottom-3">
       <button type="button" className="usa-button" onClick={toggleMenu}>
         Filters
         {' '}
@@ -281,7 +281,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
         onApplyFilters={onApplyFilters}
         filters={filters}
         toggleMenu={toggleMenu}
-        hidden={menuIsOpen}
+        hidden={!menuIsOpen}
       />
     </div>
   );
