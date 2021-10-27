@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug CRA Tests",
+        "type": "node",
+        "request": "launch",
+        "runtimeArgs": ["--expose-gc"],
+        "runtimeExecutable": "${workspaceRoot}/frontend/node_modules/.bin/react-scripts",
+        "args": ["test", "--runInBand", "--detectOpenHandles", "--forceExit", "--no-cache", "--logHeapUsage", "--silent"],
+        "cwd": "${workspaceRoot}/frontend",
+        "protocol": "inspector",
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen"
+      }
+    ]
+  }
