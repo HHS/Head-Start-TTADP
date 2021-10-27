@@ -80,7 +80,7 @@ const runJob = () => {
 };
 
 // Run only on one instance
-if (process.env.CF_INSTANCE_INDEX === '0') {
+if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
   const job = new CronJob(schedule, () => runJob(), null, true, timezone);
   job.start();
 }
