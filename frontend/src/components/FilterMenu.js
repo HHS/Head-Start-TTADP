@@ -62,6 +62,10 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     onUpdateFilter(id, name, value);
   };
 
+  const DummySelect = () => (
+    <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
+  );
+
   const onApplyDateRange = (selected, range) => {
     if (selected.value === YEAR_TO_DATE_OPTION) {
       const yearToDate = formatDateRange({
@@ -82,19 +86,21 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   const renderDateRangeInput = () => {
     if (condition === 'Is within') {
       return (
-        <DateRangeSelect
-          selectedDateRangeOption={selectedDateRangeOption}
-          onApply={onApplyDateRange}
-          applied={selectedDateRangeOption}
-          customDateRangeOption={CUSTOM_DATE_RANGE}
-          dateRange={Array.isArray(query) ? '' : query}
-          styleAsSelect
-          options={DATE_OPTIONS}
-        />
+        <span className="margin-right-1">
+          <DateRangeSelect
+            selectedDateRangeOption={selectedDateRangeOption}
+            onApply={onApplyDateRange}
+            applied={selectedDateRangeOption}
+            customDateRangeOption={CUSTOM_DATE_RANGE}
+            dateRange={Array.isArray(query) ? '' : query}
+            styleAsSelect
+            options={DATE_OPTIONS}
+          />
+        </span>
       );
     }
     return (
-      <span className="ttahub-filter-menu-single-date-picker display-flex margin-top-1 margin-left-1">
+      <span className="ttahub-filter-menu-single-date-picker display-flex margin-top-1 margin-x-1">
         <DatePicker query={Array.isArray(query) ? '' : query} onUpdateFilter={updateSingleDate} id="filter-date-picker" />
       </span>
     );
@@ -116,10 +122,12 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       display: 'Specialist',
       conditions: FILTER_CONDITIONS,
       renderInput: () => (
-        <SpecialistSelect
-          onApplyRoles={onApplyRoles}
-          initialValues={query}
-        />
+        <span className="margin-right-1">
+          <SpecialistSelect
+            onApplyRoles={onApplyRoles}
+            initialValues={query}
+          />
+        </span>
       ),
     },
     {
@@ -161,11 +169,9 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         <option value="">- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
-      <span className="margin-right-1">
-        { selectedTopic
-          ? selectedTopic.renderInput()
-          : (<select className="usa-select ttahub-dummy-select margin-left-1" disabled aria-label="select a topic and condition first and then select a query" />)}
-      </span>
+      { selectedTopic && condition
+        ? selectedTopic.renderInput()
+        : <DummySelect /> }
       <button
         type="button"
         aria-label="remove filter"
@@ -242,10 +248,10 @@ function Menu({
   };
 
   return (
-    <div role="menu" tabIndex="-1" className="ttahub-filter-menu-filters padding-2" hidden={hidden} onKeyDown={closeOnEsc}>
-      <p><strong>Show results matching the following conditions.</strong></p>
+    <div role="menu" tabIndex="-1" className="ttahub-filter-menu-filters padding-x-5 padding-y-2 shadow-2" hidden={hidden} onKeyDown={closeOnEsc}>
+      <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
       <div>
-        <ul className="usa-list usa-list--unstyled">
+        <ul className="usa-list usa-list--unstyled margin-bottom-1">
           {items.map((filter) => (
             <FilterItem
               onRemoveFilter={onRemoveFilter}
@@ -257,7 +263,7 @@ function Menu({
         </ul>
         <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
       </div>
-      <div className="margin-top-1 display-flex flex-justify-end">
+      <div className="margin-top-1 display-flex flex-justify-end margin-right-3">
         <button type="button" className="usa-button usa-button--unstyled margin-right-2" onClick={toggleMenu}>Cancel</button>
         <button type="button" className="usa-button" onClick={onApply}>Apply filters</button>
       </div>
