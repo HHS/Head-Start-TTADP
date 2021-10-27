@@ -100,7 +100,7 @@ function ButtonSelect(props) {
       updateDateRange(range);
     }
 
-    onApply(selectedItem);
+    onApply(selectedItem, range);
     setMenuIsOpen(false);
   };
 
