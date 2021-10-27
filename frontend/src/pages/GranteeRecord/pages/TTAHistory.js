@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Helmet } from 'react-helmet';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/FilterMenu';
 
@@ -24,7 +25,9 @@ function expandFilters(filters) {
   return arr;
 }
 
-export default function TTAHistory({ filters, onApplyFilters, filtersForWidgets }) {
+export default function TTAHistory({
+  filters, onApplyFilters, filtersForWidgets, granteeName,
+}) {
   const onApply = (newFilters) => {
     onApplyFilters([
       ...newFilters,
@@ -37,19 +40,28 @@ export default function TTAHistory({ filters, onApplyFilters, filtersForWidgets 
   ];
 
   return (
-    <div className="margin-x-2">
-      <FilterMenu filters={filters} onApplyFilters={onApply} />
-      <Overview
-        fields={[
-          'Activity reports',
-          'Hours of TTA',
-          'Participants',
-          'In-person activities',
-        ]}
-        showTooltips
-        filters={filtersToApply}
-      />
-    </div>
+    <>
+      <Helmet>
+        <title>
+          Grantee TTA History -
+          {' '}
+          {granteeName}
+        </title>
+      </Helmet>
+      <div className="margin-x-2">
+        <FilterMenu filters={filters} onApplyFilters={onApply} />
+        <Overview
+          fields={[
+            'Activity reports',
+            'Hours of TTA',
+            'Participants',
+            'In-person activities',
+          ]}
+          showTooltips
+          filters={filtersToApply}
+        />
+      </div>
+    </>
   );
 }
 
@@ -66,9 +78,11 @@ TTAHistory.propTypes = {
   filters: filtersProp,
   onApplyFilters: PropTypes.func.isRequired,
   filtersForWidgets: filtersProp,
+  granteeName: PropTypes.string,
 };
 
 TTAHistory.defaultProps = {
   filters: [],
   filtersForWidgets: [],
+  granteeName: '',
 };
