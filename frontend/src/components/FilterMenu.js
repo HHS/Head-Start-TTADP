@@ -9,25 +9,42 @@
  *
  * */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTimesCircle, faCaretDown, faCaretUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuidv4 } from 'uuid';
-import DateRangeSelect from './DateRangeSelect';
+import DateRangeSelect, { formatDateRange } from './DateRangeSelect';
 import DatePicker from './FilterDatePicker';
 import SpecialistSelect, { ROLES_MAP } from './SpecialistSelect';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
   CUSTOM_DATE_RANGE,
-  LAST_THIRTY_DAYS,
 } from './constants';
 
 import './FilterMenu.css';
 
+/**
+ * this date picker has bespoke date options
+ */
+const DATE_OPTIONS = [
+  {
+    label: 'Year to Date',
+    value: 1,
+  },
+  {
+    label: 'Custom Date Range',
+    value: 2,
+  },
+];
+
+// store this for later
+const YEAR_TO_DATE_OPTION = DATE_OPTIONS[0].value;
+
+// save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
@@ -35,6 +52,12 @@ const filterProp = PropTypes.shape({
   id: PropTypes.string,
 });
 
+/**
+ * The individual filter controls with the set of dropdowns
+ *
+ * @param {Object} props
+ * @returns a JSX object
+ */
 function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   const {
     id,
@@ -43,23 +66,35 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   } = filter;
 
   const [query, setQuery] = useState('');
-  const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(LAST_THIRTY_DAYS);
+  const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(YEAR_TO_DATE_OPTION);
 
   const onUpdate = (name, value) => {
     onUpdateFilter(id, name, value);
   };
 
-  const onApplyDateRange = (selected) => {
-    updateSelectedDateRangeOption(selected.value);
-    onUpdate('query', selected.value);
-  };
+  /**
+   * watch the selected option and apply the query
+   */
+  useEffect(() => {
+    if (topic !== 'startDate') {
+      return;
+    }
 
-  const updateDateRange = (range) => {
-    setQuery(range);
-  };
+    if (selectedDateRangeOption === YEAR_TO_DATE_OPTION) {
+      const range = formatDateRange({
+        yearToDate: true,
+        forDateTime: true,
+      });
+      setQuery(range);
+    }
+
+    onUpdate('query', query);
+  }, [query, selectedDateRangeOption, topic]);
+
+  const onApplyDateRange = (selected) => updateSelectedDateRangeOption(selected.value);
 
   const updateSingleDate = (name, value) => {
-    updateDateRange(value);
+    setQuery(value);
     onUpdate(name, value);
   };
 
@@ -72,18 +107,9 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
           applied={selectedDateRangeOption}
           customDateRangeOption={CUSTOM_DATE_RANGE}
           dateRange={Array.isArray(query) ? '' : query}
-          updateDateRange={updateDateRange}
+          updateDateRange={setQuery}
           styleAsSelect
-          options={[
-            {
-              label: 'Year to Date',
-              value: 1,
-            },
-            {
-              label: 'Custom Date Range',
-              value: 2,
-            },
-          ]}
+          options={DATE_OPTIONS}
         />
       );
     }
@@ -107,7 +133,7 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
 
   const possibleFilters = [
     {
-      id: 'programSpecialist',
+      id: 'role',
       display: 'Specialist',
       conditions: FILTER_CONDITIONS,
       renderInput: () => <SpecialistSelect onApplyRoles={onApplyRoles} />,
@@ -174,6 +200,11 @@ FilterItem.propTypes = {
   onUpdateFilter: PropTypes.func.isRequired,
 };
 
+/**
+ * Renders the interior of the menu, the set of FilterItems
+ * @param {Object} props
+ * @returns JSX Object
+ */
 function Menu({ filters, onApplyFilters, toggleMenu }) {
   const [items, setItems] = useState([...filters]);
 
@@ -244,6 +275,11 @@ Menu.propTypes = {
   toggleMenu: PropTypes.func.isRequired,
 };
 
+/**
+ * Renders the entire filter menu and contains the logic for toggling it's visibility
+ * @param {Object} props
+ * @returns JSX Object
+ */
 export default function FilterMenu({ filters, onApplyFilters }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const toggleMenu = () => setMenuIsOpen(!menuIsOpen);
