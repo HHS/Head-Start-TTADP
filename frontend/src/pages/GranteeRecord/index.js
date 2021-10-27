@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Switch, Route } from 'react-router';
+import { Helmet } from 'react-helmet';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeTabs from './components/GranteeTabs';
@@ -90,6 +91,13 @@ export default function GranteeRecord({ match, location }) {
 
   return (
     <>
+      <Helmet>
+        <title>
+          Grantee Profile -
+          {' '}
+          {granteeName}
+        </title>
+      </Helmet>
       <GranteeTabs region={regionId} granteeId={granteeId} />
       {
     error ? (
@@ -111,12 +119,19 @@ export default function GranteeRecord({ match, location }) {
                 filters={filters}
                 filtersForWidgets={baseFilters}
                 onApplyFilters={onApplyFilters}
+                granteeName={granteeName}
               />
             )}
           />
           <Route
             path="/grantee/:granteeId/profile"
-            render={() => <Profile regionId={regionId} granteeSummary={granteeSummary} />}
+            render={() => (
+              <Profile
+                granteeName={granteeName}
+                regionId={regionId}
+                granteeSummary={granteeSummary}
+              />
+            )}
           />
         </Switch>
       </>

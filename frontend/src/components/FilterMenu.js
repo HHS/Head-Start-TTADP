@@ -15,6 +15,7 @@ import {
 } from './constants';
 
 import './FilterMenu.css';
+import { ESCAPE_KEY_CODE } from '../Constants';
 
 /**
  * this date picker has bespoke date options
@@ -230,8 +231,18 @@ function Menu({
     setItems(newItems);
   };
 
+  const closeOnEsc = (e) => {
+    if (hidden) {
+      return;
+    }
+
+    if (e.keyCode === ESCAPE_KEY_CODE) {
+      toggleMenu(false);
+    }
+  };
+
   return (
-    <div className="ttahub-filter-menu-filters padding-2" hidden={hidden}>
+    <div role="menu" tabIndex="-1" className="ttahub-filter-menu-filters padding-2" hidden={hidden} onKeyDown={closeOnEsc}>
       <p><strong>Show results matching the following conditions.</strong></p>
       <div>
         <ul className="usa-list usa-list--unstyled">
