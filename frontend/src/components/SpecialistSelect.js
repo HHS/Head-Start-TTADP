@@ -53,9 +53,9 @@ export default function SpecialistSelect({ onApplyRoles, initialValues }) {
 
 SpecialistSelect.propTypes = {
   onApplyRoles: PropTypes.func.isRequired,
-  initialValues: PropTypes.arrayOf(PropTypes.bool),
+  initialValues: PropTypes.arrayOf(PropTypes.string),
 };
 
 SpecialistSelect.defaultProps = {
-  initialValues: [true, true, true, true, true],
+  initialValues: ['Early Childhood Specialist', 'Family Engagement Specialist', 'Grantee Specialist', 'Health Specialist', 'System Specialist'],
 };

@@ -81,8 +81,8 @@ export default function DateRangeSelect(props) {
       customDateRangeOption={customDateRangeOption}
       updateDateRange={updateDateRange}
       dateRange={dateRange}
-      startDatePickerId="dashboardStartDatePicker"
-      endDatePickerId="dashboardEndDatePicker"
+      startDatePickerId="startDatePicker"
+      endDatePickerId="endDatePicker"
       ariaName="date range options menu"
       styleAsSelect={styleAsSelect}
     />
@@ -97,7 +97,7 @@ const optionProp = PropTypes.shape({
 DateRangeSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   selectedDateRangeOption: PropTypes.number.isRequired,
-  updateDateRange: PropTypes.func.isRequired,
+  updateDateRange: PropTypes.func,
   dateRange: PropTypes.string.isRequired,
   customDateRangeOption: PropTypes.number.isRequired,
   styleAsSelect: PropTypes.bool.isRequired,
@@ -106,6 +106,7 @@ DateRangeSelect.propTypes = {
 };
 
 DateRangeSelect.defaultProps = {
+  updateDateRange: () => {},
   initialValue: {
     label: 'Last 30 Days',
     value: 1,

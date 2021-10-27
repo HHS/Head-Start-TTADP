@@ -1,15 +1,4 @@
-/** **
- *
- * TO DO
- *
- * 3) Fix date range picker interactions
- * 4) Polish the CSS (needs to match the mockup)
- * 5) Screen reader interaction test
- * 6) Everything else works, after that we just need unit tests!
- *
- * */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -63,38 +52,29 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     id,
     topic,
     condition,
+    query,
   } = filter;
 
-  const [query, setQuery] = useState('');
   const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(YEAR_TO_DATE_OPTION);
 
   const onUpdate = (name, value) => {
     onUpdateFilter(id, name, value);
   };
 
-  /**
-   * watch the selected option and apply the query
-   */
-  useEffect(() => {
-    if (topic !== 'startDate') {
-      return;
-    }
-
-    if (selectedDateRangeOption === YEAR_TO_DATE_OPTION) {
-      const range = formatDateRange({
+  const onApplyDateRange = (selected, range) => {
+    if (selected.value === YEAR_TO_DATE_OPTION) {
+      const yearToDate = formatDateRange({
         yearToDate: true,
         forDateTime: true,
       });
-      setQuery(range);
+      onUpdate('query', yearToDate);
+    } else {
+      onUpdate('query', range);
     }
-
-    onUpdate('query', query);
-  }, [query, selectedDateRangeOption, topic]);
-
-  const onApplyDateRange = (selected) => updateSelectedDateRangeOption(selected.value);
+    updateSelectedDateRangeOption(selected.value);
+  };
 
   const updateSingleDate = (name, value) => {
-    setQuery(value);
     onUpdate(name, value);
   };
 
@@ -107,7 +87,6 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
           applied={selectedDateRangeOption}
           customDateRangeOption={CUSTOM_DATE_RANGE}
           dateRange={Array.isArray(query) ? '' : query}
-          updateDateRange={setQuery}
           styleAsSelect
           options={DATE_OPTIONS}
         />
@@ -127,7 +106,6 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       (role) => roleValues.includes(role.selectValue),
     ).map((role) => role.value);
 
-    setQuery(roles);
     onUpdate('query', roles);
   };
 
@@ -136,7 +114,12 @@ function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       id: 'role',
       display: 'Specialist',
       conditions: FILTER_CONDITIONS,
-      renderInput: () => <SpecialistSelect onApplyRoles={onApplyRoles} />,
+      renderInput: () => (
+        <SpecialistSelect
+          onApplyRoles={onApplyRoles}
+          initialValues={query}
+        />
+      ),
     },
     {
       id: 'startDate',
@@ -205,7 +188,9 @@ FilterItem.propTypes = {
  * @param {Object} props
  * @returns JSX Object
  */
-function Menu({ filters, onApplyFilters, toggleMenu }) {
+function Menu({
+  filters, onApplyFilters, toggleMenu, hidden,
+}) {
   const [items, setItems] = useState([...filters]);
 
   const onApply = () => {
@@ -246,7 +231,7 @@ function Menu({ filters, onApplyFilters, toggleMenu }) {
   };
 
   return (
-    <div className="ttahub-filter-menu-filters padding-2">
+    <div className="ttahub-filter-menu-filters padding-2" hidden={hidden}>
       <p><strong>Show results matching the following conditions.</strong></p>
       <div>
         <ul className="usa-list usa-list--unstyled">
@@ -273,6 +258,7 @@ Menu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
   toggleMenu: PropTypes.func.isRequired,
+  hidden: PropTypes.bool.isRequired,
 };
 
 /**
@@ -291,15 +277,12 @@ export default function FilterMenu({ filters, onApplyFilters }) {
         {' '}
         <FontAwesomeIcon className="margin-left-1" color="white" icon={menuIsOpen ? faCaretUp : faCaretDown} />
       </button>
-      {
-          menuIsOpen && (
-          <Menu
-            onApplyFilters={onApplyFilters}
-            filters={filters}
-            toggleMenu={toggleMenu}
-          />
-          )
-      }
+      <Menu
+        onApplyFilters={onApplyFilters}
+        filters={filters}
+        toggleMenu={toggleMenu}
+        hidden={menuIsOpen}
+      />
     </div>
   );
 }
