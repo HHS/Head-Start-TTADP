@@ -10,9 +10,8 @@ export function renderCheckboxes(
   prefix,
   handleCheckboxSelect,
   onBlur,
-  initialValues,
 ) {
-  return options.map((option, index) => {
+  return options.map((option) => {
     const { label, value } = option;
     const selectId = `${prefix}-${value}`;
     const isChecked = checkboxes[value] || false;
@@ -27,7 +26,6 @@ export function renderCheckboxes(
         onChange={handleCheckboxSelect}
         aria-label={`Select ${label}`}
         onBlur={onBlur}
-        initialValue={initialValues[index]}
       />
     );
   });
@@ -47,7 +45,6 @@ export default function CheckboxSelect(props) {
     styleAsSelect,
     labelText,
     ariaName,
-    initialValues,
   } = props;
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
@@ -162,7 +159,6 @@ export default function CheckboxSelect(props) {
                 labelId,
                 handleCheckboxSelect,
                 onBlur,
-                initialValues,
               )}
             </fieldset>
             <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label={`Apply filters for ${ariaName}`}>Apply</button>
@@ -191,12 +187,8 @@ CheckboxSelect.propTypes = {
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
-
-  initialValues: PropTypes.arrayOf(PropTypes.bool),
-
 };
 
 CheckboxSelect.defaultProps = {
   styleAsSelect: false,
-  initialValues: [true, true, true, true, true],
 };
