@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Grid } from '@trussworks/react-uswds';
-import moment from 'moment';
+import { Grid, useModal, connectModal } from '@trussworks/react-uswds';
+import { Redirect } from 'react-router-dom';
+import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
 import './index.css';
 import ViewTable from './components/ViewTable';
-import { getReport } from '../../fetchers/activityReports';
-import { allRegionsUserHasPermissionTo } from '../../permissions';
+import { getReport, unlockReport } from '../../fetchers/activityReports';
+import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
+import Modal from '../../components/Modal';
 
 /**
  *
@@ -113,6 +115,7 @@ function formatSimpleArray(arr) {
 export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
+  const [reportId, setReportId] = useState(0);
   const [displayId, setDisplayId] = useState('');
   const [recipientType, setRecipientType] = useState('Grantee');
   const [creator, setCreator] = useState('');
@@ -142,6 +145,11 @@ export default function ApprovedActivityReport({ match, user }) {
   const [granteeNextSteps, setGranteeNextSteps] = useState([]);
   const [specialistNextSteps, setSpecialistNextSteps] = useState([]);
 
+  const { isOpen, openModal, closeModal } = useModal();
+  const ConnectModal = connectModal(Modal);
+
+  const [justUnlocked, updatedJustUnlocked] = useState(false);
+
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
@@ -164,6 +172,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setRecipientType(recipientTypeLabel);
       const arRecipients = report.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
       setRecipients(arRecipients);
+      setReportId(report.id);
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
@@ -260,8 +269,24 @@ export default function ApprovedActivityReport({ match, user }) {
     );
   }
 
+  const onUnlock = async () => {
+    await unlockReport(reportId);
+    closeModal();
+    updatedJustUnlocked(true);
+  };
+
+  const timezone = moment.tz.guess();
+  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+  const message = {
+    time,
+    reportId,
+    displayId,
+    status: 'unlocked',
+  };
+
   return (
     <>
+      {justUnlocked && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <Helmet>
         <title>
           {displayId}
@@ -298,10 +323,38 @@ export default function ApprovedActivityReport({ match, user }) {
         : null}
       <Grid row>
         {navigator && navigator.clipboard
-          ? <button type="button" className="usa-button no-print" onClick={handleCopyUrl}>Copy URL Link</button>
+          ? <button type="button" className="usa-button no-print" disabled={isOpen} onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
-        <button type="button" className="usa-button no-print" onClick={() => window.print()}>Print to PDF</button>
+        <button type="button" className="usa-button no-print" disabled={isOpen} onClick={() => window.print()}>Print to PDF</button>
+        {user && user.permissions && canUnlockReports(user)
+          ? <button type="button" className="usa-button usa-button--accent-warm no-print" onClick={openModal}>Unlock Report</button>
+          : null}
       </Grid>
+      <ConnectModal
+        onOk={() => onUnlock()}
+        onClose={closeModal}
+        isOpen={isOpen}
+        openModal={openModal}
+        closeModal={closeModal}
+        modalId="UnlockReportModal"
+        title="Unlock Activity Report"
+        okButtonText="Unlock"
+        okButtonAriaLabel="Unlock approved report will redirect to activity report page."
+      >
+        <>
+          Are you sure you want to unlock this activity report?
+          <br />
+          <br />
+          The report status will be set to
+          {' '}
+          <b>NEEDS ACTION</b>
+          {' '}
+          and
+          {' '}
+          <br />
+          must be re-submitted for approval.
+        </>
+      </ConnectModal>
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
           TTA Activity report
@@ -433,5 +486,9 @@ ApprovedActivityReport.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
+    permissions: PropTypes.arrayOf(PropTypes.shape({
+      regionId: PropTypes.number.isRequired,
+      scopeId: PropTypes.number.isRequired,
+    })),
   }).isRequired,
 };

@@ -78,7 +78,7 @@ describe('Activity report print and share view', () => {
     ],
   };
 
-  function renderApprovedActivityReport(id) {
+  function renderApprovedActivityReport(id, passedUser = user) {
     const match = {
       path: '',
       url: '',
@@ -87,7 +87,7 @@ describe('Activity report print and share view', () => {
       },
     };
 
-    render(<ApprovedActivityReport user={user} match={match} />);
+    render(<ApprovedActivityReport user={passedUser} match={match} />);
   }
   afterEach(() => fetchMock.restore());
 
@@ -225,6 +225,37 @@ describe('Activity report print and share view', () => {
       const printButton = screen.getByRole('button', { name: /print to pdf/i });
       fireEvent.click(printButton);
       expect(window.print).toHaveBeenCalled();
+    });
+  });
+
+  it('shows unlock report button', async () => {
+    const unlockUser = {
+      id: 2,
+      permissions: [
+        {
+          regionId: 45,
+          userId: 2,
+          scopeId: 4,
+        },
+        {
+          regionId: 14,
+          userId: 2,
+          scopeId: 6,
+        },
+      ],
+    };
+    act(() => renderApprovedActivityReport(5000, unlockUser));
+    await waitFor(() => {
+      const unlockButton = screen.getByRole('button', { name: /unlock report/i });
+      fireEvent.click(unlockButton);
+      expect(screen.getByRole('heading', { name: /unlock activity report/i })).toBeInTheDocument();
+    });
+  });
+
+  it('hides unlock report button', async () => {
+    act(() => renderApprovedActivityReport(5000));
+    await waitFor(() => {
+      expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
     });
   });
 });

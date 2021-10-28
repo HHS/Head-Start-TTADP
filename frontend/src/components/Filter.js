@@ -7,13 +7,13 @@ import moment from 'moment';
 import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuidv4 } from 'uuid';
 
-import Container from '../../components/Container';
+import Container from './Container';
 import FilterItem from './FilterItem';
 import {
   WITHIN,
   QUERY_CONDITIONS,
 } from './constants';
-import { DECIMAL_BASE, DATE_FMT } from '../../Constants';
+import { DECIMAL_BASE, DATE_FMT } from '../Constants';
 import './Filter.css';
 
 const defaultFilter = () => (

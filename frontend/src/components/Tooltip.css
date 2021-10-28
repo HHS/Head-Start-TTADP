@@ -1,7 +1,19 @@
-.smart-hub--tooltip-truncated {
-    border-bottom: 1px dashed #21272D;
+.smart-hub--tooltip .smart-hub--ellipsis{
     font-size: 15px;
     position: relative;
+}
+
+.smart-hub--tooltip svg {
+    position: absolute;
+    max-width: 100%;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.smart-hub--tooltip .usa-button,
+.smart-hub--tooltip .usa-button:hover {
+    text-decoration: none;
 }
 
 .smart-hub--ellipsis {
@@ -9,10 +21,13 @@
     display: inline-block;
     overflow-x: hidden;
     overflow-y: visible;
-    white-space: nowrap;
     width: 173.5px;   
     text-overflow: ellipsis;
     vertical-align: middle;
+}
+
+.smart-hub--ellipsis > span {  
+    position: relative;
 }
 
 .smart-hub--tooltip {
@@ -21,7 +36,6 @@
 }
 
 .smart-hub--tooltip button {
-    display: block;
     line-height: 1.7;    
 }
 
@@ -32,9 +46,11 @@
     animation-iteration-count: 1;
     bottom: 1.5rem;
     display: inline-block;
-    left: -20px;
-    line-height: 1;
+    left: -25%;
+    line-height: 1; 
     position: absolute;
+    white-space: normal;
+    max-width: 200px;
 }
 
 @keyframes fadein {

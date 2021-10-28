@@ -1,6 +1,6 @@
 import AdmZip from 'adm-zip';
 import { toJson } from 'xml2json';
-import {} from 'dotenv/config';
+import { } from 'dotenv/config';
 import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 
@@ -139,6 +139,31 @@ export async function processFiles() {
       {
         updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
       });
+
+    // Load and Process grant replacement data.
+    const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');
+    const grantReplacementsJson = JSON.parse(toJson(grantReplacementsData));
+    const grantReplacements = grantReplacementsJson
+      .grant_award_replacements.grant_award_replacement;
+
+    const grantsToUpdate = grantReplacements.filter(
+      (g) => grantIds.includes(parseInt(g.replaced_grant_award_id, 10))
+        && grantIds.includes(parseInt(g.replacement_grant_award_id, 10)),
+    );
+
+    const grantUpdatePromises = grantsToUpdate.map((g) => (
+      Grant.update(
+        { oldGrantId: parseInt(g.replaced_grant_award_id, 10) },
+        {
+          where: { id: parseInt(g.replacement_grant_award_id, 10) },
+          fields: ['oldGrantId'],
+          sideEffects: false,
+        },
+      )
+    ));
+
+    await Promise.all(grantUpdatePromises);
+
     await Program.bulkCreate(programsForDb,
       {
         updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],

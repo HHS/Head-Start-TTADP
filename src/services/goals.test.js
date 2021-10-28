@@ -1,5 +1,5 @@
 import {
-  copyGoalsToGrants, saveGoalsForReport,
+  copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
 } from './goals';
 
 import {
@@ -17,9 +17,9 @@ describe('Goals DB service', () => {
 
   describe('copyGoalsToGrants', () => {
     it('creates a new grantGoal for every grant goal pair', async () => {
-      const findAll = jest.fn();
-      findAll.mockResolvedValue([{ id: 1, granteeId: 1 }, { id: 2, granteeId: 1 }]);
-      Grant.findAll = findAll;
+      Grant.findAll = jest.fn();
+      Grant.findAll.mockResolvedValue([{ id: 1, granteeId: 1 }, { id: 2, granteeId: 1 }]);
+
       GrantGoal.bulkCreate = jest.fn();
 
       await copyGoalsToGrants([{ id: 1 }, { id: 2 }], [1, 2]);
@@ -186,6 +186,35 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(Objective.upsert).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' }, { returning: true, transaction: undefined });
+    });
+  });
+});
+
+describe('goalsForGrants', () => {
+  beforeAll(async () => {
+    jest.resetAllMocks();
+  });
+
+  it('finds the correct list of goals', async () => {
+    Grant.findAll = jest.fn();
+    Grant.findAll.mockResolvedValue([{ id: 505, oldGrantId: 506 }]);
+    Goal.findAll = jest.fn();
+    Goal.findAll.mockResolvedValue([{ id: 505 }, { id: 506 }]);
+
+    await goalsForGrants([506]);
+
+    expect(Goal.findAll).toHaveBeenCalledWith({
+      include: [
+        {
+          model: Grant,
+          as: 'grants',
+          attributes: ['id'],
+          where: {
+            id: [505, 506],
+          },
+        },
+      ],
+      order: ['createdAt'],
     });
   });
 });
