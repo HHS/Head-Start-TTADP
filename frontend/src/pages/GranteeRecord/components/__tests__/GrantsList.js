@@ -24,7 +24,14 @@ describe('Grants List Widget', () => {
           name: 'Grant Name 1',
           number: 'Grant Number 1',
           status: 'Active',
-          programs: ['EHS', 'HS'],
+          programs: [
+            {
+              name: 'EHS',
+            },
+            {
+              name: 'HS',
+            },
+          ],
           endDate: '2021-09-28',
           id: 1,
         },
@@ -32,7 +39,11 @@ describe('Grants List Widget', () => {
           name: 'Grant Name 2',
           number: 'Grant Number 2',
           status: 'Inactive',
-          programs: ['EHS-CCP'],
+          programs: [
+            {
+              name: 'EHS-CCP',
+            },
+          ],
           endDate: '2021-10-01',
         },
       ],

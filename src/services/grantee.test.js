@@ -100,7 +100,7 @@ describe('Grantee DB service', () => {
       expect(grantee3.grants[0].programSpecialistName).toBe(null);
       expect(grantee3.grants[0].startDate).toBeTruthy();
       expect(grantee3.grants[0].endDate).toBeTruthy();
-      expect(grantee3.grants[0].dataValues.programs).toStrictEqual(['type2', 'type']);
+      expect(grantee3.grants[0].programs.map((program) => program.name)).toStrictEqual(['type2', 'type']);
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [74] };

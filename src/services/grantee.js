@@ -18,7 +18,7 @@ export async function allGrantees() {
 }
 
 export async function granteeById(granteeId, grantScopes) {
-  const grantee = await Grantee.findOne({
+  return Grantee.findOne({
     attributes: ['id', 'name'],
     where: {
       id: granteeId,
@@ -33,48 +33,19 @@ export async function granteeById(granteeId, grantScopes) {
             grantScopes,
           ],
         },
+        include: [
+          {
+            attributes: ['name'],
+            model: Program,
+            as: 'programs',
+          },
+        ],
       },
     ],
     order: [
       [{ model: Grant, as: 'grants' }, 'endDate', 'DESC'], [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
     ],
   });
-
-  if (!grantee) {
-    return null;
-  }
-
-  const grantIds = grantee.grants.map((grant) => grant.id);
-
-  const programs = await Program.findAll({
-    attributes: ['name'],
-    include: [
-      {
-        attributes: ['id'],
-        model: Grant,
-        as: 'grant',
-        where: {
-          id: grantIds,
-        },
-      },
-    ],
-  });
-
-  programs.forEach((program) => {
-    const grant = grantee.grants.find((g) => g.id === program.grant.id);
-
-    if (!grant) {
-      return;
-    }
-
-    if (grant.dataValues.programs) {
-      grant.dataValues.programs = Array.from(new Set([...grant.dataValues.programs, program.name]));
-    } else {
-      grant.dataValues.programs = [program.name];
-    }
-  });
-
-  return grantee;
 }
 
 /**
