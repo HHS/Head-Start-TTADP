@@ -10,6 +10,7 @@ import { SCOPE_IDS, DECIMAL_BASE } from '../../../Constants';
 const {
   READ_ACTIVITY_REPORTS,
   ADMIN,
+  UNLOCK_APPROVED_REPORTS,
 } = SCOPE_IDS;
 
 describe('UserPermissions', () => {
@@ -18,8 +19,8 @@ describe('UserPermissions', () => {
       render(<UserPermissions
         regionalPermissions={{}}
         globalPermissions={{}}
-        onRegionalPermissionChange={() => {}}
-        onGlobalPermissionChange={() => {}}
+        onRegionalPermissionChange={() => { }}
+        onGlobalPermissionChange={() => { }}
       />);
     });
 
@@ -38,15 +39,23 @@ describe('UserPermissions', () => {
         }}
         globalPermissions={{
           [ADMIN]: true,
+          [UNLOCK_APPROVED_REPORTS]: true,
         }}
-        onRegionalPermissionChange={() => {}}
-        onGlobalPermissionChange={() => {}}
+        onRegionalPermissionChange={() => { }}
+        onGlobalPermissionChange={() => { }}
       />);
     });
 
     it('has correct global permissions checked', () => {
-      const checkbox = screen.getByRole('checkbox', { checked: true });
-      expect(checkbox.name).toBe(ADMIN.toString(DECIMAL_BASE));
+      const adminCheckbox = screen.getByRole('checkbox', {
+        name: /admin : user can view the admin panel and change user permissions \(including their own\)/i, checked: true,
+      });
+      expect(adminCheckbox.name).toBe(ADMIN.toString(DECIMAL_BASE));
+
+      const unlockCheckbox = screen.getByRole('checkbox', {
+        name: /unlock_approved_reports : user can unlock approved reports\./i, checked: true,
+      });
+      expect(unlockCheckbox.name).toBe(UNLOCK_APPROVED_REPORTS.toString(DECIMAL_BASE));
     });
 
     it('displays the current regional permissions', () => {

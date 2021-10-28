@@ -13,6 +13,7 @@ import {
   downloadReports,
   updateLegacyFields,
   softDeleteReport,
+  unlockReport,
   downloadAllReports,
   downloadAllAlerts,
   LEGACY_WARNING,
@@ -550,6 +551,29 @@ describe('Activity Report handlers', () => {
         canDelete: () => false,
       }));
       await softDeleteReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('unlockReport', () => {
+    const request = {
+      ...mockRequest,
+      params: { activityReportId: 1 },
+    };
+
+    it('returns 204', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canUnlock: () => true,
+      }));
+      await unlockReport(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    it('handles unauthorized', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canUnlock: () => false,
+      }));
+      await unlockReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });

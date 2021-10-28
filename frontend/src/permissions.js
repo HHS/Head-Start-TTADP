@@ -45,6 +45,15 @@ export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => {
   return _.uniq(regions);
 };
 
+/**
+ * Search the user's permissions the ability to unlock approved reports.
+ *
+ */
+export const canUnlockReports = (user) => _.some(
+  user.permissions, (perm) => (perm.scopeId === SCOPE_IDS.UNLOCK_APPROVED_REPORTS
+  ),
+);
+
 // /**
 //  * Return all regions that user has a read access to.
 //  * Permissions that qualify this criteria are:
