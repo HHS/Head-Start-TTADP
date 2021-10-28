@@ -11,6 +11,7 @@ import { SCOPE_IDS } from '../../../Constants';
 const {
   ADMIN,
   READ_ACTIVITY_REPORTS,
+  UNLOCK_APPROVED_REPORTS,
 } = SCOPE_IDS;
 
 describe('UserSection', () => {
@@ -27,6 +28,10 @@ describe('UserSection', () => {
         {
           regionId: 14,
           scopeId: ADMIN,
+        },
+        {
+          regionId: 14,
+          scopeId: UNLOCK_APPROVED_REPORTS,
         },
         {
           regionId: 1,
@@ -47,10 +52,15 @@ describe('UserSection', () => {
   });
 
   it('properly controls global permissions', () => {
-    const checkbox = screen.getByRole('checkbox', { name: /admin : user can view the admin panel and change user permissions \(including their own\)/i });
-    expect(checkbox).toBeChecked();
-    userEvent.click(checkbox);
-    expect(checkbox).not.toBeChecked();
+    const adminCheckbox = screen.getByRole('checkbox', { name: /admin : user can view the admin panel and change user permissions \(including their own\)/i });
+    expect(adminCheckbox).toBeChecked();
+    userEvent.click(adminCheckbox);
+    expect(adminCheckbox).not.toBeChecked();
+
+    const unlockCheckbox = screen.getByRole('checkbox', { name: /unlock_approved_reports : user can unlock approved reports\./i });
+    expect(unlockCheckbox).toBeChecked();
+    userEvent.click(unlockCheckbox);
+    expect(unlockCheckbox).not.toBeChecked();
   });
 
   it('properly controls regional permissions', () => {
