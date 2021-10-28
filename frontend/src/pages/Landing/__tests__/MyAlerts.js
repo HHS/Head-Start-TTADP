@@ -117,10 +117,9 @@ describe('My Alerts', () => {
 
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
-    expect(collaborators.firstChild.children.length).toBe(2);
-    expect(collaborators.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
-    expect(collaborators.firstChild.firstChild).toHaveTextContent('Orange, GS');
-    expect(collaborators.firstChild.lastChild).toHaveTextContent('Hermione Granger');
+    const truncated = collaborators.firstChild.firstChild.firstChild;
+    expect(truncated).toHaveClass('smart-hub--tooltip-truncated');
+    expect(truncated).toHaveTextContent('Orange, GS');
   });
 
   test('displays the correct statuses', async () => {

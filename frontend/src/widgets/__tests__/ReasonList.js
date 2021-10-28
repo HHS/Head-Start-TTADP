@@ -24,14 +24,6 @@ describe('Reason List Widget', () => {
     expect(screen.getByRole('columnheader', { name: /# of activities/i })).toBeInTheDocument();
   });
 
-  it('renders error correctly', async () => {
-    const data = [];
-    const dateRange = '2021/07/01-2021/04/01';
-    const errorOverride = true;
-    renderReasonList({ data, dateRange, errorOverride });
-    expect(await screen.findByText(/errors set to always show/i)).toBeInTheDocument();
-  });
-
   it('renders correctly with data', async () => {
     const data = [
       { name: 'reason one', count: 4 },

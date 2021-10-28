@@ -6,6 +6,7 @@ const {
   ADMIN,
   READ_ACTIVITY_REPORTS,
   READ_WRITE_ACTIVITY_REPORTS,
+  UNLOCK_APPROVED_REPORTS,
 } = SCOPE_IDS;
 
 describe('PermissionHelpers', () => {
@@ -73,10 +74,15 @@ describe('PermissionHelpers', () => {
               scopeId: ADMIN,
               regionId: 14,
             },
+            {
+              scopeId: UNLOCK_APPROVED_REPORTS,
+              regionId: 14,
+            },
           ],
         };
         const globalPermissions = userGlobalPermissions(user);
         expect(globalPermissions['2']).toBeTruthy();
+        expect(globalPermissions['6']).toBeTruthy();
       });
 
       it('flags global permissions the user does not have as false', () => {
@@ -85,6 +91,7 @@ describe('PermissionHelpers', () => {
         };
         const globalPermissions = userGlobalPermissions(user);
         expect(globalPermissions['2']).toBeFalsy();
+        expect(globalPermissions['6']).toBeFalsy();
       });
     });
   });

@@ -35,6 +35,10 @@ describe('permissions', () => {
             regionId: 14,
           },
           {
+            scopeId: SCOPE_IDS.UNLOCK_APPROVED_REPORTS,
+            regionId: 14,
+          },
+          {
             scopeId: SCOPE_IDS.SITE_ACCESS,
             regionId: 1,
           },

@@ -364,6 +364,35 @@ export async function softDeleteReport(req, res) {
 }
 
 /**
+ * Mark activity report submissionStatus as needs_action
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function unlockReport(req, res) {
+  try {
+    const { activityReportId } = req.params;
+    const report = await activityReportById(activityReportId);
+    const user = await userById(req.session.userId);
+    const authorization = new ActivityReport(user, report);
+    if (!authorization.canUnlock()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    // Unlocking resets all Approving Managers to NEEDS_ACTION status.
+    await ActivityReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
+      where: { activityReportId },
+      individualHooks: true,
+    });
+
+    res.sendStatus(204);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
  * Submit a report to managers for approval
  * @param {*} req - request
  * @param {*} res - response
