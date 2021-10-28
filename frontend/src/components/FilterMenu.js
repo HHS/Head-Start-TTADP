@@ -48,7 +48,7 @@ const filterProp = PropTypes.shape({
  * @param {Object} props
  * @returns a JSX object
  */
-function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
+export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   const {
     id,
     topic,
@@ -195,7 +195,7 @@ FilterItem.propTypes = {
  * @param {Object} props
  * @returns JSX Object
  */
-function Menu({
+export function Menu({
   filters, onApplyFilters, toggleMenu, hidden,
 }) {
   const [items, setItems] = useState([...filters]);
