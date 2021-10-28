@@ -48,6 +48,6 @@ module.exports = {
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Grants');
+    await queryInterface.dropTable('Programs');
   },
 };

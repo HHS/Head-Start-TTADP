@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
       Grant.belongsTo(models.Grantee, { foreignKey: 'granteeId', as: 'grantee' });
       Grant.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'grantId', as: 'goals' });
+      Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
     }
   }
   Grant.init({
@@ -45,6 +46,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    oldGrantId: DataTypes.INTEGER,
     name: {
       type: DataTypes.VIRTUAL,
       get() {

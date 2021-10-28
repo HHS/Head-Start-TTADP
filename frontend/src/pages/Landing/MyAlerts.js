@@ -64,8 +64,8 @@ function ReportsRow({ reports, removeAlert, message }) {
     let displayStatus = calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus;
 
     if (justSubmitted && message.status !== calculatedStatus) {
-      displayStatus = message.status;
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status}`;
+      displayStatus = message.status === 'unlocked' ? 'Needs action' : message.status;
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? 'needs_action' : message.status}`;
     }
     const menuItems = [
       {

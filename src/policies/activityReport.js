@@ -41,6 +41,11 @@ export default class ActivityReport {
       && this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
   }
 
+  canUnlock() {
+    return (this.isUnlockAdmin())
+      && this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED;
+  }
+
   canViewLegacy() {
     return this.canReadInRegion();
   }
@@ -88,6 +93,13 @@ export default class ActivityReport {
   isAdmin() {
     const adminScope = this.user.permissions.find(
       (permission) => permission.scopeId === SCOPES.ADMIN,
+    );
+    return !_.isUndefined(adminScope);
+  }
+
+  isUnlockAdmin() {
+    const adminScope = this.user.permissions.find(
+      (permission) => permission.scopeId === SCOPES.UNLOCK_APPROVED_REPORTS,
     );
     return !_.isUndefined(adminScope);
   }

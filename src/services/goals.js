@@ -6,8 +6,27 @@ import {
   GrantGoal,
 } from '../models';
 
-// eslint-disable-next-line import/prefer-default-export
 export async function goalsForGrants(grantIds) {
+  /**
+   * get all the matching grants
+   */
+  const grants = await Grant.findAll({
+    attributes: ['id', 'oldGrantId'],
+    where: {
+      id: grantIds,
+    },
+  });
+
+  /**
+   *  we need one big array that includes the old grantee id as well
+   */
+  const ids = grants.reduce((previous, current) => [...previous, current.id, current.oldGrantId],
+    []);
+
+  /*
+  * finally, return all matching goals
+  */
+
   return Goal.findAll({
     include: [
       {
@@ -15,7 +34,7 @@ export async function goalsForGrants(grantIds) {
         as: 'grants',
         attributes: ['id'],
         where: {
-          id: grantIds,
+          id: ids,
         },
       },
     ],

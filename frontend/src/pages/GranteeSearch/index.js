@@ -58,10 +58,23 @@ function GranteeSearch({ user }) {
         });
       }
 
+      /**
+       * if the current query doesn't match the value of the input,
+       * we need to handle that first. Changing that will trigger this hook again
+       */
+      if (query !== inputRef.current.value) {
+        setCurrentQuery();
+        return;
+      }
+
       setLoading(true);
 
       try {
-        const response = await searchGrantees(query, filters, { ...sortConfig, offset });
+        const response = await searchGrantees(
+          query,
+          filters,
+          { ...sortConfig, offset },
+        );
         setResults(response);
       } catch (err) {
         setResults({ count: 0, rows: [] });
