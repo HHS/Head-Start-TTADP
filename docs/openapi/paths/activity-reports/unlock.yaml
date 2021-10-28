@@ -1,0 +1,22 @@
+put:
+  tags:
+    - activity-reports
+  summary: Unlocks approved activity reports
+  description: >
+    When a user has the UNLOCK_REPORT global permission they are able to unlock an approved activity report.
+    Once the report is unlocked, the report and approving manager statuses will be set to needs_action.
+  parameters:
+    - in: path
+      name: activityReportId
+      required: true
+      schema:
+        type: number
+  responses:
+    204:
+      description: The report has been successfully unlocked
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/activityReport'
+    403:
+      description: User doesn't have permission to unlock the activity report
