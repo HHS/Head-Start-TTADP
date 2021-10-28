@@ -82,24 +82,30 @@ function ReportMenu({
                   >
                     Export table data
                   </button>
-                  <span className="padding-left-1 font-family-sans">
-                    (
-                    {count.toLocaleString('en-US')}
-                    {' '}
-                    records
-                    {' '}
-                    )
-                  </span>
                 </div>
                 <div className="usa-hint" id="no-exports-please">
-                  There is a
-                  {' '}
-                  {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-US')}
-                  {' '}
-                  record maximum export limit. For assistance, please
-                  {' '}
-                  <a href="mailto:ttasupport@adhocteam.us">contact support</a>
-                  .
+                  <p>
+                    This export has
+                    {' '}
+                    {count.toLocaleString('en-US')}
+                    {' '}
+                    reports. You can only export
+                    {' '}
+                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                    {' '}
+                    reports at a time.
+                  </p>
+                  <p>
+                    To export more than
+                    {' '}
+                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                    {' '}
+                    reports, please
+                    {' '}
+                    <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
+                    {' '}
+                    and specify the filters you need.
+                  </p>
                 </div>
               </>
             )
