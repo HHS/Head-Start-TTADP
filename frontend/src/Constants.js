@@ -6,6 +6,7 @@ export const SCOPE_IDS = {
   READ_WRITE_ACTIVITY_REPORTS: 3,
   READ_ACTIVITY_REPORTS: 4,
   APPROVE_ACTIVITY_REPORTS: 5,
+  UNLOCK_APPROVED_REPORTS: 6,
 };
 
 export const REGIONAL_SCOPES = {
@@ -31,6 +32,10 @@ export const GLOBAL_SCOPES = {
   [SCOPE_IDS.ADMIN]: {
     name: 'ADMIN',
     description: 'User can view the admin panel and change user permissions (including their own)',
+  },
+  [SCOPE_IDS.UNLOCK_APPROVED_REPORTS]: {
+    name: 'UNLOCK_APPROVED_REPORTS',
+    description: 'User can unlock approved reports.',
   },
 };
 
@@ -82,8 +87,14 @@ export const REPORT_STATUSES = {
   APPROVED: 'approved',
 };
 
+export const MODEL_TYPES = {
+  ACTIVITY_REPORT: 'activityReport',
+  GRANTEE: 'grantee',
+};
+
 export const REPORTS_PER_PAGE = 10;
 export const ALERTS_PER_PAGE = 10;
+export const GRANTEES_PER_PAGE = 12;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
 

@@ -1,4 +1,4 @@
-import { submitReport } from './handlers';
+import { submitReport, unlockReport } from './handlers';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
@@ -65,6 +65,11 @@ beforeAll(async () => {
     userId: secondMockManager.id,
     regionId: 1,
     scopeId: SCOPES.APPROVE_REPORTS,
+  },
+  {
+    userId: mockUser.id,
+    regionId: 14,
+    scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
   }]);
 });
 
@@ -131,5 +136,53 @@ describe('submitReport', () => {
         expect.objectContaining({ status: null, note: 'make changes x, y, z' }),
       ],
     }));
+  });
+  it('resets to NEEDS_ACTION on unlock', async () => {
+    const submittedReport = await ActivityReport.create({
+      ...draftObject,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      userId: mockUser.id,
+    });
+    await ActivityReportApprover.create({
+      activityReportId: submittedReport.id, userId: mockManager.id, status: APPROVER_STATUSES.APPROVED, note: 'report looks good',
+    });
+
+    await ActivityReportApprover.create({
+      activityReportId: submittedReport.id, userId: secondMockManager.id, status: APPROVER_STATUSES.APPROVED, note: 'agree report looks good',
+    });
+
+    const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
+
+    // check that testing condition is correct
+    expect(reviewedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+    // Create request to unlock
+    const request = {
+      session: { userId: mockUser.id },
+      params: { activityReportId: reviewedReport.id },
+    };
+
+    // Call Unlock.
+    const mockUnlockResponse = {
+      sendStatus: jest.fn(),
+    };
+    await unlockReport(request, mockUnlockResponse);
+
+    expect(mockUnlockResponse.sendStatus).toHaveBeenCalledWith(204);
+
+    // Verify report is set to NEEDS_ACTION.
+    const needsActionReport = await ActivityReport.findByPk(submittedReport.id);
+    expect(needsActionReport.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
+
+    // Verify approving managers are set to NEEDS_ACTION.
+    const approvers = await ActivityReportApprover.findAll({
+      attributes: ['status'],
+      where: { activityReportId: needsActionReport.id },
+    });
+
+    // Both approvers should now be NEEDS_ACTION status.
+    expect(approvers.length).toBe(2);
+    expect(approvers[0].status).toBe(REPORT_STATUSES.NEEDS_ACTION);
+    expect(approvers[1].status).toBe(REPORT_STATUSES.NEEDS_ACTION);
   });
 });

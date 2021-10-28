@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartBar, faBorderAll } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 
 import './SiteNav.css';
+import FeatureFlag from './FeatureFlag';
 
 const navLinkClasses = [
   'display-block',
@@ -96,6 +97,18 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
+                  <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
+                    <li>
+                      <NavLink
+                        to="/grantee"
+                      >
+                        <span className="padding-right-1">
+                          <FontAwesomeIcon color="white" icon={faUserFriends} />
+                        </span>
+                        Grantee TTA Records
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                 </ul>
               </div>
               <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">

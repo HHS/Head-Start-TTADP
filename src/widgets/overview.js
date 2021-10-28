@@ -1,8 +1,10 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import {
   ActivityReport, ActivityRecipient, Grant, NonGrantee, sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
+
 /*
   Widgets on the backend should only have to worry about fetching data in the format required
   by the widget. In this case we return a single object but other widgets my require an array
@@ -14,9 +16,10 @@ import { REPORT_STATUSES } from '../constants';
 */
 export default async function overview(scopes, query) {
   const region = query['region.in'];
-  const startDte = '2020-09-15';
+  const startDte = '2020-09-01';
+  const endDte = moment().format('MM/DD/yyyy');
   const grantsWhere = `WHERE "regionId" in (${region !== undefined ? region : '0'}) and "endDate" >= '${startDte}'`;
-  const baseWhere = `${grantsWhere} AND "calculatedStatus" = '${REPORT_STATUSES.APPROVED}' AND "startDate" >= '${startDte}'`;
+  const baseWhere = `${grantsWhere} AND "calculatedStatus" = '${REPORT_STATUSES.APPROVED}' AND "startDate" >= '${startDte}' AND "startDate" <= '${endDte}'`;
   // There could be a better way, but using sequelize.literal was the only way I could get correct
   // numbers for SUM
   // FIXME: see if there is a better way to get totals using SUM
@@ -34,7 +37,7 @@ export default async function overview(scopes, query) {
         [Op.and]:
         [scopes,
           { calculatedStatus: REPORT_STATUSES.APPROVED },
-          { startDate: { [Op.gte]: startDte } },
+          { startDate: { [Op.gte]: startDte, [Op.lte]: endDte } },
         ],
       },
       raw: true,

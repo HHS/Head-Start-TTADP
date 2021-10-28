@@ -1,0 +1,22 @@
+get:
+  tags:
+    - grantee
+  summary: Retrieve a grantee
+  parameters:
+    - in: path
+      name: granteeId
+      required: true
+      schema:
+        type: number
+    - in: query
+      name: region
+      required: false
+      schema:
+        type: number
+  responses:
+    200:
+      description: The grantee record with an Id of {granteeId}
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/grantee'

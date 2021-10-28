@@ -3,10 +3,12 @@ import React from 'react';
 import {
   render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
+import { act } from 'react-dom/test-utils';
 import join from 'url-join';
+import fetchMock from 'fetch-mock';
 import RegionalDashboard from '../index';
 import formatDateRange from '../formatDateRange';
+import { SCOPE_IDS } from '../../../Constants';
 
 describe('Regional Dashboard page', () => {
   beforeAll(() => {
@@ -32,6 +34,38 @@ describe('Regional Dashboard page', () => {
     renderDashboard(user);
     const dateRange = await screen.findByRole('button', { name: /open date range options menu/i });
     expect(dateRange).toBeInTheDocument();
+  });
+
+  it('shows the selected region', async () => {
+    renderDashboard({
+      ...user,
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 14,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
+    });
+
+    expect(screen.getByText('Regional TTA Activity Dashboard')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Open regional select menu' });
+    fireEvent.click(button);
+
+    const region1 = screen.getByRole('button', { name: 'Select to view data from Region 1. Select Apply filters button to apply selection' });
+    fireEvent.click(region1);
+
+    const apply = screen.getByRole('button', { name: 'Apply filters for the regional select menu' });
+    fireEvent.click(apply);
+
+    expect(screen.getByText('Region 1 TTA Activity Dashboard')).toBeInTheDocument();
   });
 
   it('shows the currently selected date range', async () => {
@@ -79,7 +113,7 @@ describe('Regional Dashboard page', () => {
       { lastThirtyDays: true, withSpaces: false, forDateTime: true },
     );
 
-    const params = `?&region.in[]=14&startDate.win=${thirtyDays}&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist`;
+    const params = `?region.in[]=14&startDate.win=${thirtyDays}&modelType.is=activityReport&role.in[]=Family%20Engagement%20Specialist,Grantee%20Specialist,Health%20Specialist,System%20Specialist`;
     const widgetUrl = join('/', 'api', 'widgets', 'topicFrequencyGraph', params);
     fetchMock.get(widgetUrl, []);
 
@@ -88,7 +122,10 @@ describe('Regional Dashboard page', () => {
     const ecs = screen.getByRole('checkbox', { name: /select early childhood specialist \(ecs\)/i });
     fireEvent.click(ecs);
     const apply = screen.getByRole('button', { name: /apply filters/i });
-    fireEvent.click(apply);
+
+    act(() => {
+      fireEvent.click(apply);
+    });
 
     expect(fetchMock.called()).toBeTruthy();
     fetchMock.reset();
