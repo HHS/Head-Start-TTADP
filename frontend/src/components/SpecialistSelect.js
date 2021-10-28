@@ -30,7 +30,7 @@ export const ROLES_MAP = [
   },
 ];
 
-export default function SpecialistSelect({ onApplyRoles, initialValues }) {
+export default function SpecialistSelect({ onApplyRoles }) {
   return (
     <CheckboxSelect
       styleAsSelect
@@ -40,7 +40,6 @@ export default function SpecialistSelect({ onApplyRoles, initialValues }) {
       labelText="Filter by specialists"
       ariaName="Change filter by specialists menu"
       onApply={onApplyRoles}
-      initialValues={initialValues}
       options={
         ROLES_MAP.map((role) => ({
           value: role.selectValue,
@@ -53,9 +52,4 @@ export default function SpecialistSelect({ onApplyRoles, initialValues }) {
 
 SpecialistSelect.propTypes = {
   onApplyRoles: PropTypes.func.isRequired,
-  initialValues: PropTypes.arrayOf(PropTypes.string),
-};
-
-SpecialistSelect.defaultProps = {
-  initialValues: ['Early Childhood Specialist', 'Family Engagement Specialist', 'Grantee Specialist', 'Health Specialist', 'System Specialist'],
 };

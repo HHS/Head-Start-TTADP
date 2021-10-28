@@ -125,7 +125,6 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         <span className="margin-right-1">
           <SpecialistSelect
             onApplyRoles={onApplyRoles}
-            initialValues={query}
           />
         </span>
       ),
