@@ -96,8 +96,8 @@ const submittedReport = {
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
-  endDate: '2000-01-01T12:00:00Z',
-  startDate: '2000-01-01T12:00:00Z',
+  endDate: '2020-09-01T12:00:00Z',
+  startDate: '2020-09-01T12:00:00Z',
   requester: 'requester',
   programTypes: ['type'],
   targetPopulations: ['pop'],
@@ -625,6 +625,13 @@ describe('Activity Reports DB service', () => {
         ...submittedReport,
         calculatedStatus: REPORT_STATUSES.APPROVED,
         updatedAt: '1900-01-01T12:00:00Z',
+      });
+      await ActivityReport.create({
+        ...submittedReport,
+        status: REPORT_STATUSES.APPROVED,
+        startDate: '2020-08-31T12:00:00Z',
+        endDate: '2020-08-31T12:00:00Z',
+        topics: topicsTwo,
       });
     });
 

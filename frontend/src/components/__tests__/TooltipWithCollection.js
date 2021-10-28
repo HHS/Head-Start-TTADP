@@ -17,11 +17,6 @@ describe('TooltipWithCollection', () => {
 
   it('correctly modifies the dom when the button is clicked', async () => {
     renderTooltip();
-    const teddy = screen.getByText('Teddy');
-    const cathy = screen.getByText('Cathy');
-
-    expect(teddy).toBeVisible();
-    expect(cathy).toBeVisible();
 
     const button = screen.getByRole('button', { name: 'Teddy Cathy Bobby G-berg click to visually reveal the people who something' });
     act(() => {
@@ -50,6 +45,6 @@ describe('TooltipWithCollection', () => {
     renderTooltip(['Jimbo']);
     const jimbo = screen.getByText('Jimbo');
     expect(jimbo).toBeVisible();
-    expect(jimbo).toHaveClass('smarthub-ellipsis');
+    expect(jimbo.parentElement).toHaveClass('smarthub-ellipsis');
   });
 });

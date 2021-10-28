@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import Tooltip from './Tooltip';
-import './TooltipWithCollection.css';
 
 export default function TooltipWithCollection({ collection, collectionTitle }) {
   if (!collection || collection.length === 0) {
@@ -10,8 +9,13 @@ export default function TooltipWithCollection({ collection, collectionTitle }) {
   }
 
   const tooltip = (collection).reduce(
-    (result, member) => `${result + member}\n`,
-    '',
+    (result, member) => (
+      <>
+        {result}
+        <span>{member}</span>
+        <br />
+      </>
+    ), <></>,
   );
 
   const tags = (collection).map((member) => (
