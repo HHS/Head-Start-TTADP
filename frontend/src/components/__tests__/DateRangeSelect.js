@@ -34,6 +34,7 @@ describe('DateRangeSelect', () => {
       dateRange="2020/01/01-2020/01/01"
       customDateRangeOption={0}
       onApply={onApplyDateRange}
+      styleAsSelect
     />);
   };
 
@@ -68,7 +69,7 @@ describe('DateRangeSelect', () => {
     const applyFilters = screen.getByRole('button', { name: 'Apply filters for the date range options menu' });
     fireEvent.click(applyFilters);
 
-    expect(onApplyDateRange).toHaveBeenCalledWith({ label: 'Last 30 Days', value: 1 });
+    expect(onApplyDateRange).toHaveBeenCalled();
   });
 
   it('closes the menu with the escape key', () => {

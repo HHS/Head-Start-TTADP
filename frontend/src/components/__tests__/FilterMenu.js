@@ -53,6 +53,36 @@ describe('Filter Menu', () => {
       />);
     };
 
+    it('shows a dummy select', () => {
+      renderMenu();
+      userEvent.click(screen.getByRole('button', { name: /add new filter/i }));
+
+      const dummy = screen.getByRole('combobox', { name: /select a topic and condition first and then select a query/i });
+      expect(dummy).toBeDisabled();
+    });
+
+    it('calls the apply filters function passed in', () => {
+      const onApplyFilters = jest.fn();
+      renderMenu({
+        filters: [], onApplyFilters, hidden: false, toggleMenu: jest.fn(),
+      });
+
+      const apply = screen.getByRole('button', { name: /apply filters/i });
+      userEvent.click(apply);
+
+      expect(onApplyFilters).toHaveBeenCalled();
+    });
+
+    it('cancel closes the menu', () => {
+      const toggleMenu = jest.fn();
+      renderMenu({
+        filters: [], onApplyFilters: jest.fn(), hidden: false, toggleMenu,
+      });
+      userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+      expect(toggleMenu).toHaveBeenCalled();
+    });
+
     it('hides the menu when appropriate', () => {
       renderMenu({
         filters: [], onApplyFilters: jest.fn(), hidden: true, toggleMenu: jest.fn(),
@@ -72,18 +102,47 @@ describe('Filter Menu', () => {
       />);
     };
 
+    it('displays a date filter correctly', () => {
+      const filter = {
+        topic: 'startDate',
+        condition: 'within',
+        id: 'gibberish',
+      };
+      const onRemove = jest.fn();
+      const onUpdate = jest.fn();
+      renderFilterItem(filter, onRemove, onUpdate);
+
+      const selector = screen.getByRole('combobox', { name: 'condition' });
+
+      userEvent.selectOptions(selector, 'Is after');
+
+      expect(screen.getByRole('textbox', { name: /date/i })).toBeVisible();
+
+      userEvent.selectOptions(selector, 'Is within');
+    });
+
     it('display a specialist filter correctly', () => {
       const filter = {
         topic: 'role',
         condition: 'Contains',
-        query: ['Early Childhood Specialist'],
         id: 'gibberish',
       };
-      renderFilterItem(filter);
+      const onRemove = jest.fn();
+      const onUpdate = jest.fn();
+      renderFilterItem(filter, onRemove, onUpdate);
 
-      screen.logTestingPlaygroundURL();
+      const button = screen.getByText(/all specialists/i);
+      userEvent.click(button);
 
-      expect(true).toBe(false);
+      const apply = screen.getByRole('button', { name: /apply filters for change filter by specialists menu/i });
+      userEvent.click(apply);
+      expect(onUpdate).toHaveBeenCalled();
+
+      userEvent.click(screen.getByRole('button', {
+        name: /remove filter/i,
+      }));
+
+      expect(onRemove).toHaveBeenCalled();
     });
   });
 });

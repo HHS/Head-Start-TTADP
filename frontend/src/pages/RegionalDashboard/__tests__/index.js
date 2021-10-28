@@ -7,7 +7,7 @@ import { act } from 'react-dom/test-utils';
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
 import RegionalDashboard from '../index';
-import formatDateRange from '../formatDateRange';
+import { formatDateRange } from '../../../components/DateRangeSelect';
 import { SCOPE_IDS } from '../../../Constants';
 
 describe('Regional Dashboard page', () => {

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
@@ -135,7 +135,9 @@ describe('grantee record page', () => {
     fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
     memoryHistory.push('/grantee/1/tta-history?region=45');
     act(() => renderGranteeRecord(memoryHistory));
-    const arLabel = await screen.findByText(/the total number of approved activity reports\. click to visually reveal this information/i);
-    expect(arLabel).toBeInTheDocument();
+    await waitFor(() => {
+      const ar = screen.getByText(/the total number of approved activity reports\. click to visually reveal this information/i);
+      expect(ar).toBeInTheDocument();
+    });
   });
 });
