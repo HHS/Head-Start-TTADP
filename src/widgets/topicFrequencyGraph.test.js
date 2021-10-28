@@ -8,7 +8,7 @@ import db, {
   NextStep,
   Region,
 } from '../models';
-import { filtersToScopes } from '../scopes/activityReport';
+import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
 

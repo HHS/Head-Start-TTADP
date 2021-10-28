@@ -38,12 +38,16 @@
   $ref: './activity-reports/activity-reports-id.yaml'
 '/activity-reports/{activityReportId}/submit':
   $ref: './activity-reports/submit.yaml'
+'/activity-reports/{activityReportId}/unlock':
+  $ref: './activity-reports/unlock.yaml'
 '/activity-reports/{activityReportId}/review':
   $ref: './activity-reports/review.yaml'
 '/activity-reports/{activityReportId}/reset':
   $ref: './activity-reports/reset.yaml'
 '/files':
   $ref: './files.yaml'
+'/grantee/{granteeId}':
+  $ref: './grantee/grantee-id.yaml'
 '/widgets/dashboardOverview':
   $ref: './widgets/dashboardOverview.yaml'
 '/widgets/overview':

@@ -83,7 +83,16 @@ describe('Update grants and grantees', () => {
     const grantee = await Grantee.findOne({ where: { id: 1335 } });
     expect(grantee).toBeDefined();
     expect(grantee.name).toBe('Agency 1, Inc.');
+
+    const grant1 = await Grant.findOne({ where: { id: 8110 } });
+    expect(grant1.oldGrantId).toBe(7842);
+
+    const grant2 = await Grant.findOne({ where: { id: 11835 } });
+    expect(grant2.oldGrantId).toBe(2591);
     expect(grantee.granteeType).toBe('Community Action Agency (CAA)');
+
+    const grant3 = await Grant.findOne({ where: { id: 10448 } });
+    expect(grant3.oldGrantId).toBe(null);
   });
 
   it('should import or update grants', async () => {

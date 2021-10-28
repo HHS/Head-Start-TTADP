@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getApprovers,
   submitReport,
+  unlockReport,
   saveReport,
   createReport,
   getReport,
@@ -45,5 +46,6 @@ router.delete('/:activityReportId', checkActivityReportIdParam, softDeleteReport
 router.put('/:activityReportId/reset', checkActivityReportIdParam, resetToDraft);
 router.put('/:activityReportId/review', checkActivityReportIdParam, reviewReport);
 router.put('/:activityReportId/submit', checkActivityReportIdParam, submitReport);
+router.put('/:activityReportId/unlock', checkActivityReportIdParam, unlockReport);
 
 export default router;

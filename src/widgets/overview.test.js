@@ -1,7 +1,7 @@
 import db, {
   ActivityReport, ActivityRecipient, User, Grantee, Grant, Region,
 } from '../models';
-import { filtersToScopes } from '../scopes/activityReport';
+import filtersToScopes from '../scopes';
 import { formatQuery } from '../routes/widgets/utils';
 import overview from './overview';
 import { REPORT_STATUSES } from '../constants';
