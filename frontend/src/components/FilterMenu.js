@@ -10,7 +10,7 @@ import DatePicker from './FilterDatePicker';
 import SpecialistSelect, { ROLES_MAP } from './SpecialistSelect';
 import {
   DATE_CONDITIONS,
-  FILTER_CONDITIONS,
+  SELECT_CONDITIONS,
   CUSTOM_DATE_RANGE,
 } from './constants';
 
@@ -120,7 +120,7 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     {
       id: 'role',
       display: 'Specialist',
-      conditions: FILTER_CONDITIONS,
+      conditions: SELECT_CONDITIONS,
       renderInput: () => (
         <span className="margin-right-1">
           <SpecialistSelect
