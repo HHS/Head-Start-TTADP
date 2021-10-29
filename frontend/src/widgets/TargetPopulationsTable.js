@@ -20,7 +20,7 @@ const renderTargetPopulationTable = (data) => {
   return null;
 };
 
-function TargetPopulationTable({ data, loading }) {
+export function TargetPopulationTable({ data, loading }) {
   return (
     <TableWidget
       data={data}
