@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { Grid } from '@trussworks/react-uswds';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/FilterMenu';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
@@ -61,11 +62,13 @@ export default function TTAHistory({
           showTooltips
           filters={filtersToApply}
         />
-        <div>
-          <TargetPopulationsTable
-            filters={filtersToApply}
-          />
-        </div>
+        <Grid row>
+          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
+            <TargetPopulationsTable
+              filters={filtersToApply}
+            />
+          </Grid>
+        </Grid>
       </div>
     </>
   );
