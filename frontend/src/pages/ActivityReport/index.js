@@ -293,16 +293,31 @@ function ActivityReport({
   const reportCreator = { name: user.name, role: user.role };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
+  const author = formData.author ? (
+    <>
+      <hr />
+      <p>
+        <strong>Creator:</strong>
+        {' '}
+        {formData.author.name}
+      </p>
+
+    </>
+  ) : null;
+
   return (
     <div className="smart-hub-activity-report">
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-3 margin-bottom-5">
-            Activity report for Region
-            {' '}
-            {formData.regionId}
-          </h1>
+          <div className="margin-top-3 margin-bottom-5">
+            <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
+              Activity report for Region
+              {' '}
+              {formData.regionId}
+            </h1>
+            {author}
+          </div>
         </Grid>
         <Grid col="auto" className="flex-align-self-center">
           {formData.calculatedStatus && (
