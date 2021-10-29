@@ -266,6 +266,8 @@ describe('the grantee search page', () => {
   it('the regional select works with all regions', async () => {
     const user = { ...userBluePrint, homeRegionId: 14 };
 
+    fetchMock.get('/api/grantee/search?s=&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0', res);
+
     renderGranteeSearch(user);
     const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, res);
@@ -298,6 +300,62 @@ describe('the grantee search page', () => {
     });
 
     expect(document.querySelector('table.usa-table')).toBeInTheDocument();
+  });
+
+  it('requests a sort', async () => {
+    const user = { ...userBluePrint };
+    renderGranteeSearch(user);
+
+    const url = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(url, res);
+
+    const searchBox = screen.getByRole('searchbox');
+    const button = screen.getByRole('button', { name: /search for matching grantees/i });
+
+    await waitFor(() => expect(button).not.toBeDisabled());
+
+    act(() => {
+      userEvent.type(searchBox, query);
+      fireEvent.click(button);
+    });
+
+    const changeDirection = await screen.findByRole('button', { name: /grantee name\. activate to sort descending/i });
+    const changeDirectionUrl = join(granteeUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=0');
+
+    fetchMock.get(changeDirectionUrl, res);
+
+    await waitFor(() => expect(changeDirection).not.toBeDisabled());
+
+    act(() => {
+      fireEvent.click(changeDirection);
+    });
+
+    const changeSort = await screen.findByRole('button', { name: /program specialist\. activate to sort ascending/i });
+    const chageSortUrl = join(
+      granteeUrl,
+      'search',
+      `?s=${encodeURIComponent(`${query}major tom`)}`,
+      '&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0',
+    );
+
+    fetchMock.get(chageSortUrl, res);
+
+    await waitFor(() => expect(changeSort).not.toBeDisabled());
+
+    act(() => {
+      userEvent.type(searchBox, 'major tom');
+      fireEvent.click(changeSort);
+    });
+
+    const expectedMocks = [
+      '/api/grantee/search?s=&region.in[]=1&sortBy=name&direction=asc&offset=0',
+      '/api/grantee/search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0',
+      '/api/grantee/search?s=ground%20control&region.in[]=1&sortBy=name&direction=desc&offset=0',
+      '/api/grantee/search?s=ground%20controlmajor%20tom&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0',
+    ];
+
+    const mocks = fetchMock.calls().map((call) => call[0]);
+    expect(mocks).toStrictEqual(expectedMocks);
   });
 
   it('requests the next page', async () => {

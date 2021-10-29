@@ -35,7 +35,7 @@ function escapeRole(role) {
   const acceptableRoles = [
     'Early Childhood Specialist',
     'Family Engagement Specialist',
-    'Grant Specialist',
+    'Grantee Specialist',
     'Health Specialist',
     'System Specialist',
   ];
