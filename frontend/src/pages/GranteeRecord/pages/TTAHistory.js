@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/FilterMenu';
+import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 
 function expandFilters(filters) {
   const arr = [];
@@ -60,6 +61,11 @@ export default function TTAHistory({
           showTooltips
           filters={filtersToApply}
         />
+        <div>
+          <TargetPopulationsTable
+            filters={filtersToApply}
+          />
+        </div>
       </div>
     </>
   );
