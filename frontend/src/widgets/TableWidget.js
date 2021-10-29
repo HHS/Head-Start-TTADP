@@ -29,7 +29,7 @@ export default function TableWidget(
           </caption>
           <thead>
             <tr>
-              {headings.map((heading) => <th scope="col" className="text-left">{heading}</th>)}
+              {headings.map((heading) => <th key={heading.replace(' ', '_')} scope="col" className="text-left">{heading}</th>)}
             </tr>
           </thead>
           <tbody>
