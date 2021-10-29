@@ -22,9 +22,9 @@ describe('Target Populations Table', () => {
     expect(screen.getByText(/Target Populations in Activity Reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /target population/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /# of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /reason one/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /population one/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /4/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /reason two/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /population two/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /2/i })).toBeInTheDocument();
   });
 });
