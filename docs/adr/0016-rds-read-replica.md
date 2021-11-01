@@ -39,8 +39,8 @@ We could potentially promote a read replica to its own instance and run the scri
 
 However, that’s probably complicating things. We could just as easily have a terraform script that starts up a database from the latest snapshot, runs the script against it, and produces a new snapshot from which the other phases start their databases. That would also be safer, as a script would obviate the possibility of accidentally choosing the wrong database.
 
-##
-
+### Verdict
+Of the possible benefits, RDS Read Replicas only seem like a possibly worthwhile response for the second, "DB single source of failure" challenge. Whether it's worth it in the near term is not clear.
 
 ## Consequences
 
