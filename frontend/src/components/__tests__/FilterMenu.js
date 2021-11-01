@@ -79,7 +79,7 @@ describe('Filter Menu', () => {
         filters: [], onApplyFilters, hidden: false, toggleMenu: jest.fn(),
       });
 
-      const apply = screen.getByRole('button', { name: /apply filters/i });
+      const apply = screen.getByRole('button', { name: /Apply all filters and reload the data on this page/i });
       userEvent.click(apply);
 
       expect(onApplyFilters).toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('Filter Menu', () => {
 
       userEvent.selectOptions(topic, 'startDate');
 
-      userEvent.click(screen.getByRole('button', { name: /apply filters/i }));
+      userEvent.click(screen.getByRole('button', { name: /Apply all filters and reload the data on this page/i }));
 
       expect(onApplyFilters).toHaveBeenCalledWith([
         {
@@ -132,8 +132,10 @@ describe('Filter Menu', () => {
         },
       ]);
 
-      userEvent.click(screen.getByRole('button', { name: /remove filter/i }));
-      userEvent.click(screen.getByRole('button', { name: /apply filters/i }));
+      const remove = screen.getByRole('button', { name: /remove Date range Contains filter. click apply filters to make your changes/i });
+
+      userEvent.click(remove);
+      userEvent.click(screen.getByRole('button', { name: /Apply all filters and reload the data on this page/i }));
 
       expect(onApplyFilters).toHaveBeenCalledWith([]);
     });
@@ -208,7 +210,7 @@ describe('Filter Menu', () => {
     it('display a specialist filter correctly', () => {
       const filter = {
         topic: 'role',
-        condition: 'Contains',
+        condition: 'Is within',
         id: 'gibberish',
       };
       const onRemove = jest.fn();
@@ -223,7 +225,7 @@ describe('Filter Menu', () => {
       expect(onUpdate).toHaveBeenCalled();
 
       userEvent.click(screen.getByRole('button', {
-        name: /remove filter/i,
+        name: /remove Specialist Is within undefined filter. click apply filters to make your changes/i,
       }));
 
       expect(onRemove).toHaveBeenCalled();

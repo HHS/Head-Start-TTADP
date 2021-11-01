@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -57,6 +57,13 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   } = filter;
 
   const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(YEAR_TO_DATE_OPTION);
+  const firstSelect = useRef();
+
+  useEffect(() => {
+    if (firstSelect.current) {
+      firstSelect.current.focus();
+    }
+  });
 
   const onUpdate = (name, value) => {
     onUpdateFilter(id, name, value);
@@ -144,6 +151,15 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     onRemoveFilter(id);
   };
 
+  let readableFilterName = '';
+  if (selectedTopic) {
+    readableFilterName = selectedTopic.display;
+  }
+
+  const buttonAriaLabel = readableFilterName
+    ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
+    : 'remove this filter. click apply filters to make your changes';
+
   return (
     <li className="ttahub-filter-menu-item display-flex">
       <select
@@ -152,6 +168,7 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select margin-right-1"
+        ref={firstSelect}
       >
         <option value="">- Select -</option>
         {possibleFilters.map(({ id: filterId, display }) => (
@@ -173,7 +190,7 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         : <DummySelect /> }
       <button
         type="button"
-        aria-label="remove filter"
+        aria-label={buttonAriaLabel}
         className="usa-button usa-button--unstyled font-sans-xs margin-right-1 margin-left-0"
         onClick={onRemove}
       >
@@ -263,8 +280,23 @@ export function Menu({
         <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
       </div>
       <div className="margin-top-1 display-flex flex-justify-end margin-right-3">
-        <button type="button" className="usa-button usa-button--unstyled margin-right-2" onClick={toggleMenu}>Cancel</button>
-        <button type="button" className="usa-button" onClick={onApply}>Apply filters</button>
+        <button
+          type="button"
+          className="usa-button usa-button--unstyled margin-right-2"
+          aria-label="Cancel and discard unsaved filters"
+          onClick={toggleMenu}
+        >
+          Cancel
+
+        </button>
+        <button
+          type="button"
+          aria-label="Apply all filters and reload the data on this page"
+          className="usa-button"
+          onClick={onApply}
+        >
+          Apply filters
+        </button>
       </div>
     </div>
   );
