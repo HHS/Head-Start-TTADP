@@ -5,7 +5,7 @@
 }
 
 .smart-hub--objective-title {
-  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .smart-hub--objective-tag {
