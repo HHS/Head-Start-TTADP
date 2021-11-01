@@ -299,7 +299,7 @@ function ActivityReport({
       <p>
         <strong>Creator:</strong>
         {' '}
-        {formData.author.name}
+        {formData.author.fullName}
       </p>
 
     </>
