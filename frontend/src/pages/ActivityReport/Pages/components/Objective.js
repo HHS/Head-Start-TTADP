@@ -103,6 +103,7 @@ const Objective = ({
               onChange={onChange}
               inputRef={firstInput}
               value={title}
+              spellcheck="true"
             />
           </ObjectiveFormItem>
           <ObjectiveFormItem
