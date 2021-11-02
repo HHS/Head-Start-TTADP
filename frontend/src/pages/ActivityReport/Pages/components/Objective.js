@@ -165,7 +165,7 @@ const Objective = ({
               />
             </div>
           </div>
-          <p className="margin-top-0">
+          <p className="smart-hub--objective-title margin-top-0">
             <span className="text-bold">Objective: </span>
             {title}
           </p>
