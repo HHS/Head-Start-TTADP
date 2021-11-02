@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
 } from './goals';
@@ -211,6 +212,14 @@ describe('goalsForGrants', () => {
           attributes: ['id'],
           where: {
             id: [505, 506],
+            [Op.or]: [
+              {
+                status: 'Not Started',
+              },
+              {
+                status: 'In Progress',
+              },
+            ],
           },
         },
       ],
