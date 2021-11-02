@@ -6,6 +6,13 @@ import {
 import { REPORT_STATUSES } from '../constants';
 
 export default async function dashboardOverview(scopes) {
+  /**
+   * this looks a little strange... why create two SQL queries?
+   *
+   * The answer - the includes/required: false on the second query
+   * causes the joins to be left outer joins, which will give us duplicated
+   * activity reports, and incorrect numbers
+   */
   const duration = await ActivityReport.findAll({
     attributes: [
       'duration',
