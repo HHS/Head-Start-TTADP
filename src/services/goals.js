@@ -31,6 +31,16 @@ export async function goalsForGrants(grantIds) {
   */
 
   return Goal.findAll({
+    where: {
+      [Op.or]: [
+        {
+          status: 'Not Started',
+        },
+        {
+          status: 'In Progress',
+        },
+      ],
+    },
     include: [
       {
         model: Grant,
@@ -38,14 +48,6 @@ export async function goalsForGrants(grantIds) {
         attributes: ['id'],
         where: {
           id: ids,
-          [Op.or]: [
-            {
-              status: 'Not Started',
-            },
-            {
-              status: 'In Progress',
-            },
-          ],
         },
       },
     ],
