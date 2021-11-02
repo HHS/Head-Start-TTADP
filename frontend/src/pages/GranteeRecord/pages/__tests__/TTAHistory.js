@@ -35,7 +35,7 @@ describe('Grantee Record - TTA History', () => {
   };
 
   beforeEach(async () => {
-    const url = '/api/widgets/dashboardOverview?region.in[]=400&granteeId.in[]=100&modelType.is=grant';
+    const url = '/api/widgets/overview?region.in[]=400&granteeId.in[]=100&modelType.is=grant';
     fetchMock.get(url, response);
   });
 

@@ -434,6 +434,19 @@ function Landing({ user }) {
     );
   }
 
+  const overviewFilters = [
+    {
+      topic: 'region',
+      condition: 'Contains',
+      query: appliedRegion,
+    },
+    {
+      topic: 'startDate',
+      condition: 'Is after',
+      query: '2020/08/31',
+    },
+  ];
+
   return (
     <>
       <Helmet>
@@ -487,10 +500,7 @@ function Landing({ user }) {
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
             <Overview
-              filters={filters}
-              region={appliedRegion}
-              allRegions={regions}
-              skipLoading
+              filters={overviewFilters}
               regionLabel={regionLabel}
             />
           </Grid>
