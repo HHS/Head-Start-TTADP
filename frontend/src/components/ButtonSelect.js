@@ -27,6 +27,7 @@ function ButtonSelect(props) {
     endDatePickerId,
     dateRange,
     disabled,
+    className,
   } = props;
 
   const [checked, setChecked] = useState(applied);
@@ -160,7 +161,7 @@ function ButtonSelect(props) {
   const ariaLabel = `${menuIsOpen ? 'press escape to close ' : 'Open '} ${ariaName}`;
 
   return (
-    <div className="margin-left-1" onBlur={onBlur} data-testid="data-sort">
+    <div className={`margin-left-1 ${className}`} onBlur={onBlur} data-testid="data-sort">
       <button
         onClick={setMenuIsOpen}
         onKeyDown={onKeyDown}
@@ -301,6 +302,7 @@ ButtonSelect.propTypes = {
   applied: PropTypes.number.isRequired,
   ariaName: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
+  className: PropTypes.string,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -321,6 +323,7 @@ ButtonSelect.defaultProps = {
   startDatePickerId: '',
   endDatePickerId: '',
   disabled: false,
+  className: '',
 };
 
 export default ButtonSelect;
