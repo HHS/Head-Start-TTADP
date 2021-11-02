@@ -205,6 +205,16 @@ describe('goalsForGrants', () => {
     await goalsForGrants([506]);
 
     expect(Goal.findAll).toHaveBeenCalledWith({
+      where: {
+        [Op.or]: [
+          {
+            status: 'Not Started',
+          },
+          {
+            status: 'In Progress',
+          },
+        ],
+      },
       include: [
         {
           model: Grant,
@@ -212,14 +222,6 @@ describe('goalsForGrants', () => {
           attributes: ['id'],
           where: {
             id: [505, 506],
-            [Op.or]: [
-              {
-                status: 'Not Started',
-              },
-              {
-                status: 'In Progress',
-              },
-            ],
           },
         },
       ],
