@@ -1,3 +1,5 @@
+// Note that if this topic list is changed, it needs also to be changed in
+// - src/constants.js
 export const reasons = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
@@ -69,7 +71,7 @@ export const programTypes = [
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in
-// - src/widgets/topicFrequencyGraph.js
+// - src/constants.js
 export const topics = [
   'Behavioral / Mental Health / Trauma',
   'Child Assessment, Development, Screening',
