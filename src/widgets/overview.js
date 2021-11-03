@@ -5,7 +5,7 @@ import {
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
-export default async function dashboardOverview(scopes) {
+export default async function overview(scopes) {
   /**
    * this looks a little strange... why create two SQL queries?
    *
