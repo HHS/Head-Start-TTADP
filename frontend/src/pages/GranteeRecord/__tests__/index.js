@@ -84,8 +84,8 @@ describe('grantee record page', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/user', user);
-    fetchMock.get('/api/widgets/dashboardOverview', overview);
-    fetchMock.get('/api/widgets/dashboardOverview?region.in[]=45&granteeId.in[]=1', overview);
+    fetchMock.get('/api/widgets/overview', overview);
+    fetchMock.get('/api/widgets/overview?region.in[]=45&granteeId.in[]=1', overview);
   });
   afterEach(() => {
     fetchMock.restore();

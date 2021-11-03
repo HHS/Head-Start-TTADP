@@ -20,13 +20,13 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { Controller } from 'react-hook-form/dist/index.ie11';
 import _ from 'lodash';
-
+import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
 
 export const DropdownIndicator = (props) => (
@@ -57,6 +57,21 @@ function MultiSelect({
   onCreateOption,
   components: componentReplacements,
 }) {
+  const inputId = `select-${uuidv4()}`;
+
+  useEffect(() => {
+    /**
+     * unfortunately, given our support for ie11, we can't
+     * upgrade to react-select v5, which support a spellcheck
+     * attribute. Here is an awkward solution I've concocted
+     * in it's stead.
+     */
+    const input = document.querySelector(`#${inputId}`);
+    if (input) {
+      input.setAttribute('spellcheck', 'true');
+    }
+  });
+
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
@@ -142,42 +157,14 @@ function MultiSelect({
     }
   };
 
+  const Selector = canCreate ? Creatable : Select;
+
   return (
     <Controller
       render={({ onChange: controllerOnChange, value }) => {
         const values = value ? getValues(value) : value;
-        if (canCreate) {
-          return (
-            <Creatable
-              className="margin-top-1"
-              id={name}
-              value={values}
-              onChange={(event) => {
-                if (onItemSelected) {
-                  onItemSelected(event);
-                } else if (event) {
-                  onChange(event, controllerOnChange);
-                } else {
-                  controllerOnChange([]);
-                }
-              }}
-              styles={styles}
-              components={{ ...componentReplacements, DropdownIndicator }}
-              options={options}
-              isDisabled={disabled}
-              tabSelectsValue={false}
-              isClearable={multiSelectOptions.isClearable}
-              closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
-              controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
-              hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-              placeholder=""
-              onCreateOption={onCreateOption}
-              isMulti
-            />
-          );
-        }
         return (
-          <Select
+          <Selector
             className="margin-top-1"
             id={name}
             value={values}
@@ -190,6 +177,7 @@ function MultiSelect({
                 controllerOnChange([]);
               }
             }}
+            inputId={inputId}
             styles={styles}
             components={{ ...componentReplacements, DropdownIndicator }}
             options={options}
@@ -200,6 +188,7 @@ function MultiSelect({
             controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
             hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
             placeholder=""
+            onCreateOption={onCreateOption}
             isMulti
           />
         );
