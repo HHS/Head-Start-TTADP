@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import './DateRangeSelect.css';
 import moment from 'moment';
 import {
   SingleDatePicker, isInclusivelyBeforeDay,
@@ -9,12 +8,37 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
 import {
-  DATETIME_DATE_FORMAT, DATE_FORMAT, CUSTOM_DATE_RANGE, DATE_OPTIONS,
+  DATETIME_DATE_FORMAT, DATE_FORMAT,
 } from './constants';
 import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
-import './ButtonSelect.css';
 import triangleDown from '../images/triange_down.png';
 
+// I think we need 'em both
+import './ButtonSelect.css';
+import './DateRangeSelect.css';
+
+/**
+ * This function accepts a configuration object, the keys of which are all optional
+ *
+ *  if either of these are true, the function will return the date string for that automatically
+ *  lastThirtyDays
+ *  yearToDate
+ *
+ *  (Logically, if they are both true, that doesn't make sense,
+ *   but last thirty days will be returned)
+ *
+ *   withSpaces - Should there be spaces in between the two dates and the seperator
+ *
+ *   sep - what character or string should seperate the two dates
+ *
+ *   forDateTime: returns the string in DATETIME_DATE_FORMAT, otherwise DATE_FORMAT is used
+ *
+ *   string - the string to be parsed to return a formatted date
+ *   It's expected to be in DATETIME_DATE_FORMAT
+ *
+ * @param {Object} format
+ * @returns a date string
+ */
 export function formatDateRange(format = {
   lastThirtyDays: false,
   yearToDate: false,
@@ -66,90 +90,51 @@ export function formatDateRange(format = {
 
   return '';
 }
-/*
-  we are trying to kill one of the two functions, on apply or updateDateRange
-  we can probably continue to pass in "on apply" and then handle that here
-  we only want to pass in one method down the component tree at each level
-*/
 
-/**
- * ## Refactor plan
- * 1) Pass in the options as a node
- * 2) One "on apply" function
- * 3) DateRangeSelect should just return a date range string
- * 4) Probably remove that year to date thing as it is needlessly complicated
- * 5) Likewise, the label should probably just have a hide/show hint text prop
- */
+const OPTIONS = [
+  {
+    label: 'Last 30 Days',
+    value: 1,
+    range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
+  },
+  {
+    label: 'Custom Date Range',
+    value: 2,
+    range: '',
+  },
+];
+
+const CUSTOM_DATE_RANGE = OPTIONS[1].value;
 
 /**
  *
  * @param {*} props
- * @returns
+ * @returns JSX object
  */
 
 function DateRangeSelect(props) {
   const {
     options,
-    onApply,
-    labelId,
     styleAsSelect,
-    initialValue,
-    applied,
-    labelText,
-    ariaName,
     updateDateRange,
-    startDatePickerId,
-    endDatePickerId,
-    dateRange,
     disabled,
   } = props;
 
-  const [checked, setChecked] = useState(applied);
-  const [selectedItem, setSelectedItem] = useState();
+  const [selectedItem, setSelectedItem] = useState(1);
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const [range, setRange] = useState();
   const [showDateError, setShowDateError] = useState(false);
 
+  // to handle the internal range
   const [startDate, setStartDate] = useState();
   const [startDateFocused, setStartDateFocused] = useState(false);
   const [endDate, setEndDate] = useState();
   const [endDateFocused, setEndDateFocused] = useState(false);
-  /**
-   * just so we always have something selected
-   * */
-  useEffect(() => {
-    if (!selectedItem && !applied) {
-      setSelectedItem(initialValue);
-    }
-  }, [applied, initialValue, selectedItem]);
 
-  /**
-   * To calculate where the checkmark should go :)
-   */
-
-  useEffect(() => {
-    if (selectedItem && selectedItem.value !== applied) {
-      setChecked(selectedItem.value);
-    } else {
-      setChecked(applied);
-    }
-  }, [applied, selectedItem]);
-
-  /**
-   * we store the date range in here so that we can apply it up the chain
-   * when the calendar control is updated
-   */
-  useEffect(() => {
-    if (!range) {
-      setRange(dateRange);
-    }
-
-    setRange(`${startDate ? startDate.format(DATE_FMT) : ''}-${endDate ? endDate.format(DATE_FMT) : ''}`);
-  }, [range, dateRange, startDate, endDate]);
+  const startDatePickerId = 'startDatePicker';
 
   /** when to focus on the start date input */
   useEffect(() => {
-    if (selectedItem && selectedItem.value === CUSTOM_DATE_RANGE) {
+    if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
       const input = document.getElementById(startDatePickerId);
       if (input) {
         input.focus();
@@ -160,11 +145,10 @@ function DateRangeSelect(props) {
   /**
    * apply the selected item and close the menu
    *
-   * if we have a date picker and it's a custom range, also apply the
-   * new date range
    */
   const onApplyClick = () => {
-    if (selectedItem && selectedItem.value === CUSTOM_DATE_RANGE) {
+    if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
+      const range = `${startDate ? startDate.format(DATE_FMT) : ''}-${endDate ? endDate.format(DATE_FMT) : ''}`;
       const isValidDateRange = range.trim().split('-').filter((str) => str !== '').length === 2;
 
       if (!isValidDateRange) {
@@ -173,9 +157,13 @@ function DateRangeSelect(props) {
       }
 
       updateDateRange(range);
+    } else if (selectedItem) {
+      const option = options.find((o) => selectedItem === o.value);
+      if (option) {
+        const { range } = option;
+        updateDateRange(range);
+      }
     }
-
-    onApply(selectedItem, range);
     setMenuIsOpen(false);
   };
 
@@ -228,11 +216,11 @@ function DateRangeSelect(props) {
   };
 
   // get label text
-  const label = options.find((option) => option.value === applied);
+  const label = options.find((option) => option.value === selectedItem.value);
 
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
 
-  const ariaLabel = `${menuIsOpen ? 'press escape to close ' : 'Open '} ${ariaName}`;
+  const ariaLabel = `${menuIsOpen ? 'press escape to close ' : 'Open '} date range select menu`;
 
   return (
     <div className="margin-left-1" onBlur={onBlur} data-testid="data-sort">
@@ -250,28 +238,29 @@ function DateRangeSelect(props) {
 
       { menuIsOpen && !disabled
         ? (
-          <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
-            <span className="smart-hub--button-select-menu-label" id={labelId}><strong>{labelText}</strong></span>
+          <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">
+            <span className="smart-hub--button-select-menu-label" id="dateRangeSelectLabel">
+              <strong>Choose activity start date range</strong>
+            </span>
             <fieldset className="margin-0 border-0 padding-0">
               { options.map((option) => (
                 <button
                   type="button"
-                  aria-pressed={option.value === checked}
+                  aria-pressed={option.value === selectedItem}
                   className="smart-hub--button smart-hub--button-select-range-button"
                   key={option.value}
                   onKeyDown={onKeyDown}
-                  data-value={option.value}
                   aria-label={`Select to view data from ${option.label}. Select Apply filters button to apply selection`}
                   onClick={() => {
-                    setSelectedItem(option);
+                    setSelectedItem(option.value);
                   }}
                 >
                   {option.label}
-                  {option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null}
+                  {option.value === selectedItem.value ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null}
                 </button>
               ))}
 
-              { selectedItem && selectedItem.value === CUSTOM_DATE_RANGE
+              { selectedItem && selectedItem === CUSTOM_DATE_RANGE
                 ? (
                   <div className="smart-hub--button-select-menu-date-picker">
                     { showDateError ? (
@@ -317,13 +306,13 @@ function DateRangeSelect(props) {
                       </Button>
                     </div>
                     {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                    <label className="display-block margin-top-2" htmlFor={endDatePickerId}>End Date</label>
+                    <label className="display-block margin-top-2" htmlFor="endDatePicker">End Date</label>
                     <p><small>mm/dd/yyyy</small></p>
                     <div className="smart-hub--button-select-menu-date-picker-single">
                       <SingleDatePicker
                         ariaLabel="end date"
                         small
-                        id={endDatePickerId}
+                        id="endDatePicker"
                         focused={endDateFocused}
                         numberOfMonths={1}
                         hideKeyboardShortcutsPanel
@@ -352,7 +341,15 @@ function DateRangeSelect(props) {
                   </div>
                 ) : null }
             </fieldset>
-            <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label={`Apply filters for the ${ariaName}`}>Apply</button>
+            <button
+              type="button"
+              onKeyDown={onKeyDown}
+              className="usa-button smart-hub--button margin-2"
+              onClick={onApplyClick}
+              aria-label="Apply date range filters"
+            >
+              Apply
+            </button>
           </div>
         )
         : null }
@@ -365,36 +362,23 @@ function DateRangeSelect(props) {
 const optionProp = PropTypes.shape({
   value: PropTypes.number,
   label: PropTypes.string,
+  range: PropTypes.string,
 });
 
 DateRangeSelect.propTypes = {
+  // basic button select props
   options: PropTypes.arrayOf(optionProp),
-  labelId: PropTypes.string.isRequired,
-  labelText: PropTypes.string.isRequired,
-  onApply: PropTypes.func.isRequired,
-  initialValue: optionProp.isRequired,
-  applied: PropTypes.number.isRequired,
-  ariaName: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
-
-  // style as a select box
   styleAsSelect: PropTypes.bool,
 
   // props for handling the date range select
-  updateDateRange: PropTypes.func,
-  dateRange: PropTypes.string,
-  startDatePickerId: PropTypes.string,
-  endDatePickerId: PropTypes.string,
+  updateDateRange: PropTypes.func.isRequired,
 };
 
 DateRangeSelect.defaultProps = {
   styleAsSelect: false,
-  updateDateRange: () => {},
-  dateRange: '',
-  startDatePickerId: '',
-  endDatePickerId: '',
   disabled: false,
-  options: DATE_OPTIONS,
+  options: OPTIONS,
 };
 
 export default DateRangeSelect;

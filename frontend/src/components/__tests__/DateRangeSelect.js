@@ -27,29 +27,26 @@ describe('format date function', () => {
 });
 
 describe('DateRangeSelect', () => {
-  const renderDateRangeSelect = (onApplyDateRange) => {
-    render(<DateRangeSelect
-      selectedDateRangeOption={0}
-      updateDateRange={() => {}}
-      dateRange="2020/01/01-2020/01/01"
-      customDateRangeOption={0}
-      onApply={onApplyDateRange}
-      styleAsSelect
-    />);
+  const renderDateRangeSelect = (onApplyDateRange = jest.fn(), disabled = false) => {
+    render(
+      <DateRangeSelect
+        updateDateRange={onApplyDateRange}
+        styleAsSelect
+        disabled={disabled}
+      />,
+    );
   };
 
   it('renders correctly', () => {
-    const onApplyDateRange = jest.fn();
-    renderDateRangeSelect(onApplyDateRange);
-    const button = screen.getByRole('button', { name: /open date range options menu/i });
+    renderDateRangeSelect();
+    const button = screen.getByRole('button', { name: /open date range select/i });
     expect(button).toHaveTextContent('Last 30 Days');
   });
 
   it('opens the list of options', () => {
-    const onApplyDateRange = jest.fn();
-    renderDateRangeSelect(onApplyDateRange);
+    renderDateRangeSelect();
 
-    const button = screen.getByRole('button', { name: /open date range options menu/i });
+    const button = screen.getByRole('button', { name: /open date range select/i });
     fireEvent.click(button);
 
     const thirtyDays = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
@@ -60,24 +57,30 @@ describe('DateRangeSelect', () => {
     const onApplyDateRange = jest.fn();
     renderDateRangeSelect(onApplyDateRange);
 
-    const button = screen.getByRole('button', { name: /open date range options menu/i });
+    const button = screen.getByRole('button', { name: /open date range select/i });
     fireEvent.click(button);
 
     const thirtyDays = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
     fireEvent.click(thirtyDays);
 
-    const applyFilters = screen.getByRole('button', { name: 'Apply filters for the date range options menu' });
+    const applyFilters = screen.getByRole('button', { name: 'Apply date range filters' });
     fireEvent.click(applyFilters);
 
     expect(onApplyDateRange).toHaveBeenCalled();
   });
 
-  it('closes the menu with the escape key', () => {
+  it('can be disabled', () => {
     const onApplyDateRange = jest.fn();
-    renderDateRangeSelect(onApplyDateRange);
+    renderDateRangeSelect(onApplyDateRange, true);
+    const button = screen.getByRole('button', { name: /open date range select/i });
+    expect(button).toBeDisabled();
+  });
+
+  it('closes the menu with the escape key', () => {
+    renderDateRangeSelect();
 
     // open menu
-    const button = screen.getByRole('button', { name: /open date range options menu/i });
+    const button = screen.getByRole('button', { name: /open date range select/i });
     fireEvent.click(button);
 
     // expect text

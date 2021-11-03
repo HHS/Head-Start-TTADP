@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import './ButtonSelect.css';
+import './DateRangeSelect.css';
 import triangleDown from '../images/triange_down.png';
 
 /**

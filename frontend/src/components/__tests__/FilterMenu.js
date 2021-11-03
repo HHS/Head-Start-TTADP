@@ -173,7 +173,7 @@ describe('Filter Menu', () => {
       renderFilterItem(filter, onRemove, onUpdate);
 
       const button = screen.getByRole('button', {
-        name: /open date range options menu/i,
+        name: /open date range select/i,
       });
 
       userEvent.click(button);
@@ -188,7 +188,7 @@ describe('Filter Menu', () => {
       userEvent.type(sd, '01/01/2021');
       userEvent.type(ed, '01/02/2021');
 
-      userEvent.click(screen.getByRole('button', { name: /apply filters for the date range options menu/i }));
+      userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
       expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
 
       userEvent.click(button);
@@ -197,7 +197,7 @@ describe('Filter Menu', () => {
         name: /select to view data from year to date\. select apply filters button to apply selection/i,
       }));
 
-      userEvent.click(screen.getByRole('button', { name: /apply filters for the date range options menu/i }));
+      userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
 
       const yearToDate = formatDateRange({
         yearToDate: true,
