@@ -11,7 +11,6 @@ import SpecialistSelect, { ROLES_MAP } from './SpecialistSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
-  CUSTOM_DATE_RANGE,
 } from './constants';
 
 import './FilterMenu.css';
@@ -24,15 +23,14 @@ const DATE_OPTIONS = [
   {
     label: 'Year to Date',
     value: 1,
+    range: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
   {
     label: 'Custom Date Range',
     value: 2,
+    range: '',
   },
 ];
-
-// store this for later
-const YEAR_TO_DATE_OPTION = DATE_OPTIONS[0].value;
 
 // save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
@@ -56,7 +54,6 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     query,
   } = filter;
 
-  const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(YEAR_TO_DATE_OPTION);
   const firstSelect = useRef();
 
   useEffect(() => {
@@ -73,17 +70,8 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
   );
 
-  const onApplyDateRange = (selected, range) => {
-    if (selected.value === YEAR_TO_DATE_OPTION) {
-      const yearToDate = formatDateRange({
-        yearToDate: true,
-        forDateTime: true,
-      });
-      onUpdate('query', yearToDate);
-    } else {
-      onUpdate('query', range);
-    }
-    updateSelectedDateRangeOption(selected.value);
+  const onApplyDateRange = (range) => {
+    onUpdate('query', range);
   };
 
   const updateSingleDate = (name, value) => {
@@ -95,13 +83,9 @@ export function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       return (
         <span className="margin-right-1">
           <DateRangeSelect
-            selectedDateRangeOption={selectedDateRangeOption}
-            onApply={onApplyDateRange}
-            applied={selectedDateRangeOption}
-            customDateRangeOption={CUSTOM_DATE_RANGE}
-            dateRange={Array.isArray(query) ? '' : query}
-            styleAsSelect
             options={DATE_OPTIONS}
+            updateDateRange={onApplyDateRange}
+            styleAsSelect
           />
         </span>
       );

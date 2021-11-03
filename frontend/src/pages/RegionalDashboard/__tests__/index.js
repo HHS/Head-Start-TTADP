@@ -30,12 +30,6 @@ describe('Regional Dashboard page', () => {
     expect(heading).toBeInTheDocument();
   });
 
-  it('shows a date range selector', async () => {
-    renderDashboard(user);
-    const dateRange = await screen.findByRole('button', { name: /open date range options menu/i });
-    expect(dateRange).toBeInTheDocument();
-  });
-
   it('shows the selected region', async () => {
     renderDashboard({
       ...user,
@@ -79,7 +73,7 @@ describe('Regional Dashboard page', () => {
   it('shows the currently applied date range', async () => {
     renderDashboard(user);
 
-    const button = await screen.findByRole('button', { name: /open date range options menu/i });
+    const button = await screen.findByRole('button', { name: /open date range select menu/i });
     fireEvent.click(button);
 
     const custom = await screen.findByRole('button', { name: /select to view data from custom date range\. select apply filters button to apply selection/i });
