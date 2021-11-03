@@ -130,4 +130,4 @@ DashboardOverviewWidget.defaultProps = {
   ],
 };
 
-export default withWidgetData(DashboardOverviewWidget, 'dashboardOverview');
+export default withWidgetData(DashboardOverviewWidget, 'overview');

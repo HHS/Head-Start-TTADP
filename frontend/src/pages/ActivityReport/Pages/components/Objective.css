@@ -1,6 +1,11 @@
 .smart-hub--objective {
   background-color: #f8f8f8;
+  max-width: 470px;
   padding: 22px;
+}
+
+.smart-hub--objective-title {
+  overflow-wrap: break-word;
 }
 
 .smart-hub--objective-tag {
