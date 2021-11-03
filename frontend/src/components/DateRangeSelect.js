@@ -56,6 +56,11 @@ export function formatDateRange(format = {
 
   return '';
 }
+/*
+  we are trying to kill one of the two functions, on apply or updateDateRange
+  we can probably continue to pass in "on apply" and then handle that here
+  we only want to pass in one method down the component tree at each level
+*/
 
 export default function DateRangeSelect(props) {
   const {

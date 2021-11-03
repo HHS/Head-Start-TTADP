@@ -11,6 +11,21 @@ import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 import './ButtonSelect.css';
 import triangleDown from '../images/triange_down.png';
 
+/**
+ * ## Refactor plan
+ * 1) Pass in the options as a node
+ * 2) One "on apply" function
+ * 3) DateRangeSelect should just return a date range string
+ * 4) Probably remove that year to date thing as it is needlessly complicated
+ * 5) Likewise, the label should probably just have a hide/show hint text prop
+ */
+
+/**
+ *
+ * @param {*} props
+ * @returns
+ */
+
 function ButtonSelect(props) {
   const {
     options,
@@ -293,7 +308,7 @@ const optionProp = PropTypes.shape({
 });
 
 ButtonSelect.propTypes = {
-  options: PropTypes.arrayOf(optionProp).isRequired,
+  options: PropTypes.node.isRequired,
   labelId: PropTypes.string.isRequired,
   labelText: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
