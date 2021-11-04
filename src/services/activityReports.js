@@ -316,7 +316,7 @@ export function activityReports(
   const where = {
     calculatedStatus: REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
-    startDate: { [Op.gte]: '2020-09-01', [Op.lte]: endDte },
+    startDate: { [Op.gte]: '2020-08-31', [Op.lte]: endDte },
   };
 
   if (excludeLegacy) {

@@ -22,7 +22,7 @@ export function nameTransactionByBase(req, res, next) {
  * Set transaction name by request method, baseUrl, and path.
  * Suitable for routes with params in path that you do NOT want
  * to be grouped. Example: api/widgets/:widgetId
- * will be named api/widgets/dashboardOverview
+ * will be named api/widgets/overview
  *
  * @param {*} req - request
  * @param {*} res - response
