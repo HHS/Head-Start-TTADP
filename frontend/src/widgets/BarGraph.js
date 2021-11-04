@@ -103,7 +103,9 @@ function BarGraph({ data, yAxisLabel, xAxisLabel }) {
         <div className="margin-right-1 smart-hub--vertical-text">
           { yAxisLabel }
         </div>
-        <div className="overflow-x-scroll">
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div className="overflow-x-scroll" tabIndex={0}>
+          <caption className="sr-only">graph receives focus so keyboard users can scroll it</caption>
           <Plot
             data={plot.data}
             layout={plot.layout}
