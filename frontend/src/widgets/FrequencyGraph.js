@@ -33,7 +33,7 @@ const HEADINGS = {
   [REASON]: ['Reason', 'Count'],
 };
 
-function FrequencyGraph({ data, loading }) {
+export function FreqGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
   const [selectedGraph, updateSelectedGraph] = useState(TOPIC);
@@ -112,7 +112,7 @@ function FrequencyGraph({ data, loading }) {
   );
 }
 
-FrequencyGraph.propTypes = {
+FreqGraph.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -124,8 +124,8 @@ FrequencyGraph.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-FrequencyGraph.defaultProps = {
+FreqGraph.defaultProps = {
   data: { topic: [], reason: [] },
 };
 
-export default withWidgetData(FrequencyGraph, 'frequencyGraph');
+export default withWidgetData(FreqGraph, 'frequencyGraph');
