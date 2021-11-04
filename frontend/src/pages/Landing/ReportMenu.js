@@ -2,14 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
 import Container from '../../components/Container';
+
+import './ReportMenu.css';
+
+const MAXIMUM_EXPORTED_REPORTS = 5000;
 
 function ReportMenu({
   onExportAll,
   onExportSelected,
   hasSelectedReports,
   label,
+  count,
 }) {
   const [open, updateOpen] = useState(false);
 
@@ -63,16 +67,58 @@ function ReportMenu({
         />
       </button>
       {open && (
-        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 position-absolute left-0 width-card-lg">
+        <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="tta-report-menu z-400 position-absolute left-0 width-mobile">
           <Container padding={2} className="margin-bottom-0">
-            <button
-              role="menuitem"
-              onClick={onExportAll}
-              type="button"
-              className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
-            >
-              Export Table Data...
-            </button>
+            {count > MAXIMUM_EXPORTED_REPORTS ? (
+              <>
+                <div className="display-flex">
+                  <button
+                    role="menuitem"
+                    onClick={onExportAll}
+                    type="button"
+                    disabled
+                    className="usa-button usa-button--unstyled smart-hub--reports-button margin-bottom-1"
+                    aria-labelledby="no-exports-please"
+                  >
+                    Export table data
+                  </button>
+                </div>
+                <div className="usa-hint" id="no-exports-please">
+                  <p>
+                    This export has
+                    {' '}
+                    {count.toLocaleString('en-US')}
+                    {' '}
+                    reports. You can only export
+                    {' '}
+                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                    {' '}
+                    reports at a time.
+                  </p>
+                  <p>
+                    To export more than
+                    {' '}
+                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                    {' '}
+                    reports, please
+                    {' '}
+                    <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
+                    {' '}
+                    and specify the filters you need.
+                  </p>
+                </div>
+              </>
+            )
+              : (
+                <button
+                  role="menuitem"
+                  onClick={onExportAll}
+                  type="button"
+                  className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
+                >
+                  Export table data...
+                </button>
+              ) }
             {hasSelectedReports && onExportSelected && (
               <button
                 role="menuitem"
@@ -80,7 +126,7 @@ function ReportMenu({
                 type="button"
                 className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
               >
-                Export Selected Reports...
+                Export selected reports...
               </button>
             )}
           </Container>
@@ -95,9 +141,11 @@ ReportMenu.propTypes = {
   onExportSelected: PropTypes.func,
   hasSelectedReports: PropTypes.bool.isRequired,
   label: PropTypes.string,
+  count: PropTypes.number,
 };
 
 ReportMenu.defaultProps = {
+  count: 0,
   label: 'Reports menu',
   onExportSelected: null,
 };

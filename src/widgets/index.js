@@ -1,8 +1,8 @@
 import example from './example';
 import overview from './overview';
+import dashboardOverview from './dashboardOverview';
 import totalHrsAndGranteeGraph from './totalHrsAndGranteeGraph';
 import reasonList from './reasonList';
-import dashboardOverview from './dashboardOverview';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
 /*
@@ -11,8 +11,8 @@ import topicFrequencyGraph from './topicFrequencyGraph';
 export default {
   example,
   overview,
+  dashboardOverview,
   totalHrsAndGranteeGraph,
   reasonList,
-  dashboardOverview,
   topicFrequencyGraph,
 };
