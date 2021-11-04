@@ -14,7 +14,7 @@ import 'react-dates/initialize';
 import MutationObserver from '@sheerun/mutationobserver-shim';
 
 // See https://github.com/plotly/react-plotly.js/issues/115
-window.URL.createObjectURL = function () {};
+window.URL.createObjectURL = () => {};
 
 window.MutationObserver = MutationObserver;
 jest.setTimeout(50000);

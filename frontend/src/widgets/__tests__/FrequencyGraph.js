@@ -6,7 +6,7 @@ import {
   screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FrequencyGraph } from '../FrequencyGraph';
+import { FreqGraph } from '../FrequencyGraph';
 
 const TEST_DATA = {
   topic: [
@@ -40,7 +40,7 @@ const TEST_DATA = {
 };
 
 const renderFrequencyGraph = async () => (
-  render(<FrequencyGraph loading={false} data={TEST_DATA} />)
+  render(<FreqGraph loading={false} data={TEST_DATA} />)
 );
 
 describe('Frequency Graph', () => {
