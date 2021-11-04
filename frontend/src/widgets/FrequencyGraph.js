@@ -8,7 +8,7 @@ import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import BarGraph from './BarGraph';
 import ButtonSelect from '../components/ButtonSelect';
-import './TopicFrequencyGraph.css';
+import './FrequencyGraph.css';
 
 const SORT_ORDER = {
   DESC: 1,
@@ -55,14 +55,14 @@ export function FrequencyGraph({ data, loading }) {
   };
 
   return (
-    <Container className="ttahub--topic-frequency-graph" padding={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
+    <Container className="ttahub--frequency-graph" padding={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
       <Grid row className="position-relative margin-bottom-2">
-        <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
+        <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">
             <ButtonSelect
               styleAsSelect
               labelId="graphType"
-              className="display-inline-block margin-right-1"
+              className="margin-left-1 display-inline-block margin-right-1"
               labelText="Change type of graph"
               ariaName="Change graph type menu"
               initialValue={{

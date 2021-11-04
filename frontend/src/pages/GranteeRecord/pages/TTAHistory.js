@@ -20,7 +20,7 @@ export default function TTAHistory({ filters }) {
             filters={filters}
           />
         </Grid>
-        <Grid col={8}>
+        <Grid desktop={{ col: 8 }} tablet={{ col: 12 }}>
           <FrequencyGraph filters={filters} />
         </Grid>
       </Grid>

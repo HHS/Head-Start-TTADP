@@ -161,7 +161,7 @@ function ButtonSelect(props) {
   const ariaLabel = `${menuIsOpen ? 'press escape to close ' : 'Open '} ${ariaName}`;
 
   return (
-    <div className={`margin-left-1 ${className}`} onBlur={onBlur} data-testid="data-sort">
+    <div className={className} onBlur={onBlur} data-testid="data-sort">
       <button
         onClick={setMenuIsOpen}
         onKeyDown={onKeyDown}
@@ -323,7 +323,7 @@ ButtonSelect.defaultProps = {
   startDatePickerId: '',
   endDatePickerId: '',
   disabled: false,
-  className: '',
+  className: 'margin-left-1',
 };
 
 export default ButtonSelect;
