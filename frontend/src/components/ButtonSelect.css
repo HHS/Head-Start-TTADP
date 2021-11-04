@@ -1,20 +1,3 @@
-.smart-hub--button-select-toggle-btn {
-    justify-content: space-between;
-    min-width: 140px;
-}
-
-.smart-hub--button-select-menu {
-    background-color: hsl(0, 0%, 100%);
-    border-radius: 4px;
-    box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
-    margin-bottom: 8px;
-    margin-top: 8px;
-    position: absolute;
-    min-width: 200px;
-    z-index: 2;
-    box-sizing: border-box;
-}
-
 .smart-hub--button-select-menu-label:not(.sr-only) {
     display: block;
     margin-top: 1em;

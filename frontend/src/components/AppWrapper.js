@@ -44,11 +44,10 @@ AppWrapper.propTypes = {
   authenticated: PropTypes.bool,
   padded: PropTypes.bool,
   children: PropTypes.node.isRequired,
-  logout: PropTypes.func,
+  logout: PropTypes.func.isRequired,
 };
 
 AppWrapper.defaultProps = {
   authenticated: false,
   padded: true,
-  logout: () => null,
 };

@@ -7,11 +7,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
+import DropdownMenu from './DropdownMenu';
 import {
   DATETIME_DATE_FORMAT, DATE_FORMAT,
 } from './constants';
 import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
-import triangleDown from '../images/triange_down.png';
 
 // I think we need 'em both
 import './ButtonSelect.css';
@@ -121,7 +121,6 @@ function DateRangeSelect(props) {
   } = props;
 
   const [selectedItem, setSelectedItem] = useState(1);
-  const [menuIsOpen, setMenuIsOpen] = useState(false);
   const [showDateError, setShowDateError] = useState(false);
 
   // to handle the internal range
@@ -164,38 +163,27 @@ function DateRangeSelect(props) {
         updateDateRange(range);
       }
     }
-    setMenuIsOpen(false);
-  };
-
-  /**
-   * Close the menu on escape key
-   * @param {Event} e
-   */
-  const onKeyDown = (e) => {
-    if (e.keyCode === 27) {
-      setMenuIsOpen(false);
-    }
   };
 
   /**
    * Close the menu on blur, with some extenuating circumstance
    *
    * @param {Event} e
-   * @returns void
+   * @returns bool, whether or not to blur
    */
   const onBlur = (e) => {
     // if we're within the same menu, do nothing
     if (e.relatedTarget && e.relatedTarget.matches('.smart-hub--button-select-menu *')) {
-      return;
+      return false;
     }
 
     // if we've a date range, also do nothing on blur when we click on those
     if (e.target.matches('.CalendarDay, .DayPickerNavigation, .DayPickerNavigation_button')) {
-      return;
+      return false;
     }
 
-    setMenuIsOpen(false);
     setShowDateError(false);
+    return true;
   };
 
   /**
@@ -204,7 +192,6 @@ function DateRangeSelect(props) {
    * returns bool
    */
 
-  // eslint-disable-next-line no-unused-vars
   const isOutsideRange = (day, startOrEnd) => {
     if (startOrEnd === 'start') {
       return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)
@@ -218,143 +205,122 @@ function DateRangeSelect(props) {
   // get label text
   const label = options.find((option) => option.value === selectedItem.value);
 
-  const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
-
-  const ariaLabel = `${menuIsOpen ? 'press escape to close ' : 'Open '} date range select menu`;
+  const ariaLabel = 'Toggle the date range select menu';
 
   return (
-    <div className="margin-left-1" onBlur={onBlur} data-testid="data-sort">
-      <button
-        onClick={setMenuIsOpen}
-        onKeyDown={onKeyDown}
-        className={`${buttonClasses} smart-hub--button-select-toggle-btn display-flex`}
-        aria-label={ariaLabel}
-        type="button"
-        disabled={disabled}
-      >
-        {label ? label.label : options[0].label}
-        {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
-      </button>
-
-      { menuIsOpen && !disabled
-        ? (
-          <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">
-            <span className="smart-hub--button-select-menu-label" id="dateRangeSelectLabel">
-              <strong>Choose activity start date range</strong>
-            </span>
-            <fieldset className="margin-0 border-0 padding-0">
-              { options.map((option) => (
-                <button
-                  type="button"
-                  aria-pressed={option.value === selectedItem}
-                  className="smart-hub--button smart-hub--button-select-range-button"
-                  key={option.value}
-                  onKeyDown={onKeyDown}
-                  aria-label={`Select to view data from ${option.label}. Select Apply filters button to apply selection`}
-                  onClick={() => {
-                    setSelectedItem(option.value);
-                  }}
-                >
-                  {option.label}
-                  {option.value === selectedItem.value ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null}
-                </button>
-              ))}
-
-              { selectedItem && selectedItem === CUSTOM_DATE_RANGE
-                ? (
-                  <div className="smart-hub--button-select-menu-date-picker">
-                    { showDateError ? (
-                      <div className="usa-alert usa-alert--warning usa-alert--no-icon margin-top-1 margin-0" role="alert">
-                        <p className="usa-alert__text padding-1">
-                          Reports are available from 09/01/2020.
-                          <br />
-                          Use the format MM/DD/YYYY.
-                        </p>
-                      </div>
-                    ) : null }
-                    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                    <label className="display-block margin-top-2" htmlFor={startDatePickerId}>Start Date</label>
-                    <p><small>mm/dd/yyyy</small></p>
-                    <div className="smart-hub--button-select-menu-date-picker-single">
-                      <SingleDatePicker
-                        small
-                        ariaLabel="start date"
-                        id={startDatePickerId}
-                        focused={startDateFocused}
-                        numberOfMonths={1}
-                        hideKeyboardShortcutsPanel
-                        isOutsideRange={(day) => isOutsideRange(day, 'start')}
-                        onFocusChange={({ focused }) => {
-                          if (!focused) {
-                            setStartDateFocused(focused);
-                          }
-                        }}
-                        onDateChange={(selectedDate) => {
-                          setStartDate(selectedDate);
-                          setStartDateFocused(false);
-                        }}
-                        date={startDate}
-                      />
-                      <Button
-                        onClick={() => setStartDateFocused(true)}
-                        aria-label="open start date picker calendar"
-                        type="button"
-                        unstyled
-                        className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
-                      >
-                        <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
-                      </Button>
-                    </div>
-                    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                    <label className="display-block margin-top-2" htmlFor="endDatePicker">End Date</label>
-                    <p><small>mm/dd/yyyy</small></p>
-                    <div className="smart-hub--button-select-menu-date-picker-single">
-                      <SingleDatePicker
-                        ariaLabel="end date"
-                        small
-                        id="endDatePicker"
-                        focused={endDateFocused}
-                        numberOfMonths={1}
-                        hideKeyboardShortcutsPanel
-                        isOutsideRange={(day) => isOutsideRange(day, 'END')}
-                        onFocusChange={({ focused }) => {
-                          if (!focused) {
-                            setEndDateFocused(focused);
-                          }
-                        }}
-                        onDateChange={(selectedDate) => {
-                          setEndDate(selectedDate);
-                          setEndDateFocused(false);
-                        }}
-                        date={endDate}
-                      />
-                      <Button
-                        onClick={() => setEndDateFocused(true)}
-                        aria-label="open end date picker calendar"
-                        type="button"
-                        unstyled
-                        className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
-                      >
-                        <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
-                      </Button>
-                    </div>
-                  </div>
-                ) : null }
-            </fieldset>
+    <DropdownMenu
+      buttonText={label ? label.label : options[0].label}
+      buttonAriaLabel={ariaLabel}
+      styleAsSelect={styleAsSelect}
+      disabled={disabled}
+      blurValidations={onBlur}
+      onApply={onApplyClick}
+      applyButtonAria="Apply date range filters"
+    >
+      <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">
+        <span className="smart-hub--button-select-menu-label" id="dateRangeSelectLabel">
+          <strong>Choose activity start date range</strong>
+        </span>
+        <fieldset className="margin-0 border-0 padding-0">
+          { options.map((option) => (
             <button
               type="button"
-              onKeyDown={onKeyDown}
-              className="usa-button smart-hub--button margin-2"
-              onClick={onApplyClick}
-              aria-label="Apply date range filters"
+              aria-pressed={option.value === selectedItem}
+              className="smart-hub--button smart-hub--button-select-range-button"
+              key={option.value}
+              aria-label={`Select to view data from ${option.label}. Select Apply filters button to apply selection`}
+              onClick={() => {
+                setSelectedItem(option.value);
+              }}
             >
-              Apply
+              {option.label}
+              {option.value === selectedItem.value ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null}
             </button>
-          </div>
-        )
-        : null }
+          ))}
 
-    </div>
+          { selectedItem && selectedItem === CUSTOM_DATE_RANGE
+            ? (
+              <div className="smart-hub--button-select-menu-date-picker">
+                { showDateError ? (
+                  <div className="usa-alert usa-alert--warning usa-alert--no-icon margin-top-1 margin-0" role="alert">
+                    <p className="usa-alert__text padding-1">
+                      Reports are available from 09/01/2020.
+                      <br />
+                      Use the format MM/DD/YYYY.
+                    </p>
+                  </div>
+                ) : null }
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                <label className="display-block margin-top-2" htmlFor={startDatePickerId}>Start Date</label>
+                <p><small>mm/dd/yyyy</small></p>
+                <div className="smart-hub--button-select-menu-date-picker-single">
+                  <SingleDatePicker
+                    small
+                    ariaLabel="start date"
+                    id={startDatePickerId}
+                    focused={startDateFocused}
+                    numberOfMonths={1}
+                    hideKeyboardShortcutsPanel
+                    isOutsideRange={(day) => isOutsideRange(day, 'start')}
+                    onFocusChange={({ focused }) => {
+                      if (!focused) {
+                        setStartDateFocused(focused);
+                      }
+                    }}
+                    onDateChange={(selectedDate) => {
+                      setStartDate(selectedDate);
+                      setStartDateFocused(false);
+                    }}
+                    date={startDate}
+                  />
+                  <Button
+                    onClick={() => setStartDateFocused(true)}
+                    aria-label="open start date picker calendar"
+                    type="button"
+                    unstyled
+                    className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
+                  >
+                    <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
+                  </Button>
+                </div>
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                <label className="display-block margin-top-2" htmlFor="endDatePicker">End Date</label>
+                <p><small>mm/dd/yyyy</small></p>
+                <div className="smart-hub--button-select-menu-date-picker-single">
+                  <SingleDatePicker
+                    ariaLabel="end date"
+                    small
+                    id="endDatePicker"
+                    focused={endDateFocused}
+                    numberOfMonths={1}
+                    hideKeyboardShortcutsPanel
+                    isOutsideRange={(day) => isOutsideRange(day, 'END')}
+                    onFocusChange={({ focused }) => {
+                      if (!focused) {
+                        setEndDateFocused(focused);
+                      }
+                    }}
+                    onDateChange={(selectedDate) => {
+                      setEndDate(selectedDate);
+                      setEndDateFocused(false);
+                    }}
+                    date={endDate}
+                  />
+                  <Button
+                    onClick={() => setEndDateFocused(true)}
+                    aria-label="open end date picker calendar"
+                    type="button"
+                    unstyled
+                    className="margin-top-auto margin-bottom-auto font-sans-xs margin-left-1 smart-hub--filter-date-picker-button"
+                  >
+                    <FontAwesomeIcon size="1x" color="gray" icon={faCalendar} />
+                  </Button>
+                </div>
+              </div>
+            ) : null }
+        </fieldset>
+      </div>
+    </DropdownMenu>
 
   );
 }
