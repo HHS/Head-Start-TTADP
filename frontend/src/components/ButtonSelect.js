@@ -26,16 +26,8 @@ function ButtonSelect(props) {
   } = props;
 
   const [checked, setChecked] = useState(applied);
-  const [selectedItem, setSelectedItem] = useState();
+  const [selectedItem, setSelectedItem] = useState(initialValue);
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-  /**
-   * just so we always have something selected
-   * */
-  useEffect(() => {
-    if (!selectedItem && !applied) {
-      setSelectedItem(initialValue);
-    }
-  }, [applied, initialValue, selectedItem]);
 
   /**
    * To calculate where the checkmark should go :)
