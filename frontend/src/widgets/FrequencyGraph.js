@@ -33,7 +33,7 @@ const HEADINGS = {
   [REASON]: ['Reason', 'Count'],
 };
 
-export function FrequencyGraph({ data, loading }) {
+function FrequencyGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
   const [selectedGraph, updateSelectedGraph] = useState(TOPIC);
