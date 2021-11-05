@@ -94,7 +94,12 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
 
   return (
     <li className="ttahub-filter-menu-item display-flex">
+      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label className="sr-only" htmlFor={`topic-${id}`}>
+        Select a filter topic
+      </label>
       <select
+        id={`topic-${id}`}
         name="topic"
         aria-label="topic"
         value={topic}
@@ -106,7 +111,12 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
           <option key={filterId} value={filterId}>{display}</option>
         ))}
       </select>
+      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label className="sr-only" htmlFor={`condition-${id}`}>
+        Select a filter condition
+      </label>
       <select
+        id={`condition-${id}`}
         name="condition"
         aria-label="condition"
         value={condition}

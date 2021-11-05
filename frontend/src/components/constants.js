@@ -4,7 +4,7 @@ export const BEFORE = 'Is before';
 export const AFTER = 'Is after';
 export const WITHIN = 'Is within';
 export const IS = 'Is';
-export const IS_NOT = 'Is';
+export const IS_NOT = 'Is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const DATE_CONDITIONS = [BEFORE, AFTER, WITHIN];
