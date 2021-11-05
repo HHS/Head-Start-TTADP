@@ -53,7 +53,7 @@ export function topicsWithLineBreaks(reason) {
 }
 
 export function TopicFrequencyGraphWidget({
-  data, dateTime, updateRoles, loading,
+  data, dateTime, onApplyRoles, loading,
 }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
@@ -153,11 +153,6 @@ export function TopicFrequencyGraphWidget({
     setOrder(selected.value);
   };
 
-  const onApplyRoles = (selected) => {
-    // we may get these as a string, so we cast them to ints
-    updateRoles(selected.map((s) => parseInt(s, 10)));
-  };
-
   // toggle the data table
   function toggleType() {
     setShowAccessibleData(!showAccessibleData);
@@ -232,7 +227,7 @@ TopicFrequencyGraphWidget.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-  updateRoles: PropTypes.func.isRequired,
+  onApplyRoles: PropTypes.func.isRequired,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {

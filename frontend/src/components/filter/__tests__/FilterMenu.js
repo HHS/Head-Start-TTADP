@@ -20,7 +20,7 @@ describe('Filter Menu', () => {
       />);
     };
 
-    it('opens the menu when the button is clicked', async () => {
+    it('toggles the menu', async () => {
       renderFilterMenu();
 
       const button = screen.getByRole('button', {
@@ -28,15 +28,12 @@ describe('Filter Menu', () => {
       });
 
       userEvent.click(button);
-
       const message = await screen.findByText('Show results matching the following conditions.');
       expect(message).toBeVisible();
-      userEvent.click(button);
+
+      const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
+      userEvent.click(cancel);
       expect(message).not.toBeVisible();
-    });
-
-    it('closes the menu when cancel is clicked', async () => {
-
     });
   });
 });

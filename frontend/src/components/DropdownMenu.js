@@ -7,7 +7,7 @@ export default function DropdownMenu({
   buttonText,
   buttonAriaLabel,
   styleAsSelect,
-  blurValidations,
+  canBlur,
   children,
   disabled,
   applyButtonText,
@@ -17,6 +17,7 @@ export default function DropdownMenu({
   menuName,
   onCancel,
   showCancel,
+  cancelAriaLabel,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
 
@@ -42,7 +43,7 @@ export default function DropdownMenu({
       return;
     }
 
-    if (blurValidations(e)) {
+    if (canBlur(e)) {
       setMenuIsOpen(false);
     }
   };
@@ -101,7 +102,7 @@ export default function DropdownMenu({
                 onClick={onCancelClick}
                 type="button"
                 className="usa-button usa-button--unstyled margin-right-2"
-                aria-label="Cancel and discard unsaved filters"
+                aria-label={cancelAriaLabel}
               >
                 Cancel
               </button>
@@ -122,7 +123,7 @@ DropdownMenu.propTypes = {
   buttonAriaLabel: PropTypes.string,
   disabled: PropTypes.bool,
   styleAsSelect: PropTypes.bool,
-  blurValidations: PropTypes.func,
+  canBlur: PropTypes.func,
   applyButtonText: PropTypes.string,
   applyButtonAria: PropTypes.string,
   onApply: PropTypes.func.isRequired,
@@ -130,6 +131,7 @@ DropdownMenu.propTypes = {
   menuName: PropTypes.string.isRequired,
   showCancel: PropTypes.bool,
   onCancel: PropTypes.func,
+  cancelAriaLabel: PropTypes.string,
 };
 
 DropdownMenu.defaultProps = {
@@ -137,9 +139,10 @@ DropdownMenu.defaultProps = {
   buttonAriaLabel: '',
   disabled: false,
   styleAsSelect: false,
-  blurValidations: () => true,
+  canBlur: () => true,
   applyButtonAria: 'Apply',
   applyButtonText: 'Apply',
   showCancel: false,
+  cancelAriaLabel: '',
   onCancel: () => {},
 };

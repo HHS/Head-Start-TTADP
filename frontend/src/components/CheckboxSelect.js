@@ -86,6 +86,14 @@ export default function CheckboxSelect(props) {
     setMenuIsOpen(false);
   };
 
+  const canBlur = (e) => {
+    if (e.currentTarget.matches('.smart-hub--checkbox-select')) {
+      return false;
+    }
+
+    return true;
+  };
+
   const label = toggleAllChecked ? toggleAllText : `${options.filter((option) => checkboxes[option.value]).map((option) => option.label).join(', ')}`;
   // html id for toggle all
   const toggleAllHtmlId = `${labelId}-toggle-all`;
@@ -94,6 +102,7 @@ export default function CheckboxSelect(props) {
 
   return (
     <DropdownMenu
+      canBlur={canBlur}
       className="smart-hub--checkbox-select position-relative margin-left-1"
       buttonText={label}
       buttonAriaLabel={ariaLabel}
