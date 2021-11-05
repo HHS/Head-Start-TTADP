@@ -1,15 +1,15 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-
-import DateRangeSelect, { formatDateRange } from '../DateRangeSelect';
-import DatePicker from '../FilterDatePicker';
-import SpecialistSelect, { ROLES_MAP } from '../SpecialistSelect';
+import FilterDateRange from './FilterDateRange';
+import SpecialistSelect from '../SpecialistSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../constants';
+
+import './FilterItem.css';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
@@ -17,22 +17,6 @@ const filterProp = PropTypes.shape({
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
   id: PropTypes.string,
 });
-
-/**
- * this date picker has bespoke date options
- */
-const DATE_OPTIONS = [
-  {
-    label: 'Year to Date',
-    value: 1,
-    range: formatDateRange({ yearToDate: true, forDateTime: true }),
-  },
-  {
-    label: 'Custom Date Range',
-    value: 2,
-    range: '',
-  },
-];
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -48,14 +32,6 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     query,
   } = filter;
 
-  const firstSelect = useRef();
-
-  useEffect(() => {
-    if (firstSelect.current) {
-      firstSelect.current.focus();
-    }
-  });
-
   const onUpdate = (name, value) => {
     onUpdateFilter(id, name, value);
   };
@@ -64,41 +40,12 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
   );
 
-  const onApplyDateRange = (range) => {
-    onUpdate('query', range);
+  const onApplyQuery = (q) => {
+    onUpdate('query', q);
   };
 
   const updateSingleDate = (name, value) => {
     onUpdate(name, value);
-  };
-
-  const renderDateRangeInput = () => {
-    if (condition === 'Is within') {
-      return (
-        <span className="margin-right-1">
-          <DateRangeSelect
-            options={DATE_OPTIONS}
-            updateDateRange={onApplyDateRange}
-            styleAsSelect
-          />
-        </span>
-      );
-    }
-    return (
-      <span className="ttahub-filter-menu-single-date-picker display-flex margin-top-1 margin-x-1">
-        <DatePicker query={Array.isArray(query) ? '' : query} onUpdateFilter={updateSingleDate} id="filter-date-picker" />
-      </span>
-    );
-  };
-
-  const onApplyRoles = (selected) => {
-    const roleValues = selected.map((s) => parseInt(s, 10));
-
-    const roles = ROLES_MAP.filter(
-      (role) => roleValues.includes(role.selectValue),
-    ).map((role) => role.value);
-
-    onUpdate('query', roles);
   };
 
   const possibleFilters = [
@@ -109,7 +56,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       renderInput: () => (
         <span className="margin-right-1">
           <SpecialistSelect
-            onApplyRoles={onApplyRoles}
+            onApplyRoles={onApplyQuery}
           />
         </span>
       ),
@@ -118,7 +65,14 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       id: 'startDate',
       display: 'Date range',
       conditions: DATE_CONDITIONS,
-      renderInput: () => renderDateRangeInput(),
+      renderInput: () => (
+        <FilterDateRange
+          condition={condition}
+          query={query}
+          updateSingleDate={updateSingleDate}
+          onApplyDateRange={onApplyQuery}
+        />
+      ),
     },
   ];
 
@@ -146,9 +100,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select margin-right-1"
-        ref={firstSelect}
       >
-        <option value="">- Select -</option>
         {possibleFilters.map(({ id: filterId, display }) => (
           <option key={filterId} value={filterId}>{display}</option>
         ))}
@@ -160,7 +112,6 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="">- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
