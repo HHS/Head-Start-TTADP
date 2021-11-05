@@ -45,7 +45,7 @@ export default function FilterDateRange({
 
 FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
-  query: PropTypes.string.isRequired,
+  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]).isRequired,
   updateSingleDate: PropTypes.func.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
 };
