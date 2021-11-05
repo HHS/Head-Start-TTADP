@@ -47,7 +47,7 @@ describe('The Button Select component', () => {
     renderButtonSelect(onApply);
 
     const openMenu = screen.getByRole('button', {
-      name: /open menu/i,
+      name: /toggle menu/i,
     });
 
     fireEvent.click(openMenu);

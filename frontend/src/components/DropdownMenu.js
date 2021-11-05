@@ -13,6 +13,8 @@ export default function DropdownMenu({
   applyButtonText,
   applyButtonAria,
   onApply,
+  className,
+  menuName,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
 
@@ -54,22 +56,22 @@ export default function DropdownMenu({
 
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
 
+  const classNames = `${className} smart-hub--dropdown-menu`;
+
   return (
-    <div className="smart-hub--dropdown-menu position-relative margin-left-1" onBlur={onBlur}>
+    <div role="menu" tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
       <button
         onClick={onClick}
-        onKeyDown={onKeyDown}
         className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex`}
         aria-label={buttonAriaLabel}
         type="button"
         disabled={disabled}
       >
-        {buttonText}
-        {menuIsOpen}
+        <span>{buttonText}</span>
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
-      <div className="smart-hub--dropdown-menu--contents" hidden={menuIsOpen && !disabled}>
+      <div className="smart-hub--dropdown-menu--contents" hidden={!menuIsOpen || disabled}>
         {children}
         <button
           type="button"
@@ -94,9 +96,12 @@ DropdownMenu.propTypes = {
   applyButtonText: PropTypes.string,
   applyButtonAria: PropTypes.string,
   onApply: PropTypes.func.isRequired,
+  className: PropTypes.string,
+  menuName: PropTypes.string.isRequired,
 };
 
 DropdownMenu.defaultProps = {
+  className: 'position-relative margin-left-1',
   buttonAriaLabel: '',
   disabled: false,
   styleAsSelect: false,

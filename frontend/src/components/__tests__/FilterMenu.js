@@ -173,7 +173,7 @@ describe('Filter Menu', () => {
       renderFilterItem(filter, onRemove, onUpdate);
 
       const button = screen.getByRole('button', {
-        name: /open date range select/i,
+        name: /Toggle the date range select menu/i,
       });
 
       userEvent.click(button);
@@ -217,10 +217,10 @@ describe('Filter Menu', () => {
       const onUpdate = jest.fn();
       renderFilterItem(filter, onRemove, onUpdate);
 
-      const button = screen.getByText(/all specialists/i);
+      const button = screen.getByRole('button', { name: 'Open the Change filter by specialists menu' });
       userEvent.click(button);
 
-      const apply = screen.getByRole('button', { name: /apply filters for change filter by specialists menu/i });
+      const apply = screen.getByRole('button', { name: /apply filters for the change filter by specialists menu/i });
       userEvent.click(apply);
       expect(onUpdate).toHaveBeenCalled();
 

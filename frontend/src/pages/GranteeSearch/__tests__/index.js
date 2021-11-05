@@ -181,17 +181,6 @@ describe('the grantee search page', () => {
     jest.clearAllMocks();
   });
 
-  it('shows the correct heading and regional select text', () => {
-    const user = {
-      ...userBluePrint,
-    };
-
-    renderGranteeSearch(user);
-    expect(screen.getByRole('heading', { name: /grantee records/i })).toBeInTheDocument();
-    const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
-    expect(regionalSelect).toBeInTheDocument();
-  });
-
   it('shows the correct regional select text when user has all regions', () => {
     const user = {
       ...userBluePrint,
@@ -200,8 +189,8 @@ describe('the grantee search page', () => {
 
     fetchMock.get('/api/grantee/search?s=&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0', res);
     renderGranteeSearch(user);
-
-    const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
+    expect(screen.getByRole('heading', { name: /grantee records/i })).toBeInTheDocument();
+    const regionalSelect = screen.getByRole('button', { name: 'toggle regional select menu' });
     expect(regionalSelect).toHaveTextContent('All Regions');
   });
 
@@ -238,7 +227,7 @@ describe('the grantee search page', () => {
 
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching grantees/i });
-    const regionalSelect = screen.getByRole('button', { name: /open regional select menu/i });
+    const regionalSelect = screen.getByRole('button', { name: 'toggle regional select menu' });
 
     await waitFor(() => expect(button).not.toBeDisabled());
 

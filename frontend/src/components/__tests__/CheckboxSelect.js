@@ -63,14 +63,14 @@ describe('Checkbox select', () => {
     const button = screen.getByRole('button', { name: /open the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
-    expect(pom).toBeInTheDocument();
+    expect(pom).toBeVisible();
     fireEvent.keyDown(button, {
       key: 'Escape',
       code: 'Escape',
       keyCode: 27,
       charCode: 27,
     });
-    expect(pom).not.toBeInTheDocument();
+    expect(pom).not.toBeVisible();
   });
 
   it('handles blur', () => {

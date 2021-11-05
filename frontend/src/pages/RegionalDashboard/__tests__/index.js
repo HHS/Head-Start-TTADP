@@ -50,7 +50,7 @@ describe('Regional Dashboard page', () => {
     });
 
     expect(screen.getByText('Regional TTA Activity Dashboard')).toBeInTheDocument();
-    const button = screen.getByRole('button', { name: 'Open regional select menu' });
+    const button = screen.getByRole('button', { name: 'toggle regional select menu' });
     fireEvent.click(button);
 
     const region1 = screen.getByRole('button', { name: 'Select to view data from Region 1. Select Apply filters button to apply selection' });
@@ -73,7 +73,7 @@ describe('Regional Dashboard page', () => {
   it('shows the currently applied date range', async () => {
     renderDashboard(user);
 
-    const button = await screen.findByRole('button', { name: /open date range select menu/i });
+    const button = await screen.findByRole('button', { name: /Toggle the date range select menu/i });
     fireEvent.click(button);
 
     const custom = await screen.findByRole('button', { name: /select to view data from custom date range\. select apply filters button to apply selection/i });
