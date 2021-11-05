@@ -217,6 +217,31 @@ describe('the grantee search page', () => {
     expect(fetchMock.calls().length).toBe(2);
   });
 
+  it('an error sets the result to nothing', async () => {
+    const user = { ...userBluePrint };
+
+    renderGranteeSearch(user);
+
+    const button = screen.getByRole('button', { name: /search for matching grantees/i });
+    const searchBox = screen.getByRole('searchbox');
+    await waitFor(() => expect(button).not.toBeDisabled());
+
+    expect(document.querySelectorAll('tbody tr').length).toBe(12);
+
+    fetchMock.restore();
+
+    const url = join(granteeUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(url, 500);
+
+    act(() => {
+      userEvent.type(searchBox, query);
+      fireEvent.click(button);
+    });
+
+    await waitFor(() => expect(button).not.toBeDisabled());
+    expect(document.querySelectorAll('tbody tr').length).toBe(0);
+  });
+
   it('the regional select works', async () => {
     const user = { ...userBluePrint };
 
