@@ -8,10 +8,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
 import DropdownMenu from './DropdownMenu';
-import {
-  DATETIME_DATE_FORMAT, DATE_FORMAT,
-} from './constants';
-import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
+import { DATE_FORMAT } from './constants';
+import { DATE_FMT as DATETIME_DATE_FORMAT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 
 // I think we need 'em both
 import './ButtonSelect.css';
@@ -147,7 +145,7 @@ function DateRangeSelect(props) {
    */
   const onApplyClick = () => {
     if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
-      const range = `${startDate ? startDate.format(DATE_FMT) : ''}-${endDate ? endDate.format(DATE_FMT) : ''}`;
+      const range = `${startDate ? startDate.format(DATETIME_DATE_FORMAT) : ''}-${endDate ? endDate.format(DATETIME_DATE_FORMAT) : ''}`;
       const isValidDateRange = range.trim().split('-').filter((str) => str !== '').length === 2;
 
       if (!isValidDateRange) {

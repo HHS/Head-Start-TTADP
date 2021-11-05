@@ -19,4 +19,3 @@ export const QUERY_CONDITIONS = {
 };
 
 export const DATE_FORMAT = 'MM/DD/YYYY';
-export const DATETIME_DATE_FORMAT = 'YYYY/MM/DD';
