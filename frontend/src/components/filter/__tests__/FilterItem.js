@@ -17,6 +17,23 @@ describe('Filter menu item', () => {
     />);
   };
 
+  it('updates topic & condition', async () => {
+    const filter = {
+      id: 'gibberish', topic: 'startDate', condition: 'Is after', query: '2021/01/01',
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate);
+
+    const topic = screen.getByRole('combobox', { name: 'topic' });
+    userEvent.selectOptions(topic, 'role');
+    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'topic', 'role');
+
+    const condition = screen.getByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, 'Is within');
+    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'condition', 'Is within');
+  });
+
   it('displays a date filter correctly', () => {
     const filter = {
       id: 'gibberish', topic: 'startDate', condition: 'Is after', query: '2021/01/01',
@@ -78,6 +95,7 @@ describe('Filter menu item', () => {
     const filter = {
       topic: 'role',
       condition: 'Is within',
+      query: ['Early Childhood Specialist'],
       id: 'gibberish',
     };
     const onRemove = jest.fn();
@@ -92,7 +110,7 @@ describe('Filter menu item', () => {
     expect(onUpdate).toHaveBeenCalled();
 
     userEvent.click(screen.getByRole('button', {
-      name: /remove Specialist Is within undefined filter. click apply filters to make your changes/i,
+      name: /remove Specialist Is within Early Childhood Specialist filter. click apply filters to make your changes/i,
     }));
 
     expect(onRemove).toHaveBeenCalled();
