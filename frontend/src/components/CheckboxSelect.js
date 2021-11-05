@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
-import triangleDown from '../images/triange_down.png';
 import './CheckboxSelect.css';
+import DropdownMenu from './DropdownMenu';
 
 export function renderCheckboxes(
   options,
@@ -45,12 +45,12 @@ export default function CheckboxSelect(props) {
     styleAsSelect,
     labelText,
     ariaName,
+    disabled,
   } = props;
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
   const [checkboxes, setCheckboxes] = useState(makeCheckboxes(options, toggleAllChecked));
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const [preventBlur, setPreventBlur] = useState(false);
 
   // The all-reports checkbox can select/deselect all
   const toggleSelectAll = (event) => {
@@ -86,88 +86,46 @@ export default function CheckboxSelect(props) {
     setMenuIsOpen(false);
   };
 
-  /**
-   * Close the menu on escape key
-   * @param {Event} e
-   */
-  const onKeyDown = (e) => {
-    if (e.keyCode === 27) {
-      setMenuIsOpen(false);
-    }
-  };
-
-  /**
-   * Close the menu on blur, with some extenuating circumstance
-   *
-   * @param {Event} e
-   * @returns
-   */
-  const onBlur = () => {
-    if (preventBlur) {
-      return;
-    }
-
-    setMenuIsOpen(false);
-  };
-
-  function onMouseHandler(e) {
-    setPreventBlur(e.type === 'mouseenter');
-  }
-
-  function onFocusHandler() {
-    setPreventBlur(true);
-  }
-
   const label = toggleAllChecked ? toggleAllText : `${options.filter((option) => checkboxes[option.value]).map((option) => option.label).join(', ')}`;
   // html id for toggle all
   const toggleAllHtmlId = `${labelId}-toggle-all`;
 
-  const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
   const ariaLabel = `${menuIsOpen ? 'press escape to close' : 'Open'} the ${ariaName}`;
 
   return (
-    <div className="margin-left-1" onBlur={onBlur} onMouseEnter={onMouseHandler} onMouseLeave={onMouseHandler} onFocus={onFocusHandler}>
-      <button
-        onClick={setMenuIsOpen}
-        onKeyDown={onKeyDown}
-        className={`${buttonClasses} smart-hub--button-select-toggle-btn smart-hub--checkbox-select display-flex`}
-        aria-label={ariaLabel}
-        type="button"
-      >
-        <span>{label}</span>
-        {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
-      </button>
-      { menuIsOpen
-        ? (
-          <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
-            <span className="sr-only" id={labelId}>{labelText}</span>
-            <fieldset className="border-0">
-              <div className="usa-checkbox smart-hub--checkbox-select-toggle-all" onBlur={onBlur}>
-                <input
-                  className="usa-checkbox__input"
-                  type="checkbox"
-                  checked={toggleAllChecked}
-                  name={toggleAllHtmlId}
-                  id={toggleAllHtmlId}
-                  onChange={toggleSelectAll}
-                />
-                <label className="usa-checkbox__label" htmlFor={toggleAllHtmlId}>{toggleAllText}</label>
-              </div>
-              {renderCheckboxes(
-                options,
-                checkboxes,
-                labelId,
-                handleCheckboxSelect,
-                onBlur,
-              )}
-            </fieldset>
-            <button type="button" onKeyDown={onKeyDown} className="usa-button smart-hub--button margin-2" onClick={onApplyClick} aria-label={`Apply filters for ${ariaName}`}>Apply</button>
+    <DropdownMenu
+      className="smart-hub--checkbox-select position-relative margin-left-1"
+      buttonText={label}
+      buttonAriaLabel={ariaLabel}
+      styleAsSelect={styleAsSelect}
+      disabled={disabled}
+      onApply={onApplyClick}
+      menuName={ariaName}
+      applyButtonAria={`Apply filters for the ${ariaName}`}
+    >
+      <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
+        <span className="sr-only" id={labelId}>{labelText}</span>
+        <fieldset className="border-0">
+          <div className="usa-checkbox smart-hub--checkbox-select-toggle-all">
+            <input
+              className="usa-checkbox__input"
+              type="checkbox"
+              checked={toggleAllChecked}
+              name={toggleAllHtmlId}
+              id={toggleAllHtmlId}
+              onChange={toggleSelectAll}
+            />
+            <label className="usa-checkbox__label" htmlFor={toggleAllHtmlId}>{toggleAllText}</label>
           </div>
-        )
-        : null }
-
-    </div>
-
+          {renderCheckboxes(
+            options,
+            checkboxes,
+            labelId,
+            handleCheckboxSelect,
+          )}
+        </fieldset>
+      </div>
+    </DropdownMenu>
   );
 }
 
@@ -184,11 +142,13 @@ CheckboxSelect.propTypes = {
   labelText: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
   ariaName: PropTypes.string.isRequired,
+  disabled: PropTypes.bool,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
 };
 
 CheckboxSelect.defaultProps = {
+  disabled: false,
   styleAsSelect: false,
 };

@@ -60,13 +60,14 @@ function ButtonSelect(props) {
       styleAsSelect={styleAsSelect}
       disabled={disabled}
       onApply={onApplyClick}
+      menuName={ariaName}
       applyButtonAria={`Apply filters for the ${ariaName}`}
     >
       <div role="group" aria-describedby={labelId}>
         <span className="smart-hub--button-select-menu-label sr-only" id={labelId}>
           <strong>{labelText}</strong>
         </span>
-        <fieldset className="margin-0 border-0 padding-0">
+        <fieldset className="margin-0 border-0 padding-0" data-testid="button-select-button-group">
           { options.map((option) => (
             <button
               type="button"

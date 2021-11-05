@@ -39,14 +39,14 @@ describe('DateRangeSelect', () => {
 
   it('renders correctly', () => {
     renderDateRangeSelect();
-    const button = screen.getByRole('button', { name: /open date range select/i });
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
     expect(button).toHaveTextContent('Last 30 Days');
   });
 
   it('opens the list of options', () => {
     renderDateRangeSelect();
 
-    const button = screen.getByRole('button', { name: /open date range select/i });
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
     fireEvent.click(button);
 
     const thirtyDays = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
@@ -57,7 +57,7 @@ describe('DateRangeSelect', () => {
     const onApplyDateRange = jest.fn();
     renderDateRangeSelect(onApplyDateRange);
 
-    const button = screen.getByRole('button', { name: /open date range select/i });
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
     fireEvent.click(button);
 
     const thirtyDays = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
@@ -72,7 +72,7 @@ describe('DateRangeSelect', () => {
   it('can be disabled', () => {
     const onApplyDateRange = jest.fn();
     renderDateRangeSelect(onApplyDateRange, true);
-    const button = screen.getByRole('button', { name: /open date range select/i });
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
     expect(button).toBeDisabled();
   });
 
@@ -80,7 +80,7 @@ describe('DateRangeSelect', () => {
     renderDateRangeSelect();
 
     // open menu
-    const button = screen.getByRole('button', { name: /open date range select/i });
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
     fireEvent.click(button);
 
     // expect text

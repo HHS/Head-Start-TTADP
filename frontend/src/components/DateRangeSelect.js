@@ -215,6 +215,7 @@ function DateRangeSelect(props) {
       disabled={disabled}
       blurValidations={onBlur}
       onApply={onApplyClick}
+      menuName="Date range select menu"
       applyButtonAria="Apply date range filters"
     >
       <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">

@@ -31,18 +31,15 @@ describe('Regional Select', () => {
   test('displays correct region in input', async () => {
     const onApplyRegion = jest.fn();
     renderRegionalSelect(onApplyRegion);
-    const input = await screen.findByText(/all regions/i);
-    expect(input).toBeVisible();
+    const button = screen.getByRole('button', { name: 'toggle regional select menu' });
+    expect(button.textContent).toBe('All Regions');
   });
 
   test('changes input value on apply', async () => {
     const onApplyRegion = jest.fn();
     renderRegionalSelect(onApplyRegion, false, 1);
-    const input = await screen.findByText(/region 1/i);
-    expect(input).toBeVisible();
-
-    fireEvent.click(input);
-
+    const button = screen.getByRole('button', { name: /toggle regional select menu/i });
+    fireEvent.click(button);
     fireEvent.click(screen.getByRole('button', {
       name: /select to view data from region 2\. select apply filters button to apply selection/i,
     }));

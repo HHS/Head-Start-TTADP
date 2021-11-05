@@ -4,7 +4,6 @@ import React from 'react';
 import {
   render,
   screen,
-  within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -142,8 +141,7 @@ describe('Topic & Frequency Graph Widget', () => {
     userEvent.click(button);
     const aZ = screen.getByRole('button', { name: /select to view data from a to z\. select apply filters button to apply selection/i });
     userEvent.click(aZ);
-    const buttonGroup = screen.getByTestId('data-sort');
-    const apply = within(buttonGroup).getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
+    const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
     const point1 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
