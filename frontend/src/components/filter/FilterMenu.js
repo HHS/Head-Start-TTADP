@@ -72,6 +72,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       buttonText="Filters"
       buttonAriaLabel="open filters for this page"
       onApply={onApply}
+      applyButtonAria="apply filters to grantee record data"
       showCancel
       onCancel={onCancel}
       cancelAriaLabel="discard changes and close filter menu"

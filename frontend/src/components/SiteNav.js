@@ -60,8 +60,6 @@ const SiteNav = ({
 
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
-  console.log(user);
-
   return (
     <div>
       <div className="position-relative z-top">
