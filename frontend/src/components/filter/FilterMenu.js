@@ -21,7 +21,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   const [items, setItems] = useState([...filters]);
 
   const onApply = () => {
-    onApplyFilters(items);
+    onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
   };
 
   const onRemoveFilter = (id) => {
@@ -34,7 +34,8 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     }
   };
 
-  const onCancel = () => console.log('cancel!');
+  // reset state if we hit cancel
+  const onCancel = () => setItems([...filters]);
 
   const onUpdateFilter = (id, name, value) => {
     const newItems = [...items];
@@ -59,6 +60,13 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     setItems(newItems);
   };
 
+  const canBlur = (e) => {
+    if (e.relatedTarget && e.relatedTarget.matches('.ttahub-filter-menu')) {
+      return false;
+    }
+    return true;
+  };
+
   return (
     <DropdownMenu
       buttonText="Filters"
@@ -66,8 +74,10 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       onApply={onApply}
       showCancel
       onCancel={onCancel}
+      cancelAriaLabel="discard changes and close filter menu"
       className="margin-bottom-2 ttahub-filter-menu"
       menuName="filter menu"
+      canBlur={canBlur}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>

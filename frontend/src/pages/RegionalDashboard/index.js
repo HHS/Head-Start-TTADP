@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import RegionalSelect from '../../components/RegionalSelect';
 import DateRangeSelect, { formatDateRange } from '../../components/DateRangeSelect';
-import { ROLES_MAP } from '../../components/SpecialistSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
 import DateTime from '../../components/DateTime';
@@ -76,7 +75,7 @@ export default function RegionalDashboard({ user }) {
   };
 
   const updateRoles = (selectedRoles) => {
-    updateRoleFilter(selectedRoles.map((role) => ROLES_MAP.find((r) => r.selectValue === role)).map((r) => r.value).join(','));
+    updateRoleFilter(selectedRoles);
   };
 
   if (!user) {
@@ -137,14 +136,15 @@ export default function RegionalDashboard({ user }) {
             <TopicFrequencyGraph
               filters={
                 roleFilter
-                  ? [...filters, {
-                    id: uuidv4(),
-                    topic: 'role',
-                    condition: 'Contains',
-                    query: roleFilter,
-                  }] : filters
+                  ? [...filters,
+                    ...roleFilter.map((role) => ({
+                      id: uuidv4(),
+                      topic: 'role',
+                      condition: 'Contains',
+                      query: role,
+                    }))] : filters
               }
-              updateRoles={updateRoles}
+              onApplyRoles={updateRoles}
               dateTime={dateTime}
             />
           </Grid>

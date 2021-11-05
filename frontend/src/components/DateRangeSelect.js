@@ -171,7 +171,7 @@ function DateRangeSelect(props) {
    * @param {Event} e
    * @returns bool, whether or not to blur
    */
-  const onBlur = (e) => {
+  const canBlur = (e) => {
     // if we're within the same menu, do nothing
     if (e.relatedTarget && e.relatedTarget.matches('.smart-hub--button-select-menu *')) {
       return false;
@@ -213,7 +213,7 @@ function DateRangeSelect(props) {
       buttonAriaLabel={ariaLabel}
       styleAsSelect={styleAsSelect}
       disabled={disabled}
-      blurValidations={onBlur}
+      canBlur={canBlur}
       onApply={onApplyClick}
       menuName="Date range select menu"
       applyButtonAria="Apply date range filters"
