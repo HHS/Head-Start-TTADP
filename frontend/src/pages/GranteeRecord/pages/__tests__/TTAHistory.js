@@ -11,19 +11,19 @@ describe('Grantee Record - TTA History', () => {
 
   const filtersToApply = [
     {
-      id: 1,
+      id: '1',
       topic: 'region',
       condition: 'Contains',
-      query: 400,
+      query: ['400', '401'],
     },
     {
-      id: 2,
+      id: '2',
       topic: 'granteeId',
       condition: 'Contains',
-      query: 100,
+      query: '100',
     },
     {
-      id: 3,
+      id: '3',
       topic: 'modelType',
       condition: 'Is',
       query: 'grant',
@@ -31,11 +31,11 @@ describe('Grantee Record - TTA History', () => {
   ];
 
   const renderTTAHistory = (filters = filtersToApply) => {
-    render(<TTAHistory filters={filters} />);
+    render(<TTAHistory onApplyFilters={jest.fn()} filters={filters} />);
   };
 
   beforeEach(async () => {
-    const url = '/api/widgets/overview?region.in[]=400&granteeId.in[]=100&modelType.is=grant';
+    const url = '/api/widgets/overview?region.in[]=400&region.in[]=401&granteeId.in[]=100&modelType.is=grant';
     fetchMock.get(url, response);
   });
 
