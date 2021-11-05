@@ -94,6 +94,42 @@ describe('Filter Menu', () => {
     }]);
   });
 
+  it('clears the query if the topic is changed', () => {
+    const filters = [
+      {
+        id: 'filter1234',
+        topic: 'startDate',
+        condition: 'Is after',
+        query: '2021/10/31',
+      },
+    ];
+
+    renderFilterMenu(filters);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    let date = screen.getByRole('textbox', { name: /date/i });
+    expect(date.value).toBe('10/31/2021');
+
+    const topic = screen.getByRole('combobox', { name: 'topic' });
+    userEvent.selectOptions(topic, 'role');
+    userEvent.selectOptions(topic, 'startDate');
+
+    date = screen.getByRole('textbox', { name: /date/i });
+    expect(date.value).toBe('');
+
+    expect(document.querySelectorAll('[name="topic"').length).toBe(1);
+
+    const addNew = screen.getByRole('button', { name: /Add new filter/i });
+    userEvent.click(addNew);
+
+    expect(document.querySelectorAll('[name="topic"').length).toBe(2);
+  });
+
   it('closes the menu on blur', async () => {
     const filters = [
       {
