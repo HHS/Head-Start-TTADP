@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Overview from '../../../widgets/DashboardOverview';
-import FilterMenu from '../../../components/FilterMenu';
+import FilterMenu from '../../../components/filter/FilterMenu';
 
 function expandFilters(filters) {
   const arr = [];
