@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Overview from '../../../widgets/DashboardOverview';
+import ActivityReportsTable from '../../../components/ActivityReportsTable';
 
 export default function TTAHistory({ filters }) {
   return (
@@ -15,7 +16,12 @@ export default function TTAHistory({ filters }) {
         showTooltips
         filters={filters}
       />
-
+      <ActivityReportsTable
+        filters={filters}
+        showFilter={false}
+        onUpdateFilters={() => {}}
+        tableCaption="Activity Reports"
+      />
     </div>
   );
 }
