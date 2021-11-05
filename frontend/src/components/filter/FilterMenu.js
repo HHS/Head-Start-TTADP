@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import './FilterMenu.css';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
 
@@ -19,7 +18,6 @@ const filterProp = PropTypes.shape({
  * @returns JSX Object
  */
 export default function FilterMenu({ filters, onApplyFilters }) {
-  const [menuIsOpen, setMenuIsOpen] = useState(false);
   const [items, setItems] = useState([...filters]);
 
   const onApply = () => {
@@ -35,6 +33,8 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       setItems(newItems);
     }
   };
+
+  const onCancel = () => console.log('cancel!');
 
   const onUpdateFilter = (id, name, value) => {
     const newItems = [...items];
@@ -63,13 +63,13 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     <DropdownMenu
       buttonText="Filters"
       buttonAriaLabel="open filters for this page"
-      hideApply
       onApply={onApply}
-      className="margin-bottom-2"
+      showCancel
+      onCancel={onCancel}
+      className="margin-bottom-2 ttahub-filter-menu"
       menuName="filter menu"
-      menuState={[menuIsOpen, setMenuIsOpen]}
     >
-      <div className="ttahub-filter-menu-filters padding-x-5 padding-y-2 shadow-2">
+      <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
         <div>
           <ul className="usa-list usa-list--unstyled margin-bottom-1">
@@ -83,23 +83,6 @@ export default function FilterMenu({ filters, onApplyFilters }) {
             ))}
           </ul>
           <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
-        </div>
-        <div className="margin-top-1 display-flex flex-justify-end margin-right-3">
-          <button
-            type="button"
-            className="usa-button usa-button--unstyled margin-right-2"
-            aria-label="Cancel and discard unsaved filters"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            aria-label="Apply all filters and reload the data on this page"
-            className="usa-button"
-            onClick={onApply}
-          >
-            Apply filters
-          </button>
         </div>
       </div>
 

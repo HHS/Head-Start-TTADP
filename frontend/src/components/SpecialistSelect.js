@@ -31,6 +31,16 @@ export const ROLES_MAP = [
 ];
 
 export default function SpecialistSelect({ onApplyRoles }) {
+  const onApply = (selected) => {
+    const roleValues = selected.map((s) => parseInt(s, 10));
+
+    const roles = ROLES_MAP.filter(
+      (role) => roleValues.includes(role.selectValue),
+    ).map((role) => role.value);
+
+    onApplyRoles(roles);
+  };
+
   return (
     <CheckboxSelect
       styleAsSelect
@@ -39,7 +49,7 @@ export default function SpecialistSelect({ onApplyRoles }) {
       labelId="tfRoleFilter"
       labelText="Filter by specialists"
       ariaName="Change filter by specialists menu"
-      onApply={onApplyRoles}
+      onApply={onApply}
       options={
         ROLES_MAP.map((role) => ({
           value: role.selectValue,
