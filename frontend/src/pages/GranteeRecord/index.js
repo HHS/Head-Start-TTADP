@@ -23,7 +23,21 @@ export default function GranteeRecord({ match, location }) {
     'grants.number': '',
     granteeId,
   });
-  const [filters, setFilters] = useState([]);
+  const [filters, setFilters] = useState([
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
+  ]);
+
   const [error, setError] = useState();
 
   useEffect(() => {
@@ -91,7 +105,11 @@ export default function GranteeRecord({ match, location }) {
         <Switch>
           <Route
             path="/grantee/:granteeId/tta-history"
-            render={() => <TTAHistory filters={filters} />}
+            render={() => (
+              <TTAHistory
+                filters={filters}
+              />
+            )}
           />
           <Route
             path="/grantee/:granteeId/profile"
