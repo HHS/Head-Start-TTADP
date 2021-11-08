@@ -64,6 +64,12 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     if (e.relatedTarget && e.relatedTarget.matches('.ttahub-filter-menu')) {
       return false;
     }
+
+    // if we've a date range, also do nothing on blur when we click on those
+    if (e.target.matches('.CalendarDay, .DayPickerNavigation, .DayPickerNavigation_button')) {
+      return false;
+    }
+
     return true;
   };
 
