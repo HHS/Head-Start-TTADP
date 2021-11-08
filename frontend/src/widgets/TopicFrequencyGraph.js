@@ -192,7 +192,7 @@ export function TopicFrequencyGraphWidget({
               ]
             }
           />
-          <SpecialistSelect onApplyRoles={onApplyRoles} />
+          <SpecialistSelect labelId="tf-role-select" onApplyRoles={onApplyRoles} />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button

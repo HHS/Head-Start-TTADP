@@ -30,7 +30,7 @@ export const ROLES_MAP = [
   },
 ];
 
-export default function SpecialistSelect({ onApplyRoles }) {
+export default function SpecialistSelect({ onApplyRoles, labelId }) {
   const onApply = (selected) => {
     const roleValues = selected.map((s) => parseInt(s, 10));
 
@@ -46,7 +46,7 @@ export default function SpecialistSelect({ onApplyRoles }) {
       styleAsSelect
       toggleAllText="All Specialists"
       toggleAllInitial
-      labelId="tfRoleFilter"
+      labelId={labelId}
       labelText="Filter by specialists"
       ariaName="Change filter by specialists menu"
       onApply={onApply}
@@ -61,5 +61,6 @@ export default function SpecialistSelect({ onApplyRoles }) {
 }
 
 SpecialistSelect.propTypes = {
+  labelId: PropTypes.string.isRequired,
   onApplyRoles: PropTypes.func.isRequired,
 };

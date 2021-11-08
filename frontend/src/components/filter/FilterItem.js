@@ -56,6 +56,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       renderInput: () => (
         <span className="margin-right-1">
           <SpecialistSelect
+            labelId={`role-${condition}-${id}`}
             onApplyRoles={onApplyQuery}
           />
         </span>
