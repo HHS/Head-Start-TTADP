@@ -133,7 +133,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       <button
         type="button"
         aria-label={buttonAriaLabel}
-        className="usa-button usa-button--unstyled font-sans-xs margin-right-1 margin-left-0"
+        className="ttahub-filter-menu-item-close-buttom usa-button usa-button--unstyled font-sans-xs margin-x-1 margin-top-1"
         onClick={onRemove}
       >
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
