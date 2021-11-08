@@ -175,6 +175,12 @@ describe('ActivityReport', () => {
       });
     });
 
+    it('displays the creator name', async () => {
+      fetchMock.get('/api/activity-reports/1', formData());
+      renderActivityReport(1);
+      expect(await screen.findByText(/creator:/i)).toBeVisible();
+    });
+
     it('calls "report update"', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       fetchMock.put('/api/activity-reports/1', {});
