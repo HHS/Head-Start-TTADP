@@ -28,6 +28,9 @@ function sortData(data, order) {
 const TOPIC = 0;
 const REASON = 1;
 
+const TOPIC_STR = 'topics';
+const REASON_STR = 'reasons';
+
 const HEADINGS = {
   [TOPIC]: ['Topic', 'Count'],
   [REASON]: ['Reason', 'Count'],
@@ -37,7 +40,7 @@ export function FreqGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
   const [selectedGraph, updateSelectedGraph] = useState(TOPIC);
-  const selectedGraphString = selectedGraph === TOPIC ? 'topic' : 'reason';
+  const selectedGraphString = selectedGraph === TOPIC ? TOPIC_STR : REASON_STR;
 
   const selectedData = data[selectedGraphString];
   const sortedData = sortData(selectedData, SORT_ORDER.DESC);
@@ -130,7 +133,7 @@ FreqGraph.propTypes = {
 };
 
 FreqGraph.defaultProps = {
-  data: { topic: [], reason: [] },
+  data: { [TOPIC_STR]: [], [REASON_STR]: [] },
 };
 
 export default withWidgetData(FreqGraph, 'frequencyGraph');
