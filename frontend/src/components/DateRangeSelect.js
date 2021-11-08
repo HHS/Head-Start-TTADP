@@ -52,38 +52,35 @@ export function formatDateRange(format = {
   if (!format.sep) {
     sep = '-';
   }
+
+  let firstDay;
+  let secondDay;
+
   if (format.lastThirtyDays) {
-    const today = moment();
-    const thirtyDaysAgo = moment().subtract(30, 'days');
-
-    if (format.withSpaces) {
-      return `${thirtyDaysAgo.format(selectedFormat)} ${sep} ${today.format(selectedFormat)}`;
-    }
-
-    return `${thirtyDaysAgo.format(selectedFormat)}${sep}${today.format(selectedFormat)}`;
+    secondDay = moment();
+    firstDay = moment().subtract(30, 'days');
   }
 
   if (format.yearToDate) {
-    const today = moment();
-    const firstDayOfYear = moment().startOf('year');
-
-    if (format.withSpaces) {
-      return `${firstDayOfYear.format(selectedFormat)} ${sep} ${today.format(selectedFormat)}`;
-    }
-
-    return `${firstDayOfYear.format(selectedFormat)}${sep}${today.format(selectedFormat)}`;
+    secondDay = moment();
+    firstDay = moment().startOf('year');
   }
 
   if (format.string) {
     const dates = format.string.split('-');
 
     if (dates && dates.length > 1) {
-      if (format.withSpaces) {
-        return `${moment(dates[0], DATETIME_DATE_FORMAT).format(selectedFormat)} ${sep} ${moment(dates[1], DATETIME_DATE_FORMAT).format(selectedFormat)}`;
-      }
-
-      return `${moment(dates[0], DATETIME_DATE_FORMAT).format(selectedFormat)}${sep}${moment(dates[1], DATETIME_DATE_FORMAT).format(selectedFormat)}`;
+      firstDay = moment(dates[0], DATETIME_DATE_FORMAT);
+      secondDay = moment(dates[1], DATETIME_DATE_FORMAT);
     }
+  }
+
+  if (firstDay && secondDay) {
+    if (format.withSpaces) {
+      return `${firstDay.format(selectedFormat)} ${sep} ${secondDay.format(selectedFormat)}`;
+    }
+
+    return `${firstDay.format(selectedFormat)}${sep}${secondDay.format(selectedFormat)}`;
   }
 
   return '';
