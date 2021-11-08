@@ -84,3 +84,7 @@
 .smart-hub--text-area__resize-vertical {
   resize: vertical;
 }
+
+.smart-hub--text-area__resize-vertical .rdw-editor-main {
+  resize: vertical;
+}
