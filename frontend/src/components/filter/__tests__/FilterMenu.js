@@ -94,7 +94,7 @@ describe('Filter Menu', () => {
     }]);
   });
 
-  it('clears the query if the topic is changed', () => {
+  it('clears the query if the topic is changed', async () => {
     const filters = [
       {
         id: 'filter1234',
@@ -112,22 +112,21 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    let date = screen.getByRole('textbox', { name: /date/i });
+    const date = screen.getByRole('textbox', { name: /date/i });
     expect(date.value).toBe('10/31/2021');
 
     const topic = screen.getByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'role');
     userEvent.selectOptions(topic, 'startDate');
 
-    date = screen.getByRole('textbox', { name: /date/i });
-    expect(date.value).toBe('');
+    await screen.findByRole('combobox', { name: 'select a topic and condition first and then select a query' });
 
-    expect(document.querySelectorAll('[name="topic"').length).toBe(1);
+    expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
 
     const addNew = screen.getByRole('button', { name: /Add new filter/i });
     userEvent.click(addNew);
 
-    expect(document.querySelectorAll('[name="topic"').length).toBe(2);
+    expect(document.querySelectorAll('[name="topic"]').length).toBe(2);
   });
 
   it('closes the menu on blur', async () => {
