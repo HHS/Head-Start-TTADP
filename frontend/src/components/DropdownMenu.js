@@ -18,6 +18,7 @@ export default function DropdownMenu({
   onCancel,
   showCancel,
   cancelAriaLabel,
+  forwardedRef,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
 
@@ -81,7 +82,7 @@ export default function DropdownMenu({
     );
   }
   return (
-    <div role="menu" tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
+    <div role="menu" ref={forwardedRef} tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
       <button
         onClick={onClick}
         className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex`}
@@ -132,6 +133,10 @@ DropdownMenu.propTypes = {
   showCancel: PropTypes.bool,
   onCancel: PropTypes.func,
   cancelAriaLabel: PropTypes.string,
+  forwardedRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 DropdownMenu.defaultProps = {
@@ -145,4 +150,5 @@ DropdownMenu.defaultProps = {
   showCancel: false,
   cancelAriaLabel: '',
   onCancel: () => {},
+  forwardedRef: () => {},
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createRef } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import './CheckboxSelect.css';
@@ -52,6 +52,8 @@ export default function CheckboxSelect(props) {
   const [checkboxes, setCheckboxes] = useState(makeCheckboxes(options, toggleAllChecked));
   const [menuIsOpen, setMenuIsOpen] = useState(false);
 
+  const menu = createRef();
+
   // The all-reports checkbox can select/deselect all
   const toggleSelectAll = (event) => {
     const { target: { checked = null } = {} } = event;
@@ -87,7 +89,7 @@ export default function CheckboxSelect(props) {
   };
 
   const canBlur = (e) => {
-    if (e.currentTarget.matches('.smart-hub--checkbox-select')) {
+    if (e.currentTarget === menu.current) {
       return false;
     }
 
@@ -103,6 +105,7 @@ export default function CheckboxSelect(props) {
   return (
     <DropdownMenu
       canBlur={canBlur}
+      forwardedRef={menu}
       className="smart-hub--checkbox-select position-relative margin-left-1"
       buttonText={label}
       buttonAriaLabel={ariaLabel}
