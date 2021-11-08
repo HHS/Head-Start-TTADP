@@ -55,7 +55,6 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       id: uuidv4(),
       display: '',
       conditions: [],
-      renderInput: () => <span />,
     };
     newItems.push(newItem);
     setItems(newItems);
