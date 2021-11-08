@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent,
+  render, screen, fireEvent, act,
 } from '@testing-library/react';
 import DateRangeSelect, { formatDateRange } from '../DateRangeSelect';
 
@@ -51,6 +51,24 @@ describe('DateRangeSelect', () => {
 
     const thirtyDays = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
     expect(thirtyDays).toHaveTextContent('Last 30 Days');
+  });
+
+  it('opens the start date calendar', async () => {
+    renderDateRangeSelect();
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
+
+    fireEvent.click(button);
+
+    const custom = screen.getByRole('button', { name: /select to view data from custom date range\. select apply filters button to apply selection/i });
+    fireEvent.click(custom);
+
+    const startDateCalendar = screen.getByRole('button', { name: /open start date picker calendar/i });
+
+    act(() => {
+      fireEvent.click(startDateCalendar);
+    });
+
+    expect(document.querySelector('#startDatePicker')).toHaveFocus();
   });
 
   it('allows the date range to be updated', () => {
