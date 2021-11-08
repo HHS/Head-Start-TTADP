@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cat >frontend/public/robots.txt <<EOL
+# Welcome Robots
+User-agent: *
+Disallow: 
+EOL
