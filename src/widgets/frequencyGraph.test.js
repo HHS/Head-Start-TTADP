@@ -48,12 +48,12 @@ describe('frequency graph widget', () => {
       id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
     }]);
 
-    const { topic } = res;
+    const { topics } = res;
 
-    expect(topic.find((r) => r.category === 'Home Visiting').count).toBe(3);
-    expect(topic.find((r) => r.category === 'Five-Year Grant').count).toBe(2);
-    expect(topic.find((r) => r.category === 'Fiscal / Budget').count).toBe(2);
-    expect(topic.find((r) => r.category === 'Nutrition').count).toBe(0);
+    expect(topics.find((r) => r.category === 'Home Visiting').count).toBe(3);
+    expect(topics.find((r) => r.category === 'Five-Year Grant').count).toBe(2);
+    expect(topics.find((r) => r.category === 'Fiscal / Budget').count).toBe(2);
+    expect(topics.find((r) => r.category === 'Nutrition').count).toBe(0);
   });
 
   it('returns count of reasons', async () => {
@@ -61,11 +61,11 @@ describe('frequency graph widget', () => {
       id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
     }]);
 
-    const { reason } = res;
+    const { reasons } = res;
 
-    expect(reason.find((r) => r.category === 'Change in Scope').count).toBe(3);
-    expect(reason.find((r) => r.category === 'Complaint').count).toBe(1);
-    expect(reason.find((r) => r.category === 'Child Incidents').count).toBe(2);
-    expect(reason.find((r) => r.category === 'Full Enrollment').count).toBe(0);
+    expect(reasons.find((r) => r.category === 'Change in Scope').count).toBe(3);
+    expect(reasons.find((r) => r.category === 'Complaint').count).toBe(1);
+    expect(reasons.find((r) => r.category === 'Child Incidents').count).toBe(2);
+    expect(reasons.find((r) => r.category === 'Full Enrollment').count).toBe(0);
   });
 });
