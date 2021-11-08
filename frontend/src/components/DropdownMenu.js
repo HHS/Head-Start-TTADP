@@ -45,7 +45,7 @@ export default function DropdownMenu({
     }
 
     if (canBlur(e)) {
-      setMenuIsOpen(false);
+      // setMenuIsOpen(false);
     }
   };
 

@@ -13,6 +13,14 @@
     width: 200px;
 }
 
+.ttahub-filter-menu-single-date-picker {
+    border: 1px solid;
+}
+
+.ttahub-filter-menu-item .SingleDatePickerInput__withBorder {
+    border: 0;
+}
+
 .ttahub-filter-menu-item .SingleDatePicker .DateInput__small {
     min-width: 160px;
 }
