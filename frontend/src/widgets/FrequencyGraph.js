@@ -58,12 +58,17 @@ export function FreqGraph({ data, loading }) {
     <Container className="ttahub--frequency-graph" padding={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
+          <span className="sr-only">
+            {selectedGraphString}
+            {' '}
+            in Activity reports by frequency
+          </span>
           <ButtonSelect
             styleAsSelect
             labelId="graphType"
             className="margin-left-1 display-inline-block margin-right-1"
             labelText="Change type of graph"
-            ariaName="Change graph type menu"
+            ariaName="change graph type menu"
             initialValue={{
               value: TOPIC,
               label: 'Topics',
@@ -83,7 +88,7 @@ export function FreqGraph({ data, loading }) {
               ]
             }
           />
-          <h2 className="display-inline">
+          <h2 className="display-inline" aria-hidden>
             in Activity Reports by Frequency
           </h2>
         </Grid>
