@@ -36,7 +36,7 @@ describe('Checkbox select', () => {
   it('renders properly and calls the on apply function', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /open the dogs/i });
+    const button = screen.getByRole('button', { name: /toggle the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
     userEvent.click(pom);
@@ -48,7 +48,7 @@ describe('Checkbox select', () => {
   it('toggles all off', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /open the dogs/i });
+    const button = screen.getByRole('button', { name: /toggle the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
     expect(pom).toBeChecked();
@@ -57,13 +57,15 @@ describe('Checkbox select', () => {
     expect(pom).not.toBeChecked();
   });
 
-  it('closes on escape button', () => {
+  it('closes on escape button', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /open the dogs/i });
+    const button = screen.getByRole('button', { name: /toggle the dogs/i });
     userEvent.click(button);
     const pom = screen.getByRole('checkbox', { name: /select pomeranian/i });
+
     expect(pom).toBeVisible();
+
     fireEvent.keyDown(button, {
       key: 'Escape',
       code: 'Escape',
@@ -76,7 +78,7 @@ describe('Checkbox select', () => {
   it('handles blur', () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /open the dogs/i });
+    const button = screen.getByRole('button', { name: /toggle the dogs/i });
     userEvent.click(button);
     const allDogs = screen.getByRole('checkbox', { name: /all dogs/i });
     expect(allDogs).toBeInTheDocument();
@@ -87,7 +89,7 @@ describe('Checkbox select', () => {
   it('toggles all on', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /open the dogs/i });
+    const button = screen.getByRole('button', { name: /toggle the dogs/i });
     userEvent.click(button);
     const allDogs = screen.getByRole('checkbox', { name: /all dogs/i });
     userEvent.click(allDogs);
@@ -102,7 +104,7 @@ describe('Checkbox select', () => {
   it('checks and unchecks and passes the right parameters to onApply', async () => {
     const onApply = jest.fn();
     renderCheckboxSelect(onApply);
-    const button = screen.getByRole('button', { name: /open the dogs/i });
+    const button = screen.getByRole('button', { name: /toggle the dogs/i });
     userEvent.click(button);
     const allDogs = screen.getByRole('checkbox', { name: /all dogs/i });
     userEvent.click(allDogs);

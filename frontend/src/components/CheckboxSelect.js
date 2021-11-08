@@ -50,7 +50,6 @@ export default function CheckboxSelect(props) {
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
   const [checkboxes, setCheckboxes] = useState(makeCheckboxes(options, toggleAllChecked));
-  const [menuIsOpen, setMenuIsOpen] = useState(false);
 
   const menu = createRef();
 
@@ -85,7 +84,6 @@ export default function CheckboxSelect(props) {
   const onApplyClick = () => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
     onApply(checked);
-    setMenuIsOpen(false);
   };
 
   const canBlur = (e) => {
@@ -100,7 +98,7 @@ export default function CheckboxSelect(props) {
   // html id for toggle all
   const toggleAllHtmlId = `${labelId}-toggle-all`;
 
-  const ariaLabel = `${menuIsOpen ? 'press escape to close' : 'Open'} the ${ariaName}`;
+  const ariaLabel = `toggle the ${ariaName}`;
 
   return (
     <DropdownMenu
