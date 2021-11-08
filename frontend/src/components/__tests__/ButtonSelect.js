@@ -7,7 +7,7 @@ import {
 } from '@testing-library/react';
 import ButtonSelect from '../ButtonSelect';
 
-const renderButtonSelect = (onApply) => {
+const renderButtonSelect = (onApply, applied = 1) => {
   const options = [
     {
       label: 'Test',
@@ -22,7 +22,6 @@ const renderButtonSelect = (onApply) => {
   const labelId = 'Test-Button-Select';
   const labelText = 'Give me a test, guv';
   const initialValue = options[0];
-  const applied = options[0].value;
 
   render(
     <div>
@@ -35,7 +34,6 @@ const renderButtonSelect = (onApply) => {
         applied={applied}
         ariaName="menu"
       />
-
       <button type="button" data-testid="blanko">Blanko</button>
     </div>,
   );
@@ -59,5 +57,17 @@ describe('The Button Select component', () => {
     fireEvent.click(apply);
 
     expect(onApply).toHaveBeenCalled();
+  });
+
+  it('handles weird applied value', () => {
+    const onApply = jest.fn();
+    const applied = 3;
+    renderButtonSelect(onApply, applied);
+
+    const openMenu = screen.getByRole('button', {
+      name: /toggle menu/i,
+    });
+
+    expect(openMenu.textContent).toBe('Test');
   });
 });
