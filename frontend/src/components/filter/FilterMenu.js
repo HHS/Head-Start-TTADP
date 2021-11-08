@@ -43,6 +43,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     toUpdate[name] = value;
 
     if (name === 'topic') {
+      toUpdate.condition = '';
       toUpdate.query = '';
     }
 
