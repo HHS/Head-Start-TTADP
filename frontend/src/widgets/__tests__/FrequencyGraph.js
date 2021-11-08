@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { FreqGraph } from '../FrequencyGraph';
 
 const TEST_DATA = {
-  topic: [
+  topics: [
     {
       category: 'first category',
       count: 1,
@@ -23,7 +23,7 @@ const TEST_DATA = {
       count: 0,
     },
   ],
-  reason: [
+  reasons: [
     {
       category: 'one',
       count: 1,
@@ -46,13 +46,13 @@ const renderFrequencyGraph = async () => (
 describe('Frequency Graph', () => {
   it('shows topics by default', async () => {
     renderFrequencyGraph();
-    const topics = await screen.findByText('Topics');
-    expect(topics).toBeInTheDocument();
+    const topics = await screen.findByRole('button', { name: 'Open change graph type menu' });
+    expect(topics.textContent).toBe('Topics');
   });
 
   it('can switch to show reasons', async () => {
     renderFrequencyGraph();
-    const topics = await screen.findByText('Topics');
+    const topics = await screen.findByRole('button', { name: 'Open change graph type menu' });
 
     userEvent.click(topics);
     const reasonBtn = await screen.findByText('Reasons');
@@ -60,8 +60,8 @@ describe('Frequency Graph', () => {
     const apply = await screen.findByText('Apply');
     userEvent.click(apply);
 
-    const reasons = await screen.findByText('Reasons');
-    expect(reasons).toBeInTheDocument();
+    const reasons = await screen.findByRole('button', { name: 'Open change graph type menu' });
+    expect(reasons.textContent).toBe('Reasons');
   });
 
   it('can show accessible data', async () => {
