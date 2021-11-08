@@ -102,7 +102,7 @@ describe('Filter menu item', () => {
     const onUpdate = jest.fn();
     renderFilterItem(filter, onRemove, onUpdate);
 
-    const button = screen.getByRole('button', { name: 'Open the Change filter by specialists menu' });
+    const button = screen.getByRole('button', { name: /toggle the change filter by specialists menu/i });
     userEvent.click(button);
 
     const apply = screen.getByRole('button', { name: /apply filters for the change filter by specialists menu/i });
