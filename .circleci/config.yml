@@ -336,10 +336,10 @@ jobs:
       - run: 
           name: Create production robot
           environment:
-            SANDBOX_GIT_URL: pipeline.parameters.sandbox_git_url
-            CURRENT_GIT_URL: pipeline.project.git_url
-            SANDBOX_GIT_BRANCH: sandbox_git_branch
-            CURRENT_GIT_BRANCH: pipeline.git.branch
+            SANDBOX_GIT_URL: <<pipeline.parameters.sandbox_git_url>>
+            CURRENT_GIT_URL: <<pipeline.project.git_url>>
+            SANDBOX_GIT_BRANCH: <<sandbox_git_branch>>
+            CURRENT_GIT_BRANCH: <<pipeline.git.branch>>
           command: ./bin/robot-factory
       - run:
           name: Build frontend assets
