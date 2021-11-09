@@ -87,10 +87,9 @@ export default function CheckboxSelect(props) {
   };
 
   const canBlur = (e) => {
-    if (e.currentTarget === menu.current) {
+    if (e.relatedTarget === menu.current) {
       return false;
     }
-
     return true;
   };
 
