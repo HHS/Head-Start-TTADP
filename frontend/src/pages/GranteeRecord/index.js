@@ -90,7 +90,11 @@ export default function GranteeRecord({ match, location }) {
         <Switch>
           <Route
             path="/grantee/:granteeId/tta-history"
-            render={() => <TTAHistory filters={filters} />}
+            render={() => (
+              <TTAHistory
+                filters={filters}
+              />
+            )}
           />
           <Route
             path="/grantee/:granteeId/profile"
