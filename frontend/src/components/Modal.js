@@ -45,9 +45,9 @@ const Modal = ({
 Modal.propTypes = {
   modalRef: PropTypes.oneOfType([
     PropTypes.func,
-    PropTypes.shape({ current: PropTypes.elementType }),
+    PropTypes.shape(),
   ]).isRequired,
-  modalId: PropTypes.number.isRequired,
+  modalId: PropTypes.string.isRequired,
   onOk: PropTypes.func,
   title: PropTypes.string.isRequired,
   okButtonText: PropTypes.string,
