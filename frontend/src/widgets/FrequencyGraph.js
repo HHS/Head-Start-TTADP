@@ -69,7 +69,6 @@ export function FreqGraph({ data, loading }) {
           <ButtonSelect
             styleAsSelect
             labelId="graphType"
-            className="margin-left-1 display-inline-block margin-right-1"
             labelText="Change type of graph"
             ariaName="change graph type menu"
             initialValue={{
@@ -105,7 +104,6 @@ export function FreqGraph({ data, loading }) {
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>
         </Grid>
-
       </Grid>
       { showAccessibleData
         ? (

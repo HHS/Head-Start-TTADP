@@ -53,21 +53,19 @@ export default function TTAHistory({
         </title>
       </Helmet>
       <div className="margin-right-3">
-        <Grid>
-          <Grid col={12}>
-            <FilterMenu filters={filters} onApplyFilters={onApply} />
-            <Overview
-              fields={[
-                'Activity reports',
-                'Hours of TTA',
-                'Participants',
-                'In-person activities',
-              ]}
-              showTooltips
-              filters={filtersToApply}
-            />
-          </Grid>
-          <Grid desktop={{ col: 8 }} tablet={{ col: 12 }}>
+        <FilterMenu filters={filters} onApplyFilters={onApply} />
+        <Overview
+          fields={[
+            'Activity reports',
+            'Hours of TTA',
+            'Participants',
+            'In-person activities',
+          ]}
+          showTooltips
+          filters={filtersToApply}
+        />
+        <Grid row gap={2}>
+          <Grid desktop={{ col: 8 }} tabletLg={{ col: 12 }}>
             <FrequencyGraph filters={filters} />
           </Grid>
           <Grid desktop={{ col: 4 }} tabletLg={{ col: 12 }}>
@@ -75,13 +73,13 @@ export default function TTAHistory({
               filters={filtersToApply}
             />
           </Grid>
-          <ActivityReportsTable
-            filters={filters}
-            showFilter={false}
-            onUpdateFilters={() => {}}
-            tableCaption="Activity Reports"
-          />
         </Grid>
+        <ActivityReportsTable
+          filters={filters}
+          showFilter={false}
+          onUpdateFilters={() => {}}
+          tableCaption="Activity Reports"
+        />
       </div>
     </>
   );
