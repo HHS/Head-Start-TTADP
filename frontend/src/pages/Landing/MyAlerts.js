@@ -224,7 +224,7 @@ function MyAlerts(props) {
                 onKeyPress={() => sortHandler(name)}
                 className={`sortable ${sortClassName}`}
                 aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-                  }`}
+                }`}
               >
                 {displayName}
               </a>
