@@ -46,6 +46,15 @@ export default function GranteeRecord({ match, location }) {
     setFilters(newFilters);
   };
 
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
+  };
+
   useEffect(() => {
     async function fetchGrantee(id, region) {
       try {
@@ -100,43 +109,44 @@ export default function GranteeRecord({ match, location }) {
       </Helmet>
       <GranteeTabs region={regionId} granteeId={granteeId} />
       {
-    error ? (
-      <div className="usa-alert usa-alert--error" role="alert">
-        <div className="usa-alert__body">
-          <p className="usa-alert__text">
-            {error}
-          </p>
-        </div>
-      </div>
-    ) : (
-      <>
-        <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
-        <Switch>
-          <Route
-            path="/grantee/:granteeId/tta-history"
-            render={() => (
-              <TTAHistory
-                filters={filters}
-                filtersForWidgets={baseFilters}
-                onApplyFilters={onApplyFilters}
-                granteeName={granteeName}
+        error ? (
+          <div className="usa-alert usa-alert--error" role="alert">
+            <div className="usa-alert__body">
+              <p className="usa-alert__text">
+                {error}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
+            <Switch>
+              <Route
+                path="/grantee/:granteeId/tta-history"
+                render={() => (
+                  <TTAHistory
+                    filters={filters}
+                    filtersForWidgets={baseFilters}
+                    onApplyFilters={onApplyFilters}
+                    onRemoveFilter={onRemoveFilter}
+                    granteeName={granteeName}
+                  />
+                )}
               />
-            )}
-          />
-          <Route
-            path="/grantee/:granteeId/profile"
-            render={() => (
-              <Profile
-                granteeName={granteeName}
-                regionId={regionId}
-                granteeSummary={granteeSummary}
+              <Route
+                path="/grantee/:granteeId/profile"
+                render={() => (
+                  <Profile
+                    granteeName={granteeName}
+                    regionId={regionId}
+                    granteeSummary={granteeSummary}
+                  />
+                )}
               />
-            )}
-          />
-        </Switch>
-      </>
-    )
-}
+            </Switch>
+          </>
+        )
+      }
     </>
   );
 }

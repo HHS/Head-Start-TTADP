@@ -83,7 +83,7 @@ export default function CheckboxSelect(props) {
    */
   const onApplyClick = () => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
-    onApply(checked);
+    onApply(checked, toggleAllChecked);
   };
 
   const canBlur = (e) => {
