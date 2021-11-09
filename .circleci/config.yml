@@ -165,7 +165,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-disable-hses-staging"
+    default: "TTAHUB276"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB276"
@@ -336,9 +336,9 @@ jobs:
       - run: 
           name: Create production robot
           environment:
-            SANDBOX_GIT_URL: <<pipeline.parameters.sandbox_git_url>>
+            DEV_GIT_URL: <<pipeline.parameters.dev_git_url>>
             CURRENT_GIT_URL: <<pipeline.project.git_url>>
-            SANDBOX_GIT_BRANCH: <<pipeline.parameters.sandbox_git_branch>>
+            DEV_GIT_BRANCH: <<pipeline.parameters.dev_git_branch>>
             CURRENT_GIT_BRANCH: <<pipeline.git.branch>>
           command: ./bin/robot-factory
       - run:
