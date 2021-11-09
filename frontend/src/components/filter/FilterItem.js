@@ -2,14 +2,20 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import moment from 'moment';
 import FilterDateRange from './FilterDateRange';
-import SpecialistSelect from '../SpecialistSelect';
+import { formatDateRange } from '../DateRangeSelect';
+import SpecialistSelect, { ROLES_MAP } from '../SpecialistSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../constants';
-
 import './FilterItem.css';
+
+const YEAR_TO_DATE = formatDateRange({
+  yearToDate: true,
+  forDateTime: true,
+});
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
@@ -17,6 +23,15 @@ const filterProp = PropTypes.shape({
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
   id: PropTypes.string,
 });
+
+const specialistName = ROLES_MAP.map((r) => r.value);
+
+const todaysDate = moment().format('YYYY/MM/DD');
+
+const DEFAULT_VALUES = {
+  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': todaysDate, 'Is before': todaysDate },
+  role: { Contains: specialistName, 'Does not contain': specialistName },
+};
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -32,16 +47,21 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     query,
   } = filter;
 
-  const onUpdate = (name, value) => {
-    onUpdateFilter(id, name, value);
-  };
+  const onUpdate = (name, value, toggleAllChecked = true) => {
+    if (!query && name === 'condition') {
+      // Set default value.
+      const defaultQuery = DEFAULT_VALUES[topic][value];
+      onUpdateFilter(id, 'query', defaultQuery, toggleAllChecked);
+    }
 
+    onUpdateFilter(id, name, value, toggleAllChecked);
+  };
   const DummySelect = () => (
     <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
   );
 
-  const onApplyQuery = (q) => {
-    onUpdate('query', q);
+  const onApplyQuery = (q, toggleAllChecked) => {
+    onUpdate('query', q, toggleAllChecked);
   };
 
   const updateSingleDate = (name, value) => {
