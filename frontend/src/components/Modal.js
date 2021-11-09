@@ -15,12 +15,14 @@ const Modal = ({
   showOkButton,
   cancelButtonText,
   showCloseX,
+  isLarge,
   children,
 }) => (
   <div className={`popup-modal ${showOkButton ? 'show-ok-button' : ''}  ${showCloseX ? 'show-close-x' : ''}`} aria-modal="true" role="dialog" id="popup-modal">
     <TrussWorksModal
       ref={modalRef}
       id={`${modalId}-modal-id`}
+      isLarge={isLarge}
     >
       <ModalHeading className="font-sans" id={`${modalId}-modal-id-heading`}>
         {title}
@@ -55,6 +57,7 @@ Modal.propTypes = {
   showOkButton: PropTypes.bool,
   cancelButtonText: PropTypes.string,
   showCloseX: PropTypes.bool,
+  isLarge: PropTypes.bool,
   children: PropTypes.node.isRequired,
 };
 
@@ -64,6 +67,7 @@ Modal.defaultProps = {
   okButtonText: '',
   showCloseX: false,
   showOkButton: true,
+  isLarge: false,
   cancelButtonText: 'Cancel',
 
 };

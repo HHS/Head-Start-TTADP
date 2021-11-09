@@ -6,7 +6,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import join from 'url-join';
 
-import { ExternalLink } from '../ExternalResourceModal';
+import ExternalLink from '../ExternalResourceModal';
 import { isExternalURL, isValidURL } from '../../utils';
 import { GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
 
