@@ -25,7 +25,7 @@ describe('ReportMenu', () => {
     render(<RenderReportMenu />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    const report = await screen.findByText('Reports');
+    const report = await screen.findByText('Export reports');
     expect(report).toHaveClass('smart-hub--menu-button__open');
   });
 
@@ -34,7 +34,7 @@ describe('ReportMenu', () => {
     render(<RenderReportMenu onExportAll={onExport} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    const exportButton = await screen.findByRole('menuitem', { name: 'Export table data...' });
+    const exportButton = await screen.findByRole('menuitem', { name: 'Export table data' });
     userEvent.click(exportButton);
     expect(onExport).toHaveBeenCalled();
   });
@@ -45,7 +45,7 @@ describe('ReportMenu', () => {
       render(<RenderReportMenu onExportSelected={onExport} hasSelectedReports />);
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      const exportButton = await screen.findByRole('menuitem', { name: 'Export selected reports...' });
+      const exportButton = await screen.findByRole('menuitem', { name: 'Export selected reports' });
       userEvent.click(exportButton);
       expect(onExport).toHaveBeenCalled();
     });
@@ -59,26 +59,25 @@ describe('ReportMenu', () => {
     // first, open the menu
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    report = await screen.findByText('Reports');
+    report = await screen.findByText('Export reports');
     expect(report).toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).toBeInTheDocument();
 
     // Focus on the menu button should close the menu
     button.focus();
-    report = await screen.findByText('Reports');
+    report = await screen.findByText('Export reports');
     expect(report).not.toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).not.toBeInTheDocument();
   });
 
-  it('disables the button and shows the error message when there are too many reports', async () => {
+  it('shows the error message when there are too many reports', async () => {
     render(<RenderReportMenu count={5001} hasSelectedReports={false} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
     const label = /this export has 5,001 reports\. you can only export 5,000 reports at a time\./i;
-    const exportButton = await screen.findByRole('menuitem', { name: label });
-    expect(exportButton).toBeDisabled();
+    expect(screen.getByText(label)).toBeVisible();
   });
 
   it('closes when the Escape key is pressed', async () => {
@@ -89,21 +88,21 @@ describe('ReportMenu', () => {
     // first, open the menu
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    report = await screen.findByText('Reports');
+    report = await screen.findByText('Export reports');
     expect(report).toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).toBeInTheDocument();
 
     // Keypress with the keys other than 'Escape' should NOT close the menu
     fireEvent.keyDown(document.activeElement || document.body, { key: ' ' });
-    report = await screen.findByText('Reports');
+    report = await screen.findByText('Export reports');
     expect(report).toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).toBeInTheDocument();
 
     // Keypress with the escape key should close the menu
     fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape' });
-    report = await screen.findByText('Reports');
+    report = await screen.findByText('Export reports');
     expect(report).not.toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).not.toBeInTheDocument();
