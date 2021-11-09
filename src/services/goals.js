@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   Goal,
   Grant,
@@ -18,16 +19,28 @@ export async function goalsForGrants(grantIds) {
   });
 
   /**
-   *  we need one big array that includes the old grantee id as well
+   * we need one big array that includes the old grantee id as well,
+   * removing all the nulls along the way
    */
-  const ids = grants.reduce((previous, current) => [...previous, current.id, current.oldGrantId],
-    []);
+  const ids = grants
+    .reduce((previous, current) => [...previous, current.id, current.oldGrantId], [])
+    .filter((g) => g != null);
 
   /*
   * finally, return all matching goals
   */
 
   return Goal.findAll({
+    where: {
+      [Op.or]: [
+        {
+          status: 'Not Started',
+        },
+        {
+          status: 'In Progress',
+        },
+      ],
+    },
     include: [
       {
         model: Grant,

@@ -3,11 +3,10 @@ import { ActivityReport } from '../models';
 import { REPORT_STATUSES } from '../constants';
 import { countBySingleKey } from './helpers';
 
-export default async function reasonList(scopes) {
-  // Query Database for all Reasons within the scope.
+export default async function targetPopulationTable(scopes) {
   const res = await ActivityReport.findAll({
     attributes: [
-      'reason',
+      'targetPopulations',
     ],
     where: {
       [Op.and]: [
@@ -18,6 +17,5 @@ export default async function reasonList(scopes) {
     raw: true,
   });
 
-  // Return only top 14.
-  return countBySingleKey(res, 'reason');
+  return countBySingleKey(res, 'targetPopulations');
 }
