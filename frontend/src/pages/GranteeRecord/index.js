@@ -26,6 +26,21 @@ export default function GranteeRecord({ match, location }) {
     granteeId,
   });
 
+  const [defaultFilters] = useState([
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
+  ]);
+
   const defaultDate = formatDateRange({
     yearToDate: true,
     forDateTime: true,
@@ -83,21 +98,6 @@ export default function GranteeRecord({ match, location }) {
     }
   }, [granteeId, match.params, regionId]);
 
-  const baseFilters = [
-    {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: regionId,
-    },
-    {
-      id: uuidv4(),
-      topic: 'granteeId',
-      condition: 'Contains',
-      query: granteeId,
-    },
-  ];
-
   return (
     <>
       <Helmet>
@@ -126,7 +126,7 @@ export default function GranteeRecord({ match, location }) {
                 render={() => (
                   <TTAHistory
                     filters={filters}
-                    filtersForWidgets={baseFilters}
+                    filtersForWidgets={defaultFilters}
                     onApplyFilters={onApplyFilters}
                     onRemoveFilter={onRemoveFilter}
                     granteeName={granteeName}
