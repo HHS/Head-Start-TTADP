@@ -17,6 +17,8 @@ import ReportMenu from '../../pages/Landing/ReportMenu';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
+import './index.css';
+
 const emptyReport = {
   id: 0,
   displayId: '',
