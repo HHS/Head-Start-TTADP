@@ -23,6 +23,7 @@ function ButtonSelect(props) {
     labelText,
     ariaName,
     disabled,
+    className,
   } = props;
 
   const [checked, setChecked] = useState(applied);
@@ -61,6 +62,7 @@ function ButtonSelect(props) {
       disabled={disabled}
       onApply={onApplyClick}
       menuName={ariaName}
+      className={className}
       applyButtonAria={`Apply filters for the ${ariaName}`}
     >
       <div role="group" aria-describedby={labelId}>
@@ -105,6 +107,7 @@ ButtonSelect.propTypes = {
   applied: PropTypes.number.isRequired,
   ariaName: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
+  className: PropTypes.string,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -113,6 +116,7 @@ ButtonSelect.propTypes = {
 ButtonSelect.defaultProps = {
   styleAsSelect: false,
   disabled: false,
+  className: '',
 };
 
 export default ButtonSelect;

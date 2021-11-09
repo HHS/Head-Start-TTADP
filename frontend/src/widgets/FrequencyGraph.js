@@ -60,7 +60,7 @@ export function FreqGraph({ data, loading }) {
   return (
     <Container className="ttahub--frequency-graph" padding={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
       <Grid row className="position-relative margin-bottom-2">
-        <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
+        <Grid className="flex-align-self-center display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <span className="sr-only">
             {selectedGraphString}
             {' '}
@@ -90,7 +90,7 @@ export function FreqGraph({ data, loading }) {
               ]
             }
           />
-          <h2 className="display-inline" aria-hidden>
+          <h2 className="display-inline margin-y-0 margin-left-1" aria-hidden>
             in Activity Reports by Frequency
           </h2>
         </Grid>

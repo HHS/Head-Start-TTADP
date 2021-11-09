@@ -86,7 +86,7 @@ export default function DropdownMenu({
     <div role="menu" ref={forwardedRef} tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
       <button
         onClick={onClick}
-        className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex`}
+        className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0`}
         aria-label={buttonAriaLabel}
         type="button"
         disabled={disabled}

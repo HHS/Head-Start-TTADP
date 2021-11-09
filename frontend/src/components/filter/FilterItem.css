@@ -13,6 +13,10 @@
     width: 200px;
 }
 
+.ttahub-filter-menu-item .usa-select {
+    margin-top: 0.5em;
+}
+
 .ttahub-filter-menu-single-date-picker {
     border: 1px solid;
 }
