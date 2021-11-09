@@ -4,15 +4,15 @@ import withWidgetData from './withWidgetData';
 import formatNumber from './WidgetHelper';
 import TableWidget from './TableWidget';
 
-const renderReasonList = (data) => {
+const renderTargetPopulationTable = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
-    return data.map((reason) => (
-      <tr key={`reason_list_row_${reason.name}`}>
+    return data.map((population) => (
+      <tr key={`population_row_${population.name}`}>
         <td>
-          {reason.name}
+          {population.name}
         </td>
         <td>
-          {formatNumber(reason.count)}
+          {formatNumber(population.count)}
         </td>
       </tr>
     ));
@@ -20,21 +20,21 @@ const renderReasonList = (data) => {
   return null;
 };
 
-function ReasonList({ data, dateTime, loading }) {
+export function TargetPopulationTable({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Reason', '# of Activities']}
-      dateTime={dateTime}
+      headings={['Target Population', '# of Activities']}
       loading={loading}
-      loadingLabel="Reason list loading"
-      title="Reasons in Activity Reports"
-      renderData={renderReasonList}
+      loadingLabel="Target populations in activity reports loading"
+      title="Target Populations in Activity Reports"
+      renderData={renderTargetPopulationTable}
+      showDateTime={false}
     />
   );
 }
 
-ReasonList.propTypes = {
+TargetPopulationTable.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -50,7 +50,7 @@ ReasonList.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-ReasonList.defaultProps = {
+TargetPopulationTable.defaultProps = {
   dateTime: {
     timestamp: '',
     label: '',
@@ -58,4 +58,4 @@ ReasonList.defaultProps = {
   data: [],
 };
 
-export default withWidgetData(ReasonList, 'reasonList');
+export default withWidgetData(TargetPopulationTable, 'targetPopulationTable');
