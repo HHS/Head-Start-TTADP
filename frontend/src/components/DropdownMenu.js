@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
 import triangleDown from '../images/triange_down.png';
@@ -21,6 +21,7 @@ export default function DropdownMenu({
   forwardedRef,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
+  const menuContents = useRef();
 
   /**
    * Close the menu on escape key
@@ -40,7 +41,7 @@ export default function DropdownMenu({
    */
   const onBlur = (e) => {
     // if we're within the same menu, do nothing
-    if (e.relatedTarget && e.relatedTarget.matches('.smart-hub--dropdown-menu--contents *')) {
+    if (e.relatedTarget && menuContents.current.contains(e.relatedTarget)) {
       return;
     }
 
@@ -94,7 +95,7 @@ export default function DropdownMenu({
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
-      <div className="smart-hub--dropdown-menu--contents" hidden={!menuIsOpen || disabled}>
+      <div className="smart-hub--dropdown-menu--contents" ref={menuContents} hidden={!menuIsOpen || disabled}>
         {children}
         { showCancel
           ? (
