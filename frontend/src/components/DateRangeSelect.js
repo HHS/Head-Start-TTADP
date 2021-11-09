@@ -198,7 +198,7 @@ function DateRangeSelect(props) {
   };
 
   // get label text
-  const label = options.find((option) => option.value === selectedItem.value);
+  const label = options.find((option) => option.value === selectedItem);
 
   const ariaLabel = 'Toggle the date range select menu';
 
