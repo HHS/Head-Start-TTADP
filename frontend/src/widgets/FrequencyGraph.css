@@ -1,0 +1,17 @@
+.ttahub--frequency-graph {
+  width: 100%;
+}
+
+@media(min-width: 1090px){
+  .ttahub--show-accessible-data-button {
+    flex: 1;
+    text-align: right;
+  }
+}
+
+@media(max-width: 768px) {
+  .ttahub--frequency-graph-control-row {
+      display: block;
+      width: 100%;
+  }
+}
