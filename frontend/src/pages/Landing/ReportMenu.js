@@ -6,7 +6,7 @@ import Container from '../../components/Container';
 
 import './ReportMenu.css';
 
-const MAXIMUM_EXPORTED_REPORTS = 5000;
+const MAXIMUM_EXPORTED_REPORTS = 4000;
 
 function ReportMenu({
   onExportAll,
