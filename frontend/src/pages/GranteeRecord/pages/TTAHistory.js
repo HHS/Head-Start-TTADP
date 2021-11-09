@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import Overview from '../../../widgets/DashboardOverview';
+import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 
 export default function TTAHistory({ filters }) {
@@ -23,6 +24,12 @@ export default function TTAHistory({ filters }) {
         <Grid desktop={{ col: 8 }} tablet={{ col: 12 }}>
           <FrequencyGraph filters={filters} />
         </Grid>
+        <ActivityReportsTable
+          filters={filters}
+          showFilter={false}
+          onUpdateFilters={() => {}}
+          tableCaption="Activity Reports"
+        />
       </Grid>
     </div>
   );
