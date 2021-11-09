@@ -336,9 +336,9 @@ jobs:
       - run: 
           name: Create production robot
           environment:
-            DEV_GIT_URL: <<pipeline.parameters.dev_git_url>>
+            PROD_GIT_URL: <<pipeline.parameters.prod_git_url>>
             CURRENT_GIT_URL: <<pipeline.project.git_url>>
-            DEV_GIT_BRANCH: <<pipeline.parameters.dev_git_branch>>
+            PROD_GIT_BRANCH: <<pipeline.parameters.prod_git_branch>>
             CURRENT_GIT_BRANCH: <<pipeline.git.branch>>
           command: ./bin/robot-factory
       - run:
