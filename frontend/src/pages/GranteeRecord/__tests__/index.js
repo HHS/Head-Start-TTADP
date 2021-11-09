@@ -86,6 +86,7 @@ describe('grantee record page', () => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/widgets/overview', overview);
     fetchMock.get('/api/widgets/overview?region.in[]=45&granteeId.in[]=1', overview);
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&granteeId.in[]=1', { count: 0, rows: [] });
   });
   afterEach(() => {
     fetchMock.restore();
