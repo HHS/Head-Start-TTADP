@@ -11,7 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
-  Button, Alert, Modal, connectModal,
+  Button, Alert, Modal, ModalToggleButton,
 } from '@trussworks/react-uswds';
 import { uploadFile, deleteFile } from '../fetchers/File';
 
@@ -157,12 +157,12 @@ export const getStatus = (status) => {
 };
 
 const DeleteFileModal = ({
-  onFileRemoved, files, index, closeModal,
+  modalRef, onFileRemoved, files, index,
 }) => {
   const deleteModal = useRef(null);
-  const onClose = () => {
+  const onDeleteFile = () => {
     onFileRemoved(index)
-      .then(closeModal());
+      .then(modalRef.current.toggleModal(false));
   };
   useEffect(() => {
     deleteModal.current.querySelector('button').focus();
@@ -173,10 +173,10 @@ const DeleteFileModal = ({
         title={<h2>Delete File</h2>}
         actions={(
           <>
-            <Button type="button" onClick={closeModal}>
+            <ModalToggleButton type="button" modalRef={modalRef} closer>
               Cancel
-            </Button>
-            <Button type="button" secondary onClick={onClose}>
+            </ModalToggleButton>
+            <Button type="button" secondary onClick={onDeleteFile}>
               Delete
             </Button>
           </>
@@ -196,32 +196,30 @@ const DeleteFileModal = ({
 };
 
 DeleteFileModal.propTypes = {
+  modalRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
-  closeModal: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const ConnectedDeleteFileModal = connectModal(DeleteFileModal);
-
 const FileTable = ({ onFileRemoved, files }) => {
   const [index, setIndex] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const closeModal = () => setIsOpen(false);
-
+  const modalRef = useRef();
   const handleDelete = (newIndex) => {
     setIndex(newIndex);
-    setIsOpen(true);
+    modalRef.current.toggleModal(true);
   };
 
   return (
     <div className="files-table--container margin-top-2">
-      <ConnectedDeleteFileModal
+      <DeleteFileModal
+        modalRef={modalRef}
         onFileRemoved={onFileRemoved}
         files={files}
         index={index}
-        isOpen={isOpen}
-        closeModal={closeModal}
       />
       <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
