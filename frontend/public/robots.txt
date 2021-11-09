@@ -1,5 +1,5 @@
 # we disallow everything by default
-# in production, we allow indexing
+# in production, we allow indexing by removing the slash from the disallow
 
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *

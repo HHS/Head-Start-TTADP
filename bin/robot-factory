@@ -5,6 +5,6 @@ then
     cat >frontend/public/robots.txt <<EOL
 # Welcome Robots
 User-agent: *
-Disallow: /
+Disallow:
 EOL
 fi
