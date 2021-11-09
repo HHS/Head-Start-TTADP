@@ -6,6 +6,7 @@ import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/filter/FilterMenu';
+import FilterPills from '../../../components/filter/FilterPills';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 
 function expandFilters(filters) {
@@ -30,7 +31,7 @@ function expandFilters(filters) {
 }
 
 export default function TTAHistory({
-  filters, onApplyFilters, filtersForWidgets, granteeName,
+  filters, onApplyFilters, filtersForWidgets, granteeName, onRemoveFilter,
 }) {
   const onApply = (newFilters) => {
     onApplyFilters([
@@ -52,8 +53,11 @@ export default function TTAHistory({
           {granteeName}
         </title>
       </Helmet>
-      <div className="margin-right-3">
-        <FilterMenu filters={filters} onApplyFilters={onApply} />
+      <div className="margin-x-2">
+        <div className="display-flex flex-wrap margin-bottom-2">
+          <FilterMenu filters={filters} onApplyFilters={onApply} onRemoveFilter={onRemoveFilter} />
+          <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
+        </div>
         <Overview
           fields={[
             'Activity reports',
@@ -99,6 +103,7 @@ TTAHistory.propTypes = {
   onApplyFilters: PropTypes.func.isRequired,
   filtersForWidgets: filtersProp,
   granteeName: PropTypes.string,
+  onRemoveFilter: PropTypes.func.isRequired,
 };
 
 TTAHistory.defaultProps = {

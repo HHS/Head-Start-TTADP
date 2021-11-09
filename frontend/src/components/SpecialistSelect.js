@@ -31,14 +31,14 @@ export const ROLES_MAP = [
 ];
 
 export default function SpecialistSelect({ onApplyRoles, labelId }) {
-  const onApply = (selected) => {
+  const onApply = (selected, toggleAllChecked) => {
     const roleValues = selected.map((s) => parseInt(s, 10));
 
     const roles = ROLES_MAP.filter(
       (role) => roleValues.includes(role.selectValue),
     ).map((role) => role.value);
 
-    onApplyRoles(roles);
+    onApplyRoles(roles, toggleAllChecked);
   };
 
   return (
