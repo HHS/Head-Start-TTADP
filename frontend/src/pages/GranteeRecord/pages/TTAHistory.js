@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
+import ActivityReportsTable from '../../../components/ActivityReportsTable';
+import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/filter/FilterMenu';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
@@ -50,24 +52,35 @@ export default function TTAHistory({
           {granteeName}
         </title>
       </Helmet>
-      <div className="margin-x-2">
-        <FilterMenu filters={filters} onApplyFilters={onApply} />
-        <Overview
-          fields={[
-            'Activity reports',
-            'Hours of TTA',
-            'Participants',
-            'In-person activities',
-          ]}
-          showTooltips
-          filters={filtersToApply}
-        />
-        <Grid row>
-          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
+      <div className="margin-right-3">
+        <Grid>
+          <Grid col={12}>
+            <FilterMenu filters={filters} onApplyFilters={onApply} />
+            <Overview
+              fields={[
+                'Activity reports',
+                'Hours of TTA',
+                'Participants',
+                'In-person activities',
+              ]}
+              showTooltips
+              filters={filtersToApply}
+            />
+          </Grid>
+          <Grid desktop={{ col: 8 }} tablet={{ col: 12 }}>
+            <FrequencyGraph filters={filters} />
+          </Grid>
+          <Grid desktop={{ col: 4 }} tabletLg={{ col: 12 }}>
             <TargetPopulationsTable
               filters={filtersToApply}
             />
           </Grid>
+          <ActivityReportsTable
+            filters={filters}
+            showFilter={false}
+            onUpdateFilters={() => {}}
+            tableCaption="Activity Reports"
+          />
         </Grid>
       </div>
     </>
