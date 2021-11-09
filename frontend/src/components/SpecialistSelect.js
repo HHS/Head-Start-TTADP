@@ -30,7 +30,7 @@ export const ROLES_MAP = [
   },
 ];
 
-export default function SpecialistSelect({ onApplyRoles, labelId }) {
+export default function SpecialistSelect({ onApplyRoles, labelId, toggleAllInitial }) {
   const onApply = (selected, toggleAllChecked) => {
     const roleValues = selected.map((s) => parseInt(s, 10));
 
@@ -45,7 +45,7 @@ export default function SpecialistSelect({ onApplyRoles, labelId }) {
     <CheckboxSelect
       styleAsSelect
       toggleAllText="All Specialists"
-      toggleAllInitial
+      toggleAllInitial={toggleAllInitial}
       labelId={labelId}
       labelText="Filter by specialists"
       ariaName="Change filter by specialists menu"
@@ -63,4 +63,9 @@ export default function SpecialistSelect({ onApplyRoles, labelId }) {
 SpecialistSelect.propTypes = {
   labelId: PropTypes.string.isRequired,
   onApplyRoles: PropTypes.func.isRequired,
+  toggleAllInitial: PropTypes.bool,
+};
+
+SpecialistSelect.defaultProps = {
+  toggleAllInitial: true,
 };

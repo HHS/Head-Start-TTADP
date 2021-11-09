@@ -2,10 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import moment from 'moment';
 import FilterDateRange from './FilterDateRange';
 import { formatDateRange } from '../DateRangeSelect';
-import SpecialistSelect, { ROLES_MAP } from '../SpecialistSelect';
+import SpecialistSelect from '../SpecialistSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
@@ -24,13 +23,9 @@ const filterProp = PropTypes.shape({
   id: PropTypes.string,
 });
 
-const specialistName = ROLES_MAP.map((r) => r.value);
-
-const todaysDate = moment().format('YYYY/MM/DD');
-
 const DEFAULT_VALUES = {
-  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': todaysDate, 'Is before': todaysDate },
-  role: { Contains: specialistName, 'Does not contain': specialistName },
+  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '' },
+  role: { Contains: [], 'Does not contain': [] },
 };
 
 /**
@@ -47,8 +42,14 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     query,
   } = filter;
 
+  /**
+   * changing the condition should clear the query
+   * Having to do this, I set the default values to be empty where possible
+   * since that creates the least complicated and confusing logic in the
+   * function below
+   */
   const onUpdate = (name, value, toggleAllChecked = true) => {
-    if (!query && name === 'condition') {
+    if (name === 'condition') {
       // Set default value.
       const defaultQuery = DEFAULT_VALUES[topic][value];
       onUpdateFilter(id, 'query', defaultQuery, toggleAllChecked);
@@ -56,6 +57,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
 
     onUpdateFilter(id, name, value, toggleAllChecked);
   };
+
   const DummySelect = () => (
     <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
   );
@@ -78,6 +80,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
           <SpecialistSelect
             labelId={`role-${condition}-${id}`}
             onApplyRoles={onApplyQuery}
+            toggleAllInitial={false}
           />
         </span>
       ),
