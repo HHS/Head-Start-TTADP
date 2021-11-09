@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo $CURRENT_GIT_BRANCH
+echo $SANDBOX_GIT_BRANCH
+echo $CURRENT_GIT_URL
+echo $SANDBOX_GIT_URL
+
 if [$CURRENT_GIT_URL == $SANDBOX_GIT_URL] && [$SANDBOX_GIT_BRANCH != $CURRENT_GIT_BRANCH];
 then
     cat >frontend/public/robots.txt <<EOL
