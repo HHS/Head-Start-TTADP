@@ -27,11 +27,11 @@ describe('Filter menu item', () => {
 
     const topic = screen.getByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'role');
-    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'topic', 'role');
+    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'topic', 'role', true);
 
     const condition = screen.getByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'Is within');
-    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'condition', 'Is within');
+    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'condition', 'Is within', true);
   });
 
   it('displays a date filter correctly', () => {
@@ -73,7 +73,7 @@ describe('Filter menu item', () => {
     userEvent.type(ed, '01/02/2021');
 
     userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
+    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02', true);
 
     userEvent.click(button);
 
@@ -88,7 +88,7 @@ describe('Filter menu item', () => {
       forDateTime: true,
     });
 
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', yearToDate);
+    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', yearToDate, true);
   });
 
   it('display a specialist filter correctly', () => {

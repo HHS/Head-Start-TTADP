@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
@@ -20,6 +20,11 @@ const filterProp = PropTypes.shape({
 export default function FilterMenu({ filters, onApplyFilters }) {
   const [items, setItems] = useState([...filters]);
 
+  useEffect(() => {
+    // If filters where changes outside of this component update.
+    setItems(filters);
+  }, [filters]);
+
   const onApply = () => {
     onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
   };
@@ -37,7 +42,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   // reset state if we hit cancel
   const onCancel = () => setItems([...filters]);
 
-  const onUpdateFilter = (id, name, value) => {
+  const onUpdateFilter = (id, name, value, toggleAllChecked) => {
     const newItems = [...items];
     const toUpdate = newItems.find((item) => item.id === id);
     toUpdate[name] = value;
@@ -46,7 +51,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       toUpdate.condition = '';
       toUpdate.query = '';
     }
-
+    toUpdate.toggleAllChecked = toggleAllChecked;
     setItems(newItems);
   };
   const onAddFilter = () => {
@@ -55,6 +60,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       id: uuidv4(),
       display: '',
       conditions: [],
+      toggleAllChecked: true,
     };
     newItems.push(newItem);
     setItems(newItems);
@@ -83,7 +89,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       showCancel
       onCancel={onCancel}
       cancelAriaLabel="discard changes and close filter menu"
-      className="margin-bottom-2 ttahub-filter-menu"
+      className="ttahub-filter-menu"
       menuName="filter menu"
       canBlur={canBlur}
     >
