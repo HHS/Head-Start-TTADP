@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
 } from './goals';
@@ -204,6 +205,16 @@ describe('goalsForGrants', () => {
     await goalsForGrants([506]);
 
     expect(Goal.findAll).toHaveBeenCalledWith({
+      where: {
+        [Op.or]: [
+          {
+            status: 'Not Started',
+          },
+          {
+            status: 'In Progress',
+          },
+        ],
+      },
       include: [
         {
           model: Grant,
