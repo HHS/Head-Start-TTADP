@@ -7,8 +7,7 @@ import { filtersToQueryString } from '../components/Filter';
 /*
   `withWidgetData` wraps widgets providing the widget with data
   when successfully retrieved from the API. It handles error and
-  loading states and (only temporarily) accepts loading and error
-  overrides so loading and error states can be worked on.
+  loading states.
 */
 const withWidgetData = (Widget, widgetId) => {
   const WidgetWrapper = (props) => {
@@ -39,7 +38,7 @@ const withWidgetData = (Widget, widgetId) => {
     if (error) {
       return (
         <div>
-          {error || 'Errors set to always show'}
+          {error}
         </div>
       );
     }
