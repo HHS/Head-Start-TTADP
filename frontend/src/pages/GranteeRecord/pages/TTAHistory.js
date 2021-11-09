@@ -33,16 +33,16 @@ function expandFilters(filters) {
 export default function TTAHistory({
   filters, onApplyFilters, filtersForWidgets, granteeName, onRemoveFilter,
 }) {
+  const filtersToApply = [
+    ...expandFilters(filters),
+    ...filtersForWidgets,
+  ];
+
   const onApply = (newFilters) => {
     onApplyFilters([
       ...newFilters,
     ]);
   };
-
-  const filtersToApply = [
-    ...expandFilters(filters),
-    ...filtersForWidgets,
-  ];
 
   return (
     <>
@@ -81,7 +81,6 @@ export default function TTAHistory({
         <ActivityReportsTable
           filters={filters}
           showFilter={false}
-          onUpdateFilters={() => {}}
           tableCaption="Activity Reports"
         />
       </div>
