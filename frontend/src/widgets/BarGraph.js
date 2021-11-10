@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import Plot from 'react-plotly.js';
+// https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
+import Plotly from 'plotly.js-basic-dist';
+import createPlotlyComponent from 'react-plotly.js/factory';
+
 import './BarGraph.css';
 
+const Plot = createPlotlyComponent(Plotly);
 const WIDGET_PER_CATEGORY = 180;
 
 /**
