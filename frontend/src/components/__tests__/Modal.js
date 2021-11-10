@@ -27,8 +27,6 @@ const ModalComponent = (
       <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
       <Modal
         modalRef={modalRef}
-        hidden
-        aria-hidden
         onOk={onOk}
         modalId={modalIdValue}
         title={title}
