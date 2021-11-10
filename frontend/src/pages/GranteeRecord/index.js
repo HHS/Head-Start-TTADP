@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { v4 as uuidv4 } from 'uuid';
+
 import { Switch, Route } from 'react-router';
 import { Helmet } from 'react-helmet';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeTabs from './components/GranteeTabs';
-import { formatDateRange } from '../../components/DateRangeSelect';
+
 import { HTTPError } from '../../fetchers';
 import './index.css';
 import Profile from './pages/Profile';
@@ -26,34 +26,7 @@ export default function GranteeRecord({ match, location }) {
     granteeId,
   });
 
-  const defaultDate = formatDateRange({
-    yearToDate: true,
-    forDateTime: true,
-  });
-
-  const [filters, setFilters] = useState([
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'Is within',
-      query: defaultDate,
-    },
-  ]);
   const [error, setError] = useState();
-
-  const onApplyFilters = (newFilters) => {
-    // save updated filters into state
-    setFilters(newFilters);
-  };
-
-  const onRemoveFilter = (id) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      setFilters(newFilters);
-    }
-  };
 
   useEffect(() => {
     async function fetchGrantee(id, region) {
@@ -112,9 +85,6 @@ export default function GranteeRecord({ match, location }) {
                   <TTAHistory
                     granteeId={granteeId}
                     regionId={regionId}
-                    filters={filters}
-                    onApplyFilters={onApplyFilters}
-                    onRemoveFilter={onRemoveFilter}
                     granteeName={granteeName}
                   />
                 )}
