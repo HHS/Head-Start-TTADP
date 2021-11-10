@@ -76,7 +76,8 @@ describe('ReportMenu', () => {
     render(<RenderReportMenu count={5001} hasSelectedReports={false} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
-    const label = /this export has 5,001 reports\. you can only export 4,000 reports at a time\./i;
+
+    const label = /this export has 5,001 reports\. you can only export 2,000 reports at a time\./i;
     expect(screen.getByText(label)).toBeVisible();
   });
 
