@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
+import { v4 as uuidv4 } from 'uuid';
+import { formatDateRange } from '../../../components/DateRangeSelect';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/filter/FilterMenu';
 import FilterPills from '../../../components/filter/FilterPills';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+
+const defaultDate = formatDateRange({
+  yearToDate: true,
+  forDateTime: true,
+});
 
 function expandFilters(filters) {
   const arr = [];
@@ -31,8 +38,17 @@ function expandFilters(filters) {
 }
 
 export default function TTAHistory({
-  filters, onApplyFilters, granteeName, onRemoveFilter, granteeId, regionId,
+  granteeName, granteeId, regionId,
 }) {
+  const [filters, setFilters] = useState([
+    {
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'Is within',
+      query: defaultDate,
+    },
+  ]);
+
   const filtersToApply = [
     ...expandFilters(filters),
     {
@@ -47,8 +63,17 @@ export default function TTAHistory({
     },
   ];
 
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
+  };
+
   const onApply = (newFilters) => {
-    onApplyFilters([
+    setFilters([
       ...newFilters,
     ]);
   };
@@ -97,25 +122,12 @@ export default function TTAHistory({
   );
 }
 
-const filtersProp = PropTypes.arrayOf(PropTypes.shape({
-  id: PropTypes.string,
-  topic: PropTypes.string,
-  condition: PropTypes.string,
-  query: PropTypes.oneOfType(
-    [PropTypes.string, PropTypes.number, PropTypes.arrayOf(PropTypes.string)],
-  ),
-}));
-
 TTAHistory.propTypes = {
-  filters: filtersProp,
-  onApplyFilters: PropTypes.func.isRequired,
   granteeName: PropTypes.string,
-  onRemoveFilter: PropTypes.func.isRequired,
   granteeId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
 };
 
 TTAHistory.defaultProps = {
-  filters: [],
   granteeName: '',
 };
