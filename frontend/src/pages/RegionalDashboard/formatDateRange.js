@@ -1,5 +1,6 @@
 import moment from 'moment';
-import { DATETIME_DATE_FORMAT, DATE_FORMAT } from './constants';
+import { DATETIME_DATE_FORMAT } from './constants';
+import { DATE_DISPLAY_FORMAT as DATE_FORMAT } from '../../Constants';
 
 export default function formatDateRange(format = {
   lastThirtyDays: false, withSpaces: false, forDateTime: false, sep: '-', string: '',
