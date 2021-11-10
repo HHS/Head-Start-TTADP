@@ -42,6 +42,8 @@ const orderReportsBy = (sortBy, sortDir) => {
     case 'calculatedStatus':
     case 'startDate':
     case 'updatedAt':
+    case 'approvedAt':
+    case 'createdAt':
       result = [[sortBy, sortDir]];
       break;
     default:
