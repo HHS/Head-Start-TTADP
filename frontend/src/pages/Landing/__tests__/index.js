@@ -326,7 +326,7 @@ describe('My alerts sorting', () => {
   it('is enabled for Status', async () => {
     const statusColumnHeaders = await screen.findAllByText(/status/i);
 
-    expect(statusColumnHeaders.length).toBe(2);
+    expect(statusColumnHeaders.length).toBe(1);
     fetchMock.reset();
 
     fireEvent.click(statusColumnHeaders[0]);
@@ -356,7 +356,7 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/r14-ar-1/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/r14-ar-2/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/r14-ar-2/i));
   });
 
   it('is enabled for Grantee', async () => {
@@ -376,7 +376,7 @@ describe('My alerts sorting', () => {
 
     const textContent = /Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
-    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/qris system/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/qris system/i));
   });
 
   it('is enabled for Start date', async () => {
@@ -394,7 +394,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/02\/01\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/02\/08\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/02\/08\/2021/i));
   });
 
   it('is enabled for Creator', async () => {
@@ -412,7 +412,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/kiwi, gs/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/kiwi, ttac/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/kiwi, ttac/i));
   });
 
   it('is enabled for Collaborator(s)', async () => {
@@ -427,8 +427,8 @@ describe('My alerts sorting', () => {
 
     const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
     const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
-    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(firstCell));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(secondCell));
+    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(firstCell));
+    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(secondCell));
   });
 });
 
@@ -478,7 +478,7 @@ describe('Landing Page error', () => {
     };
     renderLanding(user);
     const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(9);
+    expect(rowCells.length).toBe(10);
     const grantee = rowCells[1];
     expect(grantee).toHaveTextContent('');
   });
