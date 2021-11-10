@@ -3,7 +3,7 @@
 echo 'Setting site to be indexable in robots.txt'
 
 cat >frontend/public/robots.txt <<EOL
-# Welcome all Robots
+# Welcome Robots
 User-agent: *
 Disallow:
 EOL
