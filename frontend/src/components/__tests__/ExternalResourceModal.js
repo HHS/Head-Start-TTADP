@@ -39,12 +39,15 @@ describe('External Resources', () => {
 
     // When the users clicks it
     userEvent.click(link);
-    expect(await screen.findByTestId('modal')).toBeVisible();
+    let modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-visible');
 
     // Then the user can make the modal disappear via the cancel button
     const cancelButton = await screen.findByText('Cancel');
     userEvent.click(cancelButton);
-    expect(screen.queryByTestId('modal')).not.toBeTruthy();
+
+    modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-hidden');
   });
 
   it('closes modal when escape key is pressed', async () => {
@@ -54,16 +57,18 @@ describe('External Resources', () => {
 
     // When the users clicks it
     userEvent.click(link);
-    const modal = await screen.findByTestId('modal');
-    expect(modal).toBeVisible();
+    let modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-visible');
 
     // Then they try to close with delete key
     userEvent.type(modal, '{del}', { skipClick: true });
-    expect(screen.queryByTestId('modal')).toBeTruthy();
+    modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-visible');
 
     // And they can close the modal via the escape key
     userEvent.type(modal, '{esc}', { skipClick: true });
-    expect(screen.queryByTestId('modal')).not.toBeTruthy();
+    modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-hidden');
   });
 
   it('shows external link when ok is pressed', async () => {
@@ -79,7 +84,8 @@ describe('External Resources', () => {
     userEvent.click(acceptButton);
 
     // Then we hide the modal
-    expect(screen.queryByTestId('modal')).not.toBeTruthy();
+    const modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-hidden');
 
     // And a new tab has been opened
     expect(windowSpy).toHaveBeenCalledWith('https://www.google.com', '_blank');
