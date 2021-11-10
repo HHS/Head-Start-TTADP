@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo 'Setting site to be indexable in robots.txt'
+
+cat >frontend/public/robots.txt <<EOL
+# Welcome Robots
+User-agent: *
+Disallow:
+EOL
