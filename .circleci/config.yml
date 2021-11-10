@@ -336,8 +336,8 @@ jobs:
       - when:  # dev
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
           - run: 
               name: Create production robot
