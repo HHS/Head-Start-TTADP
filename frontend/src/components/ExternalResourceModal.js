@@ -34,7 +34,6 @@ const ExternalLink = ({ to, children }) => {
         title="External Resources Disclaimer"
         okButtonText="View External Resource"
         okButtonAriaLabel="This button will redirect you to content that is outside of any OHS-led system."
-        isLarge
       >
         <Alert role="alert" type="warning">
           <b>Note:</b>
