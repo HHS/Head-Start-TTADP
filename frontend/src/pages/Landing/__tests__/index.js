@@ -217,14 +217,6 @@ describe('Landing Page', () => {
     expect(lastSavedDates.length).toBe(1);
   });
 
-  test('displays the correct statuses', async () => {
-    const draft = await screen.findByText(/draft/i);
-    const needsAction = await screen.findByText(/needs action/i);
-
-    expect(draft).toBeVisible();
-    expect(needsAction).toBeVisible();
-  });
-
   test('displays the options buttons', async () => {
     const optionButtons = await screen.findAllByRole('button', {
       name: /actions for activity report r14-ar-2/i,
@@ -331,15 +323,15 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(statusColumnHeaders[0]);
 
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/needs action/i));
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReportsSorted });
 
     fireEvent.click(statusColumnHeaders[0]);
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/draft/i));
   });
 
   it('is enabled for Report ID', async () => {
@@ -412,7 +404,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/kiwi, gs/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/kiwi, ttac/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/kiwi, ttac/i));
   });
 
   it('is enabled for Collaborator(s)', async () => {
