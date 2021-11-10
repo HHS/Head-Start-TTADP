@@ -26,21 +26,6 @@ export default function GranteeRecord({ match, location }) {
     granteeId,
   });
 
-  const [defaultFilters] = useState([
-    {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: regionId,
-    },
-    {
-      id: uuidv4(),
-      topic: 'granteeId',
-      condition: 'Contains',
-      query: granteeId,
-    },
-  ]);
-
   const defaultDate = formatDateRange({
     yearToDate: true,
     forDateTime: true,
@@ -125,8 +110,9 @@ export default function GranteeRecord({ match, location }) {
                 path="/grantee/:granteeId/tta-history"
                 render={() => (
                   <TTAHistory
+                    granteeId={granteeId}
+                    regionId={regionId}
                     filters={filters}
-                    filtersForWidgets={defaultFilters}
                     onApplyFilters={onApplyFilters}
                     onRemoveFilter={onRemoveFilter}
                     granteeName={granteeName}

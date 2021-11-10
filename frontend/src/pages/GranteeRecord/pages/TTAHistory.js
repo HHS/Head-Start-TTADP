@@ -31,11 +31,20 @@ function expandFilters(filters) {
 }
 
 export default function TTAHistory({
-  filters, onApplyFilters, filtersForWidgets, granteeName, onRemoveFilter,
+  filters, onApplyFilters, granteeName, onRemoveFilter, granteeId, regionId,
 }) {
   const filtersToApply = [
     ...expandFilters(filters),
-    ...filtersForWidgets,
+    {
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
   ];
 
   const onApply = (newFilters) => {
@@ -100,13 +109,13 @@ const filtersProp = PropTypes.arrayOf(PropTypes.shape({
 TTAHistory.propTypes = {
   filters: filtersProp,
   onApplyFilters: PropTypes.func.isRequired,
-  filtersForWidgets: filtersProp,
   granteeName: PropTypes.string,
   onRemoveFilter: PropTypes.func.isRequired,
+  granteeId: PropTypes.string.isRequired,
+  regionId: PropTypes.string.isRequired,
 };
 
 TTAHistory.defaultProps = {
   filters: [],
-  filtersForWidgets: [],
   granteeName: '',
 };
