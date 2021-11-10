@@ -165,6 +165,14 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Grantee next steps',
         },
         {
+          key: 'createdAt',
+          header: 'Created date',
+        },
+        {
+          key: 'approvedAt',
+          header: 'Approved date',
+        },
+        {
           key: 'lastSaved',
           header: 'Last saved',
         },
@@ -614,6 +622,9 @@ export async function downloadReports(req, res) {
       readRegions,
       req.query,
     );
+
+    const { rows } = reportsWithCount;
+    console.log(rows.map((r) => r.approvedAt));
 
     const { format = 'json' } = req.query || {};
 
