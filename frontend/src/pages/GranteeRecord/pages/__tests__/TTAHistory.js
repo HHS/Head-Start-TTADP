@@ -49,7 +49,7 @@ describe('Grantee Record - TTA History', () => {
 
   beforeEach(async () => {
     const overviewUrl = '/api/widgets/overview?region.in[]=400&granteeId.in[]=100&modelType.is=grant';
-    const tableUrl = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=400&granteeId.in[]=100&modelType.is=grant';
+    const tableUrl = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=400,401&granteeId.in[]=100&modelType.is=grant';
     fetchMock.get(overviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
   });
@@ -60,8 +60,8 @@ describe('Grantee Record - TTA History', () => {
 
   it('renders the TTA History page appropriately', async () => {
     act(() => renderTTAHistory());
-    const onePointOh = await screen.findByText('1.0');
-    expect(onePointOh).toBeInTheDocument();
+    const overview = document.querySelector('.smart-hub--dashboard-overview');
+    expect(overview).toBeTruthy();
   });
 
   it('renders the activity reports table', async () => {
