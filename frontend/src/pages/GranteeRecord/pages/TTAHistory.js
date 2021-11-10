@@ -70,7 +70,7 @@ export default function TTAHistory({
         />
         <Grid row gap={2}>
           <Grid desktop={{ col: 8 }} tabletLg={{ col: 12 }}>
-            <FrequencyGraph filters={filters} />
+            <FrequencyGraph filters={filtersToApply} />
           </Grid>
           <Grid desktop={{ col: 4 }} tabletLg={{ col: 12 }}>
             <TargetPopulationsTable
