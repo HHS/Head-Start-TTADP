@@ -623,9 +623,6 @@ export async function downloadReports(req, res) {
       req.query,
     );
 
-    const { rows } = reportsWithCount;
-    console.log(rows.map((r) => r.approvedAt));
-
     const { format = 'json' } = req.query || {};
 
     if (!reportsWithCount) {
