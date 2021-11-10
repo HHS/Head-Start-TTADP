@@ -333,7 +333,7 @@ jobs:
       - run:
           name: Build backend assets
           command: yarn build
-      - when:  # dev
+      - when:
           condition:
             and:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
