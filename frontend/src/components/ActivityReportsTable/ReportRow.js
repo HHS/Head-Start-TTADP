@@ -127,7 +127,11 @@ export const reportPropTypes = {
       name: PropTypes.string,
     }).isRequired,
     topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-    collaborators: PropTypes.arrayOf(PropTypes.string).isRequired,
+    collaborators: PropTypes.arrayOf(
+      PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
+    ).isRequired,
     lastSaved: PropTypes.string.isRequired,
     calculatedStatus: PropTypes.string.isRequired,
     legacyId: PropTypes.string,
