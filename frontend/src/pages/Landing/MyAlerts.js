@@ -289,24 +289,6 @@ function MyAlerts(props) {
               )}
             </span>
           </span>
-          <span className="smart-hub--table-nav">
-            <span
-              id="alertsTotalCount"
-              aria-label={`Displaying rows ${renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}`}
-            >
-              {renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}
-            </span>
-          </span>
           <div className="usa-table-container--scrollable">
             <Table className="usa-table usa-table--borderless" fullWidth>
               <caption className="smart-hub--table-caption">
