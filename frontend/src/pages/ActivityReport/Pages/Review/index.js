@@ -104,9 +104,11 @@ const ReviewSubmit = ({
             formData={formData}
             isPendingApprover={isPendingApprover}
           >
-            <h2 className="display-none">test2</h2>
-            <h3 className="display-none">test3</h3>
-            <Accordion bordered={false} items={items} />
+            <>
+              <h2 className="display-none">test2</h2>
+              <h3 className="display-none">test3</h3>
+              <Accordion bordered={false} items={items} />
+            </>
           </Approver>
         )}
     </>
