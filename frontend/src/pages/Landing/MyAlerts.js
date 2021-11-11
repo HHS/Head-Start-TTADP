@@ -23,6 +23,9 @@ function ReportsRow({ reports, removeAlert, message }) {
   const modalRef = useRef();
 
   const onDelete = async (reportId) => {
+    if (modalRef && modalRef.current) {
+      modalRef.current.toggleModal(false);
+    }
     await deleteReport(reportId);
     removeAlert(reportId);
   };

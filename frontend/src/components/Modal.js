@@ -35,7 +35,7 @@ const Modal = ({
           <ModalToggleButton data-focus="true" type="button" modalRef={modalRef} closer>
             {cancelButtonText}
           </ModalToggleButton>
-          <Button type="button" aria-label={okButtonAriaLabel} secondary onClick={onOk}>
+          <Button type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} secondary onClick={onOk} closer>
             {okButtonText}
           </Button>
         </ButtonGroup>
