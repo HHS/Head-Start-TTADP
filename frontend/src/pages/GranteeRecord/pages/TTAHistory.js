@@ -113,7 +113,7 @@ export default function TTAHistory({
           </Grid>
         </Grid>
         <ActivityReportsTable
-          filters={filters}
+          filters={filtersToApply}
           showFilter={false}
           tableCaption="Activity Reports"
         />
