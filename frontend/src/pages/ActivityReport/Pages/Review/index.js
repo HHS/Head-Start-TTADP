@@ -88,8 +88,8 @@ const ReviewSubmit = ({
             onSaveForm={onSaveForm}
           >
             <>
-              <h2 className="display-none">test2</h2>
-              <h3 className="display-none">test3</h3>
+              <h2>test2</h2>
+              <h3>test3</h3>
               <Accordion bordered={false} items={items} />
             </>
           </Submitter>
@@ -105,8 +105,8 @@ const ReviewSubmit = ({
             isPendingApprover={isPendingApprover}
           >
             <>
-              <h2 className="display-none">test2</h2>
-              <h3 className="display-none">test3</h3>
+              <h2>test2</h2>
+              <h3>test3</h3>
               <Accordion bordered={false} items={items} />
             </>
           </Approver>
