@@ -10,6 +10,7 @@ import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/filter/FilterMenu';
 import FilterPills from '../../../components/filter/FilterPills';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import './TTAHistory.css';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
