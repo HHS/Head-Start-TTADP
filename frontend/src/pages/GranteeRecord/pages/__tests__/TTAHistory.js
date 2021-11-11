@@ -18,38 +18,17 @@ describe('Grantee Record - TTA History', () => {
     rows: [],
   };
 
-  const filtersToApply = [
-    {
-      id: '1',
-      topic: 'region',
-      condition: 'Contains',
-      query: ['400', '401'],
-    },
-    {
-      id: '2',
-      topic: 'granteeId',
-      condition: 'Contains',
-      query: '100',
-    },
-    {
-      id: '3',
-      topic: 'modelType',
-      condition: 'Is',
-      query: 'grant',
-    },
-  ];
-
-  const renderTTAHistory = (filters = filtersToApply) => {
+  const renderTTAHistory = () => {
     render(
       <Router history={memoryHistory}>
-        <TTAHistory filters={filters} regionId={1} />
+        <TTAHistory granteeName="Jim Grantee" granteeId="401" regionId="1" />
       </Router>,
     );
   };
 
   beforeEach(async () => {
     const overviewUrl = '/api/widgets/overview?region.in[]=400&granteeId.in[]=100&modelType.is=grant';
-    const tableUrl = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=400,401&granteeId.in[]=100&modelType.is=grant';
+    const tableUrl = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=400&region.in[]=401&granteeId.in[]=100&modelType.is=grant';
     fetchMock.get(overviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
   });
