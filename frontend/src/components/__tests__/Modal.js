@@ -11,7 +11,7 @@ import Modal from '../Modal';
 const ModalComponent = (
   {
     onOk = () => { },
-    modalIdValue = 'TestReportModal',
+    modalIdValue = 'popup-modal',
     title = 'Test Report Modal',
     okButtonText = 'Ok',
     okButtonAriaLabel = 'This button will ok the modal action.',
