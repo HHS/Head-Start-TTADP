@@ -29,7 +29,7 @@ describe('External Resources', () => {
     userEvent.click(link);
 
     // Then we see the modal
-    const modal = document.querySelector('#popup-modal');
+    const modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-visible');
   });
 
@@ -40,14 +40,14 @@ describe('External Resources', () => {
 
     // When the users clicks it
     userEvent.click(link);
-    let modal = document.querySelector('#popup-modal');
+    let modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-visible');
 
     // Then the user can make the modal disappear via the cancel button
     const cancelButton = await screen.findByText('Cancel');
     userEvent.click(cancelButton);
 
-    modal = document.querySelector('#popup-modal');
+    modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-hidden');
   });
 
@@ -58,19 +58,19 @@ describe('External Resources', () => {
 
     // When the users clicks it
     userEvent.click(link);
-    let modal = document.querySelector('#popup-modal');
+    let modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-visible');
 
     // Then they try to close with delete key
     const modalWindow = await screen.findByRole('heading', { name: /external resources disclaimer/i, hidden: true });
     userEvent.type(modalWindow, '{del}', { skipClick: true });
 
-    modal = document.querySelector('#popup-modal');
+    modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-visible');
 
     // And they can close the modal via the escape key
     userEvent.type(modal, '{esc}', { skipClick: true });
-    modal = document.querySelector('#popup-modal');
+    modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-hidden');
   });
 
@@ -87,7 +87,7 @@ describe('External Resources', () => {
     userEvent.click(acceptButton);
 
     // Then we hide the modal
-    const modal = document.querySelector('#popup-modal');
+    const modal = document.querySelector('#ExternalResourceModal');
     expect(modal.firstChild).toHaveClass('is-hidden');
 
     // And a new tab has been opened
