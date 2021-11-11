@@ -103,7 +103,6 @@ describe('submitReport', () => {
     expect(assignedNotification).toHaveBeenCalled();
     expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      approvedAt: null,
       approvers: [
         expect.objectContaining({ status: null, note: null }),
         expect.objectContaining({ status: null, note: null }),
@@ -132,7 +131,6 @@ describe('submitReport', () => {
     await submitReport(request, mockResponse);
     expect(assignedNotification).toHaveBeenCalled();
     expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-      approvedAt: null,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
       approvers: [
         expect.objectContaining({ status: null, note: 'make changes x, y, z' }),
@@ -157,7 +155,6 @@ describe('submitReport', () => {
 
     // check that testing condition is correct
     expect(reviewedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
-    expect(reviewedReport.approvedAt).toBeTruthy();
 
     // Create request to unlock
     const request = {
