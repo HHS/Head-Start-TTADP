@@ -29,7 +29,8 @@ describe('External Resources', () => {
     userEvent.click(link);
 
     // Then we see the modal
-    expect(await screen.findByTestId('modal')).toBeVisible();
+    const modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-visible');
   });
 
   it('closes modal when cancel button is pressed', async () => {
@@ -61,7 +62,9 @@ describe('External Resources', () => {
     expect(modal.firstChild).toHaveClass('is-visible');
 
     // Then they try to close with delete key
-    userEvent.type(modal, '{del}', { skipClick: true });
+    const modalWindow = await screen.findByRole('heading', { name: /external resources disclaimer/i, hidden: true });
+    userEvent.type(modalWindow, '{del}', { skipClick: true });
+
     modal = document.querySelector('#popup-modal');
     expect(modal.firstChild).toHaveClass('is-visible');
 
