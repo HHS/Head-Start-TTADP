@@ -7,6 +7,9 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import GranteeRecord from '../index';
+import { formatDateRange } from '../../../components/DateRangeSelect';
+
+const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
 const memoryHistory = createMemoryHistory();
 
@@ -87,14 +90,16 @@ describe('grantee record page', () => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/widgets/overview', overview);
     fetchMock.get('/api/widgets/overview?region.in[]=45&granteeId.in[]=1', overview);
-    fetchMock.get('/api/widgets/overview?startDate.win=2021/01/01-2021/11/10&region.in[]=45&granteeId.in[]=1', overview);
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10', 200);
+    fetchMock.get(`/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=45&granteeId.in[]=1`, overview);
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10', { count: 0, rows: [] });
+    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=45&granteeId.in[]=1`, { count: 0, rows: [] });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&granteeId.in[]=1', { count: 0, rows: [] });
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=2021/01/01-2021/11/10', { count: 0, rows: [] });
+    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [] });
     fetchMock.get('/api/widgets/frequencyGraph', 200);
-    fetchMock.get('/api/widgets/frequencyGraph?startDate.win=2021/01/01-2021/11/10', 200);
+    fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&granteeId.in[]=1', 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}`, 200);
     fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&granteeId.in[]=1', 200);
-    fetchMock.get('/api/widgets/targetPopulationTable?startDate.win=2021/01/01-2021/11/10&region.in[]=45&granteeId.in[]=1', 200);
+    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=45&granteeId.in[]=1`, 200);
   });
   afterEach(() => {
     fetchMock.restore();
@@ -150,7 +155,7 @@ describe('grantee record page', () => {
     });
 
     const remove = screen.getByRole('button', {
-      name: /this button removes the filter: date range is within 01\/01\/2021-11\/10\/2021/i,
+      name: /this button removes the filter: date range is within 01\/01\/2021/i,
     });
 
     act(() => userEvent.click(remove));
