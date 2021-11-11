@@ -117,7 +117,7 @@ describe('Checkbox select', () => {
     expect(pom).toBeChecked();
     const apply = screen.getByRole('button', { name: /apply filters/i });
     userEvent.click(apply);
-    expect(onApply).toHaveBeenCalledWith(['1'], false);
+    expect(onApply).toHaveBeenCalledWith(['1']);
     userEvent.click(button);
     expect(document.querySelectorAll(':checked').length).toBe(1);
   });
