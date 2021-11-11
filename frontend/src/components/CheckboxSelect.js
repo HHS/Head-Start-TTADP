@@ -46,6 +46,7 @@ export default function CheckboxSelect(props) {
     labelText,
     ariaName,
     disabled,
+    hideToggleAll,
   } = props;
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
@@ -83,7 +84,7 @@ export default function CheckboxSelect(props) {
    */
   const onApplyClick = () => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
-    onApply(checked, toggleAllChecked);
+    onApply(checked);
   };
 
   const canBlur = (e) => {
@@ -115,6 +116,7 @@ export default function CheckboxSelect(props) {
       <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
         <span className="sr-only" id={labelId}>{labelText}</span>
         <fieldset className="border-0">
+          {!hideToggleAll && (
           <div className="usa-checkbox smart-hub--checkbox-select-toggle-all">
             <input
               className="usa-checkbox__input"
@@ -126,6 +128,7 @@ export default function CheckboxSelect(props) {
             />
             <label className="usa-checkbox__label" htmlFor={toggleAllHtmlId}>{toggleAllText}</label>
           </div>
+          )}
           {renderCheckboxes(
             options,
             checkboxes,
@@ -152,6 +155,7 @@ CheckboxSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   ariaName: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
+  hideToggleAll: PropTypes.bool,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -160,4 +164,5 @@ CheckboxSelect.propTypes = {
 CheckboxSelect.defaultProps = {
   disabled: false,
   styleAsSelect: false,
+  hideToggleAll: false,
 };
