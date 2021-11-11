@@ -93,9 +93,15 @@ function ReportsRow({ reports, removeAlert, message }) {
         </td>
         <td>{startDate}</td>
         <td>
-          <span className="smart-hub--ellipsis" title={author ? author.fullName : ''}>
-            {author ? author.fullName : ''}
-          </span>
+          { author
+            ? (
+              <Tooltip
+                displayText={author.fullName}
+                tooltipText={author.fullName}
+                buttonLabel={`click to reveal: ${author.fullName} `}
+                screenReadDisplayText={false}
+              />
+            ) : <span /> }
         </td>
         <td>
           {moment(createdAt).format('MM/DD/YYYY')}
