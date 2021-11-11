@@ -317,28 +317,6 @@ describe('Table sorting', () => {
     await screen.findByText('Activity Reports');
   });
 
-  it('clicking status column header will sort by status', async () => {
-    const statusColumnHeader = await screen.findByText(/status/i);
-    fetchMock.reset();
-    fetchMock.get(
-      '/api/activity-reports?sortBy=calculatedStatus&sortDir=asc&offset=0&limit=10&region.in[]=1',
-      { count: 2, rows: activityReportsSorted },
-    );
-
-    fireEvent.click(statusColumnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
-
-    fetchMock.get(
-      '/api/activity-reports?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
-      { count: 2, rows: activityReports },
-    );
-
-    fireEvent.click(statusColumnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
-  });
-
   it('clicking Last saved column header will sort by updatedAt', async () => {
     const columnHeader = await screen.findByText(/last saved/i);
 
@@ -374,7 +352,6 @@ describe('Table sorting', () => {
     );
 
     await act(async () => fireEvent.click(columnHeader));
-    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent('11/10/2021'));
     await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
   });
 
