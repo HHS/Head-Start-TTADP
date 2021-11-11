@@ -12,7 +12,6 @@ const filterProp = PropTypes.shape({
   condition: PropTypes.string,
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
   id: PropTypes.string,
-  toggleAllChecked: PropTypes.bool,
 });
 
 /* Pill */
@@ -22,19 +21,13 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     topic,
     condition,
     query,
-    toggleAllChecked,
   } = filter;
 
   const filterNameLookup = [
     {
       topic: 'role',
       display: 'Specialist',
-      query: () => {
-        if (!query || toggleAllChecked) {
-          return 'All Specialists';
-        }
-        return query.join(', ');
-      },
+      query: () => query.join(', '),
     },
     {
       topic: 'startDate',

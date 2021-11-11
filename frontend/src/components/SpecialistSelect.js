@@ -30,20 +30,23 @@ export const ROLES_MAP = [
   },
 ];
 
-export default function SpecialistSelect({ onApplyRoles, labelId, toggleAllInitial }) {
-  const onApply = (selected, toggleAllChecked) => {
+export default function SpecialistSelect({
+  onApplyRoles, labelId, hideToggleAll, toggleAllInitial,
+}) {
+  const onApply = (selected) => {
     const roleValues = selected.map((s) => parseInt(s, 10));
 
     const roles = ROLES_MAP.filter(
       (role) => roleValues.includes(role.selectValue),
     ).map((role) => role.value);
 
-    onApplyRoles(roles, toggleAllChecked);
+    onApplyRoles(roles);
   };
 
   return (
     <CheckboxSelect
       styleAsSelect
+      hideToggleAll={hideToggleAll}
       toggleAllText="All Specialists"
       toggleAllInitial={toggleAllInitial}
       labelId={labelId}
@@ -64,8 +67,10 @@ SpecialistSelect.propTypes = {
   labelId: PropTypes.string.isRequired,
   onApplyRoles: PropTypes.func.isRequired,
   toggleAllInitial: PropTypes.bool,
+  hideToggleAll: PropTypes.bool,
 };
 
 SpecialistSelect.defaultProps = {
   toggleAllInitial: true,
+  hideToggleAll: false,
 };

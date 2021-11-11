@@ -48,22 +48,22 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
    * since that creates the least complicated and confusing logic in the
    * function below
    */
-  const onUpdate = (name, value, toggleAllChecked = true) => {
+  const onUpdate = (name, value) => {
     if (name === 'condition') {
       // Set default value.
       const defaultQuery = DEFAULT_VALUES[topic][value];
-      onUpdateFilter(id, 'query', defaultQuery, toggleAllChecked);
+      onUpdateFilter(id, 'query', defaultQuery);
     }
 
-    onUpdateFilter(id, name, value, toggleAllChecked);
+    onUpdateFilter(id, name, value);
   };
 
   const DummySelect = () => (
     <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
   );
 
-  const onApplyQuery = (q, toggleAllChecked) => {
-    onUpdate('query', q, toggleAllChecked);
+  const onApplyQuery = (q) => {
+    onUpdate('query', q);
   };
 
   const updateSingleDate = (name, value) => {
@@ -81,6 +81,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
             labelId={`role-${condition}-${id}`}
             onApplyRoles={onApplyQuery}
             toggleAllInitial={false}
+            hideToggleAll
           />
         </span>
       ),
