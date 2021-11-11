@@ -18,7 +18,7 @@ const Modal = ({
   isLarge,
   children,
 }) => (
-  <div className={`popup-modal ${showOkButton ? 'show-ok-button' : ''}  ${showCloseX ? 'show-close-x' : ''}`} aria-modal="true" role="dialog" id="popup-modal">
+  <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`} aria-modal="true" role="dialog" id="popup-modal" aria-labelledby={`${modalId}-modal-id-heading`}>
     <TrussWorksModal
       ref={modalRef}
       id={`${modalId}-modal-id`}
@@ -35,9 +35,15 @@ const Modal = ({
           <ModalToggleButton data-focus="true" type="button" modalRef={modalRef} closer>
             {cancelButtonText}
           </ModalToggleButton>
-          <Button type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} secondary onClick={onOk} closer>
-            {okButtonText}
-          </Button>
+          {
+            showOkButton
+              ? (
+                <Button type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} secondary onClick={onOk} closer>
+                  {okButtonText}
+                </Button>
+              )
+              : null
+          }
         </ButtonGroup>
       </ModalFooter>
     </TrussWorksModal>
@@ -62,7 +68,7 @@ Modal.propTypes = {
 };
 
 Modal.defaultProps = {
-  onOk: () => {},
+  onOk: () => { },
   okButtonAriaLabel: null,
   okButtonText: '',
   showCloseX: false,

@@ -9,15 +9,17 @@ import { ModalToggleButton } from '@trussworks/react-uswds';
 import Modal from '../Modal';
 
 const ModalComponent = (
-  onOk = () => { },
-  modalIdValue = 'TestReportModal',
-  title = 'Test Report Modal',
-  okButtonText = 'Ok',
-  okButtonAriaLabel = 'This button will ok the modal action.',
-  showOkButton = true,
-  cancelButtonText = 'Cancel',
-  showCloseX = false,
-  isLarge = false,
+  {
+    onOk = () => { },
+    modalIdValue = 'TestReportModal',
+    title = 'Test Report Modal',
+    okButtonText = 'Ok',
+    okButtonAriaLabel = 'This button will ok the modal action.',
+    showOkButton = true,
+    cancelButtonText = 'Cancel',
+    showCloseX = false,
+    isLarge = false,
+  },
 ) => {
   const modalRef = useRef();
 
@@ -106,5 +108,10 @@ describe('Modal', () => {
     // Modal is still open.
     modalElement = document.querySelector('#popup-modal');
     expect(modalElement.firstChild).toHaveClass('is-visible');
+  });
+
+  it('hides ok button', async () => {
+    render(<ModalComponent showOkButton={false} showCloseX />);
+    expect(screen.queryByRole('button', { name: /this button will ok the modal action\./i })).not.toBeInTheDocument();
   });
 });

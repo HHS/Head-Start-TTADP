@@ -13,7 +13,3 @@
 .popup-modal:not(.show-close-x) .usa-modal__close {
     display: none;
 }
-
-.popup-modal:not(.show-ok-button) .usa-button--secondary {
-    display: none;
-}
