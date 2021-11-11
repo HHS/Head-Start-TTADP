@@ -235,7 +235,7 @@ describe('My Alerts', () => {
     const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true });
     await userEvent.click(button);
 
-    const modal = document.querySelector('#popup-modal');
+    const modal = document.querySelector('#DeleteReportModal');
     expect(modal.firstChild).toHaveClass('is-hidden');
   });
 });

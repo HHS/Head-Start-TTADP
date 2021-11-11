@@ -33,7 +33,7 @@ describe('IdleModal', () => {
     act(() => {
       jest.advanceTimersByTime(11);
     });
-    const modal = document.querySelector('#popup-modal');
+    const modal = document.querySelector('#IdleReportModal');
     expect(modal.firstChild).toHaveClass('is-visible');
   });
 
@@ -64,7 +64,7 @@ describe('IdleModal', () => {
     renderIdleModal(20, 10, logout);
     act(() => {
       jest.advanceTimersByTime(12);
-      const modal = document.querySelector('#popup-modal');
+      const modal = document.querySelector('#IdleReportModal');
       expect(modal.firstChild).toHaveClass('is-visible');
 
       const testDiv = screen.getByTestId('test');
