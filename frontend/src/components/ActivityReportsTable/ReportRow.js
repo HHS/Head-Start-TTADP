@@ -6,6 +6,7 @@ import moment from 'moment';
 import ContextMenu from '../ContextMenu';
 import { getReportsDownloadURL } from '../../fetchers/helpers';
 import TooltipWithCollection from '../TooltipWithCollection';
+import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 function ReportRow({
@@ -86,9 +87,11 @@ function ReportRow({
       </td>
       <td>{startDate}</td>
       <td>
-        <span className="smart-hub--ellipsis" title={authorName}>
-          {authorName}
-        </span>
+        <Tooltip
+          displayText={authorName}
+          tooltipText={authorName}
+          buttonLabel="click to reveal author name"
+        />
       </td>
       <td>{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td>
