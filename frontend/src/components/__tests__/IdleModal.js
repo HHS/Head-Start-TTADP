@@ -33,7 +33,8 @@ describe('IdleModal', () => {
     act(() => {
       jest.advanceTimersByTime(11);
     });
-    expect(screen.getByTestId('modal')).toBeVisible();
+    const modal = document.querySelector('#popup-modal');
+    expect(modal.firstChild).toHaveClass('is-visible');
   });
 
   it('logout is called after logoutTimeout milliseconds of inactivity', () => {
@@ -63,7 +64,9 @@ describe('IdleModal', () => {
     renderIdleModal(20, 10, logout);
     act(() => {
       jest.advanceTimersByTime(12);
-      expect(screen.getByTestId('modal')).toBeVisible();
+      const modal = document.querySelector('#popup-modal');
+      expect(modal.firstChild).toHaveClass('is-visible');
+
       const testDiv = screen.getByTestId('test');
       userEvent.type(testDiv, 'test');
     });
@@ -76,7 +79,7 @@ describe('IdleModal', () => {
       renderIdleModal(20, 10);
       act(() => {
         jest.advanceTimersByTime(11);
-        expect(screen.getByRole('alert').textContent).toContain('in less than a minute');
+        expect(screen.getByTestId(/alert/i).textContent).toContain('in less than a minute');
       });
     });
 
@@ -84,7 +87,7 @@ describe('IdleModal', () => {
       renderIdleModal(1000 * 60 + 10, 10);
       act(() => {
         jest.advanceTimersByTime(11);
-        expect(screen.getByRole('alert').textContent).toContain('in a minute');
+        expect(screen.getByTestId(/alert/i).textContent).toContain('in a minute');
       });
     });
 
@@ -92,7 +95,7 @@ describe('IdleModal', () => {
       renderIdleModal((1000 * 60 * 5) + 10, 10);
       act(() => {
         jest.advanceTimersByTime(11);
-        expect(screen.getByRole('alert').textContent).toContain('in 5 minutes');
+        expect(screen.getByTestId(/alert/i).textContent).toContain('in 5 minutes');
       });
     });
   });
