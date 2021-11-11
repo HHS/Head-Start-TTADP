@@ -25,7 +25,7 @@ describe('Filter Pills', () => {
         id: '1',
         topic: 'role',
         condition: 'Contains',
-
+        query: [],
       },
       {
         id: '2',
@@ -38,8 +38,7 @@ describe('Filter Pills', () => {
 
       // Role.
       expect(await screen.findByText(/contains/i)).toBeVisible();
-      expect(await screen.findByText(/all specialists/i)).toBeVisible();
-      expect(await screen.findByRole('button', { name: /this button removes the filter: specialist contains all specialists/i })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /this button removes the filter: specialist contains/i })).toBeVisible();
 
       // Date.
       expect(await screen.findByText(/date range/i)).toBeVisible();
@@ -53,7 +52,7 @@ describe('Filter Pills', () => {
         id: '1',
         topic: 'role',
         condition: 'Contains',
-
+        query: [],
       },
       {
         id: '2',
@@ -67,7 +66,6 @@ describe('Filter Pills', () => {
       renderFilterMenu(filters, onRemoveFilter);
 
       // All filter pills exist.
-      expect(await screen.findByText(/all specialists/i)).toBeVisible();
       expect(await screen.findByText(/date range/i)).toBeVisible();
 
       // Remove filter pill.
