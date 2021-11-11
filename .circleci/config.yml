@@ -165,10 +165,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "js-fix-plotly-import"
+    default: "TTAHUB276"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-delete-reports-script"
+    default: "TTAHUB276"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -333,6 +333,15 @@ jobs:
       - run:
           name: Build backend assets
           command: yarn build
+      - when:
+          condition:
+            and:
+              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+          steps:
+          - run: 
+              name: Create production robot
+              command: ./bin/robot-factory
       - run:
           name: Build frontend assets
           command: yarn --cwd frontend run build
