@@ -11,6 +11,7 @@ import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 /**
  *
@@ -125,6 +126,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [participantCount, setParticipantCount] = useState('');
   const [reasons, setReasons] = useState('');
   const [programType, setProgramType] = useState('');
+  const [targetPopulations, setTargetPopulations] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [duration, setDuration] = useState('');
@@ -175,6 +177,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
+      setTargetPopulations(report.targetPopulations.map((population) => population).join(', '));
 
       // Approvers.
       const approversNames = report.approvers.map((a) => a.User.fullName);
@@ -191,8 +194,8 @@ export default function ApprovedActivityReport({ match, user }) {
       setParticipantCount(newCount);
       setReasons(formatSimpleArray(report.reason));
       setProgramType(formatSimpleArray(report.programTypes));
-      setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
-      setEndDate(moment(report.endDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
+      setStartDate(moment(report.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY'));
+      setEndDate(moment(report.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY'));
       setDuration(`${report.duration} hours`);
       setMethod(formatMethod(report.ttaType, report.virtualDeliveryType));
       setRequester(formatRequester(report.requester));
@@ -353,7 +356,7 @@ export default function ApprovedActivityReport({ match, user }) {
       </Modal>
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
-          TTA Activity report
+          TTA activity report
           {' '}
           {displayId}
         </h1>
@@ -381,7 +384,8 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               recipientType,
               'Reason',
-              'Program Type',
+              'Program type',
+              'Target populations',
               'Start date',
               'End date',
               'Topics',
@@ -398,6 +402,7 @@ export default function ApprovedActivityReport({ match, user }) {
               recipients,
               reasons,
               programType,
+              targetPopulations,
               startDate,
               endDate,
               topics,
