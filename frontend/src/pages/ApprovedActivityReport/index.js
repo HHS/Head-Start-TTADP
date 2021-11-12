@@ -359,7 +359,7 @@ export default function ApprovedActivityReport({ match, user }) {
       </ConnectModal>
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
-          TTA Activity report
+          TTA activity report
           {' '}
           {displayId}
         </h1>
@@ -387,7 +387,7 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               recipientType,
               'Reason',
-              'Program Type',
+              'Program type',
               'Target populations',
               'Start date',
               'End date',
