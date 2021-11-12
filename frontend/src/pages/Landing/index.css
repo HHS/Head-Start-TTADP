@@ -140,10 +140,16 @@ h1.landing {
 }
 
 .landing .usa-table td {
-  font-size: 15px;
-  white-space: nowrap;
   background-color: transparent;
   border-style: none;
+  font-size: 15px;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.landing .usa-table td:first-child,
+.landing .usa-table td:last-child{
+  min-width: auto;
 }
 
 .landing .usa-table .usa-checkbox__label {

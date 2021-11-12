@@ -103,4 +103,5 @@ export const ESCAPE_KEY_CODE = 27;
 export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 
 export const DATE_FMT = 'YYYY/MM/DD';
+export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
