@@ -247,7 +247,6 @@ function ActivityReportsTable({
             hasSelectedReports={numberOfSelectedReports > 0}
             onExportAll={handleDownloadAllReports}
             onExportSelected={handleDownloadClick}
-            count={reportsCount}
           />
         </span>
         <span className="smart-hub--table-nav">
