@@ -268,6 +268,8 @@ function DateRangeSelect(props) {
                     isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onDateChange={(selectedDate) => {
                       // weird that we'd have to explicitly do this
+                      // but otherwise things get all wacky when you
+                      // type in a date that's different than the end date
                       if (!selectedDate) {
                         return;
                       }
