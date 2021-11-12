@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Accordion,
-} from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
 import { REPORT_STATUSES } from '../../../../Constants';
 import './index.css';
+import { Accordion } from '../../../../components/Accordion';
 
 const ReviewSubmit = ({
   onSubmit,
@@ -76,8 +73,7 @@ const ReviewSubmit = ({
         <title>Review and submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-      <h2 className="sr-only">Accessibility heading 2</h2>
-      <h3 className="sr-only">Accessibility heading 3</h3>
+
       {!isApprover
         && (
           <Submitter
