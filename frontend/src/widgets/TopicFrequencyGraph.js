@@ -8,35 +8,7 @@ import DateTime from '../components/DateTime';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
-import CheckboxSelect from '../components/CheckboxSelect';
-
-export const ROLES_MAP = [
-  {
-    selectValue: 1,
-    value: 'Early Childhood Specialist',
-    label: 'Early Childhood Specialist (ECS)',
-  },
-  {
-    selectValue: 2,
-    value: 'Family Engagement Specialist',
-    label: 'Family Engagement Specialist (FES)',
-  },
-  {
-    selectValue: 3,
-    value: 'Grantee Specialist',
-    label: 'Grantee Specialist (GS)',
-  },
-  {
-    selectValue: 4,
-    value: 'Health Specialist',
-    label: 'Health Specialist (HS)',
-  },
-  {
-    selectValue: 5,
-    value: 'System Specialist',
-    label: 'System Specialist (SS)',
-  },
-];
+import SpecialistSelect from '../components/SpecialistSelect';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -81,7 +53,7 @@ export function topicsWithLineBreaks(reason) {
 }
 
 export function TopicFrequencyGraphWidget({
-  data, dateTime, updateRoles, loading,
+  data, dateTime, onApplyRoles, loading,
 }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
@@ -181,11 +153,6 @@ export function TopicFrequencyGraphWidget({
     setOrder(selected.value);
   };
 
-  const onApplyRoles = (selected) => {
-    // we may get these as a string, so we cast them to ints
-    updateRoles(selected.map((s) => parseInt(s, 10)));
-  };
-
   // toggle the data table
   function toggleType() {
     setShowAccessibleData(!showAccessibleData);
@@ -225,21 +192,7 @@ export function TopicFrequencyGraphWidget({
               ]
             }
           />
-          <CheckboxSelect
-            styleAsSelect
-            toggleAllText="All Specialists"
-            toggleAllInitial
-            labelId="tfRoleFilter"
-            labelText="Filter by specialists"
-            ariaName="Change filter by specialists menu"
-            onApply={onApplyRoles}
-            options={
-              ROLES_MAP.map((role) => ({
-                value: role.selectValue,
-                label: role.label,
-              }))
-            }
-          />
+          <SpecialistSelect labelId="tf-role-select" onApplyRoles={onApplyRoles} />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button
@@ -274,7 +227,7 @@ TopicFrequencyGraphWidget.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-  updateRoles: PropTypes.func.isRequired,
+  onApplyRoles: PropTypes.func.isRequired,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {
