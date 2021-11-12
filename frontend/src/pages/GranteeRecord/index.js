@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { v4 as uuidv4 } from 'uuid';
+
 import { Switch, Route } from 'react-router';
+import { Helmet } from 'react-helmet';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeTabs from './components/GranteeTabs';
+
 import { HTTPError } from '../../fetchers';
 import './index.css';
 import Profile from './pages/Profile';
@@ -24,24 +26,6 @@ export default function GranteeRecord({ match, location }) {
     granteeId,
   });
 
-  const defaultFilters = [
-    {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: regionId,
-    },
-    {
-      id: uuidv4(),
-      topic: 'granteeId',
-      condition: 'Contains',
-      query: granteeId,
-    },
-  ];
-
-  // set filters will be used very soon, disabling warning
-  // eslint-disable-next-line no-unused-vars
-  const [filters, setFilters] = useState(defaultFilters);
   const [error, setError] = useState();
 
   useEffect(() => {
@@ -74,36 +58,51 @@ export default function GranteeRecord({ match, location }) {
 
   return (
     <>
+      <Helmet>
+        <title>
+          Grantee Profile -
+          {' '}
+          {granteeName}
+        </title>
+      </Helmet>
       <GranteeTabs region={regionId} granteeId={granteeId} />
       {
-    error ? (
-      <div className="usa-alert usa-alert--error" role="alert">
-        <div className="usa-alert__body">
-          <p className="usa-alert__text">
-            {error}
-          </p>
-        </div>
-      </div>
-    ) : (
-      <>
-        <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
-        <Switch>
-          <Route
-            path="/grantee/:granteeId/tta-history"
-            render={() => (
-              <TTAHistory
-                filters={filters}
+        error ? (
+          <div className="usa-alert usa-alert--error" role="alert">
+            <div className="usa-alert__body">
+              <p className="usa-alert__text">
+                {error}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
+            <Switch>
+              <Route
+                path="/grantee/:granteeId/tta-history"
+                render={() => (
+                  <TTAHistory
+                    granteeId={granteeId}
+                    regionId={regionId}
+                    granteeName={granteeName}
+                  />
+                )}
               />
-            )}
-          />
-          <Route
-            path="/grantee/:granteeId/profile"
-            render={() => <Profile regionId={regionId} granteeSummary={granteeSummary} />}
-          />
-        </Switch>
-      </>
-    )
-}
+              <Route
+                path="/grantee/:granteeId/profile"
+                render={() => (
+                  <Profile
+                    granteeName={granteeName}
+                    regionId={regionId}
+                    granteeSummary={granteeSummary}
+                  />
+                )}
+              />
+            </Switch>
+          </>
+        )
+      }
     </>
   );
 }

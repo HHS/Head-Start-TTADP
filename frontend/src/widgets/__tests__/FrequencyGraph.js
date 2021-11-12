@@ -46,13 +46,13 @@ const renderFrequencyGraph = async () => (
 describe('Frequency Graph', () => {
   it('shows topics by default', async () => {
     renderFrequencyGraph();
-    const topics = await screen.findByRole('button', { name: 'Open change graph type menu' });
+    const topics = await screen.findByRole('button', { name: 'toggle change graph type menu' });
     expect(topics.textContent).toBe('Topics');
   });
 
   it('can switch to show reasons', async () => {
     renderFrequencyGraph();
-    const topics = await screen.findByRole('button', { name: 'Open change graph type menu' });
+    const topics = await screen.findByRole('button', { name: 'toggle change graph type menu' });
 
     userEvent.click(topics);
     const reasonBtn = await screen.findByText('Reasons');
@@ -60,7 +60,7 @@ describe('Frequency Graph', () => {
     const apply = await screen.findByText('Apply');
     userEvent.click(apply);
 
-    const reasons = await screen.findByRole('button', { name: 'Open change graph type menu' });
+    const reasons = await screen.findByRole('button', { name: 'toggle change graph type menu' });
     expect(reasons.textContent).toBe('Reasons');
   });
 
