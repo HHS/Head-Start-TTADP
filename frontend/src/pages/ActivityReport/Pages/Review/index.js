@@ -76,6 +76,8 @@ const ReviewSubmit = ({
         <title>Review and submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
+      <h2 className="sr-only">Accessibility heading 2</h2>
+      <h3 className="sr-only">Accessibility heading 3</h3>
       {!isApprover
         && (
           <Submitter
@@ -88,8 +90,7 @@ const ReviewSubmit = ({
             onSaveForm={onSaveForm}
           >
             <>
-              <h2 className="sr-only">accessability</h2>
-              <h3 className="sr-only">accessability</h3>
+
               <Accordion bordered={false} items={items} />
             </>
           </Submitter>
@@ -105,8 +106,6 @@ const ReviewSubmit = ({
             isPendingApprover={isPendingApprover}
           >
             <>
-              <h2 className="sr-only">accessability</h2>
-              <h3 className="sr-only">accessability</h3>
               <Accordion bordered={false} items={items} />
             </>
           </Approver>
