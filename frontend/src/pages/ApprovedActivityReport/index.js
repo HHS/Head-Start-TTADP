@@ -11,6 +11,7 @@ import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 /**
  *
@@ -194,8 +195,8 @@ export default function ApprovedActivityReport({ match, user }) {
       setParticipantCount(newCount);
       setReasons(formatSimpleArray(report.reason));
       setProgramType(formatSimpleArray(report.programTypes));
-      setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
-      setEndDate(moment(report.endDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
+      setStartDate(moment(report.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY'));
+      setEndDate(moment(report.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY'));
       setDuration(`${report.duration} hours`);
       setMethod(formatMethod(report.ttaType, report.virtualDeliveryType));
       setRequester(formatRequester(report.requester));
