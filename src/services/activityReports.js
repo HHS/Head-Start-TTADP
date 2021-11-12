@@ -337,6 +337,8 @@ export function activityReports(
         'updatedAt',
         'sortedTopics',
         'legacyId',
+        'createdAt',
+        'approvedAt',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),
@@ -461,6 +463,7 @@ export async function activityReportAlerts(userId, {
       'calculatedStatus',
       'regionId',
       'userId',
+      'createdAt',
       sequelize.literal(
         '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
       ),
@@ -674,7 +677,10 @@ async function getDownloadableActivityReports(where) {
   return ActivityReport.findAndCountAll(
     {
       where,
-      attributes: { include: ['displayId'], exclude: ['imported', 'legacyId', 'oldManagerNotes', 'additionalNotes', 'approvers'] },
+      attributes: {
+        include: ['displayId', 'createdAt', 'approvedAt'],
+        exclude: ['imported', 'legacyId', 'oldManagerNotes', 'additionalNotes', 'approvers'],
+      },
       include: [
         {
           model: Objective,

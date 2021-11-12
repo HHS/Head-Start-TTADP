@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import fetchWidget from '../fetchers/Widgets';
 import { filtersToQueryString } from '../components/Filter';
@@ -7,8 +8,7 @@ import { filtersToQueryString } from '../components/Filter';
 /*
   `withWidgetData` wraps widgets providing the widget with data
   when successfully retrieved from the API. It handles error and
-  loading states and (only temporarily) accepts loading and error
-  overrides so loading and error states can be worked on.
+  loading states.
 */
 const withWidgetData = (Widget, widgetId) => {
   const WidgetWrapper = (props) => {
@@ -18,7 +18,7 @@ const withWidgetData = (Widget, widgetId) => {
 
     const { filters } = props;
 
-    useEffect(() => {
+    useDeepCompareEffect(() => {
       const fetch = async () => {
         try {
           updateLoading(true);
@@ -39,7 +39,7 @@ const withWidgetData = (Widget, widgetId) => {
     if (error) {
       return (
         <div>
-          {error || 'Errors set to always show'}
+          {error}
         </div>
       );
     }

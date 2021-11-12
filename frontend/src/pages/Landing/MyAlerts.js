@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
 import Modal from '../../components/Modal';
+import moment from 'moment';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
@@ -41,6 +42,7 @@ function ReportsRow({ reports, removeAlert, message }) {
       calculatedStatus,
       pendingApprovals,
       approvers,
+      createdAt,
     } = report;
 
     const justSubmitted = message && message.reportId === id;
@@ -89,9 +91,18 @@ function ReportsRow({ reports, removeAlert, message }) {
         </td>
         <td>{startDate}</td>
         <td>
-          <span className="smart-hub--ellipsis" title={author ? author.fullName : ''}>
-            {author ? author.fullName : ''}
-          </span>
+          { author
+            ? (
+              <Tooltip
+                displayText={author.fullName}
+                tooltipText={author.fullName}
+                buttonLabel={`click to reveal: ${author.fullName} `}
+                screenReadDisplayText={false}
+              />
+            ) : <span /> }
+        </td>
+        <td>
+          {moment(createdAt).format('MM/DD/YYYY')}
         </td>
         <td>
           <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
@@ -301,6 +312,7 @@ function MyAlerts(props) {
                   {renderColumnHeader('Grantee', 'activityRecipients')}
                   {renderColumnHeader('Start date', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
+                  {renderColumnHeader('Created date', 'createdAt')}
                   {renderColumnHeader('Collaborator(s)', 'collaborators')}
                   {renderColumnHeader('Approvers(s)', 'approvals', true)}
                   {renderColumnHeader('Status', 'calculatedStatus')}

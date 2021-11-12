@@ -23,27 +23,26 @@ export default function GranteeRecord({ match, location }) {
     'grants.number': '',
     granteeId,
   });
-  const [filters, setFilters] = useState([]);
+
+  const defaultFilters = [
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
+  ];
+
+  // set filters will be used very soon, disabling warning
+  // eslint-disable-next-line no-unused-vars
+  const [filters, setFilters] = useState(defaultFilters);
   const [error, setError] = useState();
-
-  useEffect(() => {
-    const filtersToApply = [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'Contains',
-        query: regionId,
-      },
-      {
-        id: uuidv4(),
-        topic: 'granteeId',
-        condition: 'Contains',
-        query: granteeId,
-      },
-    ];
-
-    setFilters(filtersToApply);
-  }, [granteeId, regionId]);
 
   useEffect(() => {
     async function fetchGrantee(id, region) {
@@ -91,7 +90,11 @@ export default function GranteeRecord({ match, location }) {
         <Switch>
           <Route
             path="/grantee/:granteeId/tta-history"
-            render={() => <TTAHistory filters={filters} />}
+            render={() => (
+              <TTAHistory
+                filters={filters}
+              />
+            )}
           />
           <Route
             path="/grantee/:granteeId/profile"
