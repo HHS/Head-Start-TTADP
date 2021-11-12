@@ -125,6 +125,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [participantCount, setParticipantCount] = useState('');
   const [reasons, setReasons] = useState('');
   const [programType, setProgramType] = useState('');
+  const [targetPopulations, setTargetPopulations] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [duration, setDuration] = useState('');
@@ -176,6 +177,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
+      setTargetPopulations(report.targetPopulations.map((population) => population).join(', '));
 
       // Approvers.
       const approversNames = report.approvers.map((a) => a.User.fullName);
@@ -357,7 +359,7 @@ export default function ApprovedActivityReport({ match, user }) {
       </ConnectModal>
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
-          TTA Activity report
+          TTA activity report
           {' '}
           {displayId}
         </h1>
@@ -385,7 +387,8 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               recipientType,
               'Reason',
-              'Program Type',
+              'Program type',
+              'Target populations',
               'Start date',
               'End date',
               'Topics',
@@ -402,6 +405,7 @@ export default function ApprovedActivityReport({ match, user }) {
               recipients,
               reasons,
               programType,
+              targetPopulations,
               startDate,
               endDate,
               topics,
