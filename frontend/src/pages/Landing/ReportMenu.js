@@ -7,7 +7,7 @@ import Container from '../../components/Container';
 
 import './ReportMenu.css';
 
-const MAXIMUM_EXPORTED_REPORTS = 14000;
+const MAXIMUM_EXPORTED_REPORTS = 2000;
 
 function ReportMenu({
   onExportAll,
@@ -78,8 +78,12 @@ function ReportMenu({
               <Alert noIcon slim type="error" className="margin-bottom-3" role="alert">
                 Sorry, something went wrong. Please try your request again.
                 <br />
-                You may export up to 4,000 reports at a time.
-                  {' '}
+                You may export up to
+                {' '}
+                {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                {' '}
+                reports at a time.
+                {' '}
                 <br />
                 For assistance, please
                   {' '}
@@ -133,6 +137,7 @@ function ReportMenu({
                   role="menuitem"
                   onClick={onExportAll}
                   type="button"
+                  disabled={downloadError}
                   className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
                 >
                   Export table data...
