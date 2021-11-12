@@ -267,6 +267,11 @@ function DateRangeSelect(props) {
                     }}
                     isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onDateChange={(selectedDate) => {
+                      // weird that we'd have to explicitly do this
+                      if (!selectedDate) {
+                        return;
+                      }
+
                       const { startDate, endDate } = dates;
                       if (endDate && endDate.isBefore(selectedDate)) {
                         const diff = endDate.diff(startDate, 'days');
