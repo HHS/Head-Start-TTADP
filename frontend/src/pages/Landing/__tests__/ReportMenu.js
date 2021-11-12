@@ -72,15 +72,6 @@ describe('ReportMenu', () => {
     expect(menu).not.toBeInTheDocument();
   });
 
-  it('disables the button and shows the error message when there are too many reports', async () => {
-    render(<RenderReportMenu count={5001} hasSelectedReports={false} />);
-    const button = await screen.findByRole('button');
-    userEvent.click(button);
-    const label = /this export has 5,001 reports\. you can only export 5,000 reports at a time\./i;
-    const exportButton = await screen.findByRole('menuitem', { name: label });
-    expect(exportButton).toBeDisabled();
-  });
-
   it('closes when the Escape key is pressed', async () => {
     let report;
     let menu;
