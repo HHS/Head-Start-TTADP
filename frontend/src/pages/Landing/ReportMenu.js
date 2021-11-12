@@ -75,7 +75,7 @@ function ReportMenu({
         <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames}>
           <Container padding={2} className="margin-bottom-0">
             {downloadError && (
-              <Alert role="alert" type="warning" className="margin-bottom-1">
+              <Alert noIcon slim type="error" className="margin-bottom-3" role="alert">
                 Sorry, something went wrong. Please try your request again.
                 <br />
                 You may export up to 4,000 reports at a time.

@@ -155,6 +155,10 @@ function ActivityReportsTable({
     const downloadURL = getAllReportsDownloadURL(filterQuery);
 
     try {
+      // changed the way this works ever so slightly because I was thinking
+      // you'd want a try/catch around the fetching of the reports and not the
+      // window.location.assign
+
       const blob = await downloadReports(downloadURL);
       const csv = URL.createObjectURL(blob);
       window.location.assign(csv);
