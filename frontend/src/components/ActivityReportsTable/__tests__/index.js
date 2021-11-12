@@ -64,7 +64,7 @@ describe('Table menus & selections', () => {
       fetchMock.reset();
       fetchMock.get(
         defaultBaseUrlWithRegionOne,
-        { count: 10, rows: generateXFakeReports(10) },
+        { count: 10, rows: generateXFakeReports(10, ['approved']) },
       );
       const user = {
         name: 'test@test.com',

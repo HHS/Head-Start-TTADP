@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import './Tooltip.css';
 
 export default function Tooltip({
-  displayText, tooltipText, buttonLabel, screenReadDisplayText,
+  displayText, tooltipText, buttonLabel, screenReadDisplayText, hideUnderline,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -21,16 +21,21 @@ export default function Tooltip({
         <span className="smart-hub--ellipsis">
           <span aria-hidden={!screenReadDisplayText}>
             {displayText}
-            <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true">
-              <path
-                d="M 0 5 L 190 5"
-                stroke="black"
-                strokeLinecap="round"
-                strokeWidth="1"
-                strokeDasharray="5,5"
-                fill="none"
-              />
-            </svg>
+            {
+              hideUnderline ? null
+                : (
+                  <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true">
+                    <path
+                      d="M 0 5 L 190 5"
+                      stroke="black"
+                      strokeLinecap="round"
+                      strokeWidth="1"
+                      strokeDasharray="5,5"
+                      fill="none"
+                    />
+                  </svg>
+                )
+            }
           </span>
         </span>
         <span className="sr-only">
@@ -54,8 +59,10 @@ Tooltip.propTypes = {
   ]).isRequired,
   buttonLabel: PropTypes.string.isRequired,
   screenReadDisplayText: PropTypes.bool,
+  hideUnderline: PropTypes.bool,
 };
 
 Tooltip.defaultProps = {
   screenReadDisplayText: true,
+  hideUnderline: false,
 };

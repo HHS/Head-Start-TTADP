@@ -50,5 +50,5 @@ AppWrapper.propTypes = {
 AppWrapper.defaultProps = {
   authenticated: false,
   padded: true,
-  logout: () => null,
+  logout: () => {},
 };
