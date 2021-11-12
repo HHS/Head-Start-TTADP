@@ -334,8 +334,12 @@ ActivityReportsTable.propTypes = {
     }),
   ).isRequired,
   showFilter: PropTypes.bool.isRequired,
-  onUpdateFilters: PropTypes.func.isRequired,
+  onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
+};
+
+ActivityReportsTable.defaultProps = {
+  onUpdateFilters: () => {},
 };
 
 export default ActivityReportsTable;
