@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Accordion,
-} from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-
 import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
 import { REPORT_STATUSES } from '../../../../Constants';
 import './index.css';
+import { Accordion } from '../../../../components/Accordion';
 
 const ReviewSubmit = ({
   onSubmit,
@@ -76,6 +73,7 @@ const ReviewSubmit = ({
         <title>Review and submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
+
       {!isApprover
         && (
           <Submitter
@@ -87,7 +85,10 @@ const ReviewSubmit = ({
             error={error}
             onSaveForm={onSaveForm}
           >
-            <Accordion bordered={false} items={items} />
+            <>
+
+              <Accordion bordered={false} items={items} />
+            </>
           </Submitter>
         )}
       {isApprover
@@ -100,7 +101,9 @@ const ReviewSubmit = ({
             formData={formData}
             isPendingApprover={isPendingApprover}
           >
-            <Accordion bordered={false} items={items} />
+            <>
+              <Accordion bordered={false} items={items} />
+            </>
           </Approver>
         )}
     </>

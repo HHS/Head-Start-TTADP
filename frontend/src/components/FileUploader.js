@@ -5,15 +5,14 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import {
-  Button, Alert, Modal, connectModal,
-} from '@trussworks/react-uswds';
+import { Button, Alert } from '@trussworks/react-uswds';
 import { uploadFile, deleteFile } from '../fetchers/File';
+import Modal from './Modal';
 
 import './FileUploader.css';
 
@@ -111,17 +110,17 @@ function Dropzone(props) {
         Upload Resources
       </button>
       {errorMessage
-          && (
-            <Alert type="error" slim noIcon className="smart-hub--save-alert">
-              This is an error
-            </Alert>
-          )}
+        && (
+          <Alert type="error" slim noIcon className="smart-hub--save-alert">
+            This is an error
+          </Alert>
+        )}
       {fileRejections.length > 0
-          && (
-            <Alert className="files-table--upload-alert" type="error" slim noIcon>
-              <FileRejections fileRejections={fileRejections} />
-            </Alert>
-          )}
+        && (
+          <Alert className="files-table--upload-alert" type="error" slim noIcon>
+            <FileRejections fileRejections={fileRejections} />
+          </Alert>
+        )}
     </div>
   );
 }
@@ -157,71 +156,65 @@ export const getStatus = (status) => {
 };
 
 const DeleteFileModal = ({
-  onFileRemoved, files, index, closeModal,
+  modalRef, onFileRemoved, files, index,
 }) => {
-  const deleteModal = useRef(null);
-  const onClose = () => {
+  const onDeleteFile = () => {
     onFileRemoved(index)
-      .then(closeModal());
+      .then(modalRef.current.toggleModal(false));
   };
-  useEffect(() => {
-    deleteModal.current.querySelector('button').focus();
-  });
+
   return (
-    <div role="dialog" aria-modal="true" ref={deleteModal}>
+    <>
       <Modal
-        title={<h2>Delete File</h2>}
-        actions={(
-          <>
-            <Button type="button" onClick={closeModal}>
-              Cancel
-            </Button>
-            <Button type="button" secondary onClick={onClose}>
-              Delete
-            </Button>
-          </>
-          )}
+        modalRef={modalRef}
+        onOk={onDeleteFile}
+        modalId="DeleteFileModal"
+        title="Delete File"
+        okButtonText="Delete"
+        okButtonAriaLabel="This button will permanently delete the file."
       >
         <p>
           Are you sure you want to delete
           {' '}
-          {files[index].originalFileName}
+          { files[index] ? files[index].originalFileName : null }
           {' '}
           ?
         </p>
         <p>This action cannot be undone.</p>
       </Modal>
-    </div>
+    </>
   );
 };
 
 DeleteFileModal.propTypes = {
+  modalRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape(),
+  ]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
-  closeModal: PropTypes.func.isRequired,
-  index: PropTypes.number.isRequired,
+  index: PropTypes.number,
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const ConnectedDeleteFileModal = connectModal(DeleteFileModal);
+DeleteFileModal.defaultProps = {
+  index: null,
+};
 
 const FileTable = ({ onFileRemoved, files }) => {
   const [index, setIndex] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const closeModal = () => setIsOpen(false);
-
+  const modalRef = useRef();
   const handleDelete = (newIndex) => {
     setIndex(newIndex);
-    setIsOpen(true);
+    modalRef.current.toggleModal(true);
   };
 
   return (
     <div className="files-table--container margin-top-2">
-      <ConnectedDeleteFileModal
+      <DeleteFileModal
+        modalRef={modalRef}
         onFileRemoved={onFileRemoved}
         files={files}
         index={index}
-        isOpen={isOpen}
-        closeModal={closeModal}
       />
       <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
@@ -273,7 +266,7 @@ const FileTable = ({ onFileRemoved, files }) => {
         </tbody>
       </table>
       {files.length === 0 && (
-      <p className="files-table--empty">No files uploaded</p>
+        <p className="files-table--empty">No files uploaded</p>
       )}
     </div>
   );

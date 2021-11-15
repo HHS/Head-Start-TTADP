@@ -1,12 +1,10 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Tag, Table, useModal, connectModal,
-} from '@trussworks/react-uswds';
+import { Tag, Table } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
-import DeleteReportModal from '../../components/DeleteReportModal';
+import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
@@ -22,15 +20,15 @@ import Tooltip from '../../components/Tooltip';
 
 function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
-  const { isOpen, openModal, closeModal } = useModal();
-  const ConnectModal = connectModal(DeleteReportModal);
-
   const [idToDelete, updateIdToDelete] = useState(0);
+  const modalRef = useRef();
 
   const onDelete = async (reportId) => {
+    if (modalRef && modalRef.current) {
+      modalRef.current.toggleModal(false);
+    }
     await deleteReport(reportId);
     removeAlert(reportId);
-    closeModal();
   };
 
   const tableRows = reports.map((report, index, { length }) => {
@@ -75,7 +73,7 @@ function ReportsRow({ reports, removeAlert, message }) {
       },
       {
         label: 'Delete',
-        onClick: () => { updateIdToDelete(id); openModal(); },
+        onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
       },
     ];
 
@@ -118,7 +116,7 @@ function ReportsRow({ reports, removeAlert, message }) {
                 buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
               />
             )
-            : '' }
+            : ''}
         </td>
         <td>
           <Tag
@@ -136,13 +134,24 @@ function ReportsRow({ reports, removeAlert, message }) {
 
   return (
     <>
-      <ConnectModal
-        onDelete={() => onDelete(idToDelete)}
-        onClose={closeModal}
-        isOpen={isOpen}
-        openModal={openModal}
-        closeModal={closeModal}
-      />
+      <Modal
+        modalRef={modalRef}
+        onOk={() => onDelete(idToDelete)}
+        modalId="DeleteReportModal"
+        title="Delete Activity Report"
+        okButtonText="Delete"
+        okButtonAriaLabel="This button will permanently delete the report."
+      >
+        <div>
+          Are you sure you want to delete this activity report?
+          <br />
+          This action
+          {' '}
+          <b>cannot</b>
+          {' '}
+          be undone.
+        </div>
+      </Modal>
       {tableRows}
     </>
   );
@@ -272,24 +281,6 @@ function MyAlerts(props) {
               hasSelectedReports={false}
               onExportAll={handleDownloadAllAlerts}
             />
-          </span>
-          <span className="smart-hub--table-nav">
-            <span
-              id="alertsTotalCount"
-              aria-label={`Displaying rows ${renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}`}
-            >
-              {renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}
-            </span>
           </span>
           <span className="smart-hub--table-nav">
             <span
