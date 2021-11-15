@@ -134,7 +134,9 @@ function GranteeSearch({ user }) {
                 </div>
               )}
           <form role="search" className="ttahub-grantee-search--search-form display-flex" onSubmit={onSubmit}>
-            <input type="search" name="search" className="ttahub-grantee-search--search-input" ref={inputRef} disabled={loading} />
+            { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
+            <label htmlFor="granteeRecordSearch" className="sr-only">Search grantee records by name or grant id</label>
+            <input id="granteeRecordSearch" type="search" name="search" className="ttahub-grantee-search--search-input" ref={inputRef} disabled={loading} />
             <button type="submit" className="ttahub-grantee-search--submit-button usa-button" disabled={loading}>
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}
