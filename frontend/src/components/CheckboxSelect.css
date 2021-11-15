@@ -13,3 +13,7 @@
     margin: 1em auto;
     width: 100%;
 }
+
+.smart-hub--checkbox-select label {
+    margin-top: 0.75em;
+}

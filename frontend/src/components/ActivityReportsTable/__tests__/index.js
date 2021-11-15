@@ -317,28 +317,6 @@ describe('Table sorting', () => {
     await screen.findByText('Activity Reports');
   });
 
-  it('clicking status column header will sort by status', async () => {
-    const statusColumnHeader = await screen.findByText(/status/i);
-    fetchMock.reset();
-    fetchMock.get(
-      '/api/activity-reports?sortBy=calculatedStatus&sortDir=asc&offset=0&limit=10&region.in[]=1',
-      { count: 2, rows: activityReportsSorted },
-    );
-
-    fireEvent.click(statusColumnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
-
-    fetchMock.get(
-      '/api/activity-reports?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
-      { count: 2, rows: activityReports },
-    );
-
-    fireEvent.click(statusColumnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
-  });
-
   it('clicking Last saved column header will sort by updatedAt', async () => {
     const columnHeader = await screen.findByText(/last saved/i);
 
@@ -348,8 +326,8 @@ describe('Table sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/02\/04\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/02\/05\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/02\/04\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/02\/05\/2021/i));
   });
 
   it('clicking Collaborators column header will sort by collaborators', async () => {
@@ -361,8 +339,8 @@ describe('Table sorting', () => {
     );
 
     await act(async () => fireEvent.click(columnHeader));
-    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
   });
 
   it('clicking Topics column header will sort by topics', async () => {
@@ -374,8 +352,7 @@ describe('Table sorting', () => {
     );
 
     await act(async () => fireEvent.click(columnHeader));
-    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(''));
-    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
   });
 
   it('clicking Creator column header will sort by author', async () => {
@@ -388,7 +365,7 @@ describe('Table sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent('Kiwi, GS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('Kiwi, TTAC'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent('Kiwi, TTAC'));
   });
 
   it('clicking Start date column header will sort by start date', async () => {
@@ -401,7 +378,7 @@ describe('Table sorting', () => {
 
     fireEvent.click(columnHeader);
     await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent('02/01/2021'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent('02/08/2021'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('02/08/2021'));
   });
 
   it('clicking Grantee column header will sort by grantee', async () => {
@@ -462,8 +439,8 @@ describe('Table sorting', () => {
     );
 
     fireEvent.click(pageOne);
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/02\/05\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/02\/04\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/02\/05\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/02\/04\/2021/i));
   });
 
   it('clicking on the second page updates to, from and total', async () => {

@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Tag, Checkbox,
-} from '@trussworks/react-uswds';
+import { Checkbox } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
-
+import moment from 'moment';
 import ContextMenu from '../ContextMenu';
 import { getReportsDownloadURL } from '../../fetchers/helpers';
 import TooltipWithCollection from '../TooltipWithCollection';
+import Tooltip from '../Tooltip';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 function ReportRow({
   report, openMenuUp, handleReportSelect, isChecked,
@@ -22,6 +22,8 @@ function ReportRow({
     collaborators,
     lastSaved,
     calculatedStatus,
+    approvedAt,
+    createdAt,
     legacyId,
   } = report;
 
@@ -85,10 +87,13 @@ function ReportRow({
       </td>
       <td>{startDate}</td>
       <td>
-        <span className="smart-hub--ellipsis" title={authorName}>
-          {authorName}
-        </span>
+        <Tooltip
+          displayText={authorName}
+          tooltipText={authorName}
+          buttonLabel="click to reveal author name"
+        />
       </td>
+      <td>{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td>
         <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
       </td>
@@ -96,13 +101,7 @@ function ReportRow({
         <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
       </td>
       <td>{lastSaved}</td>
-      <td>
-        <Tag
-          className={`smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`}
-        >
-          {calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus}
-        </Tag>
-      </td>
+      <td>{approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td>
         <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} />
       </td>
@@ -122,6 +121,8 @@ export const reportPropTypes = {
         }),
       }),
     })).isRequired,
+    approvedAt: PropTypes.string,
+    createdAt: PropTypes.string,
     startDate: PropTypes.string.isRequired,
     author: PropTypes.shape({
       fullName: PropTypes.string,
@@ -129,7 +130,11 @@ export const reportPropTypes = {
       name: PropTypes.string,
     }).isRequired,
     topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-    collaborators: PropTypes.arrayOf(PropTypes.string).isRequired,
+    collaborators: PropTypes.arrayOf(
+      PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
+    ).isRequired,
     lastSaved: PropTypes.string.isRequired,
     calculatedStatus: PropTypes.string.isRequired,
     legacyId: PropTypes.string,

@@ -10,7 +10,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
-    "@trussworks/react-uswds": "1.11.0",
+    "@trussworks/react-uswds": "2.4.1",
     "@use-it/interval": "^1.0.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
@@ -157,7 +157,9 @@
       "<rootDir>/src/pages/NotFound/index.js",
       "<rootDir>/src/polyfills.js",
       "<rootDir>/src/pages/Widgets/index.js",
-      "<rootDir>/src/widgets/Example.js"
+      "<rootDir>/src/widgets/Example.js",
+      "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
+      "<rootDir>/src/pages/RegionalDashboard/constants.js"
     ],
     "coverageThreshold": {
       "global": {

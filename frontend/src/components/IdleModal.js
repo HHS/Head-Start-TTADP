@@ -4,12 +4,11 @@
   milliseconds the logout prop is called.
 */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useIdleTimer } from 'react-idle-timer';
-import {
-  Button, Modal, connectModal, useModal, Alert,
-} from '@trussworks/react-uswds';
+import { Alert } from '@trussworks/react-uswds';
+import Modal from './Modal';
 
 // list of events to determine activity
 // https://github.com/SupremeTechnopriest/react-idle-timer#default-events
@@ -28,7 +27,7 @@ const EVENTS = [
 
 function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
   const [inactiveTimeout, updateInactiveTimeout] = useState();
-  const { isOpen, openModal, closeModal } = useModal();
+  const modalRef = useRef();
   const modalVisibleTime = logoutTimeout - modalTimeout;
   const timeoutMinutes = Math.floor(modalVisibleTime / 1000 / 60);
 
@@ -41,28 +40,6 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
     timeToLogoutMsg = `${timeoutMinutes} minutes`;
   }
 
-  const Connected = connectModal(() => (
-    <Modal
-      title={<h3>Are you still there?</h3>}
-      actions={(
-        <Button type="button">
-          Stay logged in
-        </Button>
-      )}
-    >
-      <Alert role="alert" type="warning">
-        You will be automatically logged out due to inactivity in
-        {' '}
-        { timeToLogoutMsg }
-        {' '}
-        unless you become active again.
-        <span className="usa-sr-only">
-          Press any key to continue your session
-        </span>
-      </Alert>
-    </Modal>
-  ));
-
   // Make sure we clean up any timeout functions when this component
   // is unmounted
   useEffect(() => function cleanup() {
@@ -73,15 +50,15 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
 
   const onIdle = () => {
     const timer = setTimeout(() => {
-      closeModal();
+      modalRef.current.toggleModal(false);
       logoutUser(true);
     }, modalVisibleTime);
-    openModal();
+    modalRef.current.toggleModal(true);
     updateInactiveTimeout(timer);
   };
 
   const onActive = () => {
-    closeModal();
+    modalRef.current.toggleModal(false);
     clearTimeout(inactiveTimeout);
   };
 
@@ -94,7 +71,22 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
   });
 
   return (
-    <Connected isOpen={isOpen} />
+    <Modal
+      modalRef={modalRef}
+      onOk={() => {}}
+      modalId="IdleReportModal"
+      title="Are you still there?"
+      showOkButton={false}
+      cancelButtonText="Stay logged in"
+    >
+      <Alert role="alert" type="warning">
+        You will be automatically logged out due to inactivity in
+        {' '}
+        {timeToLogoutMsg}
+        {' '}
+        unless you become active again.
+      </Alert>
+    </Modal>
   );
 }
 

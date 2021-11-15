@@ -1,3 +1,5 @@
-.usa-table-container--scrollable {
+.usa-table-container--scrollable, 
+.usa-checkbox__label {
   margin-top: 0px;
 }
+

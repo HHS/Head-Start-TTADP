@@ -43,8 +43,8 @@ describe('TooltipWithCollection', () => {
 
   it('renders a single span when passed a one item array', async () => {
     renderTooltip(['Jimbo']);
-    const jimbo = screen.getByText('Jimbo');
+    const jimbo = screen.getAllByText('Jimbo')[1];
     expect(jimbo).toBeVisible();
-    expect(jimbo.parentElement).toHaveClass('smarthub-ellipsis');
+    expect(jimbo.parentElement.parentElement).toHaveClass('smart-hub--ellipsis');
   });
 });
