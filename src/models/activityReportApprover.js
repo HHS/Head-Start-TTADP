@@ -212,9 +212,21 @@ module.exports = (sequelize, DataTypes) => {
           }).map((a) => a.status);
 
           const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
-          await sequelize.models.ActivityReport.update({
+
+          /*
+           * Here we check to see if the report will be approved and update the approvedAt
+           * as appropriate
+           */
+          const approvedAt = newCalculatedStatus === REPORT_STATUSES.APPROVED ? new Date() : null;
+
+          const updatedFields = approvedAt ? {
             calculatedStatus: newCalculatedStatus,
-          }, {
+            approvedAt,
+          } : {
+            calculatedStatus: newCalculatedStatus,
+          };
+
+          await sequelize.models.ActivityReport.update(updatedFields, {
             where: { id: instance.activityReportId },
             transaction: options.transaction,
             hooks: false,
