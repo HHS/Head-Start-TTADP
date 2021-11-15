@@ -1,0 +1,33 @@
+.ttahub-filter-menu-item {
+    min-width: 600px;
+}
+
+.ttahub-filter-menu-item [name="topic"],
+.ttahub-filter-menu-item [name="condition"],
+.ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select,
+.ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select,
+.ttahub-filter-menu-item .smart-hub--dropdown-menu-toggle-btn,
+.ttahub-filter-menu-single-date-picker,
+.ttahub-dummy-select {
+    max-width: none;
+    width: 200px;
+}
+
+.ttahub-filter-menu-item .usa-select {
+    margin-top: 0.5em;
+}
+
+.ttahub-filter-menu-single-date-picker {
+    border: 1px solid;
+}
+
+.ttahub-filter-menu-item .SingleDatePickerInput__withBorder {
+    border: 0;
+}
+
+.ttahub-filter-menu-item .SingleDatePicker .DateInput__small {
+    min-width: 160px;
+}
+.ttahub-filter-menu-item .SingleDatePicker .DateInput_input__small {
+    padding: 0.5rem;
+}

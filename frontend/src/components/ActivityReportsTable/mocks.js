@@ -226,7 +226,7 @@ export const activityReportsSorted = [
   },
 ];
 
-export const generateXFakeReports = (count) => {
+export const generateXFakeReports = (count, status = []) => {
   const result = [];
   for (let i = 1; i <= count; i += 1) {
     result.push(
@@ -237,7 +237,7 @@ export const generateXFakeReports = (count) => {
         displayId: 'R14-AR-1',
         regionId: 14,
         topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
-        calculatedStatus: 'draft',
+        calculatedStatus: status[i] || 'draft',
         activityRecipients: [
           {
             activityRecipientId: 5,
