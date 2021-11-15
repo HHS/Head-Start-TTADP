@@ -165,6 +165,14 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Grantee next steps',
         },
         {
+          key: 'createdAt',
+          header: 'Created date',
+        },
+        {
+          key: 'approvedAt',
+          header: 'Approved date',
+        },
+        {
           key: 'lastSaved',
           header: 'Last saved',
         },
