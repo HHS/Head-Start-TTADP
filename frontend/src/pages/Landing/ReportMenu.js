@@ -61,7 +61,7 @@ function ReportMenu({
         aria-label={label}
         onClick={() => updateOpen((current) => !current)}
       >
-        Reports
+        Export reports
         {' '}
         <FontAwesomeIcon
           size="1x"
@@ -94,18 +94,6 @@ function ReportMenu({
             )}
             {count > MAXIMUM_EXPORTED_REPORTS ? (
               <>
-                <div className="display-flex">
-                  <button
-                    role="menuitem"
-                    onClick={onExportAll}
-                    type="button"
-                    disabled
-                    className="usa-button usa-button--unstyled smart-hub--reports-button margin-bottom-1"
-                    aria-labelledby="no-exports-please"
-                  >
-                    Export table data
-                  </button>
-                </div>
                 <div className="usa-hint" id="no-exports-please">
                   <p>
                     This export has
@@ -140,7 +128,7 @@ function ReportMenu({
                   disabled={downloadError}
                   className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
                 >
-                  Export table data...
+                  Export table data
                 </button>
               ) }
             {hasSelectedReports && onExportSelected && (
@@ -150,7 +138,7 @@ function ReportMenu({
                 type="button"
                 className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
               >
-                Export selected reports...
+                Export selected reports
               </button>
             )}
           </Container>
