@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Grid, useModal, connectModal } from '@trussworks/react-uswds';
+import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
@@ -147,10 +147,9 @@ export default function ApprovedActivityReport({ match, user }) {
   const [granteeNextSteps, setGranteeNextSteps] = useState([]);
   const [specialistNextSteps, setSpecialistNextSteps] = useState([]);
 
-  const { isOpen, openModal, closeModal } = useModal();
-  const ConnectModal = connectModal(Modal);
-
   const [justUnlocked, updatedJustUnlocked] = useState(false);
+
+  const modalRef = useRef();
 
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
@@ -274,7 +273,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
   const onUnlock = async () => {
     await unlockReport(reportId);
-    closeModal();
+    modalRef.current.toggleModal(false);
     updatedJustUnlocked(true);
   };
 
@@ -326,19 +325,16 @@ export default function ApprovedActivityReport({ match, user }) {
         : null}
       <Grid row>
         {navigator && navigator.clipboard
-          ? <button type="button" className="usa-button no-print" disabled={isOpen} onClick={handleCopyUrl}>Copy URL Link</button>
+          ? <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
-        <button type="button" className="usa-button no-print" disabled={isOpen} onClick={() => window.print()}>Print to PDF</button>
+        <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={() => window.print()}>Print to PDF</button>
         {user && user.permissions && canUnlockReports(user)
-          ? <button type="button" className="usa-button usa-button--accent-warm no-print" onClick={openModal}>Unlock Report</button>
+          ? <ModalToggleButton type="button" className="usa-button usa-button--accent-warm no-print" modalRef={modalRef} opener>Unlock Report</ModalToggleButton>
           : null}
       </Grid>
-      <ConnectModal
+      <Modal
+        modalRef={modalRef}
         onOk={() => onUnlock()}
-        onClose={closeModal}
-        isOpen={isOpen}
-        openModal={openModal}
-        closeModal={closeModal}
         modalId="UnlockReportModal"
         title="Unlock Activity Report"
         okButtonText="Unlock"
@@ -357,7 +353,7 @@ export default function ApprovedActivityReport({ match, user }) {
           <br />
           must be re-submitted for approval.
         </>
-      </ConnectModal>
+      </Modal>
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
           TTA activity report
