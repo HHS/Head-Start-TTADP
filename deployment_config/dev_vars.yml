@@ -1,6 +1,6 @@
 env: dev
 web_instances: 1
-web_memory: 2GB
+web_memory: 3GB
 worker_instances: 1
 worker_memory: 512M
 LOG_LEVEL: info
