@@ -1,3 +1,23 @@
+import moment from 'moment';
+import { DATE_FORMAT } from '../constants';
+
+function transformDate(field) {
+  async function transformer(instance) {
+    let value = '';
+    const date = instance[field];
+    if (date) {
+      value = moment(date).format(DATE_FORMAT);
+    }
+    const obj = {};
+    Object.defineProperty(obj, field, {
+      value,
+      enumerable: true,
+    });
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
 /**
  * @param {string} field name to be retrieved
  * @returns {function} Function that will return a simple value wrapped in a Promise
@@ -167,6 +187,8 @@ const arTransformers = [
   'context',
   'additionalNotes',
   'lastSaved',
+  transformDate('createdAt'),
+  transformDate('approvedAt'),
 ];
 
 /**

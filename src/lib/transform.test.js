@@ -113,6 +113,7 @@ describe('activityReportToCsvRecord', () => {
     author: mockAuthor,
     lastUpdatedBy: mockAuthor,
     collaborators: mockCollaborators,
+    approvedAt: new Date(),
   };
 
   it('transforms arrays of strings into strings', async () => {

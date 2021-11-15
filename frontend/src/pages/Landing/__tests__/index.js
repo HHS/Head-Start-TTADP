@@ -64,6 +64,7 @@ describe('Landing Page', () => {
       alerts: [],
     });
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
+
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -217,14 +218,6 @@ describe('Landing Page', () => {
     expect(lastSavedDates.length).toBe(1);
   });
 
-  test('displays the correct statuses', async () => {
-    const draft = await screen.findByText(/draft/i);
-    const needsAction = await screen.findByText(/needs action/i);
-
-    expect(draft).toBeVisible();
-    expect(needsAction).toBeVisible();
-  });
-
   test('displays the options buttons', async () => {
     const optionButtons = await screen.findAllByRole('button', {
       name: /actions for activity report r14-ar-2/i,
@@ -326,20 +319,20 @@ describe('My alerts sorting', () => {
   it('is enabled for Status', async () => {
     const statusColumnHeaders = await screen.findAllByText(/status/i);
 
-    expect(statusColumnHeaders.length).toBe(2);
+    expect(statusColumnHeaders.length).toBe(1);
     fetchMock.reset();
 
     fireEvent.click(statusColumnHeaders[0]);
 
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/draft/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReportsSorted });
 
     fireEvent.click(statusColumnHeaders[0]);
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/needs action/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/draft/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/draft/i));
   });
 
   it('is enabled for Report ID', async () => {
@@ -356,7 +349,7 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/r14-ar-1/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/r14-ar-2/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/r14-ar-2/i));
   });
 
   it('is enabled for Grantee', async () => {
@@ -376,7 +369,7 @@ describe('My alerts sorting', () => {
 
     const textContent = /Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
-    await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/qris system/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/qris system/i));
   });
 
   it('is enabled for Start date', async () => {
@@ -394,7 +387,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/02\/01\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/02\/08\/2021/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/02\/08\/2021/i));
   });
 
   it('is enabled for Creator', async () => {
@@ -412,7 +405,7 @@ describe('My alerts sorting', () => {
     fireEvent.click(columnHeaders[0]);
 
     await waitFor(() => expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/kiwi, gs/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/kiwi, ttac/i));
+    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/kiwi, ttac/i));
   });
 
   it('is enabled for Collaborator(s)', async () => {
@@ -427,8 +420,8 @@ describe('My alerts sorting', () => {
 
     const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
     const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
-    await waitFor(() => expect(screen.getAllByRole('cell')[4]).toHaveTextContent(firstCell));
-    await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent(secondCell));
+    await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(firstCell));
+    await waitFor(() => expect(screen.getAllByRole('cell')[14]).toHaveTextContent(secondCell));
   });
 });
 
@@ -478,7 +471,7 @@ describe('Landing Page error', () => {
     };
     renderLanding(user);
     const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(9);
+    expect(rowCells.length).toBe(10);
     const grantee = rowCells[1];
     expect(grantee).toHaveTextContent('');
   });

@@ -298,10 +298,11 @@ function ActivityReportsTable({
                 {renderColumnHeader('Grantee', 'activityRecipients')}
                 {renderColumnHeader('Start date', 'startDate')}
                 {renderColumnHeader('Creator', 'author')}
+                {renderColumnHeader('Created date', 'createdAt')}
                 {renderColumnHeader('Topic(s)', 'topics')}
                 {renderColumnHeader('Collaborator(s)', 'collaborators')}
                 {renderColumnHeader('Last saved', 'updatedAt')}
-                {renderColumnHeader('Status', 'calculatedStatus')}
+                {renderColumnHeader('Approved date', 'approvedAt')}
                 <th scope="col" aria-label="context menu" />
               </tr>
             </thead>
