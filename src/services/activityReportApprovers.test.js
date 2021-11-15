@@ -106,6 +106,7 @@ describe('activityReportApprovers services', () => {
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
         });
         const updatedReport = await activityReportById(report1.id);
+        expect(updatedReport.approvedAt).toBeNull();
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });
@@ -124,6 +125,7 @@ describe('activityReportApprovers services', () => {
         });
         expect(approver.status).toEqual(APPROVER_STATUSES.APPROVED);
         const updatedReport = await activityReportById(report2.id);
+        expect(updatedReport.approvedAt).toBeTruthy();
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
       });

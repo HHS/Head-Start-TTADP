@@ -16,10 +16,8 @@ import { SingleDatePicker } from 'react-dates';
 import { OPEN_UP, OPEN_DOWN } from 'react-dates/constants';
 import { Controller } from 'react-hook-form/dist/index.ie11';
 import moment from 'moment';
-
+import { DATE_DISPLAY_FORMAT } from '../Constants';
 import './DatePicker.css';
-
-const dateFmt = 'MM/DD/YYYY';
 
 const DateInput = ({
   control, minDate, name, disabled, maxDate, openUp, required, ariaName, maxDateInclusive,
@@ -29,17 +27,17 @@ const DateInput = ({
   const openDirection = openUp ? OPEN_UP : OPEN_DOWN;
 
   const isOutsideRange = (date) => {
-    const isBefore = minDate && date.isBefore(moment(minDate, dateFmt));
+    const isBefore = minDate && date.isBefore(moment(minDate, DATE_DISPLAY_FORMAT));
 
     // If max date is inclusive (maxDateInclusive == true)
     // allow the user to pick a start date that is the same as the maxDate
     // otherwise, only the day before is allowed
     let isAfter = false;
     if (maxDateInclusive) {
-      const newDate = moment(maxDate, dateFmt).add(1, 'days');
-      isAfter = maxDate && date.isAfter(newDate, dateFmt);
+      const newDate = moment(maxDate, DATE_DISPLAY_FORMAT).add(1, 'days');
+      isAfter = maxDate && date.isAfter(newDate, DATE_DISPLAY_FORMAT);
     } else {
-      isAfter = maxDate && date.isAfter(moment(maxDate, dateFmt));
+      isAfter = maxDate && date.isAfter(moment(maxDate, DATE_DISPLAY_FORMAT));
     }
 
     return isBefore || isAfter;
@@ -52,7 +50,7 @@ const DateInput = ({
       <div className="usa-hint font-body-2xs" id={hintId}>mm/dd/yyyy</div>
       <Controller
         render={({ onChange, value, ref }) => {
-          const date = value ? moment(value, dateFmt) : null;
+          const date = value ? moment(value, DATE_DISPLAY_FORMAT) : null;
           return (
             <div className="display-flex smart-hub--date-picker-input">
               <SingleDatePicker
@@ -69,7 +67,7 @@ const DateInput = ({
                 disabled={disabled}
                 hideKeyboardShortcutsPanel
                 onDateChange={(d) => {
-                  const newDate = d ? d.format(dateFmt) : d;
+                  const newDate = d ? d.format(DATE_DISPLAY_FORMAT) : d;
                   onChange(newDate);
                   const input = document.getElementById(name);
                   if (input) input.focus();

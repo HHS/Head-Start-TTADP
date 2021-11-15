@@ -12,11 +12,11 @@ const TEST_DATA = [{
   count: 1,
 },
 {
-  category: 'two',
+  category: 'two / two and a half',
   count: 2,
 },
 {
-  category: 'three',
+  category: 'three is the number than comes after two and with that we think about it',
   count: 0,
 }];
 

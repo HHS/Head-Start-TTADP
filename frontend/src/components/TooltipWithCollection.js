@@ -30,7 +30,11 @@ export default function TooltipWithCollection({ collection, collectionTitle }) {
 
   if (collection.length === 1) {
     return (
-      <span className="smarthub-ellipsis">{tooltip}</span>
+      <Tooltip
+        displayText={tooltip}
+        tooltipText={tooltip}
+        buttonLabel={`click to visually reveal the ${collectionTitle}`}
+      />
     );
   }
 

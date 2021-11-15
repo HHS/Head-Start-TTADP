@@ -47,4 +47,12 @@ describe('ActivityReportsTable ColumnHeader', () => {
     await act(async () => userEvent.type(shoes, '{enter}'));
     expect(onUpdateSort).toHaveBeenCalledTimes(2);
   });
+
+  it('displays an unsortable column', async () => {
+    const onUpdateSort = jest.fn();
+    renderColumnHeader(onUpdateSort, '');
+
+    const shoes = await screen.findByRole('columnheader', { name: /fanciest shoes/i });
+    expect(shoes).toHaveAttribute('aria-sort', 'none');
+  });
 });
