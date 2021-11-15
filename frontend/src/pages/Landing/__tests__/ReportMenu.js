@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import ReportMenu from '../ReportMenu';
+import ReportMenu, { MAXIMUM_EXPORTED_REPORTS } from '../ReportMenu';
 
 const RenderReportMenu = ({
   onExportAll = () => {},
@@ -70,6 +70,16 @@ describe('ReportMenu', () => {
     expect(report).not.toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).not.toBeInTheDocument();
+  });
+
+  it('disables the button and shows the error message when there are too many reports', async () => {
+    const formattedMaximum = MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us');
+    render(<RenderReportMenu count={MAXIMUM_EXPORTED_REPORTS + 1} hasSelectedReports={false} />);
+    const button = await screen.findByRole('button');
+    userEvent.click(button);
+    const label = `this export has ${formattedMaximum} reports. you can only export ${formattedMaximum} reports at a time.`;
+    const exportButton = await screen.findByRole('menuitem', { name: label });
+    expect(exportButton).toBeDisabled();
   });
 
   it('closes when the Escape key is pressed', async () => {
