@@ -329,7 +329,7 @@ export default function ApprovedActivityReport({ match, user }) {
           : null}
         <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={() => window.print()}>Print to PDF</button>
         {user && user.permissions && canUnlockReports(user)
-          ? <ModalToggleButton type="button" className="usa-button usa-button--accent-warm no-print" modalRef={modalRef} opener>Unlock Report</ModalToggleButton>
+          ? <ModalToggleButton type="button" className="usa-button usa-button--outline no-print" modalRef={modalRef} opener>Unlock report</ModalToggleButton>
           : null}
       </Grid>
       <Modal
