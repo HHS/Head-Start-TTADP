@@ -104,7 +104,7 @@ const Draft = ({
         updateShown={updateShowSavedDraft}
       >
         {lastSaveTime && (
-          <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
+          <Alert id="reviewSubmitSaveAlert" className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
             Draft saved on
             {' '}
             {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
