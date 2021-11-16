@@ -185,6 +185,7 @@ function Navigator({
               navigatorPages,
               reportCreator,
               updateShowValidationErrors,
+              lastSaveTime,
             )}
             {!page.review
             && (

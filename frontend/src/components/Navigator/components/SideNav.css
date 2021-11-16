@@ -93,3 +93,18 @@
 .smart-hub--navigator-item:last-child .smart-hub--navigator-link-active {
   border-bottom-right-radius: 4px;
 }
+
+.alert-fade {
+  animation: fadein 1s;
+  animation-fill-mode: forwards;
+  animation-delay: 0ms;
+}
+
+@keyframes fadein {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
