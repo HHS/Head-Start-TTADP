@@ -18,6 +18,5 @@ export default async function reasonList(scopes) {
     raw: true,
   });
 
-  // Return only top 14.
-  return countBySingleKey(res, 'reason');
+  return countBySingleKey(res, 'reason', []);
 }
