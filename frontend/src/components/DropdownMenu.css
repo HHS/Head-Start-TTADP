@@ -1,0 +1,16 @@
+.smart-hub--dropdown-menu-toggle-btn {
+    justify-content: space-between;
+    min-width: 140px;
+}
+
+.smart-hub--dropdown-menu--contents {
+    background-color: hsl(0, 0%, 100%);
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
+    margin-bottom: 8px;
+    margin-top: 8px;
+    position: absolute;
+    min-width: 200px;
+    z-index: 2;
+    box-sizing: border-box;
+}

@@ -61,23 +61,23 @@ Field.defaultProps = {
 const DASHBOARD_FIELDS = [
   {
     key: 'Activity reports',
-    render: (data, showTooltip) => <Field showTooltip={showTooltip} tooltipText="The total number of approved activity reports." icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />,
+    render: (data, showTooltip) => <Field key="activity-reports" showTooltip={showTooltip} tooltipText="The total number of approved activity reports." icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />,
   },
   {
     key: 'Grants served',
-    render: (data) => <Field showTooltip={false} icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />,
+    render: (data) => <Field key="grants-served" showTooltip={false} icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />,
   },
   {
     key: 'Participants',
-    render: (data, showTooltip) => <Field showTooltip={showTooltip} tooltipText="The total number of people involved in all activities." icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
+    render: (data, showTooltip) => <Field key="participants" showTooltip={showTooltip} tooltipText="The total number of people involved in all activities." icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
   },
   {
     key: 'Hours of TTA',
-    render: (data, showTooltip) => <Field showTooltip={showTooltip} tooltipText="The total number of hours spent on all TTA activities." icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />,
+    render: (data, showTooltip) => <Field key="hours-of-tta" showTooltip={showTooltip} tooltipText="The total number of hours spent on all TTA activities." icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />,
   },
   {
     key: 'In-person activities',
-    render: (data, showTooltip) => <Field icon={faUser} showTooltip={showTooltip} tooltipText="Number of activities that were conducted in-person vs. virtual." iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
+    render: (data, showTooltip) => <Field key="in-person-activities" icon={faUser} showTooltip={showTooltip} tooltipText="Number of activities that were conducted in-person vs. virtual." iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
   },
 ];
 
@@ -90,9 +90,8 @@ export function DashboardOverviewWidget({
       { fields.map((field) => {
         const fieldToDisplay = DASHBOARD_FIELDS.find((dbField) => dbField.key === field);
         if (fieldToDisplay) {
-          return fieldToDisplay.render(data, showTooltips);
+          return fieldToDisplay.render(data, showTooltips, field);
         }
-
         return null;
       })}
     </Grid>

@@ -30,6 +30,7 @@ describe('Activity report print and share view', () => {
         id: 2, status: '', note: 'note', User: { id: 2, fullName: 'John Smith' },
       },
     ],
+    targetPopulations: ['Mid size sedans'],
     specialistNextSteps: [],
     granteeNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],
