@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../utils';
@@ -10,17 +9,13 @@ import { getEditorState } from '../../../../utils';
  * Reasoning for another component is to not overload `ReviewItem`
  */
 
-const HtmlReviewItem = ({ label, name, path }) => {
+const HtmlReviewItem = ({ label, name }) => {
   const { watch } = useFormContext();
   const value = watch(name);
   let values = value;
 
   if (!Array.isArray(value)) {
     values = [value];
-  }
-
-  if (path) {
-    values = values.map((v) => _.get(v, path));
   }
 
   values = values.map((v) => {
@@ -56,11 +51,7 @@ const HtmlReviewItem = ({ label, name, path }) => {
 HtmlReviewItem.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-  path: PropTypes.string,
-};
 
-HtmlReviewItem.defaultProps = {
-  path: '',
 };
 
 export default HtmlReviewItem;

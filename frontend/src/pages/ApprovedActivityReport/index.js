@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Grid, useModal, connectModal } from '@trussworks/react-uswds';
+import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
@@ -11,6 +11,7 @@ import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 /**
  *
@@ -125,6 +126,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [participantCount, setParticipantCount] = useState('');
   const [reasons, setReasons] = useState('');
   const [programType, setProgramType] = useState('');
+  const [targetPopulations, setTargetPopulations] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [duration, setDuration] = useState('');
@@ -145,10 +147,9 @@ export default function ApprovedActivityReport({ match, user }) {
   const [granteeNextSteps, setGranteeNextSteps] = useState([]);
   const [specialistNextSteps, setSpecialistNextSteps] = useState([]);
 
-  const { isOpen, openModal, closeModal } = useModal();
-  const ConnectModal = connectModal(Modal);
-
   const [justUnlocked, updatedJustUnlocked] = useState(false);
+
+  const modalRef = useRef();
 
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
@@ -176,6 +177,7 @@ export default function ApprovedActivityReport({ match, user }) {
       setDisplayId(report.displayId);
       setCreator(report.author.fullName);
       setCollaborators(report.collaborators);
+      setTargetPopulations(report.targetPopulations.map((population) => population).join(', '));
 
       // Approvers.
       const approversNames = report.approvers.map((a) => a.User.fullName);
@@ -192,8 +194,8 @@ export default function ApprovedActivityReport({ match, user }) {
       setParticipantCount(newCount);
       setReasons(formatSimpleArray(report.reason));
       setProgramType(formatSimpleArray(report.programTypes));
-      setStartDate(moment(report.startDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
-      setEndDate(moment(report.endDate, 'MM/DD/YYYY').format('MMMM D, YYYY'));
+      setStartDate(moment(report.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY'));
+      setEndDate(moment(report.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY'));
       setDuration(`${report.duration} hours`);
       setMethod(formatMethod(report.ttaType, report.virtualDeliveryType));
       setRequester(formatRequester(report.requester));
@@ -271,7 +273,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
   const onUnlock = async () => {
     await unlockReport(reportId);
-    closeModal();
+    modalRef.current.toggleModal(false);
     updatedJustUnlocked(true);
   };
 
@@ -323,19 +325,16 @@ export default function ApprovedActivityReport({ match, user }) {
         : null}
       <Grid row>
         {navigator && navigator.clipboard
-          ? <button type="button" className="usa-button no-print" disabled={isOpen} onClick={handleCopyUrl}>Copy URL Link</button>
+          ? <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
-        <button type="button" className="usa-button no-print" disabled={isOpen} onClick={() => window.print()}>Print to PDF</button>
+        <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={() => window.print()}>Print to PDF</button>
         {user && user.permissions && canUnlockReports(user)
-          ? <button type="button" className="usa-button usa-button--accent-warm no-print" onClick={openModal}>Unlock Report</button>
+          ? <ModalToggleButton type="button" className="usa-button usa-button--outline no-print" modalRef={modalRef} opener>Unlock report</ModalToggleButton>
           : null}
       </Grid>
-      <ConnectModal
+      <Modal
+        modalRef={modalRef}
         onOk={() => onUnlock()}
-        onClose={closeModal}
-        isOpen={isOpen}
-        openModal={openModal}
-        closeModal={closeModal}
         modalId="UnlockReportModal"
         title="Unlock Activity Report"
         okButtonText="Unlock"
@@ -354,10 +353,10 @@ export default function ApprovedActivityReport({ match, user }) {
           <br />
           must be re-submitted for approval.
         </>
-      </ConnectModal>
+      </Modal>
       <Container className="ttahub-activity-report-view margin-top-2">
         <h1 className="landing">
-          TTA Activity report
+          TTA activity report
           {' '}
           {displayId}
         </h1>
@@ -385,7 +384,8 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               recipientType,
               'Reason',
-              'Program Type',
+              'Program type',
+              'Target populations',
               'Start date',
               'End date',
               'Topics',
@@ -402,6 +402,7 @@ export default function ApprovedActivityReport({ match, user }) {
               recipients,
               reasons,
               programType,
+              targetPopulations,
               startDate,
               endDate,
               topics,
