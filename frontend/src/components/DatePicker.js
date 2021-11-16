@@ -66,7 +66,6 @@ const DateInput = ({
 
                   if (isStartDate) {
                     if (maxDate && moment(maxDate).isBefore(d)) {
-                      console.log(maxDate, isStartDate, date, d);
                       const diff = moment(maxDate).diff(date, 'days');
                       const newEnd = moment(d).add(diff, 'days').format(DATE_DISPLAY_FORMAT);
                       setEndDate(newEnd);

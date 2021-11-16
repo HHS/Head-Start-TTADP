@@ -26,8 +26,10 @@ Object.defineProperty(window, 'getComputedStyle', {
 });
 
 describe('DatePicker', () => {
-  // eslint-disable-next-line react/prop-types
-  const RenderDatePicker = ({ disabled }) => {
+  const RenderDatePicker = ({
+    // eslint-disable-next-line react/prop-types
+    disabled = false, setEndDate = jest.fn(), isStartDate = false, maxDate = '07/04/2021',
+  }) => {
     const { control } = useForm();
     return (
       <form>
@@ -37,6 +39,9 @@ describe('DatePicker', () => {
           name="picker"
           disabled={disabled}
           ariaName="datepicker"
+          setEndDate={setEndDate}
+          isStartDate={isStartDate}
+          maxDate={maxDate}
         />
       </form>
     );
@@ -60,5 +65,19 @@ describe('DatePicker', () => {
     fireEvent.click(openCalendar);
     const button = await screen.findByLabelText('Move backward to switch to the previous month.');
     await waitFor(() => expect(button).toBeVisible());
+  });
+
+  it('changing the start date can move the end date', () => {
+    const setEndDate = jest.fn();
+    render(<RenderDatePicker isStartDate setEndDate={setEndDate} />);
+    const textbox = screen.getByRole('textbox');
+    // set initial date
+    fireEvent.change(textbox, { target: { value: '07/03/2021' } });
+
+    // set to a date past the max date
+    fireEvent.change(textbox, { target: { value: '07/10/2021' } });
+
+    // see that the delta is preserved
+    expect(setEndDate).toHaveBeenCalledWith('07/11/2021');
   });
 });
