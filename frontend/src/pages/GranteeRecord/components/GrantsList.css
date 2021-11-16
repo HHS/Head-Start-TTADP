@@ -7,3 +7,10 @@
   padding-left: 24px;
   padding-right: 24px;
 }
+
+.ttahub-grantee-record--grants-list tr:nth-child(2n+1) {
+  background-color: #f8f8f8;
+}
+.ttahub-grantee-record--grants-list tbody tr:nth-child(2n+1) td, .ttahub-grantee-record--grants-list tbody tr:nth-child(2n+1) th {
+  background-color: transparent;
+}
