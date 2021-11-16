@@ -3,13 +3,16 @@ import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { Form, Fieldset, Button } from '@trussworks/react-uswds';
+import {
+  Form, Fieldset, Button, Alert,
+} from '@trussworks/react-uswds';
 
 import IncompletePages from './IncompletePages';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import MultiSelect from '../../../../../components/MultiSelect';
 import ApproverStatusList from '../../components/ApproverStatusList';
+import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 
 const Draft = ({
   availableApprovers,
@@ -19,12 +22,14 @@ const Draft = ({
   reportId,
   displayId,
   approverStatusList,
+  lastSaveTime,
 }) => {
   const {
     watch, handleSubmit, control, register,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   const onSubmit = (e) => {
     if (!hasIncompletePages) {
@@ -91,9 +96,21 @@ const Draft = ({
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button outline type="button" onClick={() => { onSaveForm(false); }}>Save Draft</Button>
+        <Button outline type="button" onClick={() => { onSaveForm(false); updateShowSavedDraft(true); }}>Save Draft</Button>
         <Button type="submit">Submit for approval</Button>
       </Form>
+      <DismissingComponentWrapper
+        shown={showSavedDraft}
+        updateShown={updateShowSavedDraft}
+      >
+        {lastSaveTime && (
+          <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
+            Draft saved on
+            {' '}
+            {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+          </Alert>
+        )}
+      </DismissingComponentWrapper>
     </>
   );
 };
@@ -112,6 +129,7 @@ Draft.propTypes = {
     approver: PropTypes.string,
     status: PropTypes.string,
   })).isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment).isRequired,
 };
 
 export default Draft;
