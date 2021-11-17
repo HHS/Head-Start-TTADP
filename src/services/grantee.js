@@ -1,9 +1,9 @@
 import { Op } from 'sequelize';
 import {
-  Grant, Grantee, Program,
+  Grant, Grantee, Program, ActivityRecipient, ActivityReport,
 } from '../models';
 import orderGranteesBy from '../lib/orderGranteesBy';
-import { GRANTEES_PER_PAGE } from '../constants';
+import { GRANTEES_PER_PAGE, REPORT_STATUSES } from '../constants';
 
 export async function allGrantees() {
   return Grantee.findAll({
@@ -62,16 +62,19 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
 
   // first get all grants with numbers that match the query string
   const matchingGrantNumbers = await Grant.findAll({
+    attributes: [],
     where: {
       number: {
         [Op.iLike]: q, // sequelize automatically escapes this
       },
+      status: 'Active',
       [Op.and]: scopes,
     },
     include: [
       {
         model: Grantee,
         as: 'grantee',
+        attributes: ['id'],
       },
     ],
   });
@@ -103,6 +106,34 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
     };
   }
 
+  const grantsWithActivityReports = await Grant.findAll({
+    attributes: ['id'],
+    [Op.and]: scopes,
+    include: [
+      {
+        model: ActivityRecipient,
+        as: 'activityRecipients',
+        attributes: ['id'],
+        include: [
+          {
+            attributes: [],
+            model: ActivityReport,
+            as: 'ActivityReport',
+            required: true,
+            where: {
+              startDate: {
+                [Op.gte]: '2020-09-01',
+              },
+              calculatedStatus: REPORT_STATUSES.APPROVED,
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const matchingActivityReportGranteeIds = grantsWithActivityReports.map((grant) => grant.id);
+
   const limit = GRANTEES_PER_PAGE;
 
   return Grantee.findAndCountAll({
@@ -113,6 +144,12 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
         model: Grant,
         as: 'grants',
         where: {
+          [Op.or]: [
+            {
+              status: 'Active',
+              id: matchingActivityReportGranteeIds,
+            },
+          ],
           [Op.and]: scopes,
         },
       },
