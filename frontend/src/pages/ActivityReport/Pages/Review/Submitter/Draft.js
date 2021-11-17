@@ -96,7 +96,16 @@ const Draft = ({
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button outline type="button" onClick={() => { onSaveForm(false); updateShowSavedDraft(true); }}>Save Draft</Button>
+        <Button
+          outline
+          type="button"
+          onClick={() => {
+            onSaveForm(false);
+            updateShowSavedDraft(true);
+          }}
+        >
+          Save Draft
+        </Button>
         <Button type="submit">Submit for approval</Button>
       </Form>
       <DismissingComponentWrapper
