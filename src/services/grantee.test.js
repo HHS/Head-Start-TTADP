@@ -150,6 +150,10 @@ describe('Grantee DB service', () => {
         id: 66,
         name: 'Apple Sauce',
       },
+      {
+        id: 67,
+        name: 'Apple Butter',
+      },
     ];
 
     const grants = [
@@ -159,6 +163,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12345',
         programSpecialistName: 'George',
+        status: 'Active',
       },
       {
         id: 51,
@@ -166,6 +171,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12346',
         programSpecialistName: 'Belle',
+        status: 'Active',
       },
       {
         id: 52,
@@ -173,6 +179,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '55557',
         programSpecialistName: 'Caesar',
+        status: 'Active',
       },
       {
         id: 53,
@@ -180,6 +187,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '55558',
         programSpecialistName: 'Doris',
+        status: 'Active',
       },
       {
         id: 54,
@@ -187,6 +195,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12349',
         programSpecialistName: 'Eugene',
+        status: 'Active',
       },
       {
         id: 55,
@@ -194,6 +203,7 @@ describe('Grantee DB service', () => {
         regionId: 2,
         number: '12350',
         programSpecialistName: 'Farrah',
+        status: 'Active',
       },
       {
         id: 56,
@@ -201,6 +211,15 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12351',
         programSpecialistName: 'Aaron',
+        status: 'Active',
+      },
+      {
+        id: 57,
+        granteeId: 67,
+        regionId: 1,
+        number: '12352',
+        programSpecialistName: 'Jim',
+        status: 'Inactive',
       },
     ];
 

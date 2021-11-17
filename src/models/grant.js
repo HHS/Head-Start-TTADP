@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       Grant.belongsTo(models.Grantee, { foreignKey: 'granteeId', as: 'grantee' });
       Grant.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'grantId', as: 'goals' });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
+      Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
     }
   }
   Grant.init({
