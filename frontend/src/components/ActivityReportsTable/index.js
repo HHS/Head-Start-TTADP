@@ -6,6 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 
 import Pagination from 'react-js-pagination';
 
@@ -64,7 +65,7 @@ function ActivityReportsTable({
     direction: 'desc',
   });
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchReports() {
       setLoading(true);
       const filterQuery = filtersToQueryString(filters);
@@ -296,7 +297,7 @@ function ActivityReportsTable({
                   />
                 </th>
                 {renderColumnHeader('Report ID', 'regionId')}
-                {renderColumnHeader('Grantee', 'activityRecipients')}
+                {renderColumnHeader('Recipient', 'activityRecipients')}
                 {renderColumnHeader('Start date', 'startDate')}
                 {renderColumnHeader('Creator', 'author')}
                 {renderColumnHeader('Created date', 'createdAt')}

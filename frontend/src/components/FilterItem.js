@@ -73,7 +73,7 @@ const commonFilters = [
   },
   {
     id: 'grantee',
-    display: 'Grantee',
+    display: 'Recipient',
     conditions: SELECT_CONDITIONS,
     renderInput: singleSelectInput,
   },

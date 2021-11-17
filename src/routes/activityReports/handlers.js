@@ -80,11 +80,11 @@ async function sendActivityReportCSV(reports, res) {
         },
         {
           key: 'activityRecipientType',
-          header: 'Grantee or non-grantee',
+          header: 'Recipient or non-recipient',
         },
         {
           key: 'activityRecipients',
-          header: 'Grantee name/non-grantee name',
+          header: 'Recipient name/non-recipient name',
         },
         {
           key: 'programTypes',
@@ -162,7 +162,7 @@ async function sendActivityReportCSV(reports, res) {
         },
         {
           key: 'granteeNextSteps',
-          header: 'Grantee next steps',
+          header: 'Recipient next steps',
         },
         {
           key: 'createdAt',

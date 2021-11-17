@@ -100,12 +100,12 @@ const SiteNav = ({
                   <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
                     <li>
                       <NavLink
-                        to="/grantee"
+                        to="/recipient"
                       >
                         <span className="padding-right-1">
                           <FontAwesomeIcon color="white" icon={faUserFriends} />
                         </span>
-                        Grantee TTA Records
+                        Recipient TTA Records
                       </NavLink>
                     </li>
                   </FeatureFlag>
