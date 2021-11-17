@@ -2,16 +2,31 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './GranteeSummary.css';
+import { getDistinctSortedArray } from '../../../utils';
 
-function GranteeInformationSection({ heading, grants, property }) {
+function GranteeInformationSection({
+  heading, grants, property, distinct,
+}) {
+  let distinctList;
+  if (distinct) {
+    distinctList = getDistinctSortedArray(grants, property);
+  }
   return (
     <div className="margin-bottom-2">
       <p className="margin-y-1"><strong>{heading}</strong></p>
-      { grants.map((grant) => (
-        <p className="margin-y-1" key={`${grant.id}_${property}`}>
-          {grant[property]}
-        </p>
-      ))}
+      {
+        distinct
+          ? distinctList.map((item) => (
+            <p className="margin-y-1" key={`${item}_${property}`}>
+              {item}
+            </p>
+          ))
+          : grants.map((grant) => (
+            <p className="margin-y-1" key={`${grant.id}_${property}`}>
+              {grant[property]}
+            </p>
+          ))
+}
     </div>
   );
 }
@@ -19,6 +34,7 @@ function GranteeInformationSection({ heading, grants, property }) {
 GranteeInformationSection.propTypes = {
   heading: PropTypes.string.isRequired,
   property: PropTypes.string.isRequired,
+  distinct: PropTypes.bool.isRequired,
   grants: PropTypes.arrayOf(PropTypes.shape({
     number: PropTypes.string,
     status: PropTypes.string,
@@ -50,8 +66,9 @@ export default function GranteeSummary({ summary, regionId }) {
             {summary.granteeId}
           </p>
         </div>
-        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={summary.grants} />
-        <GranteeInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} />
+        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={summary.grants} distinct={false} />
+        <GranteeInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} distinct />
+        <GranteeInformationSection heading="Grant Specialist" property="grantSpecialistName" grants={summary.grants} distinct />
       </div>
 
     </Container>

@@ -5,6 +5,7 @@ import Pagination from 'react-js-pagination';
 import Container from '../../../components/Container';
 import { renderTotal } from '../../Landing';
 import './GranteeResults.css';
+import { getDistinctSortedArray } from '../../../utils';
 
 export default function GranteeResults(
   {
@@ -23,11 +24,7 @@ export default function GranteeResults(
 
   const renderGrantee = (grantee) => {
     // Get a unique sorted list of Program Specialists.
-    const programSpecialists = grantee.grants.map((p) => p.programSpecialistName);
-    let uniqueProgramSpecialists = [...new Set(programSpecialists)];
-    uniqueProgramSpecialists = uniqueProgramSpecialists.sort();
-    const psList = uniqueProgramSpecialists.join(', ');
-
+    const psList = getDistinctSortedArray(grantee.grants, 'programSpecialistName').join(', ');
     const grant = grantee.grants[0];
 
     const { number, regionId } = grant;
