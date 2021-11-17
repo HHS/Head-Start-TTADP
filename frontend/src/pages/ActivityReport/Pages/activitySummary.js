@@ -55,8 +55,8 @@ const ActivitySummary = ({
   const granteeSelected = activityRecipientType === 'grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
-  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
+  const recipientLabel = nonGranteeSelected ? 'Non-recipient name(s)' : 'Recipient name(s)';
+  const participantsLabel = nonGranteeSelected ? 'Non-recipient participants' : 'Recipient participants';
   const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
 
   useEffect(() => {
@@ -101,25 +101,25 @@ const ActivitySummary = ({
         <div id="activity-for" />
         <div className="margin-top-2">
           <FormItem
-            label="Was this activity for a grantee or non-grantee?"
+            label="Was this activity for a recipient or non-recipient?"
             name="activityRecipientType"
             fieldSetWrapper
           >
             <Radio
               id="category-grantee"
               name="activityRecipientType"
-              label="Grantee"
+              label="Recipient"
               value="grantee"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or non-grantee' })}
+              inputRef={register({ required: 'Please specify recipient or non-recipient' })}
             />
             <Radio
               id="category-non-grantee"
               name="activityRecipientType"
-              label="Non-Grantee"
+              label="Non-recipient"
               value="non-grantee"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or non-grantee' })}
+              inputRef={register({ required: 'Please specify recipient or non-recipient' })}
             />
           </FormItem>
         </div>
@@ -135,7 +135,7 @@ const ActivitySummary = ({
               valueProperty="activityRecipientId"
               labelProperty="name"
               simple={false}
-              required="Please select at least one grantee or non-grantee"
+              required="Please select at least one recipient or non-recipient"
               options={selectedRecipients}
             />
           </FormItem>
@@ -193,17 +193,17 @@ const ActivitySummary = ({
         <div id="reasons" />
         <div className="margin-top-2">
           <FormItem
-            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by grantee."
+            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by recipient."
             name="requester"
             fieldSetWrapper
           >
             <Radio
               id="granteeRequest"
               name="requester"
-              label="Grantee"
+              label="Recipient"
               value="grantee"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or regional office' })}
+              inputRef={register({ required: 'Please specify recipient or regional office' })}
             />
             <Radio
               id="requestorRegionalOffice"
@@ -211,7 +211,7 @@ const ActivitySummary = ({
               label="Regional Office"
               value="regionalOffice"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or regional office' })}
+              inputRef={register({ required: 'Please specify recipient or regional office' })}
             />
           </FormItem>
         </div>
@@ -433,7 +433,7 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Grantee or Non-grantee', name: 'activityRecipientType', sort: true },
+      { label: 'Recipient or Non-recipient', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
         label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
@@ -471,7 +471,7 @@ const sections = [
     title: 'Other participants',
     anchor: 'other-participants',
     items: [
-      { label: 'Grantee participants', name: 'participants', sort: true },
+      { label: 'Recipient participants', name: 'participants', sort: true },
       { label: 'Number of participants', name: 'numberOfParticipants' },
     ],
   },

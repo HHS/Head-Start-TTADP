@@ -166,7 +166,7 @@ export default function ApprovedActivityReport({ match, user }) {
       }
 
       // first table
-      let recipientTypeLabel = report.activityRecipients[0].grantId ? 'Grantee' : 'Non-grantee';
+      let recipientTypeLabel = report.activityRecipients[0].grantId ? 'Recipient' : 'Non-recipient';
       if (report.activityRecipients.length > 1) {
         recipientTypeLabel = `${recipientTypeLabel}s`;
       }
@@ -451,7 +451,7 @@ export default function ApprovedActivityReport({ match, user }) {
           headings={
             [
               'Specialist next steps',
-              "Grantee's next steps",
+              "Recipient's next steps",
             ]
           }
           data={
