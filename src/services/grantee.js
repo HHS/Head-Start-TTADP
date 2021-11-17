@@ -109,7 +109,7 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
     where: granteeWhere,
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'programSpecialistName'],
+        attributes: ['id', 'number', 'regionId', 'programSpecialistName', 'grantSpecialistName'],
         model: Grant,
         as: 'grants',
         where: {
