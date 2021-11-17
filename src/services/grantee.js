@@ -25,7 +25,7 @@ export async function granteeById(granteeId, grantScopes) {
     },
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
+        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'granteeId'],
         model: Grant,
         as: 'grants',
         where: {
