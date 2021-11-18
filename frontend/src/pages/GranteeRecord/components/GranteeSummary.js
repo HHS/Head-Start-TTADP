@@ -7,26 +7,21 @@ import { getDistinctSortedArray } from '../../../utils';
 function GranteeInformationSection({
   heading, grants, property, distinct,
 }) {
-  let distinctList;
+  let valueList = grants.map((p) => p[property]).filter((v) => v);
   if (distinct) {
-    distinctList = getDistinctSortedArray(grants, property);
+    valueList = getDistinctSortedArray(valueList);
   }
+
   return (
     <div className="margin-bottom-2">
       <p className="margin-y-1"><strong>{heading}</strong></p>
       {
-        distinct
-          ? distinctList.map((item) => (
-            <p className="margin-y-1" key={`${item}_${property}`}>
-              {item}
-            </p>
-          ))
-          : grants.map((grant) => (
-            <p className="margin-y-1" key={`${grant.id}_${property}`}>
-              {grant[property]}
-            </p>
-          ))
-}
+        valueList.map((item) => (
+          <p className="margin-y-1" key={`${item}_${property}`}>
+            {item}
+          </p>
+        ))
+      }
     </div>
   );
 }
