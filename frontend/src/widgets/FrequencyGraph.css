@@ -1,4 +1,5 @@
 .ttahub--frequency-graph {
+  height: calc(100% - 1.5rem);
   width: 100%;
 }
 
