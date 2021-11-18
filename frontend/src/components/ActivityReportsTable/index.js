@@ -218,7 +218,7 @@ function ActivityReportsTable({
         )}
       </Grid>
       <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
-        <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
+        <span className={`smart-hub--table-controls display-flex flex-row flex-align-center ${!showFilter ? 'hide-filter' : ''}`}>
           {numberOfSelectedReports > 0
         && (
           <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
