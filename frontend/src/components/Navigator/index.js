@@ -216,9 +216,10 @@ function Navigator({
                 <DismissingComponentWrapper
                   shown={showSavedDraft}
                   updateShown={updateShowSavedDraft}
+                  hideFromScreenReader={false}
                 >
                   {lastSaveTime && (
-                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
+                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
                     Draft saved on
                     {' '}
                     {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
