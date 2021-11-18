@@ -17,7 +17,7 @@ const filterProp = PropTypes.shape({
  * @param {Object} props
  * @returns JSX Object
  */
-export default function FilterMenu({ filters, onApplyFilters }) {
+export default function FilterMenu({ filters, onApplyFilters, applyButtonAria }) {
   const [items, setItems] = useState([...filters]);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       buttonText="Filters"
       buttonAriaLabel="open filters for this page"
       onApply={onApply}
-      applyButtonAria="apply filters to grantee record data"
+      applyButtonAria={applyButtonAria}
       showCancel
       onCancel={onCancel}
       cancelAriaLabel="discard changes and close filter menu"
@@ -117,4 +117,5 @@ export default function FilterMenu({ filters, onApplyFilters }) {
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
+  applyButtonAria: PropTypes.string.isRequired,
 };

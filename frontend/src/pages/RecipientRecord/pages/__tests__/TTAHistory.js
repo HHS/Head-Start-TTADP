@@ -59,21 +59,21 @@ describe('Recipient Record - TTA History', () => {
     renderTTAHistory();
 
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Recipient%20Specialist&region.in[]=1&recipientId.in[]=401', tableResponse);
-    fetchMock.get('/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Recipient%20Specialist&region.in[]=1&recipientId.in[]=401', 200);
-    fetchMock.get('/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Recipient%20Specialist&region.in[]=1&recipientId.in[]=401', 200);
-    fetchMock.get('/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Recipient%20Specialist&region.in[]=1&recipientId.in[]=401', overviewResponse);
+    fetchMock.get('/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.in[]=401', 200);
+    fetchMock.get('/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.in[]=401', 200);
+    fetchMock.get('/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.in[]=401', overviewResponse);
 
     await act(async () => userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i })));
     await act(async () => userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'role'));
     await act(async () => userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Contains'));
     await act(async () => userEvent.click(await screen.findByRole('button', { name: /toggle the Change filter by specialists menu/i })));
     await act(async () => userEvent.click(await screen.findByText(/family engagement specialist \(fes\)/i)));
-    await act(async () => userEvent.click(await screen.findByText(/recipient specialist \(gs\)/i)));
+    await act(async () => userEvent.click(await screen.findByText(/grantee specialist \(gs\)/i)));
     await act(async () => userEvent.click(await screen.findByRole('button', { name: /Apply filters for the Change filter by specialists menu/i })));
     await act(async () => userEvent.click(await screen.findByRole('button', { name: /apply filters to recipient record data/i })));
 
     expect(
-      await screen.findByRole('button', { name: /this button removes the filter: Specialist Contains Family Engagement Specialist, Recipient Specialist/i }),
+      await screen.findByRole('button', { name: /this button removes the filter: Specialist Contains Family Engagement Specialist, Grantee Specialist/i }),
     ).toBeVisible();
   });
 });

@@ -79,7 +79,7 @@ describe('FilterItem', () => {
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
-        'Grantee',
+        'Recipient',
         'Start date',
         'Creator',
         'Collaborator',
@@ -102,7 +102,7 @@ describe('FilterItem', () => {
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
-        'Grantee',
+        'Recipient',
         'Start date',
         'Creator',
         'Collaborator',

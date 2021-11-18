@@ -55,10 +55,10 @@ describe('My Alerts', () => {
     expect(reportIdColumnHeader).toBeVisible();
   });
 
-  test('displays grantee column', async () => {
+  test('displays recipient column', async () => {
     renderMyAlerts();
     const granteeColumnHeader = await screen.findByRole('columnheader', {
-      name: /grantee/i,
+      name: /recipient/i,
     });
     expect(granteeColumnHeader).toBeVisible();
   });

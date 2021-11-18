@@ -125,7 +125,7 @@ describe('ActivityReport', () => {
     renderActivityReport('new');
     const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
     await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeNull());
-    const nonGrantee = within(information).getByLabelText('Grantee');
+    const nonGrantee = within(information).getByLabelText('Recipient');
     fireEvent.click(nonGrantee);
     await waitFor(() => expect(screen.queryByLabelText('Program type(s) (Required)')).toBeVisible());
   });
@@ -150,9 +150,9 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       fetchMock.post('/api/activity-reports', { id: 1 });
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const grantee = within(information).getByLabelText('Grantee');
+      const grantee = within(information).getByLabelText('Recipient');
       fireEvent.click(grantee);
-      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
       await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
@@ -196,9 +196,9 @@ describe('ActivityReport', () => {
       it('Grantee', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const grantee = within(information).getByLabelText('Grantee');
+        const grantee = within(information).getByLabelText('Recipient');
         fireEvent.click(grantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
       });
@@ -206,9 +206,9 @@ describe('ActivityReport', () => {
       it('Non-grantee', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const nonGrantee = within(information).getByLabelText('Non-Grantee');
+        const nonGrantee = within(information).getByLabelText('Non-recipient');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-grantee name(s) (Required)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-recipient name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
       });
@@ -218,21 +218,21 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       let information = await screen.findByRole('group', { name: 'Who was the activity for?' });
 
-      const grantee = within(information).getByLabelText('Grantee');
+      const grantee = within(information).getByLabelText('Recipient');
       fireEvent.click(grantee);
 
-      let granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
+      let granteeSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
       reactSelectEvent.openMenu(granteeSelectbox);
       await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
       expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const nonGrantee = within(information).getByLabelText('Non-Grantee');
+      const nonGrantee = within(information).getByLabelText('Non-recipient');
       fireEvent.click(nonGrantee);
       fireEvent.click(grantee);
 
-      granteeSelectbox = await screen.findByLabelText(/grantee name\(s\)/i);
-      expect(within(granteeSelectbox).queryByText('Grantee Name')).toBeNull();
+      granteeSelectbox = await screen.findByLabelText(/recipient name\(s\)/i);
+      expect(within(granteeSelectbox).queryByText('Recipient Name')).toBeNull();
     });
 
     it('allows you to pick the same start and end date', async () => {

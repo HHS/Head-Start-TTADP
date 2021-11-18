@@ -151,8 +151,8 @@ describe('Activity report print and share view', () => {
       expect(screen.getByText(`${report.duration} hours`)).toBeInTheDocument();
       expect(screen.getByText(/training, virtual \(phone\)/i)).toBeInTheDocument();
 
-      const granteeRowHeader = screen.getByRole('rowheader', { name: /grantees/i });
-      expect(within(granteeRowHeader).getByText('Grantees')).toBeInTheDocument();
+      const granteeRowHeader = screen.getByRole('rowheader', { name: /recipients/i });
+      expect(within(granteeRowHeader).getByText('Recipients')).toBeInTheDocument();
 
       const resourcesTable = screen.getByRole('table', { name: /resources/i });
       expect(within(resourcesTable).getByRole('link', { name: /http:\/\/website/i })).toBeInTheDocument();
