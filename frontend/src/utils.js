@@ -58,8 +58,8 @@ export const getEditorState = (name) => {
   return EditorState.createWithContent(contentState);
 };
 
-export const getDistinctSortedArray = (arr, property) => {
-  let distinctList = arr.map((p) => p[property]).filter(((a) => a !== null));
+export const getDistinctSortedArray = (arr) => {
+  let distinctList = arr.filter(((a) => a !== null));
   distinctList = [...new Set(distinctList)];
   distinctList = distinctList.sort();
   return distinctList;

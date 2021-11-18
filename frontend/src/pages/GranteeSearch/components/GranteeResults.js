@@ -24,7 +24,8 @@ export default function GranteeResults(
 
   const renderGrantee = (grantee) => {
     // Get a unique sorted list of Program Specialists.
-    const psList = getDistinctSortedArray(grantee.grants, 'programSpecialistName').join(', ');
+    const valueArray = grantee.grants.map((p) => p.programSpecialistName);
+    const psList = getDistinctSortedArray(valueArray).join(', ');
     const grant = grantee.grants[0];
 
     const { number, regionId } = grant;
