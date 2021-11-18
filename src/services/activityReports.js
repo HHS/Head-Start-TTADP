@@ -313,7 +313,6 @@ export function activityReports(
   const where = {
     calculatedStatus: REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
-    startDate: { [Op.gte]: '2020-09-01' },
   };
 
   if (excludeLegacy) {

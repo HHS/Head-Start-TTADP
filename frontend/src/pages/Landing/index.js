@@ -179,11 +179,6 @@ function Landing({ user }) {
       condition: 'Contains',
       query: appliedRegion,
     },
-    {
-      topic: 'startDate',
-      condition: 'Is after',
-      query: '2020/08/31',
-    },
   ];
 
   return (
