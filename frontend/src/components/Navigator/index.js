@@ -98,9 +98,10 @@ function Navigator({
 
     updateFormData(data);
     try {
+      // Always clear the previous error message before a save.
+      updateErrorMessage();
       await onSave(data);
       updateLastSaveTime(moment());
-      updateErrorMessage();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
