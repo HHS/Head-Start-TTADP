@@ -180,10 +180,6 @@ h1.landing {
   padding: 2px;
 }
 
-.usa-table tr:nth-child(odd) {
-  background-color: #f8f8f8;
-}
-
 .smart-hub--status-draft {
   background: #e2eff7;
   color: #0166ab;
