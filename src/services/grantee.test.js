@@ -270,7 +270,7 @@ describe('Grantee DB service', () => {
     it('sorts based on name', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(3);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66, 68]);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([68, 63, 66]);
     });
 
     it('sorts based on program specialist', async () => {
