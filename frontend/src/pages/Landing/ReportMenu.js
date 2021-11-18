@@ -4,7 +4,7 @@ import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Container from '../../components/Container';
 
-const MAXIMUM_EXPORTED_REPORTS = 12000;
+export const MAXIMUM_EXPORTED_REPORTS = 12000;
 
 function ReportMenu({
   onExportAll,
