@@ -32,8 +32,6 @@ export default function GranteeSummary({ summary, regionId }) {
     return null;
   }
 
-  console.log(summary);
-
   return (
     <Container padding={0} className="ttahub--grantee-summary">
       <h2 className="ttahub-grantee-record--card-header padding-x-3 padding-y-3 margin-bottom-0">Grantee Summary</h2>
