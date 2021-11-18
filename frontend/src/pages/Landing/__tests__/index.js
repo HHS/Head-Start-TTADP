@@ -135,9 +135,9 @@ describe('Landing Page', () => {
     expect(reportIdColumnHeader).toBeVisible();
   });
 
-  test('displays grantee column', async () => {
+  test('displays recipient column', async () => {
     const granteeColumnHeader = await screen.findByRole('columnheader', {
-      name: /grantee/i,
+      name: /recipient/i,
     });
     expect(granteeColumnHeader).toBeVisible();
   });
@@ -354,7 +354,7 @@ describe('My alerts sorting', () => {
 
   it('is enabled for Grantee', async () => {
     const columnHeaders = await screen.findAllByRole('button', {
-      name: /grantee\. activate to sort ascending/i,
+      name: /recipient\. activate to sort ascending/i,
     });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();

@@ -383,7 +383,7 @@ describe('Table sorting', () => {
 
   it('clicking Grantee column header will sort by grantee', async () => {
     const columnHeader = await screen.findByRole('button', {
-      name: /grantee\. activate to sort ascending/i,
+      name: /recipient\. activate to sort ascending/i,
     });
 
     fetchMock.get(
