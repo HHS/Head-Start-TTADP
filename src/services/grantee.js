@@ -1,9 +1,9 @@
 import { Op } from 'sequelize';
 import {
-  Grant, Grantee, Program, ActivityRecipient, ActivityReport,
+  Grant, Grantee, Program,
 } from '../models';
 import orderGranteesBy from '../lib/orderGranteesBy';
-import { GRANTEES_PER_PAGE, REPORT_STATUSES } from '../constants';
+import { GRANTEES_PER_PAGE } from '../constants';
 
 export async function allGrantees() {
   return Grantee.findAll({
@@ -106,35 +106,11 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
     };
   }
 
-  const grantsWithActivityReports = await Grant.findAll({
-    attributes: ['id'],
-    [Op.and]: scopes,
-    include: [
-      {
-        model: ActivityRecipient,
-        as: 'activityRecipients',
-        attributes: ['id'],
-        include: [
-          {
-            attributes: [],
-            model: ActivityReport,
-            as: 'ActivityReport',
-            required: true,
-            where: {
-              startDate: {
-                [Op.gte]: '2020-09-01',
-              },
-              calculatedStatus: REPORT_STATUSES.APPROVED,
-            },
-          },
-        ],
-      },
-    ],
-  });
-
-  const matchingActivityReportGranteeIds = grantsWithActivityReports.map((grant) => grant.id);
-
   const limit = GRANTEES_PER_PAGE;
+
+  // We want grantees that have either
+  // - have a grant that expired gte 9/1/2020
+  // - have an active grant
 
   return Grantee.findAndCountAll({
     where: granteeWhere,
@@ -144,13 +120,17 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
         model: Grant,
         as: 'grants',
         where: {
+          [Op.and]: scopes,
           [Op.or]: [
             {
               status: 'Active',
-              id: matchingActivityReportGranteeIds,
+            },
+            {
+              endDate: {
+                [Op.gte]: '2020-09-01',
+              },
             },
           ],
-          [Op.and]: scopes,
         },
       },
     ],
