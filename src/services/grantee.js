@@ -25,7 +25,7 @@ export async function granteeById(granteeId, grantScopes) {
     },
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
+        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'granteeId'],
         model: Grant,
         as: 'grants',
         where: {
@@ -62,16 +62,19 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
 
   // first get all grants with numbers that match the query string
   const matchingGrantNumbers = await Grant.findAll({
+    attributes: [],
     where: {
       number: {
         [Op.iLike]: q, // sequelize automatically escapes this
       },
+      status: 'Active',
       [Op.and]: scopes,
     },
     include: [
       {
         model: Grantee,
         as: 'grantee',
+        attributes: ['id'],
       },
     ],
   });
@@ -105,15 +108,29 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
 
   const limit = GRANTEES_PER_PAGE;
 
+  // We want grantees that have either
+  // - have a grant that expired gte 9/1/2020
+  // - have an active grant
+
   return Grantee.findAndCountAll({
     where: granteeWhere,
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'programSpecialistName'],
+        attributes: ['id', 'number', 'regionId', 'programSpecialistName', 'grantSpecialistName'],
         model: Grant,
         as: 'grants',
         where: {
           [Op.and]: scopes,
+          [Op.or]: [
+            {
+              status: 'Active',
+            },
+            {
+              endDate: {
+                [Op.gte]: '2020-09-01',
+              },
+            },
+          ],
         },
       },
     ],

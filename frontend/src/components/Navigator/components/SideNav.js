@@ -3,7 +3,7 @@
   the nav items passed in as props. This component has lots of custom styles
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
@@ -40,6 +40,12 @@ const tagClass = (state) => {
 function SideNav({
   pages, skipTo, skipToMessage, lastSaveTime, errorMessage,
 }) {
+  const [fade, updateFade] = useState(true);
+
+  useEffect(() => {
+    updateFade(true);
+  }, [lastSaveTime, errorMessage]);
+
   const isMobile = useMediaQuery({ maxWidth: 1023 });
   const navItems = () => pages.map((page) => (
     <li key={page.label} className="smart-hub--navigator-item">
@@ -53,9 +59,9 @@ function SideNav({
         <span className="margin-left-auto margin-right-2">
           {page.state !== REPORT_STATUSES.DRAFT
             && (
-            <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
-              {startCase(page.state)}
-            </Tag>
+              <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
+                {startCase(page.state)}
+              </Tag>
             )}
         </span>
       </Button>
@@ -72,17 +78,17 @@ function SideNav({
       </Container>
       {errorMessage
         && (
-          <Alert type="error" slim noIcon className="smart-hub--save-alert">
+          <Alert type="error" onAnimationEnd={() => { updateFade(false); }} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
             {errorMessage}
           </Alert>
         )}
       {lastSaveTime && !errorMessage
         && (
-        <Alert aria-atomic aria-live="polite" type="success" slim noIcon className="smart-hub--save-alert">
-          This report was last saved on
-          {' '}
-          {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
-        </Alert>
+          <Alert onAnimationEnd={() => { updateFade(false); }} aria-atomic aria-live="polite" type="success" slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
+            This report was last saved on
+            {' '}
+            {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
+          </Alert>
         )}
     </Sticky>
   );
