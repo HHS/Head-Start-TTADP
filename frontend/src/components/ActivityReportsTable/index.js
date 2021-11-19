@@ -10,7 +10,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 
 import Pagination from 'react-js-pagination';
 
-import { getReports } from '../../fetchers/activityReports';
+import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
 import Filter, { filtersToQueryString } from '../Filter';
@@ -60,6 +60,7 @@ function ActivityReportsTable({
   const [perPage] = useState(REPORTS_PER_PAGE);
   const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
+  const [downloadError, setDownloadError] = useState(false);
   const [sortConfig, setSortConfig] = React.useState({
     sortBy: 'updatedAt',
     direction: 'desc',
@@ -150,10 +151,23 @@ function ActivityReportsTable({
     setSortConfig({ sortBy, direction });
   };
 
-  const handleDownloadAllReports = () => {
+  const handleDownloadAllReports = async () => {
     const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllReportsDownloadURL(filterQuery);
-    window.location.assign(downloadURL);
+
+    try {
+      // changed the way this works ever so slightly because I was thinking
+      // you'd want a try/catch around the fetching of the reports and not the
+      // window.location.assign
+
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      setDownloadError(true);
+    }
   };
 
   const handleDownloadClick = () => {
@@ -249,6 +263,7 @@ function ActivityReportsTable({
             onExportAll={handleDownloadAllReports}
             onExportSelected={handleDownloadClick}
             count={reportsCount}
+            downloadError={downloadError}
           />
         </span>
         <span className="smart-hub--table-nav">
