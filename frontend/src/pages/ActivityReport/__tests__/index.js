@@ -161,6 +161,28 @@ describe('ActivityReport', () => {
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
     });
 
+    it('assigns save alert fade animation', async () => {
+      renderActivityReport('new');
+      fetchMock.post('/api/activity-reports', { id: 1 });
+      let alerts = screen.queryByTestId('alert');
+      expect(alerts).toBeNull();
+      const button = await screen.findByRole('button', { name: 'Save draft' });
+      userEvent.click(button);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      alerts = await screen.findAllByTestId('alert');
+      expect(alerts.length).toBe(2);
+      expect(alerts[0]).toHaveClass('alert-fade');
+    });
+
+    it('displays review submit save alert', async () => {
+      renderActivityReport('new', 'review');
+      fetchMock.post('/api/activity-reports', { id: 1 });
+      const button = await screen.findByRole('button', { name: 'Save Draft' });
+      await userEvent.click(button);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      expect(await screen.findByText(/draft saved on/i)).toBeVisible();
+    });
+
     it('finds whats changed', () => {
       const old = {
         beans: 'kidney', dog: 'brown', beetle: ['what', 'yeah'], boat: { length: 1, color: 'green' },
