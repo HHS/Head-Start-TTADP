@@ -159,6 +159,14 @@ describe('Grantee DB service', () => {
         id: 66,
         name: 'Apple Sauce',
       },
+      {
+        id: 67,
+        name: 'Apple Butter',
+      },
+      {
+        id: 68,
+        name: 'Apple Crisp',
+      },
     ];
 
     const grants = [
@@ -168,6 +176,8 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12345',
         programSpecialistName: 'George',
+        status: 'Active',
+        endDate: new Date(2020, 10, 2),
         grantSpecialistName: 'Glen',
       },
       {
@@ -176,6 +186,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12346',
         programSpecialistName: 'Belle',
+        status: 'Active',
         grantSpecialistName: 'Ben',
       },
       {
@@ -184,6 +195,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '55557',
         programSpecialistName: 'Caesar',
+        status: 'Active',
         grantSpecialistName: 'Cassie',
       },
       {
@@ -192,6 +204,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '55558',
         programSpecialistName: 'Doris',
+        status: 'Active',
         grantSpecialistName: 'David',
       },
       {
@@ -200,6 +213,7 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12349',
         programSpecialistName: 'Eugene',
+        status: 'Active',
         grantSpecialistName: 'Eric',
       },
       {
@@ -208,6 +222,7 @@ describe('Grantee DB service', () => {
         regionId: 2,
         number: '12350',
         programSpecialistName: 'Farrah',
+        status: 'Active',
         grantSpecialistName: 'Frank',
       },
       {
@@ -216,6 +231,25 @@ describe('Grantee DB service', () => {
         regionId: 1,
         number: '12351',
         programSpecialistName: 'Aaron',
+        status: 'Active',
+        grantSpecialistName: 'Brom',
+      },
+      {
+        id: 57,
+        granteeId: 67,
+        regionId: 1,
+        number: '12352',
+        programSpecialistName: 'Jim',
+        status: 'Inactive',
+      },
+      {
+        id: 58,
+        granteeId: 68,
+        regionId: 1,
+        number: '12353',
+        programSpecialistName: 'Jim',
+        status: 'Inactive',
+        endDate: new Date(2020, 10, 31),
         grantSpecialistName: 'Allen',
       },
     ];
@@ -232,8 +266,10 @@ describe('Grantee DB service', () => {
 
     it('finds based on grantee name', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 0);
-      expect(foundGrantees.rows.length).toBe(2);
+      expect(foundGrantees.rows.length).toBe(3);
       expect(foundGrantees.rows.map((g) => g.id)).toContain(63);
+      expect(foundGrantees.rows.map((g) => g.id)).toContain(66);
+      expect(foundGrantees.rows.map((g) => g.id)).toContain(68);
     });
 
     it('finds based on grantee id', async () => {
@@ -250,32 +286,32 @@ describe('Grantee DB service', () => {
 
     it('sorts based on name', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 0);
-      expect(foundGrantees.rows.length).toBe(2);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66]);
+      expect(foundGrantees.rows.length).toBe(3);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([68, 63, 66]);
     });
 
     it('sorts based on program specialist', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'programSpecialist', 'asc', 0);
-      expect(foundGrantees.rows.length).toBe(2);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63]);
+      expect(foundGrantees.rows.length).toBe(3);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63, 68]);
     });
 
     it('sorts based on grant specialist', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'grantSpecialistName', 'desc', 0);
-      expect(foundGrantees.rows.length).toBe(2);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66]);
+      expect(foundGrantees.rows.length).toBe(3);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66, 68]);
     });
 
     it('respects sort order', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'name', 'desc', 0);
-      expect(foundGrantees.rows.length).toBe(2);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63]);
+      expect(foundGrantees.rows.length).toBe(3);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63, 68]);
     });
 
     it('respects the offset passed in', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 1);
-      expect(foundGrantees.rows.length).toBe(1);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66]);
+      expect(foundGrantees.rows.length).toBe(2);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66]);
     });
   });
 });
