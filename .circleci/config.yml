@@ -308,6 +308,7 @@ jobs:
           at: .
       - browser-tools/install-chrome:
           chrome-version: 93.0.0
+          replace-existing: true
       - browser-tools/install-chromedriver
       - run:
           name: Run migrations ci
