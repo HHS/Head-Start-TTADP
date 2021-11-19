@@ -1,6 +1,8 @@
 version: 2.1
 orbs:
   node: circleci/node@4.1.0
+  orbs: 
+    browser-tools: circleci/browser-tools@1.2.3
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
@@ -305,6 +307,9 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - browser-tools/install-chrome:
+          chrome-version: 93.0.0
+      - browser-tools/install-chromedriver
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
