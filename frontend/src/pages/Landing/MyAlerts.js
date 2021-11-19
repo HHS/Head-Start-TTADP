@@ -274,7 +274,7 @@ function MyAlerts(props) {
             hidePagination
           />
           <div className="usa-table-container--scrollable">
-            <Table className="usa-table usa-table--borderless" fullWidth>
+            <Table fullWidth striped>
               <caption className="smart-hub--table-caption usa-sr-only">
                 My activity report alerts with sorting
               </caption>
