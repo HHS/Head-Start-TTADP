@@ -2,9 +2,9 @@ import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { getRecipient, searchRecipients } from './handlers';
 import { granteeById, granteesByName } from '../../services/grantee';
 
-jest.mock('../../services/recipient', () => ({
-  recipientById: jest.fn(),
-  recipientsByName: jest.fn(),
+jest.mock('../../services/grantee', () => ({
+  granteeById: jest.fn(),
+  granteesByName: jest.fn(),
 }));
 
 describe('getRecipient', () => {
