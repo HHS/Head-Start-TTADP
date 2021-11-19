@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@axe-core/cli@^4.0.0":
+"@axe-core/cli@^4.3.1":
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/@axe-core/cli/-/cli-4.3.1.tgz#cf90b09d8d2abb1eb8aa1c486beab702aeb23d88"
   integrity sha512-pzBTUvOav1HC7+y6KipiD79WSnPy3+wx1HdbJkIe4PYZIm7WkaOAyrT117db0lbywoVWzStFWPpW97kHmnarwg==
@@ -8877,7 +8877,17 @@ selderee@^0.6.0:
   dependencies:
     parseley "^0.7.0"
 
-selenium-webdriver@^4.0.0-alpha.7, selenium-webdriver@^4.0.0-beta.4:
+selenium-webdriver@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/selenium-webdriver/-/selenium-webdriver-4.0.0.tgz#7dc8969facee3be634459e173f557b7e34308e73"
+  integrity sha512-tOlu6FnTjPq2FKpd153pl8o2cB7H40Rvl/ogiD2sapMv4IDjQqpIxbd+swDJe9UDLdszeh5CDis6lgy4e9UG1w==
+  dependencies:
+    jszip "^3.6.0"
+    rimraf "^3.0.2"
+    tmp "^0.2.1"
+    ws ">=7.4.6"
+
+selenium-webdriver@^4.0.0-beta.4:
   version "4.0.0-rc-1"
   resolved "https://registry.yarnpkg.com/selenium-webdriver/-/selenium-webdriver-4.0.0-rc-1.tgz#b1e7e5821298c8a071e988518dd6b759f0c41281"
   integrity sha512-bcrwFPRax8fifRP60p7xkWDGSJJoMkPAzufMlk5K2NyLPht/YZzR2WcIk1+3gR8VOCLlst1P2PI+MXACaFzpIw==
