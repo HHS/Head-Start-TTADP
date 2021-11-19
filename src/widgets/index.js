@@ -4,6 +4,7 @@ import dashboardOverview from './dashboardOverview';
 import totalHrsAndGranteeGraph from './totalHrsAndGranteeGraph';
 import reasonList from './reasonList';
 import topicFrequencyGraph from './topicFrequencyGraph';
+import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
 
 /*
@@ -16,5 +17,6 @@ export default {
   totalHrsAndGranteeGraph,
   reasonList,
   topicFrequencyGraph,
+  targetPopulationTable,
   frequencyGraph,
 };
