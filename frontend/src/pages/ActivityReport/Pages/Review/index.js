@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import Submitter from './Submitter';
@@ -21,6 +22,7 @@ const ReviewSubmit = ({
   onSaveForm,
   pages,
   updateShowValidationErrors,
+  lastSaveTime,
 }) => {
   const { additionalNotes, calculatedStatus } = formData;
 
@@ -84,6 +86,7 @@ const ReviewSubmit = ({
             formData={formData}
             error={error}
             onSaveForm={onSaveForm}
+            lastSaveTime={lastSaveTime}
           >
             <>
 
@@ -145,6 +148,7 @@ ReviewSubmit.propTypes = {
     state: PropTypes.string,
     label: PropTypes.string,
   })).isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment).isRequired,
 };
 
 export default ReviewSubmit;
