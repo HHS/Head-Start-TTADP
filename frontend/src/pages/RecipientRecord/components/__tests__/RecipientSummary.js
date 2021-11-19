@@ -63,7 +63,7 @@ describe('RecipientSummary', () => {
         },
       ],
     };
-    renderGranteeSummary(summary);
+    renderRecipientSummary(summary);
     const programSpecialists = await screen.findAllByText(/program specialist /i);
     expect(programSpecialists.length).toBe(3);
     expect(programSpecialists[0].firstChild.textContent).toBe('Program Specialist 1');
