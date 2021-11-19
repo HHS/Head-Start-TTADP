@@ -150,7 +150,7 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@cucumber/cucumber": "^7.0.0",
-    "chromedriver": "93.0.0",
+    "chromedriver": "96.0.0",
     "concurrently": "^6.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
