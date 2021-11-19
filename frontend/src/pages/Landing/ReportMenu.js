@@ -4,9 +4,7 @@ import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Container from '../../components/Container';
 
-import './ReportMenu.css';
-
-const MAXIMUM_EXPORTED_REPORTS = 2000;
+export const MAXIMUM_EXPORTED_REPORTS = 12000;
 
 function ReportMenu({
   onExportAll,
@@ -102,7 +100,7 @@ function ReportMenu({
                   role="menuitem"
                   onClick={onExportAll}
                   type="button"
-                  className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin"
+                  className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
                 >
                   Export table data
                 </button>
@@ -112,7 +110,7 @@ function ReportMenu({
                 role="menuitem"
                 onClick={onExportSelected}
                 type="button"
-                className="usa-button usa-button--unstyled smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
+                className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
               >
                 Export selected reports
               </button>
