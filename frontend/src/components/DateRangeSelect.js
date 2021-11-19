@@ -118,12 +118,14 @@ function DateRangeSelect(props) {
   const [selectedItem, setSelectedItem] = useState(1);
   const [showDateError, setShowDateError] = useState(false);
 
-  // to handle the internal range
-  const [startDate, setStartDate] = useState();
-  const [startDateFocused, setStartDateFocused] = useState(false);
-  const [endDate, setEndDate] = useState();
-  const [endDateFocused, setEndDateFocused] = useState(false);
+  const [dates, setDates] = useState({
+    startDate: false,
+    endDate: false,
+  });
 
+  // to handle the internal range
+  const [startDateFocused, setStartDateFocused] = useState(false);
+  const [endDateFocused, setEndDateFocused] = useState(false);
   const startDatePickerId = 'startDatePicker';
 
   /** when to focus on the start date input */
@@ -141,6 +143,7 @@ function DateRangeSelect(props) {
    *
    */
   const onApplyClick = () => {
+    const { startDate, endDate } = dates;
     if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
       const range = `${startDate ? startDate.format(DATETIME_DATE_FORMAT) : ''}-${endDate ? endDate.format(DATETIME_DATE_FORMAT) : ''}`;
       const isValidDateRange = range.trim().split('-').filter((str) => str !== '').length === 2;
@@ -188,9 +191,10 @@ function DateRangeSelect(props) {
    */
 
   const isOutsideRange = (day, startOrEnd) => {
+    const { startDate } = dates;
+
     if (startOrEnd === 'start') {
-      return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)
-        || (endDate && day.isAfter(endDate));
+      return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE);
     }
 
     return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)
@@ -256,17 +260,32 @@ function DateRangeSelect(props) {
                     focused={startDateFocused}
                     numberOfMonths={1}
                     hideKeyboardShortcutsPanel
-                    isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onFocusChange={({ focused }) => {
                       if (!focused) {
                         setStartDateFocused(focused);
                       }
                     }}
+                    isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onDateChange={(selectedDate) => {
-                      setStartDate(selectedDate);
+                      // weird that we'd have to explicitly do this
+                      // but otherwise things get all wacky when you
+                      // type in a date that's different than the end date
+                      if (!selectedDate) {
+                        return;
+                      }
+
+                      const { startDate, endDate } = dates;
+                      if (endDate && endDate.isBefore(selectedDate)) {
+                        const diff = endDate.diff(startDate, 'days');
+                        const newEnd = moment(selectedDate).add(diff, 'days');
+                        setDates({ endDate: newEnd, startDate: selectedDate });
+                      } else {
+                        setDates({ ...dates, startDate: selectedDate });
+                      }
+
                       setStartDateFocused(false);
                     }}
-                    date={startDate}
+                    date={dates.startDate || null /* this is to prevent prop type warnings */}
                   />
                   <Button
                     onClick={() => setStartDateFocused(true)}
@@ -296,10 +315,11 @@ function DateRangeSelect(props) {
                       }
                     }}
                     onDateChange={(selectedDate) => {
-                      setEndDate(selectedDate);
+                      const endDate = selectedDate;
+                      setDates({ ...dates, endDate });
                       setEndDateFocused(false);
                     }}
-                    date={endDate}
+                    date={dates.endDate || null /* this is to prevent prop type warnings */}
                   />
                   <Button
                     onClick={() => setEndDateFocused(true)}
@@ -331,7 +351,6 @@ DateRangeSelect.propTypes = {
   options: PropTypes.arrayOf(optionProp),
   disabled: PropTypes.bool,
   styleAsSelect: PropTypes.bool,
-
   // props for handling the date range select
   updateDateRange: PropTypes.func.isRequired,
 };
