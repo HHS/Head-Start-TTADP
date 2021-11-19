@@ -90,9 +90,8 @@ export function DashboardOverviewWidget({
       { fields.map((field) => {
         const fieldToDisplay = DASHBOARD_FIELDS.find((dbField) => dbField.key === field);
         if (fieldToDisplay) {
-          return fieldToDisplay.render(data, showTooltips);
+          return fieldToDisplay.render(data, showTooltips, field);
         }
-
         return null;
       })}
     </Grid>
