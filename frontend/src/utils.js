@@ -57,3 +57,10 @@ export const getEditorState = (name) => {
   const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
   return EditorState.createWithContent(contentState);
 };
+
+export const getDistinctSortedArray = (arr) => {
+  let distinctList = arr.filter(((a) => a !== null));
+  distinctList = [...new Set(distinctList)];
+  distinctList = distinctList.sort();
+  return distinctList;
+};
