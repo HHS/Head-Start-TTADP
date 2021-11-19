@@ -1,3 +1,5 @@
-.ttahub-filter-menu [aria-label="open filters for this page"] + .smart-hub--dropdown-menu--contents {
-    min-width: 700px;
+@media(min-width: 700px) {
+  .ttahub-filter-menu [aria-label="open filters for this page"] + .smart-hub--dropdown-menu--contents {
+      min-width: 700px;
+  }
 }

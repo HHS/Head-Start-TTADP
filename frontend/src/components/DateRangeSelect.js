@@ -211,6 +211,7 @@ function DateRangeSelect(props) {
       onApply={onApplyClick}
       menuName="Date range select menu"
       applyButtonAria="Apply date range filters"
+      className="margin-left-0 desktop:margin-left-1"
     >
       <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">
         <span className="smart-hub--button-select-menu-label" id="dateRangeSelectLabel">

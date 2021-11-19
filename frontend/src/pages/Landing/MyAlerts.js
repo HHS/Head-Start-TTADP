@@ -13,10 +13,9 @@ import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
-import Filter from '../../components/Filter';
-import ReportMenu from './ReportMenu';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
+import TableHeader from '../../components/TableHeader';
 
 function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -274,37 +273,22 @@ function MyAlerts(props) {
 
       {reports && (reports.length > 0 || hasFilters) && (
         <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
-          <span className="smart-hub--alerts-table-controls display-flex flex-row flex-align-center">
-            <Filter applyFilters={updateReportFilters} forMyAlerts />
-            <ReportMenu
-              label="My Alerts report menu"
-              hasSelectedReports={false}
-              onExportAll={handleDownloadAllAlerts}
-            />
-          </span>
-          <span className="smart-hub--table-nav">
-            <span
-              id="alertsTotalCount"
-              aria-label={`Displaying rows ${renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}`}
-            >
-              {renderTotal(
-                alertsOffset,
-                alertsPerPage,
-                alertsActivePage,
-                alertReportsCount,
-              )}
-            </span>
-          </span>
+          <TableHeader
+            title="My activity report alerts"
+            showFilter
+            forMyAlerts
+            onUpdateFilters={updateReportFilters}
+            handleDownloadAll={handleDownloadAllAlerts}
+            count={alertReportsCount}
+            activePage={alertsActivePage}
+            offset={alertsOffset}
+            perPage={alertsPerPage}
+            hidePagination
+          />
           <div className="usa-table-container--scrollable">
             <Table className="usa-table usa-table--borderless" fullWidth>
-              <caption className="smart-hub--table-caption">
-                My activity report alerts
-                <p className="usa-sr-only">with sorting</p>
+              <caption className="smart-hub--table-caption usa-sr-only">
+                My activity report alerts with sorting
               </caption>
               <thead>
                 <tr>

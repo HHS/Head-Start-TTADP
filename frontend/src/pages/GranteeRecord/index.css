@@ -1,3 +1,9 @@
+.ttahub-grantee-record--heading {
+    font-size: 40px;
+    font-family: "Merriweather", serif;
+    font-weight: 700;
+}
+
 .ttahub-grantee-record--card-header {
     border-bottom: 1px solid #eceef1;
     font-size: 1.17em;
