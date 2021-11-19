@@ -1,53 +1,36 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Table } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
-import Container from '../components/Container';
-import DateTime from '../components/DateTime';
-import './ReasonList.css';
-import FormatNumber from './WidgetHelper';
+import formatNumber from './WidgetHelper';
+import TableWidget from './TableWidget';
+
+const renderReasonList = (data) => {
+  if (data && Array.isArray(data) && data.length > 0) {
+    return data.map((reason) => (
+      <tr key={`reason_list_row_${reason.name}`}>
+        <td>
+          {reason.name}
+        </td>
+        <td>
+          {formatNumber(reason.count)}
+        </td>
+      </tr>
+    ));
+  }
+  return null;
+};
 
 function ReasonList({ data, dateTime, loading }) {
-  const renderReasonList = () => {
-    if (data && Array.isArray(data) && data.length > 0) {
-      return data.map((reason) => (
-        <tr key={`reason_list_row_${reason.name}`}>
-          <td>
-            {reason.name}
-          </td>
-          <td>
-            {FormatNumber(reason.count)}
-          </td>
-        </tr>
-      ));
-    }
-    return null;
-  };
-
   return (
-    <Container className="reason-list shadow-2" padding={3} loading={loading} loadingLabel="Reason list loading">
-      <div className="usa-table-container--scrollable margin-top-0">
-        <Table className="smart-hub--reason-list-table" fullWidth>
-          <caption className="smart-hub--reason-list-caption">
-            <div className="display-flex flex-wrap flex-align-center">
-              <h2 className="smart-hub--reason-list-heading ttahub--dashboard-widget-heading margin-0">Reasons in Activity Reports</h2>
-              <DateTime classNames="margin-left-1 padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
-            </div>
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col" className="text-left">Reason</th>
-              <th scope="col" className="text-left"># of Activities</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              renderReasonList()
-            }
-          </tbody>
-        </Table>
-      </div>
-    </Container>
+    <TableWidget
+      data={data}
+      headings={['Reason', '# of Activities']}
+      dateTime={dateTime}
+      loading={loading}
+      loadingLabel="Reason list loading"
+      title="Reasons in Activity Reports"
+      renderData={renderReasonList}
+    />
   );
 }
 

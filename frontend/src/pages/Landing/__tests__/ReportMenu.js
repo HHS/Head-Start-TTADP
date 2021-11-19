@@ -72,7 +72,7 @@ describe('ReportMenu', () => {
     expect(menu).not.toBeInTheDocument();
   });
 
-  it('disables the button and shows the error message when there are too many reports', async () => {
+  it('shows the error message when there are too many reports', async () => {
     render(<RenderReportMenu count={MAXIMUM_EXPORTED_REPORTS + 1} hasSelectedReports={false} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);

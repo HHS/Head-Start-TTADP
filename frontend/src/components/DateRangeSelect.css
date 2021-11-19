@@ -1,3 +1,28 @@
+/**
+** Date range picker styles
+*/
+
+.smart-hub--button-select-menu-date-picker {
+    border-top: 1px solid #eceef1;
+    padding: 0 1rem;    
+}
+
+.smart-hub--button-select-menu-date-picker-single {
+    display: flex;
+}
+
+.smart-hub--button-select-menu-date-picker-single .SingleDatePicker{
+    flex: 2;
+}
+.smart-hub--button-select-menu-date-picker-single .SingleDatePickerInput {
+    display: block;
+}
+
+.smart-hub--button-select-menu .DateInput {
+    width: 100%;
+}
+
+
 .smart-hub--date-range-select-toggle-btn {
     justify-content: space-between;
     min-width: 200px;

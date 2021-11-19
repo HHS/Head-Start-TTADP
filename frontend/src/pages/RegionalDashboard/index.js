@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-
 import RegionalSelect from '../../components/RegionalSelect';
-import DateRangeSelect from './components/DateRangeSelect';
+import DateRangeSelect, { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
-import TopicFrequencyGraph, { ROLES_MAP } from '../../widgets/TopicFrequencyGraph';
+import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
 import DateTime from '../../components/DateTime';
 import { getUserRegions } from '../../permissions';
-import { CUSTOM_DATE_RANGE } from './constants';
-import formatDateRange from './formatDateRange';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
@@ -20,14 +17,12 @@ import './index.css';
  *
  * format the date range for display
  */
-function getDateTimeObject(selectedOption, dateRange) {
+function getDateTimeObject(dateRange) {
   const timestamp = formatDateRange({
-    lastThirtyDays: selectedOption === 1,
     forDateTime: true,
     string: dateRange,
   });
   const label = formatDateRange({
-    lastThirtyDays: selectedOption === 1,
     withSpaces: true,
     string: dateRange,
   });
@@ -46,9 +41,10 @@ export default function RegionalDashboard({ user }) {
 
   // eslint-disable-next-line max-len
   const [appliedRegion, updateAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
-  const [selectedDateRangeOption, updateSelectedDateRangeOption] = useState(1);
   const [dateRange, updateDateRange] = useState(defaultDate);
-  const [dateTime, setDateTime] = useState(getDateTimeObject(1, defaultDate));
+
+  // this can be killed when we add the new filters to this page
+  const [roleFilter, updateRoleFilter] = useState();
 
   /*
     *    the idea is that this filters variable, which roughly matches
@@ -56,45 +52,22 @@ export default function RegionalDashboard({ user }) {
     *    would be passed down into each visualization
     */
 
-  const [filters, updateFilters] = useState([]);
-  const [roleFilter, updateRoleFilter] = useState();
+  const filters = [
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: appliedRegion,
+    },
+    {
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'Is within',
+      query: dateRange,
+    },
+  ];
 
-  useEffect(() => {
-    setDateTime(getDateTimeObject(selectedDateRangeOption, dateRange));
-  }, [selectedDateRangeOption, dateRange]);
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    // The number and nature of the filters is static, so we can just update them like so
-    const filtersToApply = [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'Contains',
-        query: appliedRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'Is within',
-        query: dateRange,
-      },
-    ];
-
-    updateFilters(filtersToApply);
-  },
-  [appliedRegion, dateRange, user]);
-
-  useEffect(() => {
-    const isCustom = selectedDateRangeOption === CUSTOM_DATE_RANGE;
-    if (!isCustom) {
-      const newRange = formatDateRange({ lastThirtyDays: true, forDateTime: true });
-      updateDateRange(newRange);
-    }
-  }, [selectedDateRangeOption]);
+  const dateTime = getDateTimeObject(dateRange);
 
   const onApplyRegion = (region) => {
     const regionId = region.value;
@@ -102,12 +75,7 @@ export default function RegionalDashboard({ user }) {
   };
 
   const updateRoles = (selectedRoles) => {
-    updateRoleFilter(selectedRoles.map((role) => ROLES_MAP.find((r) => r.selectValue === role)).map((r) => r.value).join(','));
-  };
-
-  const onApplyDateRange = (range) => {
-    const rangeId = range.value;
-    updateSelectedDateRangeOption(rangeId);
+    updateRoleFilter(selectedRoles);
   };
 
   if (!user) {
@@ -141,13 +109,7 @@ export default function RegionalDashboard({ user }) {
                 />
               )}
             <DateRangeSelect
-              selectedDateRangeOption={selectedDateRangeOption}
-              onApply={onApplyDateRange}
-              applied={selectedDateRangeOption}
-              customDateRangeOption={CUSTOM_DATE_RANGE}
-              dateRange={dateRange}
               updateDateRange={updateDateRange}
-              dateTime={dateTime}
             />
             <DateTime classNames="display-flex flex-align-center" timestamp={dateTime.timestamp} label={dateTime.label} />
           </Grid>
@@ -174,14 +136,15 @@ export default function RegionalDashboard({ user }) {
             <TopicFrequencyGraph
               filters={
                 roleFilter
-                  ? [...filters, {
-                    id: uuidv4(),
-                    topic: 'role',
-                    condition: 'Contains',
-                    query: roleFilter,
-                  }] : filters
+                  ? [...filters,
+                    ...roleFilter.map((role) => ({
+                      id: uuidv4(),
+                      topic: 'role',
+                      condition: 'Contains',
+                      query: role,
+                    }))] : filters
               }
-              updateRoles={updateRoles}
+              onApplyRoles={updateRoles}
               dateTime={dateTime}
             />
           </Grid>
