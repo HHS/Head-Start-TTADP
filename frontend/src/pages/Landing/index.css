@@ -56,36 +56,16 @@ div.smart-hub--total-count {
   padding: 2px;
 }
 
-.smart-hub--table-controls {
-  /* position: relative;
-  float: left;
-  margin-left: 275px;
-  margin-bottom: -90px;
-  margin-top: 24px; */
-}
-
-.smart-hub--alerts-table-controls {
-  /* position: relative;
-  float: left;
-  margin-left: 275px;
-  margin-bottom: -90px;
-  margin-top: 24px; */
-}
-
 .smart-hub-bg-vivid {
   background-color: #0166ab;
 }
 
 .landing .smart-hub--table-nav {
   position: relative;
-  /* float: right; */
   font-size: 16px;
   font-weight: 500;
   font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
     sans-serif;
-  /* margin-right: 20px;
-  margin-top: 27px;
-  margin-bottom: -90px; */
 }
 
 #alertsTotalCount {
