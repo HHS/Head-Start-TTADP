@@ -235,37 +235,6 @@ describe('ActivityReport', () => {
       expect(within(granteeSelectbox).queryByText('Recipient Name')).toBeNull();
     });
 
-    it('allows you to pick the same start and end date', async () => {
-      // render a new activity report
-      renderActivityReport('new');
-
-      // we need to wait for the page to render, that's what this is for
-      const dateSection = await screen.findByRole('group', { name: 'Activity date' });
-
-      // get the start date text box and type in a date
-      const startDate = within(dateSection).getByRole('textbox', { name: /start date \(required\), month\/day\/year, edit text/i });
-      userEvent.type(startDate, '12/25/1967');
-
-      // then type in a different date in the end date box
-      const endDate = within(dateSection).getByRole('textbox', { name: /end date \(required\), month\/day\/year, edit text/i });
-      userEvent.type(endDate, '12/26/1967');
-
-      // then change the start date to a date after the end date
-      userEvent.clear(startDate);
-      userEvent.type(startDate, '12/28/1967');
-
-      // expect an error
-      expect(endDate).toBeDisabled();
-
-      // then change the start date to a date after the end date
-      userEvent.clear(startDate);
-      userEvent.type(startDate, '12/26/1967');
-
-      // expect everything to be ok
-      expect(endDate).toBeEnabled();
-      await screen.findAllByDisplayValue('12/26/1967');
-    });
-
     it('unflattens resources properly', async () => {
       const empty = unflattenResourcesUsed(undefined);
       expect(empty).toEqual([]);

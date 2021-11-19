@@ -5,6 +5,7 @@ import Pagination from 'react-js-pagination';
 import Container from '../../../components/Container';
 import { renderTotal } from '../../Landing';
 import './RecipientResults.css';
+import { getDistinctSortedArray } from '../../../utils';
 
 export default function RecipientResults(
   {
@@ -22,15 +23,18 @@ export default function RecipientResults(
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
   const renderRecipient = (recipient) => {
+    // Get a unique sorted list of Program Specialists.
+    const valueArray = recipient.grants.map((p) => p.programSpecialistName);
+    const psList = getDistinctSortedArray(valueArray).join(', ');
     const grant = recipient.grants[0];
 
-    const { number, regionId, programSpecialistName } = grant;
+    const { number, regionId } = grant;
 
     return (
       <tr key={recipient.id + number}>
         <td>{regionId}</td>
         <td><Link to={`/recipient/${recipient.id}/profile?region=${regionId}`}>{recipient.name}</Link></td>
-        <td>{programSpecialistName}</td>
+        <td className="maxw-3">{psList}</td>
       </tr>
     );
   };

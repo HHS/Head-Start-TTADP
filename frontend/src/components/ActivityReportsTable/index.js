@@ -280,7 +280,7 @@ function ActivityReportsTable({
           </span>
         </span>
         <div className="usa-table-container--scrollable">
-          <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
+          <Table fullWidth striped>
             <caption>
               {tableCaption}
               <p className="usa-sr-only">with sorting and pagination</p>

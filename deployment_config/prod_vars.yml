@@ -1,6 +1,6 @@
 env: prod
 web_instances: 3
-web_memory: 2GB
+web_memory: 4GB
 worker_instances: 1
 worker_memory: 512M
 LOG_LEVEL: info

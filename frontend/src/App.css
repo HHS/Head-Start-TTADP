@@ -73,6 +73,13 @@ body {
   opacity: 0.7;
 }
 
+
+/* ========== Table stripe overrride ========== */
+.usa-table--striped tbody tr:nth-child(2n+1) td, .usa-table--striped tbody tr:nth-child(2n+1) th {
+  background-color: #f8f8f8;
+}
+
+
 /* ========== Print Styles ========== */
 
 /* This is for elements that in the DOM that should appear only when printing */
