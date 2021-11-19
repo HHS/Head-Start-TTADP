@@ -2,16 +2,26 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './GranteeSummary.css';
+import { getDistinctSortedArray } from '../../../utils';
 
-function GranteeInformationSection({ heading, grants, property }) {
+function GranteeInformationSection({
+  heading, grants, property, distinct,
+}) {
+  let valueList = grants.map((p) => p[property]).filter((v) => v);
+  if (distinct) {
+    valueList = getDistinctSortedArray(valueList);
+  }
+
   return (
     <div className="margin-bottom-2">
       <p className="margin-y-1"><strong>{heading}</strong></p>
-      { grants.map((grant) => (
-        <p className="margin-y-1" key={`${grant.id}_${property}`}>
-          {grant[property]}
-        </p>
-      ))}
+      {
+        valueList.map((item) => (
+          <p className="margin-y-1" key={`${item}_${property}`}>
+            {item}
+          </p>
+        ))
+      }
     </div>
   );
 }
@@ -19,12 +29,17 @@ function GranteeInformationSection({ heading, grants, property }) {
 GranteeInformationSection.propTypes = {
   heading: PropTypes.string.isRequired,
   property: PropTypes.string.isRequired,
+  distinct: PropTypes.bool,
   grants: PropTypes.arrayOf(PropTypes.shape({
     number: PropTypes.string,
     status: PropTypes.string,
     endDate: PropTypes.string,
     id: PropTypes.number,
   })).isRequired,
+};
+
+GranteeInformationSection.defaultProps = {
+  distinct: false,
 };
 
 export default function GranteeSummary({ summary, regionId }) {
@@ -50,8 +65,9 @@ export default function GranteeSummary({ summary, regionId }) {
             {summary.granteeId}
           </p>
         </div>
-        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={summary.grants} />
-        <GranteeInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} />
+        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={[{ granteeType: summary.granteeType }]} />
+        <GranteeInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} distinct />
+        <GranteeInformationSection heading="Grant Specialist" property="grantSpecialistName" grants={summary.grants} distinct />
       </div>
 
     </Container>
@@ -62,6 +78,7 @@ GranteeSummary.propTypes = {
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   summary: PropTypes.shape({
     granteeId: PropTypes.string,
+    granteeType: PropTypes.string,
     grants: PropTypes.arrayOf(
       PropTypes.shape({
         number: PropTypes.string,
@@ -76,6 +93,7 @@ GranteeSummary.propTypes = {
 GranteeSummary.defaultProps = {
   summary: {
     granteeId: '',
+    granteeType: '',
     grants: [],
   },
 };
