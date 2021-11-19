@@ -1,11 +1,5 @@
-.landing {
-  font-family: "Merriweather", serif;
-}
-
 .pagination {
-  float: right;
   white-space: nowrap;
-  margin-top: -9px;
   margin-bottom: 0px;
   padding-left: 20px;
 }
@@ -63,19 +57,19 @@ div.smart-hub--total-count {
 }
 
 .smart-hub--table-controls {
-  position: relative;
+  /* position: relative;
   float: left;
   margin-left: 275px;
   margin-bottom: -90px;
-  margin-top: 24px;
+  margin-top: 24px; */
 }
 
 .smart-hub--alerts-table-controls {
-  position: relative;
+  /* position: relative;
   float: left;
   margin-left: 275px;
   margin-bottom: -90px;
-  margin-top: 24px;
+  margin-top: 24px; */
 }
 
 .smart-hub-bg-vivid {
@@ -84,14 +78,14 @@ div.smart-hub--total-count {
 
 .landing .smart-hub--table-nav {
   position: relative;
-  float: right;
+  /* float: right; */
   font-size: 16px;
   font-weight: 500;
   font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
     sans-serif;
-  margin-right: 20px;
+  /* margin-right: 20px;
   margin-top: 27px;
-  margin-bottom: -90px;
+  margin-bottom: -90px; */
 }
 
 #alertsTotalCount {
@@ -118,7 +112,7 @@ h1.landing {
 }
 
 .landing .usa-table caption {
-  font-size: 21px;
+  font-size: 23.36px;
   font-weight: 900;
   padding: 8px 0px 17px 20px;
   margin-bottom: -0.25rem;

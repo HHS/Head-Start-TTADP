@@ -13,6 +13,5 @@
 @media(max-width: 768px) {
   .ttahub--frequency-graph-control-row {
       display: block;
-      width: 100%;
   }
 }
