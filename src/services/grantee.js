@@ -35,7 +35,7 @@ export async function granteeById(granteeId, grantScopes) {
         },
         include: [
           {
-            attributes: ['name'],
+            attributes: ['name', 'programType'],
             model: Program,
             as: 'programs',
           },
