@@ -232,7 +232,7 @@ function ActivityReportsTable({
           downloadError={downloadError}
         />
         <div className="usa-table-container--scrollable">
-          <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
+          <Table fullWidth striped>
             <caption className="usa-sr-only">
               {tableCaption}
               with sorting and pagination

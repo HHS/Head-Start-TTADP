@@ -36,6 +36,7 @@ export default function TableHeader({
   handlePageChange,
   hidePagination,
   forMyAlerts,
+  downloadError,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -73,6 +74,7 @@ export default function TableHeader({
             onExportAll={handleDownloadAll}
             onExportSelected={handleDownloadClick}
             count={count}
+            downloadError={downloadError}
           />
           ) }
         </span>
@@ -129,6 +131,7 @@ TableHeader.propTypes = {
   handlePageChange: PropTypes.func,
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
+  downloadError: PropTypes.bool,
 };
 
 TableHeader.defaultProps = {
@@ -147,4 +150,5 @@ TableHeader.defaultProps = {
   handlePageChange: () => {},
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
+  downloadError: false,
 };
