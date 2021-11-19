@@ -91,14 +91,6 @@ h1.landing {
   line-height: 2.5;
 }
 
-.landing .usa-table caption {
-  font-size: 23.36px;
-  font-weight: 900;
-  padding: 8px 0px 17px 20px;
-  margin-bottom: -0.25rem;
-  margin-top: 1px;
-}
-
 .landing .usa-table thead th a {
   cursor: pointer;
 }
@@ -109,7 +101,6 @@ h1.landing {
   border-top: solid 1.5px;
   border-color: #eceef1;
   border-bottom: none;
-
   padding-right: 0px;
 }
 
