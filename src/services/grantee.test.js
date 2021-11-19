@@ -232,6 +232,7 @@ describe('Grantee DB service', () => {
         number: '12351',
         programSpecialistName: 'Aaron',
         status: 'Active',
+        grantSpecialistName: 'Brom',
       },
       {
         id: 57,
@@ -298,7 +299,7 @@ describe('Grantee DB service', () => {
     it('sorts based on grant specialist', async () => {
       const foundGrantees = await granteesByName('apple', 1, 'grantSpecialistName', 'desc', 0);
       expect(foundGrantees.rows.length).toBe(3);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 68, 66]);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66, 68]);
     });
 
     it('respects sort order', async () => {
