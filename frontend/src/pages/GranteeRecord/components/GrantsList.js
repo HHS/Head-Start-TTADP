@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
 import './GrantsList.css';
+import { getDistinctSortedArray } from '../../../utils';
 
 export default function GrantsList({ summary }) {
   const renderGrantsList = () => {
@@ -18,7 +19,7 @@ export default function GrantsList({ summary }) {
             {grant.status}
           </td>
           <td>
-            {grant.programs ? grant.programs.map((program) => program.programType).join(', ') : ''}
+            {grant.programs ? getDistinctSortedArray(grant.programs.map((program) => program.programType)).join(', ') : ''}
           </td>
           <td>
             {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
