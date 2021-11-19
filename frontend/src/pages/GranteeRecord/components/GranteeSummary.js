@@ -29,13 +29,17 @@ function GranteeInformationSection({
 GranteeInformationSection.propTypes = {
   heading: PropTypes.string.isRequired,
   property: PropTypes.string.isRequired,
-  distinct: PropTypes.bool.isRequired,
+  distinct: PropTypes.bool,
   grants: PropTypes.arrayOf(PropTypes.shape({
     number: PropTypes.string,
     status: PropTypes.string,
     endDate: PropTypes.string,
     id: PropTypes.number,
   })).isRequired,
+};
+
+GranteeInformationSection.defaultProps = {
+  distinct: false,
 };
 
 export default function GranteeSummary({ summary, regionId }) {
@@ -61,7 +65,7 @@ export default function GranteeSummary({ summary, regionId }) {
             {summary.granteeId}
           </p>
         </div>
-        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={summary.grants} distinct={false} />
+        <GranteeInformationSection heading="Grantee Type" property="granteeType" grants={[{ granteeType: summary.granteeType }]} />
         <GranteeInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} distinct />
         <GranteeInformationSection heading="Grant Specialist" property="grantSpecialistName" grants={summary.grants} distinct />
       </div>
@@ -74,6 +78,7 @@ GranteeSummary.propTypes = {
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   summary: PropTypes.shape({
     granteeId: PropTypes.string,
+    granteeType: PropTypes.string,
     grants: PropTypes.arrayOf(
       PropTypes.shape({
         number: PropTypes.string,
@@ -88,6 +93,7 @@ GranteeSummary.propTypes = {
 GranteeSummary.defaultProps = {
   summary: {
     granteeId: '',
+    granteeType: '',
     grants: [],
   },
 };

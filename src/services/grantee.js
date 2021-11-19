@@ -19,7 +19,7 @@ export async function allGrantees() {
 
 export async function granteeById(granteeId, grantScopes) {
   return Grantee.findOne({
-    attributes: ['id', 'name'],
+    attributes: ['id', 'name', 'granteeType'],
     where: {
       id: granteeId,
     },

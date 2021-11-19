@@ -8,9 +8,10 @@ describe('GranteeSummary', () => {
     render(<div data-testid="grantee-summary-container"><GranteeSummary summary={summary} regionId={12} /></div>);
   };
 
-  it('renders the grantee summary approriately', async () => {
+  it('renders the grantee summary appropriately', async () => {
     const summary = {
       granteeId: '44',
+      granteeType: 'Frog Stuff',
       grants: [
         {
           number: 'asdfsjkfd',
@@ -22,6 +23,7 @@ describe('GranteeSummary', () => {
     renderGranteeSummary(summary);
 
     expect(screen.getByText('44')).toBeInTheDocument();
+    expect(screen.getByText(/frog stuff/i)).toBeInTheDocument();
   });
 
   it('renders nothing when it receives nothing', async () => {
