@@ -82,6 +82,11 @@ export const reviewReport = async (reportId, data) => {
   return report.json();
 };
 
+export const downloadReports = async (url) => {
+  const download = await get(url);
+  return download.blob();
+};
+
 export const resetToDraft = async (reportId) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'reset');
   const response = await put(url);
