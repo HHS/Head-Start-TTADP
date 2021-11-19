@@ -9,14 +9,17 @@ describe('Grantee DB service', () => {
     {
       id: 73,
       name: 'grantee 1',
+      granteeType: 'grantee type 1',
     },
     {
       id: 74,
       name: 'grantee 2',
+      granteeType: 'grantee type 2',
     },
     {
       id: 75,
       name: 'grantee 3',
+      granteeType: 'grantee type 3',
     },
   ];
 
@@ -89,6 +92,9 @@ describe('Grantee DB service', () => {
 
       // Grantee Name.
       expect(grantee3.name).toBe('grantee 3');
+
+      // Grantee Type.
+      expect(grantee3.granteeType).toBe('grantee type 3');
 
       // Number of Grants.
       expect(grantee3.grants.length).toBe(1);
