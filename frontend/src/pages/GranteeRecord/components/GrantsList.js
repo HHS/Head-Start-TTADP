@@ -18,7 +18,7 @@ export default function GrantsList({ summary }) {
             {grant.status}
           </td>
           <td>
-            {grant.programs ? grant.programs.map((program) => program.name).join(', ') : ''}
+            {grant.programs ? grant.programs.map((program) => program.programType).join(', ') : ''}
           </td>
           <td>
             {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
@@ -41,7 +41,7 @@ export default function GrantsList({ summary }) {
             <tr>
               <th scope="col">Grant Number</th>
               <th scope="col">Status</th>
-              <th scope="col">Programs</th>
+              <th scope="col">Program Type(s)</th>
               <th scope="col">Project End Date</th>
             </tr>
           </thead>
