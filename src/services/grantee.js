@@ -19,13 +19,13 @@ export async function allGrantees() {
 
 export async function granteeById(granteeId, grantScopes) {
   return Grantee.findOne({
-    attributes: ['id', 'name'],
+    attributes: ['id', 'name', 'granteeType'],
     where: {
       id: granteeId,
     },
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'granteeId'],
+        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'granteeId'],
         model: Grant,
         as: 'grants',
         where: {
@@ -109,7 +109,7 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
     where: granteeWhere,
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'programSpecialistName'],
+        attributes: ['id', 'number', 'regionId', 'programSpecialistName', 'grantSpecialistName'],
         model: Grant,
         as: 'grants',
         where: {

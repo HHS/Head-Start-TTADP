@@ -12,10 +12,3 @@
 .ttahub-recipient-search--submit-button {
     border-radius: 0 0.25rem 0.25rem 0;
 }
-
-.usa-table tr:nth-child(2n+1) {
-  background-color: #f8f8f8;
-}
-.usa-table--striped tbody tr:nth-child(2n+1) td, .usa-table--striped tbody tr:nth-child(2n+1) th {
-  background-color: transparent;
-}

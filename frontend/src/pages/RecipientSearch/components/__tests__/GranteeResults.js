@@ -25,6 +25,18 @@ const recipients = [
         regionId: 1,
         programSpecialistName: 'Candyman',
       },
+      {
+        id: 13,
+        number: '09HP0112',
+        regionId: 2,
+        programSpecialistName: 'Tony Todd',
+      },
+      {
+        id: 14,
+        number: '09HP01113',
+        regionId: 3,
+        programSpecialistName: 'Doug Bradley',
+      },
     ],
   },
   {
@@ -97,7 +109,7 @@ describe('Recipient Search > RecipientResults', () => {
     expect(screen.getByRole('link', {
       name: /agency 1\.a in region 1, inc\./i,
     })).toBeInTheDocument();
-    expect(screen.getByText('Candyman')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /candyman, Doug Bradley, tony todd/i })).toBeInTheDocument();
   });
 
   it('calls the sort function', async () => {
