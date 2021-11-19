@@ -49,6 +49,8 @@ export const nonGranteeParticipants = [
   'Other',
 ];
 
+// Note that if this topic list is changed, it needs also to be changed in
+// - src/constants.js
 export const targetPopulations = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool (ages 3-5)',

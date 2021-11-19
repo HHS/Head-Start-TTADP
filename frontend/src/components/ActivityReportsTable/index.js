@@ -294,7 +294,7 @@ function ActivityReportsTable({
           </span>
         </span>
         <div className="usa-table-container--scrollable">
-          <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
+          <Table fullWidth striped>
             <caption>
               {tableCaption}
               <p className="usa-sr-only">with sorting and pagination</p>
@@ -350,8 +350,12 @@ ActivityReportsTable.propTypes = {
     }),
   ).isRequired,
   showFilter: PropTypes.bool.isRequired,
-  onUpdateFilters: PropTypes.func.isRequired,
+  onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
+};
+
+ActivityReportsTable.defaultProps = {
+  onUpdateFilters: () => {},
 };
 
 export default ActivityReportsTable;
