@@ -275,6 +275,7 @@ function MyAlerts(props) {
         <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
           <TableHeader
             title="My activity report alerts"
+            menuAriaLabel="My activity report alerts menu"
             showFilter
             forMyAlerts
             onUpdateFilters={updateReportFilters}

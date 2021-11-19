@@ -25,6 +25,7 @@ export default function TableHeader({
   toggleSelectAll,
   showFilter,
   hideMenu,
+  menuAriaLabel,
   onUpdateFilters,
   handleDownloadAll,
   handleDownloadClick,
@@ -67,6 +68,7 @@ export default function TableHeader({
           {showFilter && <Filter applyFilters={onUpdateFilters} forMyAlerts={forMyAlerts} />}
           {!hideMenu && (
           <ReportMenu
+            label={menuAriaLabel}
             hasSelectedReports={numberOfSelected > 0}
             onExportAll={handleDownloadAll}
             onExportSelected={handleDownloadClick}
@@ -126,6 +128,7 @@ TableHeader.propTypes = {
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func,
   hideMenu: PropTypes.bool,
+  menuAriaLabel: PropTypes.string,
 };
 
 TableHeader.defaultProps = {
@@ -143,4 +146,5 @@ TableHeader.defaultProps = {
   perPage: 10,
   handlePageChange: () => {},
   hideMenu: false,
+  menuAriaLabel: 'Reports menu',
 };
