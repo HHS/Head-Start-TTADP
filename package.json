@@ -7,7 +7,7 @@
     "node": "14.18.1"
   },
   "scripts": {
-    "axe:ci": "CHROMEDRIVER_FILEPATH=/node_modules/chromedriver/bin/chromedriver axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
+    "axe:ci": "CHROMEDRIVER_FILEPATH=/bin/chromedriver axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/ --chromedriver-path=\"node_modules/chromedriver/bin/chromedriver\"",
     "build": "./node_modules/.bin/babel src -d ./build/server && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
