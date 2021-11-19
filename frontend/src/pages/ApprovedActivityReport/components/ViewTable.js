@@ -43,7 +43,7 @@ export default function ViewTable({
 }) {
   return (
     <div className={`ttahub-activity-report-view-table-container margin-bottom-2 ${className}`}>
-      <table className={`ttahub-activity-report-view-table usa-table ${allowBreakWithin ? 'allow-break-within' : 'no-break-within'}`}>
+      <table className={`ttahub-activity-report-view-table usa-table usa-table--striped ${allowBreakWithin ? 'allow-break-within' : 'no-break-within'}`}>
         <caption className="padding-y-1 padding-left-2">{caption}</caption>
         <tbody>
           { headings.map((heading, index) => (
