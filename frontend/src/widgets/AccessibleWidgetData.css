@@ -6,11 +6,6 @@
     background-color: white;
 }
 
-.ttahub--accessible-widget-data.usa-table tbody tr:nth-child(odd) td,
-.ttahub--accessible-widget-data.usa-table tbody tr:nth-child(odd) th{
-    background-color: #F8F8F8;
-}
-
 .ttahub--accessible-widget-data.usa-table tbody th,
 .ttahub--accessible-widget-data.usa-table tbody td {
     border: 0;

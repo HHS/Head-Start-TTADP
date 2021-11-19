@@ -20,7 +20,7 @@ export default function TableWidget(
   return (
     <Container className="smarthub-table-widget shadow-2" padding={3} loading={loading} loadingLabel={loadingLabel}>
       <div className="usa-table-container--scrollable margin-top-0">
-        <Table className="smart-hub--table-widget-table" fullWidth>
+        <Table fullWidth striped bordered={false}>
           <caption className="smart-hub--table-widget-caption">
             <div className="display-flex flex-wrap flex-align-center">
               <h2 className="smart-hub--table-widget-heading ttahub--dashboard-widget-heading margin-0">{title}</h2>
