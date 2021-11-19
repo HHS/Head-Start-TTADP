@@ -50,7 +50,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "14.17.6"
+    "node": "14.18.1"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
