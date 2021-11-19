@@ -7,7 +7,7 @@
     "node": "14.18.1"
   },
   "scripts": {
-    "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/ --chromedriver-path=\"node_modules/chromedriver/bin/chromedriver\"",
+    "axe:ci": "CHROMEDRIVER_FILEPATH=/node_modules/chromedriver/bin/chromedriver axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
     "build": "./node_modules/.bin/babel src -d ./build/server && ./node_modules/.bin/babel config -d build/config",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
@@ -150,7 +150,7 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@cucumber/cucumber": "^7.0.0",
-    "chromedriver": "^88.0.0",
+    "chromedriver": "93.0.0",
     "concurrently": "^6.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
