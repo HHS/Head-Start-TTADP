@@ -88,7 +88,7 @@ describe('Accordion component', () => {
   });
 
   it('renders a header and content for each item', () => {
-    const { getByTestId } = render(<Accordion items={testItems} />);
+    const { getByTestId } = render(<Accordion items={testItems} bordered />);
     const accordionEl = getByTestId('accordion');
     expect(accordionEl.childElementCount).toBe(testItems.length * 2);
   });
