@@ -1,8 +1,7 @@
 version: 2.1
 orbs:
   node: circleci/node@4.1.0
-  orbs: 
-    browser-tools: circleci/browser-tools@1.2.3
+  browser-tools: circleci/browser-tools@1.2.3
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
