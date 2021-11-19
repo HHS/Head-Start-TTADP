@@ -12,36 +12,29 @@
 */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { SingleDatePicker } from 'react-dates';
+import { SingleDatePicker, isInclusivelyBeforeDay } from 'react-dates';
 import { OPEN_UP, OPEN_DOWN } from 'react-dates/constants';
 import { Controller } from 'react-hook-form/dist/index.ie11';
 import moment from 'moment';
-import { DATE_DISPLAY_FORMAT } from '../Constants';
+import { DATE_DISPLAY_FORMAT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 import './DatePicker.css';
 
 const DateInput = ({
-  control, minDate, name, disabled, maxDate, openUp, required, ariaName, maxDateInclusive,
+  control,
+  maxDate,
+  name,
+  disabled,
+  openUp,
+  required,
+  ariaName,
+  isStartDate,
+  setEndDate,
 }) => {
   const hintId = `${name}-hint`;
   const [isFocused, updateFocus] = useState(false);
   const openDirection = openUp ? OPEN_UP : OPEN_DOWN;
 
-  const isOutsideRange = (date) => {
-    const isBefore = minDate && date.isBefore(moment(minDate, DATE_DISPLAY_FORMAT));
-
-    // If max date is inclusive (maxDateInclusive == true)
-    // allow the user to pick a start date that is the same as the maxDate
-    // otherwise, only the day before is allowed
-    let isAfter = false;
-    if (maxDateInclusive) {
-      const newDate = moment(maxDate, DATE_DISPLAY_FORMAT).add(1, 'days');
-      isAfter = maxDate && date.isAfter(newDate, DATE_DISPLAY_FORMAT);
-    } else {
-      isAfter = maxDate && date.isAfter(moment(maxDate, DATE_DISPLAY_FORMAT));
-    }
-
-    return isBefore || isAfter;
-  };
+  const isOutsideRange = (day) => isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE);
 
   const message = isFocused ? '' : 'Navigate forward and push button to open the calendar';
 
@@ -67,6 +60,18 @@ const DateInput = ({
                 disabled={disabled}
                 hideKeyboardShortcutsPanel
                 onDateChange={(d) => {
+                  if (!d) {
+                    return;
+                  }
+
+                  if (isStartDate) {
+                    if (maxDate && moment(maxDate).isBefore(d)) {
+                      const diff = moment(maxDate).diff(date, 'days');
+                      const newEnd = moment(d).add(diff, 'days').format(DATE_DISPLAY_FORMAT);
+                      setEndDate(newEnd);
+                    }
+                  }
+
                   const newDate = d ? d.format(DATE_DISPLAY_FORMAT) : d;
                   onChange(newDate);
                   const input = document.getElementById(name);
@@ -106,21 +111,21 @@ DateInput.propTypes = {
   control: PropTypes.object.isRequired,
   name: PropTypes.string.isRequired,
   ariaName: PropTypes.string.isRequired,
-  minDate: PropTypes.string,
   maxDate: PropTypes.string,
   openUp: PropTypes.bool,
   disabled: PropTypes.bool,
   required: PropTypes.bool,
-  maxDateInclusive: PropTypes.bool,
+  isStartDate: PropTypes.bool,
+  setEndDate: PropTypes.func,
 };
 
 DateInput.defaultProps = {
-  minDate: '',
   maxDate: '',
   disabled: false,
   openUp: false,
   required: true,
-  maxDateInclusive: false,
+  isStartDate: false,
+  setEndDate: () => {},
 };
 
 export default DateInput;

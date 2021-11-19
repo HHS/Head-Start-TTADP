@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render, screen, fireEvent, act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import DateRangeSelect, { formatDateRange } from '../DateRangeSelect';
 
 describe('format date function', () => {
@@ -92,6 +93,32 @@ describe('DateRangeSelect', () => {
     renderDateRangeSelect(onApplyDateRange, true);
     const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
     expect(button).toBeDisabled();
+  });
+
+  it('allows flexible start dates and preserves the delta', async () => {
+    renderDateRangeSelect();
+
+    // open menu
+    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
+    fireEvent.click(button);
+
+    // select custom date range
+    const custom = screen.getByRole('button', { name: /select to view data from custom date range\. select apply filters button to apply selection/i });
+    fireEvent.click(custom);
+
+    // get the two text boxes
+    const startDate = screen.getByRole('textbox', { name: /start date/i });
+    const endDate = screen.getByRole('textbox', { name: /end date/i });
+
+    // do some typing
+    userEvent.type(startDate, '10/05/2021');
+    userEvent.type(endDate, '10/10/2021');
+
+    // sure, I guess
+    // https://testing-library.com/docs/example-input-event/
+    fireEvent.change(startDate, { target: { value: '10/11/2021' } });
+
+    expect(endDate.value).toBe('10/16/2021');
   });
 
   it('closes the menu with the escape key', () => {
