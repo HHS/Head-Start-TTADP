@@ -1,0 +1,22 @@
+.tta-smarthub--report-row td:first-child {
+    position: relative;
+}
+
+.tta-smarthub--report-row .ttahub-export-reports:not(:focus) {
+	border: 0;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	width: 1px;
+}
+
+.tta-smarthub--report-row .ttahub-export-reports {
+    background: white;
+    left: 50px;  
+    top: -10px;
+    position: absolute;
+    z-index: 100000;
+}
