@@ -59,6 +59,14 @@
   width: 85px;
 }
 
+.smart-hub--filter .DateRangePicker .DayPickerNavigation_button {
+  background-color: aliceblue;
+}
+
+.smart-hub--filter .DateRangePicker .DayPickerNavigation_button svg  {
+fill: blue;   
+}
+
 .smart-hub--filter .SingleDatePicker .DateInput {
   width: 178px;
 }

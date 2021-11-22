@@ -69,7 +69,7 @@ function DateRangePicker({
         <div className="usa-alert usa-alert--warning margin-1" role="alert">
           <div className="usa-alert__body">
             <p className="usa-alert__text">
-              Reports are available from 09/01/2020.
+              Reports are available from 09/01/2020 123.
               <br />
               Use the format MM/DD/YYYY.
             </p>
@@ -84,6 +84,8 @@ function DateRangePicker({
 
         <DateRange
           small
+          startDateAriaLabel="Please enter a start date in the format MM/DD/YYYY."
+          endDateAriaLabel="Please enter a end date in the format MM/DD/YYYY."
           phrases={phrases}
           focusedInput={focusedInput}
           startDateId={startDateId}
