@@ -5,6 +5,6 @@
     text-decoration: none;
 }
 
-.ttahub-grantee-results .usa-table td {
+.ttahub-grantee-results .usa-table tbody td {
     white-space: unset;
 }
