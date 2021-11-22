@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 
-import MyAlerts from '../MyAlerts';
+import MyAlerts, { ReportsRow } from '../MyAlerts';
 import activityReports from '../mocks';
 import { ALERTS_PER_PAGE } from '../../../Constants';
 
@@ -129,6 +129,33 @@ describe('My Alerts', () => {
 
     expect(draft).toBeVisible();
     expect(needsAction).toBeVisible();
+  });
+
+  test('reports row shows the correct status', async () => {
+    const report = {
+      ...activityReports[0],
+      id: activityReports[0].id.toString(),
+      calculatedStatus: 'needs_action',
+    };
+
+    const message = {
+      reportId: report.id,
+      status: 'unlocked',
+    };
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <ReportsRow
+          reports={[...activityReports, report]}
+          removeAlert={jest.fn()}
+          message={message}
+        />
+      </Router>,
+    );
+
+    const needsAction = await screen.findAllByText(/needs action/i);
+    expect(needsAction.length).toBe(2);
   });
 
   test('displays the context menu buttons', async () => {
