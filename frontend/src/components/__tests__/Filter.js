@@ -36,14 +36,15 @@ describe('filter', () => {
     let menu;
 
     render(<RenderFilterItem />);
-    const button = await screen.findByRole('button');
+    const button = await screen.findByRole('button', { name: /filters menu/i });
     expect(button).not.toHaveClass('smart-hub--menu-button__open');
     userEvent.click(button);
     expect(button).toHaveClass('smart-hub--menu-button__open');
     menu = screen.queryByRole('menu');
     expect(menu).toBeInTheDocument();
 
-    button.focus();
+    userEvent.tab();
+    userEvent.tab();
     menu = screen.queryByRole('menu');
     expect(menu).not.toBeInTheDocument();
   });
