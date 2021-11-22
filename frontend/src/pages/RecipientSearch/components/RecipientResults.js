@@ -33,7 +33,7 @@ export default function RecipientResults(
     return (
       <tr key={recipient.id + number}>
         <td>{regionId}</td>
-        <td><Link to={`/recipient/${recipient.id}/profile?region=${regionId}`}>{recipient.name}</Link></td>
+        <td><Link to={`/recipient-tta-records/${recipient.id}/profile?region=${regionId}`}>{recipient.name}</Link></td>
         <td className="maxw-3">{psList}</td>
       </tr>
     );

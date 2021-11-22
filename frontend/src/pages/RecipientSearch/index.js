@@ -116,7 +116,7 @@ function RecipientSearch({ user }) {
   return (
     <>
       <Helmet>
-        <title>Recipient Records Search</title>
+        <title>Recipient TTA Records Search</title>
       </Helmet>
       <div className="ttahub-recipient-search">
         <h1 className="landing">Recipient Records</h1>

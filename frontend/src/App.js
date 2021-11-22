@@ -127,7 +127,7 @@ function App() {
           )}
         />
         <Route
-          path="/recipient/:recipientId([0-9]*)"
+          path="/recipient-tta-records/:recipientId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound>
@@ -153,7 +153,7 @@ function App() {
         )}
         <Route
           exact
-          path="/recipient"
+          path="/recipient-tta-records"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><RecipientSearch user={user} /></FeatureFlag>
