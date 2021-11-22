@@ -85,6 +85,7 @@ function ReportRow({
           type="button"
           className="usa-button usa-button--outline ttahub-export-reports"
           onClick={exportSelected}
+          aria-hidden="true"
         >
           Export
           {' '}
