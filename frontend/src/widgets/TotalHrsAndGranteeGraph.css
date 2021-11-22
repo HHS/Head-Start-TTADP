@@ -45,8 +45,8 @@
   content: '';
   height: 9px;
   position: absolute;
-  top: 1.2rem;
   right: 4.2rem;
+  top: 7px;
   width: 9px;
 }
 
@@ -61,7 +61,6 @@
   border-radius: 50%;
   height: 12px;
   width: 12px;
-  top: 1.1rem;
 }
 
 /* training */
@@ -72,9 +71,10 @@
   height: 0;
   width: 0;
   right: 4rem;   
-  top: 17px;
   z-index: 1;
 }
+
+/* this adds a white line around the triangle to make it stand out a bit more*/
 .ttahub--total-hrs-grantee-graph-legend .usa-checkbox.triangle::before {
   content: '';
   border-left: 11px solid transparent;
@@ -84,7 +84,7 @@
   width: 0;
   position: absolute;
   right: calc(4rem - 1px);   
-  top: 16px;  
+  top: 6px;  
   z-index: 1;
 }
 

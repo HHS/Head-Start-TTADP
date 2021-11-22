@@ -2,18 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Table, Button, Checkbox, Grid, Alert,
+  Table, Checkbox, Grid, Alert,
 } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-
-import Pagination from 'react-js-pagination';
-
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import Filter, { filtersToQueryString } from '../Filter';
-import ReportMenu from '../../pages/Landing/ReportMenu';
+import { filtersToQueryString } from '../Filter';
+import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
@@ -31,18 +26,6 @@ const emptyReport = {
   lastSaved: '',
   calculatedStatus: '',
 };
-
-export function renderTotal(offset, perPage, activePage, reportsCount) {
-  const from = offset >= reportsCount ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > reportsCount) {
-    to = reportsCount;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${reportsCount}`;
-}
 
 function ActivityReportsTable({
   filters,
@@ -231,73 +214,28 @@ function ActivityReportsTable({
         </Alert>
         )}
       </Grid>
+
       <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
-        <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
-          {numberOfSelectedReports > 0
-        && (
-          <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
-            {numberOfSelectedReports}
-            {' '}
-            selected
-            {' '}
-            <Button
-              className="smart-hub--select-tag__button"
-              unstyled
-              aria-label="deselect all reports"
-              onClick={() => {
-                toggleSelectAll({ target: { checked: false } });
-              }}
-            >
-              <FontAwesomeIcon
-                color="blue"
-                inverse
-                icon={faTimesCircle}
-              />
-            </Button>
-          </span>
-        )}
-          {showFilter && <Filter applyFilters={onUpdateFilters} />}
-          <ReportMenu
-            hasSelectedReports={numberOfSelectedReports > 0}
-            onExportAll={handleDownloadAllReports}
-            onExportSelected={handleDownloadClick}
-            count={reportsCount}
-            downloadError={downloadError}
-          />
-        </span>
-        <span className="smart-hub--table-nav">
-          <span aria-label="Pagination for activity reports">
-            <span
-              className="smart-hub--total-count"
-              aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                offset,
-                perPage,
-                activePage,
-                reportsCount,
-              )}`}
-            >
-              {renderTotal(offset, perPage, activePage, reportsCount)}
-              <Pagination
-                hideFirstLastPages
-                prevPageText="<Prev"
-                nextPageText="Next>"
-                activePage={activePage}
-                itemsCountPerPage={perPage}
-                totalItemsCount={reportsCount}
-                pageRangeDisplayed={4}
-                onChange={handlePageChange}
-                linkClassPrev="smart-hub--link-prev"
-                linkClassNext="smart-hub--link-next"
-                tabIndex={0}
-              />
-            </span>
-          </span>
-        </span>
+        <TableHeader
+          title={tableCaption}
+          numberOfSelected={numberOfSelectedReports}
+          toggleSelectAll={toggleSelectAll}
+          showFilter={showFilter}
+          onUpdateFilters={onUpdateFilters}
+          handleDownloadAll={handleDownloadAllReports}
+          handleDownloadClick={handleDownloadClick}
+          count={reportsCount}
+          activePage={activePage}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          downloadError={downloadError}
+        />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
-            <caption>
+            <caption className="usa-sr-only">
               {tableCaption}
-              <p className="usa-sr-only">with sorting and pagination</p>
+              with sorting and pagination
             </caption>
             <thead>
               <tr>

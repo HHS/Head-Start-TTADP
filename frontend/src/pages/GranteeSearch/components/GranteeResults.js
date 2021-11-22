@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import Pagination from 'react-js-pagination';
 import Container from '../../../components/Container';
-import { renderTotal } from '../../Landing';
 import './GranteeResults.css';
+import TableHeader from '../../../components/TableHeader';
 import { getDistinctSortedArray } from '../../../utils';
 
 export default function GranteeResults(
@@ -74,38 +73,19 @@ export default function GranteeResults(
 
   return (
     <Container className="landing ttahub-grantee-results maxw-desktop" padding={0} loading={loading} loadingLabel="Grantee search results loading">
-      <span className="smart-hub--table-nav">
-        <span aria-label="Pagination for activity reports">
-          <span
-            className="smart-hub--total-count"
-            aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-              offset,
-              perPage,
-              activePage,
-              count,
-            )}`}
-          >
-            {renderTotal(offset, perPage, activePage, count)}
-            <Pagination
-              hideFirstLastPages
-              prevPageText="<Prev"
-              nextPageText="Next>"
-              activePage={activePage}
-              itemsCountPerPage={perPage}
-              totalItemsCount={count}
-              pageRangeDisplayed={4}
-              onChange={handlePageChange}
-              linkClassPrev="smart-hub--link-prev"
-              linkClassNext="smart-hub--link-next"
-              tabIndex={0}
-            />
-          </span>
-        </span>
-      </span>
-      <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full">
-        <caption>
-          Grantees
-          <p className="usa-sr-only">with sorting and pagination</p>
+      <TableHeader
+        title="Grantees"
+        hideMenu
+        showFilter={false}
+        count={count}
+        activePage={activePage}
+        offset={offset}
+        perPage={perPage}
+        handlePageChange={handlePageChange}
+      />
+      <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-top-0">
+        <caption className="usa-sr-only">
+          Grantee search results with sorting and pagination
         </caption>
         <thead>
           <tr>
