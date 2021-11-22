@@ -244,7 +244,7 @@ function DateRangeSelect(props) {
                 { showDateError ? (
                   <div className="usa-alert usa-alert--warning usa-alert--no-icon margin-top-1 margin-0" role="alert">
                     <p className="usa-alert__text padding-1">
-                      Reports are available from 09/01/2020.
+                      Reports are available from 09/01/2020 456.
                       <br />
                       Use the format MM/DD/YYYY.
                     </p>
@@ -256,7 +256,7 @@ function DateRangeSelect(props) {
                 <div className="smart-hub--button-select-menu-date-picker-single">
                   <SingleDatePicker
                     small
-                    ariaLabel="start date"
+                    ariaLabel="Please enter a start date in the format MM/DD/YYYY."
                     id={startDatePickerId}
                     focused={startDateFocused}
                     numberOfMonths={1}
@@ -303,7 +303,7 @@ function DateRangeSelect(props) {
                 <p><small>mm/dd/yyyy</small></p>
                 <div className="smart-hub--button-select-menu-date-picker-single">
                   <SingleDatePicker
-                    ariaLabel="end date"
+                    ariaLabel="Please enter a end date in the format MM/DD/YYYY."
                     small
                     id="endDatePicker"
                     focused={endDateFocused}
