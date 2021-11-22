@@ -88,7 +88,7 @@ export default function TTAHistory({
           {recipientName}
         </title>
       </Helmet>
-      <div className="margin-x-2">
+      <div className="margin-x-2 maxw-widescreen">
         <div className="display-flex flex-wrap margin-bottom-2">
           <FilterMenu filters={filters} onApplyFilters={onApply} onRemoveFilter={onRemoveFilter} applyButtonAria="Apply filters to recipient record data" />
           <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />

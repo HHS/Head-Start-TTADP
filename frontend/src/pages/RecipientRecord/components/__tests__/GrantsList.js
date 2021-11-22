@@ -13,7 +13,7 @@ describe('Grants List Widget', () => {
     renderGrantsList({ summaryData });
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: /program type\(s\)/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
   });
   it('renders correctly with data', async () => {
@@ -26,10 +26,10 @@ describe('Grants List Widget', () => {
           status: 'Active',
           programs: [
             {
-              name: 'EHS',
+              programType: 'EHS',
             },
             {
-              name: 'HS',
+              programType: 'HS',
             },
           ],
           endDate: '2021-09-28',
@@ -41,7 +41,7 @@ describe('Grants List Widget', () => {
           status: 'Inactive',
           programs: [
             {
-              name: 'EHS-CCP',
+              programType: 'EHS-CCP',
             },
           ],
           endDate: '2021-10-01',
@@ -51,7 +51,7 @@ describe('Grants List Widget', () => {
     renderGrantsList(summary);
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: /program type\(s\)/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
 
     // Grant 1.

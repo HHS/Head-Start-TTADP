@@ -571,7 +571,7 @@ describe('handleApplyAlertFilters', () => {
     };
     renderLanding(user);
 
-    await screen.findByText(/My activity report alerts/i);
+    await screen.findByRole('heading', { name: /My activity report alerts/i });
     // Both alerts and AR tables' buttons should appear
     const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
     expect(allFilterButtons.length).toBe(2);
