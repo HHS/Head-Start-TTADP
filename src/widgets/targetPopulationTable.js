@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { ActivityReport } from '../models';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES, TARGET_POPULATIONS } from '../constants';
 import { countBySingleKey } from './helpers';
 
 export default async function targetPopulationTable(scopes) {
@@ -17,5 +17,7 @@ export default async function targetPopulationTable(scopes) {
     raw: true,
   });
 
-  return countBySingleKey(res, 'targetPopulations');
+  const populations = TARGET_POPULATIONS.map((population) => ({ name: population, count: 0 }));
+
+  return countBySingleKey(res, 'targetPopulations', populations);
 }

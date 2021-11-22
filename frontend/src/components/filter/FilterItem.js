@@ -59,7 +59,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   };
 
   const DummySelect = () => (
-    <span className="margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
+    <span className="desktop:margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
   );
 
   const onApplyQuery = (q) => {
@@ -118,7 +118,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     : 'remove this filter. click apply filters to make your changes';
 
   return (
-    <li className="ttahub-filter-menu-item display-flex">
+    <li className="ttahub-filter-menu-item desktop:display-flex desktop:width-tablet">
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic
@@ -157,9 +157,10 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       <button
         type="button"
         aria-label={buttonAriaLabel}
-        className="ttahub-filter-menu-item-close-buttom usa-button usa-button--unstyled font-sans-xs margin-x-1 margin-top-1"
+        className="ttahub-filter-menu-item-close-buttom usa-button usa-button--unstyled font-sans-xs desktop:margin-x-1 margin-top-1"
         onClick={onRemove}
       >
+        <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
     </li>

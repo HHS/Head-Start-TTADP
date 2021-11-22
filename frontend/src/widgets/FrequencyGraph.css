@@ -1,4 +1,5 @@
 .ttahub--frequency-graph {
+  height: calc(100% - 1.5rem);
   width: 100%;
 }
 
@@ -12,6 +13,5 @@
 @media(max-width: 768px) {
   .ttahub--frequency-graph-control-row {
       display: block;
-      width: 100%;
   }
 }

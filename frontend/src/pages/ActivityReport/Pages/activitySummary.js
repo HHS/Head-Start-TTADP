@@ -92,6 +92,10 @@ const ActivitySummary = ({
     />
   );
 
+  const setEndDate = (newEnd) => {
+    setValue('endDate', newEnd);
+  };
+
   return (
     <>
       <Helmet>
@@ -240,9 +244,10 @@ const ActivitySummary = ({
                 <DatePicker
                   ariaName="Start Date (Required)"
                   control={control}
-                  maxDate={endDate}
-                  maxDateInclusive
                   name="startDate"
+                  isStartDate
+                  maxDate={endDate}
+                  setEndDate={setEndDate}
                   openUp
                 />
               </FormItem>
