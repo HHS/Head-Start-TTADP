@@ -49,6 +49,7 @@ describe('Grantee DB service', () => {
         id: 74,
         grantId: 75,
         name: 'type2',
+        programType: 'EHS',
         startYear: 'Aeons ago',
         status: 'active',
         startDate: 'today',
@@ -58,6 +59,7 @@ describe('Grantee DB service', () => {
         id: 75,
         grantId: 75,
         name: 'type',
+        programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
         startDate: 'today',
@@ -109,6 +111,7 @@ describe('Grantee DB service', () => {
       expect(grantee3.grants[0].startDate).toBeTruthy();
       expect(grantee3.grants[0].endDate).toBeTruthy();
       expect(grantee3.grants[0].programs.map((program) => program.name)).toStrictEqual(['type2', 'type']);
+      expect(grantee3.grants[0].programs.map((program) => program.programType)).toStrictEqual(['EHS', 'HS']);
     });
     it('returns grantee and grants without a region specified', async () => {
       const query = { 'granteeId.in': [74] };
