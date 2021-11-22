@@ -14,15 +14,15 @@ export default function RecipientTabs({ region, recipientId }) {
       <nav className="ttahub-recipient-record--tabs_nav bg-white">
         <ul className="display-flex margin-0 margin-bottom-2 padding-0">
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient/${recipientId}/profile?region=${region}`}>Profile</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/profile?region=${region}`}>Profile</NavLink>
           </li>
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient/${recipientId}/tta-history?region=${region}`}>TTA History</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/tta-history?region=${region}`}>TTA History</NavLink>
           </li>
         </ul>
       </nav>
       <FontAwesomeIcon className="margin-left-2 margin-right-1" color="#0166ab" icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient">Back to search</Link>
+      <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>
     </div>
   );
 }

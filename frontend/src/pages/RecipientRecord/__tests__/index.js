@@ -139,7 +139,7 @@ describe('recipient record page', () => {
 
   it('navigates to the profile page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    memoryHistory.push('/recipient/1/profile?region.=45');
+    memoryHistory.push('/recipient-tta-records/1/profile?region.=45');
     act(() => renderRecipientRecord(memoryHistory));
     const heading = await screen.findByRole('heading', { name: /recipient summary/i });
     expect(heading).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('recipient record page', () => {
 
   it('navigates to the tta history page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    memoryHistory.push('/recipient/1/tta-history?region=45');
+    memoryHistory.push('/recipient-tta-records/1/tta-history?region=45');
     act(() => renderRecipientRecord(memoryHistory));
     await waitFor(() => {
       const ar = screen.getByText(/the total number of approved activity reports\. click to visually reveal this information/i);

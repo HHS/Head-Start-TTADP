@@ -80,7 +80,7 @@ export default function RecipientRecord({ match, location }) {
             <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{recipientName}</h1>
             <Switch>
               <Route
-                path="/recipient/:recipientId/tta-history"
+                path="/recipient-tta-records/:recipientId/tta-history"
                 render={() => (
                   <TTAHistory
                     recipientId={recipientId}
@@ -90,7 +90,7 @@ export default function RecipientRecord({ match, location }) {
                 )}
               />
               <Route
-                path="/recipient/:recipientId/profile"
+                path="/recipient-tta-records/:recipientId/profile"
                 render={() => (
                   <Profile
                     recipientName={recipientName}
