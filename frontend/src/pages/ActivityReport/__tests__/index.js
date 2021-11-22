@@ -161,6 +161,28 @@ describe('ActivityReport', () => {
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
     });
 
+    it('assigns save alert fade animation', async () => {
+      renderActivityReport('new');
+      fetchMock.post('/api/activity-reports', { id: 1 });
+      let alerts = screen.queryByTestId('alert');
+      expect(alerts).toBeNull();
+      const button = await screen.findByRole('button', { name: 'Save draft' });
+      userEvent.click(button);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      alerts = await screen.findAllByTestId('alert');
+      expect(alerts.length).toBe(2);
+      expect(alerts[0]).toHaveClass('alert-fade');
+    });
+
+    it('displays review submit save alert', async () => {
+      renderActivityReport('new', 'review');
+      fetchMock.post('/api/activity-reports', { id: 1 });
+      const button = await screen.findByRole('button', { name: 'Save Draft' });
+      await userEvent.click(button);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      expect(await screen.findByText(/draft saved on/i)).toBeVisible();
+    });
+
     it('finds whats changed', () => {
       const old = {
         beans: 'kidney', dog: 'brown', beetle: ['what', 'yeah'], boat: { length: 1, color: 'green' },
@@ -233,37 +255,6 @@ describe('ActivityReport', () => {
 
       granteeSelectbox = await screen.findByLabelText(/grantee name\(s\)/i);
       expect(within(granteeSelectbox).queryByText('Grantee Name')).toBeNull();
-    });
-
-    it('allows you to pick the same start and end date', async () => {
-      // render a new activity report
-      renderActivityReport('new');
-
-      // we need to wait for the page to render, that's what this is for
-      const dateSection = await screen.findByRole('group', { name: 'Activity date' });
-
-      // get the start date text box and type in a date
-      const startDate = within(dateSection).getByRole('textbox', { name: /start date \(required\), month\/day\/year, edit text/i });
-      userEvent.type(startDate, '12/25/1967');
-
-      // then type in a different date in the end date box
-      const endDate = within(dateSection).getByRole('textbox', { name: /end date \(required\), month\/day\/year, edit text/i });
-      userEvent.type(endDate, '12/26/1967');
-
-      // then change the start date to a date after the end date
-      userEvent.clear(startDate);
-      userEvent.type(startDate, '12/28/1967');
-
-      // expect an error
-      expect(endDate).toBeDisabled();
-
-      // then change the start date to a date after the end date
-      userEvent.clear(startDate);
-      userEvent.type(startDate, '12/26/1967');
-
-      // expect everything to be ok
-      expect(endDate).toBeEnabled();
-      await screen.findAllByDisplayValue('12/26/1967');
     });
 
     it('unflattens resources properly', async () => {

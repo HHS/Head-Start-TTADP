@@ -5,8 +5,7 @@
 .smarthub-table-widget .usa-table-container--scrollable {
   min-height: 393px;
   max-height: 393px;
-  overflow-y: auto;
-  overflow-x: auto;
+  overflow: auto;
 }
 
 .smarthub-table-widget .usa-table {
@@ -25,30 +24,24 @@
 }
 
 .smarthub-table-widget .usa-table th {
+  background: white;
   border-bottom: 0px;
-  text-align: left;
-  padding: 0px;
-  font-weight: bold;
   position: sticky;
   top: 0;
-  background-color: white;
-}
-
-.smarthub-table-widget .usa-table th:nth-child(2), .smarthub-table-widget .usa-table td:nth-child(2) {
-  padding-left: 60px;
+  vertical-align: bottom;
 }
 
 .smarthub-table-widget .usa-table td {
   border: none;
-  padding-top: 10px;
-  padding-bottom: 0px;
-  padding-left: 0px;
-  padding-right: 0px;
   text-align: left;
 }
 
+.smarthub-table-widget .usa-table th:nth-child(2), 
+.smarthub-table-widget .usa-table td:nth-child(2) {
+  padding-left: 60px;
+}
+
 .smarthub-table-widget .usa-table td:first-child {
-  width: 320px;
   white-space: normal;
 }
 
@@ -56,4 +49,3 @@
   margin: 0px;
   padding: 0px;
 }
-

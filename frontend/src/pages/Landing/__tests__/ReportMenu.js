@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import ReportMenu from '../ReportMenu';
+import ReportMenu, { MAXIMUM_EXPORTED_REPORTS } from '../ReportMenu';
 
 const RenderReportMenu = ({
   onExportAll = () => {},
@@ -73,12 +73,11 @@ describe('ReportMenu', () => {
   });
 
   it('shows the error message when there are too many reports', async () => {
-    render(<RenderReportMenu count={5001} hasSelectedReports={false} />);
+    render(<RenderReportMenu count={MAXIMUM_EXPORTED_REPORTS + 1} hasSelectedReports={false} />);
     const button = await screen.findByRole('button');
     userEvent.click(button);
-
-    const label = /this export has 5,001 reports\. you can only export 2,000 reports at a time\./i;
-    expect(screen.getByText(label)).toBeVisible();
+    const label = `This export has ${(MAXIMUM_EXPORTED_REPORTS + 1).toLocaleString('en-us')} reports. You can only export ${MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')} reports at a time.`;
+    expect(await screen.findByText(label)).toBeVisible();
   });
 
   it('closes when the Escape key is pressed', async () => {

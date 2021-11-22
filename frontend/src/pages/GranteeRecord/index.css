@@ -1,3 +1,9 @@
+.ttahub-grantee-record--heading {
+    font-size: 40px;
+    font-family: "Merriweather", serif;
+    font-weight: 700;
+}
+
 .ttahub-grantee-record--card-header {
     border-bottom: 1px solid #eceef1;
     font-size: 1.17em;
@@ -15,13 +21,8 @@
     background-color: white;
   }
 
-.usa-table.ttahub-grantee-record--table tr:nth-child(2n+1) {
-    background-color: transparent;
-}
-    
 .usa-table.ttahub-grantee-record--table td,
 .usa-table.ttahub-grantee-record--table th {
     border: 0;
-    border-top: 0;
 }
 
