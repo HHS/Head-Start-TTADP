@@ -77,7 +77,7 @@ export default function GranteeRecord({ match, location }) {
           </div>
         ) : (
           <>
-            <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
+            <h1 className="ttahub-grantee-record--heading margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
             <Switch>
               <Route
                 path="/grantee/:granteeId/tta-history"

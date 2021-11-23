@@ -90,7 +90,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     await expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(4);
 
     expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
-    const training = screen.getByRole('checkbox', { name: /training/i });
+    const training = screen.getByRole('checkbox', { name: /training/i, hidden: true });
 
     fireEvent.click(training);
     expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(8);

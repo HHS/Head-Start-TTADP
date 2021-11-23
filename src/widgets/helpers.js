@@ -1,7 +1,6 @@
 /* eslint-disable import/prefer-default-export */
-export function countBySingleKey(data, key) {
+export function countBySingleKey(data, key, results) {
   // Get counts for each key.
-  const results = [];
   data.forEach((point) => {
     point[key].forEach((r) => {
       const obj = results.find((e) => e.name === r);

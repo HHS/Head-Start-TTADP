@@ -38,6 +38,7 @@ const reviewPage = {
       allPages,
       reportCreator,
       updateShowValidationErrors,
+      lastSaveTime,
     ) => (
       <ReviewSubmit
         updateShowValidationErrors={updateShowValidationErrors}
@@ -48,6 +49,7 @@ const reviewPage = {
         isApprover={isApprover}
         isPendingApprover={isPendingApprover}
         onResetToDraft={onResetToDraft}
+        lastSaveTime={lastSaveTime}
         reviewItems={
           pages.map((p) => ({
             id: p.path,

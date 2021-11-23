@@ -4,3 +4,7 @@
     font-weight: bold;
     text-decoration: none;
 }
+
+.ttahub-grantee-results .usa-table tbody td {
+    white-space: unset;
+}
