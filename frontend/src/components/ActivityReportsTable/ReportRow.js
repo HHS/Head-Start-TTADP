@@ -33,7 +33,6 @@ function ReportRow({
     legacyId,
   } = report;
 
-  // eslint-disable-next-line no-unused-vars
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
@@ -79,15 +78,23 @@ function ReportRow({
 
   const selectId = `report-${id}`;
 
+  /**
+   * we manage the class of the row as a sort of "focus-within" workaround
+   * this is entirely to show/hide the export reports button to keyboard users but
+   * not blast screen-reader only users with a bunch of redundant buttons
+   */
+
   const onFocus = () => setTrClassname('tta-smarthub--report-row focused');
 
   const onBlur = (e) => {
-    console.log(e);
-    // setTrClassname
+    if (e.relatedTarget && e.relatedTarget.matches('.tta-smarthub--report-row *')) {
+      return;
+    }
+    setTrClassname('tta-smarthub--report-row');
   };
 
   return (
-    <tr onFocus={onFocus} onBlur={onBlur} className="tta-smarthub--report-row" key={`landing_${id}`}>
+    <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`landing_${id}`}>
       <td className="width-8">
         <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
         { numberOfSelectedReports > 0 && (
