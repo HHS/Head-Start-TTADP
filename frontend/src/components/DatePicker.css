@@ -11,14 +11,6 @@
   width: fit-content;
 }
 
-.smart-hub--date-picker-input .DayPickerNavigation_button {
-  background-color: aliceblue;
-}
-
-.smart-hub--date-picker-input .DayPickerNavigation_button svg  {
-fill: blue;
-}
-
 .DateInput {
   width: fit-content;
 }

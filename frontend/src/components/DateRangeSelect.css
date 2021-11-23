@@ -18,14 +18,6 @@
     display: block;
 }
 
-.smart-hub--button-select-menu-date-picker-single .DayPickerNavigation_button {
-    background-color: aliceblue;
-  }
-  
-  .smart-hub--button-select-menu-date-picker-single .DayPickerNavigation_button svg  {
-  fill: blue;
-  }
-
 .smart-hub--button-select-menu .DateInput {
     width: 100%;
 }

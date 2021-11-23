@@ -69,7 +69,7 @@ function DateRangePicker({
         <div className="usa-alert usa-alert--warning margin-1" role="alert">
           <div className="usa-alert__body">
             <p className="usa-alert__text">
-              Reports are available from 09/01/2020 123.
+              Reports are available from 09/01/2020.
               <br />
               Use the format MM/DD/YYYY.
             </p>
