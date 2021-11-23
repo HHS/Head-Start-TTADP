@@ -83,7 +83,7 @@ export default function DropdownMenu({
     );
   }
   return (
-    <div role="menu" ref={forwardedRef} tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
+    <div role="menu" ref={forwardedRef} tabIndex="0" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
       <button
         onClick={onClick}
         className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0`}
@@ -99,7 +99,7 @@ export default function DropdownMenu({
         {children}
         { showCancel
           ? (
-            <div className="margin-top-1 display-flex flex-justify-end margin-right-3">
+            <div className="margin-top-1 desktop:display-flex flex-justify-end margin-right-3 padding-x-3 desktop:padding-x-0">
               <button
                 onClick={onCancelClick}
                 type="button"

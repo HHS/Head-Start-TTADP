@@ -27,17 +27,15 @@ export default function FilterDateRange({
 }) {
   if (condition === 'Is within') {
     return (
-      <span className="margin-right-1">
-        <DateRangeSelect
-          options={DATE_OPTIONS}
-          updateDateRange={onApplyDateRange}
-          styleAsSelect
-        />
-      </span>
+      <DateRangeSelect
+        options={DATE_OPTIONS}
+        updateDateRange={onApplyDateRange}
+        styleAsSelect
+      />
     );
   }
   return (
-    <span className="ttahub-filter-menu-single-date-picker display-flex margin-top-1 margin-x-1">
+    <span className="border display-flex margin-top-1">
       <DatePicker query={Array.isArray(query) ? '' : query} onUpdateFilter={updateSingleDate} id="filter-date-picker" />
     </span>
   );
