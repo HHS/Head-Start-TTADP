@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
@@ -32,6 +32,9 @@ function ReportRow({
     createdAt,
     legacyId,
   } = report;
+
+  // eslint-disable-next-line no-unused-vars
+  const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
   const authorName = author ? author.fullName : '';
@@ -76,8 +79,15 @@ function ReportRow({
 
   const selectId = `report-${id}`;
 
+  const onFocus = () => setTrClassname('tta-smarthub--report-row focused');
+
+  const onBlur = (e) => {
+    console.log(e);
+    // setTrClassname
+  };
+
   return (
-    <tr className="tta-smarthub--report-row" key={`landing_${id}`}>
+    <tr onFocus={onFocus} onBlur={onBlur} className="tta-smarthub--report-row" key={`landing_${id}`}>
       <td className="width-8">
         <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
         { numberOfSelectedReports > 0 && (
@@ -85,7 +95,6 @@ function ReportRow({
           type="button"
           className="usa-button usa-button--outline ttahub-export-reports"
           onClick={exportSelected}
-          aria-hidden="true"
         >
           Export
           {' '}

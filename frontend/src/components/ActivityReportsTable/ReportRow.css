@@ -2,6 +2,14 @@
     position: relative;
 }
 
+.tta-smarthub--report-row .ttahub-export-reports {
+	display: none;
+}
+
+.tta-smarthub--report-row:focus-within .ttahub-export-reports {
+	display: inline;
+}
+
 .tta-smarthub--report-row .ttahub-export-reports:not(:focus) {
 	border: 0;
 	clip: rect(1px, 1px, 1px, 1px);
