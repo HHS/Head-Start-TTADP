@@ -62,6 +62,22 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
+function transformGrantModel(field) {
+  async function transformer(instance) {
+    const obj = {};
+    const activityRecipients = await instance.activityRecipients;
+    if (activityRecipients) {
+      const programSpecialistNames = activityRecipients.map((recipient) => (recipient.grant && recipient.grant[field] !== null ? recipient.grant[field] : '')).sort().join('\n');
+      Object.defineProperty(obj, field, {
+        value: programSpecialistNames,
+        enumerable: true,
+      });
+    }
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
 /*
  * Helper function for transformGoalsAndObjectives
  */
@@ -189,6 +205,7 @@ const arTransformers = [
   'lastSaved',
   transformDate('createdAt'),
   transformDate('approvedAt'),
+  transformGrantModel('programSpecialistName'),
 ];
 
 /**
