@@ -77,10 +77,10 @@ main() {
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
         # Test backend
-        command="yarn test:ci --colors"
-        if [ $verbose == "false" ]; then
-          command="yarn test:ci --silent --colors"
-        fi
+        command="yarn test:ci --colors -t 'target population'"
+        # if [ $verbose == "false" ]; then
+        #   command="yarn test:ci --silent --colors"
+        # fi
         echo
         log "Running backend tests"
         if [[ $docker == "true" ]]; then
@@ -91,21 +91,21 @@ main() {
         check_exit "$?"
     fi
 
-    if [[ "$opt" == "frontend" || -z "$opt" ]]; then
-        # Test frontend
-        command="yarn --cwd frontend run test:ci --colors"
-        if [ $verbose == "false" ]; then
-          command="yarn --cwd frontend run test:ci --silent --colors"
-        fi
-        echo
-        log "Running frontend tests"
-        if [[ $docker == "true" ]]; then
-          docker exec test-frontend bash -c "$command"
-        else
-          $command
-        fi
-        check_exit "$?"
-    fi
+    # if [[ "$opt" == "frontend" || -z "$opt" ]]; then
+    #     # Test frontend
+    #     command="yarn --cwd frontend run test:ci --colors"
+    #     if [ $verbose == "false" ]; then
+    #       command="yarn --cwd frontend run test:ci --silent --colors"
+    #     fi
+    #     echo
+    #     log "Running frontend tests"
+    #     if [[ $docker == "true" ]]; then
+    #       docker exec test-frontend bash -c "$command"
+    #     else
+    #       $command
+    #     fi
+    #     check_exit "$?"
+    # fi
 
     # Cleanup
     echo

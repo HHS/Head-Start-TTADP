@@ -89,11 +89,17 @@ function formatMethod(method, delivery) {
 
 function mapAttachments(attachments) {
   if (Array.isArray(attachments) && attachments.length > 0) {
-    return attachments.map((attachment) => (
-      <li>
-        <a href={attachment.url.url}>{attachment.originalFileName}</a>
-      </li>
-    ));
+    return (
+      <ul>
+        {
+          attachments.map((attachment) => (
+            <li key={attachment.url.url}>
+              <a href={attachment.url.url}>{attachment.originalFileName}</a>
+            </li>
+          ))
+        }
+      </ul>
+    );
   }
 
   return [];
@@ -426,14 +432,13 @@ export default function ApprovedActivityReport({ match, user }) {
           {' '}
           {displayId}
         </h1>
-        <hr />
         <div className="ttahub-activity-report-view-creator-data margin-bottom-4">
           <p>
             <strong>Creator:</strong>
             {' '}
             {creator}
           </p>
-          <p>
+          <p className="no-print">
             <strong>Date created:</strong>
             {' '}
             {createdAt}
