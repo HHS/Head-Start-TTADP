@@ -149,7 +149,7 @@ describe('activityReportToCsvRecord', () => {
     };
     expect(output).toMatchObject(expectedOutput);
   });
-  // ActivityRecipient
+
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
       include: [{ model: User, as: 'author' },
