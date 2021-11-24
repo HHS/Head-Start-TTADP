@@ -908,8 +908,8 @@ describe('filtersToScopes', () => {
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        logging: console.log,
       });
+
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
@@ -920,7 +920,6 @@ describe('filtersToScopes', () => {
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        logging: console.log,
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -928,11 +927,22 @@ describe('filtersToScopes', () => {
     });
 
     it('only filters by possible population values', async () => {
+      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Pregnant Women'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+    });
+
+    it('filters out bad population values', async () => {
       const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        logging: console.log,
       });
       expect(found.length).toBe(4);
       expect(found.map((f) => f.id))
