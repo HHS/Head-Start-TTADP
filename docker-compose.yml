@@ -17,7 +17,7 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
   minio:
-    image: minio/minio
+    image: minio/minio:RELEASE.2021-01-16T02-19-44Z
     env_file: .env
     ports:
       - "9000:9000"
