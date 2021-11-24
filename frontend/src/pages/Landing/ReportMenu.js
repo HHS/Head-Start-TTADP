@@ -5,11 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 
-<<<<<<< HEAD
-export const MAXIMUM_EXPORTED_REPORTS = 12000;
-=======
 export const MAXIMUM_EXPORTED_REPORTS = 2000;
->>>>>>> a06185dc4c331bb041c291cfc0dfd81b97adf37f
 
 function ReportMenu({
   onExportAll,
