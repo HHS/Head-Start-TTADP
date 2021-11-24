@@ -77,7 +77,7 @@ main() {
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
         # Test backend
-        command="yarn test:ci --colors'"
+        command="yarn test:ci --colors"
         if [ $verbose == "false" ]; then
           command="yarn test:ci --silent --colors"
         fi
