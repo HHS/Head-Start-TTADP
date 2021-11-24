@@ -3,6 +3,9 @@ import {
   Goal,
   Objective,
   User,
+  ActivityRecipient,
+  Grant,
+  Grantee,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -98,6 +101,23 @@ describe('activityReportToCsvRecord', () => {
     },
   ];
 
+  const mockActivityRecipients = [
+    {
+      id: 1,
+      grantId: 1,
+      grant: {
+        name: 'test1', programSpecialistName: 'Program Specialist 1', granteeId: 1, grantee: { name: 'test1' },
+      },
+    },
+    {
+      id: 2,
+      grantId: 2,
+      grant: {
+        name: 'test2', programSpecialistName: 'Program Specialist 2', granteeId: 2, grantee: { name: 'test2' },
+      },
+    },
+  ];
+
   const mockReport = {
     id: 209914,
     regionId: 14,
@@ -114,6 +134,7 @@ describe('activityReportToCsvRecord', () => {
     lastUpdatedBy: mockAuthor,
     collaborators: mockCollaborators,
     approvedAt: new Date(),
+    activityRecipients: mockActivityRecipients,
   };
 
   it('transforms arrays of strings into strings', async () => {
@@ -128,16 +149,26 @@ describe('activityReportToCsvRecord', () => {
     };
     expect(output).toMatchObject(expectedOutput);
   });
-
+  // ActivityRecipient
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
-      include: [{ model: User, as: 'author' }, { model: User, as: 'lastUpdatedBy' }, { model: User, as: 'collaborators' }],
+      include: [{ model: User, as: 'author' },
+        { model: User, as: 'lastUpdatedBy' },
+        { model: User, as: 'collaborators' },
+        {
+          model: ActivityRecipient,
+          as: 'activityRecipients',
+          include: [{ model: Grant, as: 'grant', include: [{ model: Grantee, as: 'grantee' }] }],
+        }],
     });
     const output = await activityReportToCsvRecord(report);
-    const { author, lastUpdatedBy, collaborators } = output;
+    const {
+      author, lastUpdatedBy, collaborators, programSpecialistName,
+    } = output;
     expect(author).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
     expect(collaborators).toEqual('Collaborator 1, GS, HS\nCollaborator 2');
+    expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2');
   });
 
   it('transforms goals and objectives into many values', async () => {
