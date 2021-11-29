@@ -18,28 +18,21 @@ const grantees = [
     granteeType: '',
     name: 'Agency 2 in region 1, Inc.',
     regionId: 1,
-    specialists: [
-      'Tony Todd',
-      'Candyman',
-    ],
+    programSpecialists: 'Candyman, Tony Todd',
   },
   {
     id: 11,
     granteeType: '',
     name: 'Agency 2 in region 1, Inc.',
     regionId: 2,
-    specialists: [
-      'Tony Todd',
-    ],
+    programSpecialists: 'Tony Todd',
   },
   {
     id: 11,
     granteeType: '',
     name: 'Agency 2 in region 1, Inc.',
-    regionId: 2,
-    specialists: [
-      'Doug Bradley',
-    ],
+    regionId: 3,
+    programSpecialists: 'Doug Bradley',
   },
   {
     id: 10,
@@ -48,7 +41,7 @@ const grantees = [
     regionId: 1,
     createdAt: '2021-09-21T19:16:15.842Z',
     updatedAt: '2021-09-21T19:16:15.842Z',
-    specialists: [],
+    programSpecialists: [],
   },
   {
     id: 9,
@@ -57,7 +50,7 @@ const grantees = [
     regionId: 1,
     createdAt: '2021-09-21T19:16:15.842Z',
     updatedAt: '2021-09-21T19:16:15.842Z',
-    specialists: [],
+    programSpecialists: [],
   },
 ];
 
