@@ -8,6 +8,7 @@ import {
   Grant,
   NextStep,
   Permission,
+  RequestErrors,
 } from '../models';
 import processData, { hideUsers, hideGranteesGrants, bootstrapUsers } from './processData';
 import { REPORT_STATUSES } from '../constants';
@@ -154,7 +155,13 @@ describe('processData', () => {
     await Grantee.findOrCreate({ where: { name: 'Agency Two', id: GRANTEE_ID_TWO } });
     await Grant.findOrCreate({
       where: {
-        id: GRANT_ID_ONE, number: '01GN011311', granteeId: GRANTEE_ID_ONE, regionId: 1, status: 'Active',
+        id: GRANT_ID_ONE,
+        number: '01GN011311',
+        granteeId: GRANTEE_ID_ONE,
+        regionId: 1,
+        status: 'Active',
+        programSpecialistName: mockManager.name,
+        programSpecialistEmail: mockManager.email,
       },
     });
     await Grant.findOrCreate({
@@ -214,6 +221,9 @@ describe('processData', () => {
 
     const transformedFile = await File.findOne({ where: { id: file.id } });
     expect(transformedFile.originalFileName).not.toBe(mockFile.originalFileName);
+
+    const requestErrors = await RequestErrors.findAll();
+    expect(requestErrors.length).toBe(0);
   });
 
   describe('hideUsers', () => {
@@ -239,6 +249,17 @@ describe('processData', () => {
 
       const transformedGrant = await Grant.findOne({ where: { granteeId: GRANTEE_ID_ONE } });
       expect(transformedGrant.number).not.toBe('01GN011311');
+    });
+
+    it('transforms program specialist name and email in the Grants table', async () => {
+      await hideGranteesGrants(reportObject.imported.granteeName);
+
+      const transformedGrant = await Grant.findOne({ where: { granteeId: GRANTEE_ID_ONE } });
+      expect(transformedGrant.id).toBe(GRANT_ID_ONE);
+      const transformedMockManager = await User.findOne({ where: { id: mockManager.id } });
+
+      expect(transformedGrant.programSpecialistName).toBe(transformedMockManager.name);
+      expect(transformedGrant.programSpecialistEmail).toBe(transformedMockManager.email);
     });
   });
 
