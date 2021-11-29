@@ -13,6 +13,7 @@ import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatu
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withRole, withoutRole } from './role';
 import withRegion from './region';
+import { withoutReason, withReason } from './reason';
 
 export const topicToQuery = {
   reportId: {
@@ -68,6 +69,10 @@ export const topicToQuery = {
   },
   region: {
     in: (query) => withRegion(query),
+  },
+  reason: {
+    in: (query) => withReason(query),
+    nin: (query) => withoutReason(query),
   },
 };
 
