@@ -116,7 +116,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     : 'remove this filter. click apply filters to make your changes';
 
   return (
-    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex flex-wrap">
+    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic
