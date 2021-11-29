@@ -23,15 +23,15 @@ export default function filterArray(column, searchTerms, exclude) {
   };
 }
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {
+export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*', operator = Op.and) {
   if (exclude) {
     return {
-      [Op.and]:
+      [operator]:
         reportInSubQuery(baseQuery, searchTerms, 'NOT IN', comparator),
     };
   }
 
   return {
-    [Op.and]: reportInSubQuery(baseQuery, searchTerms, 'IN', comparator),
+    [operator]: reportInSubQuery(baseQuery, searchTerms, 'IN', comparator),
   };
 }

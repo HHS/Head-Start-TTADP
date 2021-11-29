@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const programTypes = `
@@ -7,9 +8,9 @@ const programTypes = `
     WHERE "Programs"."programType"`;
 
 export function withProgramTypes(types) {
-  return filterAssociation(programTypes, types, false);
+  return filterAssociation(programTypes, types, false, '~*', Op.or);
 }
 
 export function withoutProgramTypes(types) {
-  return filterAssociation(programTypes, types, true);
+  return filterAssociation(programTypes, types, true, '~*', Op.or);
 }

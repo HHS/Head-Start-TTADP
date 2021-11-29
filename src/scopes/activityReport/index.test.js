@@ -976,9 +976,9 @@ describe('filtersToScopes', () => {
   });
 
   describe('programType', () => {
-    let reportIncluded1;
-    let reportIncluded2;
-    let reportExcluded;
+    let reportOne;
+    let reportTwo;
+    let reportThree;
 
     let granteeIncluded1;
     let granteeIncluded2;
@@ -991,6 +991,10 @@ describe('filtersToScopes', () => {
     let activityRecipientIncluded1;
     let activityRecipientIncluded2;
     let activityRecipientExcluded;
+
+    let programOne;
+    let programTwo;
+    let programThree;
 
     let possibleIds;
 
@@ -1033,21 +1037,21 @@ describe('filtersToScopes', () => {
         updatedAt: new Date(),
       };
 
-      await Program.create({
+      programOne = await Program.create({
         ...dummyProgram,
         id: grantIncluded1.id,
         name: faker.name.findName(),
         grantId: grantIncluded1.id,
         programType: 'EHS',
       });
-      await Program.create({
+      programTwo = await Program.create({
         ...dummyProgram,
         id: grantIncluded2.id,
         name: faker.name.findName(),
         grantId: grantIncluded2.id,
         programType: 'EHS',
       });
-      await Program.create({
+      programThree = await Program.create({
         ...dummyProgram,
         id: grantExcluded.id,
         name: faker.name.findName(),
@@ -1055,27 +1059,27 @@ describe('filtersToScopes', () => {
         programType: 'HS',
       });
 
-      reportIncluded1 = await ActivityReport.create({ ...draftReport });
-      reportIncluded2 = await ActivityReport.create({ ...draftReport });
-      reportExcluded = await ActivityReport.create({ ...draftReport });
+      reportOne = await ActivityReport.create({ ...draftReport });
+      reportTwo = await ActivityReport.create({ ...draftReport });
+      reportThree = await ActivityReport.create({ ...draftReport });
 
       activityRecipientIncluded1 = await ActivityRecipient.create({
-        activityReportId: reportIncluded1.id,
+        activityReportId: reportOne.id,
         grantId: grantIncluded1.id,
       });
       activityRecipientIncluded2 = await ActivityRecipient.create({
-        activityReportId: reportIncluded2.id,
+        activityReportId: reportTwo.id,
         grantId: grantIncluded2.id,
       });
       activityRecipientExcluded = await ActivityRecipient.create({
-        activityReportId: reportExcluded.id,
+        activityReportId: reportThree.id,
         grantId: grantExcluded.id,
       });
 
       possibleIds = [
-        reportIncluded1.id,
-        reportIncluded2.id,
-        reportExcluded.id,
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
         globallyExcludedReport.id,
       ];
     });
@@ -1091,11 +1095,11 @@ describe('filtersToScopes', () => {
         },
       });
       await ActivityReport.destroy({
-        where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+        where: { id: [reportOne.id, reportTwo.id, reportThree.id] },
       });
 
       await Program.destroy({
-        where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+        where: { id: [programOne.id, programTwo.id, programThree.id] },
       });
 
       await Grant.destroy({
@@ -1107,14 +1111,14 @@ describe('filtersToScopes', () => {
     });
 
     it('includes program type', async () => {
-      const filters = { 'programType.in': ['EHS'] };
+      const filters = { 'programType.in': ['EHS', 'HS'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));
     });
 
     it('excludes program type', async () => {
@@ -1125,7 +1129,7 @@ describe('filtersToScopes', () => {
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+        .toEqual(expect.arrayContaining([reportThree.id, globallyExcludedReport.id]));
     });
   });
 
