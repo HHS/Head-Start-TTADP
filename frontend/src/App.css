@@ -209,3 +209,20 @@ body {
     padding: 0;
   }
 }
+
+.DayPickerNavigation_button {
+  border: 1px solid #71767A;
+  background-color: #fff;
+}
+
+.DayPickerNavigation_button:hover {
+  background-color: #F0F0F0;
+}
+
+.DayPickerNavigation_button:focus {
+  border: 1px solid #C4C4C4;
+}
+
+.DayPickerNavigation_button svg  {
+fill: #1B1B1B;
+}
