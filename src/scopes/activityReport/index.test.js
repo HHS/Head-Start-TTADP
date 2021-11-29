@@ -1,10 +1,18 @@
 /* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
+import faker from 'faker';
 import filtersToScopes from '../index';
 
 import db, {
-  ActivityReport, ActivityReportApprover, ActivityRecipient,
-  User, Grantee, Grant, ActivityReportCollaborator, NonGrantee,
+  ActivityReport,
+  ActivityReportApprover,
+  ActivityRecipient,
+  User,
+  Grantee,
+  Grant,
+  ActivityReportCollaborator,
+  NonGrantee,
+  Program,
 } from '../../models';
 import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
 
@@ -957,6 +965,160 @@ describe('filtersToScopes', () => {
 
     it('excludes grantees that do not partial match or have no grantees', async () => {
       const filters = { 'programSpecialist.nin': ['pat'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('programType', () => {
+    let reportIncluded1;
+    let reportIncluded2;
+    let reportExcluded;
+
+    let granteeIncluded1;
+    let granteeIncluded2;
+    let granteeExcluded;
+
+    let grantIncluded1;
+    let grantIncluded2;
+    let grantExcluded;
+
+    let activityRecipientIncluded1;
+    let activityRecipientIncluded2;
+    let activityRecipientExcluded;
+
+    let possibleIds;
+
+    beforeAll(async () => {
+      const id1 = faker.datatype.number();
+      const id2 = faker.datatype.number();
+      const id3 = faker.datatype.number();
+
+      granteeIncluded1 = await Grantee.create({ id: id1, name: faker.name.findName() });
+      granteeIncluded2 = await Grantee.create({ id: id2, name: faker.name.findName() });
+      granteeExcluded = await Grantee.create({ id: id3, name: faker.name.findName() });
+
+      grantIncluded1 = await Grant.create({
+        id: granteeIncluded1.id,
+        number: granteeIncluded1.id,
+        granteeId: granteeIncluded1.id,
+        programSpecialistName: faker.name.findName(),
+      });
+
+      grantIncluded2 = await Grant.create({
+        id: granteeIncluded2.id,
+        number: granteeIncluded2.id,
+        granteeId: granteeIncluded2.id,
+        programSpecialistName: faker.name.findName(),
+      });
+
+      grantExcluded = await Grant.create({
+        id: granteeExcluded.id,
+        number: granteeExcluded.id,
+        granteeId: granteeExcluded.id,
+        programSpecialistName: faker.name.findName(),
+      });
+
+      const dummyProgram = {
+        startYear: '2020',
+        startDate: '2020-09-01',
+        endDate: '2020-09-02',
+        status: 'Active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await Program.create({
+        ...dummyProgram,
+        id: grantIncluded1.id,
+        name: faker.name.findName(),
+        grantId: grantIncluded1.id,
+        programType: 'EHS',
+      });
+      await Program.create({
+        ...dummyProgram,
+        id: grantIncluded2.id,
+        name: faker.name.findName(),
+        grantId: grantIncluded2.id,
+        programType: 'EHS',
+      });
+      await Program.create({
+        ...dummyProgram,
+        id: grantExcluded.id,
+        name: faker.name.findName(),
+        grantId: grantExcluded.id,
+        programType: 'HS',
+      });
+
+      reportIncluded1 = await ActivityReport.create({ ...draftReport });
+      reportIncluded2 = await ActivityReport.create({ ...draftReport });
+      reportExcluded = await ActivityReport.create({ ...draftReport });
+
+      activityRecipientIncluded1 = await ActivityRecipient.create({
+        activityReportId: reportIncluded1.id,
+        grantId: grantIncluded1.id,
+      });
+      activityRecipientIncluded2 = await ActivityRecipient.create({
+        activityReportId: reportIncluded2.id,
+        grantId: grantIncluded2.id,
+      });
+      activityRecipientExcluded = await ActivityRecipient.create({
+        activityReportId: reportExcluded.id,
+        grantId: grantExcluded.id,
+      });
+
+      possibleIds = [
+        reportIncluded1.id,
+        reportIncluded2.id,
+        reportExcluded.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityRecipient.destroy({
+        where: {
+          id: [
+            activityRecipientIncluded1.id,
+            activityRecipientIncluded2.id,
+            activityRecipientExcluded.id,
+          ],
+        },
+      });
+      await ActivityReport.destroy({
+        where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+      });
+
+      await Program.destroy({
+        where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+      });
+
+      await Grant.destroy({
+        where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+      });
+      await Grantee.destroy({
+        where: { id: [granteeIncluded1.id, granteeIncluded2.id, granteeExcluded.id] },
+      });
+    });
+
+    it('includes program type', async () => {
+      const filters = { 'programType.in': ['EHS'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+    });
+
+    it('excludes program type', async () => {
+      const filters = { 'programType.nin': ['EHS'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
