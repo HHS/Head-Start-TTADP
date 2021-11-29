@@ -1,3 +1,5 @@
+import { sequelize } from '../models';
+
 const orderGranteesBy = (sortBy, sortDir) => {
   let result = '';
   switch (sortBy) {
@@ -13,7 +15,7 @@ const orderGranteesBy = (sortBy, sortDir) => {
           'grants', 'regionId', sortDir,
         ],
         [
-          'id',
+          'name',
           sortDir,
         ],
       ];
@@ -21,7 +23,14 @@ const orderGranteesBy = (sortBy, sortDir) => {
     case 'programSpecialist':
       result = [
         [
-          'grants', 'programSpecialistName', sortDir,
+          sequelize.literal('"programSpecialists"'), sortDir,
+        ],
+      ];
+      break;
+    case 'grantSpecialist':
+      result = [
+        [
+          sequelize.literal('"grantSpecialists"'), sortDir,
         ],
       ];
       break;
