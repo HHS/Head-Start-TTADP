@@ -15,57 +15,49 @@ const history = createMemoryHistory();
 const grantees = [
   {
     id: 11,
+    granteeType: '',
     name: 'Agency 2 in region 1, Inc.',
-    createdAt: '2021-09-21T19:16:15.842Z',
-    updatedAt: '2021-09-21T19:16:15.842Z',
-    grants: [
-      {
-        id: 12,
-        number: '09HP01111',
-        regionId: 1,
-        programSpecialistName: 'Candyman',
-      },
-      {
-        id: 13,
-        number: '09HP0112',
-        regionId: 2,
-        programSpecialistName: 'Tony Todd',
-      },
-      {
-        id: 14,
-        number: '09HP01113',
-        regionId: 3,
-        programSpecialistName: 'Doug Bradley',
-      },
+    regionId: 1,
+    specialists: [
+      'Tony Todd',
+      'Candyman',
+    ],
+  },
+  {
+    id: 11,
+    granteeType: '',
+    name: 'Agency 2 in region 1, Inc.',
+    regionId: 2,
+    specialists: [
+      'Tony Todd',
+    ],
+  },
+  {
+    id: 11,
+    granteeType: '',
+    name: 'Agency 2 in region 1, Inc.',
+    regionId: 2,
+    specialists: [
+      'Doug Bradley',
     ],
   },
   {
     id: 10,
+    granteeType: '',
     name: 'Agency 1.b in region 1, Inc.',
+    regionId: 1,
     createdAt: '2021-09-21T19:16:15.842Z',
     updatedAt: '2021-09-21T19:16:15.842Z',
-    grants: [
-      {
-        id: 11,
-        number: '01HP022222',
-        regionId: 1,
-        programSpecialistName: null,
-      },
-    ],
+    specialists: [],
   },
   {
     id: 9,
+    granteeType: '',
     name: 'Agency 1.a in region 1, Inc.',
+    regionId: 1,
     createdAt: '2021-09-21T19:16:15.842Z',
     updatedAt: '2021-09-21T19:16:15.842Z',
-    grants: [
-      {
-        id: 10,
-        number: '01HP044444',
-        regionId: 1,
-        programSpecialistName: null,
-      },
-    ],
+    specialists: [],
   },
 ];
 
@@ -109,7 +101,7 @@ describe('Grantee Search > GranteeResults', () => {
     expect(screen.getByRole('link', {
       name: /agency 1\.a in region 1, inc\./i,
     })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /candyman, Doug Bradley, tony todd/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /candyman, tony todd/i })).toBeInTheDocument();
   });
 
   it('calls the sort function', async () => {

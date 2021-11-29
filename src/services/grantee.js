@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import {
-  Grant, Grantee, Program,
+  Grant, Grantee, Program, sequelize,
 } from '../models';
 import orderGranteesBy from '../lib/orderGranteesBy';
 import { GRANTEES_PER_PAGE } from '../constants';
@@ -59,83 +59,72 @@ export async function granteeById(granteeId, grantScopes) {
 export async function granteesByName(query, scopes, sortBy, direction, offset) {
   // fix the query
   const q = `%${query}%`;
+  const limit = GRANTEES_PER_PAGE;
 
-  // first get all grants with numbers that match the query string
-  const matchingGrantNumbers = await Grant.findAll({
-    attributes: [],
-    where: {
-      number: {
-        [Op.iLike]: q, // sequelize automatically escapes this
-      },
-      status: 'Active',
-      [Op.and]: scopes,
-    },
-    include: [
-      {
-        model: Grantee,
-        as: 'grantee',
-        attributes: ['id'],
-      },
+  const rows = await Grantee.findAll({
+    attributes: [
+      [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
+      [sequelize.fn('STRING_AGG', sequelize.fn('DISTINCT', sequelize.col('grants.programSpecialistName')), ', '), 'programSpecialists'],
+      [sequelize.fn('STRING_AGG', sequelize.fn('DISTINCT', sequelize.col('grants.grantSpecialistName')), ', '), 'grantSpecialists'],
+      [sequelize.col('grants.regionId'), 'regionId'],
+      'id',
+      'name',
+      'granteeType',
     ],
-  });
-
-  // create a base where clause for the grantees matching the name and the query string
-  let granteeWhere = {
-    name: {
-      [Op.iLike]: q, // sequelize automatically escapes this
-    },
-  };
-
-  // if we have any matching grant numbers
-  if (matchingGrantNumbers) {
-    // we pull out the grantee ids
-    // and include them in the where clause, so either
-    // the grant number or the grant name matches the query string
-    const matchingGrantNumbersGranteeIds = matchingGrantNumbers.map((grant) => grant.grantee.id);
-    granteeWhere = {
+    where: {
       [Op.or]: [
         {
           name: {
-            [Op.iLike]: q, // sequelize automatically escapes this
+            [Op.iLike]: q,
           },
         },
         {
-          id: matchingGrantNumbersGranteeIds,
-        },
-      ],
-    };
-  }
-
-  const limit = GRANTEES_PER_PAGE;
-
-  // We want grantees that have either
-  // - have a grant that expired gte 9/1/2020
-  // - have an active grant
-
-  return Grantee.findAndCountAll({
-    where: granteeWhere,
-    include: [
-      {
-        attributes: ['id', 'number', 'regionId', 'programSpecialistName', 'grantSpecialistName'],
-        model: Grant,
-        as: 'grants',
-        where: {
-          [Op.and]: scopes,
-          [Op.or]: [
-            {
-              status: 'Active',
-            },
-            {
-              endDate: {
-                [Op.gte]: '2020-09-01',
-              },
-            },
+          [Op.and]: [
+            { '$grants.number$': { [Op.iLike]: q } },
           ],
         },
-      },
+      ],
+    },
+    include: [{
+      attributes: [],
+      model: Grant,
+      as: 'grants',
+      required: true,
+      where: [{
+        [Op.and]: [
+          { [Op.and]: scopes },
+          {
+            [Op.or]: [
+              {
+                status: 'Active',
+              },
+              {
+                endDate: {
+                  [Op.gte]: '2020-09-01',
+                },
+              },
+            ],
+          },
+        ],
+      }],
+    }],
+    subQuery: false,
+    raw: true,
+    group: [
+      'grants.regionId',
+      'Grantee.id',
     ],
     limit,
     offset,
     order: orderGranteesBy(sortBy, direction),
   });
+
+  // handle zero results
+  const firstRow = rows[0];
+  const count = firstRow ? firstRow.count : 0;
+
+  return {
+    count: parseInt(count, 10),
+    rows,
+  };
 }
