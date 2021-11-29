@@ -21,6 +21,8 @@ export default function GrantsList({ summary }) {
           <td>
             {grant.programs ? getDistinctSortedArray(grant.programs.map((program) => program.programType)).join(', ') : ''}
           </td>
+          <td>{grant.programSpecialistName}</td>
+          <td>{grant.grantSpecialistName}</td>
           <td>
             {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
           </td>
@@ -43,6 +45,8 @@ export default function GrantsList({ summary }) {
               <th scope="col">Grant Number</th>
               <th scope="col">Status</th>
               <th scope="col">Program Type(s)</th>
+              <th scope="col">Program Specialist</th>
+              <th scope="col">Grant Specialist</th>
               <th scope="col">Project End Date</th>
             </tr>
           </thead>
@@ -65,8 +69,9 @@ GrantsList.propTypes = {
           number: PropTypes.string,
           status: PropTypes.string,
           endDate: PropTypes.string,
+          programSpecialistName: PropTypes.string,
+          grantSpecialistName: PropTypes.string,
         }),
       ),
     }).isRequired,
-
 };
