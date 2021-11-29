@@ -6,7 +6,7 @@ import sequelize, { Op } from 'sequelize';
 import cheerio from 'cheerio';
 import faker from 'faker';
 import {
-  ActivityReport, User, Grantee, Grant, File, Permission,
+  ActivityReport, User, Grantee, Grant, File, Permission, RequestErrors,
 } from '../models';
 
 const SITE_ACCESS = 1;
@@ -94,7 +94,7 @@ const processHtml = async (input) => {
 };
 
 const convertEmails = (emails) => {
-  if (emails === null) {
+  if (!emails) {
     return emails;
   }
   const emailsArray = emails.split(', ');
@@ -105,10 +105,36 @@ const convertEmails = (emails) => {
       const foundTransformedUser = transformedUsers.find((user) => user.id === userId);
       return foundTransformedUser ? foundTransformedUser.email : '';
     }
-    return '';
+    return emails.includes('@') ? faker.internet.email() : '';
   });
 
   return convertedEmails.join(', ');
+};
+
+const convertName = (name, email) => {
+  if (!name) {
+    return { name, email };
+  }
+  const additionalId = 99999;
+  let foundUser = realUsers.find((user) => user.email === email);
+
+  // Not all program specialists or grant specialist are in the Hub yet
+  // Add it to the realUsers
+  if (!foundUser && email.includes('@')) {
+    foundUser = { id: additionalId + 1, name, email };
+    realUsers.push(foundUser);
+  }
+
+  let foundTransformedUser = transformedUsers.find((user) => user.id === foundUser.id);
+  if (!foundTransformedUser) {
+    foundTransformedUser = {
+      id: foundUser.id,
+      name: faker.name.findName(),
+      email: faker.internet.email(),
+    };
+    transformedUsers.push(foundTransformedUser);
+  }
+  return foundTransformedUser;
 };
 
 const convertFileName = (fileName) => {
@@ -151,7 +177,7 @@ export const hideUsers = async (userIds) => {
   const where = ids ? { id: ids } : {};
   // save real users
   realUsers = await User.findAll({
-    attributes: ['id', 'email'],
+    attributes: ['id', 'email', 'name'],
     where,
   }).map((u) => u.dataValues);
 
@@ -160,7 +186,7 @@ export const hideUsers = async (userIds) => {
   });
   const promises = [];
   // loop through the found users
-  for await (const user of users) {
+  for (const user of users) {
     promises.push(
       user.update({
         hsesUsername: faker.internet.email(),
@@ -174,7 +200,7 @@ export const hideUsers = async (userIds) => {
   await Promise.all(promises);
   // Retrieve transformed users
   transformedUsers = await User.findAll({
-    attributes: ['id', 'email'],
+    attributes: ['id', 'email', 'name'],
   }).map((u) => u.dataValues);
 };
 
@@ -194,7 +220,7 @@ export const hideGranteesGrants = async (granteesGrants) => {
   const promises = [];
 
   // loop through the found reports
-  for await (const grantee of grantees) {
+  for (const grantee of grantees) {
     promises.push(
       grantee.update({
         name: faker.company.companyName(),
@@ -205,13 +231,26 @@ export const hideGranteesGrants = async (granteesGrants) => {
     where: grantWhere,
   });
 
-  for await (const grant of grants) {
+  for (const grant of grants) {
+    // run this first
+    const programSpecialist = convertName(
+      grant.programSpecialistName,
+      grant.programSpecialistEmail,
+    );
+    const grantSpecialist = convertName(
+      grant.grantSpecialistName,
+      grant.grantSpecialistEmail,
+    );
     const trailingNumber = grant.id;
     const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
 
     promises.push(
       grant.update({
         number: newGrantNumber,
+        programSpecialistName: programSpecialist.name,
+        programSpecialistEmail: programSpecialist.email,
+        grantSpecialistName: grantSpecialist.name,
+        grantSpecialistEmail: grantSpecialist.email,
       }),
     );
   }
@@ -386,7 +425,7 @@ const processData = async (mockReport) => {
     }
   }
 
-  for await (const file of files) {
+  for (const file of files) {
     promises.push(
       file.update({
         originalFileName: convertFileName(file.originalFileName),
@@ -395,6 +434,12 @@ const processData = async (mockReport) => {
   }
 
   await bootstrapUsers();
+
+  // Delete from RequestErrors
+  await RequestErrors.destroy({
+    where: {},
+    truncate: true,
+  });
 
   return Promise.all(promises);
 };
