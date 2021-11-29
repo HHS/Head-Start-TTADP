@@ -67,7 +67,8 @@ function transformGrantModel(field) {
     const obj = {};
     const activityRecipients = await instance.activityRecipients;
     if (activityRecipients) {
-      const programSpecialistNames = activityRecipients.map((recipient) => (recipient.grant && recipient.grant[field] !== null ? recipient.grant[field] : '')).sort().join('\n');
+      const distinctPS = [...new Set(activityRecipients.map((recipient) => (recipient.grant && recipient.grant[field] !== null ? recipient.grant[field] : '')))];
+      const programSpecialistNames = distinctPS.sort().join('\n');
       Object.defineProperty(obj, field, {
         value: programSpecialistNames,
         enumerable: true,

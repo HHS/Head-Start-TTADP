@@ -103,6 +103,13 @@ describe('activityReportToCsvRecord', () => {
 
   const mockActivityRecipients = [
     {
+      id: 4,
+      grantId: 4,
+      grant: {
+        name: 'test4', programSpecialistName: 'Program Specialist 4', granteeId: 4, grantee: { name: 'test4' },
+      },
+    },
+    {
       id: 1,
       grantId: 1,
       grant: {
@@ -114,6 +121,13 @@ describe('activityReportToCsvRecord', () => {
       grantId: 2,
       grant: {
         name: 'test2', programSpecialistName: 'Program Specialist 2', granteeId: 2, grantee: { name: 'test2' },
+      },
+    },
+    {
+      id: 3,
+      grantId: 3,
+      grant: {
+        name: 'test3', programSpecialistName: 'Program Specialist 1', granteeId: 3, grantee: { name: 'test3' },
       },
     },
   ];
@@ -168,7 +182,7 @@ describe('activityReportToCsvRecord', () => {
     expect(author).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
     expect(collaborators).toEqual('Collaborator 1, GS, HS\nCollaborator 2');
-    expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2');
+    expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
   });
 
   it('transforms goals and objectives into many values', async () => {
