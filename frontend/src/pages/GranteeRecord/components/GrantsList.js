@@ -24,6 +24,9 @@ export default function GrantsList({ summary }) {
           <td>{grant.programSpecialistName}</td>
           <td>{grant.grantSpecialistName}</td>
           <td>
+            {grant.startDate ? moment(grant.startDate).format('MM/DD/yyyy') : null}
+          </td>
+          <td>
             {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
           </td>
         </tr>
@@ -47,6 +50,7 @@ export default function GrantsList({ summary }) {
               <th scope="col">Program Type(s)</th>
               <th scope="col">Program Specialist</th>
               <th scope="col">Grant Specialist</th>
+              <th scope="col">Project Start Date</th>
               <th scope="col">Project End Date</th>
             </tr>
           </thead>
