@@ -45,7 +45,7 @@ const GoalsObjectives = () => {
         <title>Goals and objectives</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
-        <Label htmlFor="context">OPTIONAL: Provide background or context for this activity</Label>
+        <Label htmlFor="context">Provide background or context for this activity</Label>
         <div className="smart-hub--text-area__resize-vertical margin-top-1">
           <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
         </div>
