@@ -84,6 +84,8 @@ function DateRangePicker({
 
         <DateRange
           small
+          startDateAriaLabel="Please enter a start date in the format MM/DD/YYYY."
+          endDateAriaLabel="Please enter a end date in the format MM/DD/YYYY."
           phrases={phrases}
           focusedInput={focusedInput}
           startDateId={startDateId}
