@@ -75,6 +75,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Collaborators',
         },
         {
+          key: 'programSpecialistName',
+          header: 'Program Specialists',
+        },
+        {
           key: 'requester',
           header: 'Requester',
         },
