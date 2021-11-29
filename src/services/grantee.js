@@ -64,8 +64,8 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
   const rows = await Grantee.findAll({
     attributes: [
       [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
-      [sequelize.fn('STRING_AGG', sequelize.fn('DISTINCT', sequelize.col('grants.programSpecialistName')), ', '), 'programSpecialists'],
-      [sequelize.fn('STRING_AGG', sequelize.fn('DISTINCT', sequelize.col('grants.grantSpecialistName')), ', '), 'grantSpecialists'],
+      sequelize.literal('STRING_AGG(DISTINCT "grants"."programSpecialistName", \', \' order by "grants"."programSpecialistName") as "programSpecialists"'),
+      sequelize.literal('STRING_AGG(DISTINCT "grants"."grantSpecialistName", \', \' order by "grants"."grantSpecialistName") as "grantSpecialists"'),
       [sequelize.col('grants.regionId'), 'regionId'],
       'id',
       'name',
