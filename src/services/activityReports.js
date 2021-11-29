@@ -699,7 +699,7 @@ async function getDownloadableActivityReports(where) {
           include: [
             {
               model: Grant,
-              attributes: ['id', 'number'],
+              attributes: ['id', 'number', 'programSpecialistName'],
               as: 'grant',
               required: false,
               include: [
