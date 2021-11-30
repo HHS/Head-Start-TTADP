@@ -171,7 +171,7 @@ describe('FilterItem', () => {
 
     it('uses the date range picker', async () => {
       render(<RenderFilterItem topic="startDate" condition="Is within" />);
-      const input = await screen.findByRole('textbox', { name: 'Start Date' });
+      const input = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
       expect(input).toBeVisible();
     });
   });
