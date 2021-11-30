@@ -116,11 +116,11 @@ function Filter({ applyFilters, forMyAlerts }) {
         onClick={() => {
           updateOpen(!open);
         }}
-        className={`usa-button usa-button--outline font-sans-xs margin-left-1 smart-hub--table-controls__button ${filterClass}`}
+        className={`usa-button usa-button--outline font-sans-xs margin-left-1 ${filterClass}`}
       >
         {`Filters ${filters.length > 0 ? `(${filters.length})` : ''}`}
         {' '}
-        <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
+        <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="#005ea2" icon={faSortDown} />
       </button>
       {open && (
       <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 left-0 position-absolute">

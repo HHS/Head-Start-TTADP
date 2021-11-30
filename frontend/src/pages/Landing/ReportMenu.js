@@ -55,7 +55,7 @@ function ReportMenu({
         ref={menuButtonRef}
         type="button"
         aria-haspopup="menu"
-        className={`usa-button usa-button--outline font-sans-xs margin-left-1 smart-hub--table-controls__button ${openClass}`}
+        className={`usa-button usa-button--outline font-sans-xs margin-left-1 ${openClass}`}
         aria-label={label}
         onClick={() => updateOpen((current) => !current)}
       >
@@ -65,7 +65,7 @@ function ReportMenu({
           size="1x"
           className="margin-left-1"
           style={{ paddingBottom: '2px' }}
-          color="black"
+          color="#005ea2"
           icon={faSortDown}
         />
       </button>

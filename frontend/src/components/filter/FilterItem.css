@@ -1,9 +1,14 @@
+.ttahub-filter-menu-item {
+    gap: 0.5rem;
+}
+
 .ttahub-filter-menu-item [name="topic"],
 .ttahub-filter-menu-item [name="condition"],
 .ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select,
 .ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select,
 .ttahub-filter-menu-item .smart-hub--dropdown-menu-toggle-btn,
 .ttahub-filter-menu-single-date-picker,
+.ttahub-filter-menu-item > :nth-last-child(2),
 .ttahub-dummy-select {
     max-width: none;
     width: 200px;
@@ -11,10 +16,6 @@
 
 .ttahub-filter-menu-item .usa-select {
     margin-top: 0.5em;
-}
-
-.ttahub-filter-menu-single-date-picker {
-    border: 1px solid;
 }
 
 .ttahub-filter-menu-item .SingleDatePickerInput__withBorder {
