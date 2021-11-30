@@ -268,6 +268,8 @@ function ActivityReportsTable({
                   handleReportSelect={handleReportSelect}
                   isChecked={reportCheckboxes[report.id] || false}
                   openMenuUp={index > displayReports.length - 1}
+                  numberOfSelectedReports={numberOfSelectedReports}
+                  exportSelected={handleDownloadClick}
                 />
               ))}
             </tbody>

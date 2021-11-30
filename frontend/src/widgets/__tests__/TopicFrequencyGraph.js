@@ -4,6 +4,7 @@ import React from 'react';
 import {
   render,
   screen,
+  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -138,15 +139,15 @@ describe('Topic & Frequency Graph Widget', () => {
   it('the sort control works', async () => {
     renderArGraphOverview({ data: [...TEST_DATA] });
     const button = screen.getByRole('button', { name: /change topic graph order/i });
-    userEvent.click(button);
+    act(() => userEvent.click(button));
     const aZ = screen.getByRole('button', { name: /select to view data from a to z\. select apply filters button to apply selection/i });
-    userEvent.click(aZ);
+    act(() => userEvent.click(aZ));
     const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
     const point1 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
     expect(point1.__data__.text).toBe(' Community<br />and<br />Self-Assessment');
-    userEvent.click(apply);
+    act(() => userEvent.click(apply));
 
     const point2 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
@@ -155,19 +156,19 @@ describe('Topic & Frequency Graph Widget', () => {
 
   it('handles switching display contexts', async () => {
     renderArGraphOverview({ data: [...TEST_DATA] });
-    const button = screen.getByRole('button', { name: 'display number of activity reports by topic data as table' });
-    userEvent.click(button);
+    const button = await screen.findByRole('button', { name: 'display number of activity reports by topic data as table' });
+    act(() => userEvent.click(button));
 
-    const firstRowHeader = screen.getByRole('cell', {
+    const firstRowHeader = await screen.findByRole('cell', {
       name: /community and self-assessment/i,
     });
     expect(firstRowHeader).toBeInTheDocument();
 
-    const firstTableCell = screen.getByRole('cell', { name: /155/i });
+    const firstTableCell = await screen.findByRole('cell', { name: /155/i });
     expect(firstTableCell).toBeInTheDocument();
 
-    const viewGraph = screen.getByRole('button', { name: 'display number of activity reports by topic data as graph' });
-    userEvent.click(viewGraph);
+    const viewGraph = await screen.findByRole('button', { name: 'display number of activity reports by topic data as graph' });
+    act(() => userEvent.click(viewGraph));
 
     expect(firstRowHeader).not.toBeInTheDocument();
     expect(firstTableCell).not.toBeInTheDocument();
