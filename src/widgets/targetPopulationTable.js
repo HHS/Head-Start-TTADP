@@ -17,6 +17,8 @@ export default async function targetPopulationTable(scopes) {
     raw: true,
   });
 
+  console.log(TARGET_POPULATIONS);
+
   const populations = TARGET_POPULATIONS.map((population) => ({ name: population, count: 0 }));
 
   return countBySingleKey(res, 'targetPopulations', populations);
