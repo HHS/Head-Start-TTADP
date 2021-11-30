@@ -39,12 +39,11 @@
     padding-left: 10em;
 }
 
-@media(max-width: 768px) {
-    .ttahub--topic-frequency-graph-control-row {
-        display: block;
-        width: 100%;
-    }
+.grid-gap-1 {
+    gap: 1rem;
+}
 
+@media(max-width: 768px) {
     .ttahub--topic-frequency-graph-control-row .usa-select, 
     .tta-dashboard--topic-frequency-graph-apply-filters {
         width: 180px;
