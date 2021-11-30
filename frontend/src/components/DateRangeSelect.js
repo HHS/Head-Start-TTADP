@@ -251,12 +251,16 @@ function DateRangeSelect(props) {
                   </div>
                 ) : null }
                 {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <label className="display-block margin-top-2" htmlFor={startDatePickerId}>Start Date</label>
-                <p><small>mm/dd/yyyy</small></p>
+                <label className="display-block margin-top-2" htmlFor={startDatePickerId}>
+                  Start Date
+                  <br />
+                  <span className="sr-only">Please enter in the format</span>
+                  <small className="display-block margin-y-2">mm/dd/yyyy</small>
+                </label>
                 <div className="smart-hub--button-select-menu-date-picker-single">
                   <SingleDatePicker
+                    ariaLabel=""
                     small
-                    ariaLabel="start date"
                     id={startDatePickerId}
                     focused={startDateFocused}
                     numberOfMonths={1}
@@ -299,11 +303,15 @@ function DateRangeSelect(props) {
                   </Button>
                 </div>
                 {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <label className="display-block margin-top-2" htmlFor="endDatePicker">End Date</label>
-                <p><small>mm/dd/yyyy</small></p>
+                <label className="display-block margin-top-2" htmlFor="endDatePicker">
+                  End Date
+                  <br />
+                  <span className="sr-only">Please enter in the format</span>
+                  <small className="display-block margin-y-2">mm/dd/yyyy</small>
+                </label>
                 <div className="smart-hub--button-select-menu-date-picker-single">
                   <SingleDatePicker
-                    ariaLabel="end date"
+                    ariaLabel=""
                     small
                     id="endDatePicker"
                     focused={endDateFocused}

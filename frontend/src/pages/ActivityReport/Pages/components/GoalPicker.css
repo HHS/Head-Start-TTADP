@@ -1,7 +1,3 @@
 #goals .usa-checkbox {
     background: transparent;
 }
-
-#goals .usa-checkbox__label::before {
-    margin-top: -12px;
-}
