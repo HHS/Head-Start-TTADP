@@ -142,9 +142,6 @@ export default (sequelize, DataTypes) => {
     requester: {
       type: DataTypes.STRING,
     },
-    programTypes: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-    },
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
@@ -187,7 +184,6 @@ export default (sequelize, DataTypes) => {
             this.startDate,
             this.activityRecipientType,
             this.requester,
-            this.programTypes,
             this.targetPopulations,
             this.reason,
             this.participants,
