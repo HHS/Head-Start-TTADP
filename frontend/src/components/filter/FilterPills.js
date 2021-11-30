@@ -27,7 +27,12 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     {
       topic: 'role',
       display: 'Specialist',
-      query: () => query.join(', '),
+      query: () => {
+        if (query.length) {
+          return query.join(', ');
+        }
+        return 'None selected';
+      },
     },
     {
       topic: 'startDate',

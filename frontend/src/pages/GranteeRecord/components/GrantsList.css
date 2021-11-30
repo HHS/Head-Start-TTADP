@@ -2,6 +2,10 @@
   font-size: 14px;
 }
 
+.ttahub-grantee-record--grants-list th {
+  vertical-align: bottom;
+}
+
 .ttahub-grantee-record--grants-list th,
 .ttahub-grantee-record--grants-list td {
   padding-left: 24px;
