@@ -104,5 +104,4 @@ export const TARGET_POPULATIONS = [
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
-  'Pregnant Women',
 ];
