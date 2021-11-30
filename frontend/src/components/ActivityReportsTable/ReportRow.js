@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
@@ -8,9 +8,15 @@ import { getReportsDownloadURL } from '../../fetchers/helpers';
 import TooltipWithCollection from '../TooltipWithCollection';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import './ReportRow.css';
 
 function ReportRow({
-  report, openMenuUp, handleReportSelect, isChecked,
+  report,
+  openMenuUp,
+  handleReportSelect,
+  isChecked,
+  numberOfSelectedReports,
+  exportSelected,
 }) {
   const {
     id,
@@ -26,6 +32,8 @@ function ReportRow({
     createdAt,
     legacyId,
   } = report;
+
+  const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
   const authorName = author ? author.fullName : '';
@@ -70,10 +78,38 @@ function ReportRow({
 
   const selectId = `report-${id}`;
 
+  /**
+   * we manage the class of the row as a sort of "focus-within" workaround
+   * this is entirely to show/hide the export reports button to keyboard users but
+   * not blast screen-reader only users with a bunch of redundant buttons
+   */
+
+  const onFocus = () => setTrClassname('tta-smarthub--report-row focused');
+
+  const onBlur = (e) => {
+    if (e.relatedTarget && e.relatedTarget.matches('.tta-smarthub--report-row *')) {
+      return;
+    }
+    setTrClassname('tta-smarthub--report-row');
+  };
+
   return (
-    <tr key={`landing_${id}`}>
+    <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`landing_${id}`}>
       <td className="width-8">
         <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
+        { numberOfSelectedReports > 0 && (
+        <button
+          type="button"
+          className="usa-button usa-button--outline ttahub-export-reports"
+          onClick={exportSelected}
+        >
+          Export
+          {' '}
+          {numberOfSelectedReports}
+          {' '}
+          selected reports
+        </button>
+        ) }
       </td>
       <th scope="row" className="smart-hub--blue">
         <Link
@@ -109,41 +145,47 @@ function ReportRow({
   );
 }
 
-export const reportPropTypes = {
-  report: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    displayId: PropTypes.string.isRequired,
-    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string,
-      grant: PropTypes.shape({
-        grantee: PropTypes.shape({
-          name: PropTypes.string,
-        }),
+export const reportPropTypes = PropTypes.shape({
+  id: PropTypes.number.isRequired,
+  displayId: PropTypes.string.isRequired,
+  activityRecipients: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string,
+    grant: PropTypes.shape({
+      grantee: PropTypes.shape({
+        name: PropTypes.string,
       }),
-    })).isRequired,
-    approvedAt: PropTypes.string,
-    createdAt: PropTypes.string,
-    startDate: PropTypes.string.isRequired,
-    author: PropTypes.shape({
-      fullName: PropTypes.string,
-      homeRegionId: PropTypes.number,
-      name: PropTypes.string,
-    }).isRequired,
-    topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-    collaborators: PropTypes.arrayOf(
-      PropTypes.shape({
-        fullName: PropTypes.string,
-      }),
-    ).isRequired,
-    lastSaved: PropTypes.string.isRequired,
-    calculatedStatus: PropTypes.string.isRequired,
-    legacyId: PropTypes.string,
+    }),
+  })).isRequired,
+  approvedAt: PropTypes.string,
+  createdAt: PropTypes.string,
+  startDate: PropTypes.string.isRequired,
+  author: PropTypes.shape({
+    fullName: PropTypes.string,
+    homeRegionId: PropTypes.number,
+    name: PropTypes.string,
   }).isRequired,
+  topics: PropTypes.arrayOf(PropTypes.string).isRequired,
+  collaborators: PropTypes.arrayOf(
+    PropTypes.shape({
+      fullName: PropTypes.string,
+    }),
+  ),
+  lastSaved: PropTypes.string,
+  calculatedStatus: PropTypes.instanceOf(moment),
+  legacyId: PropTypes.string,
+});
+
+ReportRow.propTypes = {
+  report: reportPropTypes.isRequired,
   openMenuUp: PropTypes.bool.isRequired,
   handleReportSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
+  numberOfSelectedReports: PropTypes.number,
+  exportSelected: PropTypes.func.isRequired,
 };
 
-ReportRow.propTypes = reportPropTypes;
+ReportRow.defaultProps = {
+  numberOfSelectedReports: 0,
+};
 
 export default ReportRow;

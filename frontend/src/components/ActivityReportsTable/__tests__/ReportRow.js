@@ -14,7 +14,7 @@ const history = createMemoryHistory();
 const [report] = generateXFakeReports(1);
 
 describe('ReportRow', () => {
-  const renderReportRow = () => (
+  const renderReportRow = (numberOfSelectedReports = 0, exportSelected = jest.fn()) => (
     render(
       <Router history={history}>
         <ReportRow
@@ -22,6 +22,8 @@ describe('ReportRow', () => {
           openMenuUp={false}
           handleReportSelect={jest.fn()}
           isChecked={false}
+          numberOfSelectedReports={numberOfSelectedReports}
+          exportSelected={exportSelected}
         />
       </Router>,
     )
@@ -51,5 +53,15 @@ describe('ReportRow', () => {
     userEvent.click(await screen.findByRole('button', { name: /copy url/i }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
+  });
+
+  it('the export all button appears when a report is selected', () => {
+    const exportSelected = jest.fn();
+    renderReportRow(1, exportSelected);
+
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.keyboard('{enter}');
+    expect(exportSelected).toHaveBeenCalled();
   });
 });
