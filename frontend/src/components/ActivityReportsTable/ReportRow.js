@@ -87,11 +87,13 @@ function ReportRow({
       </td>
       <td>{startDate}</td>
       <td>
-        <Tooltip
-          displayText={authorName}
-          tooltipText={authorName}
-          buttonLabel="click to reveal author name"
-        />
+        {authorName ? (
+          <Tooltip
+            displayText={authorName}
+            tooltipText={authorName}
+            buttonLabel="click to reveal author name"
+          />
+        ) : '' }
       </td>
       <td>{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td>
