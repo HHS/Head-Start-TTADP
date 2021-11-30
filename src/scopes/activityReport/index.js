@@ -13,6 +13,7 @@ import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatu
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withRole, withoutRole } from './role';
 import withRegion from './region';
+import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutReason, withReason } from './reason';
 
 export const topicToQuery = {
@@ -69,6 +70,10 @@ export const topicToQuery = {
   },
   region: {
     in: (query) => withRegion(query),
+  },
+  targetPopulations: {
+    in: (query) => withTargetPopulations(query),
+    nin: (query) => withoutTargetPopulations(query),
   },
   reason: {
     in: (query) => withReason(query),
