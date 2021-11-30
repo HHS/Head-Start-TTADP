@@ -181,7 +181,6 @@ const arTransformers = [
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
   transformRelatedModel('collaborators', 'fullName'),
-  'programTypes',
   'targetPopulations',
   'virtualDeliveryType',
   'reason',
