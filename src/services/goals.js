@@ -39,6 +39,9 @@ export async function goalsForGrants(grantIds) {
         {
           status: 'In Progress',
         },
+        {
+          status: null,
+        },
       ],
     },
     include: [
