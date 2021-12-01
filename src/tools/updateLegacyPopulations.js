@@ -31,6 +31,13 @@ export default async function updateLegacyPopulations() {
     },
   });
 
+  if (!reports.count) {
+    auditLogger.info(`No reports to update
+    
+    `);
+    return [];
+  }
+
   auditLogger.info(`${reports.count} reports with affected data found...
   
   `);
