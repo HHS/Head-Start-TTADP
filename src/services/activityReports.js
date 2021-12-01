@@ -723,6 +723,11 @@ async function getDownloadableActivityReports(where) {
                   as: 'grantee',
                   attributes: ['name'],
                 },
+                {
+                  model: Program,
+                  as: 'programs',
+                  attributes: ['programType'],
+                },
               ],
             },
             {
