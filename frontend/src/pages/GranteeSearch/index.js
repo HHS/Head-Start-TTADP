@@ -13,6 +13,16 @@ import { searchGrantees } from '../../fetchers/grantee';
 import { GRANTEES_PER_PAGE } from '../../Constants';
 import './index.css';
 
+const DEFAULT_SORT = {
+  sortBy: 'name',
+  direction: 'asc',
+};
+
+const DEFAULT_CENTRAL_OFFICE_SORT = {
+  sortBy: 'regionId',
+  direction: 'asc',
+};
+
 function GranteeSearch({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
@@ -21,10 +31,9 @@ function GranteeSearch({ user }) {
   const [results, setResults] = useState({ count: 0, rows: [] });
   const [activePage, setActivePage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [sortConfig, setSortConfig] = useState({
-    sortBy: 'name',
-    direction: 'asc',
-  });
+  const [sortConfig, setSortConfig] = useState(
+    hasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT,
+  );
 
   const inputRef = useRef();
 
