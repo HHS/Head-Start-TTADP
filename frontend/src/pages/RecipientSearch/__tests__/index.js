@@ -232,10 +232,10 @@ describe('the recipient search page', () => {
   it('the regional select works with all regions', async () => {
     const user = { ...userBluePrint, homeRegionId: 14 };
 
-    fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0', res);
+    fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0', res);
 
     renderRecipientSearch(user);
-    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0');
+    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0');
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
