@@ -71,9 +71,16 @@ function transformGrantModel(prop, secondaryProp) {
       if (secondaryProp) {
         distinctList = [
           ...new Set(
-            values.map((recipient) => recipient.grant[secondaryProp].filter(
-              (p) => p[prop] && p[prop] !== null,
-            ).map((r) => r[prop])).flat(),
+            values.map(
+              (recipient) => {
+                if (recipient.grant[secondaryProp]) {
+                  return recipient.grant[secondaryProp].filter(
+                    (p) => p[prop] && p[prop] !== null,
+                  ).map((r) => r[prop]);
+                }
+                return null;
+              },
+            ).flat(),
           ),
         ];
       } else {
