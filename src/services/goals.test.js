@@ -213,6 +213,9 @@ describe('goalsForGrants', () => {
           {
             status: 'In Progress',
           },
+          {
+            status: null,
+          },
         ],
       },
       include: [
