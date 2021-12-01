@@ -166,7 +166,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "update-node-to-14.18.1"
+    default: "js-478-grantee-search-fixes"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-test-data"

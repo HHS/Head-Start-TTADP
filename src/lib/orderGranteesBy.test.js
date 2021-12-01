@@ -1,4 +1,5 @@
 import orderGranteesBy from './orderGranteesBy';
+import { sequelize } from '../models';
 
 describe('orderGranteesBy', () => {
   it('returns the correct values', () => {
@@ -14,7 +15,7 @@ describe('orderGranteesBy', () => {
         'grants', 'regionId', 'desc',
       ],
       [
-        'id',
+        'name',
         'desc',
       ],
     ]);
@@ -23,7 +24,7 @@ describe('orderGranteesBy', () => {
 
     expect(three).toStrictEqual([
       [
-        'grants', 'programSpecialistName', 'asc',
+        sequelize.literal('"programSpecialists"'), 'asc',
       ],
     ]);
 
