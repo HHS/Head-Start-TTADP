@@ -60,7 +60,7 @@ function Overview({ data, regionLabel, loading }) {
       </Grid>
       <Grid row gap className="smart-hub--overview-data">
         <Field col="fill" tablet={{ col: true }} label="Grants served " data={data.numGrants} />
-        <Field col="fill" label="Non-recipient entities served" data={data.numNonGrantees} />
+        <Field col="fill" label="Other entities served" data={data.numNonGrantees} />
         <Field col="fill" label="Activity reports" data={data.numReports} />
         <Field col="fill" label="Participants" data={data.numParticipants} />
         <Field col={2} label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />

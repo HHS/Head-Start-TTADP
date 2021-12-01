@@ -213,9 +213,9 @@ describe('ActivityReport', () => {
     });
   });
 
-  describe('grantee select', () => {
+  describe('recipient select', () => {
     describe('changes the recipient selection to', () => {
-      it('Grantee', async () => {
+      it('Recipient', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const grantee = within(information).getByLabelText('Recipient');
@@ -225,18 +225,18 @@ describe('ActivityReport', () => {
         expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
       });
 
-      it('Non-grantee', async () => {
+      it('Other entity', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const nonGrantee = within(information).getByLabelText('Non-recipient');
+        const nonGrantee = within(information).getByLabelText('Other entities');
         fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-recipient name(s) (Required)' });
+        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Other entities (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
         expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
       });
     });
 
-    it('clears selection when non-grantee is selected', async () => {
+    it('clears selection when other entity is selected', async () => {
       renderActivityReport('new');
       let information = await screen.findByRole('group', { name: 'Who was the activity for?' });
 
@@ -249,7 +249,7 @@ describe('ActivityReport', () => {
       expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const nonGrantee = within(information).getByLabelText('Non-recipient');
+      const nonGrantee = within(information).getByLabelText('Other entities');
       fireEvent.click(nonGrantee);
       fireEvent.click(grantee);
 

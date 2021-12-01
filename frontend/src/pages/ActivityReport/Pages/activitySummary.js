@@ -55,8 +55,8 @@ const ActivitySummary = ({
   const granteeSelected = activityRecipientType === 'grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = nonGranteeSelected ? 'Non-recipient name(s)' : 'Recipient name(s)';
-  const participantsLabel = nonGranteeSelected ? 'Non-recipient participants' : 'Recipient participants';
+  const recipientLabel = nonGranteeSelected ? 'Other entities' : 'Recipient name(s)';
+  const participantsLabel = nonGranteeSelected ? 'Other entity participants' : 'Recipient participants';
   const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
 
   useEffect(() => {
@@ -105,7 +105,7 @@ const ActivitySummary = ({
         <div id="activity-for" />
         <div className="margin-top-2">
           <FormItem
-            label="Was this activity for a recipient or non-recipient?"
+            label="Was this activity for a recipient or other entity?"
             name="activityRecipientType"
             fieldSetWrapper
           >
@@ -115,15 +115,15 @@ const ActivitySummary = ({
               label="Recipient"
               value="grantee"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or non-recipient' })}
+              inputRef={register({ required: 'Please specify recipient or other entities' })}
             />
             <Radio
               id="category-non-grantee"
               name="activityRecipientType"
-              label="Non-recipient"
+              label="Other entities"
               value="non-grantee"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or non-recipient' })}
+              inputRef={register({ required: 'Please specify recipient or other entities' })}
             />
           </FormItem>
         </div>
@@ -139,7 +139,7 @@ const ActivitySummary = ({
               valueProperty="activityRecipientId"
               labelProperty="name"
               simple={false}
-              required="Please select at least one recipient or non-recipient"
+              required="Please select at least one recipient or other entities"
               options={selectedRecipients}
             />
           </FormItem>
@@ -438,7 +438,7 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Recipient or Non-recipient', name: 'activityRecipientType', sort: true },
+      { label: 'Recipient or other entities', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
         label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,

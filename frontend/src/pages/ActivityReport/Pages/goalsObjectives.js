@@ -51,7 +51,7 @@ const GoalsObjectives = () => {
         </div>
       </Fieldset>
       {!recipientGrantee && (
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for non-grantee TTA">
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for other entity TTA">
           <ObjectivePicker />
         </Fieldset>
       )}
