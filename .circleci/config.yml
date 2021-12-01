@@ -169,7 +169,7 @@ parameters:
     default: "update-node-to-14.18.1"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-test-data"
+    default: "TTAHUB-496/update-legacy-ar-data"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
