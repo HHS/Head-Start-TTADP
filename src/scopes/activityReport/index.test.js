@@ -41,7 +41,7 @@ const submittedReport = {
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
   programTypes: ['type'],
-  targetPopulations: ['pop'],
+  targetPopulations: ['Children with Disabilities', 'Pregnant Women'],
   reason: ['reason'],
   participants: ['participants'],
   topics: ['topics'],
@@ -862,6 +862,155 @@ describe('filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
+    });
+  });
+
+  describe('target population', () => {
+    let reportOne;
+    let reportTwo;
+    let reportThree;
+    let reportFour;
+    let possibleIds;
+
+    beforeAll(async () => {
+      reportOne = await ActivityReport.create(submittedReport);
+      reportTwo = await ActivityReport.create({
+        ...submittedReport,
+        targetPopulations: ['Pregnant Women'],
+      });
+      reportThree = await ActivityReport.create({
+        ...submittedReport,
+        targetPopulations: ['Dual-Language Learners'],
+      });
+      reportFour = await ActivityReport.create({
+        ...submittedReport,
+        targetPopulations: [],
+      });
+
+      possibleIds = [
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
+        reportFour.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+    });
+
+    it('filters by reports containing said population', async () => {
+      const filters = { 'targetPopulations.in': ['Pregnant Women'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+    });
+
+    it('filters out the appropriate population', async () => {
+      const filters = { 'targetPopulations.nin': ['Pregnant Women'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportThree.id, reportFour.id]));
+    });
+
+    it('only filters by possible population values', async () => {
+      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Pregnant Women'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+    });
+
+    it('filters out bad population values', async () => {
+      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(4);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining(
+          [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
+        ));
+    });
+  });
+
+  describe('reason', () => {
+    let possibleIds;
+    let reportOne;
+    let reportTwo;
+    let reportThree;
+    let reportFour;
+
+    beforeAll(async () => {
+      reportOne = await ActivityReport.create({ ...approvedReport, reason: ['School Readiness Goals', 'Child Incidents'] });
+      reportTwo = await ActivityReport.create({ ...approvedReport, reason: ['School Readiness Goals', 'Ongoing Quality Improvement'] });
+      reportThree = await ActivityReport.create({ ...approvedReport, reason: ['COVID-19 response'] });
+      reportFour = await ActivityReport.create({ ...approvedReport, reason: [] });
+
+      possibleIds = [
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
+        reportFour.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+    });
+
+    it('returns reports with a specific reason', async () => {
+      const filters = { 'reason.in': ['School Readiness Goals'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+    });
+
+    it('returns reports without a specific reason', async () => {
+      const filters = { 'reason.nin': ['School Readiness Goals'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportThree.id, reportFour.id]));
+    });
+
+    it('only searches by allowed reasons', async () => {
+      const filters = { 'reason.in': ['Pesky the Clown'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(4);
     });
   });
 

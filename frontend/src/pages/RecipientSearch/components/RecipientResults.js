@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './RecipientResults.css';
 import TableHeader from '../../../components/TableHeader';
-import { getDistinctSortedArray } from '../../../utils';
 
 export default function RecipientResults(
   {
@@ -23,17 +22,13 @@ export default function RecipientResults(
 
   const renderRecipient = (recipient) => {
     // Get a unique sorted list of Program Specialists.
-    const valueArray = recipient.grants.map((p) => p.programSpecialistName);
-    const psList = getDistinctSortedArray(valueArray).join(', ');
-    const grant = recipient.grants[0];
-
-    const { number, regionId } = grant;
+    const { regionId, programSpecialists } = recipient;
 
     return (
-      <tr key={recipient.id + number}>
+      <tr key={`${recipient.id} ${regionId}`}>
         <td>{regionId}</td>
         <td><Link to={`/recipient-tta-records/${recipient.id}/profile?region=${regionId}`}>{recipient.name}</Link></td>
-        <td className="maxw-3">{psList}</td>
+        <td className="maxw-3">{programSpecialists}</td>
       </tr>
     );
   };

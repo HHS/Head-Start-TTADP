@@ -11,7 +11,6 @@ import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { v4 as uuidv4 } from 'uuid';
 import { act } from 'react-dom/test-utils';
 import RecipientSearch from '../index';
 import { SCOPE_IDS } from '../../../Constants';
@@ -45,121 +44,74 @@ const res = {
     {
       id: 2,
       name: 'major tom',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 3,
       name: 'major bob',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 4,
       name: 'major sara',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 5,
       name: 'major tara',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 6,
       name: 'major jim',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 7,
       name: 'major xi',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 1,
       name: 'major larry',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 8,
       name: 'major maggie',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 10,
       name: 'major brian',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 11,
       name: 'major chumley',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 12,
       name: 'major karen',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
     {
       id: 13,
       name: 'major superhero',
-      grants: [
-        {
-          programSpecialistName: 'someone else',
-          number: uuidv4(),
-        },
-      ],
+      specialists: ['someone else'],
+      regionId: 1,
     },
   ],
 };
@@ -399,12 +351,8 @@ describe('the recipient search page', () => {
           {
             id: 14,
             name: 'major barack',
-            grants: [
-              {
-                programSpecialistName: 'someone else',
-                number: uuidv4(),
-              },
-            ],
+            regionId: 1,
+            specialists: ['someone else'],
           },
         ],
       });

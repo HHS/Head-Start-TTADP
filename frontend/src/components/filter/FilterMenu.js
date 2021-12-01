@@ -66,19 +66,7 @@ export default function FilterMenu({ filters, onApplyFilters, applyButtonAria })
     setItems(newItems);
   };
 
-  const canBlur = (e) => {
-    if (e.relatedTarget && e.relatedTarget.matches('.ttahub-filter-menu')) {
-      return false;
-    }
-
-    // if we've a date range, also do nothing on blur when we click on those. this is kind of an
-    // annoyance created because we have nested dropdownmenus
-    if (e.target.matches('.CalendarDay, .DayPickerNavigation, .DayPickerNavigation_button')) {
-      return false;
-    }
-
-    return true;
-  };
+  const canBlur = () => false;
 
   return (
     <DropdownMenu
@@ -109,7 +97,6 @@ export default function FilterMenu({ filters, onApplyFilters, applyButtonAria })
           <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
-
     </DropdownMenu>
   );
 }

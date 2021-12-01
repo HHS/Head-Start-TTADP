@@ -59,7 +59,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   };
 
   const DummySelect = () => (
-    <span className="desktop:margin-x-1"><select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" /></span>
+    <select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" />
   );
 
   const onApplyQuery = (q) => {
@@ -76,14 +76,12 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       display: 'Specialist',
       conditions: SELECT_CONDITIONS,
       renderInput: () => (
-        <span className="margin-right-1">
-          <SpecialistSelect
-            labelId={`role-${condition}-${id}`}
-            onApplyRoles={onApplyQuery}
-            toggleAllInitial={false}
-            hideToggleAll
-          />
-        </span>
+        <SpecialistSelect
+          labelId={`role-${condition}-${id}`}
+          onApplyRoles={onApplyQuery}
+          toggleAllInitial={false}
+          hideToggleAll
+        />
       ),
     },
     {
@@ -118,7 +116,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     : 'remove this filter. click apply filters to make your changes';
 
   return (
-    <li className="ttahub-filter-menu-item desktop:display-flex desktop:width-tablet">
+    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic
@@ -129,7 +127,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         aria-label="topic"
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
-        className="usa-select margin-right-1"
+        className="usa-select"
       >
         <option value="">Select a topic</option>
         {possibleFilters.map(({ id: filterId, display }) => (
@@ -157,7 +155,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       <button
         type="button"
         aria-label={buttonAriaLabel}
-        className="ttahub-filter-menu-item-close-buttom usa-button usa-button--unstyled font-sans-xs desktop:margin-x-1 margin-top-1"
+        className="ttahub-filter-menu-item-close-buttom usa-button usa-button--unstyled font-sans-xs desktop:margin-x-1 margin-top-1 desktop:margin-bottom-0 margin-bottom-4"
         onClick={onRemove}
       >
         <span className="desktop:display-none margin-right-1">Remove filter</span>

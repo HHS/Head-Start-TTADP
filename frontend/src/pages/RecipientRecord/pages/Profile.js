@@ -15,7 +15,7 @@ export default function Profile({ recipientSummary, regionId, recipientName }) {
           {recipientName}
         </title>
       </Helmet>
-      <div className="margin-right-1">
+      <div className="margin-x-2 maxw-widescreen">
         <Grid row gap={4}>
           <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
             <RecipientSummary summary={recipientSummary} regionId={regionId} />
