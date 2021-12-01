@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Table, Checkbox, Grid, Alert,
 } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
@@ -48,7 +49,7 @@ function ActivityReportsTable({
     direction: 'desc',
   });
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchReports() {
       setLoading(true);
       const filterQuery = filtersToQueryString(filters);
@@ -268,6 +269,8 @@ function ActivityReportsTable({
                   handleReportSelect={handleReportSelect}
                   isChecked={reportCheckboxes[report.id] || false}
                   openMenuUp={index > displayReports.length - 1}
+                  numberOfSelectedReports={numberOfSelectedReports}
+                  exportSelected={handleDownloadClick}
                 />
               ))}
             </tbody>
