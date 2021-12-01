@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './GranteeResults.css';
 import TableHeader from '../../../components/TableHeader';
-import { getDistinctSortedArray } from '../../../utils';
 
 export default function GranteeResults(
   {
@@ -23,17 +22,13 @@ export default function GranteeResults(
 
   const renderGrantee = (grantee) => {
     // Get a unique sorted list of Program Specialists.
-    const valueArray = grantee.grants.map((p) => p.programSpecialistName);
-    const psList = getDistinctSortedArray(valueArray).join(', ');
-    const grant = grantee.grants[0];
-
-    const { number, regionId } = grant;
+    const { regionId, programSpecialists } = grantee;
 
     return (
-      <tr key={grantee.id + number}>
+      <tr key={`${grantee.id} ${regionId}`}>
         <td>{regionId}</td>
         <td><Link to={`/grantee/${grantee.id}/profile?region=${regionId}`}>{grantee.name}</Link></td>
-        <td className="maxw-3">{psList}</td>
+        <td className="maxw-3">{programSpecialists}</td>
       </tr>
     );
   };
