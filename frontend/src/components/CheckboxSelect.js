@@ -104,7 +104,7 @@ export default function CheckboxSelect(props) {
     <DropdownMenu
       canBlur={canBlur}
       forwardedRef={menu}
-      className="smart-hub--checkbox-select position-relative desktop:margin-left-1"
+      className="smart-hub--checkbox-select position-relative"
       buttonText={label}
       buttonAriaLabel={ariaLabel}
       styleAsSelect={styleAsSelect}
