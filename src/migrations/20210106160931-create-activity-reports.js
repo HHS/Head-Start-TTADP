@@ -47,6 +47,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING,
       },
+      programTypes: {
+        allowNull: true,
+        type: Sequelize.ARRAY(Sequelize.STRING),
+      },
       targetPopulations: {
         allowNull: true,
         type: Sequelize.ARRAY(Sequelize.STRING),

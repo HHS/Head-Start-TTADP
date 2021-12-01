@@ -62,36 +62,49 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
-function transformGrantModel(prop, secondaryProp) {
+function transformProgramsModel(prop) {
   async function transformer(instance) {
     const obj = {};
     const values = await instance.activityRecipients;
     if (values) {
-      let distinctList;
-      if (secondaryProp) {
-        distinctList = [
-          ...new Set(
-            values.map(
-              (recipient) => {
-                if (recipient.grant[secondaryProp]) {
-                  return recipient.grant[secondaryProp].filter(
-                    (p) => p[prop] && p[prop] !== null,
-                  ).map((r) => r[prop]);
-                }
-                return null;
-              },
-            ).flat(),
-          ),
-        ];
-      } else {
-        distinctList = [
-          ...new Set(
-            values.filter(
-              (recipient) => recipient.grant && recipient.grant[prop] !== null,
-            ).map((r) => r.grant[prop]),
-          ),
-        ];
-      }
+      const distinctList = [
+        ...new Set(
+          values.map(
+            (recipient) => {
+              if (recipient.grant.programs) {
+                return recipient.grant.programs.filter(
+                  (p) => p[prop] && p[prop] !== null,
+                ).map((r) => r[prop]);
+              }
+              return null;
+            },
+          ).flat(),
+        ),
+      ];
+      const programValues = distinctList.sort().join('\n');
+      Object.defineProperty(obj, prop, {
+        value: programValues,
+        enumerable: true,
+      });
+    }
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
+function transformGrantModel(prop) {
+  async function transformer(instance) {
+    const obj = {};
+    const values = await instance.activityRecipients;
+    if (values) {
+      const distinctList = [
+        ...new Set(
+          values.filter(
+            (recipient) => recipient.grant && recipient.grant[prop] !== null,
+          ).map((r) => r.grant[prop]),
+        ),
+      ];
+
       const programSpecialistNames = distinctList.sort().join('\n');
       Object.defineProperty(obj, prop, {
         value: programSpecialistNames,
@@ -217,7 +230,7 @@ const arTransformers = [
   'endDate',
   'startDate',
   transformRelatedModel('activityRecipients', 'name'),
-  transformGrantModel('programType', 'programs'),
+  transformProgramsModel('programType'),
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
