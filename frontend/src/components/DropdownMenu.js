@@ -99,7 +99,7 @@ export default function DropdownMenu({
         {children}
         { showCancel
           ? (
-            <div className="margin-top-1 display-flex flex-justify-end margin-right-3">
+            <div className="margin-top-1 desktop:display-flex flex-justify-end margin-right-3 padding-x-3 desktop:padding-x-0">
               <button
                 onClick={onCancelClick}
                 type="button"

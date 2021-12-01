@@ -109,7 +109,6 @@ export default function FilterMenu({ filters, onApplyFilters }) {
           <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
-
     </DropdownMenu>
   );
 }
