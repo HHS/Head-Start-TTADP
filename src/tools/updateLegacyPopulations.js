@@ -19,10 +19,10 @@ export default async function updateLegacyPopulations(id) {
       targetPopulations: {
         [Op.or]: [
           {
-            [Op.contains]: ['Infants/Toddlers'],
+            [Op.contains]: ['Infant/Toddlers'],
           },
           {
-            [Op.contains]: ['Preschoolers'],
+            [Op.contains]: ['Preschool'],
           },
           {
             [Op.contains]: ['Affected by Homelessness'],
