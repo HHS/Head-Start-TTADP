@@ -76,7 +76,7 @@ describe('goals objectives', () => {
     it('the objectives section is displayed', async () => {
       renderGoals([1], 'nonGrantee');
       await screen.findByText('Context');
-      expect(await screen.findByText('Objectives for non-grantee TTA')).toBeVisible();
+      expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
     });
   });
 
