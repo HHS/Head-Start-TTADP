@@ -81,7 +81,7 @@ describe('updateLegacyPopulations', () => {
 
     expect(before.length).toBe(3);
 
-    await updateLegacyPopulations(reportIds);
+    await updateLegacyPopulations();
 
     const after = await ActivityReport.findAll({
       where: {
