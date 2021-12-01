@@ -14,6 +14,7 @@ export default async function updateLegacyPopulations() {
   `);
 
   const reports = await ActivityReport.findAll({
+    logging: console.log,
     where: {
       targetPopulations: {
         [Op.or]: [
