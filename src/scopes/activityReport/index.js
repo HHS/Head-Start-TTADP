@@ -13,6 +13,7 @@ import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatu
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withRole, withoutRole } from './role';
 import withRegion from './region';
+import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutReason, withReason } from './reason';
 
@@ -67,6 +68,10 @@ export const topicToQuery = {
   programSpecialist: {
     in: (query) => withProgramSpecialist(query),
     nin: (query) => withoutProgramSpecialist(query),
+  },
+  programType: {
+    in: (query) => withProgramTypes(query),
+    nin: (query) => withoutProgramTypes(query),
   },
   region: {
     in: (query) => withRegion(query),
