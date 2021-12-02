@@ -12,6 +12,7 @@ import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
+import ActivityReportsTable from '../../components/ActivityReportsTable';
 
 /**
  *
@@ -146,6 +147,13 @@ export default function RegionalDashboard({ user }) {
               }
               onApplyRoles={updateRoles}
               dateTime={dateTime}
+            />
+          </Grid>
+          <Grid row>
+            <ActivityReportsTable
+              filters={filters}
+              showFilter={false}
+              tableCaption="Activity reports"
             />
           </Grid>
         </GridContainer>
