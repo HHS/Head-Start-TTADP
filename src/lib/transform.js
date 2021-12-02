@@ -62,36 +62,6 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
-function transformProgramsModel(prop) {
-  async function transformer(instance) {
-    const obj = {};
-    const values = await instance.activityRecipients;
-    if (values) {
-      const distinctList = [
-        ...new Set(
-          values.map(
-            (recipient) => {
-              if (recipient.grant.programs) {
-                return recipient.grant.programs.filter(
-                  (p) => p[prop] && p[prop] !== null,
-                ).map((r) => r[prop]);
-              }
-              return null;
-            },
-          ).flat(),
-        ),
-      ];
-      const programValues = distinctList.sort().join('\n');
-      Object.defineProperty(obj, prop, {
-        value: programValues,
-        enumerable: true,
-      });
-    }
-    return Promise.resolve(obj);
-  }
-  return transformer;
-}
-
 function transformGrantModel(prop) {
   async function transformer(instance) {
     const obj = {};
@@ -101,10 +71,9 @@ function transformGrantModel(prop) {
         ...new Set(
           values.filter(
             (recipient) => recipient.grant && recipient.grant[prop] !== null,
-          ).map((r) => r.grant[prop]),
+          ).map((r) => r.grant[prop]).flat(),
         ),
       ];
-
       const programSpecialistNames = distinctList.sort().join('\n');
       Object.defineProperty(obj, prop, {
         value: programSpecialistNames,
@@ -230,7 +199,7 @@ const arTransformers = [
   'endDate',
   'startDate',
   transformRelatedModel('activityRecipients', 'name'),
-  transformProgramsModel('programType'),
+  transformGrantModel('programTypes'),
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',

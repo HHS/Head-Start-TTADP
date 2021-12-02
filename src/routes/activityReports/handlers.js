@@ -91,7 +91,7 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Grantee name/non-grantee name',
         },
         {
-          key: 'programType',
+          key: 'programTypes',
           header: 'Program types',
         },
         {
