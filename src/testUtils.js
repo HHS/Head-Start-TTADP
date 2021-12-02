@@ -23,7 +23,6 @@ function defaultReport() {
     endDate: '2021-01-01T12:00:00Z',
     startDate: '2021-01-01T12:00:00Z',
     requester: 'requester',
-    programTypes: ['type'],
     targetPopulations: ['pop'],
     reason: ['reason'],
     participants: ['participants', 'genies'],
