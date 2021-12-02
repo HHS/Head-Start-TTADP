@@ -8,7 +8,7 @@ const newPopulations = {
   'Affected by Homelessness': 'Children Experiencing Homelessness',
 };
 
-export default async function updateLegacyPopulations(id) {
+export default async function updateLegacyPopulations() {
   auditLogger.info(`Updating legacy target population data...
   
   `);
@@ -16,7 +16,6 @@ export default async function updateLegacyPopulations(id) {
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'targetPopulations', 'imported'],
     where: {
-      id,
       [Op.or]: [
         {
           targetPopulations: {
