@@ -18,7 +18,7 @@
     margin-top: 0.5em;
 }
 
-.ttahub-filter-menu-item .SingleDatePickerInput__withBorder {
+.ttahub-filter-menu-item .ttahub-filter-date-range-single-date .SingleDatePickerInput__withBorder {
     border: 0;
 }
 
