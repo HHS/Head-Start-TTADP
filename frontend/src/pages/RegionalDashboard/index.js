@@ -154,6 +154,7 @@ export default function RegionalDashboard({ user }) {
               filters={filters}
               showFilter={false}
               tableCaption="Activity reports"
+              dateTime={dateTime}
             />
           </Grid>
         </GridContainer>
