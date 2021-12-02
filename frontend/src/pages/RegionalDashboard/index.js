@@ -57,8 +57,6 @@ export default function RegionalDashboard({ user }) {
     },
   ]);
 
-  console.log(filters);
-
   const dateTime = getDateTimeObject(filters.find((filter) => filter.topic === 'startDate').query);
   const appliedRegion = filters.find((filter) => filter.topic === 'region').query;
 
