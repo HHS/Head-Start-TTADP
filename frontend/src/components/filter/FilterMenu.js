@@ -26,6 +26,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   }, [filters]);
 
   const onApply = () => {
+    // we only apply filters that have all the thingys filled out (technical term)
     onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
   };
 
@@ -54,6 +55,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     toUpdate.toggleAllChecked = toggleAllChecked;
     setItems(newItems);
   };
+
   const onAddFilter = () => {
     const newItems = [...items];
     const newItem = {

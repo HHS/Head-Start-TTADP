@@ -8,7 +8,6 @@ import DateTime from '../components/DateTime';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
-import SpecialistSelect from '../components/SpecialistSelect';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -53,7 +52,7 @@ export function topicsWithLineBreaks(reason) {
 }
 
 export function TopicFrequencyGraphWidget({
-  data, dateTime, onApplyRoles, loading,
+  data, dateTime, loading,
 }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
@@ -192,7 +191,6 @@ export function TopicFrequencyGraphWidget({
               ]
             }
           />
-          <SpecialistSelect labelId="tf-role-select" onApplyRoles={onApplyRoles} />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button
@@ -227,7 +225,6 @@ TopicFrequencyGraphWidget.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-  onApplyRoles: PropTypes.func.isRequired,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {
