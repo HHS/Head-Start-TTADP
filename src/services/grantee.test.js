@@ -257,18 +257,23 @@ describe('Grantee DB service', () => {
       },
     ];
 
-    beforeEach(async () => {
+    function regionToScope(regionId) {
+      const query = { 'region.in': [regionId] };
+      return filtersToScopes(query, 'grant');
+    }
+
+    beforeAll(async () => {
       await Promise.all(granteesToSearch.map((g) => Grantee.create(g)));
       await Promise.all(grants.map((g) => Grant.create(g)));
     });
 
-    afterEach(async () => {
+    afterAll(async () => {
       await Grant.destroy({ where: { granteeId: granteesToSearch.map((g) => g.id) } });
       await Grantee.destroy({ where: { id: granteesToSearch.map((g) => g.id) } });
     });
 
     it('finds based on grantee name', async () => {
-      const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 0);
+      const foundGrantees = await granteesByName('apple', regionToScope(1), 'name', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(3);
       expect(foundGrantees.rows.map((g) => g.id)).toContain(63);
       expect(foundGrantees.rows.map((g) => g.id)).toContain(66);
@@ -276,43 +281,43 @@ describe('Grantee DB service', () => {
     });
 
     it('finds based on grantee id', async () => {
-      const foundGrantees = await granteesByName('5555', 1, 'name', 'asc', 0);
+      const foundGrantees = await granteesByName('5555', regionToScope(1), 'name', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(1);
       expect(foundGrantees.rows.map((g) => g.id)).toContain(64);
     });
 
     it('finds based on region', async () => {
-      const foundGrantees = await granteesByName('banana', 2, 'name', 'asc', 0);
+      const foundGrantees = await granteesByName('banana', regionToScope(2), 'name', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(1);
       expect(foundGrantees.rows.map((g) => g.id)).toContain(65);
     });
 
     it('sorts based on name', async () => {
-      const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 0);
+      const foundGrantees = await granteesByName('apple', regionToScope(1), 'name', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(3);
       expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([68, 63, 66]);
     });
 
     it('sorts based on program specialist', async () => {
-      const foundGrantees = await granteesByName('apple', 1, 'programSpecialist', 'asc', 0);
+      const foundGrantees = await granteesByName('apple', regionToScope(1), 'programSpecialist', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(3);
       expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63, 68]);
     });
 
     it('sorts based on grant specialist', async () => {
-      const foundGrantees = await granteesByName('apple', 1, 'grantSpecialistName', 'desc', 0);
+      const foundGrantees = await granteesByName('apple', regionToScope(1), 'grantSpecialist', 'asc', 0);
       expect(foundGrantees.rows.length).toBe(3);
-      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66, 68]);
+      expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([68, 63, 66]);
     });
 
     it('respects sort order', async () => {
-      const foundGrantees = await granteesByName('apple', 1, 'name', 'desc', 0);
+      const foundGrantees = await granteesByName('apple', regionToScope(1), 'name', 'desc', 0);
       expect(foundGrantees.rows.length).toBe(3);
       expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([66, 63, 68]);
     });
 
     it('respects the offset passed in', async () => {
-      const foundGrantees = await granteesByName('apple', 1, 'name', 'asc', 1);
+      const foundGrantees = await granteesByName('apple', regionToScope(1), 'name', 'asc', 1);
       expect(foundGrantees.rows.length).toBe(2);
       expect(foundGrantees.rows.map((g) => g.id)).toStrictEqual([63, 66]);
     });
