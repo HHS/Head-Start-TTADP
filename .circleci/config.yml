@@ -365,8 +365,8 @@ jobs:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
                 auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_DEV_USERNAME
-                cloudgov_password: CLOUDGOV_DEV_PASSWORD
+                cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
+                cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
                 cloudgov_space: CLOUDGOV_SANDBOX_SPACE
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
