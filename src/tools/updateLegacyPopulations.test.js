@@ -33,13 +33,29 @@ describe('updateLegacyPopulations', () => {
       ['Infants and Toddlers (ages birth to 3)'],
       ['Dual-Language Learners'],
       [],
+      [],
+    ];
+
+    const imported = [
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+        targetPopulations: 'Infant/Toddlers\nPregnant Women\nPreschool',
+      },
+      {
+        targetPopulations: 'Infants and Toddlers (ages birth to 3)\nPregnant Women\nPreschool (ages 3-5)',
+      },
     ];
 
     reports = await Promise.all(
       populationData.map(
-        async (targetPopulations) => ActivityReport.create({
+        async (targetPopulations, index) => ActivityReport.create({
           ...dumbReport,
           targetPopulations,
+          imported: imported[index],
         }),
       ),
     );
@@ -60,28 +76,49 @@ describe('updateLegacyPopulations', () => {
 
     const where = {
       id: reportIds,
-      targetPopulations: {
-        [Op.or]: [
-          {
-            [Op.contains]: ['Infant/Toddlers'],
+      [Op.or]: [
+        {
+          targetPopulations: {
+            [Op.or]: [
+              {
+                [Op.contains]: ['Infant/Toddlers'],
+              },
+              {
+                [Op.contains]: ['Preschool'],
+              },
+              {
+                [Op.contains]: ['Affected by Homelessness'],
+              },
+            ],
           },
-          {
-            [Op.contains]: ['Preschool'],
+        },
+        {
+          imported: {
+            targetPopulations: {
+              [Op.or]: [
+                {
+                  [Op.iLike]: '%Infant/Toddlers%',
+                },
+                {
+                  [Op.iLike]: '%Preschool%',
+                },
+                {
+                  [Op.iLike]: '%Affected by Homelessness%',
+                },
+              ],
+            },
           },
-          {
-            [Op.contains]: ['Affected by Homelessness'],
-          },
-        ],
-      },
+        },
+      ],
     };
 
     const before = await ActivityReport.findAll({
       where,
     });
 
-    expect(before.length).toBe(3);
+    expect(before.length).toBe(5);
 
-    await updateLegacyPopulations();
+    await updateLegacyPopulations(reportIds);
 
     const after = await ActivityReport.findAll({
       where: {
@@ -89,7 +126,7 @@ describe('updateLegacyPopulations', () => {
       },
     });
 
-    expect(after.length).toBe(6);
+    expect(after.length).toBe(7);
 
     const populations = after.map((report) => report.targetPopulations);
     expect(populations).toEqual(expect.arrayContaining([['Infants and Toddlers (ages birth to 3)', 'Preschool (ages 3-5)', 'Children Experiencing Homelessness']]));
@@ -97,8 +134,23 @@ describe('updateLegacyPopulations', () => {
     expect(populations).toEqual(expect.arrayContaining([['Dual-Language Learners']]));
     expect(populations).toEqual(expect.arrayContaining([[]]));
 
+    const imported = after.map((report) => report.imported);
+    expect(imported).toEqual(expect.arrayContaining([null]));
+    expect(imported).toEqual(expect.arrayContaining([{ targetPopulations: 'Infants and Toddlers (ages birth to 3)\nPregnant Women\nPreschool (ages 3-5)' }]));
+
     const sanityCheck = await ActivityReport.findAll({ where });
 
-    expect(sanityCheck.length).toBe(0);
+    expect(sanityCheck.length).toBe(2);
+    const sanityCheckImported = sanityCheck.map((report) => report.imported);
+    expect(sanityCheckImported).toEqual(
+      expect.arrayContaining([{
+        targetPopulations: 'Infants and Toddlers (ages birth to 3)\nPregnant Women\nPreschool (ages 3-5)',
+      }]),
+    );
+    expect(sanityCheckImported).not.toEqual(
+      expect.arrayContaining([{
+        targetPopulations: 'Infant/Toddlers\nPregnant Women\nPreschool',
+      }]),
+    );
   });
 });
