@@ -8,26 +8,49 @@ const newPopulations = {
   'Affected by Homelessness': 'Children Experiencing Homelessness',
 };
 
-export default async function updateLegacyPopulations() {
+export default async function updateLegacyPopulations(id) {
   auditLogger.info(`Updating legacy target population data...
   
   `);
 
   const reports = await ActivityReport.findAll({
+    attributes: ['id', 'targetPopulations', 'imported'],
     where: {
-      targetPopulations: {
-        [Op.or]: [
-          {
-            [Op.contains]: ['Infant/Toddlers'],
+      id,
+      [Op.or]: [
+        {
+          targetPopulations: {
+            [Op.or]: [
+              {
+                [Op.contains]: ['Infant/Toddlers'],
+              },
+              {
+                [Op.contains]: ['Preschool'],
+              },
+              {
+                [Op.contains]: ['Affected by Homelessness'],
+              },
+            ],
           },
-          {
-            [Op.contains]: ['Preschool'],
+        },
+        {
+          imported: {
+            targetPopulations: {
+              [Op.or]: [
+                {
+                  [Op.iLike]: '%Infant/Toddlers%',
+                },
+                {
+                  [Op.iLike]: '%Preschool%',
+                },
+                {
+                  [Op.iLike]: '%Affected by Homelessness%',
+                },
+              ],
+            },
           },
-          {
-            [Op.contains]: ['Affected by Homelessness'],
-          },
-        ],
-      },
+        },
+      ],
     },
   });
 
@@ -36,6 +59,29 @@ export default async function updateLegacyPopulations() {
   `);
 
   return Promise.all(reports.map(async (report) => {
+    let imported = null;
+
+    if (report.imported) {
+      imported = { ...report.imported };
+    }
+
+    if (imported) {
+      const importedPopulations = imported.targetPopulations.split('\n');
+      importedPopulations.forEach((population, index) => {
+        const newPopulation = newPopulations[population];
+        if (!newPopulation) {
+          return;
+        }
+
+        importedPopulations.splice(index, 1, newPopulation);
+      });
+
+      imported.targetPopulations = importedPopulations.join('\n');
+      auditLogger.info(`Updating report ${report.id}'s target populations from ${report.imported.targetPopulations} to ${imported.targetPopulations}
+    
+      `);
+    }
+
     const populations = [...report.targetPopulations];
     populations.forEach((population, index) => {
       const newPopulation = newPopulations[population];
@@ -51,6 +97,7 @@ export default async function updateLegacyPopulations() {
     `);
 
     return report.update({
+      imported,
       targetPopulations: populations,
     });
   }));
