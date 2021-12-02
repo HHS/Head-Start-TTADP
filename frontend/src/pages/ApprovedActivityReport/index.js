@@ -136,7 +136,6 @@ export default function ApprovedActivityReport({ match, user }) {
     attendees: '',
     participantCount: '',
     reasons: '',
-    programType: '',
     targetPopulations: '',
     startDate: '',
     endDate: '',
@@ -196,7 +195,6 @@ export default function ApprovedActivityReport({ match, user }) {
         const attendees = formatSimpleArray(data.participants);
         const participantCount = data.numberOfParticipants.toString();
         const reasons = formatSimpleArray(data.reason);
-        const programType = formatSimpleArray(data.programTypes);
         const startDate = moment(data.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
         const endDate = moment(data.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
         const duration = `${data.duration} hours`;
@@ -232,7 +230,6 @@ export default function ApprovedActivityReport({ match, user }) {
           attendees,
           participantCount,
           reasons,
-          programType,
           targetPopulations,
           startDate,
           endDate,
@@ -320,7 +317,6 @@ export default function ApprovedActivityReport({ match, user }) {
     attendees,
     participantCount,
     reasons,
-    programType,
     targetPopulations,
     startDate,
     endDate,
@@ -465,7 +461,6 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               recipientType,
               'Reason',
-              'Program type',
               'Target populations',
               'Start date',
               'End date',
@@ -482,7 +477,6 @@ export default function ApprovedActivityReport({ match, user }) {
             [
               recipients,
               reasons,
-              programType,
               targetPopulations,
               startDate,
               endDate,
