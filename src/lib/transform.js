@@ -67,16 +67,16 @@ function transformGrantModel(prop) {
     const obj = {};
     const values = await instance.activityRecipients;
     if (values) {
-      const distinctList = [
+      const distinctValues = [
         ...new Set(
           values.filter(
             (recipient) => recipient.grant && recipient.grant[prop] !== null,
           ).map((r) => r.grant[prop]).flat(),
         ),
       ];
-      const programSpecialistNames = distinctList.sort().join('\n');
+      const grantValueList = distinctValues.sort().join('\n');
       Object.defineProperty(obj, prop, {
-        value: programSpecialistNames,
+        value: grantValueList,
         enumerable: true,
       });
     }
