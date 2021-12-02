@@ -5,6 +5,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import FilterDateRange from './FilterDateRange';
 import { formatDateRange } from '../DateRangeSelect';
 import SpecialistSelect from '../SpecialistSelect';
+import FilterRegionalSelect from './FilterRegionSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
@@ -71,6 +72,17 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
   };
 
   const possibleFilters = [
+    {
+      id: 'region',
+      display: 'Region',
+      conditions: SELECT_CONDITIONS,
+      renderInput: () => (
+        <FilterRegionalSelect
+          appliedRegion={query}
+          onApply={onApplyQuery}
+        />
+      ),
+    },
     {
       id: 'role',
       display: 'Specialist',

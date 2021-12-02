@@ -3,15 +3,16 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-import RegionalSelect from '../../components/RegionalSelect';
-import DateRangeSelect, { formatDateRange } from '../../components/DateRangeSelect';
+import FilterMenu from '../../components/filter/FilterMenu';
+import { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
-import DateTime from '../../components/DateTime';
+
 import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
+import FilterPills from '../../components/filter/FilterPills';
 
 /**
  *
@@ -40,8 +41,8 @@ export default function RegionalDashboard({ user }) {
   const regions = getUserRegions(user);
 
   // eslint-disable-next-line max-len
-  const [appliedRegion, updateAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
-  const [dateRange, updateDateRange] = useState(defaultDate);
+  const [appliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
+  const [dateRange] = useState(defaultDate);
 
   // this can be killed when we add the new filters to this page
   const [roleFilter, updateRoleFilter] = useState();
@@ -69,10 +70,9 @@ export default function RegionalDashboard({ user }) {
 
   const dateTime = getDateTimeObject(dateRange);
 
-  const onApplyRegion = (region) => {
-    const regionId = region.value;
-    updateAppliedRegion(regionId);
-  };
+  const onApplyFilters = () => {};
+
+  const onRemoveFilter = () => {};
 
   const updateRoles = (selectedRoles) => {
     updateRoleFilter(selectedRoles);
@@ -99,19 +99,8 @@ export default function RegionalDashboard({ user }) {
             </h1>
           </Grid>
           <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 desktop:margin-top-0">
-            {regions.length > 1
-              && (
-                <RegionalSelect
-                  regions={regions}
-                  onApply={onApplyRegion}
-                  hasCentralOffice={hasCentralOffice}
-                  appliedRegion={appliedRegion}
-                />
-              )}
-            <DateRangeSelect
-              updateDateRange={updateDateRange}
-            />
-            <DateTime classNames="display-flex flex-align-center" timestamp={dateTime.timestamp} label={dateTime.label} />
+            <FilterMenu filters={filters} onApplyFilters={onApplyFilters} />
+            <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
           </Grid>
         </Grid>
         <GridContainer className="margin-0 padding-0">
