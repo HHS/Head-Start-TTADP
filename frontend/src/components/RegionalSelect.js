@@ -6,7 +6,12 @@ export const getRegionOptions = (regions) => regions.map((region) => ({ value: r
 
 function RegionalSelect(props) {
   const {
-    regions, onApply, hasCentralOffice, appliedRegion, disabled,
+    regions,
+    onApply,
+    hasCentralOffice,
+    appliedRegion,
+    disabled,
+    styleAsSelect,
   } = props;
 
   let options = [...getRegionOptions(regions)];
@@ -27,6 +32,7 @@ function RegionalSelect(props) {
       labelText="Region Select Options"
       applied={appliedRegion}
       ariaName="regional select menu"
+      styleAsSelect={styleAsSelect}
     />
   );
 }
@@ -37,12 +43,14 @@ RegionalSelect.propTypes = {
   hasCentralOffice: PropTypes.bool,
   appliedRegion: PropTypes.number,
   disabled: PropTypes.bool,
+  styleAsSelect: PropTypes.bool,
 };
 
 RegionalSelect.defaultProps = {
   hasCentralOffice: false,
   appliedRegion: 0,
   disabled: false,
+  styleAsSelect: false,
 };
 
 export default RegionalSelect;
