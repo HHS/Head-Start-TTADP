@@ -11,6 +11,8 @@ import {
   SELECT_CONDITIONS,
 } from '../constants';
 import './FilterItem.css';
+import FilterInput from './FilterInput';
+import FilterReasonSelect from './FilterReasonSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -24,9 +26,23 @@ const filterProp = PropTypes.shape({
   id: PropTypes.string,
 });
 
+const EMPTY_DEFAULT_ARRAY_CONTAINS = {
+  Contains: [],
+  'Does not contain': [],
+};
+
 const DEFAULT_VALUES = {
-  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '' },
-  role: { Contains: [], 'Does not contain': [] },
+  startDate: {
+    'Is within': YEAR_TO_DATE,
+    'Is after': '',
+    'Is before': '',
+  },
+  role: EMPTY_DEFAULT_ARRAY_CONTAINS,
+  reason: EMPTY_DEFAULT_ARRAY_CONTAINS,
+  programSpecialist: {
+    Contains: '',
+    'Does not contain': '',
+  },
 };
 
 /**
@@ -73,6 +89,28 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
 
   const possibleFilters = [
     {
+      id: 'programSpecialist',
+      display: 'Program Specialist',
+      conditions: SELECT_CONDITIONS,
+      renderInput: () => (
+        <FilterInput
+          query={query}
+          onApply={onApplyQuery}
+        />
+      ),
+    },
+    {
+      id: 'reason',
+      display: 'Reason',
+      conditions: SELECT_CONDITIONS,
+      renderInput: () => (
+        <FilterReasonSelect
+          labelId={`reason-${condition}-${id}`}
+          onApply={onApplyQuery}
+        />
+      ),
+    },
+    {
       id: 'region',
       display: 'Region',
       conditions: SELECT_CONDITIONS,
@@ -85,7 +123,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     },
     {
       id: 'role',
-      display: 'Specialist',
+      display: 'Role',
       conditions: SELECT_CONDITIONS,
       renderInput: () => (
         <SpecialistSelect

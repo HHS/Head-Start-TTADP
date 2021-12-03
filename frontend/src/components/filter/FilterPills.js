@@ -23,16 +23,28 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     query,
   } = filter;
 
+  const handleArrayQuery = (q) => {
+    if (q.length) {
+      return q.join(', ');
+    }
+    return '';
+  };
+
   const filterNameLookup = [
+    {
+      topic: 'reason',
+      display: 'Reason',
+      query: () => handleArrayQuery(query),
+    },
+    {
+      topic: 'programSpecialist',
+      display: 'Program Specialist',
+      query: () => query,
+    },
     {
       topic: 'role',
       display: 'Specialist',
-      query: () => {
-        if (query.length) {
-          return query.join(', ');
-        }
-        return 'None selected';
-      },
+      query: () => handleArrayQuery(query),
     },
     {
       topic: 'startDate',
