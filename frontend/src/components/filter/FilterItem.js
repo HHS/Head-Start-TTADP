@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -35,12 +35,39 @@ const DEFAULT_VALUES = {
  * @returns a JSX object
  */
 export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
+  const [error, setError] = useState('');
   const {
     id,
     topic,
     condition,
     query,
   } = filter;
+
+  const li = useRef();
+
+  const onBlur = (e) => {
+    if (li.current.contains(e.relatedTarget)) {
+      setError('');
+      return;
+    }
+
+    if (!topic) {
+      setError('Please enter a value');
+      return;
+    }
+
+    if (!condition) {
+      setError('Please enter a condition');
+      return;
+    }
+
+    if (!query || !query.length) {
+      setError('Please enter a query');
+      return;
+    }
+
+    setError('');
+  };
 
   /**
    * changing the condition should clear the query
@@ -114,7 +141,15 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     : 'remove this filter. click apply filters to make your changes';
 
   return (
-    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
+    <li className={`ttahub-filter-menu-item position-relative gap-1 desktop:display-flex ${error ? 'ttahub-filter-menu-item--error' : ''}`} onBlur={onBlur} ref={li}>
+      {
+        error
+        && (
+        <span className="ttahub-filter-menu-error" role="status">
+          <strong>{error}</strong>
+        </span>
+        )
+      }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic

@@ -2,6 +2,18 @@
     gap: 0.5rem;
 }
 
+.ttahub-filter-menu-item.ttahub-filter-menu-item--error {
+    border-left: 4px solid #d83933 ;
+    padding: 2em 1em;    
+    margin: 1em 0 1em calc( -1em - 4px );
+}
+
+.ttahub-filter-menu-error {
+    color: #d83933;
+    position: absolute;
+    top: 0.5em;
+}
+
 .ttahub-filter-menu-item [name="topic"],
 .ttahub-filter-menu-item [name="condition"],
 .ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select,
@@ -34,4 +46,8 @@
         border: 1px solid #f0f0f0;
         padding: 0.5em;
     }
+}
+
+.ttahub-filter-menu-item.ttahub-filter-menu-item--error :blank {
+    border: 2px solid red;
 }
