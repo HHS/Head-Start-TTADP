@@ -38,7 +38,12 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     },
     {
       topic: 'programSpecialist',
-      display: 'Program Specialist',
+      display: 'Program specialist',
+      query: () => query,
+    },
+    {
+      topic: 'targetPopulation',
+      display: 'Target population',
       query: () => query,
     },
     {
@@ -48,7 +53,7 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     },
     {
       topic: 'startDate',
-      display: 'Date Range',
+      display: 'Date range',
       query: () => {
         if (query.includes('-')) {
           return formatDateRange({

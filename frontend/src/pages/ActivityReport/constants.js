@@ -27,23 +27,6 @@ export const nonGranteeParticipants = [
   'Other',
 ];
 
-// Note that if this topic list is changed, it needs also to be changed in
-// - src/constants.js
-export const targetPopulations = [
-  'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
-  '--------------------',
-  'Affected by Child Welfare Involvement',
-  'Affected by Disaster',
-  'Affected by Substance Use',
-  'Children Experiencing Homelessness',
-  'Children with Disabilities',
-  'Children with Special Health Care Needs',
-  'Dual-Language Learners',
-  'Pregnant Women',
-];
-
 export const programTypes = [
   'Early Head Start (ages 0-3)',
   'Head Start (ages 3-5)',

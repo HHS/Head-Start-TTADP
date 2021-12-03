@@ -13,6 +13,7 @@ import {
 import './FilterItem.css';
 import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
+import FilterPopulationSelect from './FilterPopulationSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -39,6 +40,7 @@ const DEFAULT_VALUES = {
   },
   role: EMPTY_DEFAULT_ARRAY_CONTAINS,
   reason: EMPTY_DEFAULT_ARRAY_CONTAINS,
+  targetPopulation: EMPTY_DEFAULT_ARRAY_CONTAINS,
   programSpecialist: {
     Contains: '',
     'Does not contain': '',
@@ -89,6 +91,19 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
 
   const possibleFilters = [
     {
+      id: 'startDate',
+      display: 'Date range',
+      conditions: DATE_CONDITIONS,
+      renderInput: () => (
+        <FilterDateRange
+          condition={condition}
+          query={query}
+          updateSingleDate={updateSingleDate}
+          onApplyDateRange={onApplyQuery}
+        />
+      ),
+    },
+    {
       id: 'programSpecialist',
       display: 'Program Specialist',
       conditions: SELECT_CONDITIONS,
@@ -135,15 +150,13 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       ),
     },
     {
-      id: 'startDate',
-      display: 'Date range',
-      conditions: DATE_CONDITIONS,
+      id: 'targetPopulation',
+      display: 'Target Population',
+      conditions: SELECT_CONDITIONS,
       renderInput: () => (
-        <FilterDateRange
-          condition={condition}
-          query={query}
-          updateSingleDate={updateSingleDate}
-          onApplyDateRange={onApplyQuery}
+        <FilterPopulationSelect
+          labelId={`population-${condition}-${id}`}
+          onApply={onApplyQuery}
         />
       ),
     },
