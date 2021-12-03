@@ -13,11 +13,13 @@ import {
   nonGranteeParticipants,
   granteeParticipants,
   programTypes,
-  targetPopulations,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
-import { REASONS as reasons } from '../../../Constants';
+import {
+  REASONS as reasons,
+  TARGET_POPULATIONS as targetPopulations,
+} from '../../../Constants';
 
 const ActivitySummary = ({
   recipients,

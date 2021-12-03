@@ -61,6 +61,23 @@ export const REASONS = [
   'Monitoring | Deficiency',
 ];
 
+// Note that if this topic list is changed, it needs also to be changed in
+// - src/constants.js
+export const TARGET_POPULATIONS = [
+  'Infants and Toddlers (ages birth to 3)',
+  'Preschool (ages 3-5)',
+  'Pregnant Women',
+  '--------------------',
+  'Affected by Child Welfare Involvement',
+  'Affected by Disaster',
+  'Affected by Substance Use',
+  'Children Experiencing Homelessness',
+  'Children with Disabilities',
+  'Children with Special Health Care Needs',
+  'Dual-Language Learners',
+  'Pregnant Women',
+];
+
 export const ROLES = [
   'Regional Program Manager',
   'COR',

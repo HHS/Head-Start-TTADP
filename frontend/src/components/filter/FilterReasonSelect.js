@@ -1,33 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import CheckboxSelect from '../CheckboxSelect';
+import FilterOptionSelect from './FilterOptionSelect';
 import { REASONS } from '../../Constants';
 
 const REASONS_OPTIONS = REASONS.map((label, value) => ({ value, label }));
 
 export default function FilterReasonSelect({
-  onApply, labelId,
+  onApply,
+  labelId,
 }) {
   const onApplyClick = (selected) => {
-    const reasonValues = selected.map((s) => parseInt(s, 10));
-
-    const reasons = REASONS_OPTIONS.filter(
-      (reason) => reasonValues.includes(reason.value),
-    ).map((reason) => reason.label);
-
-    onApply(reasons);
+    onApply(selected);
   };
-
   return (
-    <CheckboxSelect
-      styleAsSelect
-      hideToggleAll
-      toggleAllText="All Reasons"
-      toggleAllInitial={false}
+    <FilterOptionSelect
+      onApply={onApplyClick}
       labelId={labelId}
       labelText="Filter by reasons"
       ariaName="Change filter by reasons menu"
-      onApply={onApplyClick}
       options={REASONS_OPTIONS}
     />
   );
