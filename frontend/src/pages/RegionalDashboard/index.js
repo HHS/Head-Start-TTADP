@@ -38,8 +38,6 @@ export default function RegionalDashboard({ user }) {
   });
 
   const regions = getUserRegions(user);
-
-  // eslint-disable-next-line max-len
   const defaultRegion = hasCentralOffice ? 14 : regions[0];
 
   const [filters, setFilters] = useState([
@@ -64,7 +62,14 @@ export default function RegionalDashboard({ user }) {
     setFilters(newFilters);
   };
 
-  const onRemoveFilter = () => {};
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
+  };
 
   if (!user) {
     return (
