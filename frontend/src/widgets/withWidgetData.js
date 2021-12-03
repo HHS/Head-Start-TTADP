@@ -18,6 +18,9 @@ const withWidgetData = (Widget, widgetId) => {
 
     const { filters } = props;
 
+    // todo - investigate why this was preventing data refresh
+    // useDeepCompareEffect(() => {
+
     useEffect(() => {
       const fetch = async () => {
         try {
