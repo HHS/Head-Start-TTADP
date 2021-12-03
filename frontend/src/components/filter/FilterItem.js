@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import FilterDateRange from './FilterDateRange';
 import { formatDateRange } from '../DateRangeSelect';
-import SpecialistSelect from '../SpecialistSelect';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
@@ -76,11 +76,9 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       display: 'Specialist',
       conditions: SELECT_CONDITIONS,
       renderInput: () => (
-        <SpecialistSelect
+        <FilterSpecialistSelect
           labelId={`role-${condition}-${id}`}
           onApplyRoles={onApplyQuery}
-          toggleAllInitial={false}
-          hideToggleAll
         />
       ),
     },
