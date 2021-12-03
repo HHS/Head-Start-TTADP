@@ -355,6 +355,37 @@ describe('filtersToScopes', () => {
         expect(found.map((f) => f.id))
           .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
       });
+
+      it('grant number with matches', async () => {
+        const filters = { 'grantNumber.in': ['123'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+      });
+
+      it('grant number with no matches', async () => {
+        const filters = { 'grantNumber.in': ['789'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(0);
+      });
+
+      it('grant numbers excludes matches', async () => {
+        const filters = { 'grantNumber.nin': ['123'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+      });
     });
 
     describe('granteeId', () => {
