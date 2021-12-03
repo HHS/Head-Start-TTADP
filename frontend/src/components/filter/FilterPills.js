@@ -2,9 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import moment from 'moment';
-import { formatDateRange } from '../DateRangeSelect';
 import Tooltip from '../Tooltip';
+import { FILTER_CONFIG } from './constants';
 import './FilterPills.css';
 
 const filterProp = PropTypes.shape({
@@ -23,51 +22,8 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     query,
   } = filter;
 
-  const handleArrayQuery = (q) => {
-    if (q.length) {
-      return q.join(', ');
-    }
-    return '';
-  };
-
-  const filterNameLookup = [
-    {
-      topic: 'reason',
-      display: 'Reason',
-      query: () => handleArrayQuery(query),
-    },
-    {
-      topic: 'programSpecialist',
-      display: 'Program specialist',
-      query: () => query,
-    },
-    {
-      topic: 'targetPopulation',
-      display: 'Target population',
-      query: () => query,
-    },
-    {
-      topic: 'role',
-      display: 'Specialist',
-      query: () => handleArrayQuery(query),
-    },
-    {
-      topic: 'startDate',
-      display: 'Date range',
-      query: () => {
-        if (query.includes('-')) {
-          return formatDateRange({
-            string: query,
-            withSpaces: false,
-          });
-        }
-        return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
-      },
-    },
-  ];
-
   const determineFilterName = () => {
-    const topicMatch = filterNameLookup.find((f) => f.topic === topic);
+    const topicMatch = FILTER_CONFIG.find((f) => f.id === topic);
     if (topicMatch) {
       return topicMatch.display;
     }
@@ -87,9 +43,9 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
   };
 
   const determineQuery = (keepOriginalLength = true) => {
-    const queryMatch = filterNameLookup.find((f) => f.topic === topic);
+    const queryMatch = FILTER_CONFIG.find((f) => f.id === topic);
     if (queryMatch) {
-      const queryToReturn = queryMatch.query();
+      const queryToReturn = queryMatch.displayQuery(query);
       return keepOriginalLength ? queryToReturn : truncateQuery(queryToReturn);
     }
     return query;

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import FilterDateRange from './FilterDateRange';
-import { formatDateRange } from '../DateRangeSelect';
+
 import SpecialistSelect from '../SpecialistSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import {
@@ -15,10 +15,7 @@ import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
+import { FILTER_CONFIG } from './constants';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
@@ -26,26 +23,6 @@ const filterProp = PropTypes.shape({
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
   id: PropTypes.string,
 });
-
-const EMPTY_DEFAULT_ARRAY_CONTAINS = {
-  Contains: [],
-  'Does not contain': [],
-};
-
-const DEFAULT_VALUES = {
-  startDate: {
-    'Is within': YEAR_TO_DATE,
-    'Is after': '',
-    'Is before': '',
-  },
-  role: EMPTY_DEFAULT_ARRAY_CONTAINS,
-  reason: EMPTY_DEFAULT_ARRAY_CONTAINS,
-  targetPopulation: EMPTY_DEFAULT_ARRAY_CONTAINS,
-  programSpecialist: {
-    Contains: '',
-    'Does not contain': '',
-  },
-};
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -69,8 +46,13 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
    */
   const onUpdate = (name, value) => {
     if (name === 'condition') {
-      // Set default value.
-      const defaultQuery = DEFAULT_VALUES[topic][value];
+      /**
+       * if the condition is changed, we need to do a lookup in the filter config
+       * and set the query to the new default value
+       */
+      const f = FILTER_CONFIG.find(((config) => config.id === topic));
+      const defaultQuery = f.defaultValues[value];
+
       onUpdateFilter(id, 'query', defaultQuery);
     }
 
