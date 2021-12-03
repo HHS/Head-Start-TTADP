@@ -2,18 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import FilterDateRange from './FilterDateRange';
-
-import SpecialistSelect from '../SpecialistSelect';
-import FilterRegionalSelect from './FilterRegionSelect';
-import {
-  DATE_CONDITIONS,
-  SELECT_CONDITIONS,
-} from '../constants';
 import './FilterItem.css';
-import FilterInput from './FilterInput';
-import FilterReasonSelect from './FilterReasonSelect';
-import FilterPopulationSelect from './FilterPopulationSelect';
 
 import { FILTER_CONFIG } from './constants';
 
@@ -67,84 +56,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     onUpdate('query', q);
   };
 
-  const updateSingleDate = (name, value) => {
-    onUpdate(name, value);
-  };
-
-  const possibleFilters = [
-    {
-      id: 'startDate',
-      display: 'Date range',
-      conditions: DATE_CONDITIONS,
-      renderInput: () => (
-        <FilterDateRange
-          condition={condition}
-          query={query}
-          updateSingleDate={updateSingleDate}
-          onApplyDateRange={onApplyQuery}
-        />
-      ),
-    },
-    {
-      id: 'programSpecialist',
-      display: 'Program Specialist',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <FilterInput
-          query={query}
-          onApply={onApplyQuery}
-        />
-      ),
-    },
-    {
-      id: 'reason',
-      display: 'Reason',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <FilterReasonSelect
-          labelId={`reason-${condition}-${id}`}
-          onApply={onApplyQuery}
-        />
-      ),
-    },
-    {
-      id: 'region',
-      display: 'Region',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <FilterRegionalSelect
-          appliedRegion={query}
-          onApply={onApplyQuery}
-        />
-      ),
-    },
-    {
-      id: 'role',
-      display: 'Role',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <SpecialistSelect
-          labelId={`role-${condition}-${id}`}
-          onApplyRoles={onApplyQuery}
-          toggleAllInitial={false}
-          hideToggleAll
-        />
-      ),
-    },
-    {
-      id: 'targetPopulation',
-      display: 'Target Population',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <FilterPopulationSelect
-          labelId={`population-${condition}-${id}`}
-          onApply={onApplyQuery}
-        />
-      ),
-    },
-  ];
-
-  const selectedTopic = possibleFilters.find((f) => f.id === topic);
+  const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
 
   const onRemove = () => {
@@ -175,7 +87,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         className="usa-select"
       >
         <option value="">Select a topic</option>
-        {possibleFilters.map(({ id: filterId, display }) => (
+        {FILTER_CONFIG.map(({ id: filterId, display }) => (
           <option key={filterId} value={filterId}>{display}</option>
         ))}
       </select>
@@ -195,7 +107,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput()
+        ? selectedTopic.renderInput(id, condition, query, onUpdate, onApplyQuery)
         : <DummySelect /> }
       <button
         type="button"

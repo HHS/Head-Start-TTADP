@@ -1,9 +1,17 @@
+import React from 'react';
 import moment from 'moment';
 import { formatDateRange } from '../DateRangeSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../constants';
+import SpecialistSelect from '../SpecialistSelect';
+import FilterDateRange from './FilterDateRange';
+import FilterInput from './FilterInput';
+import FilterReasonSelect from './FilterReasonSelect';
+import FilterRegionalSelect from './FilterRegionSelect';
+import FilterTopicSelect from './FilterTopicSelect';
+import FilterPopulationSelect from './FilterPopulationSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -49,6 +57,14 @@ export const FILTER_CONFIG = [
       }
       return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
     },
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterDateRange
+        condition={condition}
+        query={query}
+        updateSingleDate={onUpdate}
+        onApplyDateRange={onApplyQuery}
+      />
+    ),
   },
   {
     id: 'programSpecialist',
@@ -56,6 +72,12 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterInput
+        query={query}
+        onApply={onApplyQuery}
+      />
+    ),
   },
   {
     id: 'reason',
@@ -63,12 +85,25 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterReasonSelect
+        labelId={`reason-${condition}-${id}`}
+        onApply={onApplyQuery}
+      />
+    ),
   },
   {
     id: 'region',
     display: 'Region',
     conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterRegionalSelect
+        appliedRegion={query}
+        onApply={onApplyQuery}
+      />
+    ),
   },
   {
     id: 'role',
@@ -76,6 +111,14 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <SpecialistSelect
+        labelId={`role-${condition}-${id}`}
+        onApplyRoles={onApplyQuery}
+        toggleAllInitial={false}
+        hideToggleAll
+      />
+    ),
   },
   {
     id: 'targetPopulation',
@@ -83,5 +126,24 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterPopulationSelect
+        labelId={`population-${condition}-${id}`}
+        onApply={onApplyQuery}
+      />
+    ),
+  },
+  {
+    id: 'topic',
+    display: 'Topics',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_CHECKBOX_SELECT,
+    displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterTopicSelect
+        labelId={`topic-${condition}-${id}`}
+        onApply={onApplyQuery}
+      />
+    ),
   },
 ];
