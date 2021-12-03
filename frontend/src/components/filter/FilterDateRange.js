@@ -32,6 +32,7 @@ export default function FilterDateRange({
         options={DATE_OPTIONS}
         updateDateRange={onApplyDateRange}
         styleAsSelect
+        onChange={onApplyDateRange}
       />
     );
   }

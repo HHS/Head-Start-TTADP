@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, createRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {
@@ -107,19 +109,18 @@ const CUSTOM_DATE_RANGE = OPTIONS[1].value;
  * @returns JSX object
  */
 
-function DateRangeSelect(props) {
-  const {
-    options,
-    styleAsSelect,
-    updateDateRange,
-    disabled,
-  } = props;
-
+function DateRangeSelect({
+  options,
+  styleAsSelect,
+  updateDateRange,
+  disabled,
+  onChange,
+}) {
   const [selectedItem, setSelectedItem] = useState(1);
   const [showDateError, setShowDateError] = useState(false);
 
   // this is a ref for the dropdown menu so that we can
-  const menu = useRef();
+  const menu = createRef();
 
   const [dates, setDates] = useState({
     startDate: false,
@@ -131,21 +132,7 @@ function DateRangeSelect(props) {
   const [endDateFocused, setEndDateFocused] = useState(false);
   const startDatePickerId = 'startDatePicker';
 
-  /** when to focus on the start date input */
-  useEffect(() => {
-    if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
-      const input = document.getElementById(startDatePickerId);
-      if (input) {
-        input.focus();
-      }
-    }
-  }, [selectedItem, startDatePickerId]);
-
-  /**
-   * apply the selected item and close the menu
-   *
-   */
-  const onApplyClick = () => {
+  function getDateRange() {
     const { startDate, endDate } = dates;
 
     if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
@@ -162,15 +149,50 @@ function DateRangeSelect(props) {
         return false;
       }
 
-      updateDateRange(range);
-    } else if (selectedItem) {
+      return range;
+    }
+
+    if (selectedItem) {
       const option = options.find((o) => selectedItem === o.value);
       if (option) {
         const { range } = option;
-        updateDateRange(range);
+        return range;
       }
     }
+
     setShowDateError(false);
+    return false;
+  }
+
+  useEffect(() => {
+    const range = getDateRange();
+    if (range) {
+      onChange(range);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dates, selectedItem]);
+
+  /** when to focus on the start date input */
+  useEffect(() => {
+    if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
+      const input = document.getElementById(startDatePickerId);
+      if (input) {
+        input.focus();
+      }
+    }
+  }, [selectedItem, startDatePickerId]);
+
+  /**
+   * apply the selected item and close the menu
+   *
+   */
+  const onApplyClick = () => {
+    const range = getDateRange();
+    if (range) {
+      updateDateRange(range);
+      return true;
+    }
+
     return false;
   };
 
@@ -379,12 +401,14 @@ DateRangeSelect.propTypes = {
   styleAsSelect: PropTypes.bool,
   // props for handling the date range select
   updateDateRange: PropTypes.func.isRequired,
+  onChange: PropTypes.func,
 };
 
 DateRangeSelect.defaultProps = {
   styleAsSelect: false,
   disabled: false,
   options: OPTIONS,
+  onChange: () => {},
 };
 
 export default DateRangeSelect;
