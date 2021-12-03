@@ -1,25 +1,3 @@
-// Note that if this topic list is changed, it needs also to be changed in
-// - src/constants.js
-export const reasons = [
-  'Below Competitive Threshold (CLASS)',
-  'Below Quality Threshold (CLASS)',
-  'Change in Scope',
-  'Child Incidents',
-  'Complaint',
-  'COVID-19 response',
-  'Full Enrollment',
-  'New Grantee',
-  'New Director or Management',
-  'New Program Option',
-  'New Staff / Turnover',
-  'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
-  'School Readiness Goals',
-  'Monitoring | Area of Concern',
-  'Monitoring | Noncompliance',
-  'Monitoring | Deficiency',
-];
-
 export const granteeParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
