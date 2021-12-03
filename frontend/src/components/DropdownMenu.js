@@ -55,8 +55,9 @@ export default function DropdownMenu({
   };
 
   const onApplyClick = () => {
-    onApply();
-    setMenuIsOpen(false);
+    if (onApply()) {
+      setMenuIsOpen(false);
+    }
   };
 
   const onCancelClick = () => {

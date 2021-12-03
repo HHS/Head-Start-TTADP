@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {
@@ -118,6 +118,9 @@ function DateRangeSelect(props) {
   const [selectedItem, setSelectedItem] = useState(1);
   const [showDateError, setShowDateError] = useState(false);
 
+  // this is a ref for the dropdown menu so that we can
+  const menu = useRef();
+
   const [dates, setDates] = useState({
     startDate: false,
     endDate: false,
@@ -144,13 +147,19 @@ function DateRangeSelect(props) {
    */
   const onApplyClick = () => {
     const { startDate, endDate } = dates;
+
     if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
       const range = `${startDate ? startDate.format(DATETIME_DATE_FORMAT) : ''}-${endDate ? endDate.format(DATETIME_DATE_FORMAT) : ''}`;
       const isValidDateRange = range.trim().split('-').filter((str) => str !== '').length === 2;
 
       if (!isValidDateRange) {
         setShowDateError(true);
-        return;
+        return false;
+      }
+
+      if (startDate.isBefore(EARLIEST_INC_FILTER_DATE) || endDate.isAfter(moment())) {
+        setShowDateError(true);
+        return false;
       }
 
       updateDateRange(range);
@@ -161,6 +170,8 @@ function DateRangeSelect(props) {
         updateDateRange(range);
       }
     }
+    setShowDateError(false);
+    return false;
   };
 
   /**
@@ -172,6 +183,11 @@ function DateRangeSelect(props) {
   const canBlur = (e) => {
     // if we're within the same menu, do nothing
     if (e.relatedTarget && e.relatedTarget.matches('.smart-hub--button-select-menu *')) {
+      return false;
+    }
+
+    // clicking between the dropdowns should also not close the date select
+    if (e.relatedTarget === menu.current) {
       return false;
     }
 
@@ -216,6 +232,7 @@ function DateRangeSelect(props) {
       menuName="Date range select menu"
       applyButtonAria="Apply date range filters"
       className=""
+      forwardedRef={menu}
     >
       <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">
         <span className="smart-hub--button-select-menu-label" id="dateRangeSelectLabel">
