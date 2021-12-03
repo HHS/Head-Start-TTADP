@@ -286,7 +286,7 @@ describe('filtersToScopes', () => {
           id: granteeIncluded2.id, number: 1235, granteeId: granteeIncluded2.id,
         });
         grantExcluded = await Grant.create({
-          id: granteeExcluded.id, number: 1236, granteeId: granteeExcluded.id,
+          id: granteeExcluded.id, number: 456, granteeId: granteeExcluded.id,
         });
 
         reportIncluded1 = await ActivityReport.create({ ...draftReport });
