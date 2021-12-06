@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +12,8 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
 import FilterPills from '../../components/filter/FilterPills';
+import { expandFilters } from '../../utils';
+import useUrlFilters from '../../hooks/useUrlFilters';
 
 /**
  *
@@ -40,7 +42,7 @@ export default function RegionalDashboard({ user }) {
   const regions = getUserRegions(user);
   const defaultRegion = hasCentralOffice ? 14 : regions[0];
 
-  const [filters, setFilters] = useState([
+  const [filters, setFilters] = useUrlFilters([
     {
       id: uuidv4(),
       topic: 'region',
@@ -77,6 +79,8 @@ export default function RegionalDashboard({ user }) {
     );
   }
 
+  const filtersToApply = expandFilters(filters);
+
   return (
     <div className="ttahub-dashboard">
 
@@ -95,25 +99,25 @@ export default function RegionalDashboard({ user }) {
 
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
-            filters={filters}
+            filters={filtersToApply}
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
               <ReasonList
-                filters={filters}
+                filters={filtersToApply}
                 dateTime={dateTime}
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
               <TotalHrsAndGrantee
-                filters={filters}
+                filters={filtersToApply}
                 dateTime={dateTime}
               />
             </Grid>
           </Grid>
           <Grid row>
             <TopicFrequencyGraph
-              filters={filters}
+              filters={filtersToApply}
               dateTime={dateTime}
             />
           </Grid>

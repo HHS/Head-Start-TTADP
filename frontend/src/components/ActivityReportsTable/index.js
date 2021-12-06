@@ -8,7 +8,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import { filtersToQueryString } from '../Filter';
+import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';

@@ -12,6 +12,7 @@ import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
+import FilterProgramType from './FilterProgramType';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -67,6 +68,23 @@ export const FILTER_CONFIG = [
     ),
   },
   {
+    id: 'grantNumber',
+    display: 'Grant Number',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_TEXT_INPUT,
+    displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterInput
+        query={query}
+        id={id}
+        condition={condition}
+        onApply={onApplyQuery}
+        type="grantNumber"
+        label="Grant number"
+      />
+    ),
+  },
+  {
     id: 'programSpecialist',
     display: 'Program Specialist',
     conditions: SELECT_CONDITIONS,
@@ -75,6 +93,23 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
       <FilterInput
         query={query}
+        id={id}
+        condition={condition}
+        onApply={onApplyQuery}
+        type="programSpecialist"
+        label="Program specialist name"
+      />
+    ),
+  },
+  {
+    id: 'programType',
+    display: 'Program Types',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_CHECKBOX_SELECT,
+    displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterProgramType
+        labelId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
       />
     ),
@@ -89,6 +124,23 @@ export const FILTER_CONFIG = [
       <FilterReasonSelect
         labelId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
+      />
+    ),
+  },
+  {
+    id: 'grantee',
+    display: 'Recipient name',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_TEXT_INPUT,
+    displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterInput
+        query={query}
+        id={id}
+        condition={condition}
+        onApply={onApplyQuery}
+        type="grantee"
+        label="recipientName"
       />
     ),
   },
