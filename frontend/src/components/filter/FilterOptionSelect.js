@@ -24,6 +24,7 @@ export default function FilterOptionSelect({
       styleAsSelect
       hideToggleAll
       toggleAllInitial={false}
+      toggleAllChecked={false}
       labelId={labelId}
       labelText={labelText}
       ariaName={ariaName}

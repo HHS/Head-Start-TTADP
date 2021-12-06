@@ -10,33 +10,14 @@ import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/filter/FilterMenu';
 import FilterPills from '../../../components/filter/FilterPills';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import { expandFilters } from '../../../utils';
+
 import './TTAHistory.css';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
 });
-
-function expandFilters(filters) {
-  const arr = [];
-
-  filters.forEach((filter) => {
-    const { topic, query, condition } = filter;
-    if (Array.isArray(query)) {
-      query.forEach((q) => {
-        arr.push({
-          topic,
-          condition,
-          query: q,
-        });
-      });
-    } else {
-      arr.push(filter);
-    }
-  });
-
-  return arr;
-}
 
 export default function TTAHistory({
   granteeName, granteeId, regionId,
