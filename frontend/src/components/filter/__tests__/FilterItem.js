@@ -9,12 +9,25 @@ import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
 
 describe('Filter menu item', () => {
-  const renderFilterItem = (filter, onRemoveFilter = jest.fn(), onUpdateFilter = jest.fn()) => {
-    render(<FilterItem
-      filter={filter}
-      onRemoveFilter={onRemoveFilter}
-      onUpdateFilter={onUpdateFilter}
-    />);
+  const renderFilterItem = (
+    filter,
+    onRemoveFilter = jest.fn(),
+    onUpdateFilter = jest.fn(),
+    setErrors = jest.fn(),
+  ) => {
+    render(
+      <div>
+        <FilterItem
+          filter={filter}
+          onRemoveFilter={onRemoveFilter}
+          onUpdateFilter={onUpdateFilter}
+          errors={['']}
+          setErrors={setErrors}
+          index={0}
+        />
+        <button type="button">BIG DUMB BUTTON</button>
+      </div>,
+    );
   };
 
   it('updates topic & condition', async () => {
@@ -114,5 +127,23 @@ describe('Filter menu item', () => {
     }));
 
     expect(onRemove).toHaveBeenCalled();
+  });
+
+  it('validates on blur', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      conditions: [],
+      toggleAllChecked: true,
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+
+    console.log(document.querySelectorAll(':focus'));
+
+    expect(true).toBe(false);
   });
 });
