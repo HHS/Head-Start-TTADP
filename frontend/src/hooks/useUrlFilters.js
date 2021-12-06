@@ -5,9 +5,7 @@ import { filtersToQueryString, queryStringToFilters } from '../utils';
 export default function useUrlFilters(defaultFilters) {
   const history = useHistory();
 
-  const { replace } = history;
-
-  const { search: historyLocationSearch } = history.location;
+  const { replace, location: { search: historyLocationSearch } } = history;
 
   /**
      * get the current window location
