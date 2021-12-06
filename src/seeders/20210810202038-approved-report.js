@@ -22,7 +22,6 @@ const reports = [
     requester: 'recipient',
     calculatedStatus: 'approved',
     submissionStatus: 'submitted',
-    programTypes: ['Head Start (ages 3-5)'],
     reason: ['Child Incidents'],
     targetPopulations: ['Children with disabilities'],
     participants: ['Regional Head Start Association'],

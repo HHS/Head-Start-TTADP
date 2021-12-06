@@ -48,10 +48,21 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     oldGrantId: DataTypes.INTEGER,
+    programTypes: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.programs && this.programs.length > 0 ? [
+          ...new Set(
+            this.programs.filter((p) => (p.programType))
+              .map((p) => (p.programType)).sort(),
+          )] : [];
+      },
+    },
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.number}`;
+        const programTypes = this.programTypes.length > 0 ? ` - ${this.programTypes.join(', ')}` : '';
+        return `${this.recipient.name} - ${this.number}${programTypes}`;
       },
     },
   }, {
