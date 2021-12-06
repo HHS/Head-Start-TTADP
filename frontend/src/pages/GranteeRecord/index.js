@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 
@@ -17,14 +17,7 @@ export default function GranteeRecord({ match, location }) {
   const { granteeId } = match.params;
   const regionId = new URLSearchParams(location.search).get('region');
 
-  function reducer(state, action) {
-    if (action.type === 'data') {
-      return action.payload;
-    }
-    throw new Error();
-  }
-
-  const [granteeData, dispatch] = useReducer(reducer, {
+  const [granteeData, setGranteeData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
     'grants.startDate': '',
@@ -42,11 +35,8 @@ export default function GranteeRecord({ match, location }) {
       try {
         const grantee = await getGrantee(granteeId, regionId);
         if (grantee) {
-          dispatch({
-            type: 'data',
-            payload: {
-              ...grantee, granteeId, regionId, granteeName: grantee.name,
-            },
+          setGranteeData({
+            ...grantee, granteeId, regionId, granteeName: grantee.name,
           });
         }
       } catch (e) {
