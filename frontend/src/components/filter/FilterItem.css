@@ -14,6 +14,18 @@
     top: 0.5em;
 }
 
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value [name="topic"]{
+    border: 2px solid #d83933;
+}
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"]{
+    border: 2px solid #d83933;
+}
+
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter .smart-hub--dropdown-menu-toggle-btn,
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter .ttahub-filter-date-range-single-date{
+    border: 2px solid #d83933;
+}
+
 .ttahub-filter-menu-item [name="topic"],
 .ttahub-filter-menu-item [name="condition"],
 .ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select,

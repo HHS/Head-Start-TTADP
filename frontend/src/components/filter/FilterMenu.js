@@ -19,6 +19,7 @@ const filterProp = PropTypes.shape({
  */
 export default function FilterMenu({ filters, onApplyFilters }) {
   const [items, setItems] = useState([...filters]);
+  const [errors, setErrors] = useState(filters.map(() => ''));
 
   useEffect(() => {
     // If filters where changes outside of this component update.
@@ -26,7 +27,20 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   }, [filters]);
 
   const onApply = () => {
+    const hasErrors = errors.reduce((acc, curr) => {
+      if (curr) {
+        return true;
+      }
+
+      return acc;
+    }, false);
+
+    if (hasErrors) {
+      return false;
+    }
+
     onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
+    return true;
   };
 
   const onRemoveFilter = (id) => {
@@ -85,12 +99,15 @@ export default function FilterMenu({ filters, onApplyFilters }) {
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
         <div>
           <ul className="usa-list usa-list--unstyled margin-bottom-1">
-            {items.map((filter) => (
+            {items.map((filter, index) => (
               <FilterItem
                 onRemoveFilter={onRemoveFilter}
                 onUpdateFilter={onUpdateFilter}
                 key={filter.id}
                 filter={filter}
+                index={index}
+                errors={errors}
+                setErrors={setErrors}
               />
             ))}
           </ul>
