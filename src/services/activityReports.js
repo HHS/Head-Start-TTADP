@@ -21,6 +21,7 @@ import {
   User,
   NextStep,
   Objective,
+  Program,
 } from '../models';
 
 import { saveGoalsForReport } from './goals';
@@ -203,11 +204,19 @@ export function activityReportById(activityReportId) {
             attributes: ['id', 'number'],
             as: 'grant',
             required: false,
-            include: [{
-              model: Recipient,
-              as: 'recipient',
-              attributes: ['name'],
-            }],
+            include:
+            [
+              {
+                model: Recipient,
+                as: 'recipient',
+                attributes: ['name'],
+              },
+              {
+                model: Program,
+                as: 'programs',
+                attributes: ['programType'],
+              },
+            ],
           },
           {
             model: OtherEntity,
@@ -663,7 +672,13 @@ export async function possibleRecipients(regionId) {
       include: [{
         model: Recipient,
         as: 'recipient',
-      }],
+      },
+      {
+        model: Program,
+        as: 'programs',
+        attributes: ['programType'],
+      },
+      ],
     }],
   });
   const otherEntities = await OtherEntity.findAll({
@@ -707,6 +722,11 @@ async function getDownloadableActivityReports(where) {
                   model: Recipient,
                   as: 'recipient',
                   attributes: ['name'],
+                },
+                {
+                  model: Program,
+                  as: 'programs',
+                  attributes: ['programType'],
                 },
               ],
             },

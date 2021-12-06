@@ -13,7 +13,6 @@ import {
   otherEntityParticipants,
   recipientParticipants,
   reasons,
-  programTypes,
   targetPopulations,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
@@ -52,7 +51,6 @@ const ActivitySummary = ({
 
   const disableRecipients = isEmpty(activityRecipientType);
   const otherEntitiesSelected = activityRecipientType === 'other-entities';
-  const recipientSelected = activityRecipientType === 'recipient';
   const selectedRecipients = otherEntitiesSelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
   const recipientLabel = otherEntitiesSelected ? 'Other entities' : 'Recipient name(s)';
@@ -65,7 +63,6 @@ const ActivitySummary = ({
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: true });
       setValue('participants', [], { shouldValidate: true });
-      setValue('programTypes', [], { shouldValidate: true });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
@@ -161,23 +158,6 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        {recipientSelected
-        && (
-        <div className="margin-top-2">
-          <FormItem
-            label="Program type(s)"
-            name="programTypes"
-          >
-            <MultiSelect
-              name="programTypes"
-              label="Program type(s)"
-              control={control}
-              required="Please select at least one program type"
-              options={programTypes.map((pt) => ({ value: pt, label: pt }))}
-            />
-          </FormItem>
-        </div>
-        )}
         <div className="margin-top-2">
           <FormItem
             label="Target Populations addressed. You may choose more than one."
@@ -443,7 +423,6 @@ const sections = [
       {
         label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
       },
-      { label: 'Program type(s)', name: 'programTypes' },
       { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],
   },

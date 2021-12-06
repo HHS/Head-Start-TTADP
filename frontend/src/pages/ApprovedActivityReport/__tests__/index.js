@@ -35,7 +35,6 @@ describe('Activity report print and share view', () => {
     recipientNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
-    programTypes: ['Party'],
     reason: ['Needed it'],
     startDate: '08/01/1968',
     endDate: '08/02/1969',
@@ -145,7 +144,6 @@ describe('Activity report print and share view', () => {
       expect(screen.getByText(/john smith: note/i)).toBeInTheDocument();
       expect(screen.getByText(report.activityRecipients.map((arRecipient) => arRecipient.name).join(', '))).toBeInTheDocument();
       expect(screen.getByText(report.reason.join(', '))).toBeInTheDocument();
-      expect(screen.getByText(report.programTypes.join(', '))).toBeInTheDocument();
       expect(screen.getByText(/august 1, 1968/i)).toBeInTheDocument();
       expect(screen.getByText(/august 2, 1969/i)).toBeInTheDocument();
       expect(screen.getByText(`${report.duration} hours`)).toBeInTheDocument();
