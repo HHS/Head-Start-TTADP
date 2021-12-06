@@ -8,7 +8,7 @@ describe('RecipientSummary', () => {
     render(<div data-testid="recipient-summary-container"><RecipientSummary summary={summary} regionId={12} /></div>);
   };
 
-  it('renders the grantee summary appropriately', async () => {
+  it('renders the recipient summary appropriately', async () => {
     const summary = {
       recipientId: '44',
       recipientType: 'Frog Stuff',
@@ -44,7 +44,7 @@ describe('RecipientSummary', () => {
 
   it('renders program and grant specialist lists', async () => {
     const summary = {
-      granteeId: '44',
+      recipientId: '44',
       grants: [
         {
           programSpecialistName: 'Program Specialist 3',

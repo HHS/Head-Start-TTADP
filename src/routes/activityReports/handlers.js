@@ -165,7 +165,7 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
-          key: 'granteeNextSteps',
+          key: 'recipientNextSteps',
           header: 'Recipient next steps',
         },
         {
@@ -309,7 +309,7 @@ export async function reviewReport(req, res) {
     const reviewedReport = await activityReportById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      if (reviewedReport.activityRecipientType === 'grantee') {
+      if (reviewedReport.activityRecipientType === 'recipient') {
         await copyGoalsToGrants(
           reviewedReport.goals,
           reviewedReport.activityRecipients.map((recipient) => recipient.activityRecipientId),

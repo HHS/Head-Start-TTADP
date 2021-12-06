@@ -225,8 +225,8 @@ export default async function importActivityReports(fileKey, region) {
     if (legacyId) {
       logger.debug(`Processing legacyId: ${legacyId}`);
 
-      const granteeActivity = getValue(data, 'granteeActivity');
-      const activityRecipientType = granteeActivity ? 'grantee' : 'nonGrantee';
+      const recipientActivity = getValue(data, 'granteeActivity');
+      const activityRecipientType = recipientActivity ? 'recipient' : 'other-entities';
 
       // Coerce values into appropriate data type
       const submissionStatus = coerceStatus(getValue(data, 'managerApproval'));

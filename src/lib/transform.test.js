@@ -5,7 +5,7 @@ import {
   User,
   ActivityRecipient,
   Grant,
-  Grantee,
+  Recipient,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -106,28 +106,28 @@ describe('activityReportToCsvRecord', () => {
       id: 4,
       grantId: 4,
       grant: {
-        name: 'test4', programSpecialistName: 'Program Specialist 4', granteeId: 4, grantee: { name: 'test4' },
+        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, recipient: { name: 'test4' },
       },
     },
     {
       id: 1,
       grantId: 1,
       grant: {
-        name: 'test1', programSpecialistName: 'Program Specialist 1', granteeId: 1, grantee: { name: 'test1' },
+        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, recipient: { name: 'test1' },
       },
     },
     {
       id: 2,
       grantId: 2,
       grant: {
-        name: 'test2', programSpecialistName: 'Program Specialist 2', granteeId: 2, grantee: { name: 'test2' },
+        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, recipient: { name: 'test2' },
       },
     },
     {
       id: 3,
       grantId: 3,
       grant: {
-        name: 'test3', programSpecialistName: 'Program Specialist 1', granteeId: 3, grantee: { name: 'test3' },
+        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, recipient: { name: 'test3' },
       },
     },
   ];
@@ -172,7 +172,7 @@ describe('activityReportToCsvRecord', () => {
         {
           model: ActivityRecipient,
           as: 'activityRecipients',
-          include: [{ model: Grant, as: 'grant', include: [{ model: Grantee, as: 'grantee' }] }],
+          include: [{ model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] }],
         }],
     });
     const output = await activityReportToCsvRecord(report);

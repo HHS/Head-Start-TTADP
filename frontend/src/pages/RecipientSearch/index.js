@@ -10,7 +10,7 @@ import RegionalSelect from '../../components/RegionalSelect';
 import RecipientResults from './components/RecipientResults';
 import { getUserRegions } from '../../permissions';
 import { searchRecipients } from '../../fetchers/recipient';
-import { GRANTEES_PER_PAGE } from '../../Constants';
+import { RECIPIENTS_PER_PAGE } from '../../Constants';
 import './index.css';
 
 const DEFAULT_SORT = {
@@ -37,7 +37,7 @@ function RecipientSearch({ user }) {
 
   const inputRef = useRef();
 
-  const offset = (activePage - 1) * GRANTEES_PER_PAGE;
+  const offset = (activePage - 1) * RECIPIENTS_PER_PAGE;
 
   function setCurrentQuery() {
     if (inputRef.current) {
@@ -159,7 +159,7 @@ function RecipientSearch({ user }) {
             loading={loading}
             activePage={activePage}
             offset={offset}
-            perPage={GRANTEES_PER_PAGE}
+            perPage={RECIPIENTS_PER_PAGE}
             count={count}
             handlePageChange={handlePageChange}
             requestSort={requestSort}

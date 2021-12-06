@@ -8,7 +8,7 @@ import changeReportStatus from './changeReportStatus';
 jest.mock('../logger');
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   regionId: 1,
   ECLKCResourcesUsed: ['test'],
   submissionStatus: REPORT_STATUSES.APPROVED,

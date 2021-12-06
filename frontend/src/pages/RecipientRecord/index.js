@@ -77,7 +77,7 @@ export default function RecipientRecord({ match, location }) {
           </div>
         ) : (
           <>
-            <h1 className="ttahub-grantee-record--heading margin-top-0 margin-bottom-1 margin-left-2">{recipientName}</h1>
+            <h1 className="ttahub-recipient-record--heading margin-top-0 margin-bottom-1 margin-left-2">{recipientName}</h1>
             <Switch>
               <Route
                 path="/recipient-tta-records/:recipientId/tta-history"

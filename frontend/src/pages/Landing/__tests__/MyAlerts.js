@@ -57,10 +57,10 @@ describe('My Alerts', () => {
 
   test('displays recipient column', async () => {
     renderMyAlerts();
-    const granteeColumnHeader = await screen.findByRole('columnheader', {
+    const recipientColumnHeader = await screen.findByRole('columnheader', {
       name: /recipient/i,
     });
-    expect(granteeColumnHeader).toBeVisible();
+    expect(recipientColumnHeader).toBeVisible();
   });
 
   test('displays start date column', async () => {
@@ -91,15 +91,15 @@ describe('My Alerts', () => {
     expect(creatorColumnHeader).toBeVisible();
   });
 
-  test('displays the correct grantees', async () => {
+  test('displays the correct recipients', async () => {
     renderMyAlerts();
-    const grantees = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera grantee name click to visually reveal the recipients for r14-ar-1/i });
-    const nonGrantees = await screen.findByRole('cell', {
+    const recipients = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera recipient name click to visually reveal the recipients for r14-ar-1/i });
+    const otherEntities = await screen.findByRole('cell', {
       name: /qris system/i,
     });
 
-    expect(grantees).toBeVisible();
-    expect(nonGrantees).toBeVisible();
+    expect(recipients).toBeVisible();
+    expect(otherEntities).toBeVisible();
   });
 
   test('displays the correct start date', async () => {
@@ -206,11 +206,11 @@ describe('My Alerts', () => {
           grant: {
             id: 5,
             number: '14CH00003',
-            grantee: {
+            recipient: {
               name: 'Johnston-Romaguera',
             },
           },
-          nonGrantee: null,
+          otherEntity: null,
         },
         {
           activityRecipientId: 4,
@@ -219,24 +219,24 @@ describe('My Alerts', () => {
           grant: {
             id: 4,
             number: '14CH00002',
-            grantee: {
+            recipient: {
               name: 'Johnston-Romaguera',
             },
           },
-          nonGrantee: null,
+          otherEntity: null,
         },
         {
           activityRecipientId: 1,
-          name: 'Grantee Name - 14CH1234',
+          name: 'Recipient Name - 14CH1234',
           id: 3,
           grant: {
             id: 1,
             number: '14CH1234',
-            grantee: {
-              name: 'Grantee Name',
+            recipient: {
+              name: 'Recipient Name',
             },
           },
-          nonGrantee: null,
+          otherEntity: null,
         },
       ],
       author: {

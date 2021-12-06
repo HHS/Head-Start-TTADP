@@ -1,15 +1,15 @@
-import orderGranteesBy from './orderGranteesBy';
+import orderRecipientsBy from './orderRecipientsBy';
 import { sequelize } from '../models';
 
-describe('orderGranteesBy', () => {
+describe('orderRecipientsBy', () => {
   it('returns the correct values', () => {
-    const one = orderGranteesBy('name', 'asc');
+    const one = orderRecipientsBy('name', 'asc');
     expect(one).toStrictEqual([[
       'name',
       'asc',
     ]]);
 
-    const two = orderGranteesBy('regionId', 'desc');
+    const two = orderRecipientsBy('regionId', 'desc');
     expect(two).toStrictEqual([
       [
         'grants', 'regionId', 'desc',
@@ -20,7 +20,7 @@ describe('orderGranteesBy', () => {
       ],
     ]);
 
-    const three = orderGranteesBy('programSpecialist', 'asc');
+    const three = orderRecipientsBy('programSpecialist', 'asc');
 
     expect(three).toStrictEqual([
       [
@@ -28,7 +28,7 @@ describe('orderGranteesBy', () => {
       ],
     ]);
 
-    const four = orderGranteesBy('sorcery', 'asc');
+    const four = orderRecipientsBy('sorcery', 'asc');
 
     expect(four).toStrictEqual('');
   });

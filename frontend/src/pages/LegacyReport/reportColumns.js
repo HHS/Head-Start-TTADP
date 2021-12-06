@@ -15,7 +15,7 @@ const reportFields = {
   topics: 'Topic(s) covered',
   otherTopics: 'Other topics covered',
   granteeParticipants: 'Recipient participant(s)',
-  nonGranteeParticipants: 'Non-recipient participant(s)',
+  nonGranteeParticipants: 'Other entity participant(s)',
   participants: 'Participants',
   numberOfParticipants: 'Number of participants',
   targetPopulations: 'Target populations addressed',

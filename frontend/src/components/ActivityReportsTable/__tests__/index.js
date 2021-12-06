@@ -381,7 +381,7 @@ describe('Table sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('02/08/2021'));
   });
 
-  it('clicking Grantee column header will sort by grantee', async () => {
+  it('clicking Recipient column header will sort by recipient', async () => {
     const columnHeader = await screen.findByRole('button', {
       name: /recipient\. activate to sort ascending/i,
     });
@@ -392,7 +392,7 @@ describe('Table sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Grantee Name'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Recipient Name'));
   });
 
   it('clicking Report id column header will sort by region and id', async () => {

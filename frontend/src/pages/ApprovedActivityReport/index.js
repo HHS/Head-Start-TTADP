@@ -23,7 +23,7 @@ function calculateGoalsAndObjectives(report) {
   const data = [];
 
   if (report.goals.length > 0) {
-    // assume grantee
+    // assume recipient
     const { goals } = report;
 
     goals.forEach((goal, index) => {
@@ -43,7 +43,7 @@ function calculateGoalsAndObjectives(report) {
     return [headings, data];
   }
 
-  // else, we assume non grantee
+  // else, we assume other entities
   const { objectivesWithoutGoals } = report;
   objectivesWithoutGoals.forEach((objective, index) => {
     const displayNumber = index + 1;
@@ -58,8 +58,8 @@ function calculateGoalsAndObjectives(report) {
 }
 
 function formatRequester(requester) {
-  if (requester === 'grantee') {
-    return 'Grantee';
+  if (requester === 'recipient') {
+    return 'Recipient';
   }
 
   if (requester === 'regionalOffice') {
@@ -129,7 +129,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [report, setReport] = useState({
     reportId: 0,
     displayId: '',
-    recipientType: 'Grantee',
+    recipientType: 'Recipient',
     creator: '',
     collaborators: [],
     approvingManagers: '',
@@ -153,7 +153,7 @@ export default function ApprovedActivityReport({ match, user }) {
     goalsAndObjectives: [],
     managerNotes: '',
     creatorNotes: '',
-    granteeNextSteps: [],
+    recipientNextSteps: [],
     specialistNextSteps: [],
     createdAt: '',
     approvedAt: '',
@@ -217,7 +217,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
         // next steps table
         const specialistNextSteps = data.specialistNextSteps.map((step) => step.note);
-        const granteeNextSteps = data.granteeNextSteps.map((step) => step.note);
+        const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
         const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
         const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
 
@@ -249,7 +249,7 @@ export default function ApprovedActivityReport({ match, user }) {
           goalsAndObjectives,
           managerNotes,
           creatorNotes: additionalNotes,
-          granteeNextSteps,
+          recipientNextSteps,
           specialistNextSteps,
           createdAt,
           approvedAt,
@@ -337,7 +337,7 @@ export default function ApprovedActivityReport({ match, user }) {
     goalsAndObjectives,
     managerNotes,
     creatorNotes,
-    granteeNextSteps,
+    recipientNextSteps,
     specialistNextSteps,
     createdAt,
     approvedAt,
@@ -538,7 +538,7 @@ export default function ApprovedActivityReport({ match, user }) {
           data={
             [
               specialistNextSteps,
-              granteeNextSteps,
+              recipientNextSteps,
             ]
           }
         />

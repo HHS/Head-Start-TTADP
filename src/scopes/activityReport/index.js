@@ -1,8 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import { map, pickBy } from 'lodash';
 
-import { withGranteeName, withoutGranteeName } from './grantee';
-import withGranteeId from './granteeId';
+import { withRecipientName, withoutRecipientName } from './recipient';
+import withRecipientId from './recipientId';
 import { withoutReportIds, withReportIds } from './reportId';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withoutTopics, withTopics } from './topic';
@@ -22,12 +22,12 @@ export const topicToQuery = {
     in: (query) => withReportIds(query),
     nin: (query) => withoutReportIds(query),
   },
-  grantee: {
-    in: (query) => withGranteeName(query),
-    nin: (query) => withoutGranteeName(query),
+  recipient: {
+    in: (query) => withRecipientName(query),
+    nin: (query) => withoutRecipientName(query),
   },
-  granteeId: {
-    in: (query) => withGranteeId(query),
+  recipientId: {
+    in: (query) => withRecipientId(query),
   },
   startDate: {
     bef: (query) => beforeStartDate(query),
