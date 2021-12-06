@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -34,39 +34,56 @@ const DEFAULT_VALUES = {
  * @param {Object} props
  * @returns a JSX object
  */
-export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
-  const [error, setError] = useState('');
+export default function FilterItem({
+  filter,
+  onRemoveFilter,
+  onUpdateFilter,
+  errors,
+  setErrors,
+  index,
+}) {
   const {
     id,
     topic,
     condition,
     query,
+
   } = filter;
 
   const li = useRef();
 
+  const setError = (message) => {
+    const newErrors = [...errors];
+    newErrors.splice(index, 1, message);
+    setErrors(newErrors);
+  };
+
   const onBlur = (e) => {
+    let message = '';
+
     if (li.current.contains(e.relatedTarget)) {
-      setError('');
       return;
     }
 
     if (!topic) {
-      setError('Please enter a value');
+      message = 'Please enter a value';
+      setError(message);
       return;
     }
 
     if (!condition) {
-      setError('Please enter a condition');
+      message = 'Please enter a condition';
+      setError(message);
       return;
     }
 
     if (!query || !query.length) {
-      setError('Please enter a query');
+      message = 'Please enter a parameter';
+      setError(message);
       return;
     }
 
-    setError('');
+    setError(message);
   };
 
   /**
@@ -140,8 +157,29 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
+  const error = errors[index];
+
+  const liBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex';
+  let liErrorClass = '';
+
+  switch (error) {
+    case 'Please enter a value':
+      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
+    case 'Please enter a condition':
+      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      break;
+    case 'Please enter a parameter':
+      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--parameter';
+      break;
+    default:
+      break;
+  }
+
+  const liClassNames = `${liBaseClass} ${liErrorClass}`;
+
   return (
-    <li className={`ttahub-filter-menu-item position-relative gap-1 desktop:display-flex ${error ? 'ttahub-filter-menu-item--error' : ''}`} onBlur={onBlur} ref={li}>
+    <li className={liClassNames} onBlur={onBlur} ref={li}>
       {
         error
         && (
@@ -202,4 +240,7 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
+  errors: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setErrors: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
 };
