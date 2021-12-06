@@ -42,7 +42,6 @@ describe('recipient record page', () => {
         name: 'Grant Name 1',
         number: 'GRANTEE_NUMBER',
         status: 'Active',
-        programTypes: ['Early Head Start (ages 0-3)', 'Head Start (ages 3-5)'],
         startDate: null,
         endDate: null,
         id: 10,

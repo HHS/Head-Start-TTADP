@@ -66,12 +66,6 @@ export const targetPopulations = [
   'Pregnant Women',
 ];
 
-export const programTypes = [
-  'Early Head Start (ages 0-3)',
-  'Head Start (ages 3-5)',
-  'EHS-CCP',
-];
-
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const topics = [

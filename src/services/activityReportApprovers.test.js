@@ -44,7 +44,6 @@ const submittedReport = {
   startDate: '2000-01-01T12:00:00Z',
   activityRecipientType: 'something',
   requester: 'requester',
-  programTypes: ['type'],
   targetPopulations: ['pop'],
   reason: ['reason'],
   participants: ['participants'],

@@ -33,7 +33,6 @@ const formData = () => ({
   activityRecipientType: 'grantee',
   collaborators: [],
   participants: ['CEO / CFO / Executive'],
-  programTypes: ['type 1'],
   requester: 'grantee',
   calculatedStatus: REPORT_STATUSES.DRAFT,
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -119,15 +118,6 @@ describe('ActivityReport', () => {
       await screen.findByRole('group', { name: 'Who was the activity for?' });
       expect(screen.queryByTestId('alert')).toBeNull();
     });
-  });
-
-  it('program type is hidden unless grantee is selected', async () => {
-    renderActivityReport('new');
-    const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-    await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeNull());
-    const nonGrantee = within(information).getByLabelText('Recipient');
-    fireEvent.click(nonGrantee);
-    await waitFor(() => expect(screen.queryByLabelText('Program type(s) (Required)')).toBeVisible());
   });
 
   it('defaults to activity summary if no page is in the url', async () => {
@@ -222,7 +212,9 @@ describe('ActivityReport', () => {
         fireEvent.click(grantee);
         const granteeSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
         reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
+
+        const granteeNames = await screen.findByText(/grantee name\(s\)/i);
+        expect(await within(granteeNames).queryAllByText(/grantee name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
@@ -246,7 +238,9 @@ describe('ActivityReport', () => {
       let granteeSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
       reactSelectEvent.openMenu(granteeSelectbox);
       await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
-      expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
+
+      const granteeNames = await screen.findByText(/grantee name\(s\)/i);
+      expect(await within(granteeNames).queryAllByText(/grantee name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const nonGrantee = within(information).getByLabelText('Other entities');
