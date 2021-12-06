@@ -10,8 +10,8 @@ import ReviewPage from './Review/ReviewPage';
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
-  nonGranteeParticipants,
-  granteeParticipants,
+  otherEntityParticipants,
+  recipientParticipants,
   reasons,
   programTypes,
   targetPopulations,
@@ -35,29 +35,29 @@ const ActivitySummary = ({
   const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
-  const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
+  const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
-  const grants = rawGrants.map((grantee) => ({
-    label: grantee.name,
-    options: grantee.grants.map((grant) => ({
+  const grants = rawGrants.map((recipient) => ({
+    label: recipient.name,
+    options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
       label: grant.name,
     })),
   }));
 
-  const nonGrantees = rawNonGrantees.map((nonGrantee) => ({
-    label: nonGrantee.name,
-    value: nonGrantee.activityRecipientId,
+  const otherEntities = rawOtherEntities.map((entities) => ({
+    label: entities.name,
+    value: entities.activityRecipientId,
   }));
 
   const disableRecipients = isEmpty(activityRecipientType);
-  const nonGranteeSelected = activityRecipientType === 'non-grantee';
-  const granteeSelected = activityRecipientType === 'grantee';
-  const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
+  const otherEntitiesSelected = activityRecipientType === 'other-entities';
+  const recipientSelected = activityRecipientType === 'recipient';
+  const selectedRecipients = otherEntitiesSelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = nonGranteeSelected ? 'Other entities' : 'Recipient name(s)';
-  const participantsLabel = nonGranteeSelected ? 'Other entity participants' : 'Recipient participants';
-  const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
+  const recipientLabel = otherEntitiesSelected ? 'Other entities' : 'Recipient name(s)';
+  const participantsLabel = otherEntitiesSelected ? 'Other entity participants' : 'Recipient participants';
+  const participants = otherEntitiesSelected ? otherEntityParticipants : recipientParticipants;
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
@@ -67,7 +67,7 @@ const ActivitySummary = ({
       setValue('participants', [], { shouldValidate: true });
       setValue('programTypes', [], { shouldValidate: true });
       // Goals and objectives (page 3) has required fields when the recipient
-      // type is grantee, so we need to make sure that page is set as "not started"
+      // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
       // selected goals and objectives
       setValue('goals', []);
@@ -110,18 +110,18 @@ const ActivitySummary = ({
             fieldSetWrapper
           >
             <Radio
-              id="category-grantee"
+              id="category-recipient"
               name="activityRecipientType"
               label="Recipient"
-              value="grantee"
+              value="recipient"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Please specify recipient or other entities' })}
             />
             <Radio
-              id="category-non-grantee"
+              id="category-other-entities"
               name="activityRecipientType"
               label="Other entities"
-              value="non-grantee"
+              value="other-entities"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Please specify recipient or other entities' })}
             />
@@ -161,7 +161,7 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        {granteeSelected
+        {recipientSelected
         && (
         <div className="margin-top-2">
           <FormItem
@@ -202,10 +202,10 @@ const ActivitySummary = ({
             fieldSetWrapper
           >
             <Radio
-              id="granteeRequest"
+              id="recipientRequest"
               name="requester"
               label="Recipient"
-              value="grantee"
+              value="recipient"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Please specify recipient or regional office' })}
             />
@@ -424,7 +424,7 @@ ActivitySummary.propTypes = {
         ),
       }),
     ),
-    nonGrantees: PropTypes.arrayOf(
+    otherEntities: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
         activityRecipientId: PropTypes.number.isRequired,

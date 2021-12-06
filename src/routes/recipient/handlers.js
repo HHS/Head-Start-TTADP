@@ -1,8 +1,8 @@
-import { granteeById, granteesByName } from '../../services/grantee';
+import { recipientById, recipientsByName } from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 
-const namespace = 'SERVICE:GRANTEE';
+const namespace = 'SERVICE:RECIPIENT';
 
 const logContext = {
   namespace,
@@ -13,7 +13,7 @@ export async function getRecipient(req, res) {
     const { recipientId } = req.params;
 
     const scopes = filtersToScopes(req.query, 'grant');
-    const recipient = await granteeById(recipientId, scopes);
+    const recipient = await recipientById(recipientId, scopes);
 
     if (!recipient) {
       res.sendStatus(404);
@@ -32,7 +32,7 @@ export async function searchRecipients(req, res) {
       s, sortBy, direction, offset,
     } = req.query;
     const scopes = filtersToScopes(req.query, 'grant');
-    const recipients = await granteesByName(s, scopes, sortBy, direction, offset);
+    const recipients = await recipientsByName(s, scopes, sortBy, direction, offset);
     if (!recipients) {
       res.sendStatus(404);
       return;

@@ -15,28 +15,28 @@ const history = createMemoryHistory();
 const recipients = [
   {
     id: 11,
-    granteeType: '',
+    recipientType: '',
     name: 'Agency 2 in region 1, Inc.',
     regionId: 1,
     programSpecialists: 'Candyman, Tony Todd',
   },
   {
     id: 11,
-    granteeType: '',
+    recipientType: '',
     name: 'Agency 2 in region 1, Inc.',
     regionId: 2,
     programSpecialists: 'Tony Todd',
   },
   {
     id: 11,
-    granteeType: '',
+    recipientType: '',
     name: 'Agency 2 in region 1, Inc.',
     regionId: 3,
     programSpecialists: 'Doug Bradley',
   },
   {
     id: 10,
-    granteeType: '',
+    recipientType: '',
     name: 'Agency 1.b in region 1, Inc.',
     regionId: 1,
     createdAt: '2021-09-21T19:16:15.842Z',
@@ -45,7 +45,7 @@ const recipients = [
   },
   {
     id: 9,
-    granteeType: '',
+    recipientType: '',
     name: 'Agency 1.a in region 1, Inc.',
     regionId: 1,
     createdAt: '2021-09-21T19:16:15.842Z',

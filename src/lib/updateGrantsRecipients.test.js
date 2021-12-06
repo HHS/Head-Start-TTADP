@@ -1,9 +1,9 @@
 import { Op } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
-import updateGrantsGrantees, { processFiles } from './updateGrantsGrantees';
+import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  Grantee, Grant, Program,
+  Recipient, Grant, Program,
 } from '../models';
 
 jest.mock('axios');
@@ -37,7 +37,7 @@ describe('Update HSES data', () => {
     writeStream.mockReturnValue({ on });
 
     const processFunc = jest.fn();
-    await updateGrantsGrantees(processFunc);
+    await updateGrantsRecipients(processFunc);
 
     expect(mockZip).toHaveBeenCalled();
     expect(processFunc).toHaveBeenCalled();
@@ -54,42 +54,44 @@ describe('Update HSES data', () => {
     writeStream.mockReturnValue({ on });
 
     const processFunc = jest.fn();
-    await expect(updateGrantsGrantees(processFunc)).rejects.not.toThrow();
+    await expect(updateGrantsRecipients(processFunc)).rejects.not.toThrow();
 
     expect(mockZip).not.toHaveBeenCalled();
     expect(processFunc).not.toHaveBeenCalled();
   });
 });
 
-describe('Update grants and grantees', () => {
+describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3] } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3] } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grantee.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
     await db.sequelize.close();
   });
-  it('should import or update grantees', async () => {
-    const granteesBefore = await Grantee.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    expect(granteesBefore.length).toBe(0);
+  it('should import or update recipients', async () => {
+    const recipientsBefore = await Recipient.findAll(
+      { where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } },
+    );
+    expect(recipientsBefore.length).toBe(0);
     await processFiles();
 
-    const grantee = await Grantee.findOne({ where: { id: 1335 } });
-    expect(grantee).toBeDefined();
-    expect(grantee.name).toBe('Agency 1, Inc.');
+    const recipient = await Recipient.findOne({ where: { id: 1335 } });
+    expect(recipient).toBeDefined();
+    expect(recipient.name).toBe('Agency 1, Inc.');
 
     const grant1 = await Grant.findOne({ where: { id: 8110 } });
     expect(grant1.oldGrantId).toBe(7842);
 
     const grant2 = await Grant.findOne({ where: { id: 11835 } });
     expect(grant2.oldGrantId).toBe(2591);
-    expect(grantee.granteeType).toBe('Community Action Agency (CAA)');
+    expect(recipient.recipientType).toBe('Community Action Agency (CAA)');
 
     const grant3 = await Grant.findOne({ where: { id: 10448 } });
     expect(grant3.oldGrantId).toBe(null);
@@ -101,7 +103,7 @@ describe('Update grants and grantees', () => {
     expect(grantsBefore.length).toBe(0);
     await processFiles();
 
-    const grants = await Grant.findAll({ where: { granteeId: 1335 } });
+    const grants = await Grant.findAll({ where: { recipientId: 1335 } });
     expect(grants).toBeDefined();
     expect(grants.length).toBe(7);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
@@ -133,25 +135,25 @@ describe('Update grants and grantees', () => {
     expect(grant.grantSpecialistEmail).toBe(null);
   });
 
-  it('should not exclude grantees with only inactive grants', async () => {
+  it('should not exclude recipients with only inactive grants', async () => {
     await processFiles();
-    const grantee = await Grantee.findOne({ where: { id: 119 } });
-    expect(grantee).not.toBeNull();
+    const recipient = await Recipient.findOne({ where: { id: 119 } });
+    expect(recipient).not.toBeNull();
   });
 
-  it('should update an existing grantee if it exists in smarthub', async () => {
-    const [dbGrantee] = await Grantee.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
+  it('should update an existing recipient if it exists in smarthub', async () => {
+    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
     await processFiles();
-    const grantee = await Grantee.findOne({ where: { id: 119 } });
-    expect(grantee).not.toBeNull();
-    // Same grantee, but with a different id and having an active grant
-    expect(grantee.updatedAt).not.toEqual(dbGrantee.updatedAt);
-    expect(grantee.name).toBe('Multi ID Agency');
+    const recipient = await Recipient.findOne({ where: { id: 119 } });
+    expect(recipient).not.toBeNull();
+    // Same recipient, but with a different id and having an active grant
+    expect(recipient.updatedAt).not.toEqual(dbRecipient.updatedAt);
+    expect(recipient.name).toBe('Multi ID Agency');
   });
 
   it('should update an existing grant if it exists in smarthub', async () => {
-    await Grantee.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
-    const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', granteeId: 119 } });
+    await Recipient.findOrCreate({ where: { id: 119, name: 'Multi ID Agency' } });
+    const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', recipientId: 119 } });
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 5151 } });
     expect(grant).not.toBeNull();
@@ -164,19 +166,19 @@ describe('Update grants and grantees', () => {
     const grant = await Grant.findOne({ where: { id: 11630 } });
     expect(grant.cdi).toBeTruthy();
     expect(grant.regionId).toBe(13);
-    expect(grant.granteeId).toBe(119);
+    expect(grant.recipientId).toBe(119);
   });
 
   it('should update cdi grants', async () => {
-    await Grantee.findOrCreate({ where: { id: 500, name: 'Another Agency' } });
+    await Recipient.findOrCreate({ where: { id: 500, name: 'Another Agency' } });
     await Grant.create({
-      status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', granteeId: 500,
+      status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', recipientId: 500,
     });
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 11630 } });
     expect(grant.status).toBe('Active');
     expect(grant.regionId).toBe(5);
-    expect(grant.granteeId).toBe(500);
+    expect(grant.recipientId).toBe(500);
   });
 
   it('should import programs', async () => {

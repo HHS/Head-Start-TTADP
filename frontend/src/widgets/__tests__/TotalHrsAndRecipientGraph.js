@@ -2,11 +2,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { TotalHrsAndGranteeGraph, LegendControl } from '../TotalHrsAndGranteeGraph';
+import { TotalHrsAndRecipientGraph, LegendControl } from '../TotalHrsAndRecipientGraph';
 
 const TEST_DATA_MONTHS = [
   {
-    name: 'Grantee Rec TTA', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [1, 2, 3, 4, 5, 6], month: [false, false, false, false, false, false],
+    name: 'Recipient Rec TTA', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [1, 2, 3, 4, 5, 6], month: [false, false, false, false, false, false],
   },
   {
     name: 'Hours of Training', x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], y: [7, 8, 9, 0, 0, 0], month: [false, false, false, false, false, false],
@@ -21,7 +21,7 @@ const TEST_DATA_MONTHS = [
 
 const TEST_DATA_DAYS = [
   {
-    name: 'Grantee Rec TTA', x: ['1', '2', '3', '4'], y: [1, 2, 3, 4], month: ['Jan', 'Jan', 'Jan', 'Feb'],
+    name: 'Recipient Rec TTA', x: ['1', '2', '3', '4'], y: [1, 2, 3, 4], month: ['Jan', 'Jan', 'Jan', 'Feb'],
   },
   {
     name: 'Hours of Training', x: ['1', '2', '3', '4'], y: [5, 6, 7, 0], month: ['Jan', 'Jan', 'Jan', 'Feb'],
@@ -34,15 +34,15 @@ const TEST_DATA_DAYS = [
   },
 ];
 
-const renderTotalHrsAndGranteeGraph = async (props) => (
+const renderTotalHrsAndRecipientGraph = async (props) => (
   render(
-    <TotalHrsAndGranteeGraph loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
+    <TotalHrsAndRecipientGraph loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
   )
 );
 
-describe('Total Hrs And Grantee Graph Widget', () => {
+describe('Total Hrs And Recipient Graph Widget', () => {
   it('shows the correct month data', async () => {
-    renderTotalHrsAndGranteeGraph({ data: TEST_DATA_MONTHS });
+    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_MONTHS });
 
     const graphTitle = screen.getByRole('heading', { name: /total tta hours/i });
     await expect(graphTitle).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     // Verify Number of Traces.
     await expect(nodes[0].childNodes.length).toEqual(3);
 
-    // Verify Number of 'Grantee Rec TTA' Trace Points.
+    // Verify Number of 'Recipient Rec TTA' Trace Points.
     // await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(6);
 
     // Verify Number of 'Hours of Training' Trace Points.
@@ -68,7 +68,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
   });
 
   it('shows the correct day data', async () => {
-    renderTotalHrsAndGranteeGraph({ data: TEST_DATA_DAYS });
+    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
 
     const graphTitle = screen.getByRole('heading', { name: /total tta hours/i });
     await expect(graphTitle).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
     // Verify Number of Traces.
     await expect(nodes[0].childNodes.length).toEqual(3);
 
-    // Verify Number of 'Grantee Rec TTA' Trace Points.
+    // Verify Number of 'Recipient Rec TTA' Trace Points.
     await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(4);
 
     // Verify Number of 'Hours of Training' Trace Points.
@@ -101,13 +101,13 @@ describe('Total Hrs And Grantee Graph Widget', () => {
 
   it('handles undefined data', async () => {
     const data = undefined;
-    renderTotalHrsAndGranteeGraph({ data });
+    renderTotalHrsAndRecipientGraph({ data });
 
     expect(await screen.findByText('Total TTA Hours')).toBeInTheDocument();
   });
 
   it('handles loading', async () => {
-    renderTotalHrsAndGranteeGraph({ loading: true });
+    renderTotalHrsAndRecipientGraph({ loading: true });
     expect(await screen.findByText('Loading Data')).toBeInTheDocument();
   });
 
@@ -120,7 +120,7 @@ describe('Total Hrs And Grantee Graph Widget', () => {
   });
 
   it('displays table data correctly', async () => {
-    renderTotalHrsAndGranteeGraph({ data: TEST_DATA_DAYS });
+    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
     const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
     fireEvent.click(button);
     const jan1 = screen.getByRole('columnheader', { name: /jan 1/i });
@@ -130,12 +130,12 @@ describe('Total Hrs And Grantee Graph Widget', () => {
   });
 
   it('handles switching contexts', async () => {
-    renderTotalHrsAndGranteeGraph({ data: TEST_DATA_MONTHS });
+    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_MONTHS });
     const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
     fireEvent.click(button);
     const table = screen.getByRole('table', { name: /total tta hours by date and type/i });
 
-    const randomRowHeader = screen.getByRole('rowheader', { name: /grantee rec tta/i });
+    const randomRowHeader = screen.getByRole('rowheader', { name: /recipient rec tta/i });
     expect(randomRowHeader).toBeInTheDocument();
 
     const randomColumnHeader = screen.getByRole('columnheader', { name: /apr/i });

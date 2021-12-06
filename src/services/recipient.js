@@ -1,12 +1,12 @@
 import { Op } from 'sequelize';
 import {
-  Grant, Grantee, Program, sequelize,
+  Grant, Recipient, Program, sequelize,
 } from '../models';
-import orderGranteesBy from '../lib/orderGranteesBy';
-import { GRANTEES_PER_PAGE } from '../constants';
+import orderRecipientsBy from '../lib/orderRecipientsBy';
+import { RECIPIENTS_PER_PAGE } from '../constants';
 
-export async function allGrantees() {
-  return Grantee.findAll({
+export async function allRecipients() {
+  return Recipient.findAll({
     include: [
       {
         attributes: ['id', 'number', 'regionId'],
@@ -17,15 +17,15 @@ export async function allGrantees() {
   });
 }
 
-export async function granteeById(granteeId, grantScopes) {
-  return Grantee.findOne({
-    attributes: ['id', 'name', 'granteeType'],
+export async function recipientById(recipientId, grantScopes) {
+  return Recipient.findOne({
+    attributes: ['id', 'name', 'recipientType'],
     where: {
-      id: granteeId,
+      id: recipientId,
     },
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'granteeId'],
+        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'recipientId'],
         model: Grant,
         as: 'grants',
         where: {
@@ -54,14 +54,14 @@ export async function granteeById(granteeId, grantScopes) {
  * @param {number} regionId
  * @param {string} sortBy
  *
- * @returns {Promise} grantee results
+ * @returns {Promise} recipient results
  */
-export async function granteesByName(query, scopes, sortBy, direction, offset) {
+export async function recipientsByName(query, scopes, sortBy, direction, offset) {
   // fix the query
   const q = `%${query}%`;
-  const limit = GRANTEES_PER_PAGE;
+  const limit = RECIPIENTS_PER_PAGE;
 
-  const rows = await Grantee.findAll({
+  const rows = await Recipient.findAll({
     attributes: [
       [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
       sequelize.literal('STRING_AGG(DISTINCT "grants"."programSpecialistName", \', \' order by "grants"."programSpecialistName") as "programSpecialists"'),
@@ -69,7 +69,7 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
       [sequelize.col('grants.regionId'), 'regionId'],
       'id',
       'name',
-      'granteeType',
+      'recipientType',
     ],
     where: {
       [Op.or]: [
@@ -112,11 +112,11 @@ export async function granteesByName(query, scopes, sortBy, direction, offset) {
     raw: true,
     group: [
       'grants.regionId',
-      'Grantee.id',
+      'Recipient.id',
     ],
     limit,
     offset,
-    order: orderGranteesBy(sortBy, direction),
+    order: orderRecipientsBy(sortBy, direction),
   });
 
   // handle zero results

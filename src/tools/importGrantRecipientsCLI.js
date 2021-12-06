@@ -1,10 +1,10 @@
 import {} from 'dotenv/config';
 import { option } from 'yargs';
-import updateGrantsGrantees, { processFiles } from '../lib/updateGrantsGrantees';
+import updateGrantsRecipients, { processFiles } from '../lib/updateGrantsRecipients';
 import { auditLogger } from '../logger';
 
 /**
- * importGrantGranteesCLI is a CLI option for kicking off an HSES import.
+ * importGrantRecipientsCLI is a CLI option for kicking off an HSES import.
  * Normally, this is automatically run by cron
  */
 
@@ -21,7 +21,7 @@ if (skipdownload) {
     return process.exit(1);
   });
 } else {
-  updateGrantsGrantees().catch((e) => {
+  updateGrantsRecipients().catch((e) => {
     auditLogger.error(e);
     return process.exit(1);
   });

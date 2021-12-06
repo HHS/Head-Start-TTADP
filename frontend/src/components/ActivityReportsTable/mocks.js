@@ -17,11 +17,11 @@ const activityReports = [
         grant: {
           id: 5,
           number: '14CH00003',
-          grantee: {
+          recipient: {
             name: 'Johnston-Romaguera',
           },
         },
-        nonGrantee: null,
+        otherEntities: null,
       },
       {
         activityRecipientId: 4,
@@ -30,24 +30,24 @@ const activityReports = [
         grant: {
           id: 4,
           number: '14CH00002',
-          grantee: {
+          recipient: {
             name: 'Johnston-Romaguera',
           },
         },
-        nonGrantee: null,
+        otherEntities: null,
       },
       {
         activityRecipientId: 1,
-        name: 'Grantee Name - 14CH1234',
+        name: 'Recipient Name - 14CH1234',
         id: 3,
         grant: {
           id: 1,
           number: '14CH1234',
-          grantee: {
-            name: 'Grantee Name',
+          recipient: {
+            name: 'Recipient Name',
           },
         },
-        nonGrantee: null,
+        otherEntities: null,
       },
     ],
     author: {
@@ -85,7 +85,7 @@ const activityReports = [
         name: 'QRIS System',
         id: 31,
         grant: null,
-        nonGrantee: {
+        otherEntities: {
           id: 3,
           name: 'QRIS System',
           createdAt: '2021-02-03T21:00:57.149Z',
@@ -103,7 +103,7 @@ const activityReports = [
       {
         fullName: 'Cucumber User, GS',
         name: 'Cucumber User',
-        role: 'Grantee Specialist',
+        role: 'Recipient Specialist',
       },
       {
         fullName: 'Hermione Granger, SS',
@@ -129,7 +129,7 @@ export const activityReportsSorted = [
         name: 'QRIS System',
         id: 31,
         grant: null,
-        nonGrantee: {
+        otherEntities: {
           id: 3,
           name: 'QRIS System',
           createdAt: '2021-02-03T21:00:57.149Z',
@@ -147,7 +147,7 @@ export const activityReportsSorted = [
       {
         fullName: 'Cucumber User, GS',
         name: 'Cucumber User',
-        role: 'Grantee Specialist',
+        role: 'Recipient Specialist',
       },
       {
         fullName: 'Hermione Granger, SS',
@@ -172,11 +172,11 @@ export const activityReportsSorted = [
         grant: {
           id: 5,
           number: '14CH00003',
-          grantee: {
+          recipient: {
             name: 'Johnston-Romaguera',
           },
         },
-        nonGrantee: null,
+        otherEntities: null,
       },
       {
         activityRecipientId: 4,
@@ -185,24 +185,24 @@ export const activityReportsSorted = [
         grant: {
           id: 4,
           number: '14CH00002',
-          grantee: {
+          recipient: {
             name: 'Johnston-Romaguera',
           },
         },
-        nonGrantee: null,
+        otherEntities: null,
       },
       {
         activityRecipientId: 1,
-        name: 'Grantee Name - 14CH1234',
+        name: 'Recipient Name - 14CH1234',
         id: 3,
         grant: {
           id: 1,
           number: '14CH1234',
-          grantee: {
-            name: 'Grantee Name',
+          recipient: {
+            name: 'Recipient Name',
           },
         },
-        nonGrantee: null,
+        otherEntities: null,
       },
     ],
     author: {
@@ -246,11 +246,11 @@ export const generateXFakeReports = (count, status = []) => {
             grant: {
               id: 5,
               number: '14CH00003',
-              grantee: {
+              recipient: {
                 name: 'Johnston-Romaguera',
               },
             },
-            nonGrantee: null,
+            otherEntities: null,
           },
           {
             activityRecipientId: 4,
@@ -259,11 +259,11 @@ export const generateXFakeReports = (count, status = []) => {
             grant: {
               id: 4,
               number: '14CH00002',
-              grantee: {
+              recipient: {
                 name: 'Johnston-Romaguera',
               },
             },
-            nonGrantee: null,
+            otherEntities: null,
           },
           {
             activityRecipientId: 1,
@@ -272,11 +272,11 @@ export const generateXFakeReports = (count, status = []) => {
             grant: {
               id: 1,
               number: '14CH1234',
-              grantee: {
+              recipient: {
                 name: 'Grantee Name',
               },
             },
-            nonGrantee: null,
+            otherEntities: null,
           },
         ],
         author: {
@@ -306,7 +306,7 @@ export const generateXFakeReports = (count, status = []) => {
 export const overviewRegionOne = {
   numReports: '1',
   numGrants: '2',
-  numNonGrantees: '2',
+  numOtherEntities: '2',
   numTotalGrants: '4',
   numParticipants: '3',
   sumDuration: '0.5',

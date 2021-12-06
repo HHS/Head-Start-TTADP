@@ -132,7 +132,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     // same with objective num
 
     /**
-     * this will start non-grantee objectives at 1.1, which will prevent the creation
+     * this will start non-recipient objectives at 1.1, which will prevent the creation
      * of columns that don't fit the current schema (for example, objective-1.0)
      */
     if (!objectiveNum) {
@@ -199,7 +199,7 @@ const arTransformers = [
   'nonECLKCResourcesUsed',
   transformRelatedModel('attachments', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformRelatedModel('granteeNextSteps', 'note'),
+  transformRelatedModel('recipientNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),
   'context',
   'additionalNotes',
