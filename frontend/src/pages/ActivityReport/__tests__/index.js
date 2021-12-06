@@ -213,8 +213,8 @@ describe('ActivityReport', () => {
         const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
         reactSelectEvent.openMenu(recipientSelectbox);
 
-        const granteeNames = await screen.findByText(/grantee name\(s\)/i);
-        expect(await within(granteeNames).queryAllByText(/grantee name/i).length).toBe(2);
+        const granteeNames = await screen.findByText(/recipient name\(s\)/i);
+        expect(await within(granteeNames).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
