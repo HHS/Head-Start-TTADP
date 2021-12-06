@@ -72,7 +72,7 @@ export default function GranteeRecord({ match, location }) {
     } catch (err) {
       setError('There was an error fetching grantee data');
     }
-  }, [granteeId, match.params, regionId]);
+  }, [granteeData.granteeName, granteeId, match.params, regionId]);
 
   const { granteeName } = granteeData;
 
