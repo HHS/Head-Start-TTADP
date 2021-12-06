@@ -141,9 +141,9 @@ describe('Filter menu item', () => {
     const setErrors = jest.fn();
     renderFilterItem(filter, onRemove, onUpdate, setErrors);
     userEvent.tab();
-
-    console.log(document.querySelectorAll(':focus'));
-
-    expect(true).toBe(false);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
   });
 });
