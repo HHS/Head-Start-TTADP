@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Button } from '@trussworks/react-uswds';
@@ -10,6 +10,8 @@ import { DATE_FMT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 
 function DatePicker({ query, onUpdateFilter, id }) {
   const [isFocused, updateIsFocused] = useState(false);
+
+  const dateInput = useRef();
 
   let date;
   if (query) {
@@ -30,6 +32,7 @@ function DatePicker({ query, onUpdateFilter, id }) {
         small
         id={id}
         focused={isFocused}
+        ref={dateInput}
         numberOfMonths={1}
         hideKeyboardShortcutsPanel
         isOutsideRange={(day) => isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)}
@@ -40,7 +43,7 @@ function DatePicker({ query, onUpdateFilter, id }) {
         }}
         onDateChange={(selectedDate) => {
           onChange(selectedDate);
-          const input = document.getElementById(id);
+          const input = dateInput.current.container.querySelector(`#${id}`);
           if (input) input.focus();
         }}
         date={date}

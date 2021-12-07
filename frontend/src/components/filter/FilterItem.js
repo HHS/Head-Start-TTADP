@@ -140,6 +140,7 @@ export default function FilterItem({
           condition={condition}
           query={query}
           onApplyDateRange={onApplyQuery}
+          id={id}
         />
       ),
     },
