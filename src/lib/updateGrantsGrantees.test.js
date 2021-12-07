@@ -103,7 +103,7 @@ describe('Update grants and grantees', () => {
 
   it('handles nil states codes', async () => {
     await processFiles();
-    const grant = await Grant.findOne({ where: { id: 10448 }});
+    const grant = await Grant.findOne({ where: { id: 10448 } });
     expect(grant.stateCode).toBeNull();
   });
 
