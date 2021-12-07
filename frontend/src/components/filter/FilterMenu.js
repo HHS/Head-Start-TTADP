@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
@@ -18,7 +21,7 @@ const filterProp = PropTypes.shape({
  * @returns JSX Object
  */
 export default function FilterMenu({ filters, onApplyFilters }) {
-  const [items, setItems] = useState([...filters]);
+  const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
 
   useEffect(() => {
@@ -35,8 +38,6 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   }, [errors.length, items]);
 
   const onApply = () => {
-    // e.preventDefault();
-
     const hasErrors = errors.reduce((acc, curr) => {
       if (curr) {
         return true;
@@ -54,7 +55,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   };
 
   const onRemoveFilter = (id) => {
-    const newItems = [...items];
+    const newItems = items.map((item) => ({ ...item }));
     const index = newItems.findIndex((item) => item.id === id);
 
     if (index !== -1) {
@@ -65,29 +66,42 @@ export default function FilterMenu({ filters, onApplyFilters }) {
 
   // reset state if we hit cancel
   const onCancel = () => {
-    setItems([...filters]);
+    const copyOfFilters = filters.map((filter) => ({ ...filter }));
+    setItems(copyOfFilters);
   };
 
-  const onUpdateFilter = useCallback((id, name, value, toggleAllChecked) => {
-    const newItems = [...items];
+  const onUpdateFilter = (id, name, value) => {
+    //
+    // this is bonkers... we need to do more than map the array
+    // what escaped me originally was that just an array spread creates a new
+    // array of references... to the same objects as before
+    // therefore, this function was mutating state in unexpected ways
+    //
+    // hence this real humdinger of a line of javascript
+    const newItems = items.map((item) => ({ ...item }));
     const toUpdate = newItems.find((item) => item.id === id);
+
+    // and here is the key to all the problems
+    // the (preventing of) infinite updating itself
+    if (toUpdate[name] === value) {
+      return;
+    }
     toUpdate[name] = value;
 
     if (name === 'topic') {
       toUpdate.condition = '';
       toUpdate.query = '';
     }
-    toUpdate.toggleAllChecked = toggleAllChecked;
+
     setItems(newItems);
-  }, [items]);
+  };
 
   const onAddFilter = () => {
-    const newItems = [...items];
+    const newItems = [...items.map((item) => ({ ...item }))];
     const newItem = {
       id: uuidv4(),
       display: '',
       conditions: [],
-      toggleAllChecked: true,
     };
     newItems.push(newItem);
     setItems(newItems);

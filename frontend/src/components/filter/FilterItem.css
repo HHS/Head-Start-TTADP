@@ -3,27 +3,27 @@
 }
 
 .ttahub-filter-menu-item.ttahub-filter-menu-item--error {
-    border-left: 4px solid #d83933 ;
+    border-left: 4px solid #b50909;
     padding: 2em 1em;    
     margin: 1em 0 1em calc( -1em - 4px );
 }
 
 .ttahub-filter-menu-error {
-    color: #d83933;
+    color: #b50909;
     position: absolute;
     top: 0.5em;
 }
 
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value [name="topic"]{
-    border: 2px solid #d83933;
+    border: 2px solid #b50909;
 }
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"]{
-    border: 2px solid #d83933;
+    border: 2px solid #b50909;
 }
 
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter .smart-hub--dropdown-menu-toggle-btn,
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter .ttahub-filter-date-range-single-date{
-    border: 2px solid #d83933;
+    border: 2px solid #b50909;
 }
 
 .ttahub-filter-menu-item [name="topic"],
