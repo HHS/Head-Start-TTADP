@@ -45,12 +45,12 @@ components:
           type: string
         regionId:
           type: number
-        granteeId:
+        recipientId:
           type: number
-    grantee:
+    recipient:
       type: object
       description: >
-        A grantee imported from HSES
+        A recipient imported from HSES
       properties:
         id:
           type: number
@@ -64,7 +64,7 @@ components:
       type: object
       description: >
         This object represents a report on an activity that a specialist has completed
-        with 1 to many grants or non-grantees
+        with 1 to many grants or other-entities
       properties:
         id:
           type: number
@@ -102,13 +102,13 @@ components:
           type: string
         activityRecipientType:
           type: string
-          description: The recipient type for the report, grant or non-grantee
+          description: The recipient type for the report, grant or other-entities
         requester:
           type: string
-          description: Who requested the TTA, grantee or regional office
+          description: Who requested the TTA, recipient or regional office
         programTypes:
           type: array
-          description: The type of grantee program, Head Start, Early Head Start, etc...
+          description: The type of recipient program, Head Start, Early Head Start, etc...
           items:
             type: string
         targetPopulations:
@@ -176,14 +176,14 @@ components:
         specialistNextSteps:
           description: List of notes/next steps that a specialists enters
           $ref: '#/components/schemas/nextStepNotes'
-        granteeNextSteps:
-          description: List of notes/next steps that are assigned to the grantee
+        recipientNextSteps:
+          description: List of notes/next steps that are assigned to the recipient
           $ref: '#/components/schemas/nextStepNotes'
     shortActivityReport:
       type: object
       description: >
         This object represents a shorter version of a report on an activity that a specialist has completed
-        with 1 to many grants or non-grantees
+        with 1 to many grants or other-entities
       properties:
         id:
           type: number
@@ -201,7 +201,7 @@ components:
             type: string
         activityRecipients:
           type: array
-          description: Activity recipients - grantees or non-grantees
+          description: Activity recipients - recipients or other-entities
           items:
             type: object
         collaborators:
@@ -228,7 +228,7 @@ components:
           type: string
     activityRecipient:
       type: object
-      description: A grant or non-grantee that can be added to an activity report
+      description: A grant or other-entity that can be added to an activity report
       properties:
         activityRecipientId:
           type: number
@@ -298,7 +298,7 @@ components:
             $ref: '#/components/schemas/permission'
     nextStepNotes:
       type: array
-      description: List of notes a grantee/specialist enters
+      description: List of notes a recipient/specialist enters
       items:
         type: object
         properties:
@@ -370,19 +370,19 @@ components:
       type: array
       items:
         type: string
-    grantee.in:
+    recipient.in:
       in: query
-      name: grantee.in
-      description: Include reports with grantee's that partial match value
+      name: recipient.in
+      description: Include reports with recipient's that partial match value
       collectionFormat: multi
       type: array
       items:
         type: string
-    grantee.nin:
+    recipient.nin:
       in: query
-      name: grantee.nin
+      name: recipient.nin
       type: array
-      description: Include reports with grantee's that do not partial match value
+      description: Include reports with recipient's that do not partial match value
       collectionFormat: multi
       items:
         type: string
