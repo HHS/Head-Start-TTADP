@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import './CheckboxSelect.css';
 import DropdownMenu from './DropdownMenu';
+import usePrevious from '../hooks/usePrevious';
 
 export function renderCheckboxes(
   options,
@@ -48,22 +49,25 @@ export default function CheckboxSelect({
   disabled,
   hideToggleAll,
   onChange,
-  previousValue,
 }) {
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
   const [checkboxes, setCheckboxes] = useState(
     makeCheckboxes(options, toggleAllChecked),
   );
 
+  const prevChecked = usePrevious(
+    JSON.stringify(Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox])),
+  );
+
   const menu = createRef();
 
   useEffect(() => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
-    if (JSON.stringify(checked) === previousValue) {
+    if (JSON.stringify(checked) === prevChecked) {
       return;
     }
     onChange(checked);
-  }, [checkboxes, onChange, previousValue]);
+  }, [checkboxes, onChange, prevChecked]);
 
   // The all-reports checkbox can select/deselect all
   const toggleSelectAll = (event) => {
@@ -169,7 +173,6 @@ CheckboxSelect.propTypes = {
   disabled: PropTypes.bool,
   hideToggleAll: PropTypes.bool,
   onChange: PropTypes.func,
-  previousValue: PropTypes.string,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -180,5 +183,5 @@ CheckboxSelect.defaultProps = {
   styleAsSelect: false,
   hideToggleAll: false,
   onChange: () => {},
-  previousValue: '',
+
 };
