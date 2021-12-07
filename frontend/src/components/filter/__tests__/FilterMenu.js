@@ -63,7 +63,7 @@ describe('Filter Menu', () => {
     const condition = screen.getByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'Is after');
 
-    const del = screen.getByRole('button', { name: /remove Date range Is after filter. click apply filters to make your changes/i });
+    const del = screen.getByRole('button', { name: /remove Date range Is after/i });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
