@@ -1,6 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React, { useState, useEffect } from 'react';
-// import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import fetchWidget from '../fetchers/Widgets';
 import { filtersToQueryString } from '../components/Filter';
