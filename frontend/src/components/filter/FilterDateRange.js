@@ -21,6 +21,7 @@ const DATE_OPTIONS = [
 ];
 
 export default function FilterDateRange({
+  id,
   condition,
   query,
   onApplyDateRange,
@@ -57,7 +58,7 @@ export default function FilterDateRange({
 
   return (
     <span className="border display-flex margin-top-1 ttahub-filter-date-range-single-date">
-      <DatePicker query={singleDateQuery} onUpdateFilter={onChangeSingleDate} id="filter-date-picker" />
+      <DatePicker query={singleDateQuery} onUpdateFilter={onChangeSingleDate} id={`filter-date-picker-${id}`} />
     </span>
   );
 }
@@ -66,4 +67,5 @@ FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]).isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
+  id: PropTypes.string.isRequired,
 };
