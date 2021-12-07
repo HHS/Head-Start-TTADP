@@ -19,7 +19,9 @@ const filterProp = PropTypes.shape({
  * @param {Object} props
  * @returns a JSX object
  */
-export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
+export default function FilterItem({
+  filter, onRemoveFilter, onUpdateFilter, prohibitedFilters,
+}) {
   const {
     id,
     topic,
@@ -72,6 +74,12 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
+  const topicOptions = FILTER_CONFIG.filter((config) => (
+    topic === config.id || !prohibitedFilters.includes(config.id)
+  )).map(({ id: filterId, display }) => (
+    <option key={filterId} value={filterId}>{display}</option>
+  ));
+
   return (
     <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -87,9 +95,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         className="usa-select"
       >
         <option value="">Select a topic</option>
-        {FILTER_CONFIG.map(({ id: filterId, display }) => (
-          <option key={filterId} value={filterId}>{display}</option>
-        ))}
+        {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
@@ -126,4 +132,5 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
+  prohibitedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
