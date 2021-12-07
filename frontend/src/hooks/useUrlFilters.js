@@ -1,44 +1,45 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import {
+  useMemo,
+  useReducer,
+} from 'react';
 import { filtersToQueryString, queryStringToFilters } from '../utils';
 
-export default function useUrlFilters(defaultFilters) {
-  const history = useHistory();
-
-  const { replace, location: { search: historyLocationSearch } } = history;
-
+const reducer = (state) => {
+  const search = filtersToQueryString(state);
   /**
-     * get the current window location
-     */
-  const url = new URL(window.location);
+  * we'll use the history API to update the search params
+  */
+  window.history.replaceState(search, '');
 
-  // create a search param object from that
+  return [...state];
+};
+
+/**
+ * useUrlFilters takes in an array of default filters
+ * and returns a useState like array of a getter and a setter
+ *
+ * @param {Object[]} defaultFilters
+ * @returns {[ Object[], Function ]}
+ */
+export default function useUrlFilters(initialValue) {
+  /**
+  * A URL constructor for the current window location
+  * using useMemo to prevent the function from being recreated each time the hook is updated
+  */
+  const url = useMemo(() => new URL(window.location), []);
+
+  // and params derived from the url params
   const params = useMemo(() => new URLSearchParams(url.search), [url.search]);
 
-  // default queries that are passed in
-  const defaults = new URLSearchParams(filtersToQueryString(defaultFilters));
-
+  const defaults = new URLSearchParams(filtersToQueryString(initialValue));
   let initialQueryValue = queryStringToFilters(defaults.toString());
 
   if (Array.from(params).length) {
     initialQueryValue = queryStringToFilters(params.toString());
   }
 
-  const [query, setQuery] = useState(initialQueryValue);
+  const [filters, dispatch] = useReducer(reducer, initialQueryValue);
 
-  useEffect(() => {
-    // create our query string
-    const search = filtersToQueryString(query);
-
-    // don't update history if its the same
-    if (`?${search}` !== historyLocationSearch) {
-      // clear all the params first
-      params.forEach((value, key) => params.delete(key));
-
-      // add the new value to the history
-      replace({ search });
-    }
-  }, [replace, params, query, historyLocationSearch]);
-
-  return [query, setQuery];
+  // returning it like this creates a nice friendly useState-ish API
+  return [filters, dispatch];
 }
