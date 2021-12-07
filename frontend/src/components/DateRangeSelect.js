@@ -297,6 +297,11 @@ function DateRangeSelect({
                     focused={startDateFocused}
                     numberOfMonths={1}
                     hideKeyboardShortcutsPanel
+                    onFocusChange={({ focused }) => {
+                      if (!focused) {
+                        setStartDateFocused(focused);
+                      }
+                    }}
                     isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onDateChange={(selectedDate) => {
                       // weird that we'd have to explicitly do this
@@ -345,6 +350,11 @@ function DateRangeSelect({
                     numberOfMonths={1}
                     hideKeyboardShortcutsPanel
                     isOutsideRange={(day) => isOutsideRange(day, 'END')}
+                    onFocusChange={({ focused }) => {
+                      if (!focused) {
+                        setEndDateFocused(focused);
+                      }
+                    }}
                     onDateChange={(selectedDate) => {
                       const endDate = selectedDate;
                       setDates({ ...dates, endDate });
