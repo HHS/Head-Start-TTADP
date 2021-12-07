@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import DateRangeSelect, { formatDateRange } from '../DateRangeSelect';
 import DatePicker from '../FilterDatePicker';
@@ -23,22 +23,25 @@ const DATE_OPTIONS = [
 export default function FilterDateRange({
   condition,
   query,
-  updateSingleDate,
   onApplyDateRange,
 }) {
+  const onChange = useCallback((dateRange) => {
+    onApplyDateRange(dateRange);
+  }, [onApplyDateRange]);
+
   if (condition === 'Is within') {
     return (
       <DateRangeSelect
         options={DATE_OPTIONS}
         updateDateRange={onApplyDateRange}
         styleAsSelect
-        onChange={onApplyDateRange}
+        onChange={onChange}
       />
     );
   }
   return (
     <span className="border display-flex margin-top-1 ttahub-filter-date-range-single-date">
-      <DatePicker query={Array.isArray(query) ? '' : query} onUpdateFilter={updateSingleDate} id="filter-date-picker" />
+      <DatePicker query={Array.isArray(query) ? '' : query} onUpdateFilter={onChange} id="filter-date-picker" />
     </span>
   );
 }
@@ -46,6 +49,5 @@ export default function FilterDateRange({
 FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]).isRequired,
-  updateSingleDate: PropTypes.func.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
 };
