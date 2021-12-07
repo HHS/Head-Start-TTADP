@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -13,7 +13,6 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters } from '../../../utils';
 
 import './TTAHistory.css';
-import useUrlFilters from '../../../hooks/useUrlFilters';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
@@ -23,7 +22,7 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   granteeName, granteeId, regionId,
 }) {
-  const [filters, setFilters] = useUrlFilters([
+  const [filters, setFilters] = useState([
     {
       id: uuidv4(),
       topic: 'startDate',
