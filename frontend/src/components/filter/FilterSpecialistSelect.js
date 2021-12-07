@@ -5,6 +5,7 @@ import SpecialistSelect from '../SpecialistSelect';
 export default function FilterSpecialistSelect({
   labelId,
   onApplyRoles,
+  query,
 }) {
   const onChange = (values) => onApplyRoles(values);
 
@@ -15,6 +16,7 @@ export default function FilterSpecialistSelect({
       onApplyRoles={onApplyRoles}
       toggleAllInitial={false}
       hideToggleAll
+      previousValue={query}
     />
   );
 }
@@ -22,4 +24,9 @@ export default function FilterSpecialistSelect({
 FilterSpecialistSelect.propTypes = {
   labelId: PropTypes.string.isRequired,
   onApplyRoles: PropTypes.func.isRequired,
+  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+};
+
+FilterSpecialistSelect.defaultProps = {
+  query: [],
 };
