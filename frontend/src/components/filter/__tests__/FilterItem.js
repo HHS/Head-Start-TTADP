@@ -129,12 +129,13 @@ describe('Filter menu item', () => {
     expect(onRemove).toHaveBeenCalled();
   });
 
-  it('validates on blur', async () => {
+  it('validates topic', async () => {
     const filter = {
       id: 'blah-de-dah',
       display: '',
-      conditions: [],
-      toggleAllChecked: true,
+      topic: '',
+      condition: '',
+      query: [],
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -145,5 +146,44 @@ describe('Filter menu item', () => {
     userEvent.tab();
     userEvent.tab();
     expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
+  });
+
+  it('validates condition', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: 'role',
+      condition: '',
+      query: [],
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a condition']);
+  });
+
+  it('validates query', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: 'startDate',
+      condition: 'Is within',
+      query: '',
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a parameter']);
   });
 });
