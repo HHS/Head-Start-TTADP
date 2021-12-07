@@ -61,8 +61,11 @@ export default function RegionalDashboard({ user }) {
     return null;
   }
 
-  const dateTime = getDateTimeObject(filters.find((filter) => filter.topic === 'startDate').query);
-  const appliedRegion = filters.find((filter) => filter.topic === 'region').query;
+  const startDateFilter = filters.find((filter) => filter.topic === 'startDate');
+  const regionFilter = filters.find((filter) => filter.topic === 'region');
+
+  const dateTime = startDateFilter ? getDateTimeObject(startDateFilter.query) : '';
+  const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';
 
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);

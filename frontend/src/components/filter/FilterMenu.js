@@ -20,6 +20,8 @@ const filterProp = PropTypes.shape({
 export default function FilterMenu({ filters, onApplyFilters }) {
   const [items, setItems] = useState([...filters]);
 
+  const selectedFilters = items.map((filter) => filter.topic);
+
   useEffect(() => {
     // If filters where changes outside of this component update.
     setItems(filters);
@@ -93,6 +95,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
                 onUpdateFilter={onUpdateFilter}
                 key={filter.id}
                 filter={filter}
+                prohibitedFilters={selectedFilters}
               />
             ))}
           </ul>
