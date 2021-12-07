@@ -127,7 +127,6 @@ export default function FilterItem({
         <FilterSpecialistSelect
           labelId={`role-${condition}-${id}`}
           onApplyRoles={onApplyQuery}
-          query={query}
         />
       ),
     },

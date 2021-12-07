@@ -36,12 +36,7 @@ export default function SpecialistSelect({
   hideToggleAll,
   toggleAllInitial,
   onChange,
-  previousValue,
 }) {
-  const extrapolatePreviousValues = (selected) => JSON.stringify(ROLES_MAP.filter(
-    (role) => selected.includes(role.value),
-  ).map((role) => role.selectValue.toString()));
-
   const getRoleValues = (selected) => {
     const roleValues = selected.map((s) => parseInt(s, 10));
 
@@ -77,7 +72,6 @@ export default function SpecialistSelect({
           label: role.label,
         }))
       }
-      previousValue={extrapolatePreviousValues(previousValue)}
     />
   );
 }
@@ -88,12 +82,10 @@ SpecialistSelect.propTypes = {
   toggleAllInitial: PropTypes.bool,
   hideToggleAll: PropTypes.bool,
   onChange: PropTypes.func,
-  previousValue: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
 };
 
 SpecialistSelect.defaultProps = {
   toggleAllInitial: true,
   hideToggleAll: false,
   onChange: () => {},
-  previousValue: [],
 };
