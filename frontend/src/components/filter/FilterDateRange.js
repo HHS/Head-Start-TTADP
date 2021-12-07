@@ -48,6 +48,7 @@ export default function FilterDateRange({
   }
 
   const onChangeSingleDate = (name, value) => {
+    console.log(value);
     if (value) {
       onApplyDateRange(value);
     } else {
