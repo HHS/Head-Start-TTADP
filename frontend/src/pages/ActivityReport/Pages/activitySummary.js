@@ -431,7 +431,7 @@ const sections = [
     anchor: 'reasons',
     items: [
       { label: 'Requested by', name: 'requester' },
-      { label: 'reason(s)', name: 'reason', sort: true },
+      { label: 'Reason(s)', name: 'reason', sort: true },
     ],
   },
   {
