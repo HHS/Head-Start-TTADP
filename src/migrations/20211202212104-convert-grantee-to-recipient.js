@@ -33,12 +33,9 @@ module.exports = {
       * Next Step actions:
       * add 'RECIPIENT' as an enum value to the datatype for the 'noteType' column
       * update all 'GRANTEE' noteTypes to 'RECIPIENT'
-      * remove 'GRANTEE' as a noteType
       */
 
       await queryInterface.sequelize.query('UPDATE "NextSteps" SET "noteType" = \'RECIPIENT\' WHERE "noteType" = \'GRANTEE\';', { transaction });
-      const query = 'DELETE FROM pg_enum WHERE enumlabel = \'GRANTEE\' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = \'enum_NextSteps_noteType\');';
-      await queryInterface.sequelize.query(query, { transaction });
 
       /*
       * NonGrantee actions:
@@ -123,11 +120,8 @@ module.exports = {
       * Next Step actions:
       * add 'GRANTEE' as an enum value to the datatype for the 'noteType' column
       * update all 'RECIPIENT' noteTypes to 'GRANTEE'
-      * remove 'RECIPIENT' as a noteType
       */
       await queryInterface.sequelize.query('UPDATE "NextSteps" SET "noteType" = \'GRANTEE\' WHERE "noteType" = \'RECIPIENT\';', { transaction });
-      const query = 'DELETE FROM pg_enum WHERE enumlabel = \'RECIPIENT\' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = \'enum_NextSteps_noteType\');';
-      await queryInterface.sequelize.query(query, { transaction });
 
       /*
       * OtherEntity actions:
