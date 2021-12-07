@@ -59,7 +59,6 @@ export default function CheckboxSelect({
   useEffect(() => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
     onChange(checked);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkboxes]);
 
   // The all-reports checkbox can select/deselect all

@@ -1,5 +1,8 @@
 import React, {
-  useState, useEffect, createRef,
+  useState,
+  useEffect,
+  createRef,
+  useCallback,
 } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
@@ -132,7 +135,7 @@ function DateRangeSelect({
   const [endDateFocused, setEndDateFocused] = useState(false);
   const startDatePickerId = 'startDatePicker';
 
-  function getDateRange() {
+  const getDateRange = useCallback(() => {
     const { startDate, endDate } = dates;
 
     if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
@@ -162,15 +165,14 @@ function DateRangeSelect({
 
     setShowDateError(false);
     return false;
-  }
+  }, [dates, options, selectedItem]);
 
   useEffect(() => {
     const range = getDateRange();
     if (range) {
       onChange(range);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dates, selectedItem]);
+  }, [dates, getDateRange, onChange, selectedItem]);
 
   /** when to focus on the start date input */
   useEffect(() => {

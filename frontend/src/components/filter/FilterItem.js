@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -47,7 +47,6 @@ export default function FilterItem({
     topic,
     condition,
     query,
-
   } = filter;
 
   const li = useRef();
@@ -58,13 +57,8 @@ export default function FilterItem({
     setErrors(newErrors);
   };
 
-  const onBlur = (e) => {
+  const validate = () => {
     let message = '';
-
-    if (li.current.contains(e.relatedTarget)) {
-      return;
-    }
-
     if (!topic) {
       message = 'Please enter a value';
       setError(message);
@@ -86,13 +80,27 @@ export default function FilterItem({
     setError(message);
   };
 
+  const onBlur = (e) => {
+    // no validation if you are clicking on something within the filter item
+    if (li.current.contains(e.relatedTarget)) {
+      return;
+    }
+
+    // no validation if you are clicking on the cancel button
+    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
+      return;
+    }
+
+    validate();
+  };
+
   /**
    * changing the condition should clear the query
    * Having to do this, I set the default values to be empty where possible
    * since that creates the least complicated and confusing logic in the
    * function below
    */
-  const onUpdate = (name, value) => {
+  const onUpdate = useCallback((name, value) => {
     if (name === 'condition') {
       // Set default value.
       const defaultQuery = DEFAULT_VALUES[topic][value];
@@ -100,19 +108,15 @@ export default function FilterItem({
     }
 
     onUpdateFilter(id, name, value);
-  };
+  }, [id, onUpdateFilter, topic]);
 
   const DummySelect = () => (
     <select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" />
   );
 
-  const onApplyQuery = (q) => {
+  const onApplyQuery = useCallback((q) => {
     onUpdate('query', q);
-  };
-
-  const updateSingleDate = (name, value) => {
-    onUpdate(name, value);
-  };
+  }, [onUpdate]);
 
   const possibleFilters = [
     {
@@ -134,7 +138,6 @@ export default function FilterItem({
         <FilterDateRange
           condition={condition}
           query={query}
-          updateSingleDate={updateSingleDate}
           onApplyDateRange={onApplyQuery}
         />
       ),

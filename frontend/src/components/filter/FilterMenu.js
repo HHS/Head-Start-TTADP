@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
@@ -22,11 +22,21 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   const [errors, setErrors] = useState(filters.map(() => ''));
 
   useEffect(() => {
-    // If filters where changes outside of this component update.
+    // If filters were changed outside of this component, we need to update the items
+    // (for example, the "remove filter" button on the filter pills)
     setItems(filters);
   }, [filters]);
 
+  useEffect(() => {
+    // if an item was deleted, we need to update the errors
+    if (items.length < errors.length) {
+      setErrors(items.map(() => ''));
+    }
+  }, [errors.length, items]);
+
   const onApply = () => {
+    // e.preventDefault();
+
     const hasErrors = errors.reduce((acc, curr) => {
       if (curr) {
         return true;
@@ -54,9 +64,11 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   };
 
   // reset state if we hit cancel
-  const onCancel = () => setItems([...filters]);
+  const onCancel = () => {
+    setItems([...filters]);
+  };
 
-  const onUpdateFilter = (id, name, value, toggleAllChecked) => {
+  const onUpdateFilter = useCallback((id, name, value, toggleAllChecked) => {
     const newItems = [...items];
     const toUpdate = newItems.find((item) => item.id === id);
     toUpdate[name] = value;
@@ -67,7 +79,8 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     }
     toUpdate.toggleAllChecked = toggleAllChecked;
     setItems(newItems);
-  };
+  }, [items]);
+
   const onAddFilter = () => {
     const newItems = [...items];
     const newItem = {
@@ -98,20 +111,22 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
         <div>
-          <ul className="usa-list usa-list--unstyled margin-bottom-1">
-            {items.map((filter, index) => (
-              <FilterItem
-                onRemoveFilter={onRemoveFilter}
-                onUpdateFilter={onUpdateFilter}
-                key={filter.id}
-                filter={filter}
-                index={index}
-                errors={errors}
-                setErrors={setErrors}
-              />
-            ))}
-          </ul>
-          <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
+          <form onSubmit={onApply}>
+            <ul className="usa-list usa-list--unstyled margin-bottom-1">
+              {items.map((filter, index) => (
+                <FilterItem
+                  onRemoveFilter={onRemoveFilter}
+                  onUpdateFilter={onUpdateFilter}
+                  key={filter.id}
+                  filter={filter}
+                  index={index}
+                  errors={errors}
+                  setErrors={setErrors}
+                />
+              ))}
+            </ul>
+            <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
+          </form>
         </div>
       </div>
     </DropdownMenu>

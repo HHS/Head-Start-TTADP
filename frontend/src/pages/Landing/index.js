@@ -12,7 +12,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
-
 import AriaLiveContext from '../../AriaLiveContext';
 import { getReportAlerts } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
@@ -205,6 +204,8 @@ function Landing({ user }) {
     );
   }
 
+  const regionLabel = appliedRegion === 14 ? 'All' : appliedRegion.toString();
+
   return (
     <>
       <Helmet>
@@ -259,7 +260,7 @@ function Landing({ user }) {
           <Grid col={10}>
             <Overview
               filters={overviewFilters}
-              regionLabel={appliedRegion === 14 ? 'All' : appliedRegion.toString()}
+              regionLabel={regionLabel}
             />
           </Grid>
         </Grid>
@@ -291,7 +292,7 @@ function Landing({ user }) {
           filters={filters}
           showFilter
           onUpdateFilters={handleApplyFilters}
-          tableCaption={`Region ${appliedRegion === 14 ? 'All' : appliedRegion.toString()} Activity reports`}
+          tableCaption={`Region ${regionLabel} Activity reports`}
         />
       </>
     </>
