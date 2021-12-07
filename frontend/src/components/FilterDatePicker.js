@@ -26,11 +26,13 @@ function DatePicker({ query, onUpdateFilter, id }) {
     }
   };
 
+  const dpId = `sdp-${id}`;
+
   return (
     <>
       <SingleDatePicker
         small
-        id={id}
+        id={dpId}
         focused={isFocused}
         ref={dateInput}
         numberOfMonths={1}
@@ -43,7 +45,7 @@ function DatePicker({ query, onUpdateFilter, id }) {
         }}
         onDateChange={(selectedDate) => {
           onChange(selectedDate);
-          const input = dateInput.current.container.querySelector(`#${id}`);
+          const input = dateInput.current.container.querySelector(`#${dpId}`);
           if (input) input.focus();
         }}
         date={date}

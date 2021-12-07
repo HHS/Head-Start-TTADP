@@ -128,6 +128,8 @@ describe('filter', () => {
     let topic = await screen.findByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'startDate');
 
+    screen.logTestingPlaygroundURL();
+
     const condition = await screen.findByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'Is before');
 
