@@ -95,6 +95,18 @@ describe('Update grants and grantees', () => {
     expect(grant3.oldGrantId).toBe(null);
   });
 
+  it('includes the grants state', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 11835 } });
+    expect(grant.stateCode).toEqual('KS');
+  });
+
+  it('handles nil states codes', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 10448 }});
+    expect(grant.stateCode).toBeNull();
+  });
+
   it('should import or update grants', async () => {
     const grantsBefore = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
 
