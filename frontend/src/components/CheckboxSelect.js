@@ -48,6 +48,7 @@ export default function CheckboxSelect({
   disabled,
   hideToggleAll,
   onChange,
+  previousValue,
 }) {
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
   const [checkboxes, setCheckboxes] = useState(
@@ -58,8 +59,11 @@ export default function CheckboxSelect({
 
   useEffect(() => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
+    if (JSON.stringify(checked) === previousValue) {
+      return;
+    }
     onChange(checked);
-  }, [checkboxes]);
+  }, [checkboxes, onChange, previousValue]);
 
   // The all-reports checkbox can select/deselect all
   const toggleSelectAll = (event) => {
@@ -165,6 +169,7 @@ CheckboxSelect.propTypes = {
   disabled: PropTypes.bool,
   hideToggleAll: PropTypes.bool,
   onChange: PropTypes.func,
+  previousValue: PropTypes.string,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -175,4 +180,5 @@ CheckboxSelect.defaultProps = {
   styleAsSelect: false,
   hideToggleAll: false,
   onChange: () => {},
+  previousValue: '',
 };
