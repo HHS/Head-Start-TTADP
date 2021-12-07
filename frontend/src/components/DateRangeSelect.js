@@ -119,7 +119,7 @@ function DateRangeSelect({
   const [selectedItem, setSelectedItem] = useState(1);
   const [showDateError, setShowDateError] = useState(false);
 
-  // this is a ref for the dropdown menu so that we can
+  // this is a ref for the dropdown menu so that we can create accurate blur logic
   const menu = createRef();
 
   const [dates, setDates] = useState({
