@@ -118,6 +118,7 @@ function DateRangeSelect({
   updateDateRange,
   disabled,
   onChange,
+  dateRange,
 }) {
   const [selectedItem, setSelectedItem] = useState(1);
   const [showDateError, setShowDateError] = useState(false);
@@ -140,18 +141,6 @@ function DateRangeSelect({
 
     if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
       const range = `${startDate ? startDate.format(DATETIME_DATE_FORMAT) : ''}-${endDate ? endDate.format(DATETIME_DATE_FORMAT) : ''}`;
-      const isValidDateRange = range.trim().split('-').filter((str) => str !== '').length === 2;
-
-      if (!isValidDateRange) {
-        setShowDateError(true);
-        return false;
-      }
-
-      if (startDate.isBefore(EARLIEST_INC_FILTER_DATE) || endDate.isAfter(moment())) {
-        setShowDateError(true);
-        return false;
-      }
-
       return range;
     }
 
@@ -163,8 +152,7 @@ function DateRangeSelect({
       }
     }
 
-    setShowDateError(false);
-    return false;
+    return '';
   }, [dates, options, selectedItem]);
 
   useEffect(() => {
@@ -172,7 +160,7 @@ function DateRangeSelect({
     if (range) {
       onChange(range);
     }
-  }, [dates, getDateRange, onChange, selectedItem]);
+  }, [dateRange, dates, getDateRange, onChange]);
 
   /** when to focus on the start date input */
   useEffect(() => {
@@ -245,6 +233,9 @@ function DateRangeSelect({
   const { label } = options.find((option) => option.value === selectedItem);
   const ariaLabel = 'Toggle the date range select menu';
 
+  // css classes dependent on error
+  const cssClasses = `smart-hub--button-select-menu-date-picker ${showDateError ? `smart-hub--button-select-menu-date-picker--error-${showDateError}` : ''}`;
+
   return (
     <DropdownMenu
       buttonText={label}
@@ -281,7 +272,7 @@ function DateRangeSelect({
 
           { selectedItem && selectedItem === CUSTOM_DATE_RANGE
             ? (
-              <div className="smart-hub--button-select-menu-date-picker">
+              <div className={cssClasses}>
                 { showDateError ? (
                   <div className="usa-alert usa-alert--warning usa-alert--no-icon margin-top-1 margin-0" role="alert">
                     <p className="usa-alert__text padding-1">
@@ -306,11 +297,6 @@ function DateRangeSelect({
                     focused={startDateFocused}
                     numberOfMonths={1}
                     hideKeyboardShortcutsPanel
-                    onFocusChange={({ focused }) => {
-                      if (!focused) {
-                        setStartDateFocused(focused);
-                      }
-                    }}
                     isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onDateChange={(selectedDate) => {
                       // weird that we'd have to explicitly do this
@@ -359,11 +345,6 @@ function DateRangeSelect({
                     numberOfMonths={1}
                     hideKeyboardShortcutsPanel
                     isOutsideRange={(day) => isOutsideRange(day, 'END')}
-                    onFocusChange={({ focused }) => {
-                      if (!focused) {
-                        setEndDateFocused(focused);
-                      }
-                    }}
                     onDateChange={(selectedDate) => {
                       const endDate = selectedDate;
                       setDates({ ...dates, endDate });
@@ -404,6 +385,7 @@ DateRangeSelect.propTypes = {
   // props for handling the date range select
   updateDateRange: PropTypes.func.isRequired,
   onChange: PropTypes.func,
+  dateRange: PropTypes.string.isRequired,
 };
 
 DateRangeSelect.defaultProps = {

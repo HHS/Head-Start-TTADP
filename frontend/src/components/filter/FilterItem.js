@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -100,7 +100,7 @@ export default function FilterItem({
    * since that creates the least complicated and confusing logic in the
    * function below
    */
-  const onUpdate = useCallback((name, value) => {
+  const onUpdate = (name, value) => {
     if (name === 'condition') {
       // Set default value.
       const defaultQuery = DEFAULT_VALUES[topic][value];
@@ -108,15 +108,15 @@ export default function FilterItem({
     }
 
     onUpdateFilter(id, name, value);
-  }, [id, onUpdateFilter, topic]);
+  };
 
   const DummySelect = () => (
     <select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" />
   );
 
-  const onApplyQuery = useCallback((q) => {
+  const onApplyQuery = (q) => {
     onUpdate('query', q);
-  }, [onUpdate]);
+  };
 
   const possibleFilters = [
     {

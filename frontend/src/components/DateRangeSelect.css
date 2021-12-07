@@ -7,6 +7,11 @@
     padding: 0 1rem;    
 }
 
+.smart-hub--button-select-menu-date-picker.smart-hub--button-select-menu-date-picker--error-start,
+.smart-hub--button-select-menu-date-picker.smart-hub--button-select-menu-date-picker--error-end {
+  /* background: purple; */
+}
+
 .smart-hub--button-select-menu-date-picker-single {
     display: flex;
 }
