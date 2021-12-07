@@ -16,6 +16,7 @@ import withRegion from './region';
 import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutReason, withReason } from './reason';
+import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 
 export const topicToQuery = {
   reportId: {
@@ -83,6 +84,10 @@ export const topicToQuery = {
   reason: {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
+  },
+  grantNumber: {
+    in: (query) => withGrantNumber(query),
+    nin: (query) => withoutGrantNumber(query),
   },
 };
 

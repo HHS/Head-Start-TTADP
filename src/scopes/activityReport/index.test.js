@@ -286,7 +286,7 @@ describe('filtersToScopes', () => {
           id: granteeIncluded2.id, number: 1235, granteeId: granteeIncluded2.id,
         });
         grantExcluded = await Grant.create({
-          id: granteeExcluded.id, number: 1236, granteeId: granteeExcluded.id,
+          id: granteeExcluded.id, number: 456, granteeId: granteeExcluded.id,
         });
 
         reportIncluded1 = await ActivityReport.create({ ...draftReport });
@@ -347,6 +347,37 @@ describe('filtersToScopes', () => {
 
       it('excludes grantees that do not partial match or have no grantees', async () => {
         const filters = { 'grantee.nin': ['1234'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+      });
+
+      it('grant number with matches', async () => {
+        const filters = { 'grantNumber.in': ['123'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+      });
+
+      it('grant number with no matches', async () => {
+        const filters = { 'grantNumber.in': ['789'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(0);
+      });
+
+      it('grant numbers excludes matches', async () => {
+        const filters = { 'grantNumber.nin': ['123'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
