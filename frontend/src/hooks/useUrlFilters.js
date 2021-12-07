@@ -1,18 +1,6 @@
-import {
-  useMemo,
-  useReducer,
-} from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { filtersToQueryString, queryStringToFilters } from '../utils';
-
-const reducer = (state) => {
-  const search = filtersToQueryString(state);
-  /**
-  * we'll use the history API to update the search params
-  */
-  window.history.replaceState(search, '');
-
-  return [...state];
-};
 
 /**
  * useUrlFilters takes in an array of default filters
@@ -21,25 +9,56 @@ const reducer = (state) => {
  * @param {Object[]} defaultFilters
  * @returns {[ Object[], Function ]}
  */
-export default function useUrlFilters(initialValue) {
+export default function useUrlFilters(defaultFilters) {
+  /**
+   * we'll use the history API to update the search params
+   */
+  const history = useHistory();
+  const { replace, location: { search: historyLocationSearch } } = history;
+
   /**
   * A URL constructor for the current window location
-  * using useMemo to prevent the function from being recreated each time the hook is updated
   */
-  const url = useMemo(() => new URL(window.location), []);
+  const url = new URL(window.location);
 
-  // and params derived from the url params
+  // we memoize this so it doesn't change on every load
+  // create a search param object from that
   const params = useMemo(() => new URLSearchParams(url.search), [url.search]);
 
-  const defaults = new URLSearchParams(filtersToQueryString(initialValue));
+  // default queries that are passed in
+  const defaults = new URLSearchParams(filtersToQueryString(defaultFilters));
   let initialQueryValue = queryStringToFilters(defaults.toString());
 
   if (Array.from(params).length) {
     initialQueryValue = queryStringToFilters(params.toString());
   }
 
-  const [filters, dispatch] = useReducer(reducer, initialQueryValue);
+  // - query is the set of data that the app can change
+  // - set query is passed to the app so it can update it
+  // - when query changes, we update the URL params
+  const [query, setQuery] = useState(initialQueryValue);
 
-  // returning it like this creates a nice friendly useState-ish API
-  return [filters, dispatch];
+  // - filters is derived from the URL params
+  // - its the data we return to the app
+  // - set filters is for internal use only
+  const [filters, setFilters] = useState();
+
+  // on first load
+  useEffect(() => {
+    setFilters(queryStringToFilters(params.toString()));
+  }, [params]);
+
+  // use effect to watch the query and update if changed
+  useEffect(() => {
+    // create our query string
+    const search = filtersToQueryString(query);
+
+    // don't update history if its the same
+    if (`?${search}` !== historyLocationSearch) {
+      // add the new value to the history
+      replace({ search });
+    }
+  }, [replace, query, historyLocationSearch]);
+
+  return [filters, setQuery];
 }
