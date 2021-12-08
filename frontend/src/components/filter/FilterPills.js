@@ -114,6 +114,7 @@ Pill.propTypes = {
 
 const DISALLOWED_PILL_TOPICS = [
   'region',
+  'granteeId',
 ];
 
 /* Filter Pills */

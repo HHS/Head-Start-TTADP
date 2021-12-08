@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
 import FilterPills from '../../components/filter/FilterPills';
 import { expandFilters } from '../../utils';
-// import useUrlFilters from '../../hooks/useUrlFilters';
+import useUrlFilters from '../../hooks/useUrlFilters';
 
 /**
  *
@@ -42,7 +42,7 @@ export default function RegionalDashboard({ user }) {
   const regions = getUserRegions(user);
   const defaultRegion = hasCentralOffice ? 14 : regions[0];
 
-  const [filters, setFilters] = useState([
+  const [filters, setFilters] = useUrlFilters([
     {
       id: uuidv4(),
       topic: 'region',
