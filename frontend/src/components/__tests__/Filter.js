@@ -4,7 +4,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Filter, { filtersToQueryString } from '../Filter';
+import Filter from '../Filter';
+import { filtersToQueryString } from '../../utils';
 
 const RenderFilterItem = ({ applyFilters = () => { } }) => (
   <Filter applyFilters={applyFilters} />

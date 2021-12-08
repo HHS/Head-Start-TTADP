@@ -9,13 +9,16 @@ import fetchMock from 'fetch-mock';
 import RegionalDashboard from '../index';
 import { formatDateRange } from '../../../components/DateRangeSelect';
 import { SCOPE_IDS } from '../../../Constants';
+import UserContext from '../../../UserContext';
 
 describe('Regional Dashboard page', () => {
   beforeAll(() => {
     fetchMock.mock('*', 200);
   });
 
-  const renderDashboard = (user) => render(<RegionalDashboard user={user} />);
+  const renderDashboard = (user) => render(
+    <UserContext.Provider value={user}><RegionalDashboard user={user} /></UserContext.Provider>,
+  );
 
   const user = {
     homeRegionId: 14,

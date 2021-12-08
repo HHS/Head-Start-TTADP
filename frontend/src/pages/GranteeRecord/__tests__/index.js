@@ -63,7 +63,7 @@ describe('grantee record page', () => {
     };
 
     const location = {
-      search: '?region=45',
+      search: '?region.in[]=45',
       hash: '',
       pathname: '',
     };
@@ -139,7 +139,7 @@ describe('grantee record page', () => {
 
   it('navigates to the profile page', async () => {
     fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
-    memoryHistory.push('/grantee/1/profile?region.=45');
+    memoryHistory.push('/grantee/1/profile?region.in[]=45');
     act(() => renderGranteeRecord(memoryHistory));
     const heading = await screen.findByRole('heading', { name: /grantee summary/i });
     expect(heading).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('grantee record page', () => {
 
   it('navigates to the tta history page', async () => {
     fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
-    memoryHistory.push('/grantee/1/tta-history?region=45');
+    memoryHistory.push('/grantee/1/tta-history?region.in[]=45');
     act(() => renderGranteeRecord(memoryHistory));
     await waitFor(() => {
       const ar = screen.getByText(/the total number of approved activity reports\. click to visually reveal this information/i);

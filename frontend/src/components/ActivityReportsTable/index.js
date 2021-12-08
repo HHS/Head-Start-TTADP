@@ -286,7 +286,12 @@ ActivityReportsTable.propTypes = {
     PropTypes.shape({
       condition: PropTypes.string,
       id: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.arrayOf(PropTypes.number),
+      ]),
       topic: PropTypes.string,
     }),
   ).isRequired,

@@ -73,7 +73,7 @@ describe('Grantee Record - TTA History', () => {
     await act(async () => userEvent.click(await screen.findByRole('button', { name: /apply filters to grantee record data/i })));
 
     expect(
-      await screen.findByRole('button', { name: /this button removes the filter: Specialist Contains Family Engagement Specialist, Grantee Specialist/i }),
+      await screen.findByRole('button', { name: /this button removes the filter: Specialist role Contains Family Engagement Specialist, Grantee Specialist/i }),
     ).toBeVisible();
   });
 });
