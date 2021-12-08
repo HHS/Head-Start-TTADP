@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
 import { FILTER_CONFIG } from './constants';
+import { formatDateRange } from '../DateRangeSelect';
 
 // save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
@@ -23,7 +24,9 @@ const availableFilters = FILTER_CONFIG.map((f) => f.id);
  * @param {Object} props
  * @returns JSX Object
  */
-export default function FilterMenu({ filters, onApplyFilters, allowedFilters }) {
+export default function FilterMenu({
+  filters, onApplyFilters, allowedFilters, dateRangeOptions,
+}) {
   const [items, setItems] = useState([...filters]);
 
   // filters currently selected. these will be excluded from filter selection
@@ -115,6 +118,7 @@ export default function FilterMenu({ filters, onApplyFilters, allowedFilters }) 
                 key={filter.id}
                 filter={filter}
                 prohibitedFilters={prohibitedFilters}
+                dateRangeOptions={dateRangeOptions}
               />
             ))}
           </ul>
@@ -129,8 +133,25 @@ FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
   allowedFilters: PropTypes.arrayOf(PropTypes.string),
+  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+    range: PropTypes.string,
+  })),
 };
 
 FilterMenu.defaultProps = {
   allowedFilters: availableFilters,
+  dateRangeOptions: [
+    {
+      label: 'Year to date',
+      value: 1,
+      range: formatDateRange({ yearToDate: true, forDateTime: true }),
+    },
+    {
+      label: 'Custom date range',
+      value: 2,
+      range: '',
+    },
+  ],
 };

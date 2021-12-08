@@ -22,7 +22,7 @@ const filterProp = PropTypes.shape({
  * @returns a JSX object
  */
 export default function FilterItem({
-  filter, onRemoveFilter, onUpdateFilter, prohibitedFilters,
+  filter, onRemoveFilter, onUpdateFilter, prohibitedFilters, dateRangeOptions,
 }) {
   const {
     id,
@@ -115,7 +115,7 @@ export default function FilterItem({
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput(id, condition, query, onUpdate, onApplyQuery)
+        ? selectedTopic.renderInput(id, condition, query, onUpdate, onApplyQuery, dateRangeOptions)
         : <DummySelect /> }
       <button
         type="button"
@@ -135,4 +135,9 @@ FilterItem.propTypes = {
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
   prohibitedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
+  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+    range: PropTypes.string,
+  })).isRequired,
 };
