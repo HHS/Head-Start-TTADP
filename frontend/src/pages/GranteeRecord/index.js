@@ -15,7 +15,7 @@ import TTAHistory from './pages/TTAHistory';
 
 export default function GranteeRecord({ match, location }) {
   const { granteeId } = match.params;
-  const regionId = new URLSearchParams(location.search).get('region');
+  const regionId = new URLSearchParams(location.search).get('region.in[]');
   const [granteeName, setGranteeName] = useState(` - Region ${regionId}`);
   const [granteeSummary, setGranteeSummary] = useState({
     'grants.programSpecialistName': '',
