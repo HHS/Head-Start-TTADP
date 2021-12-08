@@ -166,7 +166,7 @@ export default function CheckboxSelect(props) {
 
 CheckboxSelect.propTypes = {
   toggleAllInitial: PropTypes.bool.isRequired,
-  toggleAllText: PropTypes.string.isRequired,
+  toggleAllText: PropTypes.string,
   options: PropTypes.arrayOf(optionProp).isRequired,
   labelId: PropTypes.string.isRequired,
   labelText: PropTypes.string.isRequired,
@@ -188,4 +188,5 @@ CheckboxSelect.defaultProps = {
   styleAsSelect: false,
   hideToggleAll: false,
   showClear: false,
+  toggleAllText: 'Toggle all checkboxes',
 };
