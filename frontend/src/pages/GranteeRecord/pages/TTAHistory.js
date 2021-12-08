@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -13,6 +13,7 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters } from '../../../utils';
 
 import './TTAHistory.css';
+import useUrlFilters from '../../../hooks/useUrlFilters';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
@@ -31,19 +32,23 @@ export default function TTAHistory({
     },
   ]);
 
-  const filtersToApply = [
-    ...expandFilters(filters),
-    {
-      topic: 'region',
-      condition: 'Contains',
-      query: regionId,
-    },
-    {
-      topic: 'granteeId',
-      condition: 'Contains',
-      query: granteeId,
-    },
-  ];
+  const [filtersToApply, setFiltersToApply] = useUrlFilters();
+
+  useEffect(() => {
+    setFiltersToApply([
+      ...expandFilters(filters),
+      {
+        topic: 'region',
+        condition: 'Contains',
+        query: regionId,
+      },
+      {
+        topic: 'granteeId',
+        condition: 'Contains',
+        query: granteeId,
+      },
+    ]);
+  }, [filters, granteeId, regionId, setFiltersToApply]);
 
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
@@ -59,6 +64,11 @@ export default function TTAHistory({
       ...newFilters,
     ]);
   };
+
+  // we don't want to double query the API
+  if (!filtersToApply.length) {
+    return null;
+  }
 
   return (
     <>
