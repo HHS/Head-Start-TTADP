@@ -77,6 +77,12 @@ export default function FilterItem({
       return;
     }
 
+    if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+      message = 'Please enter a parameter';
+      setError(message);
+      return;
+    }
+
     setError(message);
   };
 
