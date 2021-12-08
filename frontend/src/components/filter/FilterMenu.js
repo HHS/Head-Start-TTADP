@@ -9,7 +9,9 @@ import { FILTER_CONFIG } from './constants';
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+  query: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
+  ]),
   id: PropTypes.string,
 });
 
