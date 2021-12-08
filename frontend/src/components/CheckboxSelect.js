@@ -1,7 +1,6 @@
 import React, { useState, createRef } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Checkbox } from '@trussworks/react-uswds';
-import { v4 as uuid } from 'uuid';
 import './CheckboxSelect.css';
 import DropdownMenu from './DropdownMenu';
 
@@ -10,35 +9,6 @@ const optionProp = PropTypes.shape({
   label: PropTypes.string,
 });
 
-function CheckboxForSelect({
-  option, handleCheckboxSelect, onBlur, prefix, checkboxes,
-}) {
-  const { label, value } = option;
-  const selectId = `${prefix}-${value}`;
-  const isChecked = checkboxes[value] || false;
-
-  return (
-    <Checkbox
-      key={selectId}
-      id={selectId}
-      label={label}
-      value={value}
-      checked={isChecked}
-      onChange={handleCheckboxSelect}
-      aria-label={`Select ${label}`}
-      onBlur={onBlur}
-    />
-  );
-}
-
-CheckboxForSelect.propTypes = {
-  option: optionProp.isRequired,
-  handleCheckboxSelect: PropTypes.func.isRequired,
-  onBlur: PropTypes.func.isRequired,
-  prefix: PropTypes.string.isRequired,
-  checkboxes: PropTypes.arrayOf(PropTypes.node).isRequired,
-};
-
 export function renderCheckboxes(
   options,
   checkboxes,
@@ -46,32 +16,24 @@ export function renderCheckboxes(
   handleCheckboxSelect,
   onBlur,
 ) {
-  if (Array.isArray(options[1])) {
-    return options.map((optionGroup) => (
-      <div className="tta-smarthub-check" key={uuid()}>
-        {optionGroup.map((option) => (
-          <CheckboxForSelect
-            key={`${prefix}-${option.value}-${uuid()}`}
-            option={option}
-            handleCheckboxSelect={handleCheckboxSelect}
-            onBlur={onBlur}
-            prefix={prefix}
-            checkboxes={checkboxes}
-          />
-        ))}
-      </div>
-    ));
-  }
-
-  return options.map((option) => (
-    <CheckboxForSelect
-      option={option}
-      handleCheckboxSelect={handleCheckboxSelect}
-      onBlur={onBlur}
-      prefix={prefix}
-      checkboxes={checkboxes}
-    />
-  ));
+  return options.map((option) => {
+    const { label, value, endGroup } = option;
+    const selectId = `${prefix}-${value}`;
+    const isChecked = checkboxes[value] || false;
+    return (
+      <Checkbox
+        className={endGroup ? 'checkbox--end-group' : ''}
+        key={selectId}
+        id={selectId}
+        label={label}
+        value={value}
+        checked={isChecked}
+        onChange={handleCheckboxSelect}
+        aria-label={`Select ${label}`}
+        onBlur={onBlur}
+      />
+    );
+  });
 }
 
 export const makeCheckboxes = (options, checked) => (
