@@ -69,7 +69,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'grantNumber',
-    display: 'Grant Number',
+    display: 'Grant number',
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
@@ -86,7 +86,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'programSpecialist',
-    display: 'Program Specialist',
+    display: 'Program specialist',
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
@@ -103,7 +103,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'programType',
-    display: 'Program Types',
+    display: 'Program types',
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
@@ -159,7 +159,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'role',
-    display: 'Role',
+    display: 'Specialist role',
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
@@ -174,7 +174,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'targetPopulation',
-    display: 'Target Population',
+    display: 'Target population',
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,

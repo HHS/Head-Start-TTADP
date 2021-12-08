@@ -19,6 +19,7 @@ export default function DropdownMenu({
   showCancel,
   cancelAriaLabel,
   forwardedRef,
+  alternateActionButton,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
@@ -69,12 +70,14 @@ export default function DropdownMenu({
   // needs position relative for the menu to work properly
   const classNames = `${className} smart-hub--dropdown-menu position-relative`;
 
+  const bottomRowFlexJustify = alternateActionButton ? 'flex-justify' : 'flex-justify-end';
+
   // just to make things a little less verbose below
   function ApplyButton() {
     return (
       <button
         type="button"
-        className="usa-button smart-hub--button margin-2"
+        className="usa-button smart-hub--button"
         onClick={onApplyClick}
         aria-label={applyButtonAria}
       >
@@ -99,20 +102,26 @@ export default function DropdownMenu({
         {children}
         { showCancel
           ? (
-            <div className="margin-top-1 desktop:display-flex flex-justify-end margin-right-3 padding-x-3 desktop:padding-x-0">
-              <button
-                onClick={onCancelClick}
-                type="button"
-                className="usa-button usa-button--unstyled margin-right-2"
-                aria-label={cancelAriaLabel}
-              >
-                Cancel
-              </button>
-              <ApplyButton />
+            <div className={`margin-top-1 desktop:display-flex ${bottomRowFlexJustify} margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0`}>
+              {alternateActionButton}
+              <div>
+                <button
+                  onClick={onCancelClick}
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-right-2"
+                  aria-label={cancelAriaLabel}
+                >
+                  Cancel
+                </button>
+                <ApplyButton />
+              </div>
             </div>
           )
           : (
-            <ApplyButton />
+            <div className="margin-2 display-flex flex-justify">
+              {alternateActionButton}
+              <ApplyButton />
+            </div>
           ) }
       </div>
     </div>
@@ -138,6 +147,7 @@ DropdownMenu.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
+  alternateActionButton: PropTypes.node,
 };
 
 DropdownMenu.defaultProps = {
@@ -152,4 +162,5 @@ DropdownMenu.defaultProps = {
   cancelAriaLabel: '',
   onCancel: () => {},
   forwardedRef: () => {},
+  alternateActionButton: null,
 };

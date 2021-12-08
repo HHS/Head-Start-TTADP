@@ -143,7 +143,7 @@ describe('the grantee search page', () => {
     renderGranteeSearch(user);
     expect(screen.getByRole('heading', { name: /grantee records/i })).toBeInTheDocument();
     const regionalSelect = screen.getByRole('button', { name: 'toggle regional select menu' });
-    expect(regionalSelect).toHaveTextContent('All Regions');
+    expect(regionalSelect).toHaveTextContent('All regions');
   });
 
   it('the search box works', async () => {

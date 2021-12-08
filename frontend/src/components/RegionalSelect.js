@@ -17,10 +17,10 @@ function RegionalSelect(props) {
   let options = [...getRegionOptions(regions)];
 
   if (hasCentralOffice) {
-    options = [...getRegionOptions(regions), { label: 'All Regions', value: 14 }];
+    options = [...getRegionOptions(regions), { label: 'All regions', value: 14 }];
   }
 
-  const initialValue = hasCentralOffice ? { label: 'All Regions', value: 14 } : options[0];
+  const initialValue = hasCentralOffice ? { label: 'All regions', value: 14 } : options[0];
 
   return (
     <ButtonSelect

@@ -9,12 +9,12 @@ import './FilterDateRange.css';
  */
 const DATE_OPTIONS = [
   {
-    label: 'Year to Date',
+    label: 'Year to date',
     value: 1,
     range: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
   {
-    label: 'Custom Date Range',
+    label: 'Custom date range',
     value: 2,
     range: '',
   },
