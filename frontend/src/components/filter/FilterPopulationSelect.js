@@ -5,6 +5,10 @@ import { TARGET_POPULATIONS } from '../../Constants';
 
 const POPULATION_OPTIONS = TARGET_POPULATIONS.filter((population) => population !== '--------------------').map((label, value) => ({ value, label }));
 
+const PREGNANT_WOMEN_OPTION = POPULATION_OPTIONS[2];
+// add border to the bottom of this option
+Object.assign(PREGNANT_WOMEN_OPTION, { endGroup: true });
+
 export default function FilterPopulationSelect({
   onApply,
   labelId,
