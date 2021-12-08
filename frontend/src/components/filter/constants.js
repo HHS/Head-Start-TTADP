@@ -4,7 +4,7 @@ import { formatDateRange } from '../DateRangeSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
-} from '../constants';
+} from '../../Constants';
 import SpecialistSelect from '../SpecialistSelect';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
