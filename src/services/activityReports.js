@@ -785,6 +785,12 @@ async function getDownloadableActivityReports(where) {
           attributes: ['userId'],
           as: 'approvers',
           required: false,
+          include: [
+            {
+              model: User,
+              attributes: ['name'],
+            },
+          ],
         },
       ],
       distinct: true,
