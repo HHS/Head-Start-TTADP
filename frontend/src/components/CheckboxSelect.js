@@ -1,8 +1,43 @@
 import React, { useState, createRef } from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox } from '@trussworks/react-uswds';
+import { Button, Checkbox } from '@trussworks/react-uswds';
+import { v4 as uuid } from 'uuid';
 import './CheckboxSelect.css';
 import DropdownMenu from './DropdownMenu';
+
+const optionProp = PropTypes.shape({
+  value: PropTypes.number,
+  label: PropTypes.string,
+});
+
+function CheckboxForSelect({
+  option, handleCheckboxSelect, onBlur, prefix, checkboxes,
+}) {
+  const { label, value } = option;
+  const selectId = `${prefix}-${value}`;
+  const isChecked = checkboxes[value] || false;
+
+  return (
+    <Checkbox
+      key={selectId}
+      id={selectId}
+      label={label}
+      value={value}
+      checked={isChecked}
+      onChange={handleCheckboxSelect}
+      aria-label={`Select ${label}`}
+      onBlur={onBlur}
+    />
+  );
+}
+
+CheckboxForSelect.propTypes = {
+  option: optionProp.isRequired,
+  handleCheckboxSelect: PropTypes.func.isRequired,
+  onBlur: PropTypes.func.isRequired,
+  prefix: PropTypes.string.isRequired,
+  checkboxes: PropTypes.arrayOf(PropTypes.node).isRequired,
+};
 
 export function renderCheckboxes(
   options,
@@ -11,24 +46,32 @@ export function renderCheckboxes(
   handleCheckboxSelect,
   onBlur,
 ) {
-  return options.map((option) => {
-    const { label, value } = option;
-    const selectId = `${prefix}-${value}`;
-    const isChecked = checkboxes[value] || false;
+  if (Array.isArray(options[1])) {
+    return options.map((optionGroup) => (
+      <div className="tta-smarthub-check" key={uuid()}>
+        {optionGroup.map((option) => (
+          <CheckboxForSelect
+            key={`${prefix}-${option.value}-${uuid()}`}
+            option={option}
+            handleCheckboxSelect={handleCheckboxSelect}
+            onBlur={onBlur}
+            prefix={prefix}
+            checkboxes={checkboxes}
+          />
+        ))}
+      </div>
+    ));
+  }
 
-    return (
-      <Checkbox
-        key={selectId}
-        id={selectId}
-        label={label}
-        value={value}
-        checked={isChecked}
-        onChange={handleCheckboxSelect}
-        aria-label={`Select ${label}`}
-        onBlur={onBlur}
-      />
-    );
-  });
+  return options.map((option) => (
+    <CheckboxForSelect
+      option={option}
+      handleCheckboxSelect={handleCheckboxSelect}
+      onBlur={onBlur}
+      prefix={prefix}
+      checkboxes={checkboxes}
+    />
+  ));
 }
 
 export const makeCheckboxes = (options, checked) => (
@@ -47,6 +90,7 @@ export default function CheckboxSelect(props) {
     ariaName,
     disabled,
     hideToggleAll,
+    showClear,
   } = props;
 
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
@@ -100,6 +144,22 @@ export default function CheckboxSelect(props) {
 
   const ariaLabel = `toggle the ${ariaName}`;
 
+  let ClearButton = null;
+
+  if (showClear) {
+    ClearButton = (
+      <Button
+        onClick={() => {
+          setCheckboxes(makeCheckboxes(options, false));
+          setToggleAllChecked(false);
+        }}
+        unstyled
+      >
+        Clear
+      </Button>
+    );
+  }
+
   return (
     <DropdownMenu
       canBlur={canBlur}
@@ -112,6 +172,7 @@ export default function CheckboxSelect(props) {
       onApply={onApplyClick}
       menuName={ariaName}
       applyButtonAria={`Apply filters for the ${ariaName}`}
+      alternateActionButton={ClearButton}
     >
       <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
         <span className="sr-only" id={labelId}>{labelText}</span>
@@ -141,11 +202,6 @@ export default function CheckboxSelect(props) {
   );
 }
 
-const optionProp = PropTypes.shape({
-  value: PropTypes.number,
-  label: PropTypes.string,
-});
-
 CheckboxSelect.propTypes = {
   toggleAllInitial: PropTypes.bool.isRequired,
   toggleAllText: PropTypes.string.isRequired,
@@ -159,10 +215,15 @@ CheckboxSelect.propTypes = {
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
+
+  // show the clear button?
+  showClear: PropTypes.bool,
+
 };
 
 CheckboxSelect.defaultProps = {
   disabled: false,
   styleAsSelect: false,
   hideToggleAll: false,
+  showClear: false,
 };

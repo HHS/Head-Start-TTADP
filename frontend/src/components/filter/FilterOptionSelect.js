@@ -30,6 +30,7 @@ export default function FilterOptionSelect({
       ariaName={ariaName}
       onApply={onApplyClick}
       options={options}
+      showClear
     />
   );
 }

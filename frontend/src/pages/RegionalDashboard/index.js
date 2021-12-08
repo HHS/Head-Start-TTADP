@@ -99,7 +99,7 @@ export default function RegionalDashboard({ user }) {
           {' '}
           TTA Activity Dashboard
         </h1>
-        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 desktop:margin-top-0">
+        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 margin-bottom-6">
           <FilterMenu filters={filters} onApplyFilters={onApplyFilters} />
           <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
         </Grid>

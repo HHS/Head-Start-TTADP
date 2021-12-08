@@ -1,5 +1,9 @@
 .ttahub-filter-menu-item {
-    gap: 0.5rem;
+    gap: 1em;
+}
+
+.usa-list--unstyled li.ttahub-filter-menu-item {
+    margin-bottom: 0.5em;
 }
 
 .ttahub-filter-menu-item [name="topic"],

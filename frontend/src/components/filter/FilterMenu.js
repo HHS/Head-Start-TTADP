@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
+import { FILTER_CONFIG } from './constants';
 
 // save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
@@ -12,15 +13,24 @@ const filterProp = PropTypes.shape({
   id: PropTypes.string,
 });
 
+// a list of all the filter topics available
+const availableFilters = FILTER_CONFIG.map((f) => f.id);
+
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
  * @param {Object} props
  * @returns JSX Object
  */
-export default function FilterMenu({ filters, onApplyFilters }) {
+export default function FilterMenu({ filters, onApplyFilters, allowedFilters }) {
   const [items, setItems] = useState([...filters]);
 
+  // filters currently selected. these will be excluded from filter selection
   const selectedFilters = items.map((filter) => filter.topic);
+
+  const prohibitedFilters = [
+    ...selectedFilters,
+    ...availableFilters.filter((f) => !allowedFilters.includes(f)),
+  ];
 
   useEffect(() => {
     // If filters where changes outside of this component update.
@@ -70,7 +80,13 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     setItems(newItems);
   };
 
+  const clearAllFilters = () => {
+    setItems([]);
+  };
+
   const canBlur = () => false;
+
+  const ClearAllButton = <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
 
   return (
     <DropdownMenu
@@ -84,6 +100,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       className="ttahub-filter-menu margin-right-1"
       menuName="filter menu"
       canBlur={canBlur}
+      alternateActionButton={ClearAllButton}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
@@ -95,11 +112,11 @@ export default function FilterMenu({ filters, onApplyFilters }) {
                 onUpdateFilter={onUpdateFilter}
                 key={filter.id}
                 filter={filter}
-                prohibitedFilters={selectedFilters}
+                prohibitedFilters={prohibitedFilters}
               />
             ))}
           </ul>
-          <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
+          <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
     </DropdownMenu>
@@ -109,4 +126,9 @@ export default function FilterMenu({ filters, onApplyFilters }) {
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
+  allowedFilters: PropTypes.arrayOf(PropTypes.string),
+};
+
+FilterMenu.defaultProps = {
+  allowedFilters: availableFilters,
 };
