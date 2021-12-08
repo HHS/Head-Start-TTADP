@@ -13,8 +13,10 @@ import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatu
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withRole, withoutRole } from './role';
 import withRegion from './region';
+import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutReason, withReason } from './reason';
+import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 
 export const topicToQuery = {
   reportId: {
@@ -68,6 +70,10 @@ export const topicToQuery = {
     in: (query) => withProgramSpecialist(query),
     nin: (query) => withoutProgramSpecialist(query),
   },
+  programType: {
+    in: (query) => withProgramTypes(query),
+    nin: (query) => withoutProgramTypes(query),
+  },
   region: {
     in: (query) => withRegion(query),
   },
@@ -78,6 +84,10 @@ export const topicToQuery = {
   reason: {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
+  },
+  grantNumber: {
+    in: (query) => withGrantNumber(query),
+    nin: (query) => withoutGrantNumber(query),
   },
 };
 

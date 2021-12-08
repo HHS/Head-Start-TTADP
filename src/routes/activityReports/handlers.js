@@ -92,7 +92,7 @@ async function sendActivityReportCSV(reports, res) {
         },
         {
           key: 'programTypes',
-          header: 'Program type',
+          header: 'Program types',
         },
         {
           key: 'reason',
