@@ -41,6 +41,7 @@ export default function FilterItem({
   errors,
   setErrors,
   index,
+  validate,
 }) {
   const {
     id,
@@ -57,35 +58,6 @@ export default function FilterItem({
     setErrors(newErrors);
   };
 
-  const validate = () => {
-    let message = '';
-    if (!topic) {
-      message = 'Please enter a value';
-      setError(message);
-      return;
-    }
-
-    if (!condition) {
-      message = 'Please enter a condition';
-      setError(message);
-      return;
-    }
-
-    if (!query || !query.length) {
-      message = 'Please enter a parameter';
-      setError(message);
-      return;
-    }
-
-    if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
-      message = 'Please enter a parameter';
-      setError(message);
-      return;
-    }
-
-    setError(message);
-  };
-
   const onBlur = (e) => {
     // no validation if you are clicking on something within the filter item
     if (li.current.contains(e.relatedTarget)) {
@@ -97,7 +69,7 @@ export default function FilterItem({
       return;
     }
 
-    validate();
+    validate(filter, setError);
   };
 
   /**
@@ -253,4 +225,5 @@ FilterItem.propTypes = {
   errors: PropTypes.arrayOf(PropTypes.string).isRequired,
   setErrors: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
+  validate: PropTypes.func.isRequired,
 };

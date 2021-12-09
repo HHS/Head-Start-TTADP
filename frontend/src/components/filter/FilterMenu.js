@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
+import usePrevious from '../../hooks/usePrevious';
 
 // save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
@@ -24,6 +25,38 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
 
+  const itemLength = usePrevious(items.length);
+
+  const validate = ({ topic, query, condition }, setError) => {
+    let message = '';
+    if (!topic) {
+      message = 'Please enter a value';
+      setError(message);
+      return false;
+    }
+
+    if (!condition) {
+      message = 'Please enter a condition';
+      setError(message);
+      return false;
+    }
+
+    if (!query || !query.length) {
+      message = 'Please enter a parameter';
+      setError(message);
+      return false;
+    }
+
+    if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+      message = 'Please enter a parameter';
+      setError(message);
+      return false;
+    }
+
+    setError(message);
+    return true;
+  };
+
   useEffect(() => {
     // If filters were changed outside of this component, we need to update the items
     // (for example, the "remove filter" button on the filter pills)
@@ -37,20 +70,41 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     }
   }, [errors.length, items]);
 
+  // focus on the first topic if we add more
+  useEffect(() => {
+    if (items.length > itemLength) {
+      const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+
+      if (topic && !topic.value) {
+        topic.focus();
+      }
+    }
+  }, [itemLength, items.length]);
+
   const onApply = () => {
-    const hasErrors = errors.reduce((acc, curr) => {
-      if (curr) {
+    const hasErrors = items.reduce((acc, curr, index) => {
+      if (acc) {
         return true;
       }
 
-      return acc;
+      const setError = (message) => {
+        const newErrors = [...errors];
+        newErrors.splice(index, 1, message);
+        setErrors(newErrors);
+      };
+
+      if (!validate(curr, setError)) {
+        return true;
+      }
+
+      return false;
     }, false);
 
     if (hasErrors) {
       return false;
     }
 
-    onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
+    onApplyFilters(items);
     return true;
   };
 
@@ -136,6 +190,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
                   index={index}
                   errors={errors}
                   setErrors={setErrors}
+                  validate={validate}
                 />
               ))}
             </ul>
