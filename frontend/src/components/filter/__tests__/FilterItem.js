@@ -15,6 +15,37 @@ describe('Filter menu item', () => {
     onUpdateFilter = jest.fn(),
     setErrors = jest.fn(),
   ) => {
+    const setError = jest.fn((error) => {
+      setErrors([error]);
+    });
+
+    const validate = jest.fn(() => {
+      const { topic, query, condition } = filter;
+      let message = '';
+      if (!topic) {
+        message = 'Please enter a value';
+        setError(message);
+        return false;
+      }
+      if (!condition) {
+        message = 'Please enter a condition';
+        setError(message);
+        return false;
+      }
+      if (!query || !query.length) {
+        message = 'Please enter a parameter';
+        setError(message);
+        return false;
+      }
+      if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+        message = 'Please enter a parameter';
+        setError(message);
+        return false;
+      }
+      setError(message);
+      return true;
+    });
+
     render(
       <div>
         <FilterItem
@@ -24,6 +55,7 @@ describe('Filter menu item', () => {
           errors={['']}
           setErrors={setErrors}
           index={0}
+          validate={validate}
         />
         <button type="button">BIG DUMB BUTTON</button>
       </div>,
