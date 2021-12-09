@@ -182,7 +182,7 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="">Select a topic</option>
+        <option value="" hidden disabled selected>- Select -</option>
         {possibleFilters.map(({ id: filterId, display }) => (
           <option key={filterId} value={filterId}>{display}</option>
         ))}
@@ -199,7 +199,7 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="">Select a condition</option>
+        <option value="" hidden disabled selected>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition

@@ -80,7 +80,9 @@
     "addMissingGrantsToReports:local": "./node_modules/.bin/babel-node ./src/tools/addMissingGrantsToReportsCLI.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
-    "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js"
+    "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
+    "updateLegacyPopulations": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
+    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyPopulationsCLI.js"
   },
   "repository": {
     "type": "git",
