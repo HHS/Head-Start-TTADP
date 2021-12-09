@@ -24,9 +24,9 @@ describe('Grantee DB service', () => {
   ];
 
   beforeAll(async () => {
+    await Promise.all(grantees.map((g) => Grantee.create(g)));
     await Promise.all([
-      ...grantees.map((g) => Grantee.create(g)),
-      await Grant.create({
+      Grant.create({
         id: 75,
         number: '1145543',
         regionId: 1,
@@ -36,7 +36,7 @@ describe('Grantee DB service', () => {
         endDate: new Date(),
         grantSpecialistName: 'Tom Jones',
       }),
-      await Grant.create({
+      Grant.create({
         id: 74,
         number: '1145341',
         regionId: 1,
@@ -45,7 +45,9 @@ describe('Grantee DB service', () => {
         startDate: new Date(),
         endDate: new Date(),
       }),
-      await Program.create({
+    ]);
+    await Promise.all([
+      Program.create({
         id: 74,
         grantId: 75,
         name: 'type2',
@@ -55,7 +57,7 @@ describe('Grantee DB service', () => {
         startDate: 'today',
         endDate: 'tomorrow',
       }),
-      await Program.create({
+      Program.create({
         id: 75,
         grantId: 75,
         name: 'type',

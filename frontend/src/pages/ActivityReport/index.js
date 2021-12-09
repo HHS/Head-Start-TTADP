@@ -55,7 +55,6 @@ const defaultValues = {
   otherResources: [],
   participantCategory: '',
   participants: [],
-  programTypes: [],
   reason: [],
   requester: '',
   specialistNextSteps: [],

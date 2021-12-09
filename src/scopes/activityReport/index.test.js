@@ -15,7 +15,7 @@ import db, {
   Program,
 } from '../../models';
 import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
-import { createReport, destroyReport } from '../../testUtils';
+import { createReport, destroyReport, createGrant } from '../../testUtils';
 
 const mockUser = {
   id: 13706689,
@@ -49,7 +49,6 @@ const submittedReport = {
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
-  programTypes: ['type'],
   targetPopulations: ['Children with Disabilities', 'Pregnant Women'],
   reason: ['reason'],
   participants: ['participants'],
@@ -287,7 +286,7 @@ describe('filtersToScopes', () => {
           id: granteeIncluded2.id, number: 1235, granteeId: granteeIncluded2.id,
         });
         grantExcluded = await Grant.create({
-          id: granteeExcluded.id, number: 1236, granteeId: granteeExcluded.id,
+          id: granteeExcluded.id, number: 456, granteeId: granteeExcluded.id,
         });
 
         reportIncluded1 = await ActivityReport.create({ ...draftReport });
@@ -348,6 +347,37 @@ describe('filtersToScopes', () => {
 
       it('excludes grantees that do not partial match or have no grantees', async () => {
         const filters = { 'grantee.nin': ['1234'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+      });
+
+      it('grant number with matches', async () => {
+        const filters = { 'grantNumber.in': ['123'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(2);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+      });
+
+      it('grant number with no matches', async () => {
+        const filters = { 'grantNumber.in': ['789'] };
+        const scope = filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope, { id: possibleIds }] },
+        });
+        expect(found.length).toBe(0);
+      });
+
+      it('grant numbers excludes matches', async () => {
+        const filters = { 'grantNumber.nin': ['123'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1233,9 +1263,9 @@ describe('filtersToScopes', () => {
         },
       });
 
-      destroyReport(reportOne);
-      destroyReport(reportTwo);
-      destroyReport(reportThree);
+      await destroyReport(reportOne);
+      await destroyReport(reportTwo);
+      await destroyReport(reportThree);
     });
 
     it('includes program type', async () => {
@@ -1279,6 +1309,72 @@ describe('filtersToScopes', () => {
       expect(deleted.id).toBeDefined();
       const endARCount = await ActivityReport.count();
       expect(endARCount).toEqual(beginningARCount);
+    });
+  });
+
+  describe('stateCode', () => {
+    let reportOne;
+    let reportTwo;
+    let reportThree;
+    let possibleIds;
+
+    beforeAll(async () => {
+      const grantOne = await createGrant({
+        stateCode: 'KS',
+      });
+
+      const grantTwo = await createGrant({
+        stateCode: 'MO',
+      });
+
+      reportOne = await createReport({
+        activityRecipients: [
+          {
+            grantId: grantOne.id,
+          },
+        ],
+      });
+      reportTwo = await createReport({
+        activityRecipients: [
+          {
+            grantId: grantOne.id,
+          },
+          {
+            grantId: grantTwo.id,
+          },
+        ],
+      });
+      reportThree = await createReport({
+        activityRecipients: [
+          {
+            grantId: grantTwo.id,
+          },
+        ],
+      });
+
+      possibleIds = [
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await destroyReport(reportOne);
+      await destroyReport(reportTwo);
+      await destroyReport(reportThree);
+    });
+
+    it('includes reports with grants with the given state code', async () => {
+      const filters = { 'stateCode.in': ['KS'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
     });
   });
 });
