@@ -75,6 +75,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Collaborators',
         },
         {
+          key: 'approvers',
+          header: 'Approvers',
+        },
+        {
           key: 'programSpecialistName',
           header: 'Program Specialists',
         },
@@ -92,7 +96,7 @@ async function sendActivityReportCSV(reports, res) {
         },
         {
           key: 'programTypes',
-          header: 'Program type',
+          header: 'Program types',
         },
         {
           key: 'reason',

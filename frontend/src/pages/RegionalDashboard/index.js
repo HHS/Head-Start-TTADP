@@ -14,6 +14,7 @@ import './index.css';
 import FilterPills from '../../components/filter/FilterPills';
 import { expandFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
+import ActivityReportsTable from '../../components/ActivityReportsTable';
 
 /**
  *
@@ -141,6 +142,14 @@ export default function RegionalDashboard({ user }) {
           <Grid row>
             <TopicFrequencyGraph
               filters={filtersToApply}
+              dateTime={dateTime}
+            />
+          </Grid>
+          <Grid row>
+            <ActivityReportsTable
+              filters={filters}
+              showFilter={false}
+              tableCaption="Activity reports"
               dateTime={dateTime}
             />
           </Grid>

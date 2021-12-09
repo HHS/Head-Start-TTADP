@@ -12,7 +12,6 @@ import MultiSelect from '../../../components/MultiSelect';
 import {
   nonGranteeParticipants,
   granteeParticipants,
-  programTypes,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
@@ -54,7 +53,6 @@ const ActivitySummary = ({
 
   const disableRecipients = isEmpty(activityRecipientType);
   const nonGranteeSelected = activityRecipientType === 'non-grantee';
-  const granteeSelected = activityRecipientType === 'grantee';
   const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
   const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
@@ -67,7 +65,6 @@ const ActivitySummary = ({
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: true });
       setValue('participants', [], { shouldValidate: true });
-      setValue('programTypes', [], { shouldValidate: true });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is grantee, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
@@ -163,23 +160,6 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        {granteeSelected
-        && (
-        <div className="margin-top-2">
-          <FormItem
-            label="Program type(s)"
-            name="programTypes"
-          >
-            <MultiSelect
-              name="programTypes"
-              label="Program type(s)"
-              control={control}
-              required="Please select at least one program type"
-              options={programTypes.map((pt) => ({ value: pt, label: pt }))}
-            />
-          </FormItem>
-        </div>
-        )}
         <div className="margin-top-2">
           <FormItem
             label="Target Populations addressed. You may choose more than one."
@@ -445,7 +425,6 @@ const sections = [
       {
         label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
       },
-      { label: 'Program type(s)', name: 'programTypes' },
       { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],
   },
