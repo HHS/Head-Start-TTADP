@@ -30,7 +30,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   const validate = ({ topic, query, condition }, setError) => {
     let message = '';
     if (!topic) {
-      message = 'Please enter a value';
+      message = 'Please enter a parameter';
       setError(message);
       return false;
     }
@@ -42,13 +42,13 @@ export default function FilterMenu({ filters, onApplyFilters }) {
     }
 
     if (!query || !query.length) {
-      message = 'Please enter a parameter';
+      message = 'Please enter a value';
       setError(message);
       return false;
     }
 
     if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
-      message = 'Please enter a parameter';
+      message = 'Please enter a value';
       setError(message);
       return false;
     }

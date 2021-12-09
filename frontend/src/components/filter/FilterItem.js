@@ -144,6 +144,8 @@ export default function FilterItem({
   const liBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex';
   let liErrorClass = '';
 
+  console.log(error);
+
   switch (error) {
     case 'Please enter a value':
       liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
