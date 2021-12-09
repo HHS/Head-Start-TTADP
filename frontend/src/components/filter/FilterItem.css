@@ -14,15 +14,15 @@
     top: 0.5em;
 }
 
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value [name="topic"]{
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter [name="topic"]{
     border: 2px solid #b50909;
 }
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"]{
     border: 2px solid #b50909;
 }
 
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter .smart-hub--dropdown-menu-toggle-btn,
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter .ttahub-filter-date-range-single-date{
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .smart-hub--dropdown-menu-toggle-btn,
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date{
     border: 2px solid #b50909;
 }
 
