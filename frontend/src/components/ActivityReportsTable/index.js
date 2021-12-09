@@ -32,6 +32,7 @@ function ActivityReportsTable({
   showFilter,
   onUpdateFilters,
   tableCaption,
+  dateTime,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -209,9 +210,9 @@ function ActivityReportsTable({
     <>
       <Grid row>
         {error && (
-        <Alert type="error" role="alert">
-          {error}
-        </Alert>
+          <Alert type="error" role="alert">
+            {error}
+          </Alert>
         )}
       </Grid>
 
@@ -230,6 +231,7 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
+          dateTime={dateTime}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
@@ -292,10 +294,14 @@ ActivityReportsTable.propTypes = {
   showFilter: PropTypes.bool.isRequired,
   onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
+  dateTime: PropTypes.shape({
+    timestamp: PropTypes.string, label: PropTypes.string,
+  }),
 };
 
 ActivityReportsTable.defaultProps = {
-  onUpdateFilters: () => {},
+  onUpdateFilters: () => { },
+  dateTime: { timestamp: '', label: '' },
 };
 
 export default ActivityReportsTable;

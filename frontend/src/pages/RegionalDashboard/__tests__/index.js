@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { Router } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
 import {
   render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
@@ -15,7 +17,12 @@ describe('Regional Dashboard page', () => {
     fetchMock.mock('*', 200);
   });
 
-  const renderDashboard = (user) => render(<RegionalDashboard user={user} />);
+  const history = createMemoryHistory();
+  const renderDashboard = (user) => render(
+    <Router history={history}>
+      <RegionalDashboard user={user} />
+    </Router>,
+  );
 
   const user = {
     homeRegionId: 14,
