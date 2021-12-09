@@ -1,13 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import RegionalSelect from '../RegionalSelect';
+import { Dropdown } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
 import { getUserRegions } from '../../permissions';
+import { DECIMAL_BASE } from '../../Constants';
 
 export default function FilterRegionalSelect({ onApply, appliedRegion }) {
-  const onApplyRegion = (option) => {
-    const { value } = option;
-    onApply(value);
+  const onApplyRegion = (e) => {
+    const { target: { value } } = e;
+    onApply(parseInt(value, DECIMAL_BASE));
   };
 
   return (
@@ -18,13 +19,21 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
         const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
 
         return (
-          <RegionalSelect
-            regions={regions}
-            onApply={onApplyRegion}
-            hasCentralOffice={hasCentralOffice}
-            appliedRegion={appliedRegion}
-            styleAsSelect
-          />
+          <>
+            { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
+            <label className="sr-only" htmlFor="regionSelect">Select region filter</label>
+            <Dropdown name="region" id="region" value={appliedRegion} onChange={onApplyRegion}>
+              {regions.map((region) => (
+                <option key={region} value={region}>
+                  Region
+                  {' '}
+                  {region}
+                </option>
+              ))}
+              {hasCentralOffice
+              && <option value="14">All regions</option>}
+            </Dropdown>
+          </>
         );
       }}
     </UserContext.Consumer>
