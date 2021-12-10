@@ -213,8 +213,8 @@ describe('ActivityReport', () => {
         const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
         reactSelectEvent.openMenu(recipientSelectbox);
 
-        const granteeNames = await screen.findByText(/recipient name\(s\)/i);
-        expect(await within(granteeNames).queryAllByText(/recipient name/i).length).toBe(2);
+        const recipientNames = await screen.findByText(/recipient name\(s\)/i);
+        expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
@@ -239,8 +239,8 @@ describe('ActivityReport', () => {
       reactSelectEvent.openMenu(recipientSelectbox);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
-      const granteeNames = await screen.findByText(/recipient name\(s\)/i);
-      expect(await within(granteeNames).queryAllByText(/recipient name/i).length).toBe(2);
+      const recipientNames = await screen.findByText(/recipient name\(s\)/i);
+      expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const otherEntity = within(information).getByLabelText('Other entity');
