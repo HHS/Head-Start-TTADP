@@ -23,9 +23,9 @@ const Modal = ({
       ref={modalRef}
       id={`${modalId}`}
       isLarge={isLarge}
-      aria-labelledby={`${modalId}-modal-id-heading`}
+      aria-labelledby={`${modalId}-heading`}
     >
-      <ModalHeading className="font-sans" id={`${modalId}-modal-id-heading`}>
+      <ModalHeading className="font-sans" id={`${modalId}-heading`}>
         {title}
       </ModalHeading>
       <div>
