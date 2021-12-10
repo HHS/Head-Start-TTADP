@@ -44,9 +44,9 @@ const ActivitySummary = ({
     })),
   }));
 
-  const otherEntities = rawOtherEntities.map((entities) => ({
-    label: entities.name,
-    value: entities.activityRecipientId,
+  const otherEntities = rawOtherEntities.map((entity) => ({
+    label: entity.name,
+    value: entity.activityRecipientId,
   }));
 
   const disableRecipients = isEmpty(activityRecipientType);
