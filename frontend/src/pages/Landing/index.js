@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import {
   Alert, Grid, Button,
 } from '@trussworks/react-uswds';
+import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
@@ -26,6 +27,14 @@ import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
+import FilterMenu from '../../components/filter/FilterMenu';
+import FilterPills from '../../components/filter/FilterPills';
+import { formatDateRange } from '../../components/DateRangeSelect';
+
+const defaultDate = formatDateRange({
+  yearToDate: true,
+  forDateTime: true,
+});
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -48,6 +57,16 @@ function regionFilter(regionId) {
 }
 
 function Landing({ user }) {
+  // Page Filters.
+  const [filters, setFilters] = useState([
+    {
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'Is within',
+      query: defaultDate,
+    },
+  ]);
+
   const regions = allRegionsUserHasPermissionTo(user);
   const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
@@ -63,17 +82,14 @@ function Landing({ user }) {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
-  const [alertFilters, setAlertFilters] = useState([]);
 
   const defaultRegion = regions[0] || user.homeRegionId || 0;
 
+  // TODO: Remove.
   const [
     appliedRegion,
     updateAppliedRegion,
   ] = useState(user.homeRegionId === 14 ? 14 : defaultRegion);
-  const [filters, setFilters] = useState([
-    regionFilter(appliedRegion),
-  ]);
 
   const [regionLabel, setRegionLabel] = useState('');
   const ariaLiveContext = useContext(AriaLiveContext);
@@ -92,6 +108,7 @@ function Landing({ user }) {
     setAlertsSortConfig({ sortBy, direction });
   };
 
+  // TODO: Remove.
   const onApplyRegion = (region) => {
     const regionId = region ? region.value : appliedRegion;
     const filtersToApply = filters.filter((f) => f.topic !== 'region');
@@ -103,20 +120,8 @@ function Landing({ user }) {
     updateAppliedRegion(regionId);
   };
 
-  // Update ariaLiveContext outside of effects to avoid infinite re-renders and
-  // the initial "0 filters applied" on first render
-  const handleApplyFilters = (newFilters) => {
-    setFilters([...newFilters, regionFilter(appliedRegion)]);
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
-  };
-
-  const handleApplyAlertFilters = (newFilters) => {
-    setAlertFilters(newFilters);
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to my alerts`);
-  };
-
   const handleDownloadAllAlerts = () => {
-    const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
+    const filterQuery = filtersToQueryString(filters, appliedRegion);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
     window.location.assign(downloadURL);
   };
@@ -124,7 +129,7 @@ function Landing({ user }) {
   useEffect(() => {
     async function fetchAlertReports() {
       setAlertsLoading(true);
-      const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
+      const filterQuery = filtersToQueryString(filters, appliedRegion);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
@@ -145,7 +150,7 @@ function Landing({ user }) {
       setAlertsLoading(false);
     }
     fetchAlertReports();
-  }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters, appliedRegion]);
+  }, [alertsSortConfig, alertsOffset, alertsPerPage, filters, appliedRegion]);
 
   useEffect(() => {
     setRegionLabel(appliedRegion === 14 ? 'All' : appliedRegion.toString());
@@ -185,6 +190,24 @@ function Landing({ user }) {
       query: '2020/08/31',
     },
   ];
+
+  // Apply filters.
+  const onApply = (newFilters) => {
+    setFilters([
+      ...newFilters,
+    ]);
+    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
+  };
+
+  // Remove Filters.
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
+  };
 
   return (
     <>
@@ -228,6 +251,19 @@ function Landing({ user }) {
                 />
               )}
           </Grid>
+          <Grid col={10} className="flex-align-self-center">
+            <div className="display-flex flex-wrap margin-bottom-2">
+              <FilterMenu
+                filters={filters}
+                onApplyFilters={onApply}
+                onRemoveFilter={onRemoveFilter}
+              />
+              <FilterPills
+                filters={filters}
+                onRemoveFilter={onRemoveFilter}
+              />
+            </div>
+          </Grid>
           <Grid className="flex-align-self-center">
             {reportAlerts
               && reportAlerts.length > 0
@@ -261,8 +297,7 @@ function Landing({ user }) {
           alertsActivePage={alertsActivePage}
           alertReportsCount={alertReportsCount}
           sortHandler={requestAlertsSort}
-          updateReportFilters={handleApplyAlertFilters}
-          hasFilters={alertFilters.length > 0}
+          hasFilters={filters.length > 0}
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
@@ -270,8 +305,7 @@ function Landing({ user }) {
         />
         <ActivityReportsTable
           filters={filters}
-          showFilter
-          onUpdateFilters={handleApplyFilters}
+          showFilter={false}
           tableCaption={`Region ${regionLabel} Activity reports`}
         />
       </>
