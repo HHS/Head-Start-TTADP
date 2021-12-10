@@ -18,7 +18,7 @@ const Modal = ({
   isLarge,
   children,
 }) => (
-  <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`} aria-modal="true" role="dialog" id={modalId} aria-labelledby={`${modalId}-modal-id-heading`}>
+  <div aria-hidden={!modalRef.current || !modalRef.current.modalIsOpen} className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`} aria-modal="true" role="dialog" id={modalId} aria-labelledby={`${modalId}-modal-id-heading`}>
     <TrussWorksModal
       ref={modalRef}
       id={`${modalId}-inner-modal-id`}
