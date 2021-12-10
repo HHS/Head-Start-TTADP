@@ -4,6 +4,7 @@ import {
   Objective,
   User,
   ActivityRecipient,
+  ActivityReportApprover,
   Grant,
   Recipient,
 } from '../models';
@@ -101,6 +102,37 @@ describe('activityReportToCsvRecord', () => {
     },
   ];
 
+  const mockApprovers = [
+    {
+      activityReportId: 209914,
+      status: 'approved',
+      userId: 3,
+      User: {
+        name: 'Test Approver 1',
+
+      },
+    },
+    {
+      activityReportId: 209914,
+      status: 'approved',
+      userId: 4,
+      User: {
+        name: 'Test Approver 3',
+
+      },
+    },
+    {
+
+      activityReportId: 209914,
+      status: 'approved',
+      userId: 5,
+      User: {
+        name: 'Test Approver 2',
+
+      },
+    },
+  ];
+
   const mockActivityRecipients = [
     {
       id: 4,
@@ -149,6 +181,7 @@ describe('activityReportToCsvRecord', () => {
     collaborators: mockCollaborators,
     approvedAt: new Date(),
     activityRecipients: mockActivityRecipients,
+    approvers: mockApprovers,
   };
 
   it('transforms arrays of strings into strings', async () => {
@@ -173,16 +206,22 @@ describe('activityReportToCsvRecord', () => {
           model: ActivityRecipient,
           as: 'activityRecipients',
           include: [{ model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] }],
+        },
+        {
+          model: ActivityReportApprover,
+          as: 'approvers',
+          include: [{ model: User }],
         }],
     });
     const output = await activityReportToCsvRecord(report);
     const {
-      author, lastUpdatedBy, collaborators, programSpecialistName,
+      author, lastUpdatedBy, collaborators, programSpecialistName, approvers,
     } = output;
     expect(author).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
     expect(collaborators).toEqual('Collaborator 1, GS, HS\nCollaborator 2');
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
+    expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
   });
 
   it('transforms goals and objectives into many values', async () => {

@@ -21,9 +21,9 @@ const possibleIds = recipients.map((recipient) => recipient.id);
 
 describe('recipientFiltersToScopes', () => {
   beforeAll(async () => {
+    await Promise.all(recipients.map((g) => Recipient.create(g)));
     await Promise.all([
-      ...recipients.map((g) => Recipient.create(g)),
-      await Grant.create({
+      Grant.create({
         id: recipients[0].id,
         number: '1195543',
         regionId: 1,
@@ -32,7 +32,7 @@ describe('recipientFiltersToScopes', () => {
         startDate: new Date('07/01/1997'),
         endDate: new Date('07/01/1997'),
       }),
-      await Grant.create({
+      Grant.create({
         id: recipients[1].id,
         number: '1195341',
         regionId: 1,
@@ -41,7 +41,7 @@ describe('recipientFiltersToScopes', () => {
         startDate: new Date('08/01/1997'),
         endDate: new Date('08/01/1997'),
       }),
-      await Grant.create({
+      Grant.create({
         id: recipients[2].id,
         number: '1195343',
         regionId: 3,

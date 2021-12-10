@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
     grantSpecialistEmail: DataTypes.STRING,
     programSpecialistName: DataTypes.STRING,
     programSpecialistEmail: DataTypes.STRING,
+    stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
     recipientId: {

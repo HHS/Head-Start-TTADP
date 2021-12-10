@@ -94,6 +94,7 @@ export async function processFiles() {
         number: g.grant_number,
         recipientId: parseInt(g.agency_id, 10),
         status: g.grant_status,
+        stateCode: valueFromXML(g.grantee_state),
         startDate,
         endDate,
         regionId,

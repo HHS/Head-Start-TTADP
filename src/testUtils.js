@@ -77,7 +77,7 @@ async function createRecipient(recipient) {
   });
 }
 
-async function createGrant(grant) {
+export async function createGrant(grant) {
   let g = await Recipient.findByPk(grant.recipientId);
   if (!g) {
     g = await createRecipient({});

@@ -32,7 +32,7 @@ const NoteEntry = ({
       name={name}
       label={label}
     >
-      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} defaultValue={input} spellcheck="true" />
+      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} defaultValue={input} spellCheck="true" />
       <Button outline disabled={!(input && input.trim())} onClick={onSubmit} data-testid={`${name}-button`} type="button">Save Next Step</Button>
       {!isRequired && <Button secondary onClick={onCancel} type="button" data-testid={`${name}-cancel-button`}>Cancel</Button>}
     </FormItem>
