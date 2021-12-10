@@ -4,6 +4,7 @@ import {
   fireEvent,
   render, screen, waitFor, within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 
@@ -244,17 +245,15 @@ describe('Activity report print and share view', () => {
       ],
     };
     act(() => renderApprovedActivityReport(5000, unlockUser));
-    await waitFor(() => {
-      const unlockButton = screen.getByRole('button', { name: /unlock report/i });
-      fireEvent.click(unlockButton);
-      expect(screen.getByRole('heading', { name: /unlock activity report/i })).toBeInTheDocument();
-    });
+    const unlockButton = await screen.findByRole('button', { name: /unlock report/i });
+    act(() => userEvent.click(unlockButton));
+
+    const heading = await screen.findByRole('heading', { name: /unlock activity report/i });
+    expect(heading).toBeInTheDocument();
   });
 
   it('hides unlock report button', async () => {
     act(() => renderApprovedActivityReport(5000));
-    await waitFor(() => {
-      expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
   });
 });

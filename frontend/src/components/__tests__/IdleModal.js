@@ -34,7 +34,7 @@ describe('IdleModal', () => {
       jest.advanceTimersByTime(11);
     });
     const modal = document.querySelector('#IdleReportModal');
-    expect(modal.firstChild).toHaveClass('is-visible');
+    expect(modal).toHaveClass('is-visible');
   });
 
   it('logout is called after logoutTimeout milliseconds of inactivity', () => {
@@ -65,7 +65,7 @@ describe('IdleModal', () => {
     act(() => {
       jest.advanceTimersByTime(12);
       const modal = document.querySelector('#IdleReportModal');
-      expect(modal.firstChild).toHaveClass('is-visible');
+      expect(modal).toHaveClass('is-visible');
 
       const testDiv = screen.getByTestId('test');
       userEvent.type(testDiv, 'test');
