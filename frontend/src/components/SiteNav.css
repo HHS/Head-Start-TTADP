@@ -1,3 +1,9 @@
+@media(min-height: 40em){
+  .smart-hub-sitenav-content-container {
+    overflow-y: hidden;
+  }
+}
+
 .smart-hub-sitenav-separator--after::after,
 .smart-hub-sitenav-separator--before::before
 {

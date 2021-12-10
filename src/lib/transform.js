@@ -62,6 +62,29 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
+function transformApproversModel(prop) {
+  async function transformer(instance) {
+    const obj = {};
+    const values = await instance.approvers;
+    if (values) {
+      const distinctValues = [
+        ...new Set(
+          values.filter(
+            (approver) => approver.User && approver.User[prop] !== null,
+          ).map((r) => r.User[prop]).flat(),
+        ),
+      ];
+      const approversList = distinctValues.sort().join('\n');
+      Object.defineProperty(obj, 'approvers', {
+        value: approversList,
+        enumerable: true,
+      });
+    }
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
 function transformGrantModel(prop) {
   async function transformer(instance) {
     const obj = {};
@@ -187,6 +210,7 @@ const arTransformers = [
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
   transformRelatedModel('collaborators', 'fullName'),
+  transformApproversModel('name'),
   'targetPopulations',
   'virtualDeliveryType',
   'reason',
