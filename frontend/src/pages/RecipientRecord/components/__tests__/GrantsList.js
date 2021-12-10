@@ -62,14 +62,14 @@ describe('Grants List Widget', () => {
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
 
     // Grant 1.
-    expect(await screen.findByRole('link', { name: /grant number 1/i })).toBeInTheDocument();
+    expect(await screen.findByText(/grant number 1/i)).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: 'Active' })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /ehs, hs/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /tim/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /sam/i })).toBeInTheDocument();
 
     // Grant 2.
-    expect(await screen.findByRole('link', { name: /grant number 2/i })).toBeInTheDocument();
+    expect(await screen.findByText(/grant number 2/i)).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: 'Inactive' })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /ehs-ccp/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /10\/02\/2020/i })).toBeInTheDocument();

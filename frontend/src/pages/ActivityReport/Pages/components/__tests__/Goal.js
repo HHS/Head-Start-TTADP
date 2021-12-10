@@ -170,11 +170,11 @@ describe('Goal', () => {
       render(<RenderGoal onUpdateObjectives={onUpdate} name="test goal" objectives={objectives} />);
 
       const title = await screen.findByRole('textbox', { name: 'title for objective 1 on goal 1' });
-      userEvent.type(title, 'title');
+      userEvent.type(title, 't');
       const button = await screen.findByRole('button', { name: 'Save objective 1 on goal 1' });
       userEvent.click(button);
       expect(onUpdate).toHaveBeenCalledWith([{
-        id: 'a', title: 'title', ttaProvided: 'test', status: 'Not Started',
+        id: 'a', title: 't', ttaProvided: 'test', status: 'Not Started',
       }]);
     });
   });
