@@ -169,7 +169,7 @@ parameters:
     default: "js-478-grantee-search-fixes"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-496/update-legacy-ar-data"
+    default: "js-523-tweak-saving-objectives"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
