@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import FilterOptionSelect from './FilterOptionSelect';
+import FilterSelect from './FilterSelect';
 import { TOPICS } from '../../Constants';
 
 const TOPIC_OPTIONS = TOPICS.map((label, value) => ({ value, label }));
@@ -13,7 +13,7 @@ export default function FilterTopicSelect({
     onApply(selected);
   };
   return (
-    <FilterOptionSelect
+    <FilterSelect
       onApply={onApplyClick}
       labelId={labelId}
       labelText="Filter by reasons"
