@@ -1,7 +1,7 @@
 Logical Data Model
 ==================
 
-<img src="http://www.plantuml.com/plantuml/png/pLZTRjis5BxNK_1kFrY2OSDsKGH5qzGTWhLf4ASFG8idCZkAXoEFt1fntdsc3YoBbfn8iPVjAj1t_dy-aaxs9f3qL9Kc2xaq87u-_VstBFjEo0Lg9Pp7cO4oYA-QvaBQme0IkSUlGTm1K1R-qjP9BqjXj0LQEX3eQOvPbXiPWlWSm8lxJ8WVXLRYbT2Me5X3PsS5MF2IGBr-NOld0KBKlengWRosHO9RMK9R4l7pQXtAQz8GrYBflLoUiKBqkMlXvcZXgYfduDimb5ARDa2Q3BmIOAioni4IRg3GQ2zR1Np_woy_Y9l9-ydDvEfYCXMkcXcTdx9YEDMgpjt8G1-mq7PjIBg4GB9qjIJt46i_fuwaSgf7yh1fA4SOrjAq0OsBQOuEdkD120KXzzgHHjkW1vLp3RxK8GmkgGhW1ymXBamp1V_CwONOfm5cTJ_Pwh39_bsjiOdtwCEGRg2B7nfjUqALr-tF4cYE2QCyXtcBQfd2mQ4Di0-_G0KDVc2XQFhMxx6LlKMdyr4s78Rj1csMHpDasD5hCskAxY_LKpPr5eSlo1yepR0U2158KXNQI7HuvtVKT7ZliPoMqbEO0z0joMiZuqBD40r8Ur36FBR7qYxMiW5DZox-ewPVmJUQ4hWj8zCAP4vweMbv0muzFPtMUQA_ISyYGMii3Dmk7VGpRcyD_NlZfIM0eQiZHC46CVvnACyfx4sWSoK_yyJU93vaerWp6dR8meYdTv9Wfr2mgWVDbJuIOxXHp9W1XzRuWjDM3RLZg_5yFP1wQ3dhvpnM3WkTidH8U0E5p9UNgXL_Sl7XpuiR25Zvl7x3ghv7AjgkNbTDAgL9evNc2WcINMNwVBgxbfvqhbsSLy8m1KOlm2y_Tju2gceU40foNKgJx7XiqGuP66gTUkk06YpnMT5vPQIqTXuBBykes_TU9-aBe6jqbQcpwjDPQ4-LDE-0I-g6bG5jZvrhDQShvZkbJv2Z9VX6IHMoW2bnExu4Z8H7epvAkyPzEXr-HbOpVkBQQUUSoQN9OxMWMDOI4KckBis9evqxvt6n_kQmev_4uv_HHWRwpAHvk_oNN-1iTZJwShE6_GxjNkXYv8q-liFjIwZDQwHZ7MUVPbyWPZdW81rvodFkfCbiS_s9j_SwRgW2bU1SPG8TOSwje-_bXZpk2cKJsrnf0-oszz-H2N61niWPUaduVoR5llJZthrescFui3_jb8GlbJjkeWxmq6HumBx5sOdLwWJl1H_cZ3pWoSdgllNldep_2zN5sQfFW6QZppyiC_vr_x2geTZzZFdIgDMVB41fEYYxF3qLyM_BPJ_4GRVUKeG3nygR49jI4YoTKdIodvlSkiTLklwQNwnFnU8Uf52TBDxlkK6pVfWRkn8nNUvDRoWMyRXsn2pYjMcsCDl37mutGZ4LjtQq8qe_MQVlbk5vHtc_U7jqxzTv0rPLfVa7" alt="logical data model diagram">
+<img src="http://www.plantuml.com/plantuml/png/pLXVRzis47_Nf-3R_c09XWtRGn4KJLEt2DOcGPn-05gyoEmeddOyfJMIVFU5FfWH8pbHR2_hYmtzxl-V8qzw4rWJjxKhGgaTg5_t__oZA7vG-WgjKGtXp44Tr5VBSwLzvS2eal1hK9S0N8I_hMyqwLevwu4N3IWadcDHb4w7e3u787LTAFMpiaQzKjOpL43guA023wGPpElNI_8yG8ZSnv4jC5bVPRZNDNGf4JziUOvasKAu8saYlJWGXgZpeKGpHmydRJq3wi9GQ-kw05jsy4g1R-je1siuXygYF-u4yEFll_sapYVl9-UJawF9L3NjpDboNnZ3lZLBtvqE_14hw-y4sTOGMDVDab8InDWFkKTf6pD0kLqbL2oCIscUWAHYMc83csXGoa0eoJPiqITqgt3EW6eRmkYGsW0qeWwnOL8LQCFgXPYd4MBBV8hKTfNzfuN04oAaC2ORsCG7YxvRePPizx46dcCsKIHctg9Pv71eq0TOXn-XWOHl6IYweVPxh6KliB7bU9baHkH6THQX6rFig3NLcgFwO_EKpDABxHla0setBWTA1TRSXYuI5LxI0pORtXFMqreJXpa0Nx0-Spesr0pHWVPRUInbUypj2hKRaVIeudzA-Wbyuob3Sp-HUGIwP7jbUN4E3H8_xTPXnhzopoD3fom2N2mQ69wujJ6iELXAsrZmFBPvbAALIFHXHsF_WVGZBlIkvKrFxUJw6D4LRnJk3OqWnEyqmuDWmPi1j3HsHvCZoPB96N5uRHPqIbb5UfHaT4gaDftTZVDnodEWYMVPzJRQNRQmdW_j6FCEAbqkZat7_kJeurz7vn2mfNAvqfgXdHLzdw_FfesnRD5hTu8CMSlA99rUdcbYMzecbYmRDWFENW4jFlLM0zEcVS90QMljibQFAKepaK7f4EmV6zdIaKzuGrYHhYFlqFhEcYhWCsnQj_HgYEVA4hVQlGC9gMzM1_G3SaqdENsoN353X18zmpVEej0LJ5dIyILWd7jqvfFsTpZbrP6jift9nkkdlUEcrAwCqO8HMeV4h2Mwt2UnTjWqX5TtpsBsEHloXbkrqu4_oz2yNVp72xc8xMny9LdZNalxzxlQx89_HeQxTr5thf5tTPoTphv0z1B6fU0P1xtupfRTlQ-_IFUUnGurO39SeioW7TIvS_IzO96VTOkA2APRRSmCdTvpxtWaZj0vFKFIZD_rMAnnFtRUYxczmKIiSJkDuOlwZYkh8pGa3xVejrWxTNEpXzTAZdD1Rd5lx-Qwy_sdaCzIVLoaXWZeLlpofbaiVzNjpHAAsI_IHh9YJ8jr4Nzwg2ZTtrVnlwjq41ApILkE9DCn-cHa5Kw6vPMAQjRFfwJlSPQ-llGQ-vGjoK86IG1ulUOUBOPXIUsDYkwcxFHD2KbAze0i96cTr8d5cXaISyzWpCcTFksHyiUC9xjhYbZC9NsOt3c_rpEz0M_QslqB" alt="logical data model diagram">
 
 UML Source
 ----------
@@ -107,10 +107,10 @@ class NextSteps {
   * updatedAt: timestamp
 }
 
-class Grantee {
+class Recipient {
   * id : integer
   * name : string
-    granteeType : string
+    recipientType : string
   * createdAt : timestamp
   * updatedAt : timestamp
 }
@@ -119,7 +119,7 @@ class Grant {
   * id : integer
   * number : string
   regionId : integer(32) REFERENCES public.Regions.id
-  * granteeId : integer(32) REFERENCES public.Grantee.id
+  * recipientId : integer(32) REFERENCES public.Recipient.id
   status : string
   startDate : timestamp
   endDate : timestamp
@@ -130,14 +130,14 @@ class Grant {
 
 class GrantGoal {
   * id : integer <<generated>>
-  * granteeId : integer(32) REFERENCES public.Grantees.id
+  * recipientId : integer(32) REFERENCES public.Recipients.id
   * grantId : integer(32) REFERENCES public.Grants.id
   * goalId : integer(32) REFERENCES public.Goals.id
   * createdAt : timestamp
   * updatedAt : timestamp
 }
 
-class NonGrantee {
+class OtherEntities {
   * id : integer <<generated>>
   * name : string
   * createdAt : timestamp
@@ -201,7 +201,7 @@ class ActivityParticipant {
   * id : integer <<generated>>
   * activityReportId : integer(32) REFERENCES public.ActivityReport.id
   grantId : integer(32) REFERENCES public.Grant.id
-  nonGranteeId : integer(32) REFERENCES public.NonGrantee.id
+  otherEntityId : integer(32) REFERENCES public.OtherEntity.id
   * createdAt : timestamp
   * updatedAt : timestamp
 }
@@ -232,13 +232,13 @@ Scope }o--|{ Permission
 Region }o--|{ Permission
 Role }o--|{ Topic
 Topic }|--|{ Goal
-Grantee }o--|{ GrantGoal
+Recipient }o--|{ GrantGoal
 Goal }o--|{ GrantGoal
 Role .. RoleTopic
 Topic .. RoleTopic
 Topic .. TopicGoal
 Goal .. TopicGoal
-Grantee ||--|{ Grant
+Recipient ||--|{ Grant
 Region ||--|{ Grant
 ActivityReport .. ActivityReportCollaborator
 User .. ActivityReportCollaborator
@@ -255,14 +255,14 @@ ActivityReportObjective }o--|{ ActivityReport
 User ||-o{ ActivityReport
 ActivityReport ||-o{ ActivityParticipant
 Grant ||-{ ActivityParticipant
-NonGrantee ||-{ ActivityParticipant
+OtherEntity ||-{ ActivityParticipant
 @enduml
 ```
 
 Instructions
 ------------
 
-1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/pLZTRjis5BxNK_1kFrY2OSDsKGH5qzGTWhLf4ASFG8idCZkAXoEFt1fntdsc3YoBbfn8iPVjAj1t_dy-aaxs9f3qL9Kc2xaq87u-_VstBFjEo0Lg9Pp7cO4oYA-QvaBQme0IkSUlGTm1K1R-qjP9BqjXj0LQEX3eQOvPbXiPWlWSm8lxJ8WVXLRYbT2Me5X3PsS5MF2IGBr-NOld0KBKlengWRosHO9RMK9R4l7pQXtAQz8GrYBflLoUiKBqkMlXvcZXgYfduDimb5ARDa2Q3BmIOAioni4IRg3GQ2zR1Np_woy_Y9l9-ydDvEfYCXMkcXcTdx9YEDMgpjt8G1-mq7PjIBg4GB9qjIJt46i_fuwaSgf7yh1fA4SOrjAq0OsBQOuEdkD120KXzzgHHjkW1vLp3RxK8GmkgGhW1ymXBamp1V_CwONOfm5cTJ_Pwh39_bsjiOdtwCEGRg2B7nfjUqALr-tF4cYE2QCyXtcBQfd2mQ4Di0-_G0KDVc2XQFhMxx6LlKMdyr4s78Rj1csMHpDasD5hCskAxY_LKpPr5eSlo1yepR0U2158KXNQI7HuvtVKT7ZliPoMqbEO0z0joMiZuqBD40r8Ur36FBR7qYxMiW5DZox-ewPVmJUQ4hWj8zCAP4vweMbv0muzFPtMUQA_ISyYGMii3Dmk7VGpRcyD_NlZfIM0eQiZHC46CVvnACyfx4sWSoK_yyJU93vaerWp6dR8meYdTv9Wfr2mgWVDbJuIOxXHp9W1XzRuWjDM3RLZg_5yFP1wQ3dhvpnM3WkTidH8U0E5p9UNgXL_Sl7XpuiR25Zvl7x3ghv7AjgkNbTDAgL9evNc2WcINMNwVBgxbfvqhbsSLy8m1KOlm2y_Tju2gceU40foNKgJx7XiqGuP66gTUkk06YpnMT5vPQIqTXuBBykes_TU9-aBe6jqbQcpwjDPQ4-LDE-0I-g6bG5jZvrhDQShvZkbJv2Z9VX6IHMoW2bnExu4Z8H7epvAkyPzEXr-HbOpVkBQQUUSoQN9OxMWMDOI4KckBis9evqxvt6n_kQmev_4uv_HHWRwpAHvk_oNN-1iTZJwShE6_GxjNkXYv8q-liFjIwZDQwHZ7MUVPbyWPZdW81rvodFkfCbiS_s9j_SwRgW2bU1SPG8TOSwje-_bXZpk2cKJsrnf0-oszz-H2N61niWPUaduVoR5llJZthrescFui3_jb8GlbJjkeWxmq6HumBx5sOdLwWJl1H_cZ3pWoSdgllNldep_2zN5sQfFW6QZppyiC_vr_x2geTZzZFdIgDMVB41fEYYxF3qLyM_BPJ_4GRVUKeG3nygR49jI4YoTKdIodvlSkiTLklwQNwnFnU8Uf52TBDxlkK6pVfWRkn8nNUvDRoWMyRXsn2pYjMcsCDl37mutGZ4LjtQq8qe_MQVlbk5vHtc_U7jqxzTv0rPLfVa7)
+1. [Edit this diagram with plantuml.com](http://www.plantuml.com/plantuml/uml/pLXVRzis47_Nf-3R_c09XWtRGn4KJLEt2DOcGPn-05gyoEmeddOyfJMIVFU5FfWH8pbHR2_hYmtzxl-V8qzw4rWJjxKhGgaTg5_t__oZA7vG-WgjKGtXp44Tr5VBSwLzvS2eal1hK9S0N8I_hMyqwLevwu4N3IWadcDHb4w7e3u787LTAFMpiaQzKjOpL43guA023wGPpElNI_8yG8ZSnv4jC5bVPRZNDNGf4JziUOvasKAu8saYlJWGXgZpeKGpHmydRJq3wi9GQ-kw05jsy4g1R-je1siuXygYF-u4yEFll_sapYVl9-UJawF9L3NjpDboNnZ3lZLBtvqE_14hw-y4sTOGMDVDab8InDWFkKTf6pD0kLqbL2oCIscUWAHYMc83csXGoa0eoJPiqITqgt3EW6eRmkYGsW0qeWwnOL8LQCFgXPYd4MBBV8hKTfNzfuN04oAaC2ORsCG7YxvRePPizx46dcCsKIHctg9Pv71eq0TOXn-XWOHl6IYweVPxh6KliB7bU9baHkH6THQX6rFig3NLcgFwO_EKpDABxHla0setBWTA1TRSXYuI5LxI0pORtXFMqreJXpa0Nx0-Spesr0pHWVPRUInbUypj2hKRaVIeudzA-Wbyuob3Sp-HUGIwP7jbUN4E3H8_xTPXnhzopoD3fom2N2mQ69wujJ6iELXAsrZmFBPvbAALIFHXHsF_WVGZBlIkvKrFxUJw6D4LRnJk3OqWnEyqmuDWmPi1j3HsHvCZoPB96N5uRHPqIbb5UfHaT4gaDftTZVDnodEWYMVPzJRQNRQmdW_j6FCEAbqkZat7_kJeurz7vn2mfNAvqfgXdHLzdw_FfesnRD5hTu8CMSlA99rUdcbYMzecbYmRDWFENW4jFlLM0zEcVS90QMljibQFAKepaK7f4EmV6zdIaKzuGrYHhYFlqFhEcYhWCsnQj_HgYEVA4hVQlGC9gMzM1_G3SaqdENsoN353X18zmpVEej0LJ5dIyILWd7jqvfFsTpZbrP6jift9nkkdlUEcrAwCqO8HMeV4h2Mwt2UnTjWqX5TtpsBsEHloXbkrqu4_oz2yNVp72xc8xMny9LdZNalxzxlQx89_HeQxTr5thf5tTPoTphv0z1B6fU0P1xtupfRTlQ-_IFUUnGurO39SeioW7TIvS_IzO96VTOkA2APRRSmCdTvpxtWaZj0vFKFIZD_rMAnnFtRUYxczmKIiSJkDuOlwZYkh8pGa3xVejrWxTNEpXzTAZdD1Rd5lx-Qwy_sdaCzIVLoaXWZeLlpofbaiVzNjpHAAsI_IHh9YJ8jr4Nzwg2ZTtrVnlwjq41ApILkE9DCn-cHa5Kw6vPMAQjRFfwJlSPQ-llGQ-vGjoK86IG1ulUOUBOPXIUsDYkwcxFHD2KbAze0i96cTr8d5cXaISyzWpCcTFksHyiUC9xjhYbZC9NsOt3c_rpEz0M_QslqB)
 2. Copy and paste the final UML into the UML Source section
 3. Update the img src and edit link target to the current values
 
