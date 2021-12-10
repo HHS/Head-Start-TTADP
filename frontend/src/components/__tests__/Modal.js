@@ -48,14 +48,6 @@ const ModalComponent = (
 };
 
 describe('Modal', () => {
-  it('renders correctly', async () => {
-    render(<ModalComponent />);
-    expect(await screen.findByRole('heading', { name: /test report modal/i, hidden: true })).toBeVisible();
-    expect(await screen.findByText(/are you sure you want to perform this action\?/i)).toBeVisible();
-    expect(await screen.findByRole('button', { name: /cancel/i })).toBeVisible();
-    expect(await screen.findByRole('button', { name: /this button will ok the modal action\./i })).toBeVisible();
-  });
-
   it('correctly hides and shows', async () => {
     render(<ModalComponent />);
 
