@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
+import useSpellCheck from '../../hooks/useSpellCheck';
 
 // eslint-disable-next-line react/jsx-props-no-spreading
 const MultiValue = (props) => <components.MultiValue {...props} />;
@@ -8,20 +9,17 @@ const MultiValue = (props) => <components.MultiValue {...props} />;
 export default function FilterSelect({
   onApply,
   labelText,
+  labelId,
   options,
 }) {
-  // useEffect(() => {
-  //   /**
-  //    * unfortunately, given our support for ie11, we can't
-  //    * upgrade to react-select v5, which support a spellcheck
-  //    * attribute. Here is an awkward solution I've concocted
-  //    * in it's stead.
-  //    */
-  //   const input = document.querySelector(`#${inputId}`);
-  //   if (input) {
-  //     input.setAttribute('spellcheck', 'true');
-  //   }
-  // });
+  /**
+   * unfortunately, given our support for ie11, we can't
+   * upgrade to react-select v5, which support a spellcheck
+   * attribute. Here is an awkward solution I've concocted
+   * in it's stead.
+  */
+
+  useSpellCheck(labelId);
 
   const styles = {
     container: (provided, state) => {
@@ -83,6 +81,7 @@ export default function FilterSelect({
 
   return (
     <Select
+      labelId={labelId}
       label={labelText}
       onChange={onChange}
       options={options}
@@ -105,4 +104,5 @@ FilterSelect.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
+  labelId: PropTypes.string.isRequired,
 };
