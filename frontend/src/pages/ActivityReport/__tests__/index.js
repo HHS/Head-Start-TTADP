@@ -64,7 +64,7 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
 
 const recipients = {
   grants: [{ name: 'recipient', grants: [{ activityRecipientId: 1, name: 'Recipient Name' }] }],
-  otherEntity: [{ activityRecipientId: 1, name: 'otherEntity' }],
+  otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
 };
 
 describe('ActivityReport', () => {

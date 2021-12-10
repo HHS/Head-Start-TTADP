@@ -73,7 +73,7 @@ const regionOneReportC = {
     'Complaint',
     'COVID-19 response',
     'Full Enrollment',
-    'New Grantee',
+    'New Recipient',
     'New Director or Management',
     'New Program Option',
     'New Staff / Turnover',
