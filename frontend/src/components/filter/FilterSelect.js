@@ -1,15 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Select, { components } from 'react-select';
+import Select from 'react-select';
 import useSpellCheck from '../../hooks/useSpellCheck';
-
-// eslint-disable-next-line react/jsx-props-no-spreading
-const MultiValue = (props) => <components.MultiValue {...props} />;
 
 export default function FilterSelect({
   onApply,
   labelText,
-  labelId,
+  inputId,
   options,
 }) {
   /**
@@ -19,7 +16,7 @@ export default function FilterSelect({
    * in it's stead.
   */
 
-  useSpellCheck(labelId);
+  useSpellCheck(inputId);
 
   const styles = {
     container: (provided, state) => {
@@ -29,6 +26,7 @@ export default function FilterSelect({
         ...provided,
         outline,
         height: 'auto',
+        padding: 0,
       };
     },
     control: (provided, state) => {
@@ -80,20 +78,21 @@ export default function FilterSelect({
   };
 
   return (
-    <Select
-      labelId={labelId}
-      label={labelText}
-      onChange={onChange}
-      options={options}
-      styles={styles}
-      components={{
-        DropdownIndicator: null,
-        MultiValue,
-      }}
-      className="usa-select"
-      closeMenuOnSelect={false}
-      isMulti
-    />
+    <>
+      <label className="sr-only" htmlFor={inputId}>{labelText}</label>
+      <Select
+        inputId={inputId}
+        onChange={onChange}
+        options={options}
+        styles={styles}
+        components={{
+          DropdownIndicator: null,
+        }}
+        className="usa-select"
+        closeMenuOnSelect={false}
+        isMulti
+      />
+    </>
   );
 }
 
@@ -104,5 +103,5 @@ FilterSelect.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
-  labelId: PropTypes.string.isRequired,
+  inputId: PropTypes.string.isRequired,
 };

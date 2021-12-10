@@ -194,7 +194,7 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
       <FilterTopicSelect
-        labelId={`topic-${condition}-${id}`}
+        inputId={`topic-${condition}-${id}`}
         onApply={onApplyQuery}
       />
     ),
