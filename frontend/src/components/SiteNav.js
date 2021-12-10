@@ -63,25 +63,25 @@ const SiteNav = ({
   return (
     <div>
       <div className="position-relative z-top">
-        <button id="tp-ar-landing-survey" className={`usa-button position-fixed  bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
+        <button id="tp-ar-landing-survey" className={`usa-button position-fixed bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
       </div>
-      <div className="smart-hub-sitenav pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
+      <div className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
-          <>
+          <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
               <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
-                <p className="text-bold margin-top-5">{user.name}</p>
-                <p className="font-sans-3xs margin-bottom-5">{user.email}</p>
+                <p className="text-bold margin-top-2 desktop:margin-top-5">{user.name}</p>
+                <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5">{user.email}</p>
               </div>
             </div>
-            <nav>
-              <div className="width-full margin-bottom-2 margin-top-6">
+            <nav className="display-flex flex-column flex-justify flex-1">
+              <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
                 <ul className="add-list-reset">
                   <li>
                     <NavLink
                       to="/activity-reports"
                     >
-                      <span className="padding-right-105">
+                      <span className="display-none tablet:display-inline padding-right-105">
                         <FontAwesomeIcon color="white" icon={faChartBar} />
                       </span>
                       Activity Reports
@@ -91,7 +91,7 @@ const SiteNav = ({
                     <NavLink
                       to="/regional-dashboard"
                     >
-                      <span className="padding-right-105">
+                      <span className="display-none tablet:display-inline padding-right-105">
                         <FontAwesomeIcon color="white" icon={faBorderAll} />
                       </span>
                       Regional Dashboard
@@ -102,7 +102,7 @@ const SiteNav = ({
                       <NavLink
                         to="/recipient-tta-records"
                       >
-                        <span className="padding-right-1">
+                        <span className="display-none tablet:display-inline padding-right-105">
                           <FontAwesomeIcon color="white" icon={faUserFriends} />
                         </span>
                         Recipient TTA Records
@@ -111,13 +111,13 @@ const SiteNav = ({
                   </FeatureFlag>
                 </ul>
               </div>
-              <div className="width-full position-absolute bottom-0 padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
+              <div className="width-full padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
                 <ul className="add-list-reset padding-top-5 text-base-lightest">
                   {items.map((item, i) => (<li key={`smart-hub-nav__item-${i}`}>{item}</li>))}
                 </ul>
               </div>
             </nav>
-          </>
+          </div>
         )}
       </div>
     </div>

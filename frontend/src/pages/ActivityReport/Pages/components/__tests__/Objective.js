@@ -7,13 +7,19 @@ import Objective from '../Objective';
 
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  objective, onRemove = () => {}, onUpdate = () => {},
+  defaultObjective, onRemove = () => {},
 }) => {
   const hookForm = useForm({
-    defaultValues: { goals: [] },
+    defaultValues: { objective: defaultObjective },
   });
 
   hookForm.register('goals');
+  hookForm.register('objective');
+  const objective = hookForm.watch('objective');
+
+  const onUpdate = (obj) => {
+    hookForm.setValue('objective', obj);
+  };
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
@@ -33,26 +39,37 @@ const RenderObjective = ({
 
 describe('Objective', () => {
   it('opens in edit mode if "ttaProvided" is blank', async () => {
-    render(<RenderObjective objective={{ ttaProvided: '<p></p>', title: 'title', status: 'status' }} />);
+    render(<RenderObjective defaultObjective={{ ttaProvided: '<p></p>', title: 'title', status: 'status' }} />);
     const save = await screen.findByText('Save Objective');
     expect(save).toBeVisible();
   });
 
   it('opens in edit mode if "title" is blank', async () => {
-    render(<RenderObjective objective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
+    render(<RenderObjective defaultObjective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
     const save = await screen.findByText('Save Objective');
     expect(save).toBeVisible();
   });
 
   describe('in edit mode', () => {
     it('focuses the title field', async () => {
-      render(<RenderObjective objective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
+      render(<RenderObjective defaultObjective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
       const title = await screen.findByLabelText('Objective (Required)');
       expect(document.activeElement).toEqual(title);
     });
 
+    it('saves without explicitly clicking the save button', async () => {
+      const objective = {
+        title: '', ttaProvided: 'test', status: 'Not Started',
+      };
+      render(<RenderObjective defaultObjective={objective} />);
+      const title = await screen.findByLabelText('Objective (Required)');
+      userEvent.type(title, 'this is a test');
+      const titleWithText = await screen.findByDisplayValue('this is a test');
+      expect(titleWithText).toBeVisible();
+    });
+
     it('save does not work if "objective" and "TTA Provided" are empty', async () => {
-      render(<RenderObjective objective={{}} />);
+      render(<RenderObjective defaultObjective={{}} />);
       const save = await screen.findByText('Save Objective');
       expect(save).toBeVisible();
 
@@ -64,12 +81,12 @@ describe('Objective', () => {
       const objective = {
         title: '', ttaProvided: 'test', status: 'Not Started',
       };
-      render(<RenderObjective objective={objective} />);
+      render(<RenderObjective defaultObjective={objective} />);
       const save = await screen.findByText('Save Objective');
       expect(save).toBeVisible();
 
       const title = await screen.findByLabelText('Objective (Required)');
-      userEvent.type(title, 'test');
+      userEvent.type(title, 'this is a test');
 
       userEvent.click(save);
       expect(await screen.findByTestId('tag')).toBeVisible();
@@ -77,7 +94,7 @@ describe('Objective', () => {
 
     it('calls onRemove when the cancel button is clicked with an empty objective', async () => {
       const onRemove = jest.fn();
-      render(<RenderObjective objective={{ title: '', ttaProvided: '<p></p>' }} onRemove={onRemove} />);
+      render(<RenderObjective defaultObjective={{ title: '', ttaProvided: '<p></p>', status: 'Not Started' }} onRemove={onRemove} />);
       const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
       userEvent.click(cancel);
       expect(onRemove).toHaveBeenCalled();
@@ -85,7 +102,7 @@ describe('Objective', () => {
 
     it('cancels any edits if the objective is not empty', async () => {
       const onRemove = jest.fn();
-      render(<RenderObjective objective={{ title: 'title' }} onRemove={onRemove} />);
+      render(<RenderObjective defaultObjective={{ title: 'title', ttaProvided: '<p></p>', status: 'Not Started' }} onRemove={onRemove} />);
       const text = await screen.findByLabelText('Objective (Required)');
       userEvent.type(text, 'test');
       const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
@@ -101,7 +118,7 @@ describe('Objective', () => {
       const objective = {
         title: 'title', ttaProvided: 'test', status: 'Not Started',
       };
-      render(<RenderObjective objective={objective} />);
+      render(<RenderObjective defaultObjective={objective} />);
       const title = await screen.findByText('title');
       const status = await screen.findByText('Not Started');
 
@@ -114,7 +131,7 @@ describe('Objective', () => {
       const objective = {
         title: 'title', ttaProvided: 'test', status: 'Not Started',
       };
-      render(<RenderObjective objective={objective} onRemove={onRemove} />);
+      render(<RenderObjective defaultObjective={objective} onRemove={onRemove} />);
       const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
       userEvent.click(menu);
 
@@ -127,7 +144,7 @@ describe('Objective', () => {
       const objective = {
         title: 'title', ttaProvided: 'test', status: 'Not Started',
       };
-      render(<RenderObjective objective={objective} />);
+      render(<RenderObjective defaultObjective={objective} />);
       const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
       userEvent.click(menu);
 
