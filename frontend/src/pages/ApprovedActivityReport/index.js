@@ -43,7 +43,7 @@ function calculateGoalsAndObjectives(report) {
     return [headings, data];
   }
 
-  // else, we assume other entities
+  // else, we assume other entity
   const { objectivesWithoutGoals } = report;
   objectivesWithoutGoals.forEach((objective, index) => {
     const displayNumber = index + 1;

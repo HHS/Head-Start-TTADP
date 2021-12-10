@@ -21,7 +21,7 @@ const activityReports = [
             name: 'Johnston-Romaguera',
           },
         },
-        otherEntities: null,
+        otherEntity: null,
       },
       {
         activityRecipientId: 4,
@@ -34,7 +34,7 @@ const activityReports = [
             name: 'Johnston-Romaguera',
           },
         },
-        otherEntities: null,
+        otherEntity: null,
       },
       {
         activityRecipientId: 1,
@@ -47,7 +47,7 @@ const activityReports = [
             name: 'Recipient Name',
           },
         },
-        otherEntities: null,
+        otherEntity: null,
       },
     ],
     author: {
@@ -85,7 +85,7 @@ const activityReports = [
         name: 'QRIS System',
         id: 31,
         grant: null,
-        otherEntities: {
+        otherEntity: {
           id: 3,
           name: 'QRIS System',
           createdAt: '2021-02-03T21:00:57.149Z',
@@ -129,7 +129,7 @@ export const activityReportsSorted = [
         name: 'QRIS System',
         id: 31,
         grant: null,
-        otherEntities: {
+        otherEntity: {
           id: 3,
           name: 'QRIS System',
           createdAt: '2021-02-03T21:00:57.149Z',
@@ -176,7 +176,7 @@ export const activityReportsSorted = [
             name: 'Johnston-Romaguera',
           },
         },
-        otherEntities: null,
+        otherEntity: null,
       },
       {
         activityRecipientId: 4,
@@ -189,7 +189,7 @@ export const activityReportsSorted = [
             name: 'Johnston-Romaguera',
           },
         },
-        otherEntities: null,
+        otherEntity: null,
       },
       {
         activityRecipientId: 1,
@@ -202,7 +202,7 @@ export const activityReportsSorted = [
             name: 'Recipient Name',
           },
         },
-        otherEntities: null,
+        otherEntity: null,
       },
     ],
     author: {
@@ -250,7 +250,7 @@ export const generateXFakeReports = (count, status = []) => {
                 name: 'Johnston-Romaguera',
               },
             },
-            otherEntities: null,
+            otherEntity: null,
           },
           {
             activityRecipientId: 4,
@@ -263,7 +263,7 @@ export const generateXFakeReports = (count, status = []) => {
                 name: 'Johnston-Romaguera',
               },
             },
-            otherEntities: null,
+            otherEntity: null,
           },
           {
             activityRecipientId: 1,
@@ -276,7 +276,7 @@ export const generateXFakeReports = (count, status = []) => {
                 name: 'Grantee Name',
               },
             },
-            otherEntities: null,
+            otherEntity: null,
           },
         ],
         author: {

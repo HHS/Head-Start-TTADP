@@ -64,7 +64,7 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
 
 const recipients = {
   grants: [{ name: 'recipient', grants: [{ activityRecipientId: 1, name: 'Recipient Name' }] }],
-  otherEntities: [{ activityRecipientId: 1, name: 'otherEntities' }],
+  otherEntity: [{ activityRecipientId: 1, name: 'otherEntity' }],
 };
 
 describe('ActivityReport', () => {
@@ -220,11 +220,11 @@ describe('ActivityReport', () => {
       it('Other entity', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const otherEntities = within(information).getByLabelText('Other entities');
+        const otherEntities = within(information).getByLabelText('Other entity');
         fireEvent.click(otherEntities);
         const recipientSelectbox = await screen.findByRole('textbox', { name: 'Other entities (Required)' });
         reactSelectEvent.openMenu(recipientSelectbox);
-        expect(await screen.findByText(withText('otherEntities'))).toBeVisible();
+        expect(await screen.findByText(withText('otherEntity'))).toBeVisible();
       });
     });
 
@@ -243,8 +243,8 @@ describe('ActivityReport', () => {
       expect(await within(granteeNames).queryAllByText(/recipient name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const otherEntities = within(information).getByLabelText('Other entities');
-      fireEvent.click(otherEntities);
+      const otherEntity = within(information).getByLabelText('Other entity');
+      fireEvent.click(otherEntity);
       fireEvent.click(recipient);
 
       recipientSelectbox = await screen.findByLabelText(/recipient name\(s\)/i);

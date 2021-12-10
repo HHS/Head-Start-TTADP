@@ -350,8 +350,8 @@ describe('Activity Reports DB service', () => {
       expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
     });
 
-    it('creates a new report with other-entities recipient', async () => {
-      const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entities' });
+    it('creates a new report with other-entity recipient', async () => {
+      const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
       expect(report.activityRecipients[0].otherEntity.id).toBe(RECIPIENT_ID);
     });
 

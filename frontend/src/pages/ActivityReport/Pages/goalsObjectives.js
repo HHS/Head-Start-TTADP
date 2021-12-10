@@ -14,7 +14,7 @@ import { reportIsEditable } from '../../../utils';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
-import OtherEntitiesReviewSection from './components/OtherEntitiesReviewSection';
+import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 
 const GoalsObjectives = () => {
@@ -79,7 +79,7 @@ const ReviewSection = () => {
   } = watch();
 
   const canEdit = reportIsEditable(calculatedStatus);
-  const otherEntities = activityRecipientType === 'other-entities';
+  const otherEntity = activityRecipientType === 'other-entity';
 
   return (
     <>
@@ -96,10 +96,10 @@ const ReviewSection = () => {
           name="context"
         />
       </Section>
-      {!otherEntities
+      {!otherEntity
         && <RecipientReviewSection />}
-      {otherEntities
-        && <OtherEntitiesReviewSection />}
+      {otherEntity
+        && <OtherEntityReviewSection />}
     </>
   );
 };
@@ -109,7 +109,7 @@ export default {
   label: 'Goals and objectives',
   titleOverride: (formData) => {
     const { activityRecipientType } = formData;
-    if (activityRecipientType === 'other-entities') {
+    if (activityRecipientType === 'other-entity') {
       return 'Objectives';
     }
     return 'Goals and objectives';
@@ -123,7 +123,7 @@ export default {
       return false;
     }
 
-    if (activityRecipientType === 'other-entities') {
+    if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
     return activityRecipientType !== 'recipient' || validateGoals(formData.goals) === true;

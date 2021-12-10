@@ -50,12 +50,12 @@ const ActivitySummary = ({
   }));
 
   const disableRecipients = isEmpty(activityRecipientType);
-  const otherEntitiesSelected = activityRecipientType === 'other-entities';
-  const selectedRecipients = otherEntitiesSelected ? otherEntities : grants;
+  const otherEntitySelected = activityRecipientType === 'other-entity';
+  const selectedRecipients = otherEntitySelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = otherEntitiesSelected ? 'Other entities' : 'Recipient name(s)';
-  const participantsLabel = otherEntitiesSelected ? 'Other entity participants' : 'Recipient participants';
-  const participants = otherEntitiesSelected ? otherEntityParticipants : recipientParticipants;
+  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient name(s)';
+  const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
+  const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
@@ -112,15 +112,15 @@ const ActivitySummary = ({
               label="Recipient"
               value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or other entities' })}
+              inputRef={register({ required: 'Please specify recipient or other entity' })}
             />
             <Radio
-              id="category-other-entities"
+              id="category-other-entity"
               name="activityRecipientType"
-              label="Other entities"
-              value="other-entities"
+              label="Other entity"
+              value="other-entity"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or other entities' })}
+              inputRef={register({ required: 'Please specify recipient or other entity' })}
             />
           </FormItem>
         </div>
@@ -136,7 +136,7 @@ const ActivitySummary = ({
               valueProperty="activityRecipientId"
               labelProperty="name"
               simple={false}
-              required="Please select at least one recipient or other entities"
+              required="Please select at least one recipient or other entity"
               options={selectedRecipients}
             />
           </FormItem>
@@ -418,7 +418,7 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Recipient or other entities', name: 'activityRecipientType', sort: true },
+      { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
         label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,

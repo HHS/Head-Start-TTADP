@@ -75,7 +75,7 @@ async function saveReportRecipients(
       otherEntityId: null,
     };
 
-    if (activityRecipientType === 'other-entities') {
+    if (activityRecipientType === 'other-entity') {
       activityRecipient.otherEntityId = activityRecipientId;
     } else if (activityRecipientType === 'recipient') {
       activityRecipient.grantId = activityRecipientId;
@@ -88,7 +88,7 @@ async function saveReportRecipients(
   };
 
   const empty = activityRecipientIds.length === 0;
-  if (!empty && activityRecipientType === 'other-entities') {
+  if (!empty && activityRecipientType === 'other-entity') {
     where[Op.or] = {
       otherEntityId: {
         [Op.notIn]: activityRecipientIds,
@@ -628,7 +628,7 @@ export async function createOrUpdate(newActivityReport, report) {
 
     const activityRecipientType = recipientType();
 
-    if (activityRecipientType === 'other-entities' && objectivesWithoutGoals) {
+    if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
       await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
     } else if (activityRecipientType === 'recipient' && goals) {
       await saveGoalsForReport(goals, savedReport, transaction);

@@ -94,12 +94,12 @@ describe('My Alerts', () => {
   test('displays the correct recipients', async () => {
     renderMyAlerts();
     const recipients = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera recipient name click to visually reveal the recipients for r14-ar-1/i });
-    const otherEntities = await screen.findByRole('cell', {
+    const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
     });
 
     expect(recipients).toBeVisible();
-    expect(otherEntities).toBeVisible();
+    expect(otherEntity).toBeVisible();
   });
 
   test('displays the correct start date', async () => {
