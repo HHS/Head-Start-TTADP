@@ -4,4 +4,4 @@ Feature: TTA Smarthub Activity Report
         And I am on the landing page
         Then I see "Activity report for Region 1" message
         When I select "Other entity"
-        Then I see "QRIS System" as an option in the "Other entity" multiselect
+        Then I see "QRIS System" as an option in the "Other entities" multiselect
