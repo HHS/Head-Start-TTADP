@@ -7,7 +7,7 @@ const TOPIC_OPTIONS = TOPICS.map((label, value) => ({ value, label }));
 
 export default function FilterTopicSelect({
   onApply,
-  labelId,
+  inputId,
 }) {
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -15,7 +15,7 @@ export default function FilterTopicSelect({
   return (
     <FilterSelect
       onApply={onApplyClick}
-      labelId={labelId}
+      inputId={inputId}
       labelText="Filter by reasons"
       ariaName="Change filter by reasons menu"
       options={TOPIC_OPTIONS}
@@ -24,6 +24,6 @@ export default function FilterTopicSelect({
 }
 
 FilterTopicSelect.propTypes = {
-  labelId: PropTypes.string.isRequired,
+  inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
 };

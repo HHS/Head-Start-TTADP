@@ -14,7 +14,6 @@ export default function DropdownMenu({
   applyButtonAria,
   onApply,
   className,
-  menuName,
   onCancel,
   showCancel,
   cancelAriaLabel,
@@ -86,13 +85,16 @@ export default function DropdownMenu({
     );
   }
   return (
-    <div role="menu" ref={forwardedRef} tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
+    <div ref={forwardedRef} className={classNames}>
       <button
         onClick={onClick}
         className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0`}
         aria-label={buttonAriaLabel}
         type="button"
         disabled={disabled}
+        aria-pressed={menuIsOpen}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
       >
         <span>{buttonText}</span>
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
@@ -139,7 +141,6 @@ DropdownMenu.propTypes = {
   applyButtonAria: PropTypes.string,
   onApply: PropTypes.func.isRequired,
   className: PropTypes.string,
-  menuName: PropTypes.string.isRequired,
   showCancel: PropTypes.bool,
   onCancel: PropTypes.func,
   cancelAriaLabel: PropTypes.string,
