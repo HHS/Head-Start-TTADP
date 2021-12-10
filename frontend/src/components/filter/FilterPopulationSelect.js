@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import FilterOptionSelect from './FilterOptionSelect';
+import FilterSelect from './FilterSelect';
 import { TARGET_POPULATIONS } from '../../Constants';
 
 const POPULATION_OPTIONS = TARGET_POPULATIONS.filter((population) => population !== '--------------------').map((label, value) => ({ value, label }));
@@ -17,7 +17,7 @@ export default function FilterPopulationSelect({
     onApply(selected);
   };
   return (
-    <FilterOptionSelect
+    <FilterSelect
       onApply={onApplyClick}
       labelId={labelId}
       labelText="Filter by target populations"

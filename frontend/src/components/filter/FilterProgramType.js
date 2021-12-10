@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import FilterOptionSelect from './FilterOptionSelect';
+import FilterSelect from './FilterSelect';
 
 const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS', 'EHS-CCP'].map((label, value) => ({ value, label }));
 
@@ -12,7 +12,7 @@ export default function FilterProgramType({
     onApply(selected);
   };
   return (
-    <FilterOptionSelect
+    <FilterSelect
       onApply={onApplyClick}
       labelId={labelId}
       labelText="Filter by program type"

@@ -1,8 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 
-export default function FilterOptionSelect({
+// eslint-disable-next-line react/jsx-props-no-spreading
+const MultiValue = (props) => <components.MultiValue {...props} />;
+
+export default function FilterSelect({
   onApply,
   labelText,
   options,
@@ -27,28 +30,28 @@ export default function FilterOptionSelect({
       return {
         ...provided,
         outline,
+        height: 'auto',
       };
     },
-    groupHeading: (provided) => ({
-      ...provided,
-      fontWeight: 'bold',
-      fontFamily: 'SourceSansPro',
-      textTransform: 'capitalize',
-      fontSize: '14px',
-      color: '#21272d',
-      lineHeight: '22px',
-    }),
-    control: (provided, state) => ({
-      ...provided,
-      border: 'none',
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    }),
+    control: (provided, state) => {
+      const selected = state.getValue();
+      return {
+        ...provided,
+        background: state.isFocused || selected.length ? 'white' : 'transparent',
+        border: 'none',
+        borderRadius: 0,
+        boxShadow: '0',
+        // Match uswds disabled style
+        opacity: state.isDisabled ? '0.7' : '1',
+
+        overflow: 'hidden',
+        position: !state.isFocused ? 'absolute' : 'relative',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: state.isFocused && selected.length ? 'auto' : 0,
+      };
+    },
     indicatorsContainer: (provided) => ({
       ...provided,
       display: 'inline',
@@ -59,6 +62,18 @@ export default function FilterOptionSelect({
     menu: (provided) => ({
       ...provided,
       zIndex: 2,
+    }),
+    multiValue: (provided) => ({
+      ...provided,
+      backgroundColor: 'transparent',
+    }),
+    multiValueContainer: (provided) => ({
+      ...provided,
+      overflow: 'hidden',
+    }),
+    multiValueLabel: (provided) => ({
+      ...provided,
+      fontSize: '100%',
     }),
   };
 
@@ -74,14 +89,16 @@ export default function FilterOptionSelect({
       styles={styles}
       components={{
         DropdownIndicator: null,
+        MultiValue,
       }}
       className="usa-select"
+      closeMenuOnSelect={false}
       isMulti
     />
   );
 }
 
-FilterOptionSelect.propTypes = {
+FilterSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   labelText: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(PropTypes.shape({
