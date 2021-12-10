@@ -572,14 +572,14 @@ describe('handleApplyAlertFilters', () => {
     renderLanding(user);
 
     await screen.findByRole('heading', { name: /My activity report alerts/i });
-    // Both alerts and AR tables' buttons should appear
+    // Only one filters button should be shown.
     const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
-    expect(allFilterButtons.length).toBe(2);
+    expect(allFilterButtons.length).toBe(1);
 
     const filterMenuButton = allFilterButtons[0];
     fireEvent.click(filterMenuButton);
-    const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
-    fireEvent.click(addFilterButton);
+    //const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
+    //fireEvent.click(addFilterButton);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'reportId');

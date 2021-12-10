@@ -192,6 +192,7 @@ function MyAlerts(props) {
     handleDownloadAllAlerts,
     loading,
     message,
+    showFilter,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -263,7 +264,7 @@ function MyAlerts(props) {
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
-            showFilter
+            showFilter={showFilter}
             forMyAlerts
             onUpdateFilters={updateReportFilters}
             handleDownloadAll={handleDownloadAllAlerts}
@@ -312,7 +313,7 @@ MyAlerts.propTypes = {
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
   hasFilters: PropTypes.bool,
-  updateReportFilters: PropTypes.func.isRequired,
+  updateReportFilters: PropTypes.func,
   updateReportAlerts: PropTypes.func.isRequired,
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
@@ -323,9 +324,11 @@ MyAlerts.propTypes = {
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
+  showFilter: PropTypes.bool.isRequired,
 };
 
 MyAlerts.defaultProps = {
+  updateReportFilters: () => { },
   reports: [],
   alertsSortConfig: { sortBy: 'startDate', direction: 'asc' },
   alertsOffset: 0,
