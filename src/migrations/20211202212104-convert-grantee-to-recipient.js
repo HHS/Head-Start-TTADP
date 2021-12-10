@@ -58,7 +58,7 @@ module.exports = {
       *   'non-grantee' to 'other-entities'
       *
       * update legacy reports 'activityRecipientType'
-      *   'imported' field has 'nonGranteeActivity' value to 'other-entities'
+      *   'imported' field has 'nonGranteeActivity' value to 'other-entity'
       *   'imported' field has empty 'nonGranteeActivity' to 'recipient'
       *
       * update 'reason' of 'New Grantee' to 'New Recipient'
@@ -69,10 +69,10 @@ module.exports = {
       *   'grantee' to 'recipient'
       */
       await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "activityRecipientType" = \'recipient\' WHERE "activityRecipientType" = \'grantee\';', { transaction });
-      await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "activityRecipientType" = \'other-entities\' WHERE "activityRecipientType" = \'non-grantee\';', { transaction });
+      await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "activityRecipientType" = \'other-entity\' WHERE "activityRecipientType" = \'non-grantee\';', { transaction });
 
       await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "activityRecipientType" = \'recipient\' WHERE "activityRecipientType" = \'nonGrantee\' and imported->>\'nonGranteeActivity\' = \'\';', { transaction });
-      await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "activityRecipientType" = \'other-entities\' WHERE "activityRecipientType" = \'nonGrantee\' and imported->>\'nonGranteeActivity\' != \'\';', { transaction });
+      await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "activityRecipientType" = \'other-entity\' WHERE "activityRecipientType" = \'nonGrantee\' and imported->>\'nonGranteeActivity\' != \'\';', { transaction });
 
       await queryInterface.sequelize.query('UPDATE "ActivityReports" SET "reason" = ARRAY_REPLACE("reason", \'New Grantee\', \'New Recipient\');', { transaction });
 

@@ -306,7 +306,7 @@ export const generateXFakeReports = (count) => {
 export const overviewRegionOne = {
   numReports: '1',
   numGrants: '2',
-  numOtherEntitiess: '2',
+  numOtherEntities: '2',
   numTotalGrants: '4',
   numParticipants: '3',
   sumDuration: '0.5',

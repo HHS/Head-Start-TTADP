@@ -74,15 +74,15 @@ describe('goals objectives', () => {
 
   describe('when activity recipient type is not "recipient"', () => {
     it('the objectives section is displayed', async () => {
-      renderGoals([1], 'otherEntities');
+      renderGoals([1], 'otherEntity');
       await screen.findByText('Context');
       expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
     });
   });
 
   describe('title override', () => {
-    it('returns objective if activityRecipientType is other-entities', async () => {
-      const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entities' });
+    it('returns objective if activityRecipientType is other-entity', async () => {
+      const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entity' });
       expect(res).toEqual('Objectives');
     });
 
@@ -98,9 +98,9 @@ describe('goals objectives', () => {
       expect(complete).toBeFalsy();
     });
 
-    describe('for other-entities reports', () => {
+    describe('for other-entity reports', () => {
       it('is false if objectives are not valid', () => {
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entities', objectivesWithoutGoals: [] });
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: [] });
         expect(complete).toBeFalsy();
       });
 
@@ -113,7 +113,7 @@ describe('goals objectives', () => {
             status: 'In Progress',
           },
         ];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entities', objectivesWithoutGoals: objectives });
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
         expect(complete).toBeTruthy();
       });
     });
@@ -146,9 +146,9 @@ describe('goals objectives', () => {
       expect(goal).toBeVisible();
     });
 
-    it('displays other-entities objectives', async () => {
+    it('displays other-entity objectives', async () => {
       render(<RenderReview
-        activityRecipientType="other-entities"
+        activityRecipientType="other-entity"
         objectivesWithoutGoals={[
           {
             id: 1, title: 'title one', ttaProvided: 'ttaProvided one', status: 'Not Started',
@@ -190,7 +190,7 @@ describe('goals objectives', () => {
           status: 'In Progress',
         },
       ];
-      const formData = { activityRecipientType: 'other-entities', objectivesWithoutGoals: objectives };
+      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
       const isComplete = goalsObjectives.isPageComplete(formData);
       expect(isComplete).toBeTruthy();
     });

@@ -102,7 +102,7 @@ components:
           type: string
         activityRecipientType:
           type: string
-          description: The recipient type for the report, grant or other-entities
+          description: The recipient type for the report, grant or other-entity
         requester:
           type: string
           description: Who requested the TTA, recipient or regional office

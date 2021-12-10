@@ -4,7 +4,7 @@ get:
   summary: >
     Potential activity report participants
   description: >
-    An activity recipient is either a grant or otherEntity.
+    An activity recipient is either a grant or other entity.
   responses:
     200:
       description: The possible activity recipients
@@ -22,7 +22,7 @@ get:
                     type: array
                     items:
                       $ref: '../../index.yaml#/components/schemas/activityRecipient'
-              otherEntitys:
+              otherEntities:
                 type: array
                 items:
                   $ref: '../../index.yaml#/components/schemas/activityRecipient'
