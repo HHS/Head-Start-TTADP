@@ -39,7 +39,7 @@ export default function FilterItem({
     query,
   } = filter;
 
-  const li = useRef();
+  const fieldset = useRef();
 
   const setError = (message) => {
     const newErrors = [...errors];
@@ -49,7 +49,7 @@ export default function FilterItem({
 
   const onBlur = (e) => {
     // no validation if you are clicking on something within the filter item
-    if (li.current.contains(e.relatedTarget)) {
+    if (fieldset.current.contains(e.relatedTarget)) {
       return;
     }
 
@@ -132,7 +132,7 @@ export default function FilterItem({
 
   const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
   return (
-    <fieldset className={fieldsetClassNames} onBlur={onBlur}>
+    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
       {
         error
         && (
