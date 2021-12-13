@@ -1,6 +1,6 @@
 import React, { useState, createRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Checkbox } from '@trussworks/react-uswds';
+import { Checkbox } from '@trussworks/react-uswds';
 import './CheckboxSelect.css';
 import DropdownMenu from './DropdownMenu';
 import usePrevious from '../hooks/usePrevious';
@@ -18,12 +18,11 @@ export function renderCheckboxes(
   onBlur,
 ) {
   return options.map((option) => {
-    const { label, value, endGroup } = option;
+    const { label, value } = option;
     const selectId = `${prefix}-${value}`;
     const isChecked = checkboxes[value] || false;
     return (
       <Checkbox
-        className={endGroup ? 'checkbox--end-group' : ''}
         key={selectId}
         id={selectId}
         label={label}
@@ -53,7 +52,6 @@ export default function CheckboxSelect({
   disabled,
   hideToggleAll,
   onChange,
-  showClear,
 }) {
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
   const [checkboxes, setCheckboxes] = useState(
@@ -121,22 +119,6 @@ export default function CheckboxSelect({
 
   const ariaLabel = `toggle the ${ariaName}`;
 
-  let ClearButton = null;
-
-  if (showClear) {
-    ClearButton = (
-      <Button
-        onClick={() => {
-          setCheckboxes(makeCheckboxes(options, false));
-          setToggleAllChecked(false);
-        }}
-        unstyled
-      >
-        Clear
-      </Button>
-    );
-  }
-
   return (
     <DropdownMenu
       canBlur={canBlur}
@@ -149,7 +131,6 @@ export default function CheckboxSelect({
       onApply={onApplyClick}
       menuName={ariaName}
       applyButtonAria={`Apply filters for the ${ariaName}`}
-      alternateActionButton={ClearButton}
     >
       <div className="smart-hub--button-select-menu" role="group" aria-describedby={labelId}>
         <span className="sr-only" id={labelId}>{labelText}</span>
@@ -194,16 +175,12 @@ CheckboxSelect.propTypes = {
   // style as a select box
   styleAsSelect: PropTypes.bool,
 
-  // show the clear button?
-  showClear: PropTypes.bool,
-
 };
 
 CheckboxSelect.defaultProps = {
   disabled: false,
   styleAsSelect: false,
   hideToggleAll: false,
-  showClear: false,
   toggleAllText: 'Toggle all checkboxes',
   onChange: () => {},
 };
