@@ -15,7 +15,7 @@ import db, {
   Program,
 } from '../../models';
 import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
-import { createReport, destroyReport } from '../../testUtils';
+import { createReport, destroyReport, createGrant } from '../../testUtils';
 
 const mockUser = {
   id: 13706689,
@@ -1263,9 +1263,9 @@ describe('filtersToScopes', () => {
         },
       });
 
-      destroyReport(reportOne);
-      destroyReport(reportTwo);
-      destroyReport(reportThree);
+      await destroyReport(reportOne);
+      await destroyReport(reportTwo);
+      await destroyReport(reportThree);
     });
 
     it('includes program type', async () => {
@@ -1309,6 +1309,72 @@ describe('filtersToScopes', () => {
       expect(deleted.id).toBeDefined();
       const endARCount = await ActivityReport.count();
       expect(endARCount).toEqual(beginningARCount);
+    });
+  });
+
+  describe('stateCode', () => {
+    let reportOne;
+    let reportTwo;
+    let reportThree;
+    let possibleIds;
+
+    beforeAll(async () => {
+      const grantOne = await createGrant({
+        stateCode: 'KS',
+      });
+
+      const grantTwo = await createGrant({
+        stateCode: 'MO',
+      });
+
+      reportOne = await createReport({
+        activityRecipients: [
+          {
+            grantId: grantOne.id,
+          },
+        ],
+      });
+      reportTwo = await createReport({
+        activityRecipients: [
+          {
+            grantId: grantOne.id,
+          },
+          {
+            grantId: grantTwo.id,
+          },
+        ],
+      });
+      reportThree = await createReport({
+        activityRecipients: [
+          {
+            grantId: grantTwo.id,
+          },
+        ],
+      });
+
+      possibleIds = [
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await destroyReport(reportOne);
+      await destroyReport(reportTwo);
+      await destroyReport(reportThree);
+    });
+
+    it('includes reports with grants with the given state code', async () => {
+      const filters = { 'stateCode.in': ['KS'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
     });
   });
 });
