@@ -79,7 +79,6 @@ export default function FilterSelect({
 
   return (
     <>
-      <label className="sr-only" htmlFor={inputId}>{labelText}</label>
       <Select
         placeholder={labelText}
         aria-label={labelText}
