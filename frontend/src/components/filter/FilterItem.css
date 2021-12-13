@@ -21,8 +21,8 @@
     border: 2px solid #b50909;
 }
 
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .smart-hub--dropdown-menu-toggle-btn,
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date{
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter .smart-hub--dropdown-menu-toggle-btn,
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter .ttahub-filter-date-range-single-date{
     border: 2px solid #b50909;
 }
 

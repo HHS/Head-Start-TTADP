@@ -151,8 +151,8 @@ export default function FilterItem({
     case 'Please enter a condition':
       liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
       break;
-    case 'Please enter a parameter':
-      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--parameter';
+    case 'Please enter a filter':
+      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
       break;
     default:
       break;
@@ -172,7 +172,7 @@ export default function FilterItem({
       }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
-        Select a filter topic
+        Select a filter
       </label>
       <select
         id={`topic-${id}`}
@@ -189,7 +189,7 @@ export default function FilterItem({
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
-        Select a filter condition
+        Select a condition
       </label>
       <select
         id={`condition-${id}`}
