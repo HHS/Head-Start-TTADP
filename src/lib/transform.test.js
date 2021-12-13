@@ -197,6 +197,17 @@ describe('activityReportToCsvRecord', () => {
     expect(output).toMatchObject(expectedOutput);
   });
 
+  it('removes HTML tags from context', async () => {
+    const report = ActivityReport.build({
+      context: '<p data-attribute="test">test text</p>',
+    });
+    const output = await activityReportToCsvRecord(report);
+    const expectedOutput = {
+      context: 'test text',
+    };
+    expect(output).toMatchObject(expectedOutput);
+  });
+
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
       include: [{ model: User, as: 'author' },

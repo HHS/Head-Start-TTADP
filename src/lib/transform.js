@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
 function transformDate(field) {
@@ -57,6 +58,20 @@ function transformRelatedModel(field, prop) {
         enumerable: true,
       });
     }
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
+function transformHTML(field) {
+  async function transformer(instance) {
+    const html = instance[field] || '';
+    const value = convert(html);
+    const obj = {};
+    Object.defineProperty(obj, field, {
+      value,
+      enumerable: true,
+    });
     return Promise.resolve(obj);
   }
   return transformer;
@@ -179,7 +194,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
-      value: ttaProvided,
+      value: convert(ttaProvided),
       enumerable: true,
     });
     objectiveNum += 1;
@@ -231,8 +246,8 @@ const arTransformers = [
   transformGoalsAndObjectives,
   transformRelatedModel('granteeNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),
-  'context',
-  'additionalNotes',
+  transformHTML('context'),
+  transformHTML('additionalNotes'),
   'lastSaved',
   transformDate('createdAt'),
   transformDate('approvedAt'),
