@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render,
   screen,
+  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
@@ -157,7 +158,7 @@ describe('Filter Menu', () => {
     expect(message).toBeVisible();
   });
 
-  it('displays the correct component for each filter', async () => {
+  it('the clear all button works', async () => {
     const filters = [
       {
         id: 'filter-2',
@@ -213,7 +214,7 @@ describe('Filter Menu', () => {
         id: 'filter-8',
         display: '',
         conditions: [],
-        topic: 'population',
+        topic: 'targetPopulation',
         query: [],
         condition: 'Contains',
       },
@@ -235,7 +236,14 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const topics = await screen.findAllByRole('combobox', { name: 'topic' });
+    let topics = await screen.findAllByRole('combobox', { name: 'topic' });
     expect(topics.length).toBe(8);
+
+    const clear = await screen.findByRole('button', { name: /Clear all filters/i });
+    act(() => userEvent.click(clear));
+
+    // findAll errors out here
+    topics = document.querySelectorAll('[name="topic"]');
+    expect(topics.length).toBe(0);
   });
 });
