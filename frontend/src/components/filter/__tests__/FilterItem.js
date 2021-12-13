@@ -14,6 +14,7 @@ describe('Filter menu item', () => {
       filter={filter}
       onRemoveFilter={onRemoveFilter}
       onUpdateFilter={onUpdateFilter}
+      prohibitedFilters={[]}
     />);
   };
 
@@ -78,41 +79,16 @@ describe('Filter menu item', () => {
     userEvent.click(button);
 
     userEvent.click(screen.getByRole('button', {
-      name: /select to view data from year to date\. select apply filters button to apply selection/i,
+      name: /Select to view data from Last 30 Days. Select Apply filters button to apply selection/i,
     }));
 
     userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
 
-    const yearToDate = formatDateRange({
-      yearToDate: true,
+    const lastThirtyDays = formatDateRange({
+      lastThirtyDays: true,
       forDateTime: true,
     });
 
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', yearToDate);
-  });
-
-  it('display a specialist filter correctly', () => {
-    const filter = {
-      topic: 'role',
-      condition: 'Is within',
-      query: ['Early Childhood Specialist'],
-      id: 'gibberish',
-    };
-    const onRemove = jest.fn();
-    const onUpdate = jest.fn();
-    renderFilterItem(filter, onRemove, onUpdate);
-
-    const button = screen.getByRole('button', { name: /toggle the change filter by specialists menu/i });
-    userEvent.click(button);
-
-    const apply = screen.getByRole('button', { name: /apply filters for the change filter by specialists menu/i });
-    userEvent.click(apply);
-    expect(onUpdate).toHaveBeenCalled();
-
-    userEvent.click(screen.getByRole('button', {
-      name: /remove Specialist Is within Early Childhood Specialist filter. click apply filters to make your changes/i,
-    }));
-
-    expect(onRemove).toHaveBeenCalled();
+    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', lastThirtyDays);
   });
 });
