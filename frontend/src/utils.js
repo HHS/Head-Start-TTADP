@@ -1,6 +1,16 @@
+import moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
-import { GOVERNMENT_HOSTNAME_EXTENSION, REPORT_STATUSES } from './Constants';
+import {
+  GOVERNMENT_HOSTNAME_EXTENSION,
+  REPORT_STATUSES,
+  WITHIN,
+  QUERY_CONDITIONS,
+  DECIMAL_BASE,
+  DATE_FMT,
+} from './Constants';
+
 /**
  * Given a potential url, verify that it is a valid url with http(s) scheme.
  */
@@ -64,3 +74,79 @@ export const getDistinctSortedArray = (arr) => {
   distinctList = distinctList.sort();
   return distinctList;
 };
+
+/**
+ * Express expects arrays in queries like
+ * &filter.is[]=1&filter.is[]=2
+ * rather than &filter.is[]=1,2
+ *
+ * @param {Array} filters
+ * @returns array of filters
+ */
+
+export function expandFilters(filters) {
+  const arr = [];
+
+  filters.forEach((filter) => {
+    const { topic, query, condition } = filter;
+    if (Array.isArray(query)) {
+      query.forEach((q) => {
+        arr.push({
+          topic,
+          condition,
+          query: q,
+        });
+      });
+    } else {
+      arr.push(filter);
+    }
+  });
+
+  return arr;
+}
+
+export function queryStringToFilters(queryString) {
+  const queries = queryString.split('&');
+  return queries.map((q) => {
+    const [topicAndCondition, query] = q.split('=');
+    const [topic, searchCondition] = topicAndCondition.split('.');
+
+    const queryKeys = Object.keys(QUERY_CONDITIONS);
+    const queryConditions = Object.values(QUERY_CONDITIONS);
+
+    const index = queryConditions.findIndex((queryCondition) => (
+      decodeURIComponent(searchCondition) === queryCondition
+    ));
+
+    const condition = queryKeys[index];
+
+    if (topic && condition && query) {
+      return {
+        id: uuidv4(),
+        topic,
+        condition,
+        query: decodeURIComponent(query),
+      };
+    }
+
+    return null;
+  }).filter((query) => query);
+}
+
+export function filtersToQueryString(filters, region) {
+  const filtersWithValues = filters.filter((f) => {
+    if (f.condition === WITHIN) {
+      const [startDate, endDate] = f.query.split('-');
+      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
+    }
+    return f.query !== '';
+  });
+  const queryFragments = filtersWithValues.map((filter) => {
+    const con = QUERY_CONDITIONS[filter.condition];
+    return `${filter.topic}.${con}=${filter.query}`;
+  });
+  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
+    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
+  }
+  return queryFragments.join('&');
+}

@@ -14,7 +14,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
 import ResourceSelector from './components/ResourceSelector';
-import { topics } from '../constants';
+import { TOPICS as topics } from '../../../Constants';
 import { reportIsEditable } from '../../../utils';
 
 const TopicsResources = ({

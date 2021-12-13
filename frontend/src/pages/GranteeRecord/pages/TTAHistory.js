@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -10,38 +10,20 @@ import Overview from '../../../widgets/DashboardOverview';
 import FilterMenu from '../../../components/filter/FilterMenu';
 import FilterPills from '../../../components/filter/FilterPills';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import { expandFilters } from '../../../utils';
+
 import './TTAHistory.css';
+import useUrlFilters from '../../../hooks/useUrlFilters';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
 });
 
-function expandFilters(filters) {
-  const arr = [];
-
-  filters.forEach((filter) => {
-    const { topic, query, condition } = filter;
-    if (Array.isArray(query)) {
-      query.forEach((q) => {
-        arr.push({
-          topic,
-          condition,
-          query: q,
-        });
-      });
-    } else {
-      arr.push(filter);
-    }
-  });
-
-  return arr;
-}
-
 export default function TTAHistory({
   granteeName, granteeId, regionId,
 }) {
-  const [filters, setFilters] = useState([
+  const [filters, setFilters] = useUrlFilters([
     {
       id: uuidv4(),
       topic: 'startDate',
@@ -49,6 +31,10 @@ export default function TTAHistory({
       query: defaultDate,
     },
   ]);
+
+  if (!granteeName) {
+    return null;
+  }
 
   const filtersToApply = [
     ...expandFilters(filters),
@@ -79,6 +65,11 @@ export default function TTAHistory({
     ]);
   };
 
+  // we don't want to double query the API
+  if (!filtersToApply.length) {
+    return null;
+  }
+
   return (
     <>
       <Helmet>
@@ -90,7 +81,12 @@ export default function TTAHistory({
       </Helmet>
       <div className="margin-x-2 maxw-widescreen">
         <div className="display-flex flex-wrap margin-bottom-2">
-          <FilterMenu filters={filters} onApplyFilters={onApply} onRemoveFilter={onRemoveFilter} />
+          <FilterMenu
+            filters={filters}
+            onApplyFilters={onApply}
+            onRemoveFilter={onRemoveFilter}
+            allowedFilters={['startDate', 'role']}
+          />
           <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
         </div>
         <Overview
