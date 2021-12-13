@@ -83,7 +83,7 @@ export default function FilterItem({
   ));
 
   return (
-    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
+    <fieldset className="ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0">
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic
@@ -126,7 +126,7 @@ export default function FilterItem({
         <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
-    </li>
+    </fieldset>
   );
 }
 

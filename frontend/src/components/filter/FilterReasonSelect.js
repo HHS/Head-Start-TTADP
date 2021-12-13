@@ -7,7 +7,7 @@ const REASONS_OPTIONS = REASONS.map((label, value) => ({ value, label }));
 
 export default function FilterReasonSelect({
   onApply,
-  labelId,
+  inputId,
 }) {
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -15,15 +15,14 @@ export default function FilterReasonSelect({
   return (
     <FilterSelect
       onApply={onApplyClick}
-      labelId={labelId}
-      labelText="Filter by reasons"
-      ariaName="Change filter by reasons menu"
+      inputId={inputId}
+      labelText="Select reasons to filter by"
       options={REASONS_OPTIONS}
     />
   );
 }
 
 FilterReasonSelect.propTypes = {
-  labelId: PropTypes.string.isRequired,
+  inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
 };

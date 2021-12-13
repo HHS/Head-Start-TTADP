@@ -32,11 +32,19 @@
     border: 0;
 }
 
+.ttahub-filter-menu-item .SingleDatePicker {
+    flex: 1;
+}
+
 .ttahub-filter-menu-item .SingleDatePicker .DateInput__small {
-    min-width: 160px;
+    width: 100%;    
 }
 .ttahub-filter-menu-item .SingleDatePicker .DateInput_input__small {
     padding: 0.5rem;
+}
+
+.ttahub-filter-menu-item .smart-hub--filter-date-picker-button {
+    margin-right: 0.5em;    
 }
 
 @media(max-width: 768px) {

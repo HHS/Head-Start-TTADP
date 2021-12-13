@@ -81,6 +81,7 @@ export default function FilterSelect({
     <>
       <label className="sr-only" htmlFor={inputId}>{labelText}</label>
       <Select
+        aria-label={labelText}
         inputId={inputId}
         onChange={onChange}
         options={options}

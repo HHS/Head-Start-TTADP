@@ -16,8 +16,7 @@ export default function FilterTopicSelect({
     <FilterSelect
       onApply={onApplyClick}
       inputId={inputId}
-      labelText="Filter by reasons"
-      ariaName="Change filter by reasons menu"
+      labelText="Select topics to filter by"
       options={TOPIC_OPTIONS}
     />
   );
