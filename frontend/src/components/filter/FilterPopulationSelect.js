@@ -11,7 +11,7 @@ Object.assign(PREGNANT_WOMEN_OPTION, { endGroup: true });
 
 export default function FilterPopulationSelect({
   onApply,
-  labelId,
+  inputId,
 }) {
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -19,15 +19,14 @@ export default function FilterPopulationSelect({
   return (
     <FilterSelect
       onApply={onApplyClick}
-      labelId={labelId}
-      labelText="Filter by target populations"
-      ariaName="Change filter by target populations menu"
+      inputId={inputId}
+      labelText="Select target populations to filter by"
       options={POPULATION_OPTIONS}
     />
   );
 }
 
 FilterPopulationSelect.propTypes = {
-  labelId: PropTypes.string.isRequired,
+  inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
 };

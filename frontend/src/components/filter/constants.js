@@ -5,7 +5,6 @@ import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../../Constants';
-import SpecialistSelect from '../SpecialistSelect';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
@@ -13,6 +12,7 @@ import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -81,7 +81,7 @@ export const FILTER_CONFIG = [
         condition={condition}
         onApply={onApplyQuery}
         type="grantNumber"
-        label="Grant number"
+        label="Enter a grant number"
       />
     ),
   },
@@ -98,7 +98,7 @@ export const FILTER_CONFIG = [
         condition={condition}
         onApply={onApplyQuery}
         type="programSpecialist"
-        label="Program specialist name"
+        label="Enter a program specialist name"
       />
     ),
   },
@@ -110,7 +110,7 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
       <FilterProgramType
-        labelId={`reason-${condition}-${id}`}
+        inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
       />
     ),
@@ -123,7 +123,7 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
       <FilterReasonSelect
-        labelId={`reason-${condition}-${id}`}
+        inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
       />
     ),
@@ -141,7 +141,7 @@ export const FILTER_CONFIG = [
         condition={condition}
         onApply={onApplyQuery}
         type="grantee"
-        label="recipientName"
+        label="Enter a recipient name"
       />
     ),
   },
@@ -165,11 +165,9 @@ export const FILTER_CONFIG = [
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
-      <SpecialistSelect
-        labelId={`role-${condition}-${id}`}
-        onApplyRoles={onApplyQuery}
-        toggleAllInitial={false}
-        hideToggleAll
+      <FilterSpecialistSelect
+        inputId={`role-${condition}-${id}`}
+        onApply={onApplyQuery}
       />
     ),
   },
@@ -181,7 +179,7 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
       <FilterPopulationSelect
-        labelId={`population-${condition}-${id}`}
+        inputId={`population-${condition}-${id}`}
         onApply={onApplyQuery}
       />
     ),

@@ -15,8 +15,7 @@ export default function FilterProgramType({
     <FilterSelect
       onApply={onApplyClick}
       labelId={labelId}
-      labelText="Filter by program type"
-      ariaName="Change filter by program type menu"
+      labelText="Select program type to filter by"
       options={PROGRAM_TYPE_OPTIONS}
     />
   );

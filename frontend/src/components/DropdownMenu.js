@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
 import triangleDown from '../images/triange_down.png';
@@ -23,15 +23,29 @@ export default function DropdownMenu({
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
 
-  /**
-   * Close the menu on escape key
-   * @param {Event} e
-   */
-  const onKeyDown = (e) => {
-    if (e.keyCode === 27) {
-      setMenuIsOpen(false);
-    }
-  };
+  useEffect(() => {
+    // we're mixing the real stuff in
+    window.addEventListener('keydown', (e) => {
+      // if the content div's parent element (the whole menu)
+      // has an element in focus
+      if (!menuContents.current || !menuContents.current.parentElement.querySelector(':focus')) {
+        return;
+      }
+
+      // we also have to check to see if we're inside a select box
+      if (document.querySelector(':focus') && document.querySelector(':focus').classList.contains('usa-select')) {
+        return;
+      }
+
+      // then we listen for the escape key
+      // this is because we don't want to have to pass
+      // a bunch of refs and the "setMenuIsOpen" thing down the tree
+      // (I suppose this could be refactored to Consumer->Provider context, but why?)
+      if (e.key === 'Escape') {
+        setMenuIsOpen(false);
+      }
+    });
+  }, []);
 
   /**
    * Close the menu on blur, with some extenuating circumstance
@@ -94,7 +108,6 @@ export default function DropdownMenu({
         disabled={disabled}
         aria-pressed={menuIsOpen}
         onBlur={onBlur}
-        onKeyDown={onKeyDown}
       >
         <span>{buttonText}</span>
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }

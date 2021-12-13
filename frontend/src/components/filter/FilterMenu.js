@@ -110,7 +110,7 @@ export default function FilterMenu({
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
         <div>
-          <ul className="usa-list usa-list--unstyled margin-bottom-1">
+          <div className="margin-bottom-1">
             {items.map((filter) => (
               <FilterItem
                 onRemoveFilter={onRemoveFilter}
@@ -121,7 +121,7 @@ export default function FilterMenu({
                 dateRangeOptions={dateRangeOptions}
               />
             ))}
-          </ul>
+          </div>
           <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
