@@ -48,20 +48,12 @@ const ModalComponent = (
 };
 
 describe('Modal', () => {
-  it('renders correctly', async () => {
-    render(<ModalComponent />);
-    expect(await screen.findByRole('heading', { name: /test report modal/i, hidden: true })).toBeVisible();
-    expect(await screen.findByText(/are you sure you want to perform this action\?/i)).toBeVisible();
-    expect(await screen.findByRole('button', { name: /cancel/i })).toBeVisible();
-    expect(await screen.findByRole('button', { name: /this button will ok the modal action\./i })).toBeVisible();
-  });
-
   it('correctly hides and shows', async () => {
     render(<ModalComponent />);
 
     // Defaults modal to hidden.
     let modalElement = document.querySelector('#popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-hidden');
+    expect(modalElement).toHaveClass('is-hidden');
 
     // Open modal.
     const button = await screen.findByText('Open');
@@ -69,7 +61,7 @@ describe('Modal', () => {
 
     // Check modal is visible.
     modalElement = document.querySelector('#popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-visible');
+    expect(modalElement).toHaveClass('is-visible');
   });
 
   it('exits when escape key is pressed', async () => {
@@ -81,14 +73,14 @@ describe('Modal', () => {
 
     // Modal is visible.
     let modalElement = document.querySelector('#popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-visible');
+    expect(modalElement).toHaveClass('is-visible');
 
     // Press ESC.
     userEvent.type(modalElement, '{esc}', { skipClick: true });
 
     // Check Modal is hidden.
     modalElement = document.querySelector('#popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-hidden');
+    expect(modalElement).toHaveClass('is-hidden');
   });
 
   it('does not escape when any other key is pressed', async () => {
@@ -100,14 +92,14 @@ describe('Modal', () => {
 
     // Modal is open.
     let modalElement = document.querySelector('#popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-visible');
+    expect(modalElement).toHaveClass('is-visible');
 
     // Press ENTER.
     userEvent.type(modalElement, '{enter}', { skipClick: true });
 
     // Modal is still open.
     modalElement = document.querySelector('#popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-visible');
+    expect(modalElement).toHaveClass('is-visible');
   });
 
   it('hides ok button', async () => {
