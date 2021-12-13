@@ -3,12 +3,11 @@ import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
 import { getUserRegions } from '../../permissions';
-import { DECIMAL_BASE } from '../../Constants';
 
 export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   const onApplyRegion = (e) => {
     const { target: { value } } = e;
-    onApply(parseInt(value, DECIMAL_BASE));
+    onApply(value);
   };
 
   return (

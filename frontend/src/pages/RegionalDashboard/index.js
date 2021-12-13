@@ -48,7 +48,7 @@ export default function RegionalDashboard({ user }) {
       id: uuidv4(),
       topic: 'region',
       condition: 'Contains',
-      query: defaultRegion,
+      query: defaultRegion.toString(),
     },
     {
       id: uuidv4(),
