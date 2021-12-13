@@ -3,9 +3,10 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
+import PropTypes from 'prop-types';
 import useSpellCheck from '../useSpellCheck';
 
-const SpellCheckTest = (inputId) => {
+const SpellCheckTest = ({ inputId }) => {
   useSpellCheck(inputId);
   return (
     <>
@@ -17,13 +18,26 @@ const SpellCheckTest = (inputId) => {
   );
 };
 
+SpellCheckTest.propTypes = {
+  inputId: PropTypes.string.isRequired,
+};
+
 const renderSpellCheckTest = (inputId) => render(<SpellCheckTest inputId={inputId} />);
 
 describe('useSpellCheck', () => {
+  it('adds the attribute', async () => {
+    renderSpellCheckTest('input');
+    const input = await screen.findByRole('textbox', { name: /Test label/i });
+    expect(input).toBeVisible();
+    expect(input).toHaveAttribute('spellcheck', 'true');
+    expect(await screen.findByRole('heading', { name: /Test heading/i })).toBeVisible();
+  });
+
   it('fails gracefully', async () => {
     renderSpellCheckTest('asdf');
-
-    expect(await screen.findByRole('textbox', { name: /Test label/i })).toBeVisible();
+    const input = await screen.findByRole('textbox', { name: /Test label/i });
+    expect(input).toBeVisible();
+    expect(input).not.toHaveAttribute('spellcheck', 'true');
     expect(await screen.findByRole('heading', { name: /Test heading/i })).toBeVisible();
   });
 });
