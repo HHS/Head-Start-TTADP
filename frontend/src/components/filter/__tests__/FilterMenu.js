@@ -156,4 +156,86 @@ describe('Filter Menu', () => {
 
     expect(message).toBeVisible();
   });
+
+  it('displays the correct component for each filter', async () => {
+    const filters = [
+      {
+        id: 'filter-2',
+        display: '',
+        conditions: [],
+        topic: 'role',
+        query: [
+          'Family Engagement Specialist',
+        ],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-3',
+        display: '',
+        conditions: [],
+        topic: 'programSpecialist',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-4',
+        display: '',
+        conditions: [],
+        topic: 'grantNumber',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-5',
+        display: '',
+        conditions: [],
+        topic: 'programType',
+        query: ['EHS'],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-6',
+        display: '',
+        conditions: [],
+        topic: 'reason',
+        query: ['COVID-19 response'],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-7',
+        display: '',
+        conditions: [],
+        topic: 'grantee',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-8',
+        display: '',
+        conditions: [],
+        topic: 'population',
+        query: [],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-9',
+        display: '',
+        conditions: [],
+        topic: 'topic',
+        query: [],
+        condition: 'Contains',
+      },
+    ];
+
+    renderFilterMenu(filters);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const topics = await screen.findAllByRole('combobox', { name: 'topic' });
+    expect(topics.length).toBe(8);
+  });
 });
