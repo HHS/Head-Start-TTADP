@@ -212,6 +212,8 @@ export default function FilterMenu({
                 filter={filter}
                 prohibitedFilters={prohibitedFilters}
                 dateRangeOptions={dateRangeOptions}
+                errors={errors}
+                setErrors={setErrors}
               />
             ))}
           </div>
