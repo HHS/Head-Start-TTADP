@@ -185,7 +185,6 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
-    hasFilters,
     updateReportFilters,
     updateReportAlerts,
     setAlertReportsCount,
@@ -243,7 +242,7 @@ function MyAlerts(props) {
 
   return (
     <>
-      {reports && reports.length === 0 && !hasFilters && (
+      {reports && reports.length === 0 && (
         <Container className="landing" padding={0} loading={loading}>
           <div id="caughtUp">
             <div>
@@ -259,7 +258,7 @@ function MyAlerts(props) {
         </Container>
       )}
 
-      {reports && (reports.length > 0 || hasFilters) && (
+      {reports && (reports.length > 0) && (
         <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
           <TableHeader
             title="My activity report alerts"
@@ -312,7 +311,6 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
-  hasFilters: PropTypes.bool,
   updateReportFilters: PropTypes.func,
   updateReportAlerts: PropTypes.func.isRequired,
   setAlertReportsCount: PropTypes.func.isRequired,
@@ -334,7 +332,6 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
-  hasFilters: false,
   message: {
     time: '',
     reportId: '',
