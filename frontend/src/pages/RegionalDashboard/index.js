@@ -48,7 +48,7 @@ export default function RegionalDashboard({ user }) {
       id: uuidv4(),
       topic: 'region',
       condition: 'Contains',
-      query: defaultRegion.toString(),
+      query: defaultRegion ? defaultRegion.toString() : '',
     },
     {
       id: uuidv4(),
@@ -104,7 +104,7 @@ export default function RegionalDashboard({ user }) {
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
         <h1 className="ttahub--dashboard-title">
-          {appliedRegion === 14 ? 'Regional' : `Region ${appliedRegion}`}
+          {appliedRegion === '14' ? 'Regional' : `Region ${appliedRegion}`}
           {' '}
           TTA Activity Dashboard
         </h1>
