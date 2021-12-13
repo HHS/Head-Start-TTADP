@@ -154,12 +154,6 @@ describe('Filter Menu', () => {
     const message = await screen.findByText('Show results matching the following conditions.');
     userEvent.click(message);
 
-    const specialists = await screen.findByRole('button', { name: /toggle the Change filter by specialists menu/i });
-    userEvent.click(specialists);
-
-    const check = await screen.findByRole('checkbox', { name: /select health specialist \(hs\)/i });
-    userEvent.click(check);
-
     expect(message).toBeVisible();
   });
 });

@@ -120,25 +120,4 @@ describe('DateRangeSelect', () => {
 
     expect(endDate.value).toBe('10/16/2021');
   });
-
-  it('closes the menu with the escape key', () => {
-    renderDateRangeSelect();
-
-    // open menu
-    const button = screen.getByRole('button', { name: /Toggle the date range select menu/i });
-    fireEvent.click(button);
-
-    // expect text
-    const option = screen.getByRole('button', { name: /select to view data from last 30 days\. select apply filters button to apply selection/i });
-
-    button.focus();
-
-    expect(option).toBeVisible();
-
-    // close menu
-    fireEvent.keyDown(button, { key: 'Escape', code: 'Escape', keyCode: 27 });
-
-    // confirm menu is closed
-    expect(option).not.toBeVisible();
-  });
 });
