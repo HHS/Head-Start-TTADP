@@ -4,6 +4,7 @@ import { formatDateRange } from '../DateRangeSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
+  FILTER_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -105,7 +106,7 @@ export const FILTER_CONFIG = [
   {
     id: 'programType',
     display: 'Program types',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
@@ -118,7 +119,7 @@ export const FILTER_CONFIG = [
   {
     id: 'reason',
     display: 'Reason',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
@@ -131,7 +132,7 @@ export const FILTER_CONFIG = [
   {
     id: 'grantee',
     display: 'Recipient name',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
@@ -148,7 +149,7 @@ export const FILTER_CONFIG = [
   {
     id: 'region',
     display: 'Region',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
@@ -161,7 +162,7 @@ export const FILTER_CONFIG = [
   {
     id: 'role',
     display: 'Specialist role',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
@@ -174,7 +175,7 @@ export const FILTER_CONFIG = [
   {
     id: 'targetPopulation',
     display: 'Target population',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
@@ -187,7 +188,7 @@ export const FILTER_CONFIG = [
   {
     id: 'topic',
     display: 'Topics',
-    conditions: SELECT_CONDITIONS,
+    conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onUpdate, onApplyQuery) => (

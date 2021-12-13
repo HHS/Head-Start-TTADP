@@ -51,6 +51,7 @@ export default function FilterMenu({
     }
 
     if (!query || !query.length) {
+      console.log(query);
       message = 'Please enter a value';
       setError(message);
       return false;
@@ -143,8 +144,7 @@ export default function FilterMenu({
 
   const onUpdateFilter = (id, name, value) => {
     //
-    // this is bonkers... we need to do more than map the array
-    // what escaped me originally was that just an array spread creates a new
+    // just an array spread creates a new
     // array of references... to the same objects as before
     // therefore, this function was mutating state in unexpected ways
     //
@@ -204,7 +204,7 @@ export default function FilterMenu({
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
         <div>
           <div className="margin-bottom-1">
-            {items.map((filter) => (
+            {items.map((filter, index) => (
               <FilterItem
                 onRemoveFilter={onRemoveFilter}
                 onUpdateFilter={onUpdateFilter}
@@ -214,6 +214,8 @@ export default function FilterMenu({
                 dateRangeOptions={dateRangeOptions}
                 errors={errors}
                 setErrors={setErrors}
+                validate={validate}
+                index={index}
               />
             ))}
           </div>

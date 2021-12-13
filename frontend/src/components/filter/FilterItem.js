@@ -113,7 +113,7 @@ export default function FilterItem({
   ));
   const error = errors[index];
 
-  const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0';
+  const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0 position-relative';
   let fieldsetErrorClass = '';
 
   switch (error) {
