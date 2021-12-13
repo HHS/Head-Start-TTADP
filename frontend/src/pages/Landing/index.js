@@ -48,16 +48,6 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   return `${from}-${to} of ${reportsCount}`;
 }
 
-/*
-function regionFilter(regionId) {
-  return {
-    topic: 'region',
-    condition: 'Contains',
-    query: regionId.toString(),
-  };
-}
-*/
-
 function Landing({ user }) {
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
@@ -94,14 +84,6 @@ function Landing({ user }) {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
 
-  // TODO: Remove.
-  /*
-  const [
-    appliedRegion,
-    updateAppliedRegion,
-  ] = useState(user.homeRegionId === 14 ? 14 : defaultRegion);
-  */
-
   function getAppliedRegion() {
     const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
     if (regionFilters && regionFilters.length > 0) {
@@ -110,7 +92,7 @@ function Landing({ user }) {
     return null;
   }
 
-  const appliedRegion = getAppliedRegion();
+  const appliedRegionNumber = getAppliedRegion();
 
   const ariaLiveContext = useContext(AriaLiveContext);
 
@@ -128,22 +110,8 @@ function Landing({ user }) {
     setAlertsSortConfig({ sortBy, direction });
   };
 
-  // TODO: Remove.
-  /*
-  const onApplyRegion = (region) => {
-    const regionId = region ? region.value : appliedRegion;
-    const filtersToApply = filters.filter((f) => f.topic !== 'region');
-    filtersToApply.push(
-      regionFilter(regionId),
-    );
-
-    setFilters(filtersToApply);
-    updateAppliedRegion(regionId);
-  };
-*/
   const handleDownloadAllAlerts = () => {
-    // const filterQuery = filtersToQueryString(filters, appliedRegion);
-    const filterQuery = filtersToQueryString(filters, appliedRegion);
+    const filterQuery = filtersToQueryString(filters, appliedRegionNumber);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
     window.location.assign(downloadURL);
   };
@@ -151,8 +119,7 @@ function Landing({ user }) {
   useEffect(() => {
     async function fetchAlertReports() {
       setAlertsLoading(true);
-      // const filterQuery = filtersToQueryString(filters, appliedRegion);
-      const filterQuery = filtersToQueryString(filters);
+      const filterQuery = filtersToQueryString(filters, appliedRegionNumber);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
@@ -173,7 +140,7 @@ function Landing({ user }) {
       setAlertsLoading(false);
     }
     fetchAlertReports();
-  // }, [alertsSortConfig, alertsOffset, alertsPerPage, filters, appliedRegion]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alertsSortConfig, alertsOffset, alertsPerPage, filters]);
 
   let msg;
@@ -198,8 +165,7 @@ function Landing({ user }) {
     );
   }
 
-  // const regionLabel = appliedRegion === 14 ? 'All' : appliedRegion.toString();
-  const regionLabel = appliedRegion === null || appliedRegion === 14 ? 'All' : appliedRegion.toString();
+  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All' : appliedRegionNumber.toString();
 
   // Apply filters.
   const onApply = (newFilters) => {
@@ -267,7 +233,7 @@ function Landing({ user }) {
             {reportAlerts
               && reportAlerts.length > 0
               && hasReadWrite(user)
-              && appliedRegion !== 14
+              && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
         </Grid>
@@ -296,7 +262,6 @@ function Landing({ user }) {
           alertsActivePage={alertsActivePage}
           alertReportsCount={alertReportsCount}
           sortHandler={requestAlertsSort}
-          hasFilters={filters.length > 0}
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
