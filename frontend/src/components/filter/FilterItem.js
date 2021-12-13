@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -22,7 +22,15 @@ const filterProp = PropTypes.shape({
  * @returns a JSX object
  */
 export default function FilterItem({
-  filter, onRemoveFilter, onUpdateFilter, prohibitedFilters, dateRangeOptions,
+  filter,
+  onRemoveFilter,
+  onUpdateFilter,
+  prohibitedFilters,
+  dateRangeOptions,
+  errors,
+  setErrors,
+  index,
+  validate,
 }) {
   const {
     id,
@@ -30,6 +38,28 @@ export default function FilterItem({
     condition,
     query,
   } = filter;
+
+  const li = useRef();
+
+  const setError = (message) => {
+    const newErrors = [...errors];
+    newErrors.splice(index, 1, message);
+    setErrors(newErrors);
+  };
+
+  const onBlur = (e) => {
+    // no validation if you are clicking on something within the filter item
+    if (li.current.contains(e.relatedTarget)) {
+      return;
+    }
+
+    // no validation if you are clicking on the cancel button
+    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
+      return;
+    }
+
+    validate(filter, setError);
+  };
 
   /**
    * changing the condition should clear the query
@@ -81,9 +111,36 @@ export default function FilterItem({
   )).map(({ id: filterId, display }) => (
     <option key={filterId} value={filterId}>{display}</option>
   ));
+  const error = errors[index];
 
+  const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0';
+  let fieldsetErrorClass = '';
+
+  switch (error) {
+    case 'Please enter a value':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
+    case 'Please enter a condition':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      break;
+    case 'Please enter a parameter':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--parameter';
+      break;
+    default:
+      break;
+  }
+
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
   return (
-    <fieldset className="ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0">
+    <fieldset className={fieldsetClassNames} onBlur={onBlur}>
+      {
+        error
+        && (
+        <span className="ttahub-filter-menu-error" role="status">
+          <strong>{error}</strong>
+        </span>
+        )
+      }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic
@@ -140,4 +197,8 @@ FilterItem.propTypes = {
     value: PropTypes.number,
     range: PropTypes.string,
   })).isRequired,
+  errors: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setErrors: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  validate: PropTypes.func.isRequired,
 };

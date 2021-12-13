@@ -1,6 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useEffect, useState } from 'react';
-// import useDeepCompareEffect from 'use-deep-compare-effect';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import fetchWidget from '../fetchers/Widgets';
 import { filtersToQueryString } from '../utils';
@@ -17,9 +16,6 @@ const withWidgetData = (Widget, widgetId) => {
     const [data, updateData] = useState();
 
     const { filters } = props;
-
-    // todo - investigate why this was preventing data refresh
-    // useDeepCompareEffect(() => {
 
     useEffect(() => {
       const fetch = async () => {

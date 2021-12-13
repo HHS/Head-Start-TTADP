@@ -95,6 +95,7 @@ describe('grantee record page', () => {
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&granteeId.in[]=1', { count: 0, rows: [] });
     fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [] });
     fetchMock.get('/api/widgets/frequencyGraph', 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&granteeId.in[]=1`, 200);
     fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&granteeId.in[]=1', 200);
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}`, 200);
     fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&granteeId.in[]=1', 200);
@@ -102,14 +103,6 @@ describe('grantee record page', () => {
   });
   afterEach(() => {
     fetchMock.restore();
-  });
-
-  it('shows the grantee name', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
-    act(() => renderGranteeRecord());
-
-    const granteeName = await screen.findByText('the Mighty Grantee - Region 45');
-    expect(granteeName).toBeInTheDocument();
   });
 
   it('renders the navigation', async () => {

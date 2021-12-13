@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
 import { FILTER_CONFIG } from './constants';
 import { formatDateRange } from '../DateRangeSelect';
+import usePrevious from '../../hooks/usePrevious';
 
 // save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
@@ -27,7 +31,40 @@ const availableFilters = FILTER_CONFIG.map((f) => f.id);
 export default function FilterMenu({
   filters, onApplyFilters, allowedFilters, dateRangeOptions,
 }) {
-  const [items, setItems] = useState([...filters]);
+  const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
+  const [errors, setErrors] = useState(filters.map(() => ''));
+
+  const itemLength = usePrevious(items.length);
+
+  const validate = ({ topic, query, condition }, setError) => {
+    let message = '';
+    if (!topic) {
+      message = 'Please enter a parameter';
+      setError(message);
+      return false;
+    }
+
+    if (!condition) {
+      message = 'Please enter a condition';
+      setError(message);
+      return false;
+    }
+
+    if (!query || !query.length) {
+      message = 'Please enter a value';
+      setError(message);
+      return false;
+    }
+
+    if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+      message = 'Please enter a value';
+      setError(message);
+      return false;
+    }
+
+    setError(message);
+    return true;
+  };
 
   // filters currently selected. these will be excluded from filter selection
   const selectedFilters = items.map((filter) => filter.topic);
@@ -38,17 +75,58 @@ export default function FilterMenu({
   ];
 
   useEffect(() => {
-    // If filters where changes outside of this component update.
+    // If filters were changed outside of this component, we need to update the items
+    // (for example, the "remove filter" button on the filter pills)
     setItems(filters);
   }, [filters]);
 
+  useEffect(() => {
+    // if an item was deleted, we need to update the errors
+    if (items.length < errors.length) {
+      setErrors(items.map(() => ''));
+    }
+  }, [errors.length, items]);
+
+  // focus on the first topic if we add more
+  useEffect(() => {
+    if (items.length > itemLength) {
+      const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+
+      if (topic && !topic.value) {
+        topic.focus();
+      }
+    }
+  }, [itemLength, items.length]);
+
   const onApply = () => {
-    // we only apply filters that have all the thingys filled out (technical term)
-    onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
+    const hasErrors = items.reduce((acc, curr, index) => {
+      if (acc) {
+        return true;
+      }
+
+      const setError = (message) => {
+        const newErrors = [...errors];
+        newErrors.splice(index, 1, message);
+        setErrors(newErrors);
+      };
+
+      if (!validate(curr, setError)) {
+        return true;
+      }
+
+      return false;
+    }, false);
+
+    if (hasErrors) {
+      return false;
+    }
+
+    onApplyFilters(items);
+    return true;
   };
 
   const onRemoveFilter = (id) => {
-    const newItems = [...items];
+    const newItems = items.map((item) => ({ ...item }));
     const index = newItems.findIndex((item) => item.id === id);
 
     if (index !== -1) {
@@ -58,28 +136,43 @@ export default function FilterMenu({
   };
 
   // reset state if we hit cancel
-  const onCancel = () => setItems([...filters]);
+  const onCancel = () => {
+    const copyOfFilters = filters.map((filter) => ({ ...filter }));
+    setItems(copyOfFilters);
+  };
 
-  const onUpdateFilter = (id, name, value, toggleAllChecked) => {
-    const newItems = [...items];
+  const onUpdateFilter = (id, name, value) => {
+    //
+    // this is bonkers... we need to do more than map the array
+    // what escaped me originally was that just an array spread creates a new
+    // array of references... to the same objects as before
+    // therefore, this function was mutating state in unexpected ways
+    //
+    // hence this real humdinger of a line of javascript
+    const newItems = items.map((item) => ({ ...item }));
     const toUpdate = newItems.find((item) => item.id === id);
+
+    // and here is the key to all the problems
+    // the (preventing of) infinite updating itself
+    if (toUpdate[name] === value) {
+      return;
+    }
     toUpdate[name] = value;
 
     if (name === 'topic') {
       toUpdate.condition = '';
       toUpdate.query = '';
     }
-    toUpdate.toggleAllChecked = toggleAllChecked;
+
     setItems(newItems);
   };
 
   const onAddFilter = () => {
-    const newItems = [...items];
+    const newItems = [...items.map((item) => ({ ...item }))];
     const newItem = {
       id: uuidv4(),
       display: '',
       conditions: [],
-      toggleAllChecked: true,
     };
     newItems.push(newItem);
     setItems(newItems);

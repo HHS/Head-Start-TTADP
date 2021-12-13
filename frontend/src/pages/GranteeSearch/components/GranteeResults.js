@@ -21,7 +21,6 @@ export default function GranteeResults(
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
   const renderGrantee = (grantee) => {
-    // Get a unique sorted list of Program Specialists.
     const { regionId, programSpecialists } = grantee;
 
     return (

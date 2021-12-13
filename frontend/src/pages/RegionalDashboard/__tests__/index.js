@@ -6,6 +6,7 @@ import {
   render, screen, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import userEvent from '@testing-library/user-event';
 import RegionalDashboard from '../index';
 
 import { SCOPE_IDS } from '../../../Constants';
@@ -27,22 +28,21 @@ describe('Regional Dashboard page', () => {
     );
   };
 
-  const user = {
-    homeRegionId: 14,
-    permissions: [{
-      regionId: 14,
-    }],
-  };
-
   it('shows a heading', async () => {
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 14,
+      }],
+    };
     renderDashboard(user);
     const heading = await screen.findByText(/regional tta activity dashboard/i);
     expect(heading).toBeInTheDocument();
   });
 
   it('shows the selected region', async () => {
-    renderDashboard({
-      ...user,
+    const user = {
+      homeRegionId: 1,
       permissions: [
         {
           regionId: 1,
@@ -57,9 +57,10 @@ describe('Regional Dashboard page', () => {
           scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
         },
       ],
-    });
+    };
+    renderDashboard(user);
 
-    expect(screen.getByText('Regional TTA Activity Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Region 1 TTA Activity Dashboard')).toBeInTheDocument();
   });
 
   it('renders a loading div when no user is provided', async () => {
@@ -68,10 +69,30 @@ describe('Regional Dashboard page', () => {
   });
 
   it('shows the reason list widget', async () => {
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 14,
+      }],
+    };
     renderDashboard(user);
 
     await waitFor(() => {
       expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
     });
+  });
+
+  it('opens the filter menu', async () => {
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 14,
+      }],
+    };
+    renderDashboard(user);
+
+    userEvent.click(await screen.findByRole('button', { name: /This button removes the filter/i }));
+    userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+    expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
   });
 });

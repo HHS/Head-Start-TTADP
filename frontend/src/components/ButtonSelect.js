@@ -47,6 +47,7 @@ function ButtonSelect(props) {
    */
   const onApplyClick = () => {
     onApply(selectedItem);
+    return true;
   };
 
   // get label text
