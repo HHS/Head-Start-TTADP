@@ -12,11 +12,13 @@ const RenderDateRangePicker = ({
   onUpdateFilter = () => {},
   id = 'id',
   query = null,
+  gainFocus = false,
 }) => (
   <DateRangePicker
     onUpdateFilter={onUpdateFilter}
     id={id}
     query={query}
+    gainFocus={gainFocus}
   />
 );
 
@@ -57,5 +59,11 @@ describe('DateRangePicker', () => {
     const text = await screen.findByRole('textbox', { name: /please enter a end date in the format mm\/dd\/yyyy\./i });
     userEvent.type(text, '02/02/2022');
     await waitFor(() => expect(onUpdateFilter).toHaveBeenCalledWith('query', '-2022/02/02'));
+  });
+
+  it('sets focus properly', async () => {
+    render(<RenderDateRangePicker gainFocus />);
+    const text = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
+    expect(text).toHaveFocus();
   });
 });
