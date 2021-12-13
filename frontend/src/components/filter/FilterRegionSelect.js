@@ -16,7 +16,6 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
       {(data) => {
         const { user } = data;
         const regions = getUserRegions(user);
-        console.log(regions);
         const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
 
         return (
