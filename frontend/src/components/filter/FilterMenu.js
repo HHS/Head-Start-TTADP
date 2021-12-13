@@ -51,7 +51,6 @@ export default function FilterMenu({
     }
 
     if (!query || !query.length) {
-      console.log(query);
       message = 'Please enter a value';
       setError(message);
       return false;
