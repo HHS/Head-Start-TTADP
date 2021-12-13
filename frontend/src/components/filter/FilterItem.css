@@ -38,8 +38,6 @@
     border: 2px solid #b50909;
 }
 
-.ttahub-filter-menu-item [name="topic"],
-.ttahub-filter-menu-item [name="condition"],
 .ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select.smart-hub--checkbox-select,
 .ttahub-filter-menu-item .smart-hub--button-select-toggle-btn.usa-select,
 .ttahub-filter-menu-item .smart-hub--dropdown-menu-toggle-btn,
