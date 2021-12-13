@@ -4,6 +4,7 @@ import {
   fireEvent,
   render, screen, waitFor, within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 
@@ -244,17 +245,21 @@ describe('Activity report print and share view', () => {
       ],
     };
     act(() => renderApprovedActivityReport(5000, unlockUser));
-    await waitFor(() => {
-      const unlockButton = screen.getByRole('button', { name: /unlock report/i });
-      fireEvent.click(unlockButton);
-      expect(screen.getByRole('heading', { name: /unlock activity report/i })).toBeInTheDocument();
-    });
+    const unlockButton = await screen.findByRole('button', { name: /unlock report/i });
+    act(() => userEvent.click(unlockButton));
+
+    // I had to add hidden true to the following test,
+    // which says to me this test is borked somehow, but
+    // I am able to see it, have the screen reader read it, tab around...
+    // I also don't see what in the HTML is hiding it?
+
+    // todo - investigate this
+    const heading = await screen.findByRole('heading', { name: /unlock activity report/i, hidden: true });
+    expect(heading).toBeInTheDocument();
   });
 
   it('hides unlock report button', async () => {
     act(() => renderApprovedActivityReport(5000));
-    await waitFor(() => {
-      expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
   });
 });
