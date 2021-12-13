@@ -1,9 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import fetchWidget from '../fetchers/Widgets';
-import { filtersToQueryString } from '../components/Filter';
+import { filtersToQueryString } from '../utils';
 
 /*
   `withWidgetData` wraps widgets providing the widget with data
@@ -18,7 +17,7 @@ const withWidgetData = (Widget, widgetId) => {
 
     const { filters } = props;
 
-    useDeepCompareEffect(() => {
+    useEffect(() => {
       const fetch = async () => {
         try {
           updateLoading(true);

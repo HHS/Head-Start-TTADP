@@ -578,8 +578,8 @@ describe('handleApplyAlertFilters', () => {
 
     const filterMenuButton = allFilterButtons[0];
     fireEvent.click(filterMenuButton);
-    //const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
-    //fireEvent.click(addFilterButton);
+    // const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
+    // fireEvent.click(addFilterButton);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'reportId');

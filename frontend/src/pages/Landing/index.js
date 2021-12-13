@@ -1,6 +1,8 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, {
-  useState, useEffect, useContext,
+  useState,
+  useEffect,
+  useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -11,7 +13,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
-
 import AriaLiveContext from '../../AriaLiveContext';
 import { getReportAlerts } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
@@ -22,7 +23,7 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString } from '../../components/Filter';
+import { filtersToQueryString } from '../../utils';
 import Overview from '../../widgets/Overview';
 import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
@@ -91,7 +92,40 @@ function Landing({ user }) {
     updateAppliedRegion,
   ] = useState(user.homeRegionId === 14 ? 14 : defaultRegion);
 
-  const [regionLabel, setRegionLabel] = useState('');
+  const [overviewFilters, setOverviewFilters] = useState([
+    {
+      topic: 'region',
+      condition: 'Contains',
+      query: appliedRegion,
+    },
+    {
+      topic: 'startDate',
+      condition: 'Is after',
+      query: '2020/08/31',
+    },
+  ]);
+
+  useEffect(() => {
+    const regionFilterValue = overviewFilters.find((f) => f.topic === 'region').query;
+
+    if (appliedRegion === regionFilterValue) {
+      return;
+    }
+
+    setOverviewFilters([
+      {
+        topic: 'region',
+        condition: 'Contains',
+        query: appliedRegion,
+      },
+      {
+        topic: 'startDate',
+        condition: 'Is after',
+        query: '2020/08/31',
+      },
+    ]);
+  }, [appliedRegion, overviewFilters]);
+
   const ariaLiveContext = useContext(AriaLiveContext);
 
   const requestAlertsSort = (sortBy) => {
@@ -152,10 +186,6 @@ function Landing({ user }) {
     fetchAlertReports();
   }, [alertsSortConfig, alertsOffset, alertsPerPage, filters, appliedRegion]);
 
-  useEffect(() => {
-    setRegionLabel(appliedRegion === 14 ? 'All' : appliedRegion.toString());
-  }, [appliedRegion]);
-
   let msg;
   const message = history.location.state && history.location.state.message;
   if (message) {
@@ -178,18 +208,7 @@ function Landing({ user }) {
     );
   }
 
-  const overviewFilters = [
-    {
-      topic: 'region',
-      condition: 'Contains',
-      query: appliedRegion,
-    },
-    {
-      topic: 'startDate',
-      condition: 'Is after',
-      query: '2020/08/31',
-    },
-  ];
+  const regionLabel = appliedRegion === 14 ? 'All' : appliedRegion.toString();
 
   // Apply filters.
   const onApply = (newFilters) => {

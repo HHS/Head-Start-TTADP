@@ -15,26 +15,28 @@ import TTAHistory from './pages/TTAHistory';
 
 export default function GranteeRecord({ match, location }) {
   const { granteeId } = match.params;
-  const regionId = new URLSearchParams(location.search).get('region');
-  const [granteeName, setGranteeName] = useState(` - Region ${regionId}`);
-  const [granteeSummary, setGranteeSummary] = useState({
+  const regionId = new URLSearchParams(location.search).get('region.in[]');
+  const [granteeData, setGranteeData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
     'grants.startDate': '',
     'grants.endDate': '',
     'grants.number': '',
     granteeId,
+    regionId,
+    granteeName: '',
   });
 
   const [error, setError] = useState();
 
   useEffect(() => {
-    async function fetchGrantee(id, region) {
+    async function fetchGrantee() {
       try {
-        const grantee = await getGrantee(id, region);
+        const grantee = await getGrantee(granteeId, regionId);
         if (grantee) {
-          setGranteeName(`${grantee.name} - Region ${regionId}`);
-          setGranteeSummary({ granteeId, ...grantee });
+          setGranteeData({
+            ...grantee, granteeId, regionId, granteeName: grantee.name,
+          });
         }
       } catch (e) {
         if (e instanceof HTTPError) {
@@ -47,6 +49,11 @@ export default function GranteeRecord({ match, location }) {
       }
     }
 
+    // if this isn't here, then we refetch each time the URL changes (i.e., going from tab to tab)
+    if (granteeData.granteeName) {
+      return;
+    }
+
     try {
       const id = parseInt(granteeId, DECIMAL_BASE);
       const region = parseInt(regionId, DECIMAL_BASE);
@@ -54,7 +61,9 @@ export default function GranteeRecord({ match, location }) {
     } catch (err) {
       setError('There was an error fetching grantee data');
     }
-  }, [granteeId, match.params, regionId]);
+  }, [granteeData.granteeName, granteeId, match.params, regionId]);
+
+  const { granteeName } = granteeData;
 
   return (
     <>
@@ -63,6 +72,8 @@ export default function GranteeRecord({ match, location }) {
           Grantee Profile -
           {' '}
           {granteeName}
+          - Region
+          {regionId}
         </title>
       </Helmet>
       <GranteeTabs region={regionId} granteeId={granteeId} />
@@ -77,7 +88,11 @@ export default function GranteeRecord({ match, location }) {
           </div>
         ) : (
           <>
-            <h1 className="ttahub-grantee-record--heading margin-top-0 margin-bottom-1 margin-left-2">{granteeName}</h1>
+            <h1 className="ttahub-grantee-record--heading margin-top-0 margin-bottom-1 margin-left-2">
+              {granteeName}
+              - Region
+              {regionId}
+            </h1>
             <Switch>
               <Route
                 path="/grantee/:granteeId/tta-history"
@@ -95,7 +110,7 @@ export default function GranteeRecord({ match, location }) {
                   <Profile
                     granteeName={granteeName}
                     regionId={regionId}
-                    granteeSummary={granteeSummary}
+                    granteeSummary={granteeData}
                   />
                 )}
               />

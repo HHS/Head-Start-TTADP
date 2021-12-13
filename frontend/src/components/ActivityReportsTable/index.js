@@ -4,11 +4,10 @@ import PropTypes from 'prop-types';
 import {
   Table, Checkbox, Grid, Alert,
 } from '@trussworks/react-uswds';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import { filtersToQueryString } from '../Filter';
+import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
@@ -50,7 +49,7 @@ function ActivityReportsTable({
     direction: 'desc',
   });
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     async function fetchReports() {
       setLoading(true);
       const filterQuery = filtersToQueryString(filters);
@@ -288,7 +287,12 @@ ActivityReportsTable.propTypes = {
     PropTypes.shape({
       condition: PropTypes.string,
       id: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.arrayOf(PropTypes.number),
+      ]),
       topic: PropTypes.string,
     }),
   ).isRequired,

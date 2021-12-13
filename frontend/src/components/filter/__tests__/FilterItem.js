@@ -9,12 +9,58 @@ import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
 
 describe('Filter menu item', () => {
-  const renderFilterItem = (filter, onRemoveFilter = jest.fn(), onUpdateFilter = jest.fn()) => {
-    render(<FilterItem
-      filter={filter}
-      onRemoveFilter={onRemoveFilter}
-      onUpdateFilter={onUpdateFilter}
-    />);
+  const renderFilterItem = (
+    filter,
+    onRemoveFilter = jest.fn(),
+    onUpdateFilter = jest.fn(),
+    setErrors = jest.fn(),
+  ) => {
+    const setError = jest.fn((error) => {
+      setErrors([error]);
+    });
+
+    const validate = jest.fn(() => {
+      const { topic, query, condition } = filter;
+      let message = '';
+      if (!topic) {
+        message = 'Please enter a value';
+        setError(message);
+        return false;
+      }
+      if (!condition) {
+        message = 'Please enter a condition';
+        setError(message);
+        return false;
+      }
+      if (!query || !query.length) {
+        message = 'Please enter a parameter';
+        setError(message);
+        return false;
+      }
+      if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+        message = 'Please enter a parameter';
+        setError(message);
+        return false;
+      }
+      setError(message);
+      return true;
+    });
+
+    render(
+      <div>
+        <FilterItem
+          filter={filter}
+          onRemoveFilter={onRemoveFilter}
+          onUpdateFilter={onUpdateFilter}
+          errors={['']}
+          setErrors={setErrors}
+          index={0}
+          validate={validate}
+          prohibitedFilters={[]}
+        />
+        <button type="button">BIG DUMB BUTTON</button>
+      </div>,
+    );
   };
 
   it('updates topic & condition', async () => {
@@ -78,41 +124,74 @@ describe('Filter menu item', () => {
     userEvent.click(button);
 
     userEvent.click(screen.getByRole('button', {
-      name: /select to view data from year to date\. select apply filters button to apply selection/i,
+      name: /Select to view data from Last 30 Days. Select Apply filters button to apply selection/i,
     }));
 
     userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
 
-    const yearToDate = formatDateRange({
-      yearToDate: true,
+    const lastThirtyDays = formatDateRange({
+      lastThirtyDays: true,
       forDateTime: true,
     });
 
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', yearToDate);
+    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', lastThirtyDays);
   });
 
-  it('display a specialist filter correctly', () => {
+  it('validates topic', async () => {
     const filter = {
-      topic: 'role',
-      condition: 'Is within',
-      query: ['Early Childhood Specialist'],
-      id: 'gibberish',
+      id: 'blah-de-dah',
+      display: '',
+      topic: '',
+      condition: '',
+      query: [],
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
-    renderFilterItem(filter, onRemove, onUpdate);
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
+  });
 
-    const button = screen.getByRole('button', { name: /toggle the change filter by specialists menu/i });
-    userEvent.click(button);
+  it('validates condition', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: 'role',
+      condition: '',
+      query: [],
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a condition']);
+  });
 
-    const apply = screen.getByRole('button', { name: /apply filters for the change filter by specialists menu/i });
-    userEvent.click(apply);
-    expect(onUpdate).toHaveBeenCalled();
-
-    userEvent.click(screen.getByRole('button', {
-      name: /remove Specialist Is within Early Childhood Specialist filter. click apply filters to make your changes/i,
-    }));
-
-    expect(onRemove).toHaveBeenCalled();
+  it('validates query', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: 'startDate',
+      condition: 'Is within',
+      query: '',
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a parameter']);
   });
 });
