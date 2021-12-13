@@ -96,7 +96,7 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="">Select a topic</option>
+        <option value="" disabled selected>- Select -</option>
         {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -111,7 +111,7 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" hidden disabled selected>- Select -</option>
+        <option value="" disabled selected>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition

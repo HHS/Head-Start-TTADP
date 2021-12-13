@@ -173,7 +173,7 @@ export const reportPropTypes = PropTypes.shape({
     }),
   ),
   lastSaved: PropTypes.string,
-  calculatedStatus: PropTypes.instanceOf(moment),
+  calculatedStatus: PropTypes.string,
   legacyId: PropTypes.string,
 });
 
