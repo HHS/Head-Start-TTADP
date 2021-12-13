@@ -1328,6 +1328,7 @@ describe('filtersToScopes', () => {
       });
 
       reportOne = await createReport({
+        id: 2423423,
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -1335,6 +1336,7 @@ describe('filtersToScopes', () => {
         ],
       });
       reportTwo = await createReport({
+        id: 2423424,
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -1345,6 +1347,7 @@ describe('filtersToScopes', () => {
         ],
       });
       reportThree = await createReport({
+        id: 2423425,
         activityRecipients: [
           {
             grantId: grantTwo.id,
@@ -1386,10 +1389,10 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      firstReport = await ActivityReport.create({ ...draftReport, createdAt: '2019-01-01T21:00:57.149Z' });
-      secondReport = await ActivityReport.create({ ...draftReport, createdAt: '2020-02-01T21:11:57.149Z' });
-      thirdReport = await ActivityReport.create({ ...draftReport, createdAt: '2021-01-01T21:14:57.149Z' });
-      fourthReport = await ActivityReport.create({ ...draftReport, createdAt: '2023-01-01T21:15:57.149Z' });
+      firstReport = await ActivityReport.create({ ...draftReport, id: 95842, createdAt: '2019-01-01T21:00:57.149Z' });
+      secondReport = await ActivityReport.create({ ...draftReport, id: 95843, createdAt: '2020-02-01T21:11:57.149Z' });
+      thirdReport = await ActivityReport.create({ ...draftReport, id: 95844, createdAt: '2021-01-01T21:14:57.149Z' });
+      fourthReport = await ActivityReport.create({ ...draftReport, id: 95845, createdAt: '2023-01-01T21:15:57.149Z' });
       possibleIds = [
         firstReport.id,
         secondReport.id,
@@ -1427,6 +1430,7 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([fourthReport.id]));
     });
 
+    // Test rebuild.
     it('within returns reports with create dates between the two dates', async () => {
       const filters = { 'createDate.win': '2020/01/01-2021/06/06' };
       const scope = filtersToScopes(filters);
