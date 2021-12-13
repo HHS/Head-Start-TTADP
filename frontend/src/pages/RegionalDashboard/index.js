@@ -77,12 +77,6 @@ export default function RegionalDashboard({ user }) {
     }
   };
 
-  if (!user) {
-    return (
-      <div>Loading...</div>
-    );
-  }
-
   const filtersToApply = expandFilters(filters);
 
   const dateRangeOptions = [

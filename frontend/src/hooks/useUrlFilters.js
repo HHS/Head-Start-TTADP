@@ -12,7 +12,7 @@ const { history } = window;
  * @param {String[]} paramsToHide filter topics that shouldn't display in the URL
  * @returns {[ Object[], Function ]}
  */
-export default function useUrlFilters(defaultFilters = [], paramsToHide = []) {
+export default function useUrlFilters(defaultFilters, paramsToHide = []) {
   const [filters, setFilters] = useState(defaultFilters);
 
   // use effect to watch the query and update if changed
