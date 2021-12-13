@@ -1430,7 +1430,6 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([fourthReport.id]));
     });
 
-    // Test rebuild.
     it('within returns reports with create dates between the two dates', async () => {
       const filters = { 'createDate.win': '2020/01/01-2021/06/06' };
       const scope = filtersToScopes(filters);
