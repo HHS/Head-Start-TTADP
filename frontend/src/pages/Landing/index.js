@@ -119,7 +119,8 @@ function Landing({ user }) {
   useEffect(() => {
     async function fetchAlertReports() {
       setAlertsLoading(true);
-      const filterQuery = filtersToQueryString(filters, appliedRegionNumber);
+      // Filters passed also contains region.
+      const filterQuery = filtersToQueryString(filters);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
@@ -140,7 +141,6 @@ function Landing({ user }) {
       setAlertsLoading(false);
     }
     fetchAlertReports();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alertsSortConfig, alertsOffset, alertsPerPage, filters]);
 
   let msg;
