@@ -58,10 +58,6 @@ export default function RegionalDashboard({ user }) {
     },
   ]);
 
-  if (!filters) {
-    return null;
-  }
-
   const startDateFilter = filters.find((filter) => filter.topic === 'startDate');
   const regionFilter = filters.find((filter) => filter.topic === 'region');
 

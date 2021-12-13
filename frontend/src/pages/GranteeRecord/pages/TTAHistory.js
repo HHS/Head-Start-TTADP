@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -23,7 +23,7 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   granteeName, granteeId, regionId,
 }) {
-  const [filters, setFilters] = useState([
+  const [filters, setFilters] = useUrlFilters([
     {
       id: uuidv4(),
       topic: 'startDate',
@@ -32,23 +32,23 @@ export default function TTAHistory({
     },
   ]);
 
-  const [filtersToApply, setFiltersToApply] = useUrlFilters();
+  if (!granteeName) {
+    return null;
+  }
 
-  useEffect(() => {
-    setFiltersToApply([
-      ...expandFilters(filters),
-      {
-        topic: 'region',
-        condition: 'Contains',
-        query: regionId,
-      },
-      {
-        topic: 'granteeId',
-        condition: 'Contains',
-        query: granteeId,
-      },
-    ]);
-  }, [filters, granteeId, regionId, setFiltersToApply]);
+  const filtersToApply = [
+    ...expandFilters(filters),
+    {
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
+    },
+    {
+      topic: 'granteeId',
+      condition: 'Contains',
+      query: granteeId,
+    },
+  ];
 
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
