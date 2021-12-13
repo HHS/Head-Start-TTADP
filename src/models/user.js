@@ -92,6 +92,12 @@ export default (sequelize, DataTypes) => {
         return generateFullName(this.name, this.role);
       },
     },
+    stateCodes: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return ['MA'];
+      },
+    },
     lastLogin: DataTypes.DATE,
   }, {
     defaultScope: {
