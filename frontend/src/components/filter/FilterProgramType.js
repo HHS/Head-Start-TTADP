@@ -6,7 +6,7 @@ const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS', 'EHS-CCP'].map((label, value) => ({ v
 
 export default function FilterProgramType({
   onApply,
-  labelId,
+  inputId,
 }) {
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -14,7 +14,7 @@ export default function FilterProgramType({
   return (
     <FilterSelect
       onApply={onApplyClick}
-      labelId={labelId}
+      inputId={inputId}
       labelText="Select program type to filter by"
       options={PROGRAM_TYPE_OPTIONS}
     />
@@ -22,6 +22,6 @@ export default function FilterProgramType({
 }
 
 FilterProgramType.propTypes = {
-  labelId: PropTypes.string.isRequired,
+  inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
 };
