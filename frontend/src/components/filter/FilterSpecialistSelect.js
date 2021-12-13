@@ -1,7 +1,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
-import { ROLES_MAP } from '../SpecialistSelect';
+
+const ROLES_MAP = [
+  {
+    selectValue: 1,
+    value: 'Early Childhood Specialist',
+    label: 'Early Childhood Specialist (ECS)',
+  },
+  {
+    selectValue: 2,
+    value: 'Family Engagement Specialist',
+    label: 'Family Engagement Specialist (FES)',
+  },
+  {
+    selectValue: 3,
+    value: 'Grantee Specialist',
+    label: 'Grantee Specialist (GS)',
+  },
+  {
+    selectValue: 4,
+    value: 'Health Specialist',
+    label: 'Health Specialist (HS)',
+  },
+  {
+    selectValue: 5,
+    value: 'System Specialist',
+    label: 'System Specialist (SS)',
+  },
+];
 
 const ROLE_OPTIONS = ROLES_MAP.map(({ label, selectValue: value }) => ({ value, label }));
 
