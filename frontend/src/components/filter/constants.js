@@ -5,6 +5,7 @@ import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
+  IS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -14,6 +15,7 @@ import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
+import FilterStateSelect from './FilterStateSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -169,6 +171,20 @@ export const FILTER_CONFIG = [
       <FilterSpecialistSelect
         inputId={`role-${condition}-${id}`}
         onApply={onApplyQuery}
+      />
+    ),
+  },
+  {
+    id: 'stateCode',
+    display: 'State',
+    conditions: [IS],
+    defaultValues: EMPTY_CHECKBOX_SELECT,
+    displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery, dateRangeOptions, stateCodes) => (
+      <FilterStateSelect
+        inputId={`role-${condition}-${id}`}
+        onApply={onApplyQuery}
+        stateCodes={stateCodes}
       />
     ),
   },
