@@ -216,6 +216,13 @@ function Landing({ user }) {
           <Grid>
             <h1 className="landing">Activity Reports</h1>
           </Grid>
+          <Grid className="grid-col-2 flex-align-self-center">
+            {reportAlerts
+              && reportAlerts.length > 0
+              && hasReadWrite(user)
+              && appliedRegionNumber !== 14
+              && <NewReport />}
+          </Grid>
           <Grid col={10} className="flex-align-self-center">
             <div className="display-flex flex-wrap margin-bottom-2">
               <FilterMenu
@@ -229,13 +236,7 @@ function Landing({ user }) {
               />
             </div>
           </Grid>
-          <Grid className="flex-align-self-center">
-            {reportAlerts
-              && reportAlerts.length > 0
-              && hasReadWrite(user)
-              && appliedRegionNumber !== 14
-              && <NewReport />}
-          </Grid>
+       
         </Grid>
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>

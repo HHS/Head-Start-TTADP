@@ -10,7 +10,7 @@ function NewReport() {
     <Link
       to="/activity-reports/new/activity-summary"
       referrerPolicy="same-origin"
-      className="usa-button smart-hub--new-report-btn margin-bottom-1"
+      className="usa-button smart-hub--new-report-btn"
       variant="unstyled"
     >
       <span className="smart-hub--plus">+</span>
