@@ -160,6 +160,23 @@ export const FILTER_CONFIG = [
     ),
   },
   {
+    id: 'reportId',
+    display: 'Report ID',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_TEXT_INPUT,
+    displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+      <FilterInput
+        query={query}
+        id={id}
+        condition={condition}
+        onApply={onApplyQuery}
+        type="reportId"
+        label="Enter a report id"
+      />
+    ),
+  },
+  {
     id: 'role',
     display: 'Specialist role',
     conditions: FILTER_CONDITIONS,

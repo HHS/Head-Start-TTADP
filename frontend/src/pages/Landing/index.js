@@ -8,7 +8,6 @@ import PropTypes from 'prop-types';
 import {
   Alert, Grid, Button,
 } from '@trussworks/react-uswds';
-import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
@@ -29,12 +28,6 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterMenu from '../../components/filter/FilterMenu';
 import FilterPills from '../../components/filter/FilterPills';
-import { formatDateRange } from '../../components/DateRangeSelect';
-
-const defaultDate = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -60,12 +53,6 @@ function Landing({ user }) {
       topic: 'region',
       condition: 'Contains',
       query: defaultRegion,
-    },
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'Is within',
-      query: defaultDate,
     },
   ]);
 
@@ -236,7 +223,6 @@ function Landing({ user }) {
               />
             </div>
           </Grid>
-       
         </Grid>
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
