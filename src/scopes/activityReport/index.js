@@ -12,7 +12,7 @@ import { withCollaborators, withoutCollaborators } from './collaborators';
 import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatus';
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withRole, withoutRole } from './role';
-import withRegion from './region';
+import { withRegion, withoutRegion } from './region';
 import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutReason, withReason } from './reason';
@@ -77,6 +77,7 @@ export const topicToQuery = {
   },
   region: {
     in: (query) => withRegion(query),
+    nin: (query) => withoutRegion(query),
   },
   targetPopulations: {
     in: (query) => withTargetPopulations(query),
