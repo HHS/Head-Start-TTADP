@@ -260,9 +260,9 @@ describe('My Alerts', () => {
     const contextMenu = await screen.findAllByTestId('ellipsis-button');
     expect(contextMenu).toBeTruthy();
     const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true });
-    await userEvent.click(button);
+    userEvent.click(button);
 
     const modal = document.querySelector('#DeleteReportModal');
-    expect(modal.firstChild).toHaveClass('is-hidden');
+    expect(modal).toHaveClass('is-hidden');
   });
 });
