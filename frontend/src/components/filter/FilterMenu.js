@@ -177,7 +177,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       canBlur={canBlur}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
-        <p className="margin-bottom-2"><strong>Show results matching the following filters.</strong></p>
+        <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">
             {items.map((filter, index) => (
