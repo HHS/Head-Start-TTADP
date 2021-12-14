@@ -30,7 +30,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
   const validate = ({ topic, query, condition }, setError) => {
     let message = '';
     if (!topic) {
-      message = 'Please enter a parameter';
+      message = 'Please enter a filter';
       setError(message);
       return false;
     }
@@ -179,23 +179,21 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
         <div>
-          <form onSubmit={onApply}>
-            <ul className="usa-list usa-list--unstyled margin-bottom-1">
-              {items.map((filter, index) => (
-                <FilterItem
-                  onRemoveFilter={onRemoveFilter}
-                  onUpdateFilter={onUpdateFilter}
-                  key={filter.id}
-                  filter={filter}
-                  index={index}
-                  errors={errors}
-                  setErrors={setErrors}
-                  validate={validate}
-                />
-              ))}
-            </ul>
-            <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
-          </form>
+          <div className="margin-bottom-1">
+            {items.map((filter, index) => (
+              <FilterItem
+                onRemoveFilter={onRemoveFilter}
+                onUpdateFilter={onUpdateFilter}
+                key={filter.id}
+                filter={filter}
+                index={index}
+                errors={errors}
+                setErrors={setErrors}
+                validate={validate}
+              />
+            ))}
+          </div>
+          <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
     </DropdownMenu>

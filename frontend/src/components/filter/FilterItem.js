@@ -141,27 +141,27 @@ export default function FilterItem({
 
   const error = errors[index];
 
-  const liBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex';
-  let liErrorClass = '';
+  const fieldsetBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex border-0 padding-0';
+  let fieldsetErrorClass = '';
 
   switch (error) {
     case 'Please enter a value':
-      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
     case 'Please enter a condition':
-      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
       break;
     case 'Please enter a filter':
-      liErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
       break;
     default:
       break;
   }
 
-  const liClassNames = `${liBaseClass} ${liErrorClass}`;
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
 
   return (
-    <li className={liClassNames} onBlur={onBlur} ref={li}>
+    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={li}>
       {
         error
         && (
@@ -214,7 +214,7 @@ export default function FilterItem({
         <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
-    </li>
+    </fieldset>
   );
 }
 
