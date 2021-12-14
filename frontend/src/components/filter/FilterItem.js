@@ -31,6 +31,7 @@ export default function FilterItem({
   setErrors,
   index,
   validate,
+  stateCodes,
 }) {
   const {
     id,
@@ -172,7 +173,9 @@ export default function FilterItem({
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput(id, condition, query, onUpdate, onApplyQuery, dateRangeOptions)
+        ? selectedTopic.renderInput(
+          id, condition, query, onUpdate, onApplyQuery, dateRangeOptions, stateCodes,
+        )
         : <DummySelect /> }
       <button
         type="button"
@@ -201,4 +204,5 @@ FilterItem.propTypes = {
   setErrors: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   validate: PropTypes.func.isRequired,
+  stateCodes: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

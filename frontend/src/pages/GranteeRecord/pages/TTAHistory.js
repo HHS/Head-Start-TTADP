@@ -67,7 +67,13 @@ export default function TTAHistory({
 
   // we don't want to double query the API
   if (!filtersToApply.length) {
-    return null;
+    return (
+      <Helmet>
+        <title>
+          Grantee TTA History loading
+        </title>
+      </Helmet>
+    );
   }
 
   return (
@@ -76,7 +82,7 @@ export default function TTAHistory({
         <title>
           Grantee TTA History -
           {' '}
-          {granteeName}
+          {granteeName || ''}
         </title>
       </Helmet>
       <div className="margin-x-2 maxw-widescreen">
