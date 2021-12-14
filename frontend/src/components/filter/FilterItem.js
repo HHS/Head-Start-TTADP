@@ -196,6 +196,7 @@ export default function FilterItem({
         name="condition"
         aria-label="condition"
         value={condition}
+        disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
