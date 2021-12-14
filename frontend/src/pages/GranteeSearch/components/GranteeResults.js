@@ -21,13 +21,12 @@ export default function GranteeResults(
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
   const renderGrantee = (grantee) => {
-    // Get a unique sorted list of Program Specialists.
     const { regionId, programSpecialists } = grantee;
 
     return (
       <tr key={`${grantee.id} ${regionId}`}>
         <td>{regionId}</td>
-        <td><Link to={`/grantee/${grantee.id}/profile?region=${regionId}`}>{grantee.name}</Link></td>
+        <td><Link to={`/grantee/${grantee.id}/profile?region.in[]=${regionId}`}>{grantee.name}</Link></td>
         <td className="maxw-3">{programSpecialists}</td>
       </tr>
     );

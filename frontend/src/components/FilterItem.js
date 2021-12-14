@@ -14,7 +14,7 @@ import {
   SELECT_CONDITIONS,
   DATE_CONDITIONS,
   WITHIN,
-} from './constants';
+} from '../Constants';
 
 export const selectRoleInput = (query, onUpdateFilter) => (
   <select

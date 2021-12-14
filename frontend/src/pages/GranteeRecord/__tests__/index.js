@@ -62,7 +62,7 @@ describe('grantee record page', () => {
     };
 
     const location = {
-      search: '?region=45',
+      search: '?region.in[]=45',
       hash: '',
       pathname: '',
     };
@@ -95,6 +95,7 @@ describe('grantee record page', () => {
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&granteeId.in[]=1', { count: 0, rows: [] });
     fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [] });
     fetchMock.get('/api/widgets/frequencyGraph', 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&granteeId.in[]=1`, 200);
     fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&granteeId.in[]=1', 200);
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}`, 200);
     fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&granteeId.in[]=1', 200);
@@ -102,14 +103,6 @@ describe('grantee record page', () => {
   });
   afterEach(() => {
     fetchMock.restore();
-  });
-
-  it('shows the grantee name', async () => {
-    fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
-    act(() => renderGranteeRecord());
-
-    const granteeName = await screen.findByText('the Mighty Grantee - Region 45');
-    expect(granteeName).toBeInTheDocument();
   });
 
   it('renders the navigation', async () => {
@@ -138,7 +131,7 @@ describe('grantee record page', () => {
 
   it('navigates to the profile page', async () => {
     fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
-    memoryHistory.push('/grantee/1/profile?region.=45');
+    memoryHistory.push('/grantee/1/profile?region.in[]=45');
     act(() => renderGranteeRecord(memoryHistory));
     const heading = await screen.findByRole('heading', { name: /grantee summary/i });
     expect(heading).toBeInTheDocument();
@@ -146,7 +139,7 @@ describe('grantee record page', () => {
 
   it('navigates to the tta history page', async () => {
     fetchMock.get('/api/grantee/1?region.in[]=45', theMightyGrantee);
-    memoryHistory.push('/grantee/1/tta-history?region=45');
+    memoryHistory.push('/grantee/1/tta-history?region.in[]=45');
     act(() => renderGranteeRecord(memoryHistory));
     await waitFor(() => {
       const ar = screen.getByText(/the total number of approved activity reports\. click to visually reveal this information/i);
