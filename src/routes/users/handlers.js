@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+import { Grant, sequelize } from '../../models';
 import UserPolicy from '../../policies/user';
 import SCOPES from '../../middleware/scopeConstants';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -17,6 +17,26 @@ export async function getPossibleCollaborators(req, res) {
 
     const users = await usersWithPermissions([region], SCOPES.READ_WRITE_REPORTS);
     res.json(users);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
+  }
+}
+
+export async function getPossibleStateCodes(req, res) {
+  try {
+    const user = await userById(req.session.userId);
+    const regions = user.permissions.map((permission) => permission.regionId);
+    const grants = await Grant.findAll({
+      attributes: [
+        [sequelize.fn('DISTINCT', sequelize.col('stateCode')), 'stateCode'],
+      ],
+      where: {
+        regionId: regions,
+      },
+      raw: true,
+    });
+
+    res.json(grants.map((grant) => grant.stateCode));
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
   }
