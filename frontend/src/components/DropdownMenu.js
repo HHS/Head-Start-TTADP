@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+  useEffect, useState, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
 import triangleDown from '../images/triange_down.png';
@@ -40,7 +42,6 @@ export default function DropdownMenu({
       // then we listen for the escape key
       // this is because we don't want to have to pass
       // a bunch of refs and the "setMenuIsOpen" thing down the tree
-      // (I suppose this could be refactored to Consumer->Provider context, but why?)
       if (e.key === 'Escape') {
         setMenuIsOpen(false);
       }
@@ -94,6 +95,7 @@ export default function DropdownMenu({
         className="usa-button smart-hub--button"
         onClick={onApplyClick}
         aria-label={applyButtonAria}
+        onBlur={onBlur}
       >
         {applyButtonText}
       </button>
