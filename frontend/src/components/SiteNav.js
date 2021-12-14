@@ -97,7 +97,7 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
-                  <FeatureFlag user={user} flag="recipient_record_page" admin={admin} renderNotFound={false}>
+                  <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
                     <li>
                       <NavLink
                         to="/recipient-tta-records"
