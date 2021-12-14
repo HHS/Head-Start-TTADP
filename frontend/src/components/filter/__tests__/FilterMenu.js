@@ -35,7 +35,7 @@ describe('Filter Menu', () => {
     });
 
     userEvent.click(button);
-    const message = await screen.findByText('Show results matching the following conditions.');
+    const message = await screen.findByText('Show results matching the following filters.');
     expect(message).toBeVisible();
 
     const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
@@ -150,7 +150,7 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const message = await screen.findByText('Show results matching the following conditions.');
+    const message = await screen.findByText('Show results matching the following filters.');
     userEvent.click(message);
 
     const specialists = await screen.findByRole('button', { name: /toggle the Change filter by specialists menu/i });
