@@ -1,32 +1,19 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import FilterDateRange from './FilterDateRange';
-import { formatDateRange } from '../DateRangeSelect';
-import SpecialistSelect from '../SpecialistSelect';
-import {
-  DATE_CONDITIONS,
-  SELECT_CONDITIONS,
-} from '../constants';
 import './FilterItem.css';
 
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
+import { FILTER_CONFIG } from './constants';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+  query: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
+  ]),
   id: PropTypes.string,
 });
-
-const DEFAULT_VALUES = {
-  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '' },
-  role: { Contains: [], 'Does not contain': [] },
-};
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -34,13 +21,45 @@ const DEFAULT_VALUES = {
  * @param {Object} props
  * @returns a JSX object
  */
-export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
+export default function FilterItem({
+  filter,
+  onRemoveFilter,
+  onUpdateFilter,
+  prohibitedFilters,
+  dateRangeOptions,
+  errors,
+  setErrors,
+  index,
+  validate,
+}) {
   const {
     id,
     topic,
     condition,
     query,
   } = filter;
+
+  const fieldset = useRef();
+
+  const setError = (message) => {
+    const newErrors = [...errors];
+    newErrors.splice(index, 1, message);
+    setErrors(newErrors);
+  };
+
+  const onBlur = (e) => {
+    // no validation if you are clicking on something within the filter item
+    if (fieldset.current.contains(e.relatedTarget)) {
+      return;
+    }
+
+    // no validation if you are clicking on the cancel button
+    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
+      return;
+    }
+
+    validate(filter, setError);
+  };
 
   /**
    * changing the condition should clear the query
@@ -50,8 +69,13 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
    */
   const onUpdate = (name, value) => {
     if (name === 'condition') {
-      // Set default value.
-      const defaultQuery = DEFAULT_VALUES[topic][value];
+      /**
+       * if the condition is changed, we need to do a lookup in the filter config
+       * and set the query to the new default value
+       */
+      const f = FILTER_CONFIG.find(((config) => config.id === topic));
+      const defaultQuery = f.defaultValues[value];
+
       onUpdateFilter(id, 'query', defaultQuery);
     }
 
@@ -66,40 +90,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     onUpdate('query', q);
   };
 
-  const updateSingleDate = (name, value) => {
-    onUpdate(name, value);
-  };
-
-  const possibleFilters = [
-    {
-      id: 'role',
-      display: 'Specialist',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <SpecialistSelect
-          labelId={`role-${condition}-${id}`}
-          onApplyRoles={onApplyQuery}
-          toggleAllInitial={false}
-          hideToggleAll
-        />
-      ),
-    },
-    {
-      id: 'startDate',
-      display: 'Date range',
-      conditions: DATE_CONDITIONS,
-      renderInput: () => (
-        <FilterDateRange
-          condition={condition}
-          query={query}
-          updateSingleDate={updateSingleDate}
-          onApplyDateRange={onApplyQuery}
-        />
-      ),
-    },
-  ];
-
-  const selectedTopic = possibleFilters.find((f) => f.id === topic);
+  const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
 
   const onRemove = () => {
@@ -115,8 +106,41 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
+  const topicOptions = FILTER_CONFIG.filter((config) => (
+    topic === config.id || !prohibitedFilters.includes(config.id)
+  )).map(({ id: filterId, display }) => (
+    <option key={filterId} value={filterId}>{display}</option>
+  ));
+  const error = errors[index];
+
+  const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0 position-relative';
+  let fieldsetErrorClass = '';
+
+  switch (error) {
+    case 'Please enter a value':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
+    case 'Please enter a condition':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      break;
+    case 'Please enter a parameter':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--parameter';
+      break;
+    default:
+      break;
+  }
+
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
   return (
-    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
+    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
+      {
+        error
+        && (
+        <span className="ttahub-filter-menu-error" role="status">
+          <strong>{error}</strong>
+        </span>
+        )
+      }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
         Select a filter topic
@@ -129,10 +153,8 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" hidden disabled selected>- Select -</option>
-        {possibleFilters.map(({ id: filterId, display }) => (
-          <option key={filterId} value={filterId}>{display}</option>
-        ))}
+        <option value="" disabled selected>- Select -</option>
+        {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
@@ -146,11 +168,11 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" hidden disabled selected>- Select -</option>
+        <option value="" disabled selected>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput()
+        ? selectedTopic.renderInput(id, condition, query, onUpdate, onApplyQuery, dateRangeOptions)
         : <DummySelect /> }
       <button
         type="button"
@@ -161,7 +183,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
-    </li>
+    </fieldset>
   );
 }
 
@@ -169,4 +191,14 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
+  prohibitedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
+  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+    range: PropTypes.string,
+  })).isRequired,
+  errors: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setErrors: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  validate: PropTypes.func.isRequired,
 };

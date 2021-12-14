@@ -1,7 +1,7 @@
 import join from 'url-join';
 import { get } from './index';
 import { DECIMAL_BASE } from '../Constants';
-import { filtersToQueryString } from '../components/Filter';
+import { filtersToQueryString } from '../utils';
 
 const granteeUrl = join('/', 'api', 'grantee');
 
