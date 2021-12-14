@@ -1,3 +1,4 @@
+import { describe } from 'yargs';
 import { getPossibleCollaborators } from './handlers';
 import { userById, usersWithPermissions } from '../../services/users';
 import User from '../../policies/user';
@@ -24,6 +25,10 @@ const mockRequest = {
 describe('User handlers', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('getPossibleStateCodes', () => {
+
   });
 
   describe('getPossibleCollaborators', () => {

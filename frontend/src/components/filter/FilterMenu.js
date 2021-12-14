@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
+import { getStateCodes } from '../../fetchers/users';
 
 // save this to cut down on repeated boilerplate in PropTypes
 const filterProp = PropTypes.shape({
@@ -19,11 +20,25 @@ const filterProp = PropTypes.shape({
  */
 export default function FilterMenu({ filters, onApplyFilters }) {
   const [items, setItems] = useState([...filters]);
+  const [stateCodes, setStateCodes] = useState([]);
 
   useEffect(() => {
     // If filters where changes outside of this component update.
     setItems(filters);
   }, [filters]);
+
+  useEffect(() => {
+    async function fetchStateCodes() {
+      try {
+        const codes = await getStateCodes();
+        setStateCodes(codes);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    fetchStateCodes();
+  }, []);
 
   const onApply = () => {
     onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
@@ -91,6 +106,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
                 onUpdateFilter={onUpdateFilter}
                 key={filter.id}
                 filter={filter}
+                stateCodes={stateCodes}
               />
             ))}
           </ul>
