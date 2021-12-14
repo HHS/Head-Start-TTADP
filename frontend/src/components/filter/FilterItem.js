@@ -26,6 +26,7 @@ export default function FilterItem({
   onRemoveFilter,
   onUpdateFilter,
   prohibitedFilters,
+  selectedFilters,
   dateRangeOptions,
   errors,
   setErrors,
@@ -40,6 +41,10 @@ export default function FilterItem({
   } = filter;
 
   const fieldset = useRef();
+
+  if (prohibitedFilters.includes(topic)) {
+    return null;
+  }
 
   const setError = (message) => {
     const newErrors = [...errors];
@@ -107,7 +112,7 @@ export default function FilterItem({
     : 'remove this filter. click apply filters to make your changes';
 
   const topicOptions = FILTER_CONFIG.filter((config) => (
-    topic === config.id || !prohibitedFilters.includes(config.id)
+    topic === config.id || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
   )).map(({ id: filterId, display }) => (
     <option key={filterId} value={filterId}>{display}</option>
   ));
@@ -192,6 +197,7 @@ FilterItem.propTypes = {
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
   prohibitedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
   dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,

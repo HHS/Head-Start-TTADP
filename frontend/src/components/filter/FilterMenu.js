@@ -69,19 +69,17 @@ export default function FilterMenu({
   // filters currently selected. these will be excluded from filter selection
   const selectedFilters = items.map((filter) => filter.topic);
 
-  const prohibitedFilters = [
-    ...selectedFilters,
-    ...availableFilters.filter((f) => !allowedFilters.includes(f)),
-  ];
+  // filters that aren't allowed per our allowedFilters prop
+  const prohibitedFilters = availableFilters.filter((f) => !allowedFilters.includes(f));
 
+  // If filters were changed outside of this component, we need to update the items
+  // (for example, the "remove filter" button on the filter pills)
   useEffect(() => {
-    // If filters were changed outside of this component, we need to update the items
-    // (for example, the "remove filter" button on the filter pills)
     setItems(filters);
   }, [filters]);
 
+  // if an item was deleted, we need to update the errors
   useEffect(() => {
-    // if an item was deleted, we need to update the errors
     if (items.length < errors.length) {
       setErrors(items.map(() => ''));
     }
@@ -99,6 +97,7 @@ export default function FilterMenu({
   }, [itemLength, items.length]);
 
   const onApply = () => {
+    // first, we validate
     const hasErrors = items.reduce((acc, curr, index) => {
       if (acc) {
         return true;
@@ -117,10 +116,12 @@ export default function FilterMenu({
       return false;
     }, false);
 
+    // if validation was not successful
     if (hasErrors) {
       return false;
     }
 
+    // otherwise, we apply
     onApplyFilters(items);
     return true;
   };
@@ -178,7 +179,11 @@ export default function FilterMenu({
   };
 
   const clearAllFilters = () => {
-    setItems([]);
+    // this looks a little strange, right?
+    // well, we don't want to clear out things like the region, just the filters that can be set
+    // in the UI
+    const newItems = items.filter((item) => prohibitedFilters.includes(item.topic));
+    setItems(newItems);
   };
 
   const canBlur = () => false;
@@ -210,6 +215,7 @@ export default function FilterMenu({
                 key={filter.id}
                 filter={filter}
                 prohibitedFilters={prohibitedFilters}
+                selectedFilters={selectedFilters}
                 dateRangeOptions={dateRangeOptions}
                 errors={errors}
                 setErrors={setErrors}

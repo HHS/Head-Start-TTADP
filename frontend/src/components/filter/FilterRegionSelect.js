@@ -41,5 +41,5 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
 
 FilterRegionalSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
-  appliedRegion: PropTypes.number.isRequired,
+  appliedRegion: PropTypes.string.isRequired,
 };

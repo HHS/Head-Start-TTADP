@@ -66,6 +66,7 @@ export const FILTER_CONFIG = [
         updateSingleDate={onUpdate}
         onApplyDateRange={onApplyQuery}
         options={dateRangeOptions}
+        id={id}
       />
     ),
   },
