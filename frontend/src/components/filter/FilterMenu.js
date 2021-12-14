@@ -33,7 +33,7 @@ export default function FilterMenu({ filters, onApplyFilters }) {
         const codes = await getStateCodes();
         setStateCodes(codes);
       } catch (error) {
-        console.log(error);
+        // fail silently
       }
     }
 
