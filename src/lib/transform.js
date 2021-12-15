@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { convert, table } from 'html-to-text';
+import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
 function transformDate(field) {
