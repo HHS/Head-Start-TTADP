@@ -109,8 +109,8 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     act(() => renderRecipientRecord());
 
-    const recipientName = await screen.findByText('the Mighty Recipient - Region 45');
-    expect(recipientName).toBeInTheDocument();
+    const recipientName = await screen.findByRole('heading', { level: 1 });
+    expect(recipientName.textContent).toEqual('the Mighty Recipient - Region 45');
   });
 
   it('renders the navigation', async () => {

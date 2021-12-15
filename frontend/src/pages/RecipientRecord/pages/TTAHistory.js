@@ -50,7 +50,7 @@ export default function TTAHistory({
     },
   ]);
 
-  if (!granteeName) {
+  if (!recipientName) {
     return null;
   }
 
