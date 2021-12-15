@@ -27,8 +27,9 @@
 }
 
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter [name="topic"],
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"]
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .smart-hub--checkbox-select .usa-select,
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"],
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-input,
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-select:nth-last-child(2),
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date {
     border: 2px solid #b50909;
 }
