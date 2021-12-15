@@ -94,7 +94,7 @@ describe('Regional Dashboard page', () => {
     userEvent.selectOptions(lastTopic, 'grantNumber');
     const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
     userEvent.selectOptions(lastCondition, 'Contains');
-    userEvent.type(await screen.findByRole('textbox', { name: /enter a grant number/i }));
+    userEvent.type(await screen.findByRole('textbox'));
     userEvent.type(await screen.findByRole('button', { name: /apply filters to this page/i }));
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
 
