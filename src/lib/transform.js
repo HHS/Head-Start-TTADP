@@ -66,7 +66,7 @@ function transformRelatedModel(field, prop) {
 function transformHTML(field) {
   async function transformer(instance) {
     const html = instance[field] || '';
-    const value = convert(html, { tables: true });
+    const value = convert(html, { selectors: [{ selector: 'table', format: 'dataTable' }] });
     const obj = {};
     Object.defineProperty(obj, field, {
       value,
