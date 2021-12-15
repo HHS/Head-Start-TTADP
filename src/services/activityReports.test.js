@@ -114,10 +114,10 @@ describe('Retrieve Alerts', () => {
       ]),
       OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
       Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
-      Region.create({ name: 'office 20', id: 20 }),
+      Region.create({ name: 'office 22', id: 22 }),
     ]);
     await Grant.create({
-      id: ALERT_RECIPIENT_ID, number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 20, status: 'Active',
+      id: ALERT_RECIPIENT_ID, number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
     });
   });
 
@@ -137,7 +137,7 @@ describe('Retrieve Alerts', () => {
     await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
     await Grant.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
     await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
-    await Region.destroy({ where: { id: 20 } });
+    await Region.destroy({ where: { id: 22 } });
   });
 
   it('retrieves myalerts', async () => {

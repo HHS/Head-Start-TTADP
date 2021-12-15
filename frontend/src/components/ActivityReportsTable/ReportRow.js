@@ -165,7 +165,7 @@ export const reportPropTypes = PropTypes.shape({
     fullName: PropTypes.string,
     homeRegionId: PropTypes.number,
     name: PropTypes.string,
-  }).isRequired,
+  }),
   topics: PropTypes.arrayOf(PropTypes.string).isRequired,
   collaborators: PropTypes.arrayOf(
     PropTypes.shape({
@@ -173,7 +173,7 @@ export const reportPropTypes = PropTypes.shape({
     }),
   ),
   lastSaved: PropTypes.string,
-  calculatedStatus: PropTypes.instanceOf(moment),
+  calculatedStatus: PropTypes.String,
   legacyId: PropTypes.string,
 });
 

@@ -95,6 +95,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.in[]=1', { count: 0, rows: [] });
     fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [] });
     fetchMock.get('/api/widgets/frequencyGraph', 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&recipientId.in[]=1`, 200);
     fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&recipientId.in[]=1', 200);
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}`, 200);
     fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&recipientId.in[]=1', 200);
@@ -108,8 +109,8 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     act(() => renderRecipientRecord());
 
-    const recipientName = await screen.findByText('the Mighty Recipient - Region 45');
-    expect(recipientName).toBeInTheDocument();
+    const recipientName = await screen.findByRole('heading', { level: 1 });
+    expect(recipientName.textContent).toEqual('the Mighty Recipient - Region 45');
   });
 
   it('renders the navigation', async () => {
