@@ -50,6 +50,10 @@ export default function TTAHistory({
     },
   ]);
 
+  if (!recipientName) {
+    return null;
+  }
+
   const filtersToApply = [
     ...expandFilters(filters),
     {

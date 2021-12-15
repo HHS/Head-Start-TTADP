@@ -16,25 +16,28 @@ import TTAHistory from './pages/TTAHistory';
 export default function RecipientRecord({ match, location }) {
   const { recipientId } = match.params;
   const regionId = new URLSearchParams(location.search).get('region');
-  const [recipientName, setRecipientName] = useState(` - Region ${regionId}`);
-  const [recipientSummary, setRecipientSummary] = useState({
+
+  const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
     'grants.startDate': '',
     'grants.endDate': '',
     'grants.number': '',
     recipientId,
+    regionId,
+    recipientName: '',
   });
 
   const [error, setError] = useState();
 
   useEffect(() => {
-    async function fetchRecipient(id, region) {
+    async function fetchRecipient() {
       try {
-        const recipient = await getRecipient(id, region);
+        const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
-          setRecipientName(`${recipient.name} - Region ${regionId}`);
-          setRecipientSummary({ recipientId, ...recipient });
+          setRecipientData({
+            ...recipient, recipientId, regionId, recipientName: recipient.name,
+          });
         }
       } catch (e) {
         if (e instanceof HTTPError) {
@@ -47,6 +50,11 @@ export default function RecipientRecord({ match, location }) {
       }
     }
 
+    // if this isn't here, then we refetch each time the URL changes (i.e., going from tab to tab)
+    if (recipientData.recipientName) {
+      return;
+    }
+
     try {
       const id = parseInt(recipientId, DECIMAL_BASE);
       const region = parseInt(regionId, DECIMAL_BASE);
@@ -54,7 +62,10 @@ export default function RecipientRecord({ match, location }) {
     } catch (err) {
       setError('There was an error fetching recipient data');
     }
-  }, [recipientId, match.params, regionId]);
+  }, [recipientData.recipientName, recipientId, match.params, regionId]);
+
+  const { recipientName } = recipientData;
+  const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
 
   return (
     <>
@@ -62,7 +73,7 @@ export default function RecipientRecord({ match, location }) {
         <title>
           Recipient Profile -
           {' '}
-          {recipientName}
+          {recipientNameWithRegion}
         </title>
       </Helmet>
       <RecipientTabs region={regionId} recipientId={recipientId} />
@@ -77,7 +88,9 @@ export default function RecipientRecord({ match, location }) {
           </div>
         ) : (
           <>
-            <h1 className="ttahub-recipient-record--heading margin-top-0 margin-bottom-1 margin-left-2">{recipientName}</h1>
+            <h1 className="ttahub-recipient-record--heading margin-top-0 margin-bottom-1 margin-left-2">
+              {recipientNameWithRegion}
+            </h1>
             <Switch>
               <Route
                 path="/recipient-tta-records/:recipientId/tta-history"
@@ -95,7 +108,7 @@ export default function RecipientRecord({ match, location }) {
                   <Profile
                     recipientName={recipientName}
                     regionId={regionId}
-                    recipientSummary={recipientSummary}
+                    recipientSummary={recipientData}
                   />
                 )}
               />

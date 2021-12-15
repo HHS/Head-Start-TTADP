@@ -3,6 +3,7 @@ import React from 'react';
 import {
   render,
   screen,
+  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
@@ -35,7 +36,7 @@ describe('Filter Menu', () => {
     });
 
     userEvent.click(button);
-    const message = await screen.findByText('Show results matching the following conditions.');
+    const message = await screen.findByText('Show results for the following filters.');
     expect(message).toBeVisible();
 
     const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
@@ -64,7 +65,7 @@ describe('Filter Menu', () => {
     const condition = screen.getByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'Is after');
 
-    const del = screen.getByRole('button', { name: /remove Date range Is after filter. click apply filters to make your changes/i });
+    const del = screen.getByRole('button', { name: /remove Date range Is after/i });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
@@ -90,9 +91,7 @@ describe('Filter Menu', () => {
     const apply = screen.getByRole('button', { name: /apply test filters/i });
     userEvent.click(apply);
 
-    expect(onApply).toHaveBeenCalledWith([{
-      id: '3', topic: 'sdfs', condition: 'dfgfdg', query: 'dfdfg',
-    }]);
+    expect(onApply).not.toHaveBeenCalledWith();
   });
 
   it('clears the query if the topic is changed', async () => {
@@ -152,7 +151,7 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const message = await screen.findByText('Show results matching the following conditions.');
+    const message = await screen.findByText('Show results for the following filters.');
     userEvent.click(message);
 
     const specialists = await screen.findByRole('button', { name: /toggle the Change filter by specialists menu/i });
@@ -162,5 +161,38 @@ describe('Filter Menu', () => {
     userEvent.click(check);
 
     expect(message).toBeVisible();
+  });
+  it('validates input and sets focus', async () => {
+    const filters = [
+      {
+        id: 'filter1234',
+        topic: 'startDate',
+        condition: 'Is after',
+        query: '2021/10/31',
+      },
+    ];
+
+    renderFilterMenu(filters);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const addNew = screen.getByRole('button', { name: /Add new filter/i });
+    act(() => userEvent.click(addNew));
+
+    const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    expect(topic).toHaveFocus();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(screen.getByText(/please enter a filter/i)).toBeVisible();
+
+    userEvent.selectOptions(topic, ['role']);
+    const apply = screen.getByRole('button', { name: /apply test filters/i });
+    userEvent.click(apply);
+    expect(screen.getByText(/please enter a condition/i)).toBeVisible();
   });
 });
