@@ -57,6 +57,7 @@ describe('Filter menu item', () => {
           index={0}
           validate={validate}
           prohibitedFilters={[]}
+          selectedFilters={[]}
         />
         <button type="button">BIG DUMB BUTTON</button>
       </div>,
