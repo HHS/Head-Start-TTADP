@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { convert } from 'html-to-text';
+import { convert, table } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
 function transformDate(field) {
@@ -66,7 +66,7 @@ function transformRelatedModel(field, prop) {
 function transformHTML(field) {
   async function transformer(instance) {
     const html = instance[field] || '';
-    const value = convert(html);
+    const value = convert(html, { tables: true });
     const obj = {};
     Object.defineProperty(obj, field, {
       value,

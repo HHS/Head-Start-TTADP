@@ -272,8 +272,8 @@ describe('activityReportToCsvRecord', () => {
         <table>
           <thead>
             <tr>
-              <th>First</th>
-              <th>Second</th>
+              <td>First</td>
+              <td>Second</td>
             </tr>
           </thead>
           <tbody>
@@ -291,7 +291,7 @@ describe('activityReportToCsvRecord', () => {
       });
       const output = await activityReportToCsvRecord(report);
       const expectedOutput = {
-        context: 'First Second One Two Three Four',
+        context: 'First   Second\nOne     Two\nThree   Four',
       };
       expect(output).toMatchObject(expectedOutput);
     });
