@@ -13,10 +13,8 @@ describe('FilterInput', () => {
       <FilterInput
         onApply={onApply}
         query=""
-        id="screams"
-        condition="within"
+        inputId="screams"
         label="filter by bananas"
-        type="bananas"
       />,
     ));
 
@@ -24,7 +22,7 @@ describe('FilterInput', () => {
     const onApply = jest.fn();
     renderFilterInput(onApply);
     const textbox = screen.getByRole('textbox', { name: /filter by bananas/i });
-    expect(textbox).toHaveAttribute('id', 'bananas-within-screams');
+    expect(textbox).toHaveAttribute('id', 'screams');
     userEvent.type(textbox, 'we have none');
     expect(onApply).toHaveBeenCalled();
   });
