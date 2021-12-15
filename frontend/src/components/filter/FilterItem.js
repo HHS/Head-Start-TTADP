@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import FilterDateRange from './FilterDateRange';
 import { formatDateRange } from '../DateRangeSelect';
-import SpecialistSelect from '../SpecialistSelect';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
@@ -34,13 +34,43 @@ const DEFAULT_VALUES = {
  * @param {Object} props
  * @returns a JSX object
  */
-export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
+export default function FilterItem({
+  filter,
+  onRemoveFilter,
+  onUpdateFilter,
+  errors,
+  setErrors,
+  index,
+  validate,
+}) {
   const {
     id,
     topic,
     condition,
     query,
   } = filter;
+
+  const li = useRef();
+
+  const setError = (message) => {
+    const newErrors = [...errors];
+    newErrors.splice(index, 1, message);
+    setErrors(newErrors);
+  };
+
+  const onBlur = (e) => {
+    // no validation if you are clicking on something within the filter item
+    if (li.current.contains(e.relatedTarget)) {
+      return;
+    }
+
+    // no validation if you are clicking on the cancel button
+    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
+      return;
+    }
+
+    validate(filter, setError);
+  };
 
   /**
    * changing the condition should clear the query
@@ -66,21 +96,15 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     onUpdate('query', q);
   };
 
-  const updateSingleDate = (name, value) => {
-    onUpdate(name, value);
-  };
-
   const possibleFilters = [
     {
       id: 'role',
       display: 'Specialist',
       conditions: SELECT_CONDITIONS,
       renderInput: () => (
-        <SpecialistSelect
+        <FilterSpecialistSelect
           labelId={`role-${condition}-${id}`}
           onApplyRoles={onApplyQuery}
-          toggleAllInitial={false}
-          hideToggleAll
         />
       ),
     },
@@ -92,8 +116,8 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         <FilterDateRange
           condition={condition}
           query={query}
-          updateSingleDate={updateSingleDate}
           onApplyDateRange={onApplyQuery}
+          id={id}
         />
       ),
     },
@@ -115,11 +139,40 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
+  const error = errors[index];
+
+  const fieldsetBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex border-0 padding-0';
+  let fieldsetErrorClass = '';
+
+  switch (error) {
+    case 'Please enter a value':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
+    case 'Please enter a condition':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      break;
+    case 'Please enter a filter':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
+      break;
+    default:
+      break;
+  }
+
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
+
   return (
-    <li className="ttahub-filter-menu-item gap-1 desktop:display-flex">
+    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={li}>
+      {
+        error
+        && (
+        <span className="ttahub-filter-menu-error" role="status">
+          <strong>{error}</strong>
+        </span>
+        )
+      }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
-        Select a filter topic
+        Select a filter
       </label>
       <select
         id={`topic-${id}`}
@@ -136,13 +189,14 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
-        Select a filter condition
+        Select a condition
       </label>
       <select
         id={`condition-${id}`}
         name="condition"
         aria-label="condition"
         value={condition}
+        disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
@@ -161,7 +215,7 @@ export default function FilterItem({ filter, onRemoveFilter, onUpdateFilter }) {
         <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
-    </li>
+    </fieldset>
   );
 }
 
@@ -169,4 +223,8 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
+  errors: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setErrors: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  validate: PropTypes.func.isRequired,
 };
