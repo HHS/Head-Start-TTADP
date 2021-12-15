@@ -1,7 +1,7 @@
-const grantees = [
+const recipients = [
   {
     id: 1,
-    name: 'Grantee Name',
+    name: 'Recipient Name',
   },
   {
     id: 2,
@@ -47,10 +47,10 @@ const grantees = [
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Grantees', grantees, {});
+    await queryInterface.bulkInsert('Recipients', recipients, {});
   },
 
   down: async (queryInterface) => {
-    await queryInterface.bulkDelete('Grantees', null, {});
+    await queryInterface.bulkDelete('Recipients', null, {});
   },
 };

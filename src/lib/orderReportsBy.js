@@ -33,10 +33,10 @@ const orderReportsBy = (sortBy, sortDir) => {
     case 'activityRecipients':
       result = [
         [
-          sequelize.literal(`granteeName ${sortDir}`),
+          sequelize.literal(`recipientName ${sortDir}`),
         ],
         [
-          sequelize.literal(`nonGranteeName ${sortDir}`),
+          sequelize.literal(`otherEntityName ${sortDir}`),
         ]];
       break;
     case 'calculatedStatus':

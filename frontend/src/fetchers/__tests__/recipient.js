@@ -4,7 +4,7 @@ import { getRecipient } from '../recipient';
 
 const recipientUrl = join('/', 'api', 'recipient');
 
-describe('grantee fetcher', () => {
+describe('recipient fetcher', () => {
   beforeEach(() => fetchMock.reset());
 
   it('test that it retrieves a recipient', async () => {

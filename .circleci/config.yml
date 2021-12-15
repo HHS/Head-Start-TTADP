@@ -98,13 +98,13 @@ commands:
           holds the New Relic License key, a required application variable"
         type: env_var_name
       hses_data_file_url:
-        description: "Url to download HSES grants and grantee data from"
+        description: "Url to download HSES grants and recipient data from"
         type: env_var_name
       hses_data_username:
-        description: "Username used to access the HSES grants and grantee data"
+        description: "Username used to access the HSES grants and recipient data"
         type: env_var_name
       hses_data_password:
-        description: "Password used to access the HSES grants and grantee data"
+        description: "Password used to access the HSES grants and recipient data"
         type: env_var_name
     steps:
       - run:

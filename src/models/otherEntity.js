@@ -3,16 +3,16 @@ const {
 } = require('sequelize');
 
 /**
- * NonGrantee table
+ * OtherEntity table
  *
  * @param {} sequelize
  * @param {*} DataTypes
  */
 module.exports = (sequelize, DataTypes) => {
-  class NonGrantee extends Model {
+  class OtherEntity extends Model {
     static associate() {}
   }
-  NonGrantee.init({
+  OtherEntity.init({
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'NonGrantee',
+    modelName: 'OtherEntity',
   });
-  return NonGrantee;
+  return OtherEntity;
 };

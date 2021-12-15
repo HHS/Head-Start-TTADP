@@ -42,7 +42,7 @@ const renderGoals = (grantIds, activityRecipientType, initialData, goals = []) =
 };
 
 // eslint-disable-next-line react/prop-types
-const RenderReview = ({ goals, activityRecipientType = 'grantee', objectivesWithoutGoals = [] }) => {
+const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWithoutGoals = [] }) => {
   const history = createMemoryHistory();
   const hookForm = useForm({
     defaultValues: { goals, activityRecipientType, objectivesWithoutGoals },
@@ -58,36 +58,36 @@ const RenderReview = ({ goals, activityRecipientType = 'grantee', objectivesWith
 
 describe('goals objectives', () => {
   afterEach(() => fetchMock.restore());
-  describe('when activity recipient type is "grantee"', () => {
+  describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
-      renderGoals([1], 'grantee');
+      renderGoals([1], 'recipient');
       await screen.findByText('Context');
       expect(await screen.findByText('Goals and objectives')).toBeVisible();
     });
 
     it('the display goals section does not show if no grants are selected', async () => {
-      renderGoals([], 'grantee');
+      renderGoals([], 'recipient');
       await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
     });
   });
 
-  describe('when activity recipient type is not "grantee"', () => {
+  describe('when activity recipient type is not "recipient"', () => {
     it('the objectives section is displayed', async () => {
-      renderGoals([1], 'nonGrantee');
+      renderGoals([1], 'otherEntity');
       await screen.findByText('Context');
       expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
     });
   });
 
   describe('title override', () => {
-    it('returns objective if activityRecipientType is non-grantee', async () => {
-      const res = goalsObjectives.titleOverride({ activityRecipientType: 'non-grantee' });
+    it('returns objective if activityRecipientType is other-entity', async () => {
+      const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entity' });
       expect(res).toEqual('Objectives');
     });
 
-    it('returns goals if activityRecipientType is grantee', async () => {
-      const res = goalsObjectives.titleOverride({ activityRecipientType: 'grantee' });
+    it('returns goals if activityRecipientType is recipient', async () => {
+      const res = goalsObjectives.titleOverride({ activityRecipientType: 'recipient' });
       expect(res).toEqual('Goals and objectives');
     });
   });
@@ -98,9 +98,9 @@ describe('goals objectives', () => {
       expect(complete).toBeFalsy();
     });
 
-    describe('for non-grantee reports', () => {
+    describe('for other-entity reports', () => {
       it('is false if objectives are not valid', () => {
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'non-grantee', objectivesWithoutGoals: [] });
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: [] });
         expect(complete).toBeFalsy();
       });
 
@@ -113,14 +113,14 @@ describe('goals objectives', () => {
             status: 'In Progress',
           },
         ];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'non-grantee', objectivesWithoutGoals: objectives });
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
         expect(complete).toBeTruthy();
       });
     });
 
-    describe('for grantee reports', () => {
+    describe('for recipient reports', () => {
       it('is false if goals are not valid', () => {
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'grantee', goals: [] });
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals: [] });
         expect(complete).toBeFalsy();
       });
 
@@ -133,7 +133,7 @@ describe('goals objectives', () => {
             status: 'In Progress',
           }],
         }];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'grantee', goals });
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
     });
@@ -146,9 +146,9 @@ describe('goals objectives', () => {
       expect(goal).toBeVisible();
     });
 
-    it('displays non-grantee objectives', async () => {
+    it('displays other-entity objectives', async () => {
       render(<RenderReview
-        activityRecipientType="non-grantee"
+        activityRecipientType="other-entity"
         objectivesWithoutGoals={[
           {
             id: 1, title: 'title one', ttaProvided: 'ttaProvided one', status: 'Not Started',
@@ -190,13 +190,13 @@ describe('goals objectives', () => {
           status: 'In Progress',
         },
       ];
-      const formData = { activityRecipientType: 'non-grantee', objectivesWithoutGoals: objectives };
+      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
       const isComplete = goalsObjectives.isPageComplete(formData);
       expect(isComplete).toBeTruthy();
     });
 
     it('isPageComplete is false', async () => {
-      const formData = { activityRecipientType: 'grantee', goals: [] };
+      const formData = { activityRecipientType: 'recipient', goals: [] };
       const isComplete = goalsObjectives.isPageComplete(formData);
       expect(isComplete).not.toBeTruthy();
     });

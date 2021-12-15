@@ -1,6 +1,6 @@
 import { sequelize } from '../models';
 
-const orderGranteesBy = (sortBy, sortDir) => {
+const orderRecipientsBy = (sortBy, sortDir) => {
   let result = '';
   switch (sortBy) {
     case 'name':
@@ -40,4 +40,4 @@ const orderGranteesBy = (sortBy, sortDir) => {
   return result;
 };
 
-export default orderGranteesBy;
+export default orderRecipientsBy;
