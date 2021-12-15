@@ -55,8 +55,9 @@ export default function DropdownMenu({
   };
 
   const onApplyClick = () => {
-    onApply();
-    setMenuIsOpen(false);
+    if (onApply()) {
+      setMenuIsOpen(false);
+    }
   };
 
   const onCancelClick = () => {
@@ -86,7 +87,7 @@ export default function DropdownMenu({
     <div role="menu" ref={forwardedRef} tabIndex="-1" aria-label={menuName} className={classNames} onBlur={onBlur} onKeyDown={onKeyDown}>
       <button
         onClick={onClick}
-        className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0`}
+        className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0 no-print`}
         aria-label={buttonAriaLabel}
         type="button"
         disabled={disabled}
@@ -95,7 +96,7 @@ export default function DropdownMenu({
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
-      <div className="smart-hub--dropdown-menu--contents" ref={menuContents} hidden={!menuIsOpen || disabled}>
+      <div className="smart-hub--dropdown-menu--contents no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
         {children}
         { showCancel
           ? (
@@ -152,4 +153,5 @@ DropdownMenu.defaultProps = {
   cancelAriaLabel: '',
   onCancel: () => {},
   forwardedRef: () => {},
+
 };
