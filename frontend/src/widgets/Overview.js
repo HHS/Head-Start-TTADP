@@ -46,9 +46,9 @@ Field.defaultProps = {
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
 function Overview({
-  data, regionLabel, loading, tableCaption,
+  data, loading, tableCaption,
 }) {
-  const title = !tableCaption ? `${regionLabel}  TTA Overview` : tableCaption;
+  const title = !tableCaption ? 'TTA overview' : tableCaption;
   return (
     <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
@@ -77,7 +77,6 @@ Overview.propTypes = {
     numParticipants: PropTypes.string,
     sumDuration: PropTypes.string,
   }),
-  regionLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   loading: PropTypes.bool.isRequired,
   tableCaption: PropTypes.string,
 };
