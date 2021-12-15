@@ -136,10 +136,10 @@ describe('Landing Page', () => {
   });
 
   test('displays recipient column', async () => {
-    const granteeColumnHeader = await screen.findByRole('columnheader', {
+    const recipientColumnHeader = await screen.findByRole('columnheader', {
       name: /recipient/i,
     });
-    expect(granteeColumnHeader).toBeVisible();
+    expect(recipientColumnHeader).toBeVisible();
   });
 
   test('displays start date column', async () => {
@@ -175,14 +175,14 @@ describe('Landing Page', () => {
     );
   });
 
-  test('displays the correct grantees', async () => {
-    const grantee = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera grantee name click to visually reveal the recipients for r14-ar-1/i });
-    const nonGrantee = await screen.findByRole('cell', {
+  test('displays the correct recipients', async () => {
+    const recipient = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera recipient name click to visually reveal the recipients for r14-ar-1/i });
+    const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
     });
 
-    expect(grantee).toBeVisible();
-    expect(nonGrantee).toBeVisible();
+    expect(recipient).toBeVisible();
+    expect(otherEntity).toBeVisible();
   });
 
   test('displays the correct start date', async () => {
@@ -352,7 +352,7 @@ describe('My alerts sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/r14-ar-2/i));
   });
 
-  it('is enabled for Grantee', async () => {
+  it('is enabled for Recipient', async () => {
     const columnHeaders = await screen.findAllByRole('button', {
       name: /recipient\. activate to sort ascending/i,
     });
@@ -367,7 +367,7 @@ describe('My alerts sorting', () => {
 
     fireEvent.click(columnHeaders[0]);
 
-    const textContent = /Johnston-Romaguera Johnston-Romaguera Grantee Name click to visually reveal the recipients for R14-AR-1$/i;
+    const textContent = /Johnston-Romaguera Johnston-Romaguera Recipient Name click to visually reveal the recipients for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent(textContent));
     await waitFor(() => expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/qris system/i));
   });
@@ -472,8 +472,8 @@ describe('Landing Page error', () => {
     renderLanding(user);
     const rowCells = await screen.findAllByRole('cell');
     expect(rowCells.length).toBe(10);
-    const grantee = rowCells[1];
-    expect(grantee).toHaveTextContent('');
+    const recipient = rowCells[1];
+    expect(recipient).toHaveTextContent('');
   });
 
   it('does not displays new activity report button without permission', async () => {

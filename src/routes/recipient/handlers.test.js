@@ -1,10 +1,10 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { getRecipient, searchRecipients } from './handlers';
-import { granteeById, granteesByName } from '../../services/grantee';
+import { recipientById, recipientsByName } from '../../services/recipient';
 
-jest.mock('../../services/grantee', () => ({
-  granteeById: jest.fn(),
-  granteesByName: jest.fn(),
+jest.mock('../../services/recipient', () => ({
+  recipientById: jest.fn(),
+  recipientsByName: jest.fn(),
 }));
 
 describe('getRecipient', () => {
@@ -29,7 +29,7 @@ describe('getRecipient', () => {
         modelType: 'grant',
       },
     };
-    granteeById.mockResolvedValue(recipientWhere);
+    recipientById.mockResolvedValue(recipientWhere);
     await getRecipient(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
@@ -44,7 +44,7 @@ describe('getRecipient', () => {
         modelType: 'grant',
       },
     };
-    granteeById.mockResolvedValue(null);
+    recipientById.mockResolvedValue(null);
     await getRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
@@ -83,7 +83,7 @@ describe('searchRecipient', () => {
         offset: 0,
       },
     };
-    granteesByName.mockResolvedValue(recipientResults);
+    recipientsByName.mockResolvedValue(recipientResults);
     await searchRecipients(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(recipientResults);
   });
@@ -99,7 +99,7 @@ describe('searchRecipient', () => {
         offset: 0,
       },
     };
-    granteesByName.mockResolvedValue(null);
+    recipientsByName.mockResolvedValue(null);
     await searchRecipients(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
   });

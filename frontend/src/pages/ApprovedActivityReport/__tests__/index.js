@@ -33,7 +33,7 @@ describe('Activity report print and share view', () => {
     ],
     targetPopulations: ['Mid size sedans'],
     specialistNextSteps: [],
-    granteeNextSteps: [],
+    recipientNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
     reason: ['Needed it'],
@@ -42,7 +42,7 @@ describe('Activity report print and share view', () => {
     duration: 6.5,
     ttaType: ['training'],
     virtualDeliveryType: 'Phone',
-    requester: 'grantee',
+    requester: 'recipient',
     topics: ['Tea', 'cookies'],
     ECLKCResourcesUsed: ['http://website'],
     nonECLKCResourcesUsed: ['http://betterwebsite'],
@@ -150,8 +150,8 @@ describe('Activity report print and share view', () => {
       expect(screen.getByText(`${report.duration} hours`)).toBeInTheDocument();
       expect(screen.getByText(/training, virtual \(phone\)/i)).toBeInTheDocument();
 
-      const granteeRowHeader = screen.getByRole('rowheader', { name: /recipients/i });
-      expect(within(granteeRowHeader).getByText('Recipients')).toBeInTheDocument();
+      const recipientRowHeader = screen.getByRole('rowheader', { name: /recipients/i });
+      expect(within(recipientRowHeader).getByText('Recipients')).toBeInTheDocument();
 
       const resourcesTable = screen.getByRole('table', { name: /resources/i });
       expect(within(resourcesTable).getByRole('link', { name: /http:\/\/website/i })).toBeInTheDocument();

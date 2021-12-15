@@ -1,12 +1,12 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, Grant, NextStep, Region,
+  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep, Region,
 } from '../models';
 import filtersToScopes from '../scopes';
-import totalHrsAndGranteeGraph from './totalHrsAndGranteeGraph';
+import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 
-const GRANTEE_ID = 975107;
+const RECIPIENT_ID = 975107;
 const GRANT_ID_ONE = 10639719;
 const GRANT_ID_TWO = 20761384;
 
@@ -35,7 +35,7 @@ const mockUserThree = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.SUBMITTED,
   calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
@@ -74,7 +74,7 @@ const legacyReport = {
   regionId: 177,
 };
 
-describe('Total Hrs and Grantee Graph widget', () => {
+describe('Total Hrs and Recipient Graph widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
     await Region.bulkCreate([
@@ -82,11 +82,11 @@ describe('Total Hrs and Grantee Graph widget', () => {
       { name: 'office 133', id: 133 },
       { name: 'office 188', id: 188 },
     ]);
-    await Grantee.create({ name: 'grantee', id: GRANTEE_ID });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE,
       number: GRANT_ID_ONE,
-      granteeId: GRANTEE_ID,
+      recipientId: RECIPIENT_ID,
       regionId: 177,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -94,7 +94,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     }, {
       id: GRANT_ID_TWO,
       number: GRANT_ID_TWO,
-      granteeId: GRANTEE_ID,
+      recipientId: RECIPIENT_ID,
       regionId: 177,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -111,7 +111,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] } });
-    await Grantee.destroy({ where: { id: [GRANTEE_ID] } });
+    await Recipient.destroy({ where: { id: [RECIPIENT_ID] } });
     await Region.destroy({ where: { id: [133, 177, 188] } });
     await db.sequelize.close();
   });
@@ -123,7 +123,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
   it('handles no filters', async () => {
     const query = { };
     const scopes = filtersToScopes(query);
-    const data = await totalHrsAndGranteeGraph(scopes, query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
     expect(data.length).toBe(3);
   });
 
@@ -170,7 +170,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
 
     const query = { 'region.in': ['177'], 'startDate.win': '2021/02/01-2021/07/31' };
     const scopes = filtersToScopes(query);
-    const data = await totalHrsAndGranteeGraph(scopes, query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
     expect(data.length).toEqual(3);
@@ -208,7 +208,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
 
     const query = { 'region.in': ['188'], 'startDate.win': '2021/06/01-2021/06/30' };
     const scopes = filtersToScopes(query);
-    const data = await totalHrsAndGranteeGraph(scopes, query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
     expect(data.length).toEqual(3);
@@ -249,7 +249,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
 
     const query = { 'region.in': ['177'], 'startDate.win': '2020/01/01-2020/03/31' };
     const scopes = filtersToScopes(query);
-    const data = await totalHrsAndGranteeGraph(scopes, query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
     expect(data.length).toEqual(3);
@@ -293,7 +293,7 @@ describe('Total Hrs and Grantee Graph widget', () => {
 
     const query = { 'region.in': ['177'], 'startDate.win': '2021/11/01-2023/06/01' };
     const scopes = filtersToScopes(query);
-    const data = await totalHrsAndGranteeGraph(scopes, query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
     expect(data.length).toEqual(3);

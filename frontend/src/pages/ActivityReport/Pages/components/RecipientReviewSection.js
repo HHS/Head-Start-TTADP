@@ -6,7 +6,7 @@ import { getEditorState, reportIsEditable } from '../../../../utils';
 
 import Section from '../Review/ReviewSection';
 
-const GranteeReviewSection = () => {
+const RecipientReviewSection = () => {
   const { watch } = useFormContext();
   const {
     goals,
@@ -69,4 +69,4 @@ const GranteeReviewSection = () => {
   );
 };
 
-export default GranteeReviewSection;
+export default RecipientReviewSection;

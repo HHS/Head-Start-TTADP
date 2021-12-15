@@ -38,7 +38,7 @@ function ReportRow({
   const history = useHistory();
   const authorName = author ? author.fullName : '';
   const recipients = activityRecipients && activityRecipients.map((ar) => (
-    ar.grant ? ar.grant.grantee.name : ar.name
+    ar.grant ? ar.grant.recipient.name : ar.name
   ));
 
   const collaboratorNames = collaborators && collaborators.map((collaborator) => (
@@ -153,7 +153,7 @@ export const reportPropTypes = PropTypes.shape({
   activityRecipients: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     grant: PropTypes.shape({
-      grantee: PropTypes.shape({
+      recipient: PropTypes.shape({
         name: PropTypes.string,
       }),
     }),

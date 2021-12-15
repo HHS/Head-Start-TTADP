@@ -9,14 +9,14 @@ import Grant from '../Grant';
 import { withText } from '../../../../testHelpers';
 
 describe('Grant', () => {
-  const defaultGrantees = [
+  const defaultRecipients = [
     {
       id: 1,
-      name: 'grantee 1',
+      name: 'recipient 1',
     },
     {
       id: 10,
-      name: 'grantee 2',
+      name: 'recipient 2',
     },
   ];
 
@@ -27,21 +27,21 @@ describe('Grant', () => {
     status: 'Active',
     startDate: '2020-12-01',
     endDate: '2020-12-02',
-    granteeId: 1,
-    grantee: {
+    recipientId: 1,
+    recipient: {
       id: 1,
-      name: 'grantee 1',
+      name: 'recipient 1',
     },
   };
 
   const RenderGrant = ({
     grant = defaultGrant,
-    grantees = defaultGrantees,
+    recipients = defaultRecipients,
     onAssign = () => {},
   }) => (
     <Grant
       grant={grant}
-      grantees={grantees}
+      recipients={recipients}
       onAssignCDIGrant={onAssign}
     />
   );
@@ -77,9 +77,9 @@ describe('Grant', () => {
       expect(region).toBeVisible();
     });
 
-    it('grantee', async () => {
-      const grantee = await screen.findByText(withText('Grantee: grantee 1'));
-      expect(grantee).toBeVisible();
+    it('recipient', async () => {
+      const recipient = await screen.findByText(withText('Recipient: recipient 1'));
+      expect(recipient).toBeVisible();
     });
 
     it('status', async () => {
@@ -106,11 +106,11 @@ describe('Grant', () => {
       expect(dropdown).toHaveValue('2');
     });
 
-    it('grantee is select-able', async () => {
+    it('recipient is select-able', async () => {
       const onAssign = jest.fn();
       render(<RenderGrant onAssign={onAssign} />);
-      const dropdown = await screen.findByLabelText('Grantee');
-      await selectEvent.select(dropdown, ['grantee 2 - 10']);
+      const dropdown = await screen.findByLabelText('Recipient');
+      await selectEvent.select(dropdown, ['recipient 2 - 10']);
       const button = await screen.findByRole('button');
       userEvent.click(button);
       expect(onAssign).toHaveBeenCalledWith(1, 1, 10);

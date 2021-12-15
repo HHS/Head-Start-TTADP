@@ -190,7 +190,7 @@ const NextSteps = () => (
       <NoteEntries name="specialistNextSteps" humanName="Specialist" label="What have you agreed to do next?" />
     </div>
 
-    <NoteEntries name="granteeNextSteps" humanName="Recipient's" label="What has the recipient agreed to do next?" />
+    <NoteEntries name="recipientNextSteps" humanName="Recipient's" label="What has the recipient agreed to do next?" />
 
   </>
 );
@@ -205,9 +205,9 @@ const sections = [
   },
   {
     title: 'Recipient next steps',
-    anchor: 'grantee-next-steps',
+    anchor: 'recipient-next-steps',
     items: [
-      { label: 'What has the recipient agreed to do next?', name: 'granteeNextSteps', path: 'note' },
+      { label: 'What has the recipient agreed to do next?', name: 'recipientNextSteps', path: 'note' },
     ],
   },
 ];

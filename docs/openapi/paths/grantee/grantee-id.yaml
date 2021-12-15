@@ -1,10 +1,10 @@
 get:
   tags:
-    - grantee
-  summary: Retrieve a grantee
+    - recipient
+  summary: Retrieve a recipient
   parameters:
     - in: path
-      name: granteeId
+      name: recipientId
       required: true
       schema:
         type: number
@@ -15,8 +15,8 @@ get:
         type: number
   responses:
     200:
-      description: The grantee record with an Id of {granteeId}
+      description: The recipient record with an Id of {recipientId}
       content:
         application/json:
           schema:
-            $ref: '../../index.yaml#/components/schemas/grantee'
+            $ref: '../../index.yaml#/components/schemas/recipient'

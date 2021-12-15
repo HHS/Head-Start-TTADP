@@ -37,7 +37,7 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
   });
 }
 
-export default async function totalHrsAndGranteeGraph(scopes, query) {
+export default async function totalHrsAndRecipientGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     {

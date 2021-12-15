@@ -40,7 +40,7 @@ describe('recipient record page', () => {
     grants: [
       {
         name: 'Grant Name 1',
-        number: 'GRANTEE_NUMBER',
+        number: 'RECIPIENT_NUMBER',
         status: 'Active',
         startDate: null,
         endDate: null,
