@@ -224,6 +224,14 @@ describe('Filter Menu', () => {
         query: [],
         condition: 'Contains',
       },
+      {
+        id: 'filter-10',
+        display: '',
+        conditions: [],
+        topic: 'stateCode',
+        query: [],
+        condition: 'Contains',
+      },
     ];
 
     renderFilterMenu(filters);
@@ -235,7 +243,7 @@ describe('Filter Menu', () => {
     userEvent.click(button);
 
     let topics = await screen.findAllByRole('combobox', { name: 'topic' });
-    expect(topics.length).toBe(8);
+    expect(topics.length).toBe(9);
 
     const clear = await screen.findByRole('button', { name: /Clear all filters/i });
     act(() => userEvent.click(clear));
