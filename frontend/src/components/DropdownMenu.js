@@ -1,5 +1,5 @@
 import React, {
-  useState, useRef, createContext,
+  useState, useRef, createContext, useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
@@ -10,6 +10,18 @@ export const DropdownMenuContext = createContext({
   onKeyDown: () => {},
 });
 
+/**
+ *
+ * It's a pretty complicated looking component but right now
+ * the only required props are:
+ *
+ * onApply - The function that is called when the apply button is pressed
+ * children - The contents of the dropdown window pane
+ * buttonText - The text for the main toggle button (for example, "Filters")
+ *
+ * @param {React Props} props
+ * @returns rendered JSX Object
+ */
 export default function DropdownMenu({
   buttonText,
   buttonAriaLabel,
@@ -62,8 +74,8 @@ export default function DropdownMenu({
     setMenuIsOpen(false);
   };
 
-  const onKeyDown = () => {
-    console.log('ON KEY DOWN');
+  const onKeyDown = (e) => {
+    console.log(e.currentTarget);
   };
 
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
@@ -87,70 +99,76 @@ export default function DropdownMenu({
     );
   }
 
-  const contextValue = {
+  // this should never change, so we want to store it here to
+  // not rerender the children should this component re-render
+  // (based on stuff I've read, anyways, it may be overkill)
+  const contextValue = useMemo(() => ({
     onKeyDown,
     toggleMenu: setMenuIsOpen,
-  };
+  }), []);
 
   return (
-    <DropdownMenuContext.Provider value={contextValue}>
-      <div ref={forwardedRef} className={classNames}>
-        <button
-          onClick={onClick}
-          className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0 no-print`}
-          aria-label={buttonAriaLabel}
-          type="button"
-          disabled={disabled}
-          aria-pressed={menuIsOpen}
-          onBlur={onBlur}
-          onKeyDown={onKeyDown}
-        >
-          <span>{buttonText}</span>
-          {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
-        </button>
+    <div ref={forwardedRef} className={classNames}>
+      <button
+        onClick={onClick}
+        className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0 no-print`}
+        aria-label={buttonAriaLabel}
+        type="button"
+        disabled={disabled}
+        aria-pressed={menuIsOpen}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+      >
+        <span>{buttonText}</span>
+        {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
+      </button>
 
-        <div className="smart-hub--dropdown-menu--contents no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
+      <div className="smart-hub--dropdown-menu--contents no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
+        <DropdownMenuContext.Provider value={contextValue}>
           {children}
-          { showCancel
-            ? (
-              <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
-                {AlternateActionButton}
-                <div>
-                  <button
-                    onClick={onCancelClick}
-                    type="button"
-                    className="usa-button usa-button--unstyled margin-right-2"
-                    aria-label={cancelAriaLabel}
-                    onKeyDown={onKeyDown}
-                  >
-                    Cancel
-                  </button>
-                  <ApplyButton />
-                </div>
-              </div>
-            )
-            : (
-              <div className="margin-2 display-flex flex-justify">
-                {AlternateActionButton}
+        </DropdownMenuContext.Provider>
+        { showCancel
+          ? (
+            <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
+              {AlternateActionButton}
+              <div>
+                <button
+                  onClick={onCancelClick}
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-right-2"
+                  aria-label={cancelAriaLabel}
+                  onKeyDown={onKeyDown}
+                >
+                  Cancel
+                </button>
                 <ApplyButton />
               </div>
-            ) }
-        </div>
+            </div>
+          )
+          : (
+            <div className="margin-2 display-flex flex-justify">
+              {AlternateActionButton}
+              <ApplyButton />
+            </div>
+          ) }
       </div>
-    </DropdownMenuContext.Provider>
+    </div>
   );
 }
 
 DropdownMenu.propTypes = {
+  // the only required props are
+  onApply: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
   buttonText: PropTypes.string.isRequired,
+
+  // these are all extra configuration
   buttonAriaLabel: PropTypes.string,
   disabled: PropTypes.bool,
   styleAsSelect: PropTypes.bool,
   canBlur: PropTypes.func,
   applyButtonText: PropTypes.string,
   applyButtonAria: PropTypes.string,
-  onApply: PropTypes.func.isRequired,
   className: PropTypes.string,
   showCancel: PropTypes.bool,
   onCancel: PropTypes.func,
@@ -175,7 +193,7 @@ DropdownMenu.defaultProps = {
   applyButtonAria: 'Apply',
   applyButtonText: 'Apply',
   showCancel: false,
-  cancelAriaLabel: '',
+  cancelAriaLabel: 'Cancel',
   onCancel: () => {},
   forwardedRef: () => {},
   AlternateActionButton: DefaultAlternateActionButton,

@@ -186,8 +186,7 @@ export default function FilterItem({
           id, // filter id
           condition, // filter condition
           query, // filter query
-          onApplyQuery, // the on apply query
-          onKeyDown, // on keydown from the parent context
+          onApplyQuery, // the on apply query function handler
           dateRangeOptions, // date range options, configurable per filter menu
         )
         : <DummySelect /> }
