@@ -65,6 +65,7 @@ export default function RecipientRecord({ match, location }) {
   }, [recipientData.recipientName, recipientId, match.params, regionId]);
 
   const { recipientName } = recipientData;
+  const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
 
   return (
     <>
@@ -72,9 +73,7 @@ export default function RecipientRecord({ match, location }) {
         <title>
           Recipient Profile -
           {' '}
-          {recipientName}
-          - Region
-          {regionId}
+          {recipientNameWithRegion}
         </title>
       </Helmet>
       <RecipientTabs region={regionId} recipientId={recipientId} />
@@ -90,9 +89,7 @@ export default function RecipientRecord({ match, location }) {
         ) : (
           <>
             <h1 className="ttahub-recipient-record--heading margin-top-0 margin-bottom-1 margin-left-2">
-              {recipientName}
-              - Region
-              {regionId}
+              {recipientNameWithRegion}
             </h1>
             <Switch>
               <Route
