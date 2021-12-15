@@ -4,17 +4,13 @@ import PropTypes from 'prop-types';
 export default function FilterInput({
   query,
   onApply,
-  id,
-  condition,
+  inputId,
   label,
-  type,
 }) {
   const onChange = (e) => {
     const { value } = e.target;
     onApply(value);
   };
-
-  const inputId = `${type}-${condition}-${id}`;
 
   return (
     <>
@@ -27,8 +23,7 @@ export default function FilterInput({
 FilterInput.propTypes = {
   query: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  id: PropTypes.string.isRequired,
-  condition: PropTypes.string.isRequired,
+  inputId: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
-  type: PropTypes.string.isRequired,
+
 };
