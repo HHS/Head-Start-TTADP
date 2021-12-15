@@ -202,7 +202,7 @@ export default function FilterMenu({
       className="ttahub-filter-menu margin-right-1"
       menuName="filter menu"
       canBlur={canBlur}
-      AlternateActionButton={<ClearAllButton />}
+      AlternateActionButton={ClearAllButton}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
