@@ -127,7 +127,7 @@ export default function DropdownMenu({
         { showCancel
           ? (
             <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
-              {AlternateActionButton}
+              <AlternateActionButton />
               <div>
                 <button
                   onClick={onCancelClick}
@@ -143,7 +143,7 @@ export default function DropdownMenu({
           )
           : (
             <div className="margin-2 display-flex flex-justify">
-              {AlternateActionButton}
+              <AlternateActionButton />
               <ApplyButton />
             </div>
           ) }
@@ -173,7 +173,7 @@ DropdownMenu.propTypes = {
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
     PropTypes.func,
   ]),
-  AlternateActionButton: PropTypes.node,
+  AlternateActionButton: PropTypes.func,
 };
 
 function DefaultAlternateActionButton() {
