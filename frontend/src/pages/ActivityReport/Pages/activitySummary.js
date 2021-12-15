@@ -1,13 +1,15 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { Controller, useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isEmpty } from 'lodash';
+import moment from 'moment';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox,
+  Fieldset, Radio, Grid, TextInput, Checkbox, DatePicker,
 } from '@trussworks/react-uswds';
 import ReviewPage from './Review/ReviewPage';
-import DatePicker from '../../../components/DatePicker';
+// import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
   nonGranteeParticipants,
@@ -221,14 +223,16 @@ const ActivitySummary = ({
                 label="Start Date"
                 name="startDate"
               >
-                <DatePicker
-                  ariaName="Start Date (Required)"
-                  control={control}
+                <Controller
                   name="startDate"
-                  isStartDate
-                  maxDate={endDate}
-                  setEndDate={setEndDate}
-                  openUp
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      // eslint-disable-next-line react/jsx-props-no-spreading
+                      {...field}
+                      name="startDate"
+                    />
+                  )}
                 />
               </FormItem>
             </Grid>
@@ -237,13 +241,30 @@ const ActivitySummary = ({
                 label="End Date"
                 name="endDate"
               >
-                <DatePicker
-                  ariaName="End Date (required)"
-                  control={control}
-                  minDate={startDate}
-                  disabled={!startDate}
+                <Controller
                   name="endDate"
-                  openUp
+                  control={control}
+                  render={(props) => {
+                    // eslint-disable-next-line react/prop-types
+                    const { value, onChange, name } = props;
+
+                    console.log(props);
+                    const datePickerOnChange = (e) => {
+                      console.log(e);
+                      onChange(e);
+                    };
+
+                    const formattedValue = moment(value).format('YYYY-MM-DD');
+
+                    return (
+                      <DatePicker
+                        defaultValue={formattedValue}
+                        name={name}
+                        onChange={datePickerOnChange}
+
+                      />
+                    );
+                  }}
                 />
               </FormItem>
             </Grid>
