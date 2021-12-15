@@ -26,13 +26,11 @@
     top: 0.5em;
 }
 
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--parameter [name="topic"],
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter [name="topic"],
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"],
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .smart-hub--dropdown-menu-toggle-btn,
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date, 
-
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-input,
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value > :nth-last-child(2) {
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-select:nth-last-child(2),
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date {
     border: 2px solid #b50909;
 }
 
