@@ -177,9 +177,9 @@ export const FILTER_CONFIG = [
     conditions: [IS],
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery, dateRangeOptions, stateCodes) => (
+    renderInput: (id, condition, query, onApplyQuery, dateRangeOptions, stateCodes) => (
       <FilterStateSelect
-        inputId={`role-${condition}-${id}`}
+        inputId={`state-${condition}-${id}`}
         onApply={onApplyQuery}
         stateCodes={stateCodes}
       />
