@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import DropdownMenu, { DropdownMenuContext } from '../DropdownMenu';
+import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
 import { FILTER_CONFIG } from './constants';
 import { formatDateRange } from '../DateRangeSelect';
@@ -204,34 +204,30 @@ export default function FilterMenu({
       canBlur={canBlur}
       AlternateActionButton={<ClearAllButton />}
     >
-      <DropdownMenuContext.Consumer>
-        { (value) => (
-          <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
-            <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
-            <div>
-              <div className="margin-bottom-1">
-                {items.map((filter, index) => (
-                  <FilterItem
-                    onRemoveFilter={onRemoveFilter}
-                    onUpdateFilter={onUpdateFilter}
-                    key={filter.id}
-                    filter={filter}
-                    prohibitedFilters={prohibitedFilters}
-                    selectedFilters={selectedFilters}
-                    dateRangeOptions={dateRangeOptions}
-                    errors={errors}
-                    setErrors={setErrors}
-                    validate={validate}
-                    index={index}
-                  />
-                ))}
-              </div>
-              <button type="button" onKeyDown={value.onKeyDown} className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
-            </div>
+      <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
+        <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
+        <div>
+          <div className="margin-bottom-1">
+            {items.map((filter, index) => (
+              <FilterItem
+                onRemoveFilter={onRemoveFilter}
+                onUpdateFilter={onUpdateFilter}
+                key={filter.id}
+                filter={filter}
+                prohibitedFilters={prohibitedFilters}
+                selectedFilters={selectedFilters}
+                dateRangeOptions={dateRangeOptions}
+                errors={errors}
+                setErrors={setErrors}
+                validate={validate}
+                index={index}
+              />
+            ))}
           </div>
-        )}
+          <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
+        </div>
+      </div>
 
-      </DropdownMenuContext.Consumer>
     </DropdownMenu>
   );
 }

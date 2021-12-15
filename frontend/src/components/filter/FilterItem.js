@@ -1,11 +1,10 @@
-import React, { useContext, useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.css';
 
 import { FILTER_CONFIG } from './constants';
-import { DropdownMenuContext } from '../DropdownMenu';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
@@ -42,8 +41,6 @@ export default function FilterItem({
   } = filter;
 
   const fieldset = useRef();
-
-  const { onKeyDown } = useContext(DropdownMenuContext);
 
   if (prohibitedFilters.includes(topic)) {
     return null;
@@ -160,7 +157,7 @@ export default function FilterItem({
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
-        onKeyDown={onKeyDown}
+
       >
         <option value="" disabled selected>- Select -</option>
         {topicOptions}
@@ -176,7 +173,7 @@ export default function FilterItem({
         value={condition}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
-        onKeyDown={onKeyDown}
+
       >
         <option value="" disabled selected>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}

@@ -1,14 +1,14 @@
 import React, {
-  useState, useRef, createContext, useMemo,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
 } from 'react';
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
 import triangleDown from '../images/triange_down.png';
 
-export const DropdownMenuContext = createContext({
-  toggleMenu: () => {},
-  onKeyDown: () => {},
-});
+const ESCAPE_KEY_CODE = 27;
 
 /**
  *
@@ -42,6 +42,19 @@ export default function DropdownMenu({
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
 
+  const onEscape = useCallback((event) => {
+    if (event.keyCode === ESCAPE_KEY_CODE) {
+      setMenuIsOpen(false);
+    }
+  }, [setMenuIsOpen]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', onEscape, false);
+    return () => {
+      document.removeEventListener('keydown', onEscape, false);
+      setMenuIsOpen(false);
+    };
+  }, [onEscape]);
   /**
    * Close the menu on blur, with some extenuating circumstance
    *
@@ -74,10 +87,6 @@ export default function DropdownMenu({
     setMenuIsOpen(false);
   };
 
-  const onKeyDown = (e) => {
-    console.log(e.currentTarget);
-  };
-
   const buttonClasses = styleAsSelect ? 'usa-select' : 'usa-button';
 
   // needs position relative for the menu to work properly
@@ -92,20 +101,11 @@ export default function DropdownMenu({
         onClick={onApplyClick}
         aria-label={applyButtonAria}
         onBlur={onBlur}
-        onKeyDown={onKeyDown}
       >
         {applyButtonText}
       </button>
     );
   }
-
-  // this should never change, so we want to store it here to
-  // not rerender the children should this component re-render
-  // (based on stuff I've read, anyways, it may be overkill)
-  const contextValue = useMemo(() => ({
-    onKeyDown,
-    toggleMenu: setMenuIsOpen,
-  }), []);
 
   return (
     <div ref={forwardedRef} className={classNames}>
@@ -117,16 +117,13 @@ export default function DropdownMenu({
         disabled={disabled}
         aria-pressed={menuIsOpen}
         onBlur={onBlur}
-        onKeyDown={onKeyDown}
       >
         <span>{buttonText}</span>
         {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
       <div className="smart-hub--dropdown-menu--contents no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
-        <DropdownMenuContext.Provider value={contextValue}>
-          {children}
-        </DropdownMenuContext.Provider>
+        {children}
         { showCancel
           ? (
             <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
@@ -137,7 +134,6 @@ export default function DropdownMenu({
                   type="button"
                   className="usa-button usa-button--unstyled margin-right-2"
                   aria-label={cancelAriaLabel}
-                  onKeyDown={onKeyDown}
                 >
                   Cancel
                 </button>
@@ -174,8 +170,8 @@ DropdownMenu.propTypes = {
   onCancel: PropTypes.func,
   cancelAriaLabel: PropTypes.string,
   forwardedRef: PropTypes.oneOfType([
-    PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+    PropTypes.func,
   ]),
   AlternateActionButton: PropTypes.node,
 };
