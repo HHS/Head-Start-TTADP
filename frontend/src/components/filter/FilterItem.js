@@ -26,6 +26,7 @@ export default function FilterItem({
   onRemoveFilter,
   onUpdateFilter,
   prohibitedFilters,
+  selectedFilters,
   dateRangeOptions,
   errors,
   setErrors,
@@ -40,6 +41,10 @@ export default function FilterItem({
   } = filter;
 
   const fieldset = useRef();
+
+  if (prohibitedFilters.includes(topic)) {
+    return null;
+  }
 
   const setError = (message) => {
     const newErrors = [...errors];
@@ -107,7 +112,7 @@ export default function FilterItem({
     : 'remove this filter. click apply filters to make your changes';
 
   const topicOptions = FILTER_CONFIG.filter((config) => (
-    topic === config.id || !prohibitedFilters.includes(config.id)
+    topic === config.id || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
   )).map(({ id: filterId, display }) => (
     <option key={filterId} value={filterId}>{display}</option>
   ));
@@ -123,8 +128,8 @@ export default function FilterItem({
     case 'Please enter a condition':
       fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
       break;
-    case 'Please enter a parameter':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--parameter';
+    case 'Please enter a filter':
+      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
       break;
     default:
       break;
@@ -143,7 +148,7 @@ export default function FilterItem({
       }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`topic-${id}`}>
-        Select a filter topic
+        Select a filter
       </label>
       <select
         id={`topic-${id}`}
@@ -152,27 +157,36 @@ export default function FilterItem({
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
+
       >
         <option value="" disabled selected>- Select -</option>
         {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
-        Select a filter condition
+        Select a condition
       </label>
       <select
         id={`condition-${id}`}
         name="condition"
         aria-label="condition"
         value={condition}
+        disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
+
       >
         <option value="" disabled selected>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput(id, condition, query, onUpdate, onApplyQuery, dateRangeOptions)
+        ? selectedTopic.renderInput(
+          id, // filter id
+          condition, // filter condition
+          query, // filter query
+          onApplyQuery, // the on apply query function handler
+          dateRangeOptions, // date range options, configurable per filter menu
+        )
         : <DummySelect /> }
       <button
         type="button"
@@ -192,6 +206,7 @@ FilterItem.propTypes = {
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
   prohibitedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
   dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,

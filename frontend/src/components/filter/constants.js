@@ -59,13 +59,14 @@ export const FILTER_CONFIG = [
       }
       return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
     },
-    renderInput: (id, condition, query, onUpdate, onApplyQuery, dateRangeOptions) => (
+    renderInput: (id, condition, query, onApplyQuery, dateRangeOptions) => (
       <FilterDateRange
         condition={condition}
         query={query}
-        updateSingleDate={onUpdate}
+        updateSingleDate={onApplyQuery}
         onApplyDateRange={onApplyQuery}
         options={dateRangeOptions}
+        id={id}
       />
     ),
   },
@@ -75,7 +76,7 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
         id={id}
@@ -92,13 +93,11 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        id={id}
-        condition={condition}
+        inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
-        type="programSpecialist"
         label="Enter a program specialist name"
       />
     ),
@@ -109,7 +108,7 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterProgramType
         inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
@@ -122,7 +121,7 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterReasonSelect
         inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
@@ -135,13 +134,11 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        id={id}
-        condition={condition}
+        inputId={`recipient-${condition}-${id}`}
         onApply={onApplyQuery}
-        type="grantee"
         label="Enter a recipient name"
       />
     ),
@@ -152,7 +149,7 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterRegionalSelect
         appliedRegion={query}
         onApply={onApplyQuery}
@@ -182,7 +179,7 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterSpecialistSelect
         inputId={`role-${condition}-${id}`}
         onApply={onApplyQuery}
@@ -195,7 +192,7 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterPopulationSelect
         inputId={`population-${condition}-${id}`}
         onApply={onApplyQuery}
@@ -208,7 +205,7 @@ export const FILTER_CONFIG = [
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_CHECKBOX_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterTopicSelect
         inputId={`topic-${condition}-${id}`}
         onApply={onApplyQuery}

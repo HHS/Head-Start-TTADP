@@ -1,8 +1,27 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
 import triangleDown from '../images/triange_down.png';
 
+const ESCAPE_KEY_CODE = 27;
+
+/**
+ *
+ * It's a pretty complicated looking component but right now
+ * the only required props are:
+ *
+ * onApply - The function that is called when the apply button is pressed
+ * children - The contents of the dropdown window pane
+ * buttonText - The text for the main toggle button (for example, "Filters")
+ *
+ * @param {React Props} props
+ * @returns rendered JSX Object
+ */
 export default function DropdownMenu({
   buttonText,
   buttonAriaLabel,
@@ -18,35 +37,24 @@ export default function DropdownMenu({
   showCancel,
   cancelAriaLabel,
   forwardedRef,
-  alternateActionButton,
+  AlternateActionButton,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
 
+  const onEscape = useCallback((event) => {
+    if (event.keyCode === ESCAPE_KEY_CODE) {
+      setMenuIsOpen(false);
+    }
+  }, [setMenuIsOpen]);
+
   useEffect(() => {
-    // we're mixing the real stuff in
-    window.addEventListener('keydown', (e) => {
-      // if the content div's parent element (the whole menu)
-      // has an element in focus
-      if (!menuContents.current || !menuContents.current.parentElement.querySelector(':focus')) {
-        return;
-      }
-
-      // we also have to check to see if we're inside a select box
-      if (document.querySelector(':focus') && document.querySelector(':focus').classList.contains('usa-select')) {
-        return;
-      }
-
-      // then we listen for the escape key
-      // this is because we don't want to have to pass
-      // a bunch of refs and the "setMenuIsOpen" thing down the tree
-      // (I suppose this could be refactored to Consumer->Provider context, but why?)
-      if (e.key === 'Escape') {
-        setMenuIsOpen(false);
-      }
-    });
-  }, []);
-
+    document.addEventListener('keydown', onEscape, false);
+    return () => {
+      document.removeEventListener('keydown', onEscape, false);
+      setMenuIsOpen(false);
+    };
+  }, [onEscape]);
   /**
    * Close the menu on blur, with some extenuating circumstance
    *
@@ -84,8 +92,6 @@ export default function DropdownMenu({
   // needs position relative for the menu to work properly
   const classNames = `${className} smart-hub--dropdown-menu position-relative`;
 
-  const bottomRowFlexJustify = alternateActionButton ? 'flex-justify' : 'flex-justify-end';
-
   // just to make things a little less verbose below
   function ApplyButton() {
     return (
@@ -94,11 +100,13 @@ export default function DropdownMenu({
         className="usa-button smart-hub--button"
         onClick={onApplyClick}
         aria-label={applyButtonAria}
+        onBlur={onBlur}
       >
         {applyButtonText}
       </button>
     );
   }
+
   return (
     <div ref={forwardedRef} className={classNames}>
       <button
@@ -118,8 +126,8 @@ export default function DropdownMenu({
         {children}
         { showCancel
           ? (
-            <div className={`margin-top-1 desktop:display-flex ${bottomRowFlexJustify} margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0`}>
-              {alternateActionButton}
+            <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
+              {AlternateActionButton}
               <div>
                 <button
                   onClick={onCancelClick}
@@ -135,7 +143,7 @@ export default function DropdownMenu({
           )
           : (
             <div className="margin-2 display-flex flex-justify">
-              {alternateActionButton}
+              {AlternateActionButton}
               <ApplyButton />
             </div>
           ) }
@@ -145,25 +153,32 @@ export default function DropdownMenu({
 }
 
 DropdownMenu.propTypes = {
+  // the only required props are
+  onApply: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
   buttonText: PropTypes.string.isRequired,
+
+  // these are all extra configuration
   buttonAriaLabel: PropTypes.string,
   disabled: PropTypes.bool,
   styleAsSelect: PropTypes.bool,
   canBlur: PropTypes.func,
   applyButtonText: PropTypes.string,
   applyButtonAria: PropTypes.string,
-  onApply: PropTypes.func.isRequired,
   className: PropTypes.string,
   showCancel: PropTypes.bool,
   onCancel: PropTypes.func,
   cancelAriaLabel: PropTypes.string,
   forwardedRef: PropTypes.oneOfType([
-    PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+    PropTypes.func,
   ]),
-  alternateActionButton: PropTypes.node,
+  AlternateActionButton: PropTypes.node,
 };
+
+function DefaultAlternateActionButton() {
+  return <span />;
+}
 
 DropdownMenu.defaultProps = {
   className: 'margin-left-1',
@@ -174,8 +189,8 @@ DropdownMenu.defaultProps = {
   applyButtonAria: 'Apply',
   applyButtonText: 'Apply',
   showCancel: false,
-  cancelAriaLabel: '',
+  cancelAriaLabel: 'Cancel',
   onCancel: () => {},
   forwardedRef: () => {},
-  alternateActionButton: null,
+  AlternateActionButton: DefaultAlternateActionButton,
 };
