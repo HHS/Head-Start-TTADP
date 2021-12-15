@@ -9,12 +9,57 @@ import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
 
 describe('Filter menu item', () => {
-  const renderFilterItem = (filter, onRemoveFilter = jest.fn(), onUpdateFilter = jest.fn()) => {
-    render(<FilterItem
-      filter={filter}
-      onRemoveFilter={onRemoveFilter}
-      onUpdateFilter={onUpdateFilter}
-    />);
+  const renderFilterItem = (
+    filter,
+    onRemoveFilter = jest.fn(),
+    onUpdateFilter = jest.fn(),
+    setErrors = jest.fn(),
+  ) => {
+    const setError = jest.fn((error) => {
+      setErrors([error]);
+    });
+
+    const validate = jest.fn(() => {
+      const { topic, query, condition } = filter;
+      let message = '';
+      if (!topic) {
+        message = 'Please enter a value';
+        setError(message);
+        return false;
+      }
+      if (!condition) {
+        message = 'Please enter a condition';
+        setError(message);
+        return false;
+      }
+      if (!query || !query.length) {
+        message = 'Please enter a parameter';
+        setError(message);
+        return false;
+      }
+      if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+        message = 'Please enter a parameter';
+        setError(message);
+        return false;
+      }
+      setError(message);
+      return true;
+    });
+
+    render(
+      <div>
+        <FilterItem
+          filter={filter}
+          onRemoveFilter={onRemoveFilter}
+          onUpdateFilter={onUpdateFilter}
+          errors={['']}
+          setErrors={setErrors}
+          index={0}
+          validate={validate}
+        />
+        <button type="button">BIG DUMB BUTTON</button>
+      </div>,
+    );
   };
 
   it('updates topic & condition', async () => {
@@ -114,5 +159,63 @@ describe('Filter menu item', () => {
     }));
 
     expect(onRemove).toHaveBeenCalled();
+  });
+
+  it('validates topic', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: '',
+      condition: '',
+      query: [],
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
+  });
+
+  it('validates condition', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: 'role',
+      condition: '',
+      query: [],
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a condition']);
+  });
+
+  it('validates query', async () => {
+    const filter = {
+      id: 'blah-de-dah',
+      display: '',
+      topic: 'startDate',
+      condition: 'Is within',
+      query: '',
+    };
+    const onRemove = jest.fn();
+    const onUpdate = jest.fn();
+    const setErrors = jest.fn();
+    renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a parameter']);
   });
 });
