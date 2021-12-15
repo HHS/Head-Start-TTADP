@@ -39,7 +39,7 @@ export default function FilterMenu({
   const validate = ({ topic, query, condition }, setError) => {
     let message = '';
     if (!topic) {
-      message = 'Please enter a parameter';
+      message = 'Please enter a filter';
       setError(message);
       return false;
     }
@@ -205,7 +205,7 @@ export default function FilterMenu({
       AlternateActionButton={<ClearAllButton />}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
-        <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
+        <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">
             {items.map((filter, index) => (
