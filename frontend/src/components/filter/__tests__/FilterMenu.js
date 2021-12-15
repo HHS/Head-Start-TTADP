@@ -35,7 +35,7 @@ describe('Filter Menu', () => {
     });
 
     userEvent.click(button);
-    const message = await screen.findByText('Show results matching the following conditions.');
+    const message = await screen.findByText('Show results for the following filters.');
     expect(message).toBeVisible();
 
     const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
@@ -150,7 +150,7 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const message = await screen.findByText('Show results matching the following conditions.');
+    const message = await screen.findByText('Show results for the following filters.');
     userEvent.click(message);
 
     expect(message).toBeVisible();
@@ -270,7 +270,7 @@ describe('Filter Menu', () => {
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
-    expect(screen.getByText(/please enter a parameter/i)).toBeVisible();
+    expect(screen.getByText(/please enter a filter/i)).toBeVisible();
 
     userEvent.selectOptions(topic, ['role']);
     const apply = screen.getByRole('button', { name: /apply filters to this page/i });
