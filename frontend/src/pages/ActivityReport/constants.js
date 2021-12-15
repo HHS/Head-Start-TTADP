@@ -63,7 +63,6 @@ export const targetPopulations = [
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
-  'Pregnant Women',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in

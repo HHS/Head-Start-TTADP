@@ -114,10 +114,10 @@ describe('Retrieve Alerts', () => {
       ]),
       NonGrantee.create({ id: ALERT_GRANTEE_ID, name: 'alert nonGrantee' }),
       Grantee.create({ name: 'alert grantee', id: ALERT_GRANTEE_ID }),
-      Region.create({ name: 'office 20', id: 20 }),
+      Region.create({ name: 'office 22', id: 22 }),
     ]);
     await Grant.create({
-      id: ALERT_GRANTEE_ID, number: 1, granteeId: ALERT_GRANTEE_ID, regionId: 20, status: 'Active',
+      id: ALERT_GRANTEE_ID, number: 1, granteeId: ALERT_GRANTEE_ID, regionId: 22, status: 'Active',
     });
   });
 
@@ -137,7 +137,7 @@ describe('Retrieve Alerts', () => {
     await NonGrantee.destroy({ where: { id: ALERT_GRANTEE_ID } });
     await Grant.destroy({ where: { id: [ALERT_GRANTEE_ID] } });
     await Grantee.destroy({ where: { id: [ALERT_GRANTEE_ID] } });
-    await Region.destroy({ where: { id: 20 } });
+    await Region.destroy({ where: { id: 22 } });
   });
 
   it('retrieves myalerts', async () => {
