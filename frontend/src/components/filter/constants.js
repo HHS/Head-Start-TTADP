@@ -79,8 +79,7 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        id={id}
-        condition={condition}
+        inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
         type="grantNumber"
         label="Enter a grant number"
