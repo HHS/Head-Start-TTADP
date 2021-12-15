@@ -36,34 +36,24 @@ export default function FilterMenu({
 
   const itemLength = usePrevious(items.length);
 
-  const validate = ({ topic, query, condition }, setError) => {
-    let message = '';
+  const validate = ({ topic, query, condition }) => {
     if (!topic) {
-      message = 'Please enter a filter';
-      setError(message);
-      return false;
+      return 'Please enter a filter';
     }
 
     if (!condition) {
-      message = 'Please enter a condition';
-      setError(message);
-      return false;
+      return 'Please enter a condition';
     }
 
     if (!query || !query.length) {
-      message = 'Please enter a value';
-      setError(message);
-      return false;
+      return 'Please enter a value';
     }
 
     if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
-      message = 'Please enter a value';
-      setError(message);
-      return false;
+      return 'Please enter a value';
     }
 
-    setError(message);
-    return true;
+    return '';
   };
 
   // filters currently selected. these will be excluded from filter selection
@@ -109,7 +99,10 @@ export default function FilterMenu({
         setErrors(newErrors);
       };
 
-      if (!validate(curr, setError)) {
+      const message = validate(curr);
+
+      if (message) {
+        setError(message);
         return true;
       }
 
