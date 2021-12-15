@@ -162,7 +162,7 @@ export const FILTER_CONFIG = [
     conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
-    renderInput: (id, condition, query, onUpdate, onApplyQuery) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
         id={id}
