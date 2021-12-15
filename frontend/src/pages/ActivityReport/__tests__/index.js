@@ -220,8 +220,8 @@ describe('ActivityReport', () => {
       it('Other entity', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const otherEntities = within(information).getByLabelText('Other entity');
-        fireEvent.click(otherEntities);
+        const otherEntity = within(information).getByLabelText('Other entity');
+        fireEvent.click(otherEntity);
         const recipientSelectbox = await screen.findByRole('textbox', { name: 'Other entities (Required)' });
         reactSelectEvent.openMenu(recipientSelectbox);
         expect(await screen.findByText(withText('otherEntity'))).toBeVisible();
