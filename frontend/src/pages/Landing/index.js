@@ -98,7 +98,7 @@ function Landing({ user }) {
   };
 
   const handleDownloadAllAlerts = () => {
-    const filterQuery = filtersToQueryString(filters, appliedRegionNumber);
+    const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
     window.location.assign(downloadURL);
   };
