@@ -1,8 +1,7 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import useSpellCheck from '../../hooks/useSpellCheck';
-import { DropdownMenuContext } from '../DropdownMenu';
 
 export default function FilterSelect({
   onApply,
@@ -10,8 +9,6 @@ export default function FilterSelect({
   inputId,
   options,
 }) {
-  const { onKeyDown } = useContext(DropdownMenuContext);
-
   /**
    * unfortunately, given our support for ie11, we can't
    * upgrade to react-select v5, which support a spellcheck
@@ -83,7 +80,6 @@ export default function FilterSelect({
   return (
     <>
       <Select
-        onKeyDown={onKeyDown}
         placeholder={labelText}
         aria-label={labelText}
         inputId={inputId}

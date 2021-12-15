@@ -1,6 +1,5 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { DropdownMenuContext } from '../DropdownMenu';
 
 export default function FilterInput({
   query,
@@ -8,8 +7,6 @@ export default function FilterInput({
   inputId,
   label,
 }) {
-  const { onKeyDown } = useContext(DropdownMenuContext);
-
   const onChange = (e) => {
     const { value } = e.target;
     onApply(value);
@@ -18,7 +15,7 @@ export default function FilterInput({
   return (
     <>
       <label className="sr-only" htmlFor={inputId}>{label}</label>
-      <input className="usa-input" type="text" name={inputId} id={inputId} value={query} onChange={onChange} onKeyDown={onKeyDown} />
+      <input className="usa-input" type="text" name={inputId} id={inputId} value={query} onChange={onChange} />
     </>
   );
 }
