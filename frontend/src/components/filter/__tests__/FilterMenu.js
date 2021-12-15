@@ -187,7 +187,7 @@ describe('Filter Menu', () => {
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
-    expect(screen.getByText(/please enter a parameter/i)).toBeVisible();
+    expect(screen.getByText(/please enter a filter/i)).toBeVisible();
 
     userEvent.selectOptions(topic, ['role']);
     const apply = screen.getByRole('button', { name: /apply filters to grantee record data/i });
