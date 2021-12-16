@@ -7,8 +7,7 @@ import { formatDateRange } from '../../../components/DateRangeSelect';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
-import FilterMenu from '../../../components/filter/FilterMenu';
-import FilterPills from '../../../components/filter/FilterPills';
+import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters } from '../../../utils';
 
@@ -82,13 +81,12 @@ export default function TTAHistory({
       </Helmet>
       <div className="margin-x-2 maxw-widescreen">
         <div className="display-flex flex-wrap margin-bottom-2">
-          <FilterMenu
+          <FilterPanel
             filters={filters}
             onApplyFilters={onApply}
             onRemoveFilter={onRemoveFilter}
             allowedFilters={['startDate', 'role']}
           />
-          <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
         </div>
         <Overview
           fields={[
