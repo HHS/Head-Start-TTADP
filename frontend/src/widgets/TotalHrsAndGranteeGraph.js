@@ -219,7 +219,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
           : (
             <div aria-hidden="true">
               <fieldset className="grid-row ttahub--total-hrs-grantee-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
-                <legend className="margin-bottom-1">Toggle individual lines by checking or unchecking a legend item.</legend>
+                <legend className="margin-bottom-2">Toggle individual lines by checking or unchecking a legend item.</legend>
                 <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
                 <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
                 <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />
