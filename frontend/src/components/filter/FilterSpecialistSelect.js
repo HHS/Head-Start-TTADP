@@ -1,6 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
+import { filterSelectProps } from './props';
 
 const ROLES_MAP = [
   {
@@ -35,6 +35,7 @@ const ROLE_OPTIONS = ROLES_MAP.map(({ label, selectValue: value }) => ({ value, 
 export default function FilterSpecialistSelect({
   onApply,
   inputId,
+  query,
 }) {
   const onApplyClick = (selected) => {
     onApply(
@@ -42,17 +43,22 @@ export default function FilterSpecialistSelect({
     );
   };
 
+  // this is because we have a label that doesn't match the backend
+  // value (i.e., the abbreviations appended at the end of the title aren't the values,
+  // in our backend. so for this particular filter we need to maintain a special case
+  const selectedValues = query.map((selection) => (
+    ROLES_MAP.find((role) => role.value === selection).label
+  ));
+
   return (
     <FilterSelect
       onApply={onApplyClick}
       inputId={inputId}
       labelText="Select specialist role to filter by"
       options={ROLE_OPTIONS}
+      selectedValues={selectedValues}
     />
   );
 }
 
-FilterSpecialistSelect.propTypes = {
-  inputId: PropTypes.string.isRequired,
-  onApply: PropTypes.func.isRequired,
-};
+FilterSpecialistSelect.propTypes = filterSelectProps;
