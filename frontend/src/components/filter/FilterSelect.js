@@ -59,17 +59,9 @@ export default function FilterSelect({
       ...provided,
       zIndex: 2,
     }),
-    multiValue: (provided) => ({
-      ...provided,
-      backgroundColor: 'transparent',
-    }),
     multiValueContainer: (provided) => ({
       ...provided,
       overflow: 'hidden',
-    }),
-    multiValueLabel: (provided) => ({
-      ...provided,
-      fontSize: '100%',
     }),
   };
 
