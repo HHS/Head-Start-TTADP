@@ -14,16 +14,16 @@ import Cdi from '../cdi';
 import { withText } from '../../../testHelpers';
 
 const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true');
-const granteesUrl = join('/', 'api', 'admin', 'grantees');
+const recipientsUrl = join('/', 'api', 'admin', 'recipients');
 
-const defaultGrantees = [
+const defaultRecipients = [
   {
     id: 1,
-    name: 'grantee 1',
+    name: 'recipient 1',
   },
   {
     id: 10,
-    name: 'grantee 2',
+    name: 'recipient 2',
   },
 ];
 
@@ -34,10 +34,10 @@ const defaultGrant = {
   status: 'Active',
   startDate: '2020-12-01',
   endDate: '2020-12-02',
-  granteeId: 1,
-  grantee: {
+  recipientId: 1,
+  recipient: {
     id: 1,
-    name: 'grantee 1',
+    name: 'recipient 1',
   },
 };
 
@@ -47,7 +47,7 @@ describe('CDI', () => {
 
   beforeEach(() => {
     fetchMock.get(grantsUrl, [defaultGrant]);
-    fetchMock.get(granteesUrl, defaultGrantees);
+    fetchMock.get(recipientsUrl, defaultRecipients);
   });
 
   const RenderCDI = ({ grantId = null }) => (

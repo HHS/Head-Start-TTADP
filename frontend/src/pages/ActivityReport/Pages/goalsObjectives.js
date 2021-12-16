@@ -13,23 +13,23 @@ import { validateGoals } from './components/goalValidator';
 import { reportIsEditable } from '../../../utils';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ObjectivePicker from './components/ObjectivePicker';
-import GranteeReviewSection from './components/GranteeReviewSection';
-import NonGranteeReviewSection from './components/NonGranteeReviewSection';
+import RecipientReviewSection from './components/RecipientReviewSection';
+import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
-  const recipientGrantee = activityRecipientType === 'grantee';
-  const grantIds = recipientGrantee ? recipients.map((r) => r.activityRecipientId) : [];
+  const isRecipientReport = activityRecipientType === 'recipient';
+  const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
 
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
-      if (recipientGrantee && hasGrants) {
+      if (isRecipientReport && hasGrants) {
         const fetchedGoals = await getGoals(grantIds);
         updateAvailableGoals(fetchedGoals);
       }
@@ -37,7 +37,7 @@ const GoalsObjectives = () => {
     fetch();
   }, [grantIds]);
 
-  const showGoals = recipientGrantee && hasGrants;
+  const showGoals = isRecipientReport && hasGrants;
 
   return (
     <>
@@ -50,8 +50,8 @@ const GoalsObjectives = () => {
           <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
         </div>
       </Fieldset>
-      {!recipientGrantee && (
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for non-grantee TTA">
+      {!isRecipientReport && (
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for other entity TTA">
           <ObjectivePicker />
         </Fieldset>
       )}
@@ -79,7 +79,7 @@ const ReviewSection = () => {
   } = watch();
 
   const canEdit = reportIsEditable(calculatedStatus);
-  const nonGrantee = activityRecipientType === 'non-grantee';
+  const otherEntity = activityRecipientType === 'other-entity';
 
   return (
     <>
@@ -96,10 +96,10 @@ const ReviewSection = () => {
           name="context"
         />
       </Section>
-      {!nonGrantee
-        && <GranteeReviewSection />}
-      {nonGrantee
-        && <NonGranteeReviewSection />}
+      {!otherEntity
+        && <RecipientReviewSection />}
+      {otherEntity
+        && <OtherEntityReviewSection />}
     </>
   );
 };
@@ -109,7 +109,7 @@ export default {
   label: 'Goals and objectives',
   titleOverride: (formData) => {
     const { activityRecipientType } = formData;
-    if (activityRecipientType === 'non-grantee') {
+    if (activityRecipientType === 'other-entity') {
       return 'Objectives';
     }
     return 'Goals and objectives';
@@ -123,10 +123,10 @@ export default {
       return false;
     }
 
-    if (activityRecipientType === 'non-grantee') {
+    if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
-    return activityRecipientType !== 'grantee' || validateGoals(formData.goals) === true;
+    return activityRecipientType !== 'recipient' || validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
   render: () => (

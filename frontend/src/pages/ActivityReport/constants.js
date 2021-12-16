@@ -8,7 +8,7 @@ export const reasons = [
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
-  'New Grantee',
+  'New Recipient',
   'New Director or Management',
   'New Program Option',
   'New Staff / Turnover',
@@ -20,7 +20,7 @@ export const reasons = [
   'Monitoring | Deficiency',
 ];
 
-export const granteeParticipants = [
+export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
   'Coach',
@@ -37,7 +37,7 @@ export const granteeParticipants = [
   'Volunteer',
 ];
 
-export const nonGranteeParticipants = [
+export const otherEntityParticipants = [
   'Local/State Agency(ies)',
   'HSCO',
   'OCC Regional Office',

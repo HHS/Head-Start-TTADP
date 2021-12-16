@@ -1,0 +1,22 @@
+.ttahub-recipient-record--tabs_nav {
+    margin-left: -1rem;
+}
+
+.ttahub-recipient-record--tabs_link, .ttahub-recipient-record--tabs_link:visited {
+    color: #21272d;
+    text-decoration: none;
+}
+
+.ttahub-recipient-record--tabs_tab {
+    min-width: 6rem;
+    text-align:center;
+}
+
+.ttahub-recipient-record--tabs_link--active{
+    border-bottom: 4px solid #0166ab;
+    font-weight: bold;
+}
+
+.ttahub-recipient-record--tabs_back-to-search, .ttahub-recipient-record--tabs_back-to-search :visited {
+    color: #0166ab;
+}

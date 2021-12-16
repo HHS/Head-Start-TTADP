@@ -21,6 +21,7 @@ describe('Filter Menu', () => {
           <FilterMenu
             filters={filters}
             onApplyFilters={onApplyFilters}
+            applyButtonAria="apply test filters"
           />
         </div>
       </div>,
@@ -87,7 +88,7 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const apply = screen.getByRole('button', { name: /apply filters to grantee record data/i });
+    const apply = screen.getByRole('button', { name: /apply test filters/i });
     userEvent.click(apply);
 
     expect(onApply).not.toHaveBeenCalledWith();
@@ -190,7 +191,7 @@ describe('Filter Menu', () => {
     expect(screen.getByText(/please enter a filter/i)).toBeVisible();
 
     userEvent.selectOptions(topic, ['role']);
-    const apply = screen.getByRole('button', { name: /apply filters to grantee record data/i });
+    const apply = screen.getByRole('button', { name: /apply test filters/i });
     userEvent.click(apply);
     expect(screen.getByText(/please enter a condition/i)).toBeVisible();
   });

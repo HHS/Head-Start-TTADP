@@ -22,15 +22,15 @@ export const getCDIGrants = async (unassigned = true, active = true) => {
   return grants.json();
 };
 
-export const getGrantees = async () => {
-  const grantees = await get(join('/', 'api', 'admin', 'grantees'));
-  return grantees.json();
+export const getRecipients = async () => {
+  const recipients = await get(join('/', 'api', 'admin', 'recipients'));
+  return recipients.json();
 };
 
-export const assignCDIGrant = async (grantId, regionId, granteeId) => {
+export const assignCDIGrant = async (grantId, regionId, recipientId) => {
   const body = {
     regionId,
-    granteeId,
+    recipientId,
   };
   const grant = await put(join('/', 'api', 'admin', 'grants', 'cdi', grantId.toString(DECIMAL_BASE)), body);
   return grant.json();
