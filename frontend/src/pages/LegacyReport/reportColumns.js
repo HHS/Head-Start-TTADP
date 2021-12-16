@@ -3,7 +3,7 @@ const reportFields = {
   programType: 'Program type(s)',
   cdiGranteeName: 'CDI recipient(s)',
   multiGranteeActivities: 'Multi-recipient activities',
-  nonGranteeActivity: 'Non-recipient activity',
+  nonGranteeActivity: 'Other entity activity',
   sourceOfRequest: 'Who requested the TTA?',
   reasons: 'Reason(s)',
   startDate: 'Start Date',
