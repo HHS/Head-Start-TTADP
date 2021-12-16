@@ -9,7 +9,7 @@ import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
-import { expandFilters } from '../../../utils';
+import { expandFilters, queryStringToFilters } from '../../../utils';
 
 import './TTAHistory.css';
 import useUrlFilters from '../../../hooks/useUrlFilters';
@@ -22,7 +22,8 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   granteeName, granteeId, regionId,
 }) {
-  const [filters, setFilters] = useUrlFilters([
+  const params = queryStringToFilters(new URL(window.location).search.substr(1));
+  const [filters, setFilters] = useUrlFilters(params.length ? params : [
     {
       id: uuidv4(),
       topic: 'startDate',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,29 +12,46 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
 import './index.css';
 import FilterPills from '../../components/filter/FilterPills';
-import { expandFilters } from '../../utils';
+import { expandFilters, queryStringToFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
+
 export default function RegionalDashboard({ user }) {
-  const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
-  const defaultDate = formatDateRange({
-    lastThirtyDays: true,
-    forDateTime: true,
-  });
+  /**
+   * we are going to memoize all this stuff so it doesn't get recomputed each time
+   * this is re-rendered. it would (generally) only get recomputed should the user change
+   */
 
-  const regions = getUserRegions(user);
-  const defaultRegion = regions[0].toString();
+  const hasCentralOffice = useMemo(() => (
+    user && user.homeRegionId && user.homeRegionId === 14
+  ), [user]);
+  const regions = useMemo(() => getUserRegions(user), [user]);
+  const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
 
-  const [filters, setFilters] = useUrlFilters(hasCentralOffice
-    ? [
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'Is within',
-        query: defaultDate,
-      },
-    ] : [
+  const defaultFilters = useMemo(() => {
+    // specifically, we don't want to be doing this every time the component rerenders
+    const params = queryStringToFilters(new URL(window.location).search.substr(1));
+    if (params.length) {
+      return params;
+    }
+
+    if (hasCentralOffice) {
+      return [
+        {
+          id: uuidv4(),
+          topic: 'startDate',
+          condition: 'Is within',
+          query: defaultDate,
+        },
+      ];
+    }
+
+    return [
       {
         id: uuidv4(),
         topic: 'region',
@@ -47,7 +64,10 @@ export default function RegionalDashboard({ user }) {
         condition: 'Is within',
         query: defaultDate,
       },
-    ]);
+    ];
+  }, [defaultRegion, hasCentralOffice]);
+
+  const [filters, setFilters] = useUrlFilters(defaultFilters());
 
   const regionFilter = filters.find((filter) => filter.topic === 'region');
   const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';
