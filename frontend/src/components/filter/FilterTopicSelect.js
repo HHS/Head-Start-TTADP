@@ -1,13 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
 import { TOPICS } from '../../Constants';
+import { filterSelectProps } from './props';
 
 const TOPIC_OPTIONS = TOPICS.map((label, value) => ({ value, label }));
 
 export default function FilterTopicSelect({
   onApply,
   inputId,
+  query,
 }) {
   const onApplyClick = (selected) => {
     onApply(selected);
@@ -18,11 +19,9 @@ export default function FilterTopicSelect({
       inputId={inputId}
       labelText="Select topics to filter by"
       options={TOPIC_OPTIONS}
+      selectedValues={query}
     />
   );
 }
 
-FilterTopicSelect.propTypes = {
-  inputId: PropTypes.string.isRequired,
-  onApply: PropTypes.func.isRequired,
-};
+FilterTopicSelect.propTypes = filterSelectProps;

@@ -3,14 +3,13 @@ import PropTypes from 'prop-types';
 import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
-import DateTime from '../components/DateTime';
 import AccessibleWidgetData from './AccessibleWidgetData';
 
 import Container from '../components/Container';
 
 import './TotalHrsAndGranteeGraph.css';
 
-export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
+export function TotalHrsAndGranteeGraph({ data, loading }) {
   // the state for which lines to show
   const [showTA, setShowTA] = useState(true);
   const [showTraining, setShowTraining] = useState(true);
@@ -199,9 +198,6 @@ export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
       <div className="ttahub--total-hrs-grantee-graph">
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
-          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="ttahub--total-hours-graph-timestamp-container display-flex desktop:padding-x-1 flex-align-self-center">
-            <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
-          </Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
             <button
               type="button"
@@ -219,7 +215,7 @@ export function TotalHrsAndGranteeGraph({ data, dateTime, loading }) {
           : (
             <div aria-hidden="true">
               <fieldset className="grid-row ttahub--total-hrs-grantee-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
-                <legend className="margin-bottom-1">Toggle individual lines by checking or unchecking a legend item.</legend>
+                <legend className="margin-bottom-2">Toggle individual lines by checking or unchecking a legend item.</legend>
                 <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
                 <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
                 <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />

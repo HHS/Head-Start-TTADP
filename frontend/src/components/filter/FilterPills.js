@@ -59,7 +59,7 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
   const queryShortValue = determineQuery(false);
 
   return (
-    <span className="text-middle margin-right-05 padding-top-1 margin-bottom-105">
+    <span className="filter-pill text-middle margin-right-05 padding-top-1 margin-bottom-105">
       {isFirst ? null : <strong> AND </strong>}
       <span className="margin-right-05">
         <strong>

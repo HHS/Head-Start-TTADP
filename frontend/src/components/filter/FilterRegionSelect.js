@@ -12,7 +12,6 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
 
   const { user } = useContext(UserContext);
   const regions = getUserRegions(user);
-  const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
 
   return (
     <>
@@ -26,8 +25,6 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
             {region}
           </option>
         ))}
-        {hasCentralOffice
-        && <option value="14">All regions</option>}
       </Dropdown>
     </>
   );

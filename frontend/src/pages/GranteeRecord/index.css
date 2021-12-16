@@ -10,9 +10,8 @@
 }
 
 .ttahub-grantee-record-table-container {
-    min-height: 220px;
-    max-height: 220px;
     overflow-y: scroll;
+    max-height: 440px;
 }
 
 .ttahub-grantee-record-table-container .ttahub-grantee-record--table  th {
