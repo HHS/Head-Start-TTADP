@@ -186,11 +186,7 @@ export default function FilterMenu({
   };
 
   const clearAllFilters = () => {
-    // this looks a little strange, right?
-    // well, we don't want to clear out things like the region,
-    // just the filters that can be set in the UI
-    const newItems = items.filter((item) => prohibitedFilters.includes(item.topic));
-    setItems(newItems);
+    setItems([]);
   };
 
   const canBlur = () => false;

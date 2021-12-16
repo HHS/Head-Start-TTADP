@@ -127,7 +127,7 @@ function App() {
           )}
         />
         <Route
-          path="/grantee/:granteeId([0-9]*)"
+          path="/grantee/:granteeId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound>
