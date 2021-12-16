@@ -178,7 +178,7 @@ export default function ApprovedActivityReport({ match, user }) {
         }
 
         // first table
-        let recipientType = data.activityRecipients[0].grantId ? 'Recipient' : 'Non-recipient';
+        let recipientType = data.activityRecipients[0].grantId ? 'Recipient' : 'Other entity';
         if (data.activityRecipients.length > 1) {
           recipientType = `${recipientType}s`;
         }
