@@ -3,6 +3,7 @@ import React, {
   useState,
   useEffect,
   useContext,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -22,7 +23,7 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString } from '../../utils';
+import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
@@ -103,11 +104,13 @@ function Landing({ user }) {
     window.location.assign(downloadURL);
   };
 
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
   useEffect(() => {
     async function fetchAlertReports() {
       setAlertsLoading(true);
       // Filters passed also contains region.
-      const filterQuery = filtersToQueryString(filters);
+      const filterQuery = filtersToQueryString(filtersToApply);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
@@ -128,7 +131,7 @@ function Landing({ user }) {
       setAlertsLoading(false);
     }
     fetchAlertReports();
-  }, [alertsSortConfig, alertsOffset, alertsPerPage, filters]);
+  }, [alertsSortConfig, alertsOffset, alertsPerPage, filtersToApply]);
 
   let msg;
   const message = history.location.state && history.location.state.message;
@@ -227,7 +230,7 @@ function Landing({ user }) {
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
             <Overview
-              filters={filters}
+              filters={filtersToApply}
               regionLabel={regionLabel}
             />
           </Grid>
@@ -255,7 +258,7 @@ function Landing({ user }) {
           message={message}
         />
         <ActivityReportsTable
-          filters={filters}
+          filters={filtersToApply}
           showFilter={false}
           tableCaption={`Region ${regionLabel} Activity reports`}
         />
