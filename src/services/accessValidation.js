@@ -3,6 +3,7 @@ import { Permission } from '../models';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import { DECIMAL_BASE } from '../constants';
+import { userById } from './users';
 
 const { SITE_ACCESS, ADMIN } = SCOPES;
 
@@ -67,6 +68,16 @@ export async function getUserReadRegions(userId) {
   }
 }
 
+/**
+ *
+ * @param {Number} userId
+ * @returns boolean whether the user is from the central office or not
+ */
+export async function isCentralOffice(userId) {
+  const user = await userById(userId);
+  return user.homeRegionId === 14;
+}
+
 /*
   Make sure the user has read permissions to the regions requested. If no regions
   are explicitly requested default to all regions which the user has access to.
@@ -76,17 +87,6 @@ export async function setReadRegions(query, userId, useFirstReadRegion = false) 
 
   // if region.in is part of query (user has requested specific regions)
   if ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) {
-    // first check to see if "all regions (central office)" is selected
-    // if so, return all regions has access to
-
-    if (query['region.in'].length === 1 && parseInt(query['region.in'][0], DECIMAL_BASE) === 14) {
-      return {
-        ...query,
-        'region.in': readRegions,
-      };
-    }
-
-    // otherwise return filtered array of all regions user has access to vs requested regions
     return {
       ...query,
       'region.in': query['region.in'].filter((r) => readRegions.includes(parseInt(r, DECIMAL_BASE))),

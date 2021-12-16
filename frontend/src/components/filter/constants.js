@@ -20,9 +20,14 @@ const YEAR_TO_DATE = formatDateRange({
   forDateTime: true,
 });
 
-const EMPTY_CHECKBOX_SELECT = {
+const EMPTY_MULTI_SELECT = {
   Is: [],
   'Is not': [],
+};
+
+const EMPTY_SINGLE_SELECT = {
+  Is: '',
+  'Is not': '',
 };
 
 const EMPTY_TEXT_INPUT = {
@@ -105,7 +110,7 @@ export const FILTER_CONFIG = [
     id: 'programType',
     display: 'Program types',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterProgramType
@@ -119,7 +124,7 @@ export const FILTER_CONFIG = [
     id: 'reason',
     display: 'Reason',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterReasonSelect
@@ -148,7 +153,7 @@ export const FILTER_CONFIG = [
     id: 'region',
     display: 'Region',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_SINGLE_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterRegionalSelect
@@ -161,7 +166,7 @@ export const FILTER_CONFIG = [
     id: 'role',
     display: 'Specialist role',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterSpecialistSelect
@@ -175,7 +180,7 @@ export const FILTER_CONFIG = [
     id: 'targetPopulation',
     display: 'Target population',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterPopulationSelect
@@ -189,7 +194,7 @@ export const FILTER_CONFIG = [
     id: 'topic',
     display: 'Topics',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterTopicSelect

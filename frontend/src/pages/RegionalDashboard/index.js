@@ -24,22 +24,30 @@ export default function RegionalDashboard({ user }) {
   });
 
   const regions = getUserRegions(user);
-  const defaultRegion = hasCentralOffice ? 14 : regions[0];
+  const defaultRegion = regions[0].toString();
 
-  const [filters, setFilters] = useUrlFilters([
-    {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: defaultRegion ? defaultRegion.toString() : '',
-    },
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'Is within',
-      query: defaultDate,
-    },
-  ]);
+  const [filters, setFilters] = useUrlFilters(hasCentralOffice
+    ? [
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      },
+    ] : [
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'Contains',
+        query: defaultRegion,
+      },
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      },
+    ]);
 
   const regionFilter = filters.find((filter) => filter.topic === 'region');
   const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';
