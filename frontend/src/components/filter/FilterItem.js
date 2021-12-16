@@ -53,17 +53,24 @@ export default function FilterItem({
   };
 
   const onBlur = (e) => {
+    let willValidate = true;
+
     // no validation if you are clicking on something within the filter item
     if (fieldset.current.contains(e.relatedTarget)) {
-      return;
+      willValidate = false;
     }
 
     // no validation if you are clicking on the cancel button
     if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
-      return;
+      willValidate = false;
     }
 
-    validate(filter, setError);
+    if (willValidate) {
+      const message = validate(filter);
+      if (message) {
+        setError(message);
+      }
+    }
   };
 
   /**
@@ -159,7 +166,7 @@ export default function FilterItem({
         className="usa-select"
 
       >
-        <option value="" disabled selected>- Select -</option>
+        <option value="" disabled selected hidden>- Select -</option>
         {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -176,7 +183,7 @@ export default function FilterItem({
         className="usa-select"
 
       >
-        <option value="" disabled selected>- Select -</option>
+        <option value="" disabled selected hidden>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
