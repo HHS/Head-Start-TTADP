@@ -26,7 +26,7 @@ export default function GranteeResults(
     return (
       <tr key={`${grantee.id} ${regionId}`}>
         <td>{regionId}</td>
-        <td><Link to={`/grantee/${grantee.id}/profile?region.in[]=${regionId}`}>{grantee.name}</Link></td>
+        <td><Link to={`/grantee/${grantee.id}/region/${regionId}/profile`}>{grantee.name}</Link></td>
         <td className="maxw-3">{programSpecialists}</td>
       </tr>
     );

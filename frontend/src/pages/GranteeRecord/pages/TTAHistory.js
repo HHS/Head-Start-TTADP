@@ -30,12 +30,6 @@ export default function TTAHistory({
       condition: 'Is within',
       query: defaultDate,
     },
-    {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: regionId,
-    },
   ]);
 
   if (!granteeName) {
@@ -48,6 +42,12 @@ export default function TTAHistory({
       topic: 'granteeId',
       condition: 'Contains',
       query: granteeId,
+    },
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'Contains',
+      query: regionId,
     },
   ];
 

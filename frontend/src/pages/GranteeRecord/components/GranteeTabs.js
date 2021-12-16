@@ -14,10 +14,10 @@ export default function GranteeTabs({ region, granteeId }) {
       <nav className="ttahub-grantee-record--tabs_nav bg-white">
         <ul className="display-flex margin-0 margin-bottom-2 padding-0">
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/grantee/${granteeId}/profile?region.in[]=${region}`}>Profile</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/grantee/${granteeId}/region/${region}/profile`}>Profile</NavLink>
           </li>
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/grantee/${granteeId}/tta-history?region.in[]=${region}`}>TTA History</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/grantee/${granteeId}/region/${region}/tta-history`}>TTA History</NavLink>
           </li>
         </ul>
       </nav>
