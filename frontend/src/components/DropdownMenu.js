@@ -62,12 +62,7 @@ export default function DropdownMenu({
    * @returns void
    */
   const onBlur = (e) => {
-    // if we're within the same menu, do nothing
-    if (e.relatedTarget && menuContents.current.contains(e.relatedTarget)) {
-      return;
-    }
-
-    if (canBlur(e)) {
+    if ((e.relatedTarget && !menuContents.current.contains(e.relatedTarget)) && canBlur(e)) {
       setMenuIsOpen(false);
     }
   };
