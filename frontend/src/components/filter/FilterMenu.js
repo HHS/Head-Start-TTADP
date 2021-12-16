@@ -6,22 +6,10 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
-import { FILTER_CONFIG } from './constants';
+import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
 import { formatDateRange } from '../DateRangeSelect';
 import usePrevious from '../../hooks/usePrevious';
-
-// save this to cut down on repeated boilerplate in PropTypes
-const filterProp = PropTypes.shape({
-  topic: PropTypes.string,
-  condition: PropTypes.string,
-  query: PropTypes.oneOfType([
-    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
-  ]),
-  id: PropTypes.string,
-});
-
-// a list of all the filter topics available
-const availableFilters = FILTER_CONFIG.map((f) => f.id);
+import { filterProp } from './props';
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
@@ -60,7 +48,7 @@ export default function FilterMenu({
   const selectedFilters = items.map((filter) => filter.topic);
 
   // filters that aren't allowed per our allowedFilters prop
-  const prohibitedFilters = availableFilters.filter((f) => !allowedFilters.includes(f));
+  const prohibitedFilters = AVAILABLE_FILTERS.filter((f) => !allowedFilters.includes(f));
 
   // If filters were changed outside of this component, we need to update the items
   // (for example, the "remove filter" button on the filter pills)
@@ -269,7 +257,7 @@ FilterMenu.propTypes = {
 };
 
 FilterMenu.defaultProps = {
-  allowedFilters: availableFilters,
+  allowedFilters: AVAILABLE_FILTERS,
   dateRangeOptions: [
     {
       label: 'Year to date',

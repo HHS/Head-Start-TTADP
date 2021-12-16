@@ -44,7 +44,6 @@ const handleArrayQuery = (q) => {
 
 const handleStringQuery = (q) => q;
 
-// eslint-disable-next-line import/prefer-default-export
 export const FILTER_CONFIG = [
   {
     id: 'startDate',
@@ -205,3 +204,6 @@ export const FILTER_CONFIG = [
     ),
   },
 ];
+
+// a list of all the filter topics available
+export const AVAILABLE_FILTERS = FILTER_CONFIG.map((f) => f.id);

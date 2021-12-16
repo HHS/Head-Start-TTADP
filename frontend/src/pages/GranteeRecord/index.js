@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import { Helmet } from 'react-helmet';
 import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getGrantee } from '../../fetchers/grantee';
 import GranteeTabs from './components/GranteeTabs';
-
 import { HTTPError } from '../../fetchers';
 import './index.css';
 import Profile from './pages/Profile';
@@ -64,6 +64,13 @@ export default function GranteeRecord({ match }) {
 
   return (
     <>
+      <Helmet>
+        <title>
+          Grantee Profile -
+          {' '}
+          {granteeName}
+        </title>
+      </Helmet>
       <GranteeTabs region={regionId} granteeId={granteeId} />
       {
         error ? (
