@@ -88,11 +88,11 @@ async function sendActivityReportCSV(reports, res) {
         },
         {
           key: 'activityRecipientType',
-          header: 'Recipient or non-recipient',
+          header: 'Recipient or other entity',
         },
         {
           key: 'activityRecipients',
-          header: 'Recipient name/non-recipient name',
+          header: 'Recipient name/other entity name',
         },
         {
           key: 'programTypes',
