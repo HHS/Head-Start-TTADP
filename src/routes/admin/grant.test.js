@@ -1,6 +1,6 @@
 import {
   getCDIGrants,
-  assignRegionGranteeToCDIGrant,
+  assignRegionRecipientToCDIGrant,
 } from './grant';
 import { cdiGrants, grantById, assignCDIGrant } from '../../services/grant';
 import Grant from '../../policies/grant';
@@ -45,16 +45,16 @@ describe('grant routes', () => {
     });
   });
 
-  describe('assignRegionGranteeToCDIGrant', () => {
+  describe('assignRegionRecipientToCDIGrant', () => {
     it('returns the updated grant', async () => {
       const grant = { id: 1 };
-      const updatedGrant = { regionId: 2, granteeId: 3 };
+      const updatedGrant = { regionId: 2, recipientId: 3 };
       grantById.mockResolvedValue(grant);
       assignCDIGrant.mockResolvedValue(grant);
       Grant.mockImplementationOnce(() => ({
-        canAssignRegionAndGrantee: () => true,
+        canAssignRegionAndRecipient: () => true,
       }));
-      await assignRegionGranteeToCDIGrant({
+      await assignRegionRecipientToCDIGrant({
         ...mockRequest,
         body: updatedGrant,
         params: { grantId: 1 },
@@ -64,12 +64,12 @@ describe('grant routes', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(grant);
     });
 
-    it('returns 409 if grant cannot be assigned region and grantee', async () => {
-      const updatedGrant = { regionId: 2, granteeId: 3 };
+    it('returns 409 if grant cannot be assigned region and recipient', async () => {
+      const updatedGrant = { regionId: 2, recipientId: 3 };
       Grant.mockImplementationOnce(() => ({
-        canAssignRegionAndGrantee: () => false,
+        canAssignRegionAndRecipient: () => false,
       }));
-      await assignRegionGranteeToCDIGrant({
+      await assignRegionRecipientToCDIGrant({
         ...mockRequest,
         body: updatedGrant,
         params: { grantId: 1 },

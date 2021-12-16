@@ -14,18 +14,18 @@ export async function createOrUpdate(newActivityReport, report) {
 
 export async function possibleRecipients() {
   return {
-    grantees: [{
-      name: 'grantee 1',
+    recipients: [{
+      name: 'recipient 1',
       grants: [
         {
           id: 1,
           number: 1,
         },
       ],
-      grantees: [
+      recipients: [
         {
           id: 1,
-          name: 'grantee',
+          name: 'recipient',
         },
       ],
     }],

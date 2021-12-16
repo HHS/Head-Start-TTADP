@@ -37,7 +37,7 @@ export const upload = async (file, reportId, setErrorMessage) => {
 
 export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => {
   if (reportId === 'new') {
-    setErrorMessage('Cannot save attachments without a Grantee or Non-Grantee selected');
+    setErrorMessage('Cannot save attachments without a Recipient or Other entity selected');
     return;
   }
   const newFiles = e.map((file) => upload(file, reportId, setErrorMessage));
