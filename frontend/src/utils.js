@@ -105,6 +105,14 @@ export function expandFilters(filters) {
   return arr;
 }
 
+function decodeQueryParam(param) {
+  const query = decodeURIComponent(param);
+  if (query.includes(',')) {
+    return query.split(',');
+  }
+  return query;
+}
+
 export function queryStringToFilters(queryString) {
   const queries = queryString.split('&');
   return queries.map((q) => {
@@ -125,7 +133,7 @@ export function queryStringToFilters(queryString) {
         id: uuidv4(),
         topic,
         condition,
-        query: decodeURIComponent(query),
+        query: decodeQueryParam(query),
       };
     }
 

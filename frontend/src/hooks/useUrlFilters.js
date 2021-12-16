@@ -9,20 +9,17 @@ const { history } = window;
  * and returns a useState like array of a getter and a setter
  *
  * @param {Object[]} defaultFilters
- * @param {String[]} paramsToHide filter topics that shouldn't display in the URL
  * @returns {[ Object[], Function ]}
  */
-export default function useUrlFilters(defaultFilters, paramsToHide = []) {
+export default function useUrlFilters(defaultFilters) {
   const [filters, setFilters] = useState(defaultFilters);
 
   // use effect to watch the query and update if changed
   useEffect(() => {
-    const searchParams = filters.filter((filter) => !paramsToHide.includes(filter.topic));
-
     // create our query string
-    const search = filtersToQueryString(searchParams);
+    const search = filtersToQueryString(filters);
     history.pushState(null, null, `?${search}`);
-  }, [filters, paramsToHide]);
+  }, [filters]);
 
   return [filters, setFilters];
 }
