@@ -16,23 +16,6 @@ import { expandFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 
-/**
- *
- * format the date range for display
- */
-function getDateTimeObject(dateRange) {
-  const timestamp = formatDateRange({
-    forDateTime: true,
-    string: dateRange,
-  });
-  const label = formatDateRange({
-    withSpaces: true,
-    string: dateRange,
-  });
-
-  return { timestamp, label };
-}
-
 export default function RegionalDashboard({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const defaultDate = formatDateRange({
@@ -58,10 +41,7 @@ export default function RegionalDashboard({ user }) {
     },
   ]);
 
-  const startDateFilter = filters.find((filter) => filter.topic === 'startDate');
   const regionFilter = filters.find((filter) => filter.topic === 'region');
-
-  const dateTime = startDateFilter ? getDateTimeObject(startDateFilter.query) : '';
   const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';
 
   const onApplyFilters = (newFilters) => {
@@ -102,7 +82,7 @@ export default function RegionalDashboard({ user }) {
           {' '}
           TTA Activity Dashboard
         </h1>
-        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 margin-bottom-6">
+        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
           <FilterMenu
             filters={filters}
             onApplyFilters={onApplyFilters}
@@ -110,7 +90,6 @@ export default function RegionalDashboard({ user }) {
           />
           <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
         </Grid>
-
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
             filters={filtersToApply}
@@ -119,20 +98,17 @@ export default function RegionalDashboard({ user }) {
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
               <ReasonList
                 filters={filtersToApply}
-                dateTime={dateTime}
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
               <TotalHrsAndGrantee
                 filters={filtersToApply}
-                dateTime={dateTime}
               />
             </Grid>
           </Grid>
           <Grid row>
             <TopicFrequencyGraph
               filters={filtersToApply}
-              dateTime={dateTime}
             />
           </Grid>
           <Grid row>
@@ -140,7 +116,6 @@ export default function RegionalDashboard({ user }) {
               filters={filters}
               showFilter={false}
               tableCaption="Activity reports"
-              dateTime={dateTime}
             />
           </Grid>
         </GridContainer>

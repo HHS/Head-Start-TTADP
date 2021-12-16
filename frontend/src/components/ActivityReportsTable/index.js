@@ -32,7 +32,6 @@ function ActivityReportsTable({
   showFilter,
   onUpdateFilters,
   tableCaption,
-  dateTime,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -231,7 +230,6 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
-          dateTime={dateTime}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>

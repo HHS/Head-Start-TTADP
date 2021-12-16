@@ -21,8 +21,8 @@ const YEAR_TO_DATE = formatDateRange({
 });
 
 const EMPTY_CHECKBOX_SELECT = {
-  Contains: [],
-  'Does not contain': [],
+  Is: [],
+  'Is not': [],
 };
 
 const EMPTY_TEXT_INPUT = {
@@ -111,6 +111,7 @@ export const FILTER_CONFIG = [
       <FilterProgramType
         inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -124,6 +125,7 @@ export const FILTER_CONFIG = [
       <FilterReasonSelect
         inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -182,6 +184,7 @@ export const FILTER_CONFIG = [
       <FilterSpecialistSelect
         inputId={`role-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -195,6 +198,7 @@ export const FILTER_CONFIG = [
       <FilterPopulationSelect
         inputId={`population-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -208,6 +212,7 @@ export const FILTER_CONFIG = [
       <FilterTopicSelect
         inputId={`topic-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },

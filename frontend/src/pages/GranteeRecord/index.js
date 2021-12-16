@@ -77,7 +77,7 @@ export default function GranteeRecord({ match, location }) {
           </div>
         ) : (
           <>
-            <h1 className="ttahub-grantee-record--heading margin-top-0 margin-bottom-1 margin-left-2">
+            <h1 className="ttahub-grantee-record--heading margin-top-0 margin-bottom-2 margin-left-2">
               {granteeName}
               - Region
               {' '}

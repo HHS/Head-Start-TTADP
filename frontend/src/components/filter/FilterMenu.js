@@ -150,7 +150,21 @@ export default function FilterMenu({
     if (toUpdate[name] === value) {
       return;
     }
+
     toUpdate[name] = value;
+
+    if (name === 'condition') {
+      /**
+       * if the condition is changed, we need to do a lookup in the filter config
+       * and set the query to the new default value
+       */
+      const f = FILTER_CONFIG.find(((config) => config.id === toUpdate.topic));
+      const defaultQuery = f.defaultValues[value];
+
+      if (defaultQuery) {
+        toUpdate.query = defaultQuery;
+      }
+    }
 
     if (name === 'topic') {
       toUpdate.condition = '';
@@ -173,8 +187,8 @@ export default function FilterMenu({
 
   const clearAllFilters = () => {
     // this looks a little strange, right?
-    // well, we don't want to clear out things like the region, just the filters that can be set
-    // in the UI
+    // well, we don't want to clear out things like the region,
+    // just the filters that can be set in the UI
     const newItems = items.filter((item) => prohibitedFilters.includes(item.topic));
     setItems(newItems);
   };
@@ -201,21 +215,43 @@ export default function FilterMenu({
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">
-            {items.map((filter, index) => (
-              <FilterItem
-                onRemoveFilter={onRemoveFilter}
-                onUpdateFilter={onUpdateFilter}
-                key={filter.id}
-                filter={filter}
-                prohibitedFilters={prohibitedFilters}
-                selectedFilters={selectedFilters}
-                dateRangeOptions={dateRangeOptions}
-                errors={errors}
-                setErrors={setErrors}
-                validate={validate}
-                index={index}
-              />
-            ))}
+            {items.map((filter, index) => {
+              const { topic } = filter;
+
+              if (prohibitedFilters.includes(topic)) {
+                return null;
+              }
+
+              const topicOptions = FILTER_CONFIG.filter((config) => (
+                topic === config.id
+                || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
+              )).map(({ id: filterId, display }) => (
+                <option key={filterId} value={filterId}>{display}</option>
+              ));
+              const newTopic = {
+                display: '',
+                renderInput: () => {},
+                conditions: [],
+              };
+
+              const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
+
+              return (
+                <FilterItem
+                  onRemoveFilter={onRemoveFilter}
+                  onUpdateFilter={onUpdateFilter}
+                  key={filter.id}
+                  filter={filter}
+                  dateRangeOptions={dateRangeOptions}
+                  errors={errors}
+                  setErrors={setErrors}
+                  validate={validate}
+                  index={index}
+                  topicOptions={topicOptions}
+                  selectedTopic={selectedTopic || newTopic}
+                />
+              );
+            })}
           </div>
           <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
