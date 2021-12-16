@@ -180,7 +180,7 @@ export default function ApprovedActivityReport({ match, user }) {
         // first table
         let recipientType = data.activityRecipients[0].grantId ? 'Recipient' : 'Other entity';
         if (data.activityRecipients.length > 1) {
-          recipientType = `${recipientType}s`;
+          recipientType = data.activityRecipients[0].grantId ? 'Recipients' : 'Other entities';
         }
 
         const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
