@@ -14,19 +14,6 @@ import { REPORTS_PER_PAGE } from '../../Constants';
 
 import './index.css';
 
-const emptyReport = {
-  id: 0,
-  displayId: '',
-  activityRecipients: [],
-  startDate: '',
-  author: {},
-  legacyId: '',
-  topics: [],
-  collaborators: [],
-  lastSaved: '',
-  calculatedStatus: '',
-};
-
 function ActivityReportsTable({
   filters,
   showFilter,
@@ -202,7 +189,7 @@ function ActivityReportsTable({
     );
   };
 
-  const displayReports = reports.length ? reports : [emptyReport];
+  const displayReports = reports.length ? reports : [];
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
