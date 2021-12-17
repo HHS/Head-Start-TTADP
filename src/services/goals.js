@@ -19,7 +19,7 @@ export async function goalsForGrants(grantIds) {
   });
 
   /**
-   * we need one big array that includes the old grantee id as well,
+   * we need one big array that includes the old recipient id as well,
    * removing all the nulls along the way
    */
   const ids = grants
@@ -187,7 +187,7 @@ export async function copyGoalsToGrants(goals, grantIds, transaction) {
     grants.forEach((grant) => {
       grantGoals.push({
         grantId: grant.id,
-        granteeId: grant.granteeId,
+        recipientId: grant.recipientId,
         goalId: goal.id,
       });
     });

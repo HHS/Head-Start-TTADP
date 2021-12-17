@@ -1,8 +1,9 @@
-import React, { useState, createRef } from 'react';
+import React, { useState, createRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import './CheckboxSelect.css';
 import DropdownMenu from './DropdownMenu';
+import usePrevious from '../hooks/usePrevious';
 
 export function renderCheckboxes(
   options,
@@ -31,28 +32,42 @@ export function renderCheckboxes(
   });
 }
 
-export const makeCheckboxes = (options, checked) => (
-  options.reduce((obj, r) => ({ ...obj, [r.value]: checked }), {})
-);
+export const makeCheckboxes = (options, checked) => {
+  const checkboxes = options.reduce((obj, r) => ({ ...obj, [r.value]: checked }), {});
+  return checkboxes;
+};
 
-export default function CheckboxSelect(props) {
-  const {
-    options,
-    onApply,
-    labelId,
-    toggleAllText,
-    toggleAllInitial,
-    styleAsSelect,
-    labelText,
-    ariaName,
-    disabled,
-    hideToggleAll,
-  } = props;
-
+export default function CheckboxSelect({
+  options,
+  onApply,
+  labelId,
+  toggleAllText,
+  toggleAllInitial,
+  styleAsSelect,
+  labelText,
+  ariaName,
+  disabled,
+  hideToggleAll,
+  onChange,
+}) {
   const [toggleAllChecked, setToggleAllChecked] = useState(toggleAllInitial);
-  const [checkboxes, setCheckboxes] = useState(makeCheckboxes(options, toggleAllChecked));
+  const [checkboxes, setCheckboxes] = useState(
+    makeCheckboxes(options, toggleAllChecked),
+  );
+
+  const prevChecked = usePrevious(
+    JSON.stringify(Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox])),
+  );
 
   const menu = createRef();
+
+  useEffect(() => {
+    const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
+    if (JSON.stringify(checked) === prevChecked) {
+      return;
+    }
+    onChange(checked);
+  }, [checkboxes, onChange, prevChecked]);
 
   // The all-reports checkbox can select/deselect all
   const toggleSelectAll = (event) => {
@@ -85,6 +100,7 @@ export default function CheckboxSelect(props) {
   const onApplyClick = () => {
     const checked = Object.keys(checkboxes).filter((checkbox) => checkboxes[checkbox]);
     onApply(checked);
+    return true;
   };
 
   const canBlur = (e) => {
@@ -156,6 +172,7 @@ CheckboxSelect.propTypes = {
   ariaName: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
   hideToggleAll: PropTypes.bool,
+  onChange: PropTypes.func,
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
@@ -165,4 +182,6 @@ CheckboxSelect.defaultProps = {
   disabled: false,
   styleAsSelect: false,
   hideToggleAll: false,
+  onChange: () => {},
+
 };

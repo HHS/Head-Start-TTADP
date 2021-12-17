@@ -26,13 +26,13 @@ const hubRoles = [
 ];
 
 async function parseCsv(fileKey) {
-  let grantees = {};
+  let recipients = {};
   const { Body: csv } = await downloadFile(fileKey);
-  [...grantees] = parse(csv, {
+  [...recipients] = parse(csv, {
     skipEmptyLines: true,
     columns: true,
   });
-  return grantees;
+  return recipients;
 }
 
 async function prePopulateRoles() {
@@ -73,7 +73,7 @@ const parseGrantNumbers = (value) => {
  * (Total 5 goals. Some of them could be empty)
  */
 export default async function importGoals(fileKey, region) {
-  const grantees = await parseCsv(fileKey);
+  const recipients = await parseCsv(fileKey);
   const regionId = region;
   try {
     const cleanRoleTopics = [];
@@ -82,7 +82,7 @@ export default async function importGoals(fileKey, region) {
 
     await prePopulateRoles();
 
-    for await (const el of grantees) {
+    for await (const el of recipients) {
       let currentGrants = [];
       const currentGoals = [];
       let currentGoalName = '';
@@ -159,7 +159,7 @@ export default async function importGoals(fileKey, region) {
       // after each row
       let goalId;
       let grantId;
-      let currentGranteeId;
+      let currentRecipientId;
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
@@ -177,16 +177,16 @@ export default async function importGoals(fileKey, region) {
           });
           for await (const grant of currentGrants) {
             const fullGrant = { number: grant.trim(), regionId };
-            const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'granteeId'] });
+            const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'recipientId'] });
             if (!dbGrant) {
               // eslint-disable-next-line no-console
               console.log(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
-              process.exit(1);
+              throw new Error('error');
             }
             grantId = dbGrant.id;
-            currentGranteeId = dbGrant.granteeId;
-            const plan = { granteeId: currentGranteeId, grantId, goalId };
-            if (!cleanGrantGoals.some((e) => e.granteeId === currentGranteeId
+            currentRecipientId = dbGrant.recipientId;
+            const plan = { recipientId: currentRecipientId, grantId, goalId };
+            if (!cleanGrantGoals.some((e) => e.recipientId === currentRecipientId
                             && e.grantId === grantId
                             && e.goalId === goalId)) {
               cleanGrantGoals.push(plan);

@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 
 import {
-  ActivityReport, ActivityRecipient, Grant, NonGrantee, sequelize,
+  ActivityReport, ActivityRecipient, Grant, OtherEntity, sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -42,7 +42,7 @@ export default async function overview(scopes) {
     attributes: [
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))), 'numGrants'],
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."nonGranteeId"'))), 'numNonGrantees'],
+      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."otherEntityId"'))), 'numOtherEntities'],
     ],
     where: {
       [Op.and]: [scopes],
@@ -64,9 +64,9 @@ export default async function overview(scopes) {
             required: false,
           },
           {
-            model: NonGrantee,
+            model: OtherEntity,
             attributes: [],
-            as: 'nonGrantee',
+            as: 'otherEntity',
             required: false,
           },
         ],

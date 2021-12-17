@@ -2,9 +2,9 @@ put:
   tags:
     - admin
   operationId: updateCDIGrant
-  description: Update a CDI grant with a region and grantee
+  description: Update a CDI grant with a region and recipient
   requestBody:
-      description: The new regionId and granteeId for this grant
+      description: The new regionId and recipientId for this grant
       required: true
       content:
         application/json:
@@ -14,9 +14,9 @@ put:
               regionId:
                 type: number
                 description: The id of the region for this grant
-              granteeId:
+              recipientId:
                 type: number
-                description: The id of the grantee for this grant
+                description: The id of the recipient for this grant
   responses:
     200:
       summary: The updated Grant

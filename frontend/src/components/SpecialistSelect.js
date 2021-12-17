@@ -31,20 +31,33 @@ export const ROLES_MAP = [
 ];
 
 export default function SpecialistSelect({
-  onApplyRoles, labelId, hideToggleAll, toggleAllInitial,
+  onApplyRoles,
+  labelId,
+  hideToggleAll,
+  toggleAllInitial,
+  onChange,
 }) {
-  const onApply = (selected) => {
+  const getRoleValues = (selected) => {
     const roleValues = selected.map((s) => parseInt(s, 10));
 
-    const roles = ROLES_MAP.filter(
+    return ROLES_MAP.filter(
       (role) => roleValues.includes(role.selectValue),
     ).map((role) => role.value);
+  };
 
-    onApplyRoles(roles);
+  const onCheckboxChange = (selected) => {
+    const values = getRoleValues(selected);
+    onChange(values);
+  };
+
+  const onApply = (selected) => {
+    onApplyRoles(getRoleValues(selected));
   };
 
   return (
     <CheckboxSelect
+      onChange={onCheckboxChange}
+      onApplyQuery={onApply}
       styleAsSelect
       hideToggleAll={hideToggleAll}
       toggleAllText="All Specialists"
@@ -68,9 +81,11 @@ SpecialistSelect.propTypes = {
   onApplyRoles: PropTypes.func.isRequired,
   toggleAllInitial: PropTypes.bool,
   hideToggleAll: PropTypes.bool,
+  onChange: PropTypes.func,
 };
 
 SpecialistSelect.defaultProps = {
   toggleAllInitial: true,
   hideToggleAll: false,
+  onChange: () => {},
 };

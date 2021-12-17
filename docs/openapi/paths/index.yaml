@@ -12,8 +12,8 @@
   $ref: './admin.yaml'
 '/admin/users':
   $ref: './adminAllUsers.yaml'
-'/admin/grantees':
-  $ref: './grantees.yaml'
+'/admin/recipients':
+  $ref: './recipients.yaml'
 '/admin/grants/cdi':
   $ref: './grants.yaml'
 '/admin/grants/cdi/{grantId}':
@@ -46,8 +46,8 @@
   $ref: './activity-reports/reset.yaml'
 '/files':
   $ref: './files.yaml'
-'/grantee/{granteeId}':
-  $ref: './grantee/grantee-id.yaml'
+'/recipient/{recipientId}':
+  $ref: './recipient/recipient-id.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
 '/widgets/reasonList':
