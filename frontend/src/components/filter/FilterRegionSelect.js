@@ -11,6 +11,9 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   };
 
   const { user } = useContext(UserContext);
+
+  console.log(user);
+
   const regions = getUserRegions(user);
   const firstRegion = regions[0].toString();
 
