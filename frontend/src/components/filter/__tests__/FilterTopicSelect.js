@@ -15,6 +15,7 @@ describe('FilterTopicSelect', () => {
       <FilterTopicSelect
         onApply={onApply}
         inputId="curly"
+        query={[]}
       />,
     ));
 

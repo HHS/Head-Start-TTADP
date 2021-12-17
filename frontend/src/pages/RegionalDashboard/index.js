@@ -64,7 +64,7 @@ export default function RegionalDashboard({ user }) {
   const [filters, setFilters] = useUrlFilters(defaultFilters);
 
   const regionFilter = filters.find((filter) => filter.topic === 'region');
-  const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';
+  const appliedRegion = regionFilter ? regionFilter.query : false;
 
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);
@@ -100,7 +100,7 @@ export default function RegionalDashboard({ user }) {
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
         <h1 className="ttahub--dashboard-title">
-          {appliedRegion === '14' ? 'Regional' : `Region ${appliedRegion}`}
+          {appliedRegion ? `Region ${appliedRegion}` : 'Regional'}
           {' '}
           TTA Activity Dashboard
         </h1>
