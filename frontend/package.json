@@ -64,7 +64,6 @@
     "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "resolutions": {
-    "immer": "9.0.6",
     "glob-parent": "^5.1.2",
     "nth-check": "^2.0.1",
     "browserslist": "^4.16.5",
