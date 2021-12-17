@@ -72,8 +72,8 @@ const commonFilters = [
     renderInput: singleSelectInput,
   },
   {
-    id: 'grantee',
-    display: 'Grantee',
+    id: 'recipient',
+    display: 'Recipient',
     conditions: SELECT_CONDITIONS,
     renderInput: singleSelectInput,
   },
