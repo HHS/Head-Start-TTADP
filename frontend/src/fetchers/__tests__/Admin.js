@@ -2,7 +2,7 @@ import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
 import {
-  getUsers, updateUser, getCDIGrants, getGrantees, assignCDIGrant, getFeatures,
+  getUsers, updateUser, getCDIGrants, getRecipients, assignCDIGrant, getFeatures,
 } from '../Admin';
 
 describe('Admin', () => {
@@ -14,7 +14,7 @@ describe('Admin', () => {
     },
   ];
 
-  const grantees = [
+  const recipients = [
     {
       id: 1,
     },
@@ -66,11 +66,11 @@ describe('Admin', () => {
     });
   });
 
-  describe('getGrantees', () => {
-    it('gets grantees', async () => {
-      fetchMock.get(join('/', 'api', 'admin', 'grantees'), grantees);
-      const fetchedGrantees = await getGrantees();
-      expect(fetchedGrantees).toEqual(grantees);
+  describe('getRecipients', () => {
+    it('gets recipients', async () => {
+      fetchMock.get(join('/', 'api', 'admin', 'recipients'), recipients);
+      const fetchedRecipients = await getRecipients();
+      expect(fetchedRecipients).toEqual(recipients);
     });
   });
 

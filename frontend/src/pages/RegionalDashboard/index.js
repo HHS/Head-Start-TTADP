@@ -10,7 +10,7 @@ import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
 import DateTime from '../../components/DateTime';
 import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
-import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
+import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 
@@ -127,7 +127,7 @@ export default function RegionalDashboard({ user }) {
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-              <TotalHrsAndGrantee
+              <TotalHrsAndRecipient
                 filters={filters}
                 dateTime={dateTime}
               />

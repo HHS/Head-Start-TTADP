@@ -30,8 +30,8 @@ import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
 import FeatureFlag from './components/FeatureFlag';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
-import GranteeRecord from './pages/GranteeRecord';
-import GranteeSearch from './pages/GranteeSearch';
+import RecipientRecord from './pages/RecipientRecord';
+import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 
 function App() {
@@ -127,11 +127,11 @@ function App() {
           )}
         />
         <Route
-          path="/grantee/:granteeId([0-9]*)"
+          path="/recipient-tta-records/:recipientId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound>
-                <GranteeRecord location={location} match={match} user={user} />
+                <RecipientRecord location={location} match={match} user={user} />
               </FeatureFlag>
             </AppWrapper>
           )}
@@ -153,10 +153,10 @@ function App() {
         )}
         <Route
           exact
-          path="/grantee"
+          path="/recipient-tta-records"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeSearch user={user} /></FeatureFlag>
+              <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><RecipientSearch user={user} /></FeatureFlag>
             </AppWrapper>
           )}
         />
