@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,13 +14,16 @@ import './index.css';
 import { expandFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
+import UserContext from '../../UserContext';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
 });
 
-export default function RegionalDashboard({ user }) {
+export default function RegionalDashboard() {
+  const { user } = useContext(UserContext);
+
   /**
    * we are going to memoize all this stuff so it doesn't get recomputed each time
    * this is re-rendered. it would (generally) only get recomputed should the user change
