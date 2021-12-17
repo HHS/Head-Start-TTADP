@@ -15,6 +15,7 @@ describe('FilterProgramType', () => {
       <FilterProgramType
         onApply={onApply}
         inputId="curly"
+        query={[]}
       />,
     ));
 

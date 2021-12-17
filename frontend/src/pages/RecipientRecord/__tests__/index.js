@@ -58,18 +58,13 @@ describe('recipient record page', () => {
       url: '',
       params: {
         recipientId: '1',
+        regionId: '45',
       },
-    };
-
-    const location = {
-      search: '?region.in[]=45',
-      hash: '',
-      pathname: '',
     };
 
     render(
       <Router history={history}>
-        <RecipientRecord user={user} match={match} location={location} />
+        <RecipientRecord user={user} match={match} />
       </Router>,
     );
   }
@@ -138,7 +133,7 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the profile page', async () => {
-    fetchMock.get('/api/recipient/1/region/45', theMightyRecipient);
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/profile');
     act(() => renderRecipientRecord(memoryHistory));
     const heading = await screen.findByRole('heading', { name: /recipient summary/i });
@@ -146,7 +141,7 @@ describe('recipient record page', () => {
   });
 
   it('navigates to the tta history page', async () => {
-    fetchMock.get('/api/recipient/1/region/45', theMightyRecipient);
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
     act(() => renderRecipientRecord(memoryHistory));
     await waitFor(() => {
