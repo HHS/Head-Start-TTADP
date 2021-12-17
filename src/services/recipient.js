@@ -28,11 +28,23 @@ export async function recipientById(recipientId, grantScopes) {
         attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'recipientId'],
         model: Grant,
         as: 'grants',
-        where: {
+        where: [{
           [Op.and]: [
-            grantScopes,
+            { [Op.and]: grantScopes },
+            {
+              [Op.or]: [
+                {
+                  status: 'Active',
+                },
+                {
+                  endDate: {
+                    [Op.gte]: '2020-09-01',
+                  },
+                },
+              ],
+            },
           ],
-        },
+        }],
         include: [
           {
             attributes: ['name', 'programType'],
