@@ -17,7 +17,7 @@ import { filterProp } from './props';
  * @returns JSX Object
  */
 export default function FilterMenu({
-  filters, onApplyFilters, allowedFilters, dateRangeOptions,
+  filters, onApplyFilters, allowedFilters, dateRangeOptions, applyButtonAria,
 }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
@@ -186,7 +186,7 @@ export default function FilterMenu({
       buttonText="Filters"
       buttonAriaLabel="open filters for this page"
       onApply={onApply}
-      applyButtonAria="apply filters to this page"
+      applyButtonAria={applyButtonAria}
       showCancel
       onCancel={onCancel}
       cancelAriaLabel="discard changes and close filter menu"
@@ -254,6 +254,7 @@ FilterMenu.propTypes = {
     value: PropTypes.number,
     range: PropTypes.string,
   })),
+  applyButtonAria: PropTypes.string.isRequired,
 };
 
 FilterMenu.defaultProps = {

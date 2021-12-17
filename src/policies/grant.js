@@ -3,7 +3,7 @@ export default class Grant {
     this.grant = grant;
   }
 
-  canAssignRegionAndGrantee() {
+  canAssignRegionAndRecipient() {
     return this.grant.cdi;
   }
 }

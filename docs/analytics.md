@@ -46,11 +46,11 @@ different applications or systems)
 
 - \# of “request revisions” for each AR (from manager to creator)
 
-- \# of “print” ARs (distribution to grantees or team members who want it
+- \# of “print” ARs (distribution to recipients or team members who want it
 outside the Hub)
 
 - \# of URL “share” ARs (distribution from TTA to other members with Hub
-accounts. Once we create the Grantee TTA Record, will this decline?)
+accounts. Once we create the Recipient TTA Record, will this decline?)
 
 - \# csv exports
 

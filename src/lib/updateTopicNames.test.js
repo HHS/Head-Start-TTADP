@@ -11,7 +11,7 @@ const mockUser = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   calculatedStatus: REPORT_STATUSES.APPROVED,
   submissionStatus: REPORT_STATUSES.SUBMITTED,
   userId: mockUser.id,

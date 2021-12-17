@@ -11,7 +11,7 @@ import { createMemoryHistory } from 'history';
 import Admin from '../index';
 
 const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true');
-const granteesUrl = join('/', 'api', 'admin', 'grantees');
+const recipientsUrl = join('/', 'api', 'admin', 'recipients');
 const usersUrl = join('/', 'api', 'admin', 'users');
 const featuresUrl = join('/api', 'admin', 'users', 'features');
 
@@ -22,7 +22,7 @@ describe('Admin landing page', () => {
 
   beforeEach(() => {
     fetchMock.get(grantsUrl, []);
-    fetchMock.get(granteesUrl, []);
+    fetchMock.get(recipientsUrl, []);
     fetchMock.get(usersUrl, []);
     fetchMock.get(featuresUrl, []);
   });

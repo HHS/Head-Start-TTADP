@@ -249,7 +249,7 @@ function ActivityReportsTable({
                   />
                 </th>
                 {renderColumnHeader('Report ID', 'regionId')}
-                {renderColumnHeader('Grantee', 'activityRecipients')}
+                {renderColumnHeader('Recipient', 'activityRecipients')}
                 {renderColumnHeader('Start date', 'startDate')}
                 {renderColumnHeader('Creator', 'author')}
                 {renderColumnHeader('Created date', 'createdAt')}
