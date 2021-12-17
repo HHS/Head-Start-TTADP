@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-import FilterMenu from '../../components/filter/FilterMenu';
+import FilterPanel from '../../components/filter/FilterPanel';
 import { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
@@ -11,7 +11,6 @@ import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
-import FilterPills from '../../components/filter/FilterPills';
 import { expandFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
@@ -105,12 +104,13 @@ export default function RegionalDashboard({ user }) {
           TTA Activity Dashboard
         </h1>
         <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
-          <FilterMenu
+          <FilterPanel
+            applyButtonAria="apply filters for regional dashboard"
             filters={filters}
             onApplyFilters={onApplyFilters}
             dateRangeOptions={dateRangeOptions}
+            onRemoveFilter={onRemoveFilter}
           />
-          <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
         </Grid>
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
