@@ -47,7 +47,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const justSubmitted = message && message.reportId === id;
 
     const recipients = activityRecipients.map((ar) => (
-      ar.grant ? ar.grant.grantee.name : ar.name
+      ar.grant ? ar.grant.recipient.name : ar.name
     ));
 
     const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
@@ -281,7 +281,7 @@ function MyAlerts(props) {
               <thead>
                 <tr>
                   {renderColumnHeader('Report ID', 'regionId')}
-                  {renderColumnHeader('Grantee', 'activityRecipients')}
+                  {renderColumnHeader('Recipient', 'activityRecipients')}
                   {renderColumnHeader('Start date', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}

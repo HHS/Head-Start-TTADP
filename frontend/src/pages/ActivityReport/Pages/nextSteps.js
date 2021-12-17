@@ -32,7 +32,7 @@ const NoteEntry = ({
       name={name}
       label={label}
     >
-      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} defaultValue={input} spellcheck="true" />
+      <TextInput name={name} onChange={onUpdate} data-testid={`${name}-input`} defaultValue={input} spellCheck="true" />
       <Button outline disabled={!(input && input.trim())} onClick={onSubmit} data-testid={`${name}-button`} type="button">Save Next Step</Button>
       {!isRequired && <Button secondary onClick={onCancel} type="button" data-testid={`${name}-cancel-button`}>Cancel</Button>}
     </FormItem>
@@ -190,7 +190,7 @@ const NextSteps = () => (
       <NoteEntries name="specialistNextSteps" humanName="Specialist" label="What have you agreed to do next?" />
     </div>
 
-    <NoteEntries name="granteeNextSteps" humanName="Grantee's" label="What has the grantee agreed to do next?" />
+    <NoteEntries name="recipientNextSteps" humanName="Recipient's" label="What has the recipient agreed to do next?" />
 
   </>
 );
@@ -204,10 +204,10 @@ const sections = [
     ],
   },
   {
-    title: 'Grantee next steps',
-    anchor: 'grantee-next-steps',
+    title: 'Recipient next steps',
+    anchor: 'recipient-next-steps',
     items: [
-      { label: 'What has the grantee agreed to do next?', name: 'granteeNextSteps', path: 'note' },
+      { label: 'What has the recipient agreed to do next?', name: 'recipientNextSteps', path: 'note' },
     ],
   },
 ];

@@ -1,8 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import { map, pickBy } from 'lodash';
 
-import { withGranteeName, withoutGranteeName } from './grantee';
-import withGranteeId from './granteeId';
+import { withRecipientName, withoutRecipientName } from './recipient';
+import withRecipientId from './recipientId';
 import { withoutReportIds, withReportIds } from './reportId';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withoutTopics, withTopics } from './topic';
@@ -17,18 +17,20 @@ import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutReason, withReason } from './reason';
 import { withoutGrantNumber, withGrantNumber } from './grantNumber';
+import withStateCode from './stateCode';
+import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 
 export const topicToQuery = {
   reportId: {
     in: (query) => withReportIds(query),
     nin: (query) => withoutReportIds(query),
   },
-  grantee: {
-    in: (query) => withGranteeName(query),
-    nin: (query) => withoutGranteeName(query),
+  recipient: {
+    in: (query) => withRecipientName(query),
+    nin: (query) => withoutRecipientName(query),
   },
-  granteeId: {
-    in: (query) => withGranteeId(query),
+  recipientId: {
+    in: (query) => withRecipientId(query),
   },
   startDate: {
     bef: (query) => beforeStartDate(query),
@@ -88,6 +90,17 @@ export const topicToQuery = {
   grantNumber: {
     in: (query) => withGrantNumber(query),
     nin: (query) => withoutGrantNumber(query),
+  },
+  stateCode: {
+    in: (query) => withStateCode(query),
+  },
+  createDate: {
+    bef: (query) => beforeCreateDate(query),
+    aft: (query) => afterCreateDate(query),
+    win: (query) => {
+      const [startDate, endDate] = query.split('-');
+      return withinCreateDate(startDate, endDate);
+    },
   },
 };
 
