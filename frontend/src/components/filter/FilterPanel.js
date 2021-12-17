@@ -33,6 +33,7 @@ FilterPanel.propTypes = {
     value: PropTypes.number,
     range: PropTypes.string,
   })),
+  applyButtonAria: PropTypes.string.isRequired,
 };
 
 FilterPanel.defaultProps = {
