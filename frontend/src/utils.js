@@ -151,7 +151,7 @@ export function filtersToQueryString(filters, region) {
   });
   const queryFragments = filtersWithValues.map((filter) => {
     const con = QUERY_CONDITIONS[filter.condition];
-    return `${filter.topic}.${con}=${filter.query}`;
+    return `${filter.topic}.${con}=${encodeURIComponent(filter.query)}`;
   });
   if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
     queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
