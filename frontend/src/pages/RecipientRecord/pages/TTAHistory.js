@@ -80,7 +80,7 @@ export default function TTAHistory({
         </title>
       </Helmet>
       <div className="margin-x-2 maxw-widescreen">
-        <div className="display-flex flex-wrap margin-bottom-2">
+        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             filters={filters}
             onApplyFilters={onApply}
