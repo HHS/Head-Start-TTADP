@@ -89,7 +89,6 @@
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
   "resolutions": {
-    "jsonpointer": "5.0.0",
     "ansi-regex": "^5.0.1"
   },
   "eslintConfig": {
