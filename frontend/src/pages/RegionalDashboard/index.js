@@ -12,7 +12,7 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
 import FilterPills from '../../components/filter/FilterPills';
-import { expandFilters, queryStringToFilters } from '../../utils';
+import { expandFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 
@@ -34,12 +34,6 @@ export default function RegionalDashboard({ user }) {
   const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
 
   const defaultFilters = useMemo(() => {
-    // specifically, we don't want to be doing this every time the component rerenders
-    const params = queryStringToFilters(new URL(window.location).search.substr(1));
-    if (params.length) {
-      return params;
-    }
-
     if (hasCentralOffice) {
       return [
         {
@@ -67,7 +61,7 @@ export default function RegionalDashboard({ user }) {
     ];
   }, [defaultRegion, hasCentralOffice]);
 
-  const [filters, setFilters] = useUrlFilters(defaultFilters());
+  const [filters, setFilters] = useUrlFilters(defaultFilters);
 
   const regionFilter = filters.find((filter) => filter.topic === 'region');
   const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';

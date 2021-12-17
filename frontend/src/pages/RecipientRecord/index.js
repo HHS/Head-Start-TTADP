@@ -101,7 +101,7 @@ export default function RecipientRecord({ match }) {
                 )}
               />
               <Route
-                path="/recipient-tta-records/region/:regionId/:recipientId/profile"
+                path="/recipient-tta-records/:recipientId/region/:regionId/profile"
                 render={() => (
                   <Profile
                     recipientName={recipientName}

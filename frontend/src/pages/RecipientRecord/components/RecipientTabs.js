@@ -14,10 +14,10 @@ export default function RecipientTabs({ region, recipientId }) {
       <nav className="ttahub-recipient-record--tabs_nav bg-white">
         <ul className="display-flex margin-0 margin-bottom-2 padding-0">
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/profile?region=${region}`}>Profile</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/profile`}>Profile</NavLink>
           </li>
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/tta-history?region=${region}`}>TTA History</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/tta-history`}>TTA History</NavLink>
           </li>
         </ul>
       </nav>
