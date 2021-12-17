@@ -4,21 +4,21 @@ import { cdiGrants, grantById, assignCDIGrant } from './grant';
 const grants = [
   {
     id: 90,
-    granteeId: 1,
+    recipientId: 1,
     number: 'zz123',
     cdi: true,
     regionId: 13,
   },
   {
     id: 91,
-    granteeId: 1,
+    recipientId: 1,
     number: 'zz456',
     cdi: true,
     regionId: 13,
   },
   {
     id: 92,
-    granteeId: 1,
+    recipientId: 1,
     number: 'zz789',
     cdi: false,
     regionId: 13,
@@ -43,26 +43,26 @@ describe('Grant DB service', () => {
   });
 
   describe('assignCDIGrant', () => {
-    it('assigns grantee and regionId', async () => {
+    it('assigns recipient and regionId', async () => {
       const grant = await Grant.findOne({ where: { id: 92 } });
       const newGrant = await assignCDIGrant(grant, 5, 1);
       expect(newGrant.regionId).toEqual(5);
-      expect(newGrant.granteeId).toEqual(1);
+      expect(newGrant.recipientId).toEqual(1);
     });
   });
 
   describe('cdiGrants', () => {
     it('returns all CDI grants', async () => {
-      const foundGrantees = await cdiGrants();
-      const foundIds = foundGrantees.map((g) => g.id);
+      const foundRecipients = await cdiGrants();
+      const foundIds = foundRecipients.map((g) => g.id);
       expect(foundIds).toContain(90);
       expect(foundIds).toContain(91);
       expect(foundIds).not.toContain(92);
     });
 
     it('can return unassigned grants', async () => {
-      const foundGrantees = await cdiGrants('true');
-      const foundIds = foundGrantees.map((g) => g.id);
+      const foundRecipients = await cdiGrants('true');
+      const foundIds = foundRecipients.map((g) => g.id);
       expect(foundIds.length).toBe(5);
     });
   });

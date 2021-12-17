@@ -1,6 +1,6 @@
 import db, {
   ActivityReport, ActivityReportApprover, ActivityReportCollaborator, ActivityRecipient, User,
-  Grantee, NonGrantee, Grant, NextStep, Region, Permission,
+  Recipient, OtherEntity, Grant, NextStep, Region, Permission,
 } from '../models';
 import {
   createOrUpdate,
@@ -17,9 +17,9 @@ import {
 import SCOPES from '../middleware/scopeConstants';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
-const GRANTEE_ID = 30;
-const GRANTEE_ID_SORTING = 31;
-const ALERT_GRANTEE_ID = 345;
+const RECIPIENT_ID = 30;
+const RECIPIENT_ID_SORTING = 31;
+const ALERT_RECIPIENT_ID = 345;
 
 const mockUser = {
   id: 1115665161,
@@ -79,13 +79,13 @@ const alertsMockUserTwo = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
-  activityRecipients: [{ activityRecipientId: GRANTEE_ID }],
+  activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
 };
 
 const submittedReport = {
@@ -112,12 +112,12 @@ describe('Retrieve Alerts', () => {
         mockUserFour,
         mockUserFive,
       ]),
-      NonGrantee.create({ id: ALERT_GRANTEE_ID, name: 'alert nonGrantee' }),
-      Grantee.create({ name: 'alert grantee', id: ALERT_GRANTEE_ID }),
+      OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
+      Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
       Region.create({ name: 'office 22', id: 22 }),
     ]);
     await Grant.create({
-      id: ALERT_GRANTEE_ID, number: 1, granteeId: ALERT_GRANTEE_ID, regionId: 22, status: 'Active',
+      id: ALERT_RECIPIENT_ID, number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
     });
   });
 
@@ -134,9 +134,9 @@ describe('Retrieve Alerts', () => {
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: userIds } });
     await Permission.destroy({ where: { userId: userIds } });
-    await NonGrantee.destroy({ where: { id: ALERT_GRANTEE_ID } });
-    await Grant.destroy({ where: { id: [ALERT_GRANTEE_ID] } });
-    await Grantee.destroy({ where: { id: [ALERT_GRANTEE_ID] } });
+    await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
+    await Grant.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
+    await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
     await Region.destroy({ where: { id: 22 } });
   });
 
@@ -161,7 +161,7 @@ describe('Retrieve Alerts', () => {
       submissionStatus: REPORT_STATUSES.DRAFT,
       calculatedStatus: REPORT_STATUSES.DRAFT,
       userId: mockUserFour.id,
-      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+      activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
     });
 
     // Submitted.
@@ -171,7 +171,7 @@ describe('Retrieve Alerts', () => {
       lastUpdatedById: mockUserFour.id,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+      activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
     });
 
     // Needs Action.
@@ -181,7 +181,7 @@ describe('Retrieve Alerts', () => {
       lastUpdatedById: mockUserFour.id,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+      activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
     });
 
     // Approved (Should be missing).
@@ -191,7 +191,7 @@ describe('Retrieve Alerts', () => {
       lastUpdatedById: mockUserFour.id,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.APPROVED,
-      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+      activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
     });
 
     // Is Only Approver.
@@ -201,7 +201,7 @@ describe('Retrieve Alerts', () => {
       lastUpdatedById: mockUserFive.id,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+      activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
     });
 
     // Add Approver.
@@ -218,7 +218,7 @@ describe('Retrieve Alerts', () => {
       lastUpdatedById: mockUserFive.id,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      activityRecipients: [{ activityRecipientId: ALERT_GRANTEE_ID }],
+      activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
     });
 
     // Add Collaborator.
@@ -249,12 +249,12 @@ describe('Activity Reports DB service', () => {
         alertsMockUserOne,
         alertsMockUserTwo,
       ]),
-      NonGrantee.create({ id: GRANTEE_ID, name: 'nonGrantee' }),
-      Grantee.findOrCreate({ where: { name: 'grantee', id: GRANTEE_ID } }),
+      OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
+      Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID } }),
       Region.create({ name: 'office 19', id: 19 }),
     ]);
     await Grant.create({
-      id: GRANTEE_ID, number: 1, granteeId: GRANTEE_ID, regionId: 19, status: 'Active',
+      id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 19, status: 'Active',
     });
   });
 
@@ -276,9 +276,9 @@ describe('Activity Reports DB service', () => {
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: userIds } });
     await Permission.destroy({ where: { userId: userIds } });
-    await NonGrantee.destroy({ where: { id: GRANTEE_ID } });
-    await Grant.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
-    await Grantee.destroy({ where: { id: [GRANTEE_ID, GRANTEE_ID_SORTING] } });
+    await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
+    await Grant.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] } });
+    await Recipient.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] } });
     await Region.destroy({ where: { id: 19 } });
 
     await db.sequelize.close();
@@ -288,7 +288,7 @@ describe('Activity Reports DB service', () => {
     it('updates an already saved report', async () => {
       const report = await ActivityReport.create({ ...reportObject, id: 3334 });
       await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
-      expect(report.activityRecipientType).toEqual('grantee');
+      expect(report.activityRecipientType).toEqual('recipient');
       expect(report.calculatedStatus).toEqual('draft');
       expect(report.ECLKCResourcesUsed).toEqual(['updated']);
       expect(report.id).toEqual(3334);
@@ -309,8 +309,8 @@ describe('Activity Reports DB service', () => {
         duration: null,
         endDate: null,
         goals: [],
-        granteeNextSteps: [],
-        grantees: [],
+        recipientNextSteps: [],
+        recipients: [],
         nonECLKCResourcesUsed: [{ value: '' }],
         numberOfParticipants: null,
         objectivesWithoutGoals: [],
@@ -345,14 +345,14 @@ describe('Activity Reports DB service', () => {
       const report = await createOrUpdate(reportObject);
       const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
       expect(endARCount.length - beginningARCount.length).toBe(1);
-      expect(report.activityRecipients[0].grant.id).toBe(GRANTEE_ID);
+      expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
       // Check afterCreate copySubmissionStatus hook
       expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
     });
 
-    it('creates a new report with non-grantee recipient', async () => {
-      const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'non-grantee' });
-      expect(report.activityRecipients[0].nonGrantee.id).toBe(GRANTEE_ID);
+    it('creates a new report with other-entity recipient', async () => {
+      const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
+      expect(report.activityRecipients[0].otherEntity.id).toBe(RECIPIENT_ID);
     });
 
     it('handles reports with collaborators', async () => {
@@ -369,42 +369,42 @@ describe('Activity Reports DB service', () => {
       const reportObjectWithNotes = {
         ...reportObject,
         specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       // When that report is created
       const report = await createOrUpdate(reportObjectWithNotes);
       // Then we see that it was saved correctly
       expect(report.specialistNextSteps.length).toBe(2);
-      expect(report.granteeNextSteps.length).toBe(2);
+      expect(report.recipientNextSteps.length).toBe(2);
       expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
-      expect(report.granteeNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+      expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
     });
 
     it('handles specialist notes being created', async () => {
       // Given a report with specliasts notes
-      // And no grantee notes
+      // And no recipient notes
       const reportWithNotes = {
         ...reportObject,
         specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNextSteps: [],
+        recipientNextSteps: [],
       };
 
       // When that report is created
       const report = await createOrUpdate(reportWithNotes);
 
       // Then we see that it was saved correctly
-      expect(report.granteeNextSteps.length).toBe(0);
+      expect(report.recipientNextSteps.length).toBe(0);
       expect(report.specialistNextSteps.length).toBe(2);
       expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
     });
 
-    it('handles grantee notes being created', async () => {
-      // Given a report with grantee notes
+    it('handles recipient notes being created', async () => {
+      // Given a report with recipient notes
       // And not specialist notes
       const reportWithNotes = {
         ...reportObject,
         specialistNextSteps: [],
-        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
 
       // When that report is created
@@ -412,8 +412,8 @@ describe('Activity Reports DB service', () => {
 
       // Then we see that it was saved correctly
       expect(report.specialistNextSteps.length).toBe(0);
-      expect(report.granteeNextSteps.length).toBe(2);
-      expect(report.granteeNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+      expect(report.recipientNextSteps.length).toBe(2);
+      expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
     });
 
     it('handles specialist notes being updated', async () => {
@@ -421,7 +421,7 @@ describe('Activity Reports DB service', () => {
       const reportWithNotes = {
         ...reportObject,
         specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await ActivityReport.create(reportWithNotes);
 
@@ -435,22 +435,22 @@ describe('Activity Reports DB service', () => {
         .toEqual(expect.arrayContaining(['harry', 'spongebob']));
     });
 
-    it('handles grantee notes being updated', async () => {
+    it('handles recipient notes being updated', async () => {
       // Given a report with some notes
       const reportWithNotes = {
         ...reportObject,
         specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await ActivityReport.create(reportWithNotes);
 
-      // When the report is updated with new set of grantee notes
-      const notes = { granteeNextSteps: [{ note: 'One Piece' }, { note: 'spongebob' }] };
+      // When the report is updated with new set of recipient notes
+      const notes = { recipientNextSteps: [{ note: 'One Piece' }, { note: 'spongebob' }] };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see it was updated correctly
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.granteeNextSteps.map((n) => n.note))
+      expect(updatedReport.recipientNextSteps.map((n) => n.note))
         .toEqual(expect.arrayContaining(['One Piece', 'spongebob']));
     });
 
@@ -459,20 +459,20 @@ describe('Activity Reports DB service', () => {
       const reportWithNotes = {
         ...reportObject,
         specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await ActivityReport.create(reportWithNotes);
 
       // When the report is updated with empty notes
       const notes = {
-        granteeNextSteps: [],
+        recipientNextSteps: [],
         specialistNextSteps: [],
       };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see the report was updated correctly
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.granteeNextSteps.length).toBe(0);
+      expect(updatedReport.recipientNextSteps.length).toBe(0);
       expect(updatedReport.specialistNextSteps.length).toBe(0);
     });
 
@@ -481,25 +481,25 @@ describe('Activity Reports DB service', () => {
       const reportWithNotes = {
         ...reportObject,
         specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-        granteeNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+        recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
       };
       const report = await createOrUpdate(reportWithNotes);
-      const granteeIds = report.granteeNextSteps.map((note) => note.id);
+      const recipientIds = report.recipientNextSteps.map((note) => note.id);
       const specialistsIds = report.specialistNextSteps.map((note) => note.id);
 
       // When the report is updated with same notes
       const notes = {
         specialistNextSteps: report.specialistNextSteps,
-        granteeNextSteps: report.granteeNextSteps,
+        recipientNextSteps: report.recipientNextSteps,
       };
       const updatedReport = await createOrUpdate(notes, report);
 
       // Then we see nothing changes
       // And we are re-using the same old ids
       expect(updatedReport.id).toBe(report.id);
-      expect(updatedReport.granteeNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
-      expect(updatedReport.granteeNextSteps.map((n) => n.id))
-        .toEqual(expect.arrayContaining(granteeIds));
+      expect(updatedReport.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+      expect(updatedReport.recipientNextSteps.map((n) => n.id))
+        .toEqual(expect.arrayContaining(recipientIds));
 
       expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
       expect(updatedReport.specialistNextSteps.map((n) => n.id))
@@ -590,8 +590,8 @@ describe('Activity Reports DB service', () => {
     beforeAll(async () => {
       const topicsOne = ['topic d', 'topic c'];
       const topicsTwo = ['topic b', 'topic a'];
-      const firstGrantee = await Grantee.create({ id: GRANTEE_ID_SORTING, name: 'aaaa' });
-      firstGrant = await Grant.create({ id: GRANTEE_ID_SORTING, number: 'anumber', granteeId: firstGrantee.id });
+      const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa' });
+      firstGrant = await Grant.create({ id: RECIPIENT_ID_SORTING, number: 'anumber', recipientId: firstRecipient.id });
 
       await ActivityReport.create({
         ...submittedReport,
