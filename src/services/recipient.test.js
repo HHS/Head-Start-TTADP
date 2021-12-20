@@ -152,7 +152,6 @@ describe('Recipient DB service', () => {
   });
 
   afterAll(async () => {
-    // const id = recipients.map((g) => g.id);
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79] } });
     await Grant.destroy({ where: { id: [74, 75, 76, 77, 78, 79] } });
     await Recipient.destroy({ where: { id: [73, 74, 75, 76] } });
