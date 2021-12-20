@@ -1,15 +1,12 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Controller, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isEmpty } from 'lodash';
-import moment from 'moment';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox, DatePicker,
+  Fieldset, Radio, Grid, TextInput, Checkbox,
 } from '@trussworks/react-uswds';
 import ReviewPage from './Review/ReviewPage';
-// import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
   otherEntityParticipants,
@@ -19,7 +16,8 @@ import {
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
-import ControlledDatePicker from '../../../components/ControlledDatePicker';
+// import ControlledDatePicker from '../../../components/ControlledDatePicker';
+import { DatePicker as DP } from '../../../components/DatePicker/DatePicker';
 
 const ActivitySummary = ({
   recipients,
@@ -33,8 +31,11 @@ const ActivitySummary = ({
     getValues,
   } = useFormContext();
   const activityRecipientType = watch('activityRecipientType');
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
+
+  console.log(control);
+
+  // const startDate = watch('startDate');
+  // const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
@@ -92,9 +93,9 @@ const ActivitySummary = ({
     />
   );
 
-  const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
-  };
+  // const setEndDate = (newEnd) => {
+  //   setValue('endDate', newEnd);
+  // };
 
   return (
     <>
@@ -223,17 +224,16 @@ const ActivitySummary = ({
               <FormItem
                 label="Start Date"
                 name="startDate"
+                id="startDate-label"
               >
-                <Controller
+                <div
+                  className="usa-hint"
+                >
+                  mm/dd/yyyy
+                </div>
+                <DP
+                  register={register}
                   name="startDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      // eslint-disable-next-line react/jsx-props-no-spreading
-                      {...field}
-                      name="startDate"
-                    />
-                  )}
                 />
               </FormItem>
             </Grid>
@@ -241,8 +241,19 @@ const ActivitySummary = ({
               <FormItem
                 label="End Date"
                 name="endDate"
+                id="endDate-label"
               >
-                <ControlledDatePicker control={control} fieldName="endDate" />
+                <div
+                  className="usa-hint"
+                >
+                  mm/dd/yyyy
+                </div>
+                {/* <ControlledDatePicker
+                  control={control}
+                  name="endDate"
+                  value={endDate}
+                  minDate={startDate}
+                /> */}
               </FormItem>
             </Grid>
             <Grid col={5}>
