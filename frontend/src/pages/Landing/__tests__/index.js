@@ -18,22 +18,21 @@ jest.mock('../../../fetchers/helpers');
 
 const mockAnnounce = jest.fn();
 
-const withRegionOne = '&region.in[]=1';
-const withAllRegions = '&region.in[]=14';
+
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
 const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
-const defaultBaseAlertsUrl = `${baseAlerts}${withAllRegions}`;
-const defaultBaseUrl = `${base}${withAllRegions}`;
-const defaultBaseAlertsUrlWithRegionOne = `${baseAlerts}${withRegionOne}`;
-const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
+
+
+const withRegionOne = '&region.in[]=1';
+const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
+const baseWithRegionOne = `${base}${withRegionOne}`;
 const defaultOverviewUrl = '/api/widgets/overview';
 const defaultOverviewUrlWithRegionOne = `${defaultOverviewUrl}${withRegionOne}`;
 const overviewUrlWithRegionOne = `${defaultOverviewUrl}?region.in[]=1`;
-const overviewUrlWithAllRegions = `${defaultOverviewUrl}?region.in[]=14`;
 
 const mockFetchWithRegionOne = () => {
-  fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
-  fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+  fetchMock.get(baseWithRegionOne, { count: 2, rows: activityReports });
+  fetchMock.get(baseAlertsWithRegionOne, {
     alertsCount: 0,
     alerts: [],
   });
@@ -54,13 +53,13 @@ const renderLanding = (user) => {
 
 describe('Landing Page', () => {
   beforeEach(async () => {
-    fetchMock.get(defaultBaseUrl, { count: 2, rows: activityReports });
-    fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
-    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+    fetchMock.get(base, { count: 2, rows: activityReports });
+    fetchMock.get(baseWithRegionOne, { count: 2, rows: activityReports });
+    fetchMock.get(baseAlertsWithRegionOne, {
       alertsCount: 0,
       alerts: [],
     });
-    fetchMock.get(defaultBaseAlertsUrl, {
+    fetchMock.get(baseAlerts, {
       alertsCount: 0,
       alerts: [],
     });
@@ -244,11 +243,11 @@ describe('Landing page table menus & selections', () => {
       beforeAll(async () => {
         fetchMock.reset();
         fetchMock.get(
-          defaultBaseAlertsUrlWithRegionOne,
+          baseAlertsWithRegionOne,
           { count: 10, alerts: generateXFakeReports(10) },
         );
         fetchMock.get(
-          defaultBaseUrlWithRegionOne,
+          baseWithRegionOne,
           { count: 10, rows: [] },
         );
         fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
@@ -287,25 +286,25 @@ describe('My alerts sorting', () => {
     fetchMock.reset();
 
     // Alerts (All Regions).
-    fetchMock.get(defaultBaseAlertsUrl, {
+    fetchMock.get(baseAlerts, {
       alertsCount: 2,
       alerts: activityReports,
     });
 
     // Alerts (Region 1).
-    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+    fetchMock.get(baseAlertsWithRegionOne, {
       alertsCount: 2,
       alerts: activityReports,
     });
 
     // Activity Reports (All Regions).
-    fetchMock.get(defaultBaseUrl, { count: 0, rows: [] });
+    fetchMock.get(base, { count: 0, rows: [] });
 
     // Activity Reports (Region 1).
-    fetchMock.get(defaultBaseUrlWithRegionOne, { count: 0, rows: [] });
+    fetchMock.get(baseWithRegionOne, { count: 0, rows: [] });
 
     // Overview (All Regions).
-    fetchMock.get(overviewUrlWithAllRegions, overviewRegionOne);
+    fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 
     // Overview (Region 1).
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
@@ -357,7 +356,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
     const columnHeaders = await screen.findAllByText(/report id/i);
@@ -375,7 +374,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
 
@@ -394,7 +393,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
 
@@ -412,7 +411,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
 
@@ -428,7 +427,7 @@ describe('My alerts sorting', () => {
     fetchMock.reset();
     fetchMock.get(`/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10${withRegionOne}`,
       { alertsCount: 2, alerts: activityReportsSorted });
-    fetchMock.get(`${defaultBaseUrl}${withRegionOne}`, { count: 0, rows: [] });
+    fetchMock.get(`${base}${withRegionOne}`, { count: 0, rows: [] });
 
     fireEvent.click(columnHeaders[0]);
 
@@ -444,15 +443,14 @@ describe('Landing Page error', () => {
 
   beforeEach(() => {
     mockFetchWithRegionOne();
-    fetchMock.get(overviewUrlWithAllRegions, overviewRegionOne);
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     fetchMock.get(base, { count: 0, rows: [] });
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
   });
 
   it('handles errors by displaying an error message', async () => {
-    fetchMock.get(defaultBaseUrl, 500);
-    fetchMock.get(defaultBaseAlertsUrl, { alertsCount: 0, alerts: [] });
+    fetchMock.get(base, 500, { overwriteRoutes: true });
+    fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] }, { overwriteRoutes: true });
     const user = {
       name: 'test@test.com',
       homeRegionId: 14,
@@ -490,8 +488,8 @@ describe('Landing Page error', () => {
 
   it('does not displays new activity report button without permission', async () => {
     fetchMock.get(
-      defaultBaseUrl,
-      { count: 2, rows: activityReports },
+      base,
+      { count: 2, rows: activityReports }, { overwriteRoutes: true },
     );
     const user = {
       name: 'test@test.com',
@@ -511,11 +509,8 @@ describe('Landing Page error', () => {
 describe('handleApplyFilters', () => {
   beforeEach(() => {
     mockFetchWithRegionOne();
-    fetchMock.get(defaultBaseAlertsUrl, { count: 0, rows: [] });
-    fetchMock.get(defaultBaseUrl, { count: 2, rows: activityReports });
-    fetchMock.get(overviewUrlWithAllRegions, overviewRegionOne);
+    fetchMock.get(base, { count: 2, rows: activityReports });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-    fetchMock.get(base, { count: 0, rows: [] });
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
   });
 
@@ -563,11 +558,11 @@ describe('handleApplyFilters', () => {
 
 describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
-    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+    fetchMock.get(baseAlertsWithRegionOne, {
       count: 10,
       alerts: generateXFakeReports(10),
     });
-    fetchMock.get(defaultBaseUrlWithRegionOne,
+    fetchMock.get(baseWithRegionOne,
       { count: 1, rows: generateXFakeReports(1) });
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
   });
