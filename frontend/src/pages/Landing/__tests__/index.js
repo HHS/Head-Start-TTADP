@@ -566,10 +566,10 @@ describe('handleApplyAlertFilters', () => {
     fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
       count: 10,
       alerts: generateXFakeReports(10),
-    }, { overwriteRoutes: false });
+    });
     fetchMock.get(defaultBaseUrlWithRegionOne,
-      { count: 1, rows: generateXFakeReports(1) }, { overwriteRoutes: false });
-    fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne, { overwriteRoutes: false });
+      { count: 1, rows: generateXFakeReports(1) });
+    fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
   });
 
   afterEach(() => fetchMock.restore());
