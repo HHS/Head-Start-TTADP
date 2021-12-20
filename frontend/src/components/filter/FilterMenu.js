@@ -6,22 +6,10 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
-import { FILTER_CONFIG } from './constants';
+import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
 import { formatDateRange } from '../DateRangeSelect';
 import usePrevious from '../../hooks/usePrevious';
-
-// save this to cut down on repeated boilerplate in PropTypes
-const filterProp = PropTypes.shape({
-  topic: PropTypes.string,
-  condition: PropTypes.string,
-  query: PropTypes.oneOfType([
-    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
-  ]),
-  id: PropTypes.string,
-});
-
-// a list of all the filter topics available
-const availableFilters = FILTER_CONFIG.map((f) => f.id);
+import { filterProp } from './props';
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
@@ -29,7 +17,7 @@ const availableFilters = FILTER_CONFIG.map((f) => f.id);
  * @returns JSX Object
  */
 export default function FilterMenu({
-  filters, onApplyFilters, allowedFilters, dateRangeOptions,
+  filters, onApplyFilters, allowedFilters, dateRangeOptions, applyButtonAria,
 }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
@@ -60,7 +48,7 @@ export default function FilterMenu({
   const selectedFilters = items.map((filter) => filter.topic);
 
   // filters that aren't allowed per our allowedFilters prop
-  const prohibitedFilters = availableFilters.filter((f) => !allowedFilters.includes(f));
+  const prohibitedFilters = AVAILABLE_FILTERS.filter((f) => !allowedFilters.includes(f));
 
   // If filters were changed outside of this component, we need to update the items
   // (for example, the "remove filter" button on the filter pills)
@@ -186,11 +174,7 @@ export default function FilterMenu({
   };
 
   const clearAllFilters = () => {
-    // this looks a little strange, right?
-    // well, we don't want to clear out things like the region,
-    // just the filters that can be set in the UI
-    const newItems = items.filter((item) => prohibitedFilters.includes(item.topic));
-    setItems(newItems);
+    setItems([]);
   };
 
   const canBlur = () => false;
@@ -202,7 +186,7 @@ export default function FilterMenu({
       buttonText="Filters"
       buttonAriaLabel="open filters for this page"
       onApply={onApply}
-      applyButtonAria="apply filters to this page"
+      applyButtonAria={applyButtonAria}
       showCancel
       onCancel={onCancel}
       cancelAriaLabel="discard changes and close filter menu"
@@ -270,10 +254,11 @@ FilterMenu.propTypes = {
     value: PropTypes.number,
     range: PropTypes.string,
   })),
+  applyButtonAria: PropTypes.string.isRequired,
 };
 
 FilterMenu.defaultProps = {
-  allowedFilters: availableFilters,
+  allowedFilters: AVAILABLE_FILTERS,
   dateRangeOptions: [
     {
       label: 'Year to date',

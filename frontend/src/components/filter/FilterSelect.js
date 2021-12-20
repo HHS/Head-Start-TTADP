@@ -66,6 +66,10 @@ export default function FilterSelect({
     }),
     multiValue: (provided) => ({ ...provided }),
     multiValueLabel: (provided) => ({ ...provided }),
+    valueContainer: (provided) => ({
+      ...provided,
+      maxHeight: '100%',
+    }),
   };
 
   const onChange = (selected) => {

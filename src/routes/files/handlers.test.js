@@ -36,7 +36,7 @@ mockSession.userId = mockUser.id;
 const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() => jest.fn());
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,

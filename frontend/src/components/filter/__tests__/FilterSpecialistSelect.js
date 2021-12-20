@@ -15,6 +15,7 @@ describe('FilterSpecialistSelect', () => {
       <FilterSpecialistSelect
         onApply={onApply}
         inputId="curly"
+        query={[]}
       />,
     ));
 

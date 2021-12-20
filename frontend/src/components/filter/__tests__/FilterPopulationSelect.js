@@ -15,6 +15,7 @@ describe('FilterPopulationSelect', () => {
       <FilterPopulationSelect
         onApply={onApply}
         inputId="curly"
+        query={[]}
       />,
     ));
 

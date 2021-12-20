@@ -1,48 +1,72 @@
-import React from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-import FilterMenu from '../../components/filter/FilterMenu';
+import FilterPanel from '../../components/filter/FilterPanel';
 import { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
 import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
-import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
+import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
-import FilterPills from '../../components/filter/FilterPills';
 import { expandFilters } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
+import UserContext from '../../UserContext';
 
-export default function RegionalDashboard({ user }) {
-  const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
-  const defaultDate = formatDateRange({
-    lastThirtyDays: true,
-    forDateTime: true,
-  });
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
 
-  const regions = getUserRegions(user);
-  const defaultRegion = hasCentralOffice ? 14 : regions[0];
+export default function RegionalDashboard() {
+  const { user } = useContext(UserContext);
 
-  const [filters, setFilters] = useUrlFilters([
-    {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: defaultRegion ? defaultRegion.toString() : '',
-    },
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'Is within',
-      query: defaultDate,
-    },
-  ]);
+  /**
+   * we are going to memoize all this stuff so it doesn't get recomputed each time
+   * this is re-rendered. it would (generally) only get recomputed should the user change
+   */
+
+  const hasCentralOffice = useMemo(() => (
+    user && user.homeRegionId && user.homeRegionId === 14
+  ), [user]);
+  const regions = useMemo(() => getUserRegions(user), [user]);
+  const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
+
+  const defaultFilters = useMemo(() => {
+    if (hasCentralOffice) {
+      return [
+        {
+          id: uuidv4(),
+          topic: 'startDate',
+          condition: 'Is within',
+          query: defaultDate,
+        },
+      ];
+    }
+
+    return [
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'Contains',
+        query: defaultRegion,
+      },
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      },
+    ];
+  }, [defaultRegion, hasCentralOffice]);
+
+  const [filters, setFilters] = useUrlFilters(defaultFilters);
 
   const regionFilter = filters.find((filter) => filter.topic === 'region');
-  const appliedRegion = regionFilter ? filters.find((filter) => filter.topic === 'region').query : '';
+  const appliedRegion = regionFilter ? regionFilter.query : false;
 
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);
@@ -78,17 +102,18 @@ export default function RegionalDashboard({ user }) {
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
         <h1 className="ttahub--dashboard-title">
-          {appliedRegion === '14' ? 'Regional' : `Region ${appliedRegion}`}
+          {appliedRegion ? `Region ${appliedRegion}` : 'Regional'}
           {' '}
           TTA Activity Dashboard
         </h1>
         <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
-          <FilterMenu
+          <FilterPanel
+            applyButtonAria="apply filters for regional dashboard"
             filters={filters}
             onApplyFilters={onApplyFilters}
             dateRangeOptions={dateRangeOptions}
+            onRemoveFilter={onRemoveFilter}
           />
-          <FilterPills filters={filters} onRemoveFilter={onRemoveFilter} />
         </Grid>
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
@@ -101,7 +126,7 @@ export default function RegionalDashboard({ user }) {
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-              <TotalHrsAndGrantee
+              <TotalHrsAndRecipient
                 filters={filtersToApply}
               />
             </Grid>
