@@ -19,6 +19,7 @@ import {
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
+import ControlledDatePicker from '../../../components/ControlledDatePicker';
 
 const ActivitySummary = ({
   recipients,
@@ -241,31 +242,7 @@ const ActivitySummary = ({
                 label="End Date"
                 name="endDate"
               >
-                <Controller
-                  name="endDate"
-                  control={control}
-                  render={(props) => {
-                    // eslint-disable-next-line react/prop-types
-                    const { value, onChange, name } = props;
-
-                    console.log(props);
-                    const datePickerOnChange = (e) => {
-                      console.log(e);
-                      onChange(e);
-                    };
-
-                    const formattedValue = moment(value).format('YYYY-MM-DD');
-
-                    return (
-                      <DatePicker
-                        defaultValue={formattedValue}
-                        name={name}
-                        onChange={datePickerOnChange}
-
-                      />
-                    );
-                  }}
-                />
+                <ControlledDatePicker control={control} fieldName="endDate" />
               </FormItem>
             </Grid>
             <Grid col={5}>
