@@ -17,13 +17,9 @@ get:
                 type: string
               numTotalGrants:
                 type: string
-              numNonGrantees: 
+              numOtherEntities:
                 type: string
-              numParticipants: 
+              numParticipants:
                 type: string
-              sumDuration: 
+              sumDuration:
                 type: string
-    
- 
-
- 

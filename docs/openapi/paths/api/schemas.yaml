@@ -14,7 +14,7 @@ components:
       type: object
       description: >
         This object represents a report on an activity that a specialist has completed
-        with 1 to many grants or non-grantees
+        with 1 to many grants or other-entities
       properties:
         id:
           description: Activity Report identifier
