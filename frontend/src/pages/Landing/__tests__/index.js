@@ -469,10 +469,11 @@ describe('Landing Page error', () => {
     expect(alert).toHaveTextContent('Unable to fetch reports');
   });
 
-  it('displays an empty row if there are no reports', async () => {
+  it('no empty row is shown if there are no reports', async () => {
     fetchMock.get(
-      defaultBaseUrl,
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1',
       { count: 0, rows: [] },
+      { overwriteRoutes: true },
     );
     const user = {
       name: 'test@test.com',
@@ -484,10 +485,7 @@ describe('Landing Page error', () => {
       ],
     };
     renderLanding(user);
-    const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(10);
-    const recipient = rowCells[1];
-    expect(recipient).toHaveTextContent('');
+    expect(await screen.findByText(/0-0 of 0/i)).toBeVisible();
   });
 
   it('does not displays new activity report button without permission', async () => {
@@ -499,7 +497,7 @@ describe('Landing Page error', () => {
       name: 'test@test.com',
       permissions: [
         {
-          scopeId: 2,
+          scopeId: 4,
           regionId: 1,
         },
       ],
@@ -529,12 +527,13 @@ describe('handleApplyFilters', () => {
       homeRegionId: 1,
       permissions: [
         {
-          scopeId: 2,
+          scopeId: 3,
           regionId: 1,
         },
       ],
     };
     renderLanding(user);
+
     // Only one button exists only because there are no alerts
     const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
@@ -549,7 +548,8 @@ describe('handleApplyFilters', () => {
     const query = await screen.findByRole('textbox');
     userEvent.type(query, 'test');
 
-    const apply = await screen.findByRole('button', { name: /apply filters to this page/i });
+    // const apply = await screen.findByRole('button', { name: /apply filters to this page/i });
+    const apply = await screen.findByTestId(/apply-filters-test-id/i);
 
     act(() => {
       userEvent.click(apply);
@@ -611,9 +611,7 @@ describe('handleApplyAlertFilters', () => {
     });
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test', { count: 1, rows: generateXFakeReports(1) });
     fetchMock.get('/api/widgets/overview?reportId.in[]=test', overviewRegionOne);
-
-    const apply = await screen.findByRole('button', { name: /apply filters to this page/i });
-
+    const apply = await screen.findByTestId(/apply-filters-test-id/i);
     act(() => {
       userEvent.click(apply);
     });

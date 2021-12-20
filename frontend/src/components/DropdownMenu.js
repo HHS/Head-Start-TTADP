@@ -92,6 +92,7 @@ export default function DropdownMenu({
     return (
       <button
         type="button"
+        data-testid="apply-filters-test-id"
         className="usa-button smart-hub--button"
         onClick={onApplyClick}
         aria-label={applyButtonAria}
