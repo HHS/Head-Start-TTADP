@@ -8,13 +8,13 @@ import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
 import { DECIMAL_BASE } from '../../Constants';
 
-import { getCDIGrants, getGrantees, assignCDIGrant } from '../../fetchers/Admin';
+import { getCDIGrants, getRecipients, assignCDIGrant } from '../../fetchers/Admin';
 
 import Grant from './components/Grant';
 
 function Cdi({ match: { params: { grantId } } }) {
   const [selectedGrant, updateSelectedGrant] = useState();
-  const [grantees, updateGrantees] = useState([]);
+  const [recipients, updateRecipients] = useState([]);
   const [grants, updateGrants] = useState([]);
   const [loaded, updateLoaded] = useState(false);
   const [error, updateError] = useState(false);
@@ -26,17 +26,17 @@ function Cdi({ match: { params: { grantId } } }) {
     async function fetchGrants() {
       updateLoaded(false);
       try {
-        const [fetchedGrants, fetchedGrantees] = await Promise.all([
+        const [fetchedGrants, fetchedRecipients] = await Promise.all([
           getCDIGrants(unassigned, active),
-          getGrantees(),
+          getRecipients(),
         ]);
 
         updateGrants(fetchedGrants);
-        updateGrantees(fetchedGrantees);
+        updateRecipients(fetchedRecipients);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
-        updateError('Unable to fetch grants or grantees');
+        updateError('Unable to fetch grants or recipients');
       }
       updateLoaded(true);
     }
@@ -63,8 +63,8 @@ function Cdi({ match: { params: { grantId } } }) {
     <NavLink to={`/admin/cdi/${id}`}>{`${number} - ${id}`}</NavLink>
   ));
 
-  const onAssignCDIGrant = async (selectedGrantId, regionId, granteeId) => {
-    const grant = await assignCDIGrant(selectedGrantId, regionId, granteeId);
+  const onAssignCDIGrant = async (selectedGrantId, regionId, recipientId) => {
+    const grant = await assignCDIGrant(selectedGrantId, regionId, recipientId);
     const newGrants = [...grants];
     const newGrantIndex = newGrants.findIndex((g) => g.id === grant.id);
     newGrants[newGrantIndex] = grant;
@@ -121,7 +121,7 @@ function Cdi({ match: { params: { grantId } } }) {
               <Grant
                 key={selectedGrant.id}
                 grant={selectedGrant}
-                grantees={grantees}
+                recipients={recipients}
                 onAssignCDIGrant={onAssignCDIGrant}
               />
             )}

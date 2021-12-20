@@ -7,6 +7,12 @@ import {
 import userEvent from '@testing-library/user-event';
 import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
+import { FILTER_CONFIG } from '../constants';
+
+const selectedTopic = FILTER_CONFIG[0];
+const topicOptions = FILTER_CONFIG.map(({ id: filterId, display }) => (
+  <option key={filterId} value={filterId}>{display}</option>
+));
 
 describe('Filter menu item', () => {
   const renderFilterItem = (
@@ -56,8 +62,9 @@ describe('Filter menu item', () => {
           setErrors={setErrors}
           index={0}
           validate={validate}
-          prohibitedFilters={[]}
-          selectedFilters={[]}
+          key={filter.id}
+          topicOptions={topicOptions}
+          selectedTopic={selectedTopic}
         />
         <button type="button">BIG DUMB BUTTON</button>
       </div>,

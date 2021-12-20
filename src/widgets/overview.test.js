@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, Grant, Region,
+  ActivityReport, ActivityRecipient, User, Recipient, Grant, Region,
 } from '../models';
 import filtersToScopes from '../scopes';
 import overview from './overview';
@@ -7,7 +7,7 @@ import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 import { formatQuery } from '../routes/widgets/utils';
 
-const GRANTEE_ID = 84036;
+const RECIPIENT_ID = 84036;
 const GRANT_ID_ONE = 109730;
 const GRANT_ID_TWO = 276030;
 
@@ -20,7 +20,7 @@ const mockUser = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.SUBMITTED,
   calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
@@ -69,13 +69,13 @@ const reportWithNewDate = {
 describe('Dashboard overview widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
-    await Grantee.create({ name: 'grantee', id: GRANTEE_ID });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Region.create({ name: 'office 1717', id: 1717 });
     await Region.create({ name: 'office 1818', id: 1818 });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE,
       number: GRANT_ID_ONE,
-      granteeId: GRANTEE_ID,
+      recipientId: RECIPIENT_ID,
       regionId: 1717,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -83,7 +83,7 @@ describe('Dashboard overview widget', () => {
     }, {
       id: GRANT_ID_TWO,
       number: GRANT_ID_TWO,
-      granteeId: GRANTEE_ID,
+      recipientId: RECIPIENT_ID,
       regionId: 1717,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -108,7 +108,7 @@ describe('Dashboard overview widget', () => {
       where:
       { id: [GRANT_ID_ONE, GRANT_ID_TWO] },
     });
-    await Grantee.destroy({ where: { id: GRANTEE_ID } });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await Region.destroy({ where: { id: [1717, 1818] } });
     await db.sequelize.close();
   });

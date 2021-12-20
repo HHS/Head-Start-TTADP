@@ -235,7 +235,7 @@ describe('Activity Report handlers', () => {
       };
       activityReportById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        activityRecipientType: 'grantee',
+        activityRecipientType: 'recipient',
         activityRecipients: [{
           activityRecipientId: 10,
         }],
@@ -261,7 +261,7 @@ describe('Activity Report handlers', () => {
       };
       activityReportById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        activityRecipientType: 'grantee',
+        activityRecipientType: 'recipient',
         activityRecipients: [{
           activityRecipientId: 10,
         }],
@@ -281,7 +281,7 @@ describe('Activity Report handlers', () => {
     it('handles unauthorizedRequests', async () => {
       activityReportById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        activityRecipientType: 'grantee',
+        activityRecipientType: 'recipient',
         activityRecipients: [{
           activityRecipientId: 10,
         }],
