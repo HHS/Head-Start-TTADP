@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import importGoals from './importPlanGoals';
 import { downloadFile } from '../lib/s3';
 import db, {
-  Role, Topic, RoleTopic, Goal, Grantee, Grant,
+  Role, Topic, RoleTopic, Goal, Recipient, Grant,
 } from '../models';
 
 jest.mock('../lib/s3');
@@ -132,8 +132,8 @@ describe('Import TTA plan goals', () => {
           },
         },
         {
-          model: Grantee,
-          as: 'grantees',
+          model: Recipient,
+          as: 'recipients',
           attributes: ['id', 'name'],
           through: {
             attributes: [],
@@ -159,8 +159,8 @@ describe('Import TTA plan goals', () => {
       expect(goal.topics).toContainEqual(
         expect.objectContaining({ id: expect.anything(), name: 'Coaching / Teaching / Instructional Support' }),
       );
-      expect(goal.grantees.length).toBe(1);
-      expect(goal.grantees[0].name).toEqual('Johnston-Romaguera');
+      expect(goal.recipients.length).toBe(1);
+      expect(goal.recipients[0].name).toEqual('Johnston-Romaguera');
       expect(goal.grants.length).toBe(2);
       expect(goal.grants).toContainEqual(
         expect.objectContaining({ id: expect.anything(), number: '14CH00002', regionId: 14 }),
@@ -170,10 +170,10 @@ describe('Import TTA plan goals', () => {
       );
     });
 
-    it('should have Grantees Goals connection', async () => {
+    it('should have Recipients Goals connection', async () => {
     // test eager loading
-      const grantee = await Grantee.findOne({
-        where: { name: 'Grantee Name' },
+      const recipient = await Recipient.findOne({
+        where: { name: 'Recipient Name' },
         attributes: ['id', 'name'],
         include: [{
           model: Goal,
@@ -184,10 +184,10 @@ describe('Import TTA plan goals', () => {
           },
         }],
       });
-      expect(grantee.name).toBe('Grantee Name');
-      expect(grantee.goals.length).toBe(2);
-      expect(grantee.goals[0].name).toEqual('Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.');
-      expect(grantee.goals[1].name).toEqual('Enhance reflective practice.');
+      expect(recipient.name).toBe('Recipient Name');
+      expect(recipient.goals.length).toBe(2);
+      expect(recipient.goals[0].name).toEqual('Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.');
+      expect(recipient.goals[1].name).toEqual('Enhance reflective practice.');
     });
 
     it('should import RoleTopics table', async () => {
@@ -236,8 +236,8 @@ describe('Import TTA plan goals', () => {
           },
         },
         {
-          model: Grantee,
-          as: 'grantees',
+          model: Recipient,
+          as: 'recipients',
           attributes: ['id', 'name'],
           through: {
             attributes: [],
@@ -259,8 +259,8 @@ describe('Import TTA plan goals', () => {
       expect(goal.topics.length).toBe(1);
       expect(goal.topics[0].name).toEqual('Fiscal / Budget');
 
-      expect(goal.grantees.length).toBe(1);
-      expect(goal.grantees[0].name).toEqual('Agency 4, Inc.');
+      expect(goal.recipients.length).toBe(1);
+      expect(goal.recipients[0].name).toEqual('Agency 4, Inc.');
       expect(goal.grants.length).toBe(1);
       expect(goal.grants[0].number).toBe('09HP044444');
       expect(goal.grants[0].regionId).toBe(9);

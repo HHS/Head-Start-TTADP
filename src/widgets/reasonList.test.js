@@ -1,12 +1,12 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Grantee, Grant, NextStep,
+  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
 import { REPORT_STATUSES, REASONS } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 
-const GRANTEE_ID = 462034;
+const RECIPIENT_ID = 462034;
 const GRANT_ID_ONE = 107863;
 const GRANT_ID_TWO = 204628;
 
@@ -19,7 +19,7 @@ const mockUser = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.SUBMITTED,
   calculatedStatus: REPORT_STATUSES.APPROVED,
   userId: mockUser.id,
@@ -73,7 +73,7 @@ const regionOneReportC = {
     'Complaint',
     'COVID-19 response',
     'Full Enrollment',
-    'New Grantee',
+    'New Recipient',
     'New Director or Management',
     'New Program Option',
     'New Staff / Turnover',
@@ -126,11 +126,11 @@ const regionOneDraftReport = {
 describe('Reason list widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
-    await Grantee.create({ name: 'grantee', id: GRANTEE_ID });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Grant.bulkCreate([{
-      id: GRANT_ID_ONE, number: GRANT_ID_ONE, granteeId: GRANTEE_ID, regionId: 3, status: 'Active',
+      id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
     }, {
-      id: GRANT_ID_TWO, number: GRANT_ID_TWO, granteeId: GRANTEE_ID, regionId: 3, status: 'Active',
+      id: GRANT_ID_TWO, number: GRANT_ID_TWO, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
     }]);
 
     const reportOne = await ActivityReport.findOne({ where: { duration: 1, reason: ['Below Competitive Threshold (CLASS)'] } });
@@ -164,7 +164,7 @@ describe('Reason list widget', () => {
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id] } });
     await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] } });
-    await Grantee.destroy({ where: { id: GRANTEE_ID } });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await db.sequelize.close();
   });
 

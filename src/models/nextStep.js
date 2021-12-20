@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     noteType: {
       allowNull: false,
-      type: DataTypes.ENUM('SPECIALIST', 'GRANTEE'),
+      type: DataTypes.ENUM('SPECIALIST', 'RECIPIENT'),
     },
   }, {
     sequelize,
