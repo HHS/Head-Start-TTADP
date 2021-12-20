@@ -18,10 +18,8 @@ jest.mock('../../../fetchers/helpers');
 
 const mockAnnounce = jest.fn();
 
-
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
 const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
-
 
 const withRegionOne = '&region.in[]=1';
 const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
