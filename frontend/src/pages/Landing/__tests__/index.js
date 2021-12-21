@@ -76,7 +76,7 @@ describe('Landing Page', () => {
     };
 
     renderLanding(user);
-    await screen.findByText('Activity Reports');
+    await screen.findByText('Activity reports');
   });
   afterEach(() => fetchMock.restore());
 
@@ -125,7 +125,7 @@ describe('Landing Page', () => {
   });
 
   test('displays activity reports heading', async () => {
-    expect(await screen.findByText('Activity Reports')).toBeVisible();
+    expect(await screen.findByText('Activity reports')).toBeVisible();
   });
 
   test('displays report id column', async () => {
@@ -313,7 +313,7 @@ describe('My alerts sorting', () => {
     };
 
     renderLanding(user);
-    await screen.findByText('Activity Reports');
+    await screen.findByText('Activity reports');
   });
 
   it('is enabled for Status', async () => {
