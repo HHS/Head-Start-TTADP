@@ -204,7 +204,7 @@ function Landing({ user }) {
     );
   }
 
-  const regionLabel = appliedRegion === 14 ? 'All' : appliedRegion.toString();
+  const regionLabel = appliedRegion === 14 ? 'All regions' : `Region ${appliedRegion.toString()}`;
 
   return (
     <>
@@ -235,7 +235,7 @@ function Landing({ user }) {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">Activity Reports</h1>
+            <h1 className="landing">{`Activity reports - ${regionLabel}`}</h1>
           </Grid>
           <Grid col={2} className="flex-align-self-center">
             {regions.length > 1
@@ -259,8 +259,8 @@ function Landing({ user }) {
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
             <Overview
+              tableCaption="TTA overview"
               filters={overviewFilters}
-              regionLabel={regionLabel}
             />
           </Grid>
         </Grid>
@@ -292,7 +292,7 @@ function Landing({ user }) {
           filters={filters}
           showFilter
           onUpdateFilters={handleApplyFilters}
-          tableCaption={`Region ${regionLabel} Activity reports`}
+          tableCaption="Approved activity reports"
         />
       </>
     </>
