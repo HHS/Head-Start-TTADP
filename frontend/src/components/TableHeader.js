@@ -38,6 +38,7 @@ export default function TableHeader({
   hidePagination,
   forMyAlerts,
   downloadError,
+  isDownloading,
   dateTime,
 }) {
   return (
@@ -80,6 +81,7 @@ export default function TableHeader({
               onExportSelected={handleDownloadClick}
               count={count}
               downloadError={downloadError}
+              isDownloading={isDownloading}
             />
           )}
         </span>
@@ -140,6 +142,7 @@ TableHeader.propTypes = {
   dateTime: PropTypes.shape({
     timestamp: PropTypes.string, label: PropTypes.string,
   }),
+  isDownloading: PropTypes.bool,
 };
 
 TableHeader.defaultProps = {
@@ -160,4 +163,5 @@ TableHeader.defaultProps = {
   menuAriaLabel: 'Reports menu',
   downloadError: false,
   dateTime: { timestamp: '', label: '' },
+  isDownloading: false,
 };

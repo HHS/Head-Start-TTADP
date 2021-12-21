@@ -624,6 +624,8 @@ export async function createReport(req, res) {
  */
 export async function downloadReports(req, res) {
   try {
+    console.log('\n\n\n\n\n\n\nDOWNLOADING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    await new Promise((r) => setTimeout(r, 4000));
     const readRegions = await getUserReadRegions(req.session.userId);
 
     const reportsWithCount = await getDownloadableActivityReportsByIds(
