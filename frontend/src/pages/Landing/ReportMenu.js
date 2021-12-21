@@ -48,7 +48,6 @@ function ReportMenu({
   };
 
   const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'width-tablet' : 'width-mobile'}`;
-
   return (
     <span className="position-relative">
 
