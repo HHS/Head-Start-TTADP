@@ -29,6 +29,7 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterMenu from '../../components/filter/FilterMenu';
 import FilterPills from '../../components/filter/FilterPills';
+import useUrlFilters from '../../hooks/useUrlFilters';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -48,18 +49,7 @@ function Landing({ user }) {
   const regionToUse = regions[0] || user.homeRegionId || 0;
   const defaultRegion = user.homeRegionId === 14 ? 14 : regionToUse;
 
-  // Page Filters.
-  /*
-  const [filters, setFilters] = useState(defaultRegion !== 14 ? [
-    {
-      topic: 'region',
-      condition: 'Contains',
-      query: defaultRegion,
-    }] : []);
-
-    */
-
-  const [filters, setFilters] = useState([]);
+  const [filters, setFilters] = useUrlFilters([]);
 
   const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
