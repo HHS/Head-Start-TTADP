@@ -1,11 +1,12 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   DatePicker,
 } from '@trussworks/react-uswds';
 
 import './DateRangePicker.css';
+import moment from 'moment';
 
 export default function DateRangePicker({ onApply }) {
   const [hidden, setHidden] = useState(true);
@@ -17,9 +18,19 @@ export default function DateRangePicker({ onApply }) {
 
   const [endDateKey] = useState('end-date');
 
-  useEffect(() => {
-    onApply(dateRange);
-  }, [dateRange, onApply]);
+  const formattedDateRange = useMemo(() => {
+    const { startDate, endDate } = dateRange;
+
+    if (startDate && endDate) {
+      const sd = moment(startDate, 'MM/DD/YYYY');
+      const ed = moment(endDate, 'MM/DD/YYYY');
+
+      if (sd.isValid() && ed.isValid()) {
+        return `${sd.format('YYYY/MM/DD')}-${ed.format('YYYY/MM/DD')}`;
+      }
+    }
+    return '';
+  }, [dateRange]);
 
   const customDatePicker = useRef();
 
@@ -46,11 +57,15 @@ export default function DateRangePicker({ onApply }) {
 
     if (!startDate) {
       setError('start-date');
+      return;
     }
 
     if (!endDate) {
       setError('end-date');
+      return;
     }
+
+    setError('');
   };
 
   const onBlur = (e) => {
@@ -72,8 +87,12 @@ export default function DateRangePicker({ onApply }) {
         return;
       }
 
+      if (!formattedDateRange) {
+        return;
+      }
+
       // if we're all clear, then onApply
-      onApply(dateRange);
+      onApply(formattedDateRange);
       setHidden(true);
     }
   };
