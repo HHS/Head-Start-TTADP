@@ -45,7 +45,7 @@ export default function TTAHistory({
     {
       id: uuidv4(),
       topic: 'startDate',
-      condition: 'Is within',
+      condition: 'Is',
       query: defaultDate,
     },
   ]);
