@@ -192,6 +192,8 @@ function MyAlerts(props) {
     handleDownloadAllAlerts,
     loading,
     message,
+    isDownloadingAlerts,
+    downloadAlertsError,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -239,7 +241,6 @@ function MyAlerts(props) {
     setAlertReportsCount(alertReportsCount - 1);
     updateReportAlerts(newReports);
   };
-
   return (
     <>
       {reports && reports.length === 0 && !hasFilters && (
@@ -272,6 +273,8 @@ function MyAlerts(props) {
             offset={alertsOffset}
             perPage={alertsPerPage}
             hidePagination
+            isDownloading={isDownloadingAlerts}
+            downloadError={downloadAlertsError}
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
@@ -323,6 +326,8 @@ MyAlerts.propTypes = {
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
+  isDownloadingAlerts: PropTypes.bool,
+  downloadAlertsError: PropTypes.bool,
 };
 
 MyAlerts.defaultProps = {
@@ -338,6 +343,8 @@ MyAlerts.defaultProps = {
     displayId: '',
     status: '',
   },
+  isDownloadingAlerts: false,
+  downloadAlertsError: false,
 };
 
 export default MyAlerts;
