@@ -155,7 +155,7 @@ export default function DateRangePicker({ onApply }) {
         && customDatePicker.current
         && customDatePicker.current.contains(e.relatedTarget)
       ) {
-        return;
+        return e;
       }
 
       // validate our inputs and set an error if one is found
@@ -163,7 +163,7 @@ export default function DateRangePicker({ onApply }) {
 
       // if we set an error in the last step, we don't fire the blur behavior
       if (error.className) {
-        return;
+        return e;
       }
 
       // if so
@@ -173,6 +173,8 @@ export default function DateRangePicker({ onApply }) {
         setHidden(true);
       }
     }
+
+    return e;
   };
 
   const { endDateKey } = dateRange;
