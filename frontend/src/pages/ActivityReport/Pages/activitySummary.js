@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
@@ -16,13 +16,15 @@ import {
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
-// import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import { DatePicker as DP } from '../../../components/DatePicker/DatePicker';
+import ControlledDatePicker from '../../../components/ControlledDatePicker';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
 }) => {
+  // we store this to cause the end date to re-render when updated by the start date (and only then)
+  const [endDateKey, setEndDateKey] = useState('endDate');
+
   const {
     register,
     watch,
@@ -32,10 +34,8 @@ const ActivitySummary = ({
   } = useFormContext();
   const activityRecipientType = watch('activityRecipientType');
 
-  console.log(control);
-
-  // const startDate = watch('startDate');
-  // const endDate = watch('endDate');
+  const startDate = watch('startDate');
+  const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
@@ -93,9 +93,14 @@ const ActivitySummary = ({
     />
   );
 
-  // const setEndDate = (newEnd) => {
-  //   setValue('endDate', newEnd);
-  // };
+  const setEndDate = (newEnd) => {
+    setValue('endDate', newEnd);
+
+    // this will trigger the re-render of the
+    // uncontrolled end date input
+    // it's a little clumsy, but it does work
+    setEndDateKey(`endDate-${newEnd}`);
+  };
 
   return (
     <>
@@ -231,9 +236,13 @@ const ActivitySummary = ({
                 >
                   mm/dd/yyyy
                 </div>
-                <DP
-                  register={register}
+                <ControlledDatePicker
+                  control={control}
                   name="startDate"
+                  value={startDate}
+                  setEndDate={setEndDate}
+                  maxDate={endDate}
+                  isStartDate
                 />
               </FormItem>
             </Grid>
@@ -248,12 +257,13 @@ const ActivitySummary = ({
                 >
                   mm/dd/yyyy
                 </div>
-                {/* <ControlledDatePicker
+                <ControlledDatePicker
                   control={control}
                   name="endDate"
                   value={endDate}
                   minDate={startDate}
-                /> */}
+                  key={endDateKey}
+                />
               </FormItem>
             </Grid>
             <Grid col={5}>
