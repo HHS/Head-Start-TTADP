@@ -24,7 +24,9 @@ const filterProp = PropTypes.shape({
 });
 
 const DEFAULT_VALUES = {
-  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '' },
+  startDate: {
+    Is: '', 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '',
+  },
   role: { Contains: [], 'Does not contain': [] },
 };
 

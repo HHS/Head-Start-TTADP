@@ -170,7 +170,6 @@ export default function DateRangePicker({ onApply }) {
       if (formatted.dateRange) {
         // if we're all clear, then onApply
         onApply(formatted.dateRange);
-
         setHidden(true);
       }
     }
