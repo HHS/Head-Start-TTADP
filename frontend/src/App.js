@@ -28,7 +28,6 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
-import FeatureFlag from './components/FeatureFlag';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
@@ -130,9 +129,7 @@ function App() {
           path="/recipient-tta-records/:recipientId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
-              <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound>
-                <RecipientRecord location={location} match={match} user={user} />
-              </FeatureFlag>
+              <RecipientRecord location={location} match={match} user={user} />
             </AppWrapper>
           )}
         />
@@ -156,7 +153,7 @@ function App() {
           path="/recipient-tta-records"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><RecipientSearch user={user} /></FeatureFlag>
+              <RecipientSearch user={user} />
             </AppWrapper>
           )}
         />
