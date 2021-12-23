@@ -82,9 +82,8 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        inputId={`reason-${condition}-${id}`}
+        inputId={`grantNumber-${condition}-${id}`}
         onApply={onApplyQuery}
-        type="grantNumber"
         label="Enter a grant number"
       />
     ),
@@ -112,7 +111,7 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterProgramType
-        inputId={`reason-${condition}-${id}`}
+        inputId={`programType-${condition}-${id}`}
         onApply={onApplyQuery}
         query={query}
       />
@@ -169,10 +168,8 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        id={id}
-        condition={condition}
+        inputId={`reportId-${condition}-${id}`}
         onApply={onApplyQuery}
-        type="reportId"
         label="Enter a report id"
       />
     ),

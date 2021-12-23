@@ -23,7 +23,6 @@ export default function FilterItem({
   filter,
   onRemoveFilter,
   onUpdateFilter,
-  dateRangeOptions,
   errors,
   setErrors,
   index,
@@ -171,7 +170,6 @@ export default function FilterItem({
           condition, // filter condition
           query, // filter query
           onApplyQuery, // the on apply query function handler
-          dateRangeOptions, // date range options, configurable per filter menu
         )
         : <DummySelect /> }
       <button
@@ -191,11 +189,6 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
-  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-    range: PropTypes.string,
-  })).isRequired,
   errors: PropTypes.arrayOf(PropTypes.string).isRequired,
   setErrors: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
