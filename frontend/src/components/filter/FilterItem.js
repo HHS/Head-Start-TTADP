@@ -2,33 +2,16 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import FilterDateRange from './FilterDateRange';
-import { formatDateRange } from '../DateRangeSelect';
-import FilterSpecialistSelect from './FilterSpecialistSelect';
-import {
-  DATE_CONDITIONS,
-  SELECT_CONDITIONS,
-} from '../constants';
 import './FilterItem.css';
-
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+  query: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
+  ]),
   id: PropTypes.string,
 });
-
-const DEFAULT_VALUES = {
-  startDate: {
-    Is: '', 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '',
-  },
-  role: { Contains: [], 'Does not contain': [] },
-};
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -40,10 +23,13 @@ export default function FilterItem({
   filter,
   onRemoveFilter,
   onUpdateFilter,
+  dateRangeOptions,
   errors,
   setErrors,
   index,
   validate,
+  topicOptions,
+  selectedTopic,
 }) {
   const {
     id,
@@ -52,7 +38,7 @@ export default function FilterItem({
     query,
   } = filter;
 
-  const li = useRef();
+  const fieldset = useRef();
 
   const setError = (message) => {
     const newErrors = [...errors];
@@ -61,17 +47,26 @@ export default function FilterItem({
   };
 
   const onBlur = (e) => {
+    let willValidate = true;
+
     // no validation if you are clicking on something within the filter item
-    if (li.current.contains(e.relatedTarget)) {
-      return;
+    if (fieldset.current.contains(e.relatedTarget)) {
+      willValidate = false;
     }
 
     // no validation if you are clicking on the cancel button
     if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
-      return;
+      willValidate = false;
     }
 
-    validate(filter, setError);
+    if (willValidate) {
+      const message = validate(filter);
+      // if there is an error (either new or existing), we want to refresh
+      // the validation message that's there
+      if (message || errors[index]) {
+        setError(message);
+      }
+    }
   };
 
   /**
@@ -81,12 +76,6 @@ export default function FilterItem({
    * function below
    */
   const onUpdate = (name, value) => {
-    if (name === 'condition') {
-      // Set default value.
-      const defaultQuery = DEFAULT_VALUES[topic][value];
-      onUpdateFilter(id, 'query', defaultQuery);
-    }
-
     onUpdateFilter(id, name, value);
   };
 
@@ -98,34 +87,6 @@ export default function FilterItem({
     onUpdate('query', q);
   };
 
-  const possibleFilters = [
-    {
-      id: 'role',
-      display: 'Specialist',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <FilterSpecialistSelect
-          labelId={`role-${condition}-${id}`}
-          onApplyRoles={onApplyQuery}
-        />
-      ),
-    },
-    {
-      id: 'startDate',
-      display: 'Date range',
-      conditions: DATE_CONDITIONS,
-      renderInput: () => (
-        <FilterDateRange
-          condition={condition}
-          query={query}
-          onApplyDateRange={onApplyQuery}
-          id={id}
-        />
-      ),
-    },
-  ];
-
-  const selectedTopic = possibleFilters.find((f) => f.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
 
   const onRemove = () => {
@@ -143,7 +104,7 @@ export default function FilterItem({
 
   const error = errors[index];
 
-  const fieldsetBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex border-0 padding-0';
+  const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0 position-relative';
   let fieldsetErrorClass = '';
 
   switch (error) {
@@ -161,9 +122,8 @@ export default function FilterItem({
   }
 
   const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
-
   return (
-    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={li}>
+    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
       {
         error
         && (
@@ -183,11 +143,10 @@ export default function FilterItem({
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
+
       >
-        <option value="" hidden disabled selected>- Select -</option>
-        {possibleFilters.map(({ id: filterId, display }) => (
-          <option key={filterId} value={filterId}>{display}</option>
-        ))}
+        <option value="" disabled selected hidden>- Select -</option>
+        {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
@@ -201,12 +160,19 @@ export default function FilterItem({
         disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
+
       >
-        <option value="" hidden disabled selected>- Select -</option>
+        <option value="" disabled selected hidden>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput()
+        ? selectedTopic.renderInput(
+          id, // filter id
+          condition, // filter condition
+          query, // filter query
+          onApplyQuery, // the on apply query function handler
+          dateRangeOptions, // date range options, configurable per filter menu
+        )
         : <DummySelect /> }
       <button
         type="button"
@@ -225,8 +191,19 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
+  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+    range: PropTypes.string,
+  })).isRequired,
   errors: PropTypes.arrayOf(PropTypes.string).isRequired,
   setErrors: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   validate: PropTypes.func.isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.node).isRequired,
+  selectedTopic: PropTypes.shape({
+    display: PropTypes.string,
+    renderInput: PropTypes.func,
+    conditions: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
 };

@@ -10,9 +10,8 @@
 }
 
 .ttahub-recipient-record-table-container {
-    min-height: 220px;
-    max-height: 220px;
     overflow-y: scroll;
+    max-height: 440px;
 }
 
 .ttahub-recipient-record-table-container .ttahub-recipient-record--table  th {

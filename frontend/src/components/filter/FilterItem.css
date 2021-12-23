@@ -1,10 +1,22 @@
 .ttahub-filter-menu-item {
-    gap: 0.5rem;
+    gap: 1em;
+}
+
+.usa-list--unstyled li.ttahub-filter-menu-item {
+    margin-bottom: 0.5em;
+}
+
+.ttahub-filter-menu-item [name="topic"] {
+    width: 200px;
+}
+
+.ttahub-filter-menu-item [name="condition"] {
+    width: 140px;
 }
 
 .ttahub-filter-menu-item.ttahub-filter-menu-item--error {
     border-left: 4px solid #b50909;
-    padding: 2em 1em;    
+    padding: 2em 1em 1em;
     margin: 1em 0 1em calc( -1em - 4px );
 }
 
@@ -14,10 +26,11 @@
     top: 0.5em;
 }
 
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter [name="topic"]{
-    border: 2px solid #b50909;
-}
-.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"]{
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter [name="topic"],
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--condition [name="condition"],
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-input,
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-select:nth-last-child(2),
+.ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date {
     border: 2px solid #b50909;
 }
 
@@ -33,13 +46,31 @@
 .ttahub-filter-menu-item > :nth-last-child(2),
 .ttahub-dummy-select {
     max-width: none;
-    width: 200px;
+    width: 300px;
 }
 
 .ttahub-filter-menu-item .usa-select {
     margin-top: 0.5em;
 }
 
+.ttahub-filter-menu-item .ttahub-filter-date-range-single-date .SingleDatePickerInput__withBorder {
+    border: 0;
+}
+
+.ttahub-filter-menu-item .SingleDatePicker {
+    flex: 1;
+}
+
+.ttahub-filter-menu-item .SingleDatePicker .DateInput__small {
+    width: 100%;    
+}
+.ttahub-filter-menu-item .SingleDatePicker .DateInput_input__small {
+    padding: 0.5rem;
+}
+
+.ttahub-filter-menu-item .smart-hub--filter-date-picker-button {
+    margin-right: 0.5em;    
+}
 
 @media(max-width: 768px) {
     .ttahub-filter-menu-item {
