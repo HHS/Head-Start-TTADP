@@ -36,7 +36,7 @@ const EMPTY_TEXT_INPUT = {
 };
 
 const handleArrayQuery = (q) => {
-  if (q.length) {
+  if (Array.isArray(q) && q.length) {
     return q.join(', ');
   }
   return '';
