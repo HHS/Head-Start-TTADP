@@ -1,3 +1,3 @@
-.filter-date-range-within-form .usa-form-group {
-  margin-top: 0;
+.usa-input:invalid {
+  border: 2px solid #b50909;
 }

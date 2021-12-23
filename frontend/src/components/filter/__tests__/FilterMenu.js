@@ -112,9 +112,6 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const date = screen.getByRole('textbox', { name: /date/i });
-    expect(date.value).toBe('10/31/2021');
-
     const topic = screen.getByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'role');
     userEvent.selectOptions(topic, 'startDate');

@@ -1,4 +1,5 @@
-import React from 'react';
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   DatePicker,
@@ -8,6 +9,10 @@ import moment from 'moment';
 import DateRangePicker from './DateRangePicker';
 import { formatDateRange } from '../DateRangeSelect';
 import './FilterDateRange.css';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
+
+const MIN_DATE = '2020-09-01';
+const MAX_DATE = moment().format('YYYY-MM-DD');
 
 /**
  * this date picker has bespoke date options
@@ -27,44 +32,88 @@ export default function FilterDateRange({
   condition,
   onApplyDateRange,
 }) {
+  const container = useRef();
+
   const isOnChange = (e) => onApplyDateRange(e.target.value);
+
   const onChange = (date) => {
-    onApplyDateRange(moment(date, 'MM/DD/YYYY').format('YYYY/MM/DD'));
+    // for some reason, moment parses "1" to be "1/1/2021"
+    // and I think that's unexpected behavior
+    if (date.length < 6) {
+      return;
+    }
+
+    // inspecting validity state
+    // without a ref to the actual input, I think this is the way to do it
+    if (container.current && !container.current.querySelector('input:invalid')) {
+      const d = moment(date, DATE_DISPLAY_FORMAT);
+      if (d.isValid()) {
+        onApplyDateRange(d.format('YYYY/MM/DD'));
+      }
+    }
   };
 
   switch (condition) {
     case 'Is':
       return (
-        <Dropdown
-          id="filter-date-range"
-          name="filter-date-range"
-          onChange={isOnChange}
-        >
-          {DATE_OPTIONS.map(
-            (dateOption) => <option value={dateOption.value}>{dateOption.label}</option>,
-          )}
-        </Dropdown>
+        <>
+          <label htmlFor="filter-date-range" className="sr-only">
+            date
+          </label>
+          <Dropdown
+            id="filter-date-range"
+            name="filter-date-range"
+            onChange={isOnChange}
+          >
+            {DATE_OPTIONS.map(
+              (dateOption) => (
+                <option
+                  key={dateOption.value}
+                  value={dateOption.value}
+                >
+                  {dateOption.label}
+                </option>
+              ),
+            )}
+          </Dropdown>
+        </>
       );
 
     case 'Is within':
       return (
-        <DateRangePicker onApply={onApplyDateRange} />
+        <DateRangePicker
+          onApply={onApplyDateRange}
+        />
       );
     case 'Is before':
       return (
-        <DatePicker
-          id="filter-date-range"
-          name="filter-date-range"
-          onChange={onChange}
-        />
+        <span ref={container}>
+          <label htmlFor="filter-date-range" className="sr-only">
+            date
+          </label>
+          <DatePicker
+            id="filter-date-range"
+            name="filter-date-range"
+            onChange={onChange}
+            minDate={MIN_DATE}
+            maxDate={MAX_DATE}
+          />
+        </span>
       );
     case 'Is after':
       return (
-        <DatePicker
-          id="filter-date-range"
-          name="filter-date-range"
-          onChange={onChange}
-        />
+        <span ref={container}>
+          <label htmlFor="filter-date-range" className="sr-only">
+            date
+          </label>
+          <DatePicker
+            id="filter-date-range"
+            name="filter-date-range"
+            onChange={onChange}
+            minDate={MIN_DATE}
+            maxDate={MAX_DATE}
+          />
+        </span>
       );
     default:
       return <input />;
