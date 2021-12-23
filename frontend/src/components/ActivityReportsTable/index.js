@@ -52,7 +52,6 @@ function ActivityReportsTable({
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
-        console.log('unable to fetch reports');
         setError('Unable to fetch reports');
       }
       setLoading(false);
@@ -192,8 +191,6 @@ function ActivityReportsTable({
 
   const displayReports = reports.length ? reports : [];
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
-
-  console.log(error);
 
   return (
     <>

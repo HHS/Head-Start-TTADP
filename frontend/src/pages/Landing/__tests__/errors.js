@@ -43,11 +43,11 @@ describe('Landing Page error', () => {
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
     fetchMock.get(baseAlertsWithRegionOne, { alertsCount: 0, alerts: [] });
-    fetchMock.get(baseWithRegionOne, { count: 0, rows: [] });
   });
 
   it('handles errors by displaying an error message', async () => {
     fetchMock.get(base, 500, { overwriteRoutes: true });
+    fetchMock.get(baseWithRegionOne, 500, { overwriteRoutes: true });
     const user = {
       name: 'test@test.com',
       homeRegionId: 14,
@@ -58,6 +58,7 @@ describe('Landing Page error', () => {
         },
       ],
     };
+
     renderLanding(user);
 
     const alert = await screen.findByRole('alert', { name: 'Unable to fetch reports' });
@@ -66,6 +67,7 @@ describe('Landing Page error', () => {
 
   it('no empty row is shown if there are no reports', async () => {
     fetchMock.get(base, { count: 0, rows: [] });
+    fetchMock.get(baseWithRegionOne, { count: 0, rows: [] });
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -81,6 +83,7 @@ describe('Landing Page error', () => {
 
   it('does not displays new activity report button without permission', async () => {
     fetchMock.get(base, { count: 0, rows: [] });
+    fetchMock.get(baseWithRegionOne, { count: 0, rows: [] });
     const user = {
       name: 'test@test.com',
       permissions: [
