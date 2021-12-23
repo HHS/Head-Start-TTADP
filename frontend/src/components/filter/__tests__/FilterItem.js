@@ -5,7 +5,6 @@ import {
   screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
 
 describe('Filter menu item', () => {
@@ -102,14 +101,10 @@ describe('Filter menu item', () => {
     renderFilterItem(filter, onRemove, onUpdate);
 
     const button = screen.getByRole('button', {
-      name: /Toggle the date range select menu/i,
+      name: /custom date range/i,
     });
 
     userEvent.click(button);
-
-    userEvent.click(await screen.findByRole('button', {
-      name: /select to view data from custom date range\. select apply filters button to apply selection/i,
-    }));
 
     const sd = screen.getByRole('textbox', { name: /start date/i });
     const ed = screen.getByRole('textbox', { name: /end date/i });
@@ -117,23 +112,9 @@ describe('Filter menu item', () => {
     userEvent.type(sd, '01/01/2021');
     userEvent.type(ed, '01/02/2021');
 
-    userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
+    const condition = await screen.findByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, ['Is']);
     expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
-
-    userEvent.click(button);
-
-    userEvent.click(screen.getByRole('button', {
-      name: /select to view data from year to date\. select apply filters button to apply selection/i,
-    }));
-
-    userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
-
-    const yearToDate = formatDateRange({
-      yearToDate: true,
-      forDateTime: true,
-    });
-
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', yearToDate);
   });
 
   it('display a specialist filter correctly', () => {

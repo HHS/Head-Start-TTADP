@@ -121,29 +121,38 @@ export default function DateRangePicker({ onApply }) {
   const onChangeStartDate = (startDate) => {
     let { endDate, endDateKey } = dateRange;
 
-    const newStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-    const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-    const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
-    const isBeforeMax = currentEndDate.isBefore(newStartDate);
+    // knock knock its the validity inspector
+    const { valid } = document.querySelector('#start-date').validity;
 
-    if (isBeforeMax) {
-      const diff = currentStartDate.diff(currentEndDate, 'days');
-      endDate = newStartDate.add(diff, 'days').format(DATE_DISPLAY_FORMAT);
-      endDateKey = `end-date-${endDate}`;
+    if (valid) {
+      const newStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
+      const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
+      const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
+      const isBeforeMax = currentEndDate.isBefore(newStartDate);
+
+      if (isBeforeMax) {
+        const diff = currentStartDate.diff(currentEndDate, 'days');
+        endDate = newStartDate.add(diff, 'days').format(DATE_DISPLAY_FORMAT);
+        endDateKey = `end-date-${endDate}`;
+      }
+
+      setDateRange({
+        endDate,
+        startDate: currentStartDate,
+        endDateKey,
+      });
     }
-
-    setDateRange({
-      endDate,
-      startDate: currentStartDate,
-      endDateKey,
-    });
   };
 
   const onChangeEndDate = (endDate) => {
-    setDateRange({
-      ...dateRange,
-      endDate,
-    });
+    const { valid } = document.querySelector('#end-date').validity;
+
+    if (valid) {
+      setDateRange({
+        ...dateRange,
+        endDate,
+      });
+    }
   };
 
   const onBlur = (e) => {
@@ -155,7 +164,7 @@ export default function DateRangePicker({ onApply }) {
         && customDatePicker.current
         && customDatePicker.current.contains(e.relatedTarget)
       ) {
-        return e;
+        return;
       }
 
       // validate our inputs and set an error if one is found
@@ -163,7 +172,7 @@ export default function DateRangePicker({ onApply }) {
 
       // if we set an error in the last step, we don't fire the blur behavior
       if (error.className) {
-        return e;
+        return;
       }
 
       // if so
@@ -173,8 +182,6 @@ export default function DateRangePicker({ onApply }) {
         setHidden(true);
       }
     }
-
-    return e;
   };
 
   const { endDateKey } = dateRange;

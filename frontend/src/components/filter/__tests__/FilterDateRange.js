@@ -23,24 +23,18 @@ describe('FilterDateRange', () => {
     );
   };
 
-  it('handles an empty query', () => {
+  it('handles an empty query', async () => {
     const onApplyDateRange = jest.fn();
     renderFilterDateRange('', onApplyDateRange);
     const date = screen.getByRole('textbox', { name: /date/i });
-    userEvent.type(date, '10/31');
 
-    expect(onApplyDateRange).toHaveBeenCalledWith('');
+    userEvent.type(date, '10/31');
     expect(onApplyDateRange).not.toHaveBeenCalledWith('2021/10/31');
 
-    userEvent.type(date, '/2021');
-
+    userEvent.clear(date);
+    userEvent.type(date, '10/31/2021');
+    userEvent.tab();
     expect(onApplyDateRange).toHaveBeenCalledWith('2021/10/31');
-    expect(date.value).toBe('10/31/2021');
-  });
-
-  it('handles an string query', () => {
-    renderFilterDateRange('2021/10/31');
-    expect(screen.getByRole('textbox', { name: /date/i }).value).toBe('10/31/2021');
   });
 
   it('handles an array query', () => {
