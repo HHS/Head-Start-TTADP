@@ -181,6 +181,8 @@ export default function FilterMenu({
 
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
 
+  const selectItems = items.filter((item) => !prohibitedFilters.includes(item.topic));
+
   return (
     <DropdownMenu
       buttonText="Filters"
@@ -199,19 +201,17 @@ export default function FilterMenu({
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">
-            {items.map((filter, index) => {
+            {selectItems.map((filter, index) => {
               const { topic } = filter;
 
-              if (prohibitedFilters.includes(topic)) {
-                return null;
-              }
-
+              // this is some jujitsu
               const topicOptions = FILTER_CONFIG.filter((config) => (
                 topic === config.id
                 || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
               )).map(({ id: filterId, display }) => (
                 <option key={filterId} value={filterId}>{display}</option>
               ));
+
               const newTopic = {
                 display: '',
                 renderInput: () => {},
