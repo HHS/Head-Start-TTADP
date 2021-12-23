@@ -460,6 +460,7 @@ describe('Landing Page error', () => {
       ],
     };
     renderLanding(user);
+    screen.logTestingPlaygroundURL();
     const alert = await screen.findByRole('alert');
     expect(alert).toBeVisible();
     expect(alert).toHaveTextContent('Unable to fetch reports');

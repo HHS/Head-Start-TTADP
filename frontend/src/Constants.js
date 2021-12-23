@@ -8,6 +8,7 @@ export const WITHIN = 'Is within';
 export const IS = 'Is';
 export const DATE_IS = 'Is';
 export const IS_NOT = 'Is not';
+export const CUSTOM = 'Custom';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
@@ -19,15 +20,15 @@ export const QUERY_CONDITIONS = {
   [AFTER]: 'aft',
   [WITHIN]: 'win',
   [IS]: 'in[]',
-  [DATE_IS]: 'win',
   [IS_NOT]: 'nin[]',
+  [CUSTOM]: 'win',
 };
 
 export const DATE_CONDITIONS = [
   BEFORE,
   AFTER,
   WITHIN,
-  DATE_IS,
+  CUSTOM,
 ];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';

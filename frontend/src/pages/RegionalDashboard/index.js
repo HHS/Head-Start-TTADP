@@ -83,19 +83,6 @@ export default function RegionalDashboard() {
 
   const filtersToApply = expandFilters(filters);
 
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
-
   return (
     <div className="ttahub-dashboard">
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
@@ -111,7 +98,6 @@ export default function RegionalDashboard() {
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}
             onApplyFilters={onApplyFilters}
-            dateRangeOptions={dateRangeOptions}
             onRemoveFilter={onRemoveFilter}
           />
         </Grid>

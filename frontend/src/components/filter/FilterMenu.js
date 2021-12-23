@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
 import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
-import { formatDateRange } from '../DateRangeSelect';
+
 import usePrevious from '../../hooks/usePrevious';
 import { filterProp } from './props';
 
@@ -17,7 +17,7 @@ import { filterProp } from './props';
  * @returns JSX Object
  */
 export default function FilterMenu({
-  filters, onApplyFilters, allowedFilters, dateRangeOptions, applyButtonAria,
+  filters, onApplyFilters, allowedFilters, applyButtonAria,
 }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
@@ -226,7 +226,6 @@ export default function FilterMenu({
                   onUpdateFilter={onUpdateFilter}
                   key={filter.id}
                   filter={filter}
-                  dateRangeOptions={dateRangeOptions}
                   errors={errors}
                   setErrors={setErrors}
                   validate={validate}
@@ -249,26 +248,9 @@ FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
   allowedFilters: PropTypes.arrayOf(PropTypes.string),
-  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-    range: PropTypes.string,
-  })),
   applyButtonAria: PropTypes.string.isRequired,
 };
 
 FilterMenu.defaultProps = {
   allowedFilters: AVAILABLE_FILTERS,
-  dateRangeOptions: [
-    {
-      label: 'Year to date',
-      value: 1,
-      range: formatDateRange({ yearToDate: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ],
 };

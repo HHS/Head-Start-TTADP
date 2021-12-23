@@ -9,11 +9,12 @@ import userEvent from '@testing-library/user-event';
 import DateRangePicker from '../DateRangePicker';
 
 describe('DateRangePicker', () => {
-  const renderDateRangePicker = (onApply = jest.fn()) => {
+  const renderDateRangePicker = (query, onApply = jest.fn()) => {
     render(
       <>
         <DateRangePicker
           onApply={onApply}
+          query={query}
         />
         <button type="button">Dumb button</button>
       </>,
@@ -21,8 +22,8 @@ describe('DateRangePicker', () => {
   };
 
   it('throws errors', async () => {
-    renderDateRangePicker();
-    const toggle = await screen.findByRole('button', { name: /custom date range/i });
+    renderDateRangePicker('');
+    const toggle = await screen.findByRole('button', { name: /change custom date range/i });
     userEvent.click(toggle);
 
     const dumb = await screen.findByRole('button', { name: /dumb button/i });
@@ -56,14 +57,16 @@ describe('DateRangePicker', () => {
   });
 
   it('adjusts the deltas', async () => {
-    renderDateRangePicker();
-    const toggle = await screen.findByRole('button', { name: /custom date range/i });
+    renderDateRangePicker('2021/10/01-2021/10/02');
+    const toggle = await screen.findByRole('button', { name: /change custom date range/i });
     userEvent.click(toggle);
 
     const startDate = await screen.findByRole('textbox', { name: /start date/i });
+    userEvent.clear(startDate);
     userEvent.type(startDate, '11/03/2021');
 
     const endDate = await screen.findByRole('textbox', { name: /end date/i });
+    userEvent.clear(endDate);
     userEvent.type(endDate, '11/10/2021');
 
     userEvent.clear(startDate);
