@@ -7,7 +7,7 @@ import {
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import { filtersToQueryString } from '../Filter';
+import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
@@ -32,7 +32,6 @@ function ActivityReportsTable({
   showFilter,
   onUpdateFilters,
   tableCaption,
-  dateTime,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -231,7 +230,6 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
-          dateTime={dateTime}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
@@ -287,7 +285,12 @@ ActivityReportsTable.propTypes = {
     PropTypes.shape({
       condition: PropTypes.string,
       id: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.arrayOf(PropTypes.number),
+      ]),
       topic: PropTypes.string,
     }),
   ).isRequired,

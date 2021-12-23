@@ -151,13 +151,96 @@ describe('Filter Menu', () => {
     const message = await screen.findByText('Show results for the following filters.');
     userEvent.click(message);
 
-    const specialists = await screen.findByRole('button', { name: /toggle the Change filter by specialists menu/i });
-    userEvent.click(specialists);
-
-    const check = await screen.findByRole('checkbox', { name: /select health specialist \(hs\)/i });
-    userEvent.click(check);
-
     expect(message).toBeVisible();
+  });
+
+  it('the clear all button works', async () => {
+    const filters = [
+      {
+        id: 'filter-2',
+        display: '',
+        conditions: [],
+        topic: 'role',
+        query: [
+          'Family Engagement Specialist',
+        ],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-3',
+        display: '',
+        conditions: [],
+        topic: 'programSpecialist',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-4',
+        display: '',
+        conditions: [],
+        topic: 'grantNumber',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-5',
+        display: '',
+        conditions: [],
+        topic: 'programType',
+        query: ['EHS'],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-6',
+        display: '',
+        conditions: [],
+        topic: 'reason',
+        query: ['COVID-19 response'],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-7',
+        display: '',
+        conditions: [],
+        topic: 'grantee',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-8',
+        display: '',
+        conditions: [],
+        topic: 'targetPopulation',
+        query: [],
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-9',
+        display: '',
+        conditions: [],
+        topic: 'topic',
+        query: [],
+        condition: 'Contains',
+      },
+    ];
+
+    renderFilterMenu(filters);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    let topics = await screen.findAllByRole('combobox', { name: 'topic' });
+    expect(topics.length).toBe(8);
+
+    const clear = await screen.findByRole('button', { name: /Clear all filters/i });
+    act(() => userEvent.click(clear));
+
+    // findAll errors out here
+    topics = document.querySelectorAll('[name="topic"]');
+    expect(topics.length).toBe(0);
   });
   it('validates input and sets focus', async () => {
     const filters = [

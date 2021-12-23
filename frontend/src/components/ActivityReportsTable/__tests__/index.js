@@ -23,17 +23,6 @@ const withRegionOne = '&region.in[]=1';
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
 const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
 
-const defaultUser = {
-  name: 'test@test.com',
-  homeRegionId: 14,
-  permissions: [
-    {
-      scopeId: 3,
-      regionId: 1,
-    },
-  ],
-};
-
 const mockFetchWithRegionOne = () => {
   fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
 };
@@ -172,25 +161,6 @@ describe('Table menus & selections', () => {
 
       fireEvent.click(singleReportCheck);
       expect(singleReportCheck.checked).toBe(false);
-    });
-  });
-
-  describe('Date display', () => {
-    afterEach(() => fetchMock.restore());
-
-    beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        defaultBaseUrlWithRegionOne,
-        { count: 10, rows: generateXFakeReports(10) },
-      );
-    });
-
-    it('Shows date display', async () => {
-      const dateTime = { label: '11/03/2021 - 12/03/2021', timestamp: '2021/11/03-2021/12/03' };
-      renderTable(defaultUser, dateTime);
-      expect(await screen.findByRole('heading', { name: /activity reports/i })).toBeVisible();
-      expect(await screen.findByText(/11\/03\/2021 - 12\/03\/2021/i)).toBeVisible();
     });
   });
 
