@@ -27,8 +27,7 @@ import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
-import FilterMenu from '../../components/filter/FilterMenu';
-import FilterPills from '../../components/filter/FilterPills';
+import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
@@ -221,14 +220,10 @@ function Landing({ user }) {
           </Grid>
           <Grid col={10} className="flex-align-self-center">
             <div className="display-flex flex-wrap margin-bottom-2">
-              <FilterMenu
+              <FilterPanel
                 applyButtonAria="apply filters"
                 filters={filters}
                 onApplyFilters={onApply}
-                onRemoveFilter={onRemoveFilter}
-              />
-              <FilterPills
-                filters={filters}
                 onRemoveFilter={onRemoveFilter}
               />
             </div>
