@@ -109,7 +109,7 @@ function Landing({ user }) {
       },
       ]);
     }
-  }, [defaultRegion]);
+  }, [defaultRegion, setFilters]);
 
   useEffect(() => {
     async function fetchAlertReports() {

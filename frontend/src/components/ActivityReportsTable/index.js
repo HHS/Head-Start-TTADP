@@ -16,7 +16,6 @@ import './index.css';
 
 function ActivityReportsTable({
   filters,
-  showFilter,
   onUpdateFilters,
   tableCaption,
 }) {
@@ -207,7 +206,6 @@ function ActivityReportsTable({
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
           toggleSelectAll={toggleSelectAll}
-          showFilter={showFilter}
           onUpdateFilters={onUpdateFilters}
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
@@ -281,7 +279,6 @@ ActivityReportsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
-  showFilter: PropTypes.bool.isRequired,
   onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
   dateTime: PropTypes.shape({
