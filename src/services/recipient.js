@@ -18,8 +18,9 @@ export async function allRecipients() {
   });
 }
 
+const todaysDate = moment().format('MM/DD/yyyy');
+
 export async function recipientById(recipientId, grantScopes) {
-  const todaysDate = moment().format('MM/DD/yyyy');
   return Recipient.findOne({
     attributes: ['id', 'name', 'recipientType'],
     where: {
@@ -114,7 +115,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
               },
               {
                 endDate: {
-                  [Op.gte]: '2020-09-01',
+                  [Op.between]: ['2020-09-01', todaysDate],
                 },
               },
             ],
