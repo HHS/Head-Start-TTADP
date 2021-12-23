@@ -46,11 +46,14 @@ function ActivityReportsTable({
           perPage,
           filterQuery,
         );
+
+        console.log({ count, rows });
+
         setReports(rows);
         setReportsCount(count || 0);
       } catch (e) {
         // eslint-disable-next-line no-console
-        // console.log(e);
+        console.log(e);
         setError('Unable to fetch reports');
       }
       setLoading(false);
