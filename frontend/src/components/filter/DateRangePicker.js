@@ -10,7 +10,19 @@ import './DateRangePicker.css';
 import moment from 'moment';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
-export default function DateRangePicker({ onApply }) {
+export default function DateRangePicker({ onApply, query }) {
+  // check to see if the query is splittable
+  const [start, end] = query.split('-').map((d) => {
+    const m = moment(d, 'YYYY/MM/DD');
+    if (m.isValid()) {
+      return {
+        default: m.format('YYYY-MM-DD'),
+        initial: m.format('MM/DD/YYYY'),
+      };
+    }
+    return '';
+  });
+
   const [hidden, setHidden] = useState(true);
   const [error, setError] = useState({
     className: '',
@@ -18,12 +30,12 @@ export default function DateRangePicker({ onApply }) {
     icon: false,
   });
   const [dateRange, setDateRange] = useState({
-    startDate: '',
-    endDate: '',
+    startDate: start.initial,
+    endDate: end.initial,
     endDateKey: 'end-date',
   });
 
-  const today = useMemo(() => moment().format('YYYY-MM-DD'), []);
+  const tomorrow = useMemo(() => moment().add(1, 'days').format('YYYY-MM-DD'), []);
 
   const formatted = useMemo(() => {
     const formattedValues = {
@@ -211,8 +223,8 @@ export default function DateRangePicker({ onApply }) {
           id="start-date"
           name="startDate"
           minDate="2020-09-01"
-          maxDate={today}
-          defaultValue={formatted.startDate}
+          maxDate={tomorrow}
+          defaultValue={start.default}
           onChange={onChangeStartDate}
         />
         <label id="endDateLabel" className="usa-label" htmlFor="end-date">End date</label>
@@ -222,9 +234,9 @@ export default function DateRangePicker({ onApply }) {
           aria-describedby="endDateLabel custom-date-range-hint"
           id="end-date"
           name="endDate"
-          defaultValue={formatted.endDate}
+          defaultValue={end.default}
           minDate={formatted.startDate}
-          maxDate={today}
+          maxDate={tomorrow}
           onChange={onChangeEndDate}
         />
       </fieldset>
@@ -234,4 +246,5 @@ export default function DateRangePicker({ onApply }) {
 
 DateRangePicker.propTypes = {
   onApply: PropTypes.func.isRequired,
+  query: PropTypes.string.isRequired,
 };

@@ -122,9 +122,14 @@ export function queryStringToFilters(queryString) {
     const queryKeys = Object.keys(QUERY_CONDITIONS);
     const queryConditions = Object.values(QUERY_CONDITIONS);
 
-    const index = queryConditions.findIndex((queryCondition) => (
-      decodeURIComponent(searchCondition) === queryCondition
-    ));
+    const decodedQueryParam = decodeQueryParam(query);
+
+    const findCondition = (queryCondition) => {
+      const decoded = decodeURIComponent(searchCondition);
+      return decoded === queryCondition;
+    };
+
+    const index = queryConditions.findIndex(findCondition);
 
     const condition = queryKeys[index];
 
@@ -133,7 +138,7 @@ export function queryStringToFilters(queryString) {
         id: uuidv4(),
         topic,
         condition,
-        query: decodeQueryParam(query),
+        query: decodedQueryParam,
       };
     }
 
@@ -156,5 +161,6 @@ export function filtersToQueryString(filters, region) {
   if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
     queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
   }
+
   return queryFragments.join('&');
 }

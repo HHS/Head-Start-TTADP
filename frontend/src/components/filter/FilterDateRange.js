@@ -31,6 +31,7 @@ const DATE_OPTIONS = [
 export default function FilterDateRange({
   condition,
   onApplyDateRange,
+  query,
 }) {
   // we'll need this to do some of that vanilla stuff
   const container = useRef();
@@ -77,6 +78,7 @@ export default function FilterDateRange({
     case 'Is within':
       return (
         <DateRangePicker
+          query={query}
           onApply={onApplyDateRange}
         />
       );
@@ -92,6 +94,7 @@ export default function FilterDateRange({
             onChange={onChange}
             minDate={MIN_DATE}
             maxDate={MAX_DATE}
+            defaultValue={query}
           />
         </span>
       );
@@ -107,6 +110,7 @@ export default function FilterDateRange({
             onChange={onChange}
             minDate={MIN_DATE}
             maxDate={MAX_DATE}
+            defaultValue={query}
           />
         </span>
       );
@@ -118,4 +122,5 @@ export default function FilterDateRange({
 FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
+  query: PropTypes.string.isRequired,
 };

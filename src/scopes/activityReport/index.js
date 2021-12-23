@@ -35,10 +35,6 @@ export const topicToQuery = {
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
-    is: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinStartDates(startDate, endDate);
-    },
     win: (query) => {
       const [startDate, endDate] = query.split('-');
       return withinStartDates(startDate, endDate);
