@@ -82,7 +82,7 @@ export default function DateRangePicker({ onApply }) {
     }
 
     // We're inspecting the validity state of the input as recommended by Truss in their docs
-    // for this component
+    // for this component.
     if (
       customDatePicker.current
       && customDatePicker.current.querySelector('input:invalid')

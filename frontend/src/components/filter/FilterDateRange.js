@@ -32,18 +32,13 @@ export default function FilterDateRange({
   condition,
   onApplyDateRange,
 }) {
+  // we'll need this to do some of that vanilla stuff
   const container = useRef();
 
   const isOnChange = (e) => onApplyDateRange(e.target.value);
 
   const onChange = (date) => {
-    // for some reason, moment parses "1" to be "1/1/2021"
-    // and I think that's unexpected behavior
-    if (date.length < 6) {
-      return;
-    }
-
-    // inspecting validity state
+    // inspecting validity state per truss docs
     // without a ref to the actual input, I think this is the way to do it
     if (container.current && !container.current.querySelector('input:invalid')) {
       const d = moment(date, DATE_DISPLAY_FORMAT);
