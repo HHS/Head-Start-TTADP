@@ -36,9 +36,4 @@ describe('FilterDateRange', () => {
     userEvent.tab();
     expect(onApplyDateRange).toHaveBeenCalledWith('2021/10/31');
   });
-
-  it('handles an array query', () => {
-    renderFilterDateRange(['Early childhood specialist']);
-    expect(screen.getByRole('textbox', { name: /date/i }).value).toBe('');
-  });
 });

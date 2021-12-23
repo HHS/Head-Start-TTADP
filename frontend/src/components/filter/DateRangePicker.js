@@ -12,7 +12,8 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 export default function DateRangePicker({ onApply, query }) {
   // check to see if the query is splittable
-  const [start, end] = query.split('-').map((d) => {
+  // eslint-disable-next-line prefer-const
+  let [start, end] = query.split('-').map((d) => {
     const m = moment(d, 'YYYY/MM/DD');
     if (m.isValid()) {
       return {
@@ -20,8 +21,18 @@ export default function DateRangePicker({ onApply, query }) {
         initial: m.format('MM/DD/YYYY'),
       };
     }
-    return '';
+    return {
+      default: '',
+      initial: '',
+    };
   });
+
+  if (!end) {
+    end = {
+      default: '',
+      initial: '',
+    };
+  }
 
   const [hidden, setHidden] = useState(true);
   const [error, setError] = useState({
@@ -204,8 +215,8 @@ export default function DateRangePicker({ onApply, query }) {
       onBlur={onBlur}
       ref={customDatePicker}
     >
-      <button type="button" className="usa-select text-left" aria-expanded={!hidden} aria-controls="custom-date-range" onClick={toggleHidden}>
-        Custom date range
+      <button aria-label="change custom date range" type="button" className="usa-select text-left" aria-expanded={!hidden} aria-controls="custom-date-range" onClick={toggleHidden}>
+        { query || 'Custom date range' }
       </button>
       <fieldset id="custom-date-range" className="width-mobile bg-white border margin-0 margin-top-1 padding-1 ttahub-custom-date-range-picker-fields position-absolute" hidden={hidden}>
 

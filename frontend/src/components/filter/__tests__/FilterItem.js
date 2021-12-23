@@ -102,7 +102,7 @@ describe('Filter menu item', () => {
 
   it('applies the proper date range', async () => {
     const filter = {
-      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'Is within', query: '2021/01/01-2021/10/28',
+      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'Custom', query: '2021/01/01-2021/10/28',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -110,7 +110,7 @@ describe('Filter menu item', () => {
     renderFilterItem(filter, onRemove, onUpdate);
 
     const button = screen.getByRole('button', {
-      name: /custom date range/i,
+      name: /change custom date range/i,
     });
 
     userEvent.click(button);
@@ -118,11 +118,12 @@ describe('Filter menu item', () => {
     const sd = screen.getByRole('textbox', { name: /start date/i });
     const ed = screen.getByRole('textbox', { name: /end date/i });
 
+    userEvent.clear(sd);
+    userEvent.clear(ed);
+
     userEvent.type(sd, '01/01/2021');
     userEvent.type(ed, '01/02/2021');
 
-    const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, ['Is']);
     expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
 
     userEvent.click(button);
