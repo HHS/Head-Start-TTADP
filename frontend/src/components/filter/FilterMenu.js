@@ -182,6 +182,7 @@ export default function FilterMenu({
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
 
   const selectItems = items.filter((item) => !prohibitedFilters.includes(item.topic));
+  const badFilters = [...selectedFilters, ...prohibitedFilters];
 
   return (
     <DropdownMenu
@@ -203,14 +204,16 @@ export default function FilterMenu({
           <div className="margin-bottom-1">
             {selectItems.map((filter, index) => {
               const { topic } = filter;
-
               // this is some jujitsu
-              const topicOptions = FILTER_CONFIG.filter((config) => (
-                topic === config.id
-                || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
-              )).map(({ id: filterId, display }) => (
-                <option key={filterId} value={filterId}>{display}</option>
-              ));
+              const topicOptions = FILTER_CONFIG
+                // filter out the bad topics
+                .filter((config) => (
+                  topic === config.id || !badFilters.includes(config.id)
+                ))
+                // return a new array of option elements
+                .map(({ id: filterId, display }) => (
+                  <option key={filterId} value={filterId}>{display}</option>
+                ));
 
               const newTopic = {
                 display: '',
