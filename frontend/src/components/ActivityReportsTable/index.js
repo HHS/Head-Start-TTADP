@@ -14,19 +14,6 @@ import { REPORTS_PER_PAGE } from '../../Constants';
 
 import './index.css';
 
-const emptyReport = {
-  id: 0,
-  displayId: '',
-  activityRecipients: [],
-  startDate: '',
-  author: {},
-  legacyId: '',
-  topics: [],
-  collaborators: [],
-  lastSaved: '',
-  calculatedStatus: '',
-};
-
 function ActivityReportsTable({
   filters,
   showFilter,
@@ -202,7 +189,7 @@ function ActivityReportsTable({
     );
   };
 
-  const displayReports = reports.length ? reports : [emptyReport];
+  const displayReports = reports.length ? reports : [];
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
@@ -215,7 +202,7 @@ function ActivityReportsTable({
         )}
       </Grid>
 
-      <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
+      <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
         <TableHeader
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}

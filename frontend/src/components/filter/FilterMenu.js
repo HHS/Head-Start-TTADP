@@ -33,11 +33,11 @@ export default function FilterMenu({
       return 'Please enter a condition';
     }
 
-    if (!query || !query.length) {
+    if (!query || !query.toString().length) {
       return 'Please enter a value';
     }
 
-    if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
+    if (query.toString().includes('Invalid date') || (topic === 'startDate' && query.toString() === '-')) {
       return 'Please enter a value';
     }
 
