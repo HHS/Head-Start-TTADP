@@ -87,7 +87,6 @@ describe('Recipient DB service', () => {
         startDate: new Date('2020-01-01'),
         endDate: new Date('2020-01-15'),
       }),
-
       Grant.create({
         id: 80,
         number: '3145355',
@@ -318,6 +317,18 @@ describe('Recipient DB service', () => {
         id: 68,
         name: 'Apple Crisp',
       },
+      {
+        id: 69,
+        name: 'Pumpkin Pie',
+      },
+      {
+        id: 70,
+        name: 'Pumpkin Bread',
+      },
+      {
+        id: 71,
+        name: 'Pumpkin Coffee',
+      },
     ];
 
     const grants = [
@@ -403,6 +414,37 @@ describe('Recipient DB service', () => {
         endDate: new Date(2020, 10, 31),
         grantSpecialistName: 'Allen',
       },
+
+      {
+        id: 59,
+        recipientId: 69,
+        regionId: 1,
+        number: '582353',
+        programSpecialistName: 'John Tom',
+        status: 'Inactive',
+        endDate: new Date(moment().add(2, 'days').format('MM/DD/yyyy')),
+        grantSpecialistName: 'Bill Smith',
+      },
+      {
+        id: 60,
+        recipientId: 70,
+        regionId: 1,
+        number: '582354',
+        programSpecialistName: 'John Tom',
+        status: 'Inactive',
+        endDate: new Date(moment().format('MM/DD/yyyy')),
+        grantSpecialistName: 'Bill Smith',
+      },
+      {
+        id: 61,
+        recipientId: 71,
+        regionId: 1,
+        number: '582355',
+        programSpecialistName: 'Grant West',
+        status: 'Inactive',
+        endDate: new Date('09/01/2020'),
+        grantSpecialistName: 'Joe Allen',
+      },
     ];
 
     function regionToScope(regionId) {
@@ -468,6 +510,13 @@ describe('Recipient DB service', () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 1);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([63, 66]);
+    });
+
+    it('finds inactive grants that fall in the accepted range', async () => {
+      const foundRecipients = await recipientsByName('Pumpkin', regionToScope(1), 'name', 'asc', 0);
+      expect(foundRecipients.rows.length).toBe(2);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
     });
   });
 });
