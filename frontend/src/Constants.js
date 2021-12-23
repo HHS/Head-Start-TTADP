@@ -6,6 +6,7 @@ export const BEFORE = 'Is before';
 export const AFTER = 'Is after';
 export const WITHIN = 'Is within';
 export const IS = 'Is';
+export const DATE_IS = 'Is';
 export const IS_NOT = 'Is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
@@ -18,6 +19,7 @@ export const QUERY_CONDITIONS = {
   [AFTER]: 'aft',
   [WITHIN]: 'win',
   [IS]: 'in[]',
+  [DATE_IS]: 'win',
   [IS_NOT]: 'nin[]',
 };
 
@@ -25,7 +27,7 @@ export const DATE_CONDITIONS = [
   BEFORE,
   AFTER,
   WITHIN,
-  IS,
+  DATE_IS,
 ];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';

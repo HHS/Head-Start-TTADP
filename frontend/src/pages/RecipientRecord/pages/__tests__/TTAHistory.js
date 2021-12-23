@@ -31,13 +31,13 @@ describe('Recipient Record - TTA History', () => {
   };
 
   beforeEach(async () => {
-    const overviewUrl = `/api/widgets/overview?startDate.is=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
-    const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.is=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
+    const overviewUrl = `/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
+    const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
     fetchMock.get(overviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
 
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.is=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.is=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
+    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
   });
 
   afterEach(() => {

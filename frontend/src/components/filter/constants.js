@@ -63,14 +63,13 @@ export const FILTER_CONFIG = [
       }
       return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
     },
-    renderInput: (id, condition, query, onApplyQuery, dateRangeOptions) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterDateRange
         condition={condition}
         query={query}
         updateSingleDate={onApplyQuery}
         onApplyDateRange={onApplyQuery}
-        options={dateRangeOptions}
-        id={id}
+
       />
     ),
   },
