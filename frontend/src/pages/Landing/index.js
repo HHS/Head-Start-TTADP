@@ -102,11 +102,12 @@ function Landing({ user }) {
 
   useEffect(() => {
     if (defaultRegion !== 14) {
-      setFilters([{
-        topic: 'region',
-        condition: 'Contains',
-        query: defaultRegion,
-      },
+      setFilters([
+        {
+          topic: 'region',
+          condition: 'Contains',
+          query: defaultRegion.toString(),
+        },
       ]);
     }
   }, [defaultRegion, setFilters]);
