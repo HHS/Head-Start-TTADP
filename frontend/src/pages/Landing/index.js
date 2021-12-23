@@ -221,6 +221,7 @@ function Landing({ user }) {
           <Grid col={10} className="flex-align-self-center">
             <div className="display-flex flex-wrap margin-bottom-2">
               <FilterMenu
+                applyButtonAria="apply filters"
                 filters={filters}
                 onApplyFilters={onApply}
                 onRemoveFilter={onRemoveFilter}
