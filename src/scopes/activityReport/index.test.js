@@ -1441,4 +1441,50 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
     });
   });
+  describe('region id', () => {
+    let includedReport1;
+    let includedReport2;
+    let excludedReport;
+    let possibleIds;
+
+    beforeAll(async () => {
+      includedReport1 = await ActivityReport.create({ ...draftReport, regionId: 2 });
+      includedReport2 = await ActivityReport.create({ ...draftReport, regionId: 2 });
+      excludedReport = await ActivityReport.create({ ...draftReport, regionId: 3 });
+      possibleIds = [
+        includedReport1.id,
+        includedReport2.id,
+        excludedReport.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+      });
+    });
+
+    it('includes region id', async () => {
+      const filters = { 'region.in': ['2'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+    });
+
+    it('excludes region id', async () => {
+      const filters = { 'region.nin': ['2'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+  });
 });
