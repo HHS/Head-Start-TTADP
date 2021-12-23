@@ -109,21 +109,15 @@ Pill.propTypes = {
 
 /* Filter Pills */
 export default function FilterPills({ filters, onRemoveFilter }) {
-  return (
-    <>
-      {
-        filters.map((filter, index) => (
-          <Pill
-            id={filter.id}
-            key={filter.id}
-            filter={filter}
-            isFirst={index === 0}
-            onRemoveFilter={onRemoveFilter}
-          />
-        ))
-      }
-    </>
-  );
+  return filters.map((filter, index) => (
+    <Pill
+      id={filter.id}
+      key={filter.id}
+      filter={filter}
+      isFirst={index === 0}
+      onRemoveFilter={onRemoveFilter}
+    />
+  ));
 }
 
 FilterPills.propTypes = {
