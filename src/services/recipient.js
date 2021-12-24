@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import {
   Grant, Recipient, Program, sequelize,
 } from '../models';
@@ -16,6 +17,8 @@ export async function allRecipients() {
     ],
   });
 }
+
+const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
@@ -38,7 +41,7 @@ export async function recipientById(recipientId, grantScopes) {
                 },
                 {
                   endDate: {
-                    [Op.gte]: '2020-09-01',
+                    [Op.between]: ['2020-09-01', todaysDate],
                   },
                 },
               ],
@@ -112,7 +115,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
               },
               {
                 endDate: {
-                  [Op.gte]: '2020-09-01',
+                  [Op.between]: ['2020-09-01', todaysDate],
                 },
               },
             ],
