@@ -13,7 +13,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
-import { getReportAlerts } from '../../fetchers/activityReports';
+import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
@@ -65,6 +65,8 @@ function Landing({ user }) {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [alertFilters, setAlertFilters] = useState([]);
+  const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
 
   const defaultRegion = regions[0] || user.homeRegionId || 0;
 
@@ -150,10 +152,20 @@ function Landing({ user }) {
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to my alerts`);
   };
 
-  const handleDownloadAllAlerts = () => {
+  const handleDownloadAllAlerts = async () => {
     const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
-    window.location.assign(downloadURL);
+
+    try {
+      setIsDownloadingAlerts(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (e) {
+      setDownloadAlertsError(true);
+    } finally {
+      setIsDownloadingAlerts(false);
+    }
   };
 
   useEffect(() => {
@@ -287,6 +299,8 @@ function Landing({ user }) {
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
           message={message}
+          isDownloadingAlerts={isDownloadingAlerts}
+          downloadAlertsError={downloadAlertsError}
         />
         <ActivityReportsTable
           filters={filters}
