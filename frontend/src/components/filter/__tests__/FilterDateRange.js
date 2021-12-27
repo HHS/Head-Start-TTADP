@@ -28,6 +28,8 @@ describe('FilterDateRange', () => {
     renderFilterDateRange('', onApplyDateRange);
     const date = screen.getByRole('textbox', { name: /date/i });
     userEvent.type(date, '10/31/2021');
-    expect(onApplyDateRange).toHaveBeenCalledWith('2021/10/31');
+    expect(onApplyDateRange).toHaveBeenCalled();
+    const [hidden] = await screen.findAllByRole('textbox', { hidden: true });
+    expect(hidden).toHaveValue('2021-10-31');
   });
 });

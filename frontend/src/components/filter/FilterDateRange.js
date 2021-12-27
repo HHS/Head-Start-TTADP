@@ -41,9 +41,6 @@ export default function FilterDateRange({
   const onChange = (date) => {
     // inspecting validity state per truss docs
     // without a ref to the actual input, I think this is the way to do it
-
-    console.log(date);
-
     if (container.current && !container.current.querySelector('input:invalid')) {
       const d = moment(date, DATE_DISPLAY_FORMAT);
       if (d.isValid()) {
