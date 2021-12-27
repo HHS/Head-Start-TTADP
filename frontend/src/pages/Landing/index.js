@@ -14,6 +14,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
+import UserContext from '../../UserContext';
 import { getReportAlerts } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
@@ -42,7 +43,11 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   return `${from}-${to} of ${reportsCount}`;
 }
 
-function Landing({ user }) {
+function Landing() {
+  const { user } = useContext(UserContext);
+
+  console.log(user);
+
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
   const regionToUse = regions[0] || user.homeRegionId || 0;
