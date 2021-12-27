@@ -102,7 +102,7 @@ describe('Filter menu item', () => {
 
   it('applies the proper date range', async () => {
     const filter = {
-      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'Custom', query: '2021/01/01-2021/10/28',
+      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'Is within', query: '2021/01/01-2021/10/28',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();

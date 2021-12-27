@@ -57,20 +57,21 @@ describe('DateRangePicker', () => {
   });
 
   it('adjusts the deltas', async () => {
-    renderDateRangePicker('2021/10/01-2021/10/02');
+    renderDateRangePicker('2021/11/03-2021/11/10');
     const toggle = await screen.findByRole('button', { name: /change custom date range/i });
     userEvent.click(toggle);
 
     const startDate = await screen.findByRole('textbox', { name: /start date/i });
-    userEvent.clear(startDate);
-    userEvent.type(startDate, '11/03/2021');
+    // userEvent.clear(startDate);
+    // userEvent.type(startDate, '11/03/2021');
 
     const endDate = await screen.findByRole('textbox', { name: /end date/i });
-    userEvent.clear(endDate);
-    userEvent.type(endDate, '11/10/2021');
+    // userEvent.clear(endDate);
+    // userEvent.type(endDate, '11/10/2021');
 
     userEvent.clear(startDate);
     act(() => userEvent.type(startDate, '11/11/2021'));
+    userEvent.tab();
     userEvent.tab();
     expect(endDate.value).toBe('11/18/2021');
   });

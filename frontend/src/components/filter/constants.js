@@ -53,6 +53,7 @@ export const FILTER_CONFIG = [
       'Is within': YEAR_TO_DATE,
       'Is after': '',
       'Is before': '',
+      In: '',
     },
     displayQuery: (query) => {
       if (query.includes('-')) {
@@ -69,7 +70,6 @@ export const FILTER_CONFIG = [
         query={query}
         updateSingleDate={onApplyQuery}
         onApplyDateRange={onApplyQuery}
-
       />
     ),
   },
