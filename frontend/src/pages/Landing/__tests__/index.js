@@ -43,7 +43,7 @@ const renderLanding = (user) => {
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <Landing authenticated user={user} />
+          <Landing authenticated />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
     </MemoryRouter>,
