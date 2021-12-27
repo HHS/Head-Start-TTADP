@@ -99,7 +99,9 @@ function App() {
           path="/activity-reports"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <LandingLayout><Landing match={match} user={user} /></LandingLayout>
+              <LandingLayout>
+                <Landing match={match} />
+              </LandingLayout>
             </AppWrapper>
           )}
         />

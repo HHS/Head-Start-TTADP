@@ -528,7 +528,6 @@ describe('handleApplyAlertFilters', () => {
     };
     renderLanding(user);
 
-    await screen.findByRole('heading', { name: /My activity report alerts/i });
     // Only one filters button should be shown.
     const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
     expect(allFilterButtons.length).toBe(1);
