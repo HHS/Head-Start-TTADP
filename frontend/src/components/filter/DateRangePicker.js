@@ -1,36 +1,30 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Alert,
-  DatePicker,
 } from '@trussworks/react-uswds';
-
-import './DateRangePicker.css';
 import moment from 'moment';
+import DatePicker from '../DatePicker';
+import './DateRangePicker.css';
+
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
-export default function DateRangePicker({ onApply, query }) {
-  // check to see if the query is splittable
-  // eslint-disable-next-line prefer-const
-  let [start, end] = query.split('-').map((d) => {
-    const m = moment(d, 'YYYY/MM/DD');
-    if (m.isValid()) {
-      return {
-        default: m.format('YYYY-MM-DD'),
-        initial: m.format('MM/DD/YYYY'),
-      };
-    }
-    return {
-      default: '',
-      initial: '',
-    };
-  });
+const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 
-  if (!end) {
-    end = {
-      default: '',
-      initial: '',
+export default function DateRangePicker({ onApply, query }) {
+  let defaultDateRange = {
+    startDate: '',
+    endDate: '',
+    endDateKey: 'end-date',
+  };
+
+  if (query && query.split('-').length === 2) {
+    const [start, end] = query.split('-');
+    defaultDateRange = {
+      startDate: moment(start, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
+      endDate: moment(end, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
+      endDateKey: 'end-date',
     };
   }
 
@@ -40,45 +34,20 @@ export default function DateRangePicker({ onApply, query }) {
     message: '',
     icon: false,
   });
-  const [dateRange, setDateRange] = useState({
-    startDate: start.initial,
-    endDate: end.initial,
-    endDateKey: 'end-date',
-  });
+  const [dateRange, setDateRange] = useState(defaultDateRange);
+  const [range, setRange] = useState('');
 
-  const tomorrow = useMemo(() => moment().add(1, 'days').format('YYYY-MM-DD'), []);
-
-  const formatted = useMemo(() => {
-    const formattedValues = {
-      startDate: '',
-      endDate: '',
-      dateRange: '',
-    };
-
+  useEffect(() => {
     const { startDate, endDate } = dateRange;
+    const start = moment(startDate, DATE_DISPLAY_FORMAT);
+    const end = moment(endDate, DATE_DISPLAY_FORMAT);
 
-    let sd;
-    let ed;
-
-    if (startDate) {
-      sd = moment(startDate, DATE_DISPLAY_FORMAT);
-      if (sd.isValid()) {
-        formattedValues.startDate = sd.format('YYYY-MM-DD');
-      }
+    if (start.isValid && end.isValid) {
+      const rangeStr = `${start.format(QUERY_DATE_FORMAT)}-${end.format(QUERY_DATE_FORMAT)}`;
+      setRange(rangeStr);
+    } else {
+      setRange('');
     }
-
-    if (endDate) {
-      ed = moment(endDate, DATE_DISPLAY_FORMAT);
-      if (ed.isValid()) {
-        formattedValues.endDate = ed.format('YYYY-MM-DD');
-      }
-    }
-
-    if (startDate && endDate && sd.isValid() && ed.isValid()) {
-      formattedValues.dateRange = `${sd.format('YYYY/MM/DD')}-${ed.format('YYYY/MM/DD')}`;
-    }
-
-    return formattedValues;
   }, [dateRange]);
 
   const customDatePicker = useRef();
@@ -141,30 +110,43 @@ export default function DateRangePicker({ onApply, query }) {
     setHidden(!hidden);
   };
 
-  const onChangeStartDate = (startDate) => {
-    let { endDate, endDateKey } = dateRange;
+  const onChangeStartDate = (date) => {
+    const { startDate, endDate } = dateRange;
 
-    const newStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-    const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-    const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
-    const isBeforeMax = currentEndDate.isBefore(newStartDate);
+    // knock knock its the validity inspector
+    const { valid } = document.querySelector('#start-date').validity;
 
-    if (isBeforeMax) {
-      const diff = currentStartDate.diff(currentEndDate, 'days');
-      endDate = newStartDate.add(diff, 'days').format(DATE_DISPLAY_FORMAT);
-      endDateKey = `end-date-${endDate}`;
+    if (valid) {
+      const newStartDate = moment(date, DATE_DISPLAY_FORMAT);
+
+      if (newStartDate.isValid()) {
+        const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
+        const isBeforeMax = currentEndDate.isBefore(newStartDate);
+
+        if (isBeforeMax) {
+          const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
+          const diff = currentEndDate.diff(currentStartDate, 'days');
+          const newEndDate = moment(newStartDate).add(diff, 'days').format(DATE_DISPLAY_FORMAT);
+          const newEndDateKey = `end-date-${newEndDate}`;
+          setDateRange({
+            endDate: newEndDate,
+            startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+            endDateKey: newEndDateKey,
+          });
+        } else {
+          setDateRange({
+            ...dateRange,
+            startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          });
+        }
+      }
     }
-
-    setDateRange({
-      endDate,
-      startDate: currentStartDate,
-      endDateKey,
-    });
   };
 
   const onChangeEndDate = (endDate) => {
     setDateRange({
       ...dateRange,
+      endDateKey: 'end-date',
       endDate,
     });
   };
@@ -189,16 +171,16 @@ export default function DateRangePicker({ onApply, query }) {
         return;
       }
 
-      // if so
-      if (formatted.dateRange) {
+      // if we've got everything undercontrol
+      if (range) {
         // if we're all clear, then onApply
-        onApply(formatted.dateRange);
+        onApply(range);
         setHidden(true);
       }
     }
   };
 
-  const { endDateKey } = dateRange;
+  const { startDate, endDate, endDateKey } = dateRange;
 
   return (
     <div
@@ -210,7 +192,6 @@ export default function DateRangePicker({ onApply, query }) {
         { query || 'Custom date range' }
       </button>
       <fieldset id="custom-date-range" className="width-mobile bg-white border margin-0 margin-top-1 padding-1 ttahub-custom-date-range-picker-fields position-absolute" hidden={hidden}>
-
         { error.message
           && (
           <Alert type="error" noIcon={!error.icon} className="margin-bottom-2">
@@ -224,21 +205,18 @@ export default function DateRangePicker({ onApply, query }) {
           aria-describedby="startDateLabel custom-date-range-hint"
           id="start-date"
           name="startDate"
-          minDate="2020-09-01"
-          maxDate={tomorrow}
-          defaultValue={start.default}
+          defaultValue={startDate}
           onChange={onChangeStartDate}
         />
         <label id="endDateLabel" className="usa-label" htmlFor="end-date">End date</label>
         <span className="usa-hint">mm/dd/yyyy</span>
         <DatePicker
-          key={endDateKey}
+          datePickerKey={endDateKey}
           aria-describedby="endDateLabel custom-date-range-hint"
           id="end-date"
           name="endDate"
-          defaultValue={end.default}
-          minDate={formatted.startDate}
-          maxDate={tomorrow}
+          defaultValue={endDate}
+          minDate={startDate}
           onChange={onChangeEndDate}
         />
       </fieldset>

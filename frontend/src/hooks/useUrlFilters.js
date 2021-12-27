@@ -21,7 +21,9 @@ export default function useUrlFilters(defaultFilters) {
   useEffect(() => {
     // create our query string
     const search = filtersToQueryString(filters);
-    history.pushState(null, null, `?${search}`);
+    if (search) {
+      history.pushState(null, null, `?${search}`);
+    }
   }, [filters]);
 
   return [filters, setFilters];

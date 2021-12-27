@@ -50,7 +50,7 @@ export default function FilterDateRange({
   };
 
   switch (condition) {
-    case 'Is within':
+    case 'In':
       return (
         <>
           <label htmlFor="filter-date-range" className="sr-only">
@@ -75,7 +75,7 @@ export default function FilterDateRange({
         </>
       );
 
-    case 'Custom':
+    case 'Is within':
       return (
         <DateRangePicker
           query={query}

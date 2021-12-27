@@ -20,6 +20,11 @@ import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 import withStateCode from './stateCode';
 import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 
+const withinDateRange = (query) => {
+  const [startDate, endDate] = query.split('-');
+  return withinStartDates(startDate, endDate);
+};
+
 export const topicToQuery = {
   reportId: {
     in: (query) => withReportIds(query),
@@ -35,10 +40,8 @@ export const topicToQuery = {
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinStartDates(startDate, endDate);
-    },
+    win: (query) => withinDateRange(query),
+    in: (query) => withinDateRange(query),
   },
   lastSaved: {
     bef: (query) => beforeLastSaveDate(query),
