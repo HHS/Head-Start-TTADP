@@ -14,6 +14,7 @@ function ReportMenu({
   label,
   count,
   downloadError,
+  isDownloading,
 }) {
   const [open, updateOpen] = useState(false);
 
@@ -47,7 +48,6 @@ function ReportMenu({
   };
 
   const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'width-tablet' : 'width-mobile'}`;
-
   return (
     <span className="position-relative">
 
@@ -123,7 +123,7 @@ function ReportMenu({
                   role="menuitem"
                   onClick={onExportAll}
                   type="button"
-                  disabled={downloadError}
+                  disabled={downloadError || isDownloading}
                   className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
                 >
                   Export table data
@@ -134,6 +134,7 @@ function ReportMenu({
                 role="menuitem"
                 onClick={onExportSelected}
                 type="button"
+                disabled={isDownloading}
                 className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
               >
                 Export selected reports
@@ -153,6 +154,7 @@ ReportMenu.propTypes = {
   label: PropTypes.string,
   count: PropTypes.number,
   downloadError: PropTypes.bool,
+  isDownloading: PropTypes.bool,
 };
 
 ReportMenu.defaultProps = {
@@ -160,6 +162,7 @@ ReportMenu.defaultProps = {
   downloadError: false,
   label: 'Reports menu',
   onExportSelected: null,
+  isDownloading: false,
 };
 
 export default ReportMenu;

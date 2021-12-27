@@ -29,6 +29,7 @@ function ActivityReportsTable({
   const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
   const [downloadError, setDownloadError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [sortConfig, setSortConfig] = React.useState({
     sortBy: 'updatedAt',
     direction: 'desc',
@@ -129,7 +130,7 @@ function ActivityReportsTable({
       // changed the way this works ever so slightly because I was thinking
       // you'd want a try/catch around the fetching of the reports and not the
       // window.location.assign
-
+      setIsDownloading(true);
       const blob = await downloadReports(downloadURL);
       const csv = URL.createObjectURL(blob);
       window.location.assign(csv);
@@ -137,10 +138,12 @@ function ActivityReportsTable({
       // eslint-disable-next-line no-console
       console.log(err);
       setDownloadError(true);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
-  const handleDownloadClick = () => {
+  const handleDownloadClick = async () => {
     const toDownloadableReportIds = (accumulator, entry) => {
       if (!reports) return accumulator;
       const [key, value] = entry;
@@ -152,7 +155,18 @@ function ActivityReportsTable({
     const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
     if (downloadable.length) {
       const downloadURL = getReportsDownloadURL(downloadable);
-      window.location.assign(downloadURL);
+      try {
+        setIsDownloading(true);
+        const blob = await downloadReports(downloadURL);
+        const csv = URL.createObjectURL(blob);
+        window.location.assign(csv);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log(err);
+        setDownloadError(true);
+      } finally {
+        setIsDownloading(false);
+      }
     }
   };
 
@@ -217,6 +231,7 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
+          isDownloading={isDownloading}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
@@ -283,14 +298,10 @@ ActivityReportsTable.propTypes = {
   ).isRequired,
   onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
 };
 
 ActivityReportsTable.defaultProps = {
   onUpdateFilters: () => { },
-  dateTime: { timestamp: '', label: '' },
 };
 
 export default ActivityReportsTable;

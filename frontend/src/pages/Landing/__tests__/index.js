@@ -278,6 +278,31 @@ describe('Landing page table menus & selections', () => {
         userEvent.click(downloadButton);
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
       });
+
+      it('disables alert download button while downloading', async () => {
+        const user = {
+          name: 'test@test.com',
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+            {
+              scopeId: 2,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        const reportMenu = await screen.findByLabelText(/my alerts report menu/i);
+        userEvent.click(reportMenu);
+        expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+        const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+        userEvent.click(downloadButton);
+        expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+      });
     });
   });
 });
