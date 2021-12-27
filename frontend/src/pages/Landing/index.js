@@ -5,7 +5,6 @@ import React, {
   useContext,
   useMemo,
 } from 'react';
-import PropTypes from 'prop-types';
 import {
   Alert, Grid, Button,
 } from '@trussworks/react-uswds';
@@ -45,8 +44,6 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
 
 function Landing() {
   const { user } = useContext(UserContext);
-
-  console.log(user);
 
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
@@ -267,15 +264,5 @@ function Landing() {
     </>
   );
 }
-
-Landing.propTypes = {
-  user: PropTypes.shape({
-    homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      regionId: PropTypes.number.isRequired,
-      scopeId: PropTypes.number.isRequired,
-    })),
-  }).isRequired,
-};
 
 export default Landing;

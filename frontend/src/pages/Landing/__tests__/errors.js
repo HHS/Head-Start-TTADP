@@ -29,7 +29,7 @@ const renderLanding = (user) => {
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <Landing authenticated user={user} />
+          <Landing authenticated />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
     </MemoryRouter>,
@@ -50,7 +50,7 @@ describe('Landing Page error', () => {
     fetchMock.get(baseWithRegionOne, 500, { overwriteRoutes: true });
     const user = {
       name: 'test@test.com',
-      homeRegionId: 14,
+      homeRegionId: 2,
       permissions: [
         {
           scopeId: 3,
@@ -61,7 +61,7 @@ describe('Landing Page error', () => {
 
     renderLanding(user);
 
-    const alert = await screen.findByRole('alert', { name: 'Unable to fetch reports' });
+    const alert = await screen.findByRole('alert');
     expect(alert).toBeVisible();
   });
 
