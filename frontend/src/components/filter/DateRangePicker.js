@@ -163,7 +163,6 @@ export default function DateRangePicker({ onApply, query }) {
   };
 
   const onChangeEndDate = (endDate) => {
-    console.log(endDate);
     setDateRange({
       ...dateRange,
       endDate,
