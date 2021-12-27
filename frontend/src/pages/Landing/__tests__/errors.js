@@ -63,6 +63,7 @@ describe('Landing Page error', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toBeVisible();
+    expect(alert.textContent).toBe('Unable to fetch reports');
   });
 
   it('no empty row is shown if there are no reports', async () => {
