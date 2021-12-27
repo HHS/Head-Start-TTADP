@@ -27,13 +27,7 @@ describe('FilterDateRange', () => {
     const onApplyDateRange = jest.fn();
     renderFilterDateRange('', onApplyDateRange);
     const date = screen.getByRole('textbox', { name: /date/i });
-
-    userEvent.type(date, '10/31');
-    expect(onApplyDateRange).not.toHaveBeenCalledWith('2021/10/31');
-
-    userEvent.clear(date);
     userEvent.type(date, '10/31/2021');
-    userEvent.tab();
     expect(onApplyDateRange).toHaveBeenCalledWith('2021/10/31');
   });
 });
