@@ -48,7 +48,13 @@ function Landing({ user }) {
   const regionToUse = regions[0] || user.homeRegionId || 0;
   const defaultRegion = user.homeRegionId === 14 ? 14 : regionToUse;
 
-  const [filters, setFilters] = useUrlFilters([]);
+  const [filters, setFilters] = useUrlFilters(defaultRegion === 14 ? [] : [
+    {
+      topic: 'region',
+      condition: 'Contains',
+      query: defaultRegion.toString(),
+    },
+  ]);
 
   const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
@@ -98,18 +104,6 @@ function Landing({ user }) {
   };
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
-
-  useEffect(() => {
-    if (defaultRegion !== 14) {
-      setFilters([
-        {
-          topic: 'region',
-          condition: 'Contains',
-          query: defaultRegion.toString(),
-        },
-      ]);
-    }
-  }, [defaultRegion, setFilters]);
 
   useEffect(() => {
     async function fetchAlertReports() {
