@@ -15,11 +15,6 @@ import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
-
 const EMPTY_MULTI_SELECT = {
   Is: [],
   'Is not': [],
@@ -50,7 +45,7 @@ export const FILTER_CONFIG = [
     display: 'Date range',
     conditions: DATE_CONDITIONS,
     defaultValues: {
-      'Is within': YEAR_TO_DATE,
+      'Is within': '',
       'Is after': '',
       'Is before': '',
       In: '',
