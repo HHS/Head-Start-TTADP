@@ -53,8 +53,9 @@ function ActivityReportsTable({
         // eslint-disable-next-line no-console
         console.log(e);
         setError('Unable to fetch reports');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchReports();
   }, [sortConfig, offset, perPage, filters]);
