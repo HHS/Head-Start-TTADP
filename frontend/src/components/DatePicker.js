@@ -50,13 +50,14 @@ export default function DatePicker(
 
 DatePicker.propTypes = {
   onChange: PropTypes.func.isRequired,
-  defaultValue: PropTypes.string.isRequired,
+  defaultValue: PropTypes.string,
   minDate: PropTypes.string,
   maxDate: PropTypes.string,
   datePickerKey: PropTypes.string,
 };
 
 DatePicker.defaultProps = {
+  defaultValue: '',
   minDate: '09/02/2020',
   maxDate: '',
   datePickerKey: 'date-picker',
