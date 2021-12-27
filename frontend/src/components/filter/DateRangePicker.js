@@ -144,38 +144,30 @@ export default function DateRangePicker({ onApply, query }) {
   const onChangeStartDate = (startDate) => {
     let { endDate, endDateKey } = dateRange;
 
-    // knock knock its the validity inspector
-    const { valid } = document.querySelector('#start-date').validity;
+    const newStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
+    const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
+    const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
+    const isBeforeMax = currentEndDate.isBefore(newStartDate);
 
-    if (valid) {
-      const newStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-      const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-      const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
-      const isBeforeMax = currentEndDate.isBefore(newStartDate);
-
-      if (isBeforeMax) {
-        const diff = currentStartDate.diff(currentEndDate, 'days');
-        endDate = newStartDate.add(diff, 'days').format(DATE_DISPLAY_FORMAT);
-        endDateKey = `end-date-${endDate}`;
-      }
-
-      setDateRange({
-        endDate,
-        startDate: currentStartDate,
-        endDateKey,
-      });
+    if (isBeforeMax) {
+      const diff = currentStartDate.diff(currentEndDate, 'days');
+      endDate = newStartDate.add(diff, 'days').format(DATE_DISPLAY_FORMAT);
+      endDateKey = `end-date-${endDate}`;
     }
+
+    setDateRange({
+      endDate,
+      startDate: currentStartDate,
+      endDateKey,
+    });
   };
 
   const onChangeEndDate = (endDate) => {
-    const { valid } = document.querySelector('#end-date').validity;
-
-    if (valid) {
-      setDateRange({
-        ...dateRange,
-        endDate,
-      });
-    }
+    console.log(endDate);
+    setDateRange({
+      ...dateRange,
+      endDate,
+    });
   };
 
   const onBlur = (e) => {
