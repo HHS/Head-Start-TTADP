@@ -42,7 +42,7 @@ export default function DateRangePicker({ onApply, query }) {
     const start = moment(startDate, DATE_DISPLAY_FORMAT);
     const end = moment(endDate, DATE_DISPLAY_FORMAT);
 
-    if (start.isValid && end.isValid) {
+    if (start.isValid() && end.isValid()) {
       const rangeStr = `${start.format(QUERY_DATE_FORMAT)}-${end.format(QUERY_DATE_FORMAT)}`;
       setRange(rangeStr);
     } else {
