@@ -14,7 +14,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
-import { getReportAlerts } from '../../fetchers/activityReports';
+import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
@@ -72,6 +72,8 @@ function Landing() {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
+  const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
+  const [downloadAlertsError, setDownloadAlertsError] = useState('');
 
   function getAppliedRegion() {
     const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
@@ -99,10 +101,20 @@ function Landing() {
     setAlertsSortConfig({ sortBy, direction });
   };
 
-  const handleDownloadAllAlerts = () => {
+  const handleDownloadAllAlerts = async () => {
     const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
-    window.location.assign(downloadURL);
+
+    try {
+      setIsDownloadingAlerts(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (e) {
+      setDownloadAlertsError(true);
+    } finally {
+      setIsDownloadingAlerts(false);
+    }
   };
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
@@ -254,6 +266,8 @@ function Landing() {
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
           message={message}
+          isDownloadingAlerts={isDownloadingAlerts}
+          downloadAlertsError={downloadAlertsError}
         />
         <ActivityReportsTable
           filters={filtersToApply}

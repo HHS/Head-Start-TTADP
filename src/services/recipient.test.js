@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   Recipient, Grant, Program, sequelize,
 } from '../models';
@@ -21,11 +22,25 @@ describe('Recipient DB service', () => {
       name: 'recipient 3',
       recipientType: 'recipient type 3',
     },
+    {
+      id: 76,
+      name: 'recipient 4',
+      recipientType: 'recipient type 4',
+    },
   ];
 
   beforeAll(async () => {
     await Promise.all(recipients.map((r) => Recipient.create(r)));
     await Promise.all([
+      Grant.create({
+        id: 74,
+        number: '1145341',
+        regionId: 1,
+        recipientId: 74,
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
+      }),
       Grant.create({
         id: 75,
         number: '1145543',
@@ -37,14 +52,60 @@ describe('Recipient DB service', () => {
         grantSpecialistName: 'Tom Jones',
       }),
       Grant.create({
-        id: 74,
-        number: '1145341',
+        id: 76,
+        number: '3145351',
         regionId: 1,
-        recipientId: 74,
+        recipientId: 76,
         status: 'Active',
-        startDate: new Date(),
-        endDate: new Date(),
+        startDate: new Date('2021-12-01'),
+        endDate: new Date('2021-12-01'),
       }),
+      Grant.create({
+        id: 77,
+        number: '3145352',
+        regionId: 1,
+        recipientId: 76,
+        status: 'Active',
+        startDate: new Date('2020-01-01'),
+        endDate: new Date('2020-01-15'),
+      }),
+      Grant.create({
+        id: 78,
+        number: '3145353',
+        regionId: 1,
+        recipientId: 76,
+        status: 'Inactive',
+        startDate: new Date('2021-12-01'),
+        endDate: new Date('2021-12-01'),
+      }),
+      Grant.create({
+        id: 79,
+        number: '3145354',
+        regionId: 1,
+        recipientId: 76,
+        status: 'Inactive',
+        startDate: new Date('2020-01-01'),
+        endDate: new Date('2020-01-15'),
+      }),
+      Grant.create({
+        id: 80,
+        number: '3145355',
+        regionId: 1,
+        recipientId: 76,
+        status: 'Inactive',
+        startDate: new Date(moment().add(1, 'days').format('MM/DD/yyyy')),
+        endDate: new Date(moment().add(2, 'days').format('MM/DD/yyyy')),
+      }),
+      Grant.create({
+        id: 81,
+        number: '3145399',
+        regionId: 1,
+        recipientId: 76,
+        status: 'Inactive',
+        startDate: new Date(moment().subtract(5, 'days').format('MM/DD/yyyy')),
+        endDate: new Date(moment().format('MM/DD/yyyy')),
+      }),
+
     ]);
     await Promise.all([
       Program.create({
@@ -67,14 +128,73 @@ describe('Recipient DB service', () => {
         startDate: 'today',
         endDate: 'tomorrow',
       }),
+      Program.create({
+        id: 76,
+        grantId: 76,
+        name: 'type',
+        programType: 'HS',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
+      }),
+      Program.create({
+        id: 77,
+        grantId: 77,
+        name: 'type',
+        programType: 'HS',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
+      }),
+      Program.create({
+        id: 78,
+        grantId: 78,
+        name: 'type',
+        programType: 'HS',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
+      }),
+      Program.create({
+        id: 79,
+        grantId: 79,
+        name: 'type',
+        programType: 'HS',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
+      }),
+      Program.create({
+        id: 80,
+        grantId: 80,
+        name: 'type',
+        programType: 'HS',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
+      }),
+      Program.create({
+        id: 81,
+        grantId: 81,
+        name: 'type',
+        programType: 'HS',
+        startYear: 'The murky depths of time',
+        status: 'active',
+        startDate: 'today',
+        endDate: 'tomorrow',
+      }),
     ]);
   });
 
   afterAll(async () => {
-    const id = recipients.map((g) => g.id);
-    await Program.destroy({ where: { id } });
-    await Grant.destroy({ where: { id } });
-    await Recipient.destroy({ where: { id } });
+    await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Grant.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Recipient.destroy({ where: { id: [73, 74, 75, 76] } });
     await sequelize.close();
   });
 
@@ -144,6 +264,31 @@ describe('Recipient DB service', () => {
 
       expect(recipient).toBeNull();
     });
+
+    it('returns active grants and inactive grants after cutoff', async () => {
+      const query = { 'recipientId.in': [76] };
+      const grantScopes = filtersToScopes(query, 'grant');
+      const recipient = await recipientById(76, grantScopes);
+
+      expect(recipient.name).toBe('recipient 4');
+      expect(recipient.grants.length).toBe(4);
+
+      // Active After Cut Off Date.
+      expect(recipient.grants[0].id).toBe(76);
+      expect(recipient.grants[0].status).toBe('Active');
+
+      // Active Before Cut Off Date.
+      expect(recipient.grants[1].id).toBe(77);
+      expect(recipient.grants[1].status).toBe('Active');
+
+      // Inactive with End Date of Today.
+      expect(recipient.grants[2].id).toBe(81);
+      expect(recipient.grants[2].status).toBe('Inactive');
+
+      // Inactive After Cut Off Date.
+      expect(recipient.grants[3].id).toBe(78);
+      expect(recipient.grants[3].status).toBe('Inactive');
+    });
   });
 
   describe('recipientsByName', () => {
@@ -171,6 +316,18 @@ describe('Recipient DB service', () => {
       {
         id: 68,
         name: 'Apple Crisp',
+      },
+      {
+        id: 69,
+        name: 'Pumpkin Pie',
+      },
+      {
+        id: 70,
+        name: 'Pumpkin Bread',
+      },
+      {
+        id: 71,
+        name: 'Pumpkin Coffee',
       },
     ];
 
@@ -257,6 +414,37 @@ describe('Recipient DB service', () => {
         endDate: new Date(2020, 10, 31),
         grantSpecialistName: 'Allen',
       },
+
+      {
+        id: 59,
+        recipientId: 69,
+        regionId: 1,
+        number: '582353',
+        programSpecialistName: 'John Tom',
+        status: 'Inactive',
+        endDate: new Date(moment().add(2, 'days').format('MM/DD/yyyy')),
+        grantSpecialistName: 'Bill Smith',
+      },
+      {
+        id: 60,
+        recipientId: 70,
+        regionId: 1,
+        number: '582354',
+        programSpecialistName: 'John Tom',
+        status: 'Inactive',
+        endDate: new Date(moment().format('MM/DD/yyyy')),
+        grantSpecialistName: 'Bill Smith',
+      },
+      {
+        id: 61,
+        recipientId: 71,
+        regionId: 1,
+        number: '582355',
+        programSpecialistName: 'Grant West',
+        status: 'Inactive',
+        endDate: new Date('09/01/2020'),
+        grantSpecialistName: 'Joe Allen',
+      },
     ];
 
     function regionToScope(regionId) {
@@ -322,6 +510,13 @@ describe('Recipient DB service', () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 1);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([63, 66]);
+    });
+
+    it('finds inactive grants that fall in the accepted range', async () => {
+      const foundRecipients = await recipientsByName('Pumpkin', regionToScope(1), 'name', 'asc', 0);
+      expect(foundRecipients.rows.length).toBe(2);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
     });
   });
 });
