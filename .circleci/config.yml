@@ -33,12 +33,6 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
-  notify_daily_scan_fail:
-    description: "Notify acf-eng on daily scan fail"    
-    steps:
-      - slack/notify:
-          event: always
-          template: basic_fail_1
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -191,6 +185,13 @@ parameters:
     default: "867346799"
     type: string
 jobs:
+  notify_daily_scan_fail:
+    executor: docker-executor
+    description: "Notify acf-eng on daily scan fail"    
+    steps:
+      - slack/notify:
+          event: always
+          template: basic_fail_1
   build_and_lint:
     executor: docker-executor
     steps:
