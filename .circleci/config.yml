@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   node: circleci/node@4.1.0
   browser-tools: circleci/browser-tools@1.2.3
+  slack: circleci/slack@4.5.1
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
@@ -169,7 +170,7 @@ parameters:
     default: "TTAHUB-555-exclude-inactive-grants-with-end-date-greater-than-today"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-523-tweak-saving-objectives"
+    default: "TTAHUB-205/notify-daily-scan-failure"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -384,6 +385,10 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - slack/notify:
+                channel: -mb-test-channel
+                event: always
+                template: basic_fail_1
       - when:  # dev
           condition:
             and:
