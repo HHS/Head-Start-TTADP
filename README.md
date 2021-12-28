@@ -421,6 +421,19 @@ Ex.
 
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
+## Updating node
+To update the version of node the project uses, the version number needs to be specified in a few places. Cloud.gov only supports certain versions of node; you can find supported versions [on the repo for their buildpack](https://github.com/cloudfoundry/nodejs-buildpack/releases). 
+
+Once you have that version number, you need to update it in the following files
+- .circleci/config.yml
+- .nvmrc
+- Dockerfile
+- package.json
+- frontend/package.json
+
+You should also update it where it is specified this README file.
+
+You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
 
 <!-- Links -->
 
