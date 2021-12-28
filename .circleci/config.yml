@@ -386,7 +386,6 @@ jobs:
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
             - slack/notify:
-                channel: -mb-test-channel
                 event: always
                 template: basic_fail_1
       - when:  # dev
