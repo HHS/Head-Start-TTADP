@@ -33,6 +33,13 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+  notify_daily_scan_fail:
+    description: "Notify acf-eng on daily scan fail"
+    context: ohs-eng-daily-scan-slack
+    steps:
+      - slack/notify:
+          event: always
+          template: basic_fail_1
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -385,9 +392,6 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - slack/notify:
-                event: always
-                template: basic_fail_1
       - when:  # dev
           condition:
             and:
@@ -491,7 +495,7 @@ workflows:
           requires:
             - build_and_lint
       - deploy:
-          context: ohs-eng-daily-scan-slack
+          
           requires:
             - test_backend
             - test_frontend
@@ -526,3 +530,8 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+      - notify_daily_scan_fail:
+          requires:
+            - dynamic_security_scan
+            - test_backend
+            - test_frontend
