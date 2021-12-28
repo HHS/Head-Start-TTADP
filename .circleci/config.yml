@@ -492,6 +492,7 @@ workflows:
           requires:
             - build_and_lint
       - deploy:
+          context: ohs-eng-daily-scan-slack
           requires:
             - test_backend
             - test_frontend
@@ -505,7 +506,7 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-  daily_scan:
+  daily_scan:    
     triggers:
       - schedule:
           cron: "0 12 * * 1-5"
@@ -516,7 +517,7 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build_and_lint
+      - build_and_lint      
       - test_backend:
           requires:
             - build_and_lint
@@ -526,3 +527,8 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+      - slack/notify:
+          channel: -mb-test-channel
+          event: fail
+          template: basic_fail_1
+          context: ohs-eng-daily-scan-slack
