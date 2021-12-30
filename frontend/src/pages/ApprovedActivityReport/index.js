@@ -94,7 +94,7 @@ function mapAttachments(attachments) {
         {
           attachments.map((attachment) => (
             <li key={attachment.url.url}>
-              <a href={attachment.url.url}>{attachment.originalFileName}</a>
+              <a href={attachment.url.url} target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'} rel="noreferrer">{attachment.originalFileName}</a>
             </li>
           ))
         }
