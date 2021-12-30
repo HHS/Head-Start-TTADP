@@ -29,6 +29,17 @@ const {
   QUEUEING_FAILED,
 } = FILE_STATUSES;
 
+const altFileTypes = [
+  {
+    ext: '.txt',
+    mime: 'text/plain',
+  },
+  {
+    ext: '.csv',
+    mime: 'text/csv',
+  },
+];
+
 export const deleteHandler = async (req, res) => {
   const { reportId, fileId } = req.params;
   const user = await userById(req.session.userId);
@@ -59,7 +70,7 @@ export default async function uploadHandler(req, res) {
     let buffer;
     let metadata;
     let fileName;
-    let type;
+    let fileTypeToUse;
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(reportId);
@@ -81,11 +92,25 @@ export default async function uploadHandler(req, res) {
         return res.status(400).send({ error: 'reportId required' });
       }
       buffer = fs.readFileSync(path);
-      type = await fileType.fromFile(path);
+
+      /*
+      * NOTE: file-type: https://github.com/sindresorhus/file-type
+      * This package is for detecting binary-based file formats,
+      * !NOT text-based formats like .txt, .csv, .svg, etc.
+      * We need to handle TXT and CSV in our code.
+      */
+      const type = await fileType.fromFile(path);
+      let altFileType;
+
       if (!type) {
-        return res.status(400).send('Could not determine file type');
+        const matchingAltType = altFileTypes.filter((t) => path.endsWith(t.ext));
+        if (!matchingAltType || !matchingAltType.length > 0) {
+          return res.status(400).send('Could not determine file type');
+        }
+        altFileType = { ext: matchingAltType[0].ext, mime: matchingAltType[0].mime };
       }
-      fileName = `${uuidv4()}.${type.ext}`;
+      fileTypeToUse = altFileType || type;
+      fileName = `${uuidv4()}.${fileTypeToUse.ext}`;
       metadata = await createFileMetaData(
         originalFilename,
         fileName,
@@ -96,7 +121,7 @@ export default async function uploadHandler(req, res) {
       return handleErrors(req, res, err, logContext);
     }
     try {
-      const uploadedFile = await uploadFile(buffer, fileName, type);
+      const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
       const url = getPresignedURL(uploadedFile.key);
       await updateStatus(metadata.id, UPLOADED);
       res.status(200).send({ id: metadata.id, url });

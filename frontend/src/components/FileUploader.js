@@ -98,7 +98,7 @@ function Dropzone(props) {
   const {
     fileRejections, getRootProps, getInputProps,
   } = useDropzone({
-    onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip',
+    onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv',
   });
 
   return (
@@ -236,7 +236,7 @@ const FileTable = ({ onFileRemoved, files }) => {
           {files.map((file, currentIndex) => (
             <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
               <td className="files-table--file-name">
-                {file.originalFileName}
+                {file && file.originalFileName ? file.originalFileName : 'blah'}
               </td>
               <td>
                 {`${(file.fileSize / 1000).toFixed(1)} KB`}
