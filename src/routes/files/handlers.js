@@ -92,7 +92,6 @@ export default async function uploadHandler(req, res) {
         return res.status(400).send({ error: 'reportId required' });
       }
       buffer = fs.readFileSync(path);
-
       /*
       * NOTE: file-type: https://github.com/sindresorhus/file-type
       * This package is for detecting binary-based file formats,
@@ -101,7 +100,6 @@ export default async function uploadHandler(req, res) {
       */
       const type = await fileType.fromFile(path);
       let altFileType;
-
       if (!type) {
         const matchingAltType = altFileTypes.filter((t) => path.endsWith(t.ext));
         if (!matchingAltType || !matchingAltType.length > 0) {
