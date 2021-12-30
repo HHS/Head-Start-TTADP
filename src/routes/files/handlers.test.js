@@ -195,7 +195,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/test.txt`)
+        .attach('file', `${__dirname}/testfiles/test.rtf`)
         .expect(400)
         .then((res) => {
           expect(res.text).toBe('Could not determine file type');
