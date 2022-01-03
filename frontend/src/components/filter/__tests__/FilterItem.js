@@ -7,10 +7,34 @@ import {
 import userEvent from '@testing-library/user-event';
 import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
-import { FILTER_CONFIG } from '../constants';
+import {
+  START_DATE_FILTER,
+  GRANT_NUMBER_FILTER,
+  PROGRAM_SPECIALIST_FILTER,
+  PROGRAM_TYPE_FILTER,
+  REASON_FILTER,
+  RECIPIENT_NAME_FILTER,
+  REGION_FILTER,
+  ROLE_FILTER,
+  TARGET_POPULATION_FILTER,
+  TOPICS_FILTER,
+} from '../constants';
 
-const selectedTopic = FILTER_CONFIG[0];
-const topicOptions = FILTER_CONFIG.map(({ id: filterId, display }) => (
+const filtersConfig = [
+  START_DATE_FILTER,
+  GRANT_NUMBER_FILTER,
+  PROGRAM_SPECIALIST_FILTER,
+  PROGRAM_TYPE_FILTER,
+  REASON_FILTER,
+  RECIPIENT_NAME_FILTER,
+  REGION_FILTER,
+  ROLE_FILTER,
+  TARGET_POPULATION_FILTER,
+  TOPICS_FILTER,
+];
+
+const selectedTopic = filtersConfig[0];
+const topicOptions = filtersConfig.map(({ id: filterId, display }) => (
   <option key={filterId} value={filterId}>{display}</option>
 ));
 

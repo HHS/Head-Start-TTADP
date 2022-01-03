@@ -10,6 +10,7 @@ import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters, queryStringToFilters } from '../../../utils';
+import { START_DATE_FILTER, ROLE_FILTER } from '../../../components/filter/constants';
 
 import './TTAHistory.css';
 import useUrlFilters from '../../../hooks/useUrlFilters';
@@ -18,6 +19,8 @@ const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
 });
+
+const { display, displayQuery } = START_DATE_FILTER;
 
 export default function TTAHistory({
   recipientName, recipientId, regionId,
@@ -29,6 +32,8 @@ export default function TTAHistory({
       topic: 'startDate',
       condition: 'Is within',
       query: defaultDate,
+      display,
+      displayQuery,
     },
   ]);
 
@@ -85,7 +90,7 @@ export default function TTAHistory({
             filters={filters}
             onApplyFilters={onApply}
             onRemoveFilter={onRemoveFilter}
-            allowedFilters={['startDate', 'role']}
+            allowedFilters={[START_DATE_FILTER, ROLE_FILTER]}
             applyButtonAria="Apply filters to recipient record data"
           />
         </div>

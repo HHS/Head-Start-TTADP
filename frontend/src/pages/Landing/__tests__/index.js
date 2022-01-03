@@ -74,7 +74,7 @@ describe('Landing Page', () => {
     };
 
     renderLanding(user);
-    await screen.findByText('Activity Reports');
+    await screen.findByText('Activity reports');
   });
   afterEach(() => fetchMock.restore());
 
@@ -123,7 +123,7 @@ describe('Landing Page', () => {
   });
 
   test('displays activity reports heading', async () => {
-    expect(await screen.findByText('Activity Reports')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /Activity reports - /i })).toBeVisible();
   });
 
   test('displays report id column', async () => {
@@ -273,6 +273,31 @@ describe('Landing page table menus & selections', () => {
         userEvent.click(downloadButton);
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
       });
+
+      it('disables alert download button while downloading', async () => {
+        const user = {
+          name: 'test@test.com',
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+            {
+              scopeId: 2,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        const reportMenu = await screen.findByLabelText(/my alerts report menu/i);
+        userEvent.click(reportMenu);
+        expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+        const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+        userEvent.click(downloadButton);
+        expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+      });
     });
   });
 });
@@ -325,7 +350,7 @@ describe('My alerts sorting', () => {
     };
 
     renderLanding(user);
-    await screen.findByText('Activity Reports');
+    await screen.findByText('Activity reports');
   });
 
   it('is enabled for Status', async () => {

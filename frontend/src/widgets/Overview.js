@@ -45,16 +45,15 @@ Field.defaultProps = {
   API. Note the `example` passed as a 2nd parameter to `withWidgetData` must match the widget
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
-function Overview({ data, regionLabel, loading }) {
+function Overview({
+  data, loading, tableCaption,
+}) {
+  const title = !tableCaption ? 'TTA overview' : tableCaption;
   return (
     <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
         <h2>
-          Region
-          {' '}
-          {regionLabel}
-          {' '}
-          TTA Overview
+          {title}
         </h2>
         <span className="smart-hub--overview-period"> 9/01/2020 to Today</span>
       </Grid>
@@ -78,8 +77,8 @@ Overview.propTypes = {
     numParticipants: PropTypes.string,
     sumDuration: PropTypes.string,
   }),
-  regionLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   loading: PropTypes.bool.isRequired,
+  tableCaption: PropTypes.string,
 };
 
 Overview.defaultProps = {
@@ -91,6 +90,7 @@ Overview.defaultProps = {
     numParticipants: '0',
     sumDuration: '0',
   },
+  tableCaption: null,
 };
 
 export default withWidgetData(Overview, 'overview');

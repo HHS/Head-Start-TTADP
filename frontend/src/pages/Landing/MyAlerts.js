@@ -192,6 +192,10 @@ function MyAlerts(props) {
     loading,
     message,
     showFilter,
+    isDownloadingAlerts,
+    downloadAlertsError,
+    downloadAllAlertsButtonRef,
+    downloadSelectedAlertsButtonRef,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -239,7 +243,6 @@ function MyAlerts(props) {
     setAlertReportsCount(alertReportsCount - 1);
     updateReportAlerts(newReports);
   };
-
   return (
     <>
       {reports && reports.length === 0 && (
@@ -272,6 +275,10 @@ function MyAlerts(props) {
             offset={alertsOffset}
             perPage={alertsPerPage}
             hidePagination
+            isDownloading={isDownloadingAlerts}
+            downloadError={downloadAlertsError}
+            downloadAllButtonRef={downloadAllAlertsButtonRef}
+            downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
@@ -323,6 +330,16 @@ MyAlerts.propTypes = {
     status: PropTypes.string,
   }),
   showFilter: PropTypes.bool.isRequired,
+  isDownloadingAlerts: PropTypes.bool,
+  downloadAlertsError: PropTypes.bool,
+  downloadAllAlertsButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedAlertsButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 MyAlerts.defaultProps = {
@@ -338,6 +355,10 @@ MyAlerts.defaultProps = {
     displayId: '',
     status: '',
   },
+  isDownloadingAlerts: false,
+  downloadAlertsError: false,
+  downloadAllAlertsButtonRef: () => {},
+  downloadSelectedAlertsButtonRef: () => {},
 };
 
 export default MyAlerts;

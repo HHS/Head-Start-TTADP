@@ -37,6 +37,9 @@ export default function TableHeader({
   hidePagination,
   forMyAlerts,
   downloadError,
+  isDownloading,
+  downloadAllButtonRef,
+  downloadSelectedButtonRef,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -75,6 +78,9 @@ export default function TableHeader({
               onExportSelected={handleDownloadClick}
               count={count}
               downloadError={downloadError}
+              isDownloading={isDownloading}
+              downloadAllButtonRef={downloadAllButtonRef}
+              downloadSelectedButtonRef={downloadSelectedButtonRef}
             />
           )}
         </span>
@@ -132,6 +138,15 @@ TableHeader.propTypes = {
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   downloadError: PropTypes.bool,
+  isDownloading: PropTypes.bool,
+  downloadAllButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 TableHeader.defaultProps = {
@@ -151,5 +166,7 @@ TableHeader.defaultProps = {
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
-
+  isDownloading: false,
+  downloadAllButtonRef: () => {},
+  downloadSelectedButtonRef: () => {},
 };
