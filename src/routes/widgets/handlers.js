@@ -22,7 +22,7 @@ export async function getWidget(req, res) {
     }
 
     // This returns the query object with "region" property filtered by user permissions
-    const query = await setReadRegions(req.query, req.session.userId, false);
+    const query = await setReadRegions(req.query, req.session.userId);
 
     // Determine what scopes we need.
     const scopes = filtersToScopes(query, modelType);
