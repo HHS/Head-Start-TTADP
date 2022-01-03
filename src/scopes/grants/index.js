@@ -7,10 +7,7 @@ export const topicToQuery = {
   startDate: {
     bef: (query) => beforeGrantStartDate(query),
     aft: (query) => afterGrantStartDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinGrantStartDates(startDate, endDate);
-    },
+    win: (query) => withinGrantStartDates(query),
   },
   region: {
     in: (query) => withGrantsRegion(query),
@@ -25,6 +22,6 @@ export function grantsReportFiltersToScopes(filters) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition](query);
+    return topicToQuery[topic][condition]([query].flat());
   });
 }
