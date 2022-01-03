@@ -494,8 +494,7 @@ workflows:
       - accessibility_scan:
           requires:
             - build_and_lint
-      - deploy:
-          
+      - deploy:          
           requires:
             - test_backend
             - test_frontend
@@ -519,6 +518,7 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
+                - << pipeline.parameters.sandbox_git_branch >>
     jobs:
       - build_and_lint      
       - test_backend:
