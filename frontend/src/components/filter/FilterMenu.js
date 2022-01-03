@@ -120,17 +120,9 @@ export default function FilterMenu({
   };
 
   const onUpdateFilter = (id, name, value) => {
-    //
-    // just an array spread creates a new
-    // array of references... to the same objects as before
-    // therefore, this function was mutating state in unexpected ways
-    //
-    // hence this real humdinger of a line of javascript
     const newItems = items.map((item) => ({ ...item }));
     const toUpdate = newItems.find((item) => item.id === id);
 
-    // and here is the key to all the problems
-    // the (preventing of) infinite updating itself
     if (toUpdate[name] === value) {
       return;
     }
