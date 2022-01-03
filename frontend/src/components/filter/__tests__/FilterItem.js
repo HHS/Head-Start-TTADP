@@ -20,7 +20,8 @@ import {
   TOPICS_FILTER,
 } from '../constants';
 
-const filtersConfig = [START_DATE_FILTER,
+const filtersConfig = [
+  START_DATE_FILTER,
   GRANT_NUMBER_FILTER,
   PROGRAM_SPECIALIST_FILTER,
   PROGRAM_TYPE_FILTER,
