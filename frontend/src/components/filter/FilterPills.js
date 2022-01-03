@@ -107,24 +107,12 @@ Pill.propTypes = {
   onRemoveFilter: PropTypes.func.isRequired,
 };
 
-/**
- * Sometimes a filter will be created and will not have a pill
- * This list contains all the Pill Topics that are verboten
- */
-
-const DISALLOWED_PILL_TOPICS = [
-  'region',
-  'granteeId',
-];
-
 /* Filter Pills */
 export default function FilterPills({ filters, onRemoveFilter }) {
   return (
     <>
       {
-        filters.filter(
-          (filter) => !DISALLOWED_PILL_TOPICS.includes(filter.topic),
-        ).map((filter, index) => (
+        filters.map((filter, index) => (
           <Pill
             id={filter.id}
             key={filter.id}
