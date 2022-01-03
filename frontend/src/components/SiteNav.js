@@ -4,9 +4,7 @@ import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
-
 import './SiteNav.css';
-import FeatureFlag from './FeatureFlag';
 
 const navLinkClasses = [
   'display-block',
@@ -97,18 +95,16 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
-                  <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound={false}>
-                    <li>
-                      <NavLink
-                        to="/recipient-tta-records"
-                      >
-                        <span className="display-none tablet:display-inline padding-right-105">
-                          <FontAwesomeIcon color="white" icon={faUserFriends} />
-                        </span>
-                        Recipient TTA Records
-                      </NavLink>
-                    </li>
-                  </FeatureFlag>
+                  <li>
+                    <NavLink
+                      to="/recipient-tta-records"
+                    >
+                      <span className="display-none tablet:display-inline padding-right-105">
+                        <FontAwesomeIcon color="white" icon={faUserFriends} />
+                      </span>
+                      Recipient TTA Records
+                    </NavLink>
+                  </li>
                 </ul>
               </div>
               <div className="width-full padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">

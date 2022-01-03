@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useContext,
   useMemo,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -12,9 +13,10 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
+import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
-import { getReportAlerts } from '../../fetchers/activityReports';
+import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import 'uswds/dist/css/uswds.css';
@@ -23,13 +25,14 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
+import { REGION_FILTER } from '../../components/filter/constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
-import FilterMenu from '../../components/filter/FilterMenu';
-import FilterPills from '../../components/filter/FilterPills';
+import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
+import { formatDateRange } from '../../components/DateRangeSelect';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -52,9 +55,12 @@ function Landing({ user }) {
     defaultRegion !== 14
       && defaultRegion !== 0
       ? [{
+        id: uuidv4(),
         topic: 'region',
         condition: 'Contains',
         query: defaultRegion,
+        display: REGION_FILTER.display,
+        displayQuery: REGION_FILTER.displayQuery,
       },
       ] : [],
   );
@@ -73,6 +79,9 @@ function Landing({ user }) {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
+  const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
+  const downloadAllAlertsButtonRef = useRef();
 
   function getAppliedRegion() {
     const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
@@ -100,10 +109,21 @@ function Landing({ user }) {
     setAlertsSortConfig({ sortBy, direction });
   };
 
-  const handleDownloadAllAlerts = () => {
+  const handleDownloadAllAlerts = async () => {
     const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
-    window.location.assign(downloadURL);
+
+    try {
+      setIsDownloadingAlerts(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (e) {
+      setDownloadAlertsError(true);
+    } finally {
+      setIsDownloadingAlerts(false);
+      downloadAllAlertsButtonRef.current.focus();
+    }
   };
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
@@ -157,7 +177,7 @@ function Landing({ user }) {
     );
   }
 
-  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All' : appliedRegionNumber.toString();
+  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All regions' : `Region ${appliedRegionNumber.toString()}`;
 
   // Apply filters.
   const onApply = (newFilters) => {
@@ -177,6 +197,18 @@ function Landing({ user }) {
     }
   };
 
+  const dateRangeOptions = [
+    {
+      label: 'Last 30 days',
+      value: 1,
+      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
+    },
+    {
+      label: 'Custom date range',
+      value: 2,
+      range: '',
+    },
+  ];
   return (
     <>
       <Helmet>
@@ -206,7 +238,7 @@ function Landing({ user }) {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">Activity Reports</h1>
+            <h1 className="landing">{`Activity reports - ${regionLabel}`}</h1>
           </Grid>
           <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
@@ -217,13 +249,11 @@ function Landing({ user }) {
           </Grid>
           <Grid col={10} className="flex-align-self-center">
             <div className="display-flex flex-wrap margin-bottom-2">
-              <FilterMenu
+              <FilterPanel
+                applyButtonAria="apply filters for activity reports"
                 filters={filters}
                 onApplyFilters={onApply}
-                onRemoveFilter={onRemoveFilter}
-              />
-              <FilterPills
-                filters={filters}
+                dateRangeOptions={dateRangeOptions}
                 onRemoveFilter={onRemoveFilter}
               />
             </div>
@@ -232,8 +262,8 @@ function Landing({ user }) {
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
             <Overview
+              tableCaption="TTA overview"
               filters={filtersToApply}
-              regionLabel={regionLabel}
             />
           </Grid>
         </Grid>
@@ -258,11 +288,14 @@ function Landing({ user }) {
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
           message={message}
+          isDownloadingAlerts={isDownloadingAlerts}
+          downloadAlertsError={downloadAlertsError}
+          downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
         <ActivityReportsTable
           filters={filtersToApply}
           showFilter={false}
-          tableCaption={`Region ${regionLabel} Activity reports`}
+          tableCaption="Approved activity reports"
         />
       </>
     </>
