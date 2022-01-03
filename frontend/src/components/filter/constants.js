@@ -153,7 +153,7 @@ export const FILTER_CONFIG = [
     display: 'Region',
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_SINGLE_SELECT,
-    displayQuery: handleArrayQuery,
+    displayQuery: handleStringQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterRegionalSelect
         appliedRegion={query}
