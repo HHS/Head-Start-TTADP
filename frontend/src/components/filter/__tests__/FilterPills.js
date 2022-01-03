@@ -26,12 +26,16 @@ describe('Filter Pills', () => {
         topic: 'role',
         condition: 'Contains',
         query: [],
+        displayQuery: (q) => q,
+        display: 'Specialist role',
       },
       {
         id: '2',
         topic: 'startDate',
         condition: 'Is within',
         query: '2021/10/01-2021/10/31',
+        displayQuery: (q) => q,
+        display: 'Start date',
       }];
 
       renderFilterMenu(filters);
