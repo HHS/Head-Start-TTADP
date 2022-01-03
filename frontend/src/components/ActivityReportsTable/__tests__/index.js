@@ -291,6 +291,27 @@ describe('Table menus & selections', () => {
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
     });
   });
+
+  it('disables download button while downloading', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderTable(user);
+    const reportMenu = await screen.findByLabelText(/reports menu/i);
+    userEvent.click(reportMenu);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+    const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+    userEvent.click(downloadButton);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
+    expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+  });
 });
 
 describe('Table sorting', () => {
