@@ -686,7 +686,7 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('includes authors with a partial match', async () => {
+    it('includes topic with a partial match', async () => {
       const filters = { 'topic.in': ['tes'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
@@ -697,7 +697,7 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
-    it('excludes authors that do not partial match', async () => {
+    it('excludes topics that do not partial match', async () => {
       const filters = { 'topic.nin': ['tes'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
