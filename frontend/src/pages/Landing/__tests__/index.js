@@ -125,7 +125,7 @@ describe('Landing Page', () => {
   });
 
   test('displays activity reports heading', async () => {
-    expect(await screen.findByText('Activity reports')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /Activity reports - /i })).toBeVisible();
   });
 
   test('displays report id column', async () => {
