@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Tooltip from '../Tooltip';
-import { FILTER_CONFIG } from './constants';
 import './FilterPills.css';
 
 const filterProp = PropTypes.shape({
-  topic: PropTypes.string,
   condition: PropTypes.string,
+  display: PropTypes.string,
+  displayQuery: PropTypes.func,
   query: PropTypes.oneOfType([
     PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
   ]),
@@ -19,18 +19,11 @@ const filterProp = PropTypes.shape({
 export function Pill({ filter, isFirst, onRemoveFilter }) {
   const {
     id,
-    topic,
     condition,
+    displayQuery,
+    display,
     query,
   } = filter;
-
-  const determineFilterName = () => {
-    const topicMatch = FILTER_CONFIG.find((f) => f.id === topic);
-    if (topicMatch) {
-      return topicMatch.display;
-    }
-    return topic;
-  };
 
   let showToolTip = false;
 
@@ -45,15 +38,11 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
   };
 
   const determineQuery = (keepOriginalLength = true) => {
-    const queryMatch = FILTER_CONFIG.find((f) => f.id === topic);
-    if (queryMatch) {
-      const queryToReturn = queryMatch.displayQuery(query);
-      return keepOriginalLength ? queryToReturn : truncateQuery(queryToReturn);
-    }
-    return query;
+    const queryToReturn = displayQuery(query);
+    return keepOriginalLength ? queryToReturn : truncateQuery(queryToReturn);
   };
 
-  const filterName = determineFilterName();
+  const filterName = display;
   const queryValue = determineQuery();
   const ariaButtonText = `This button removes the filter: ${filterName} ${condition} ${queryValue}`;
   const queryShortValue = determineQuery(false);
