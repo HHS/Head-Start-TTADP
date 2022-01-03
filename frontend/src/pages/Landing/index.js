@@ -3,6 +3,7 @@ import React, {
   useState,
   useEffect,
   useContext,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -67,6 +68,8 @@ function Landing({ user }) {
   const [alertFilters, setAlertFilters] = useState([]);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
   const [downloadAlertsError, setDownloadAlertsError] = useState(false);
+
+  const downloadAllAlertsButtonRef = useRef();
 
   const defaultRegion = regions[0] || user.homeRegionId || 0;
 
@@ -165,6 +168,7 @@ function Landing({ user }) {
       setDownloadAlertsError(true);
     } finally {
       setIsDownloadingAlerts(false);
+      downloadAllAlertsButtonRef.current.focus();
     }
   };
 
@@ -301,6 +305,7 @@ function Landing({ user }) {
           message={message}
           isDownloadingAlerts={isDownloadingAlerts}
           downloadAlertsError={downloadAlertsError}
+          downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
         <ActivityReportsTable
           filters={filters}
