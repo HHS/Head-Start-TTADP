@@ -10,6 +10,18 @@ import {
   DECIMAL_BASE,
   DATE_FMT,
 } from './Constants';
+import {
+  START_DATE_FILTER,
+  GRANT_NUMBER_FILTER,
+  PROGRAM_SPECIALIST_FILTER,
+  PROGRAM_TYPE_FILTER,
+  REASON_FILTER,
+  RECIPIENT_NAME_FILTER,
+  REGION_FILTER,
+  ROLE_FILTER,
+  TARGET_POPULATION_FILTER,
+  TOPICS_FILTER,
+} from './components/filter/constants';
 
 /**
  * Given a potential url, verify that it is a valid url with http(s) scheme.
@@ -129,11 +141,26 @@ export function queryStringToFilters(queryString) {
     const condition = queryKeys[index];
 
     if (topic && condition && query) {
+      const { display, displayQuery } = [
+        START_DATE_FILTER,
+        GRANT_NUMBER_FILTER,
+        PROGRAM_SPECIALIST_FILTER,
+        PROGRAM_TYPE_FILTER,
+        REASON_FILTER,
+        RECIPIENT_NAME_FILTER,
+        REGION_FILTER,
+        ROLE_FILTER,
+        TARGET_POPULATION_FILTER,
+        TOPICS_FILTER,
+      ].find((f) => f.id === topic);
+
       return {
         id: uuidv4(),
         topic,
         condition,
         query: decodeQueryParam(query),
+        displayQuery,
+        display,
       };
     }
 
