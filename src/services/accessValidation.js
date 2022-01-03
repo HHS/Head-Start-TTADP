@@ -82,7 +82,7 @@ export async function isCentralOffice(userId) {
   Make sure the user has read permissions to the regions requested. If no regions
   are explicitly requested default to all regions which the user has access to.
 */
-export async function setReadRegions(query, userId, useFirstReadRegion = false) {
+export async function setReadRegions(query, userId) {
   const readRegions = await getUserReadRegions(userId);
 
   // if region.in is part of query (user has requested specific regions)
@@ -96,6 +96,6 @@ export async function setReadRegions(query, userId, useFirstReadRegion = false) 
   // otherwise region.in is not in query and we return all read regions
   return {
     ...query,
-    'region.in': useFirstReadRegion ? [readRegions[0]] : readRegions,
+    'region.in': readRegions,
   };
 }

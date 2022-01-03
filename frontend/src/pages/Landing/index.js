@@ -46,10 +46,18 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
 function Landing({ user }) {
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
-  const regionToUse = regions[0] || user.homeRegionId || 0;
-  const defaultRegion = user.homeRegionId === 14 ? 14 : regionToUse;
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
 
-  const [filters, setFilters] = useUrlFilters([]);
+  const [filters, setFilters] = useUrlFilters(
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      ? [{
+        topic: 'region',
+        condition: 'Contains',
+        query: defaultRegion,
+      },
+      ] : [],
+  );
 
   const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
@@ -99,17 +107,6 @@ function Landing({ user }) {
   };
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
-
-  useEffect(() => {
-    if (defaultRegion !== 14) {
-      setFilters([{
-        topic: 'region',
-        condition: 'Contains',
-        query: defaultRegion,
-      },
-      ]);
-    }
-  }, [defaultRegion]);
 
   useEffect(() => {
     async function fetchAlertReports() {
