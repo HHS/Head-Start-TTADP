@@ -176,7 +176,7 @@ const DeleteFileModal = ({
         <p>
           Are you sure you want to delete
           {' '}
-          { files[index] ? files[index].originalFileName : null }
+          {files[index] ? files[index].originalFileName : null}
           {' '}
           ?
         </p>
@@ -236,7 +236,7 @@ const FileTable = ({ onFileRemoved, files }) => {
           {files.map((file, currentIndex) => (
             <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
               <td className="files-table--file-name">
-                {file && file.originalFileName ? file.originalFileName : 'blah'}
+                {file.originalFileName}
               </td>
               <td>
                 {`${(file.fileSize / 1000).toFixed(1)} KB`}
