@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
 
 export default function FilterStateSelect({
   onApply,
   inputId,
-  stateCodes,
 }) {
+  const [stateCodes] = useState([]);
+
   const options = stateCodes.filter((code) => code).map((label, value) => ({
     value, label,
   }));
@@ -28,5 +29,4 @@ export default function FilterStateSelect({
 FilterStateSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  stateCodes: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

@@ -200,11 +200,10 @@ export const FILTER_CONFIG = [
     conditions: [IS],
     defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onApplyQuery, dateRangeOptions, stateCodes) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterStateSelect
         inputId={`state-${condition}-${id}`}
         onApply={onApplyQuery}
-        stateCodes={stateCodes}
       />
     ),
   },
