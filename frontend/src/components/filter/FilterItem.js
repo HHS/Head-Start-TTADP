@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.css';
 
-import { FILTER_CONFIG } from './constants';
-
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
@@ -25,14 +23,14 @@ export default function FilterItem({
   filter,
   onRemoveFilter,
   onUpdateFilter,
-  prohibitedFilters,
-  selectedFilters,
   dateRangeOptions,
   errors,
   setErrors,
   index,
   validate,
   stateCodes,
+  topicOptions,
+  selectedTopic,
 }) {
   const {
     id,
@@ -43,10 +41,6 @@ export default function FilterItem({
 
   const fieldset = useRef();
 
-  if (prohibitedFilters.includes(topic)) {
-    return null;
-  }
-
   const setError = (message) => {
     const newErrors = [...errors];
     newErrors.splice(index, 1, message);
@@ -54,17 +48,26 @@ export default function FilterItem({
   };
 
   const onBlur = (e) => {
+    let willValidate = true;
+
     // no validation if you are clicking on something within the filter item
     if (fieldset.current.contains(e.relatedTarget)) {
-      return;
+      willValidate = false;
     }
 
     // no validation if you are clicking on the cancel button
     if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
-      return;
+      willValidate = false;
     }
 
-    validate(filter, setError);
+    if (willValidate) {
+      const message = validate(filter);
+      // if there is an error (either new or existing), we want to refresh
+      // the validation message that's there
+      if (message || errors[index]) {
+        setError(message);
+      }
+    }
   };
 
   /**
@@ -74,17 +77,6 @@ export default function FilterItem({
    * function below
    */
   const onUpdate = (name, value) => {
-    if (name === 'condition') {
-      /**
-       * if the condition is changed, we need to do a lookup in the filter config
-       * and set the query to the new default value
-       */
-      const f = FILTER_CONFIG.find(((config) => config.id === topic));
-      const defaultQuery = f.defaultValues[value];
-
-      onUpdateFilter(id, 'query', defaultQuery);
-    }
-
     onUpdateFilter(id, name, value);
   };
 
@@ -96,7 +88,6 @@ export default function FilterItem({
     onUpdate('query', q);
   };
 
-  const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
 
   const onRemove = () => {
@@ -112,11 +103,6 @@ export default function FilterItem({
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
-  const topicOptions = FILTER_CONFIG.filter((config) => (
-    topic === config.id || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
-  )).map(({ id: filterId, display }) => (
-    <option key={filterId} value={filterId}>{display}</option>
-  ));
   const error = errors[index];
 
   const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0 position-relative';
@@ -160,7 +146,7 @@ export default function FilterItem({
         className="usa-select"
 
       >
-        <option value="" disabled selected>- Select -</option>
+        <option value="" disabled selected hidden>- Select -</option>
         {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -177,7 +163,7 @@ export default function FilterItem({
         className="usa-select"
 
       >
-        <option value="" disabled selected>- Select -</option>
+        <option value="" disabled selected hidden>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
@@ -207,8 +193,6 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
-  prohibitedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selectedFilters: PropTypes.arrayOf(PropTypes.string).isRequired,
   dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
@@ -219,4 +203,10 @@ FilterItem.propTypes = {
   index: PropTypes.number.isRequired,
   validate: PropTypes.func.isRequired,
   stateCodes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.node).isRequired,
+  selectedTopic: PropTypes.shape({
+    display: PropTypes.string,
+    renderInput: PropTypes.func,
+    conditions: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
 };

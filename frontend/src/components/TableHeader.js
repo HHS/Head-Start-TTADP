@@ -6,7 +6,6 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import Filter from './Filter';
 import ReportMenu from '../pages/Landing/ReportMenu';
-import DateTime from './DateTime';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -38,15 +37,14 @@ export default function TableHeader({
   hidePagination,
   forMyAlerts,
   downloadError,
-  dateTime,
+  isDownloading,
+  downloadAllButtonRef,
+  downloadSelectedButtonRef,
 }) {
   return (
     <div className="desktop:display-flex">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        {dateTime
-          ? <DateTime classNames="display-flex flex-align-center padding-x-1 flex-align-self-center" timestamp={dateTime.timestamp} label={dateTime.label} />
-          : null}
         <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row flex-align-center">
           {numberOfSelected > 0
             && (
@@ -80,6 +78,9 @@ export default function TableHeader({
               onExportSelected={handleDownloadClick}
               count={count}
               downloadError={downloadError}
+              isDownloading={isDownloading}
+              downloadAllButtonRef={downloadAllButtonRef}
+              downloadSelectedButtonRef={downloadSelectedButtonRef}
             />
           )}
         </span>
@@ -137,9 +138,15 @@ TableHeader.propTypes = {
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   downloadError: PropTypes.bool,
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
+  isDownloading: PropTypes.bool,
+  downloadAllButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 TableHeader.defaultProps = {
@@ -159,5 +166,7 @@ TableHeader.defaultProps = {
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
-  dateTime: { timestamp: '', label: '' },
+  isDownloading: false,
+  downloadAllButtonRef: () => {},
+  downloadSelectedButtonRef: () => {},
 };

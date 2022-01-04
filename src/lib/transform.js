@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
 function transformDate(field) {
@@ -57,6 +58,20 @@ function transformRelatedModel(field, prop) {
         enumerable: true,
       });
     }
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
+function transformHTML(field) {
+  async function transformer(instance) {
+    const html = instance[field] || '';
+    const value = convert(html, { selectors: [{ selector: 'table', format: 'dataTable' }] });
+    const obj = {};
+    Object.defineProperty(obj, field, {
+      value,
+      enumerable: true,
+    });
     return Promise.resolve(obj);
   }
   return transformer;
@@ -161,9 +176,9 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     // same with objective num
 
     /**
-       * this will start non-grantee objectives at 1.1, which will prevent the creation
-       * of columns that don't fit the current schema (for example, objective-1.0)
-       */
+     * this will start other entity objectives at 1.1, which will prevent the creation
+     * of columns that don't fit the current schema (for example, objective-1.0)
+     */
     if (!objectiveNum) {
       objectiveNum = 1;
     }
@@ -179,7 +194,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
-      value: ttaProvided,
+      value: convert(ttaProvided),
       enumerable: true,
     });
     objectiveNum += 1;
@@ -189,10 +204,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 }
 
 /*
-   * Transform goals and objectives into a format suitable for a CSV
-   * @param {ActivityReport} ActivityReport instance
-   * @returns {Promise<object>} Object with key-values for goals and objectives
-   */
+* Transform goals and objectives into a format suitable for a CSV
+* @param {ActivityReport} ActivityReport instance
+* @returns {Promise<object>} Object with key-values for goals and objectives
+*/
 async function transformGoalsAndObjectives(report) {
   let obj = {};
 
@@ -229,10 +244,10 @@ const arTransformers = [
   'nonECLKCResourcesUsed',
   transformRelatedModel('attachments', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformRelatedModel('granteeNextSteps', 'note'),
+  transformRelatedModel('recipientNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),
-  'context',
-  'additionalNotes',
+  transformHTML('context'),
+  transformHTML('additionalNotes'),
   'lastSaved',
   transformDate('createdAt'),
   transformDate('approvedAt'),

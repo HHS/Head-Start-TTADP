@@ -88,11 +88,11 @@ async function sendActivityReportCSV(reports, res) {
         },
         {
           key: 'activityRecipientType',
-          header: 'Grantee or non-grantee',
+          header: 'Recipient or other entity',
         },
         {
           key: 'activityRecipients',
-          header: 'Grantee name/non-grantee name',
+          header: 'Recipient name/other entity name',
         },
         {
           key: 'programTypes',
@@ -169,8 +169,8 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
-          key: 'granteeNextSteps',
-          header: 'Grantee next steps',
+          key: 'recipientNextSteps',
+          header: 'Recipient next steps',
         },
         {
           key: 'createdAt',
@@ -313,7 +313,7 @@ export async function reviewReport(req, res) {
     const reviewedReport = await activityReportById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      if (reviewedReport.activityRecipientType === 'grantee') {
+      if (reviewedReport.activityRecipientType === 'recipient') {
         await copyGoalsToGrants(
           reviewedReport.goals,
           reviewedReport.activityRecipients.map((recipient) => recipient.activityRecipientId),
@@ -508,7 +508,7 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const query = await setReadRegions(req.query, req.session.userId, true);
+  const query = await setReadRegions(req.query, req.session.userId);
   const reportsWithCount = await activityReports(query);
   if (!reportsWithCount) {
     res.sendStatus(404);

@@ -22,9 +22,14 @@ const YEAR_TO_DATE = formatDateRange({
   forDateTime: true,
 });
 
-const EMPTY_CHECKBOX_SELECT = {
-  Contains: [],
-  'Does not contain': [],
+const EMPTY_MULTI_SELECT = {
+  Is: [],
+  'Is not': [],
+};
+
+const EMPTY_SINGLE_SELECT = {
+  Is: '',
+  'Is not': '',
 };
 
 const EMPTY_TEXT_INPUT = {
@@ -41,7 +46,6 @@ const handleArrayQuery = (q) => {
 
 const handleStringQuery = (q) => q;
 
-// eslint-disable-next-line import/prefer-default-export
 export const FILTER_CONFIG = [
   {
     id: 'startDate',
@@ -81,8 +85,7 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        id={id}
-        condition={condition}
+        inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
         type="grantNumber"
         label="Enter a grant number"
@@ -108,12 +111,13 @@ export const FILTER_CONFIG = [
     id: 'programType',
     display: 'Program types',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterProgramType
         inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -121,12 +125,13 @@ export const FILTER_CONFIG = [
     id: 'reason',
     display: 'Reason',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterReasonSelect
         inputId={`reason-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -146,11 +151,28 @@ export const FILTER_CONFIG = [
     ),
   },
   {
+    id: 'reportId',
+    display: 'Report ID',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_TEXT_INPUT,
+    displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterInput
+        query={query}
+        id={id}
+        condition={condition}
+        onApply={onApplyQuery}
+        type="reportId"
+        label="Enter a report id"
+      />
+    ),
+  },
+  {
     id: 'region',
     display: 'Region',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
-    displayQuery: handleArrayQuery,
+    defaultValues: EMPTY_SINGLE_SELECT,
+    displayQuery: handleStringQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterRegionalSelect
         appliedRegion={query}
@@ -162,12 +184,13 @@ export const FILTER_CONFIG = [
     id: 'role',
     display: 'Specialist role',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterSpecialistSelect
         inputId={`role-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -175,7 +198,7 @@ export const FILTER_CONFIG = [
     id: 'stateCode',
     display: 'State',
     conditions: [IS],
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery, dateRangeOptions, stateCodes) => (
       <FilterStateSelect
@@ -189,12 +212,13 @@ export const FILTER_CONFIG = [
     id: 'targetPopulation',
     display: 'Target population',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterPopulationSelect
         inputId={`population-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
@@ -202,13 +226,17 @@ export const FILTER_CONFIG = [
     id: 'topic',
     display: 'Topics',
     conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_CHECKBOX_SELECT,
+    defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterTopicSelect
         inputId={`topic-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },
 ];
+
+// a list of all the filter topics available
+export const AVAILABLE_FILTERS = FILTER_CONFIG.map((f) => f.id);

@@ -21,19 +21,19 @@ export async function getCDIGrants(req, res) {
   }
 }
 
-export async function assignRegionGranteeToCDIGrant(req, res) {
+export async function assignRegionRecipientToCDIGrant(req, res) {
   try {
     const { grantId } = req.params;
     const grant = await grantById(grantId);
     const authorization = new Grant(grant);
 
-    if (!authorization.canAssignRegionAndGrantee()) {
+    if (!authorization.canAssignRegionAndRecipient()) {
       res.sendStatus(409);
       return;
     }
 
-    const { regionId, granteeId } = req.body;
-    await assignCDIGrant(grant, regionId, granteeId);
+    const { regionId, recipientId } = req.body;
+    await assignCDIGrant(grant, regionId, recipientId);
     const newGrant = await grantById(grantId);
     res.json(newGrant);
   } catch (error) {
@@ -44,6 +44,6 @@ export async function assignRegionGranteeToCDIGrant(req, res) {
 const router = express.Router();
 
 router.get('/cdi', getCDIGrants);
-router.put('/cdi/:grantId', assignRegionGranteeToCDIGrant);
+router.put('/cdi/:grantId', assignRegionRecipientToCDIGrant);
 
 export default router;

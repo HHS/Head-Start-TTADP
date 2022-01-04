@@ -7,7 +7,7 @@ import db, {
 } from '../../models';
 
 const draftObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   regionId: 1,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.DRAFT,

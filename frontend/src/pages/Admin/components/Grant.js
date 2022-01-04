@@ -9,11 +9,11 @@ import Select from '../../../components/Select';
 import RegionDropdown from '../../../components/RegionDropdown';
 import GrantLabel from './GrantLabel';
 
-function Grant({ grant, grantees, onAssignCDIGrant }) {
+function Grant({ grant, recipients, onAssignCDIGrant }) {
   const region = grant.regionId === 13 ? 0 : grant.regionId;
-  const defaultGrantee = grantees.find((g) => g.id === grant.granteeId);
+  const defaultRecipient = recipients.find((g) => g.id === grant.recipientId);
   const [selectedRegion, updateSelectedRegion] = useState(region);
-  const [selectedGrantee, updateSelectedGrantee] = useState({ value: defaultGrantee.id, label: `${defaultGrantee.name} - ${defaultGrantee.id}` });
+  const [selectedRecipient, updateSelectedRecipient] = useState({ value: defaultRecipient.id, label: `${defaultRecipient.name} - ${defaultRecipient.id}` });
   const [error, updateError] = useState('');
   const startDate = moment(grant.startDate);
   const endDate = moment(grant.endDate);
@@ -33,7 +33,7 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
           <Grid col={6}>
             <GrantLabel label="Number" value={`${grant.number} - ${grant.id}`} />
             <GrantLabel label="Region" value={grant.regionId} />
-            <GrantLabel label="Grantee" value={grant.grantee.name} />
+            <GrantLabel label="Recipient" value={grant.recipient.name} />
           </Grid>
           <Grid col={6}>
             <GrantLabel label="Status" value={grant.status} />
@@ -50,13 +50,13 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
           onChange={(e) => updateSelectedRegion(parseInt(e.target.value, 10))}
         />
         <div>
-          <Label htmlFor="grantee">Grantee</Label>
+          <Label htmlFor="recipient">Recipient</Label>
           <Select
             className="margin-top-1 width-mobile-lg"
-            options={grantees.map((g) => ({ label: `${g.name} - ${g.id}`, value: g.id }))}
-            name="grantee"
-            value={selectedGrantee}
-            onChange={updateSelectedGrantee}
+            options={recipients.map((g) => ({ label: `${g.name} - ${g.id}`, value: g.id }))}
+            name="recipient"
+            value={selectedRecipient}
+            onChange={updateSelectedRecipient}
           />
         </div>
         <div className="margin-top-3">
@@ -67,7 +67,7 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
                 updateError('A region must be selected');
               } else {
                 try {
-                  await onAssignCDIGrant(grant.id, selectedRegion, selectedGrantee.value);
+                  await onAssignCDIGrant(grant.id, selectedRegion, selectedRecipient.value);
                   updateError('');
                 } catch (e) {
                   // eslint-disable-next-line no-console
@@ -77,7 +77,7 @@ function Grant({ grant, grantees, onAssignCDIGrant }) {
               }
             }}
           >
-            Assign region and grantee
+            Assign region and recipient
           </Button>
         </div>
       </div>
@@ -93,13 +93,13 @@ Grant.propTypes = {
     status: PropTypes.string.isRequired,
     startDate: PropTypes.string,
     endDate: PropTypes.string,
-    granteeId: PropTypes.number,
-    grantee: PropTypes.shape({
+    recipientId: PropTypes.number,
+    recipient: PropTypes.shape({
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
     }),
   }).isRequired,
-  grantees: PropTypes.arrayOf(PropTypes.shape({
+  recipients: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
   })).isRequired,

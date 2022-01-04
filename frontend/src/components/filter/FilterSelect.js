@@ -8,6 +8,7 @@ export default function FilterSelect({
   labelText,
   inputId,
   options,
+  selectedValues,
 }) {
   /**
    * unfortunately, given our support for ie11, we can't
@@ -17,6 +18,10 @@ export default function FilterSelect({
   */
 
   useSpellCheck(inputId);
+
+  const value = selectedValues.map((selection) => (
+    options.find((option) => option.label === selection)
+  ));
 
   const styles = {
     container: (provided, state) => {
@@ -40,7 +45,7 @@ export default function FilterSelect({
         // Match uswds disabled style
         opacity: state.isDisabled ? '0.7' : '1',
 
-        overflow: 'hidden',
+        overflow: state.isFocused ? 'visible' : 'hidden',
         position: !state.isFocused ? 'absolute' : 'relative',
         top: 0,
         left: 0,
@@ -59,17 +64,11 @@ export default function FilterSelect({
       ...provided,
       zIndex: 2,
     }),
-    multiValue: (provided) => ({
+    multiValue: (provided) => ({ ...provided }),
+    multiValueLabel: (provided) => ({ ...provided }),
+    valueContainer: (provided) => ({
       ...provided,
-      backgroundColor: 'transparent',
-    }),
-    multiValueContainer: (provided) => ({
-      ...provided,
-      overflow: 'hidden',
-    }),
-    multiValueLabel: (provided) => ({
-      ...provided,
-      fontSize: '100%',
+      maxHeight: '100%',
     }),
   };
 
@@ -78,31 +77,33 @@ export default function FilterSelect({
   };
 
   return (
-    <>
-      <Select
-        placeholder={labelText}
-        aria-label={labelText}
-        inputId={inputId}
-        onChange={onChange}
-        options={options}
-        styles={styles}
-        components={{
-          DropdownIndicator: null,
-        }}
-        className="usa-select"
-        closeMenuOnSelect={false}
-        isMulti
-      />
-    </>
+    <Select
+      placeholder={labelText}
+      aria-label={labelText}
+      inputId={inputId}
+      onChange={onChange}
+      options={options}
+      styles={styles}
+      components={{
+        DropdownIndicator: null,
+      }}
+      className="usa-select"
+      closeMenuOnSelect={false}
+      value={value}
+      isMulti
+    />
   );
 }
+
+const option = PropTypes.shape({
+  label: PropTypes.string,
+  value: PropTypes.number,
+});
 
 FilterSelect.propTypes = {
   onApply: PropTypes.func.isRequired,
   labelText: PropTypes.string.isRequired,
-  options: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
+  options: PropTypes.arrayOf(option).isRequired,
   inputId: PropTypes.string.isRequired,
+  selectedValues: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
