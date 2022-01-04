@@ -47,7 +47,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const justSubmitted = message && message.reportId === id;
 
     const recipients = activityRecipients.map((ar) => (
-      ar.grant ? ar.grant.grantee.name : ar.name
+      ar.grant ? ar.grant.recipient.name : ar.name
     ));
 
     const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
@@ -185,13 +185,17 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
-    hasFilters,
     updateReportFilters,
     updateReportAlerts,
     setAlertReportsCount,
     handleDownloadAllAlerts,
     loading,
     message,
+    showFilter,
+    isDownloadingAlerts,
+    downloadAlertsError,
+    downloadAllAlertsButtonRef,
+    downloadSelectedAlertsButtonRef,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -239,10 +243,9 @@ function MyAlerts(props) {
     setAlertReportsCount(alertReportsCount - 1);
     updateReportAlerts(newReports);
   };
-
   return (
     <>
-      {reports && reports.length === 0 && !hasFilters && (
+      {reports && reports.length === 0 && (
         <Container className="landing" padding={0} loading={loading}>
           <div id="caughtUp">
             <div>
@@ -258,12 +261,12 @@ function MyAlerts(props) {
         </Container>
       )}
 
-      {reports && (reports.length > 0 || hasFilters) && (
-        <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
+      {reports && (reports.length > 0) && (
+        <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
-            showFilter
+            showFilter={showFilter}
             forMyAlerts
             onUpdateFilters={updateReportFilters}
             handleDownloadAll={handleDownloadAllAlerts}
@@ -272,6 +275,10 @@ function MyAlerts(props) {
             offset={alertsOffset}
             perPage={alertsPerPage}
             hidePagination
+            isDownloading={isDownloadingAlerts}
+            downloadError={downloadAlertsError}
+            downloadAllButtonRef={downloadAllAlertsButtonRef}
+            downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
@@ -281,7 +288,7 @@ function MyAlerts(props) {
               <thead>
                 <tr>
                   {renderColumnHeader('Report ID', 'regionId')}
-                  {renderColumnHeader('Grantee', 'activityRecipients')}
+                  {renderColumnHeader('Recipient', 'activityRecipients')}
                   {renderColumnHeader('Start date', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
@@ -311,8 +318,7 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
-  hasFilters: PropTypes.bool,
-  updateReportFilters: PropTypes.func.isRequired,
+  updateReportFilters: PropTypes.func,
   updateReportAlerts: PropTypes.func.isRequired,
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
@@ -323,21 +329,36 @@ MyAlerts.propTypes = {
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
+  showFilter: PropTypes.bool.isRequired,
+  isDownloadingAlerts: PropTypes.bool,
+  downloadAlertsError: PropTypes.bool,
+  downloadAllAlertsButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedAlertsButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 MyAlerts.defaultProps = {
+  updateReportFilters: () => { },
   reports: [],
   alertsSortConfig: { sortBy: 'startDate', direction: 'asc' },
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
-  hasFilters: false,
   message: {
     time: '',
     reportId: '',
     displayId: '',
     status: '',
   },
+  isDownloadingAlerts: false,
+  downloadAlertsError: false,
+  downloadAllAlertsButtonRef: () => {},
+  downloadSelectedAlertsButtonRef: () => {},
 };
 
 export default MyAlerts;

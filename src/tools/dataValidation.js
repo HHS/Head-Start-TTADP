@@ -28,7 +28,7 @@ const dataValidation = async () => {
     'Goals',
     'Objectives',
     'NextSteps',
-    'Grantees',
+    'Recipients',
     'Grants',
     'Users',
   ];

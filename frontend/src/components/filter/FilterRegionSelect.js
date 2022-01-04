@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
@@ -11,8 +11,24 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   };
 
   const { user } = useContext(UserContext);
+
   const regions = getUserRegions(user);
-  const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
+  const firstRegion = regions[0];
+
+  /**
+   * I'm Helping
+   *
+   * by making sure a region is selected
+   */
+  useEffect(() => {
+    if (!appliedRegion && firstRegion) {
+      onApplyRegion({
+        target: {
+          value: firstRegion.toString(),
+        },
+      });
+    }
+  });
 
   return (
     <>
@@ -26,8 +42,6 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
             {region}
           </option>
         ))}
-        {hasCentralOffice
-        && <option value="14">All regions</option>}
       </Dropdown>
     </>
   );

@@ -3,20 +3,20 @@ import {
   ActivityReport,
   ActivityRecipient,
   User,
-  Grantee,
+  Recipient,
   File,
   Grant,
   NextStep,
   Permission,
   RequestErrors,
 } from '../models';
-import processData, { hideUsers, hideGranteesGrants, bootstrapUsers } from './processData';
+import processData, { hideUsers, hideRecipientsGrants, bootstrapUsers } from './processData';
 import { REPORT_STATUSES } from '../constants';
 
 jest.mock('../logger');
 
-const GRANTEE_ID_ONE = 7777;
-const GRANTEE_ID_TWO = 7776;
+const RECIPIENT_ID_ONE = 7777;
+const RECIPIENT_ID_TWO = 7776;
 const GRANT_ID_ONE = 88888;
 const GRANT_ID_TWO = 88887;
 
@@ -66,14 +66,14 @@ const mockFile = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANTEE_ID_ONE },
-    { activityRecipientId: GRANTEE_ID_TWO },
+    { activityRecipientId: RECIPIENT_ID_ONE },
+    { activityRecipientId: RECIPIENT_ID_TWO },
   ],
   submissionStatus: REPORT_STATUSES.APPROVED,
   approvingManagerId: mockManager.id,
@@ -150,13 +150,13 @@ describe('processData', () => {
     await User.findOrCreate({ where: mockCollaboratorOne });
     await User.findOrCreate({ where: mockCollaboratorTwo });
 
-    await Grantee.findOrCreate({ where: { name: 'Agency One, Inc.', id: GRANTEE_ID_ONE } });
-    await Grantee.findOrCreate({ where: { name: 'Agency Two', id: GRANTEE_ID_TWO } });
+    await Recipient.findOrCreate({ where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE } });
+    await Recipient.findOrCreate({ where: { name: 'Agency Two', id: RECIPIENT_ID_TWO } });
     await Grant.findOrCreate({
       where: {
         id: GRANT_ID_ONE,
         number: '01GN011311',
-        granteeId: GRANTEE_ID_ONE,
+        recipientId: RECIPIENT_ID_ONE,
         regionId: 1,
         status: 'Active',
         programSpecialistName: mockManager.name,
@@ -165,7 +165,7 @@ describe('processData', () => {
     });
     await Grant.findOrCreate({
       where: {
-        id: GRANT_ID_TWO, number: '01GN011411', granteeId: GRANTEE_ID_TWO, regionId: 1, status: 'Active',
+        id: GRANT_ID_TWO, number: '01GN011411', recipientId: RECIPIENT_ID_TWO, regionId: 1, status: 'Active',
       },
     });
   });
@@ -198,12 +198,12 @@ describe('processData', () => {
     });
     await Grant.destroy({ where: { id: GRANT_ID_ONE } });
     await Grant.destroy({ where: { id: GRANT_ID_TWO } });
-    await Grantee.destroy({ where: { id: GRANTEE_ID_ONE } });
-    await Grantee.destroy({ where: { id: GRANTEE_ID_TWO } });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID_ONE } });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID_TWO } });
     await sequelize.close();
   });
 
-  it('transforms user emails, granteeName in the ActivityReports table (imported)', async () => {
+  it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockFile.activityReportId = report.id;
     const file = await File.create(mockFile);
@@ -236,24 +236,24 @@ describe('processData', () => {
     });
   });
 
-  describe('hideGranteesGrants', () => {
-    it('transforms grantee names in the Grantees table', async () => {
-      await hideGranteesGrants(reportObject.imported.granteeName);
+  describe('hideRecipientsGrants', () => {
+    it('transforms recipient names in the Recipients table', async () => {
+      await hideRecipientsGrants(reportObject.imported.granteeName);
 
-      const transformedGrantee = await Grantee.findOne({ where: { id: GRANTEE_ID_ONE } });
-      expect(transformedGrantee.name).not.toBe('Agency One, Inc.');
+      const transformedRecipient = await Recipient.findOne({ where: { id: RECIPIENT_ID_ONE } });
+      expect(transformedRecipient.name).not.toBe('Agency One, Inc.');
     });
     it('transforms grant names in the Grants table', async () => {
-      await hideGranteesGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName);
 
-      const transformedGrant = await Grant.findOne({ where: { granteeId: GRANTEE_ID_ONE } });
+      const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
       expect(transformedGrant.number).not.toBe('01GN011311');
     });
 
     it('transforms program specialist name and email in the Grants table', async () => {
-      await hideGranteesGrants(reportObject.imported.granteeName);
+      await hideRecipientsGrants(reportObject.imported.granteeName);
 
-      const transformedGrant = await Grant.findOne({ where: { granteeId: GRANTEE_ID_ONE } });
+      const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
       expect(transformedGrant.id).toBe(GRANT_ID_ONE);
       const transformedMockManager = await User.findOne({ where: { id: mockManager.id } });
 

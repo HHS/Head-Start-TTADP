@@ -16,7 +16,7 @@
 
 .ttahub-filter-menu-item.ttahub-filter-menu-item--error {
     border-left: 4px solid #b50909;
-    padding: 2em 1em;    
+    padding: 2em 1em 1em;
     margin: 1em 0 1em calc( -1em - 4px );
 }
 

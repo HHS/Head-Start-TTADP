@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { filtersToQueryString } from '../utils';
+import { useEffect, useMemo, useState } from 'react';
+import { queryStringToFilters, filtersToQueryString } from '../utils';
 
 // hoisting this fellow as to not get embroiled in useEffects
 const { history } = window;
@@ -9,20 +9,20 @@ const { history } = window;
  * and returns a useState like array of a getter and a setter
  *
  * @param {Object[]} defaultFilters
- * @param {String[]} paramsToHide filter topics that shouldn't display in the URL
  * @returns {[ Object[], Function ]}
  */
-export default function useUrlFilters(defaultFilters, paramsToHide = []) {
-  const [filters, setFilters] = useState(defaultFilters);
+export default function useUrlFilters(defaultFilters) {
+  // initial state should derive from whats in the url if possible
+  // we don't want to be doing this every time the component rerenders so we store it in a usememo
+  const params = useMemo(() => queryStringToFilters(new URL(window.location).search.substr(1)), []);
+  const [filters, setFilters] = useState(params.length ? params : defaultFilters);
 
   // use effect to watch the query and update if changed
   useEffect(() => {
-    const searchParams = filters.filter((filter) => !paramsToHide.includes(filter.topic));
-
     // create our query string
-    const search = filtersToQueryString(searchParams);
+    const search = filtersToQueryString(filters);
     history.pushState(null, null, `?${search}`);
-  }, [filters, paramsToHide]);
+  }, [filters]);
 
   return [filters, setFilters];
 }

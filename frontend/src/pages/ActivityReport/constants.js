@@ -1,4 +1,4 @@
-export const granteeParticipants = [
+export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
   'Coach',
@@ -15,7 +15,7 @@ export const granteeParticipants = [
   'Volunteer',
 ];
 
-export const nonGranteeParticipants = [
+export const otherEntityParticipants = [
   'Local/State Agency(ies)',
   'HSCO',
   'OCC Regional Office',
@@ -27,8 +27,44 @@ export const nonGranteeParticipants = [
   'Other',
 ];
 
-export const programTypes = [
-  'Early Head Start (ages 0-3)',
-  'Head Start (ages 3-5)',
-  'EHS-CCP',
+// Note that if this topic list is changed, it needs also to be changed in
+// - src/constants.js
+export const topics = [
+  'Behavioral / Mental Health / Trauma',
+  'Child Assessment, Development, Screening',
+  'CLASS: Classroom Organization',
+  'CLASS: Emotional Support',
+  'CLASS: Instructional Support',
+  'Coaching',
+  'Communication',
+  'Community and Self-Assessment',
+  'Culture & Language',
+  'Curriculum (Instructional or Parenting)',
+  'Data and Evaluation',
+  'ERSEA',
+  'Environmental Health and Safety / EPRR',
+  'Equity',
+  'Facilities',
+  'Family Support Services',
+  'Fiscal / Budget',
+  'Five-Year Grant',
+  'Home Visiting',
+  'Human Resources',
+  'Leadership / Governance',
+  'Learning Environments',
+  'Nutrition',
+  'Oral Health',
+  'Parent and Family Engagement',
+  'Partnerships and Community Engagement',
+  'Physical Health and Screenings',
+  'Pregnancy Services / Expectant Families',
+  'Program Planning and Services',
+  'Quality Improvement Plan / QIP',
+  'Recordkeeping and Reporting',
+  'Safety Practices',
+  'Staff Wellness',
+  'Teaching Practices / Teacher-Child Interactions',
+  'Technology and Information Systems',
+  'Transition Practices',
+  'Transportation',
 ];

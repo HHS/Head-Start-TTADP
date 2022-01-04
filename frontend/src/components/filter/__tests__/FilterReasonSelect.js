@@ -15,6 +15,7 @@ describe('FilterReasonSelect', () => {
       <FilterReasonSelect
         onApply={onApply}
         inputId="curly"
+        query={[]}
       />,
     ));
 

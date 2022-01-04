@@ -9,3 +9,7 @@
     display: inline;
     line-height: 1.15;
 }
+
+.filter-pill:first-of-type {
+    margin-left: 1em;
+}
