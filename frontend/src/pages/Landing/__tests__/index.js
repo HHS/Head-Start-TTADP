@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
-
+import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
@@ -18,21 +18,19 @@ jest.mock('../../../fetchers/helpers');
 
 const mockAnnounce = jest.fn();
 
-const withRegionOne = '&region.in[]=1';
-const withAllRegions = '&region.in[]=14';
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
 const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
-const defaultBaseAlertsUrl = `${baseAlerts}${withAllRegions}`;
-const defaultBaseUrl = `${base}${withAllRegions}`;
-const defaultBaseAlertsUrlWithRegionOne = `${baseAlerts}${withRegionOne}`;
-const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
+
+const withRegionOne = '&region.in[]=1';
+const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
+const baseWithRegionOne = `${base}${withRegionOne}`;
 const defaultOverviewUrl = '/api/widgets/overview';
-const overviewUrlWithRegionOne = `${defaultOverviewUrl}?region.in[]=1&startDate.aft=2020/08/31`;
-const overviewUrlWithAllRegions = `${defaultOverviewUrl}?region.in[]=14&startDate.aft=2020/08/31`;
+const defaultOverviewUrlWithRegionOne = `${defaultOverviewUrl}${withRegionOne}`;
+const overviewUrlWithRegionOne = `${defaultOverviewUrl}?region.in[]=1`;
 
 const mockFetchWithRegionOne = () => {
-  fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
-  fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+  fetchMock.get(baseWithRegionOne, { count: 2, rows: activityReports });
+  fetchMock.get(baseAlertsWithRegionOne, {
     alertsCount: 0,
     alerts: [],
   });
@@ -53,13 +51,13 @@ const renderLanding = (user) => {
 
 describe('Landing Page', () => {
   beforeEach(async () => {
-    fetchMock.get(defaultBaseUrl, { count: 2, rows: activityReports });
-    fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
-    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+    fetchMock.get(base, { count: 2, rows: activityReports });
+    fetchMock.get(baseWithRegionOne, { count: 2, rows: activityReports });
+    fetchMock.get(baseAlertsWithRegionOne, {
       alertsCount: 0,
       alerts: [],
     });
-    fetchMock.get(defaultBaseAlertsUrl, {
+    fetchMock.get(baseAlerts, {
       alertsCount: 0,
       alerts: [],
     });
@@ -243,11 +241,11 @@ describe('Landing page table menus & selections', () => {
       beforeAll(async () => {
         fetchMock.reset();
         fetchMock.get(
-          defaultBaseAlertsUrlWithRegionOne,
+          baseAlertsWithRegionOne,
           { count: 10, alerts: generateXFakeReports(10) },
         );
         fetchMock.get(
-          defaultBaseUrlWithRegionOne,
+          baseWithRegionOne,
           { count: 10, rows: [] },
         );
         fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
@@ -309,19 +307,33 @@ describe('My alerts sorting', () => {
 
   beforeEach(async () => {
     fetchMock.reset();
-    fetchMock.get(defaultBaseAlertsUrl, {
+
+    // Alerts (All Regions).
+    fetchMock.get(baseAlerts, {
       alertsCount: 2,
       alerts: activityReports,
     });
-    fetchMock.get(defaultBaseUrl, { count: 0, rows: [] });
-    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+
+    // Alerts (Region 1).
+    fetchMock.get(baseAlertsWithRegionOne, {
       alertsCount: 2,
       alerts: activityReports,
     });
-    fetchMock.get(defaultBaseUrlWithRegionOne, { count: 0, rows: [] });
-    fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
-    fetchMock.get(overviewUrlWithAllRegions, overviewRegionOne);
+
+    // Activity Reports (All Regions).
+    fetchMock.get(base, { count: 0, rows: [] });
+
+    // Activity Reports (Region 1).
+    fetchMock.get(baseWithRegionOne, { count: 0, rows: [] });
+
+    // Overview (All Regions).
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
+
+    // Overview (Region 1).
+    fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
+
+    fetchMock.get(defaultOverviewUrlWithRegionOne, overviewRegionOne);
+
     const user = {
       name: 'test@test.com',
       homeRegionId: 1,
@@ -361,17 +373,16 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Report ID', async () => {
-    const columnHeaders = await screen.findAllByText(/report id/i);
-
-    expect(columnHeaders.length).toBe(2);
+    const reportIdHeaders = await screen.findAllByRole('columnheader', { name: /report id/i });
+    expect(reportIdHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
-
+    const columnHeaders = await screen.findAllByText(/report id/i);
     fireEvent.click(columnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/r14-ar-1/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/r14-ar-2/i));
@@ -386,7 +397,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
 
@@ -405,7 +416,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
 
@@ -423,7 +434,7 @@ describe('My alerts sorting', () => {
     fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
-      defaultBaseUrl,
+      base,
       { count: 0, rows: [] },
     );
 
@@ -439,7 +450,7 @@ describe('My alerts sorting', () => {
     fetchMock.reset();
     fetchMock.get(`/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10${withRegionOne}`,
       { alertsCount: 2, alerts: activityReportsSorted });
-    fetchMock.get(`${defaultBaseUrl}${withRegionOne}`, { count: 0, rows: [] });
+    fetchMock.get(`${base}${withRegionOne}`, { count: 0, rows: [] });
 
     fireEvent.click(columnHeaders[0]);
 
@@ -454,16 +465,17 @@ describe('Landing Page error', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     mockFetchWithRegionOne();
-    fetchMock.get(overviewUrlWithAllRegions, overviewRegionOne);
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     fetchMock.get(base, { count: 0, rows: [] });
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
   });
 
   it('handles errors by displaying an error message', async () => {
-    fetchMock.get(defaultBaseUrl, 500);
-    fetchMock.get(defaultBaseAlertsUrl, { alertsCount: 0, alerts: [] });
+    fetchMock.get(base, 500, { overwriteRoutes: true });
+    fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] }, { overwriteRoutes: true });
     const user = {
       name: 'test@test.com',
       homeRegionId: 14,
@@ -480,10 +492,11 @@ describe('Landing Page error', () => {
     expect(alert).toHaveTextContent('Unable to fetch reports');
   });
 
-  it('displays an empty row if there are no reports', async () => {
+  it('no empty row is shown if there are no reports', async () => {
     fetchMock.get(
-      defaultBaseUrl,
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1',
       { count: 0, rows: [] },
+      { overwriteRoutes: true },
     );
     const user = {
       name: 'test@test.com',
@@ -495,22 +508,19 @@ describe('Landing Page error', () => {
       ],
     };
     renderLanding(user);
-    const rowCells = await screen.findAllByRole('cell');
-    expect(rowCells.length).toBe(10);
-    const recipient = rowCells[1];
-    expect(recipient).toHaveTextContent('');
+    expect(await screen.findByText(/0-0 of 0/i)).toBeVisible();
   });
 
   it('does not displays new activity report button without permission', async () => {
     fetchMock.get(
-      defaultBaseUrl,
-      { count: 2, rows: activityReports },
+      base,
+      { count: 2, rows: activityReports }, { overwriteRoutes: true },
     );
     const user = {
       name: 'test@test.com',
       permissions: [
         {
-          scopeId: 2,
+          scopeId: 4,
           regionId: 1,
         },
       ],
@@ -523,12 +533,11 @@ describe('Landing Page error', () => {
 
 describe('handleApplyFilters', () => {
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     mockFetchWithRegionOne();
-    fetchMock.get(defaultBaseAlertsUrl, { count: 0, rows: [] });
-    fetchMock.get(defaultBaseUrl, { count: 2, rows: activityReports });
-    fetchMock.get(overviewUrlWithAllRegions, overviewRegionOne);
+    fetchMock.get(base, { count: 2, rows: activityReports });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-    fetchMock.get(base, { count: 0, rows: [] });
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
   });
 
@@ -540,19 +549,18 @@ describe('handleApplyFilters', () => {
       homeRegionId: 1,
       permissions: [
         {
-          scopeId: 2,
+          scopeId: 3,
           regionId: 1,
         },
       ],
     };
     renderLanding(user);
+
     // Only one button exists only because there are no alerts
     const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
-    const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
-    fireEvent.click(addFilterButton);
 
-    const topic = await screen.findByRole('combobox', { name: 'topic' });
+    const topic = await screen.findByRole('combobox', { name: /topic/i });
     userEvent.selectOptions(topic, 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
@@ -562,8 +570,12 @@ describe('handleApplyFilters', () => {
     const query = await screen.findByRole('textbox');
     userEvent.type(query, 'test');
 
-    const apply = await screen.findByRole('button', { name: 'Apply Filters' });
-    userEvent.click(apply);
+    // const apply = await screen.findByRole('button', { name: /apply filters to this page/i });
+    const apply = await screen.findByTestId(/apply-filters-test-id/i);
+
+    act(() => {
+      userEvent.click(apply);
+    });
 
     expect(mockAnnounce).toHaveBeenCalled();
     // wait for everything to finish loading
@@ -573,11 +585,14 @@ describe('handleApplyFilters', () => {
 
 describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
-    fetchMock.get(defaultBaseAlertsUrlWithRegionOne, {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
+    fetchMock.get(baseAlertsWithRegionOne, {
       count: 10,
       alerts: generateXFakeReports(10),
     });
-    fetchMock.get(defaultBaseUrlWithRegionOne, { count: 1, rows: generateXFakeReports(1) });
+    fetchMock.get(baseWithRegionOne,
+      { count: 1, rows: generateXFakeReports(1) });
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
   });
 
@@ -597,14 +612,12 @@ describe('handleApplyAlertFilters', () => {
     renderLanding(user);
 
     await screen.findByRole('heading', { name: /My activity report alerts/i });
-    // Both alerts and AR tables' buttons should appear
+    // Only one filters button should be shown.
     const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
-    expect(allFilterButtons.length).toBe(2);
+    expect(allFilterButtons.length).toBe(1);
 
     const filterMenuButton = allFilterButtons[0];
     fireEvent.click(filterMenuButton);
-    const addFilterButton = await screen.findByRole('button', { name: /add new filter/i });
-    fireEvent.click(addFilterButton);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'reportId');
@@ -616,13 +629,16 @@ describe('handleApplyAlertFilters', () => {
     userEvent.type(query, 'test');
 
     fetchMock.restore();
-    fetchMock.get(
-      '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10&reportId.in[]=test&region.in[]=1',
-      { count: 1, rows: generateXFakeReports(1) },
-    );
-
-    const apply = await screen.findByRole('button', { name: 'Apply Filters' });
-    userEvent.click(apply);
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10&reportId.in[]=test', {
+      count: 1,
+      alerts: generateXFakeReports(1),
+    });
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test', { count: 1, rows: generateXFakeReports(1) });
+    fetchMock.get('/api/widgets/overview?reportId.in[]=test', overviewRegionOne);
+    const apply = await screen.findByTestId(/apply-filters-test-id/i);
+    act(() => {
+      userEvent.click(apply);
+    });
 
     expect(mockAnnounce).toHaveBeenCalled();
     // wait for everything to finish loading
