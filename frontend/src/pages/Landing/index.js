@@ -25,7 +25,6 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { REGION_FILTER } from '../../components/filter/constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
@@ -59,8 +58,6 @@ function Landing({ user }) {
         topic: 'region',
         condition: 'Contains',
         query: defaultRegion,
-        display: REGION_FILTER.display,
-        displayQuery: REGION_FILTER.displayQuery,
       },
       ] : [],
   );
