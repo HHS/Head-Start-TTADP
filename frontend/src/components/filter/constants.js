@@ -204,6 +204,7 @@ export const FILTER_CONFIG = [
       <FilterStateSelect
         inputId={`state-${condition}-${id}`}
         onApply={onApplyQuery}
+        query={query}
       />
     ),
   },

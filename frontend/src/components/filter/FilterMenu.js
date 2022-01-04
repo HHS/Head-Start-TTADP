@@ -6,7 +6,6 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
-import { getStateCodes } from '../../fetchers/users';
 import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
 import { formatDateRange } from '../DateRangeSelect';
 import usePrevious from '../../hooks/usePrevious';
@@ -23,7 +22,6 @@ export default function FilterMenu({
 }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
-  const [stateCodes, setStateCodes] = useState([]);
 
   const itemLength = usePrevious(items.length);
 
@@ -58,20 +56,6 @@ export default function FilterMenu({
   useEffect(() => {
     setItems(filters);
   }, [filters]);
-
-  // fetch state codes for user
-  useEffect(() => {
-    async function fetchStateCodes() {
-      try {
-        const codes = await getStateCodes();
-        setStateCodes(codes);
-      } catch (error) {
-        // fail silently
-      }
-    }
-
-    fetchStateCodes();
-  }, []);
 
   // if an item was deleted, we need to update the errors
   useEffect(() => {
@@ -241,7 +225,6 @@ export default function FilterMenu({
                   validate={validate}
                   index={index}
                   topicOptions={topicOptions}
-                  stateCodes={stateCodes}
                   selectedTopic={selectedTopic || newTopic}
                 />
               );

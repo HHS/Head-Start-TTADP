@@ -1,12 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
+import { getStateCodes } from '../../fetchers/users';
 
 export default function FilterStateSelect({
   onApply,
   inputId,
+  query,
 }) {
-  const [stateCodes] = useState([]);
+  const [stateCodes, setStateCodes] = useState([]);
+
+  // fetch state codes for user
+  useEffect(() => {
+    async function fetchStateCodes() {
+      try {
+        const codes = await getStateCodes();
+        setStateCodes(codes);
+      } catch (error) {
+        // fail silently
+      }
+    }
+
+    fetchStateCodes();
+  }, []);
 
   const options = stateCodes.filter((code) => code).map((label, value) => ({
     value, label,
@@ -22,6 +38,7 @@ export default function FilterStateSelect({
       inputId={inputId}
       labelText="Select state to filter by"
       options={options}
+      selectedValues={query}
     />
   );
 }
@@ -29,4 +46,8 @@ export default function FilterStateSelect({
 FilterStateSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
+  query: PropTypes.oneOfType([
+    PropTypes.arrayOf(PropTypes.string),
+    PropTypes.string,
+  ]).isRequired,
 };
