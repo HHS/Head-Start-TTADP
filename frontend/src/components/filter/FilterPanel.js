@@ -4,18 +4,7 @@ import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { formatDateRange } from '../DateRangeSelect';
 import { filterProp } from './props';
-import {
-  START_DATE_FILTER,
-  GRANT_NUMBER_FILTER,
-  PROGRAM_SPECIALIST_FILTER,
-  PROGRAM_TYPE_FILTER,
-  REASON_FILTER,
-  RECIPIENT_NAME_FILTER,
-  REGION_FILTER,
-  ROLE_FILTER,
-  TARGET_POPULATION_FILTER,
-  TOPICS_FILTER,
-} from './constants';
+import { AVAILABLE_FILTERS } from './constants';
 
 export default function FilterPanel(props) {
   const { onRemoveFilter, filters } = props;
@@ -38,30 +27,7 @@ FilterPanel.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
-  allowedFilters: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string,
-      display: PropTypes.string,
-      conditions: PropTypes.arrayOf(PropTypes.string),
-      defaultValues: PropTypes.shape({
-        'Is within': PropTypes.string,
-        'Is after': PropTypes.string,
-        'Is before': PropTypes.string,
-        Is: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.arrayOf(PropTypes.string),
-        ]),
-        'Is not': PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.arrayOf(PropTypes.string),
-        ]),
-        Contains: PropTypes.string,
-        'Does not contain': PropTypes.string,
-      }),
-      displayQuery: PropTypes.func,
-      renderInput: PropTypes.func,
-    }),
-  ),
+  allowedFilters: PropTypes.arrayOf(PropTypes.string),
   dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
@@ -71,18 +37,7 @@ FilterPanel.propTypes = {
 };
 
 FilterPanel.defaultProps = {
-  allowedFilters: [
-    START_DATE_FILTER,
-    GRANT_NUMBER_FILTER,
-    PROGRAM_SPECIALIST_FILTER,
-    PROGRAM_TYPE_FILTER,
-    REASON_FILTER,
-    RECIPIENT_NAME_FILTER,
-    REGION_FILTER,
-    ROLE_FILTER,
-    TARGET_POPULATION_FILTER,
-    TOPICS_FILTER,
-  ],
+  allowedFilters: AVAILABLE_FILTERS,
   dateRangeOptions: [
     {
       label: 'Year to date',
