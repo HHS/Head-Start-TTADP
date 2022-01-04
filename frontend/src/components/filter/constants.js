@@ -149,6 +149,23 @@ export const FILTER_CONFIG = [
     ),
   },
   {
+    id: 'reportId',
+    display: 'Report ID',
+    conditions: SELECT_CONDITIONS,
+    defaultValues: EMPTY_TEXT_INPUT,
+    displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterInput
+        query={query}
+        id={id}
+        condition={condition}
+        onApply={onApplyQuery}
+        type="reportId"
+        label="Enter a report id"
+      />
+    ),
+  },
+  {
     id: 'region',
     display: 'Region',
     conditions: FILTER_CONDITIONS,
