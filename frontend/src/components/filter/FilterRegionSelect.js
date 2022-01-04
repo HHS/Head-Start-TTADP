@@ -13,7 +13,7 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   const { user } = useContext(UserContext);
 
   const regions = getUserRegions(user);
-  const firstRegion = user.homeRegionId || regions[0];
+  const firstRegion = regions[0];
 
   /**
    * I'm Helping

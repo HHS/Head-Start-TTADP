@@ -18,6 +18,7 @@ import {
   ROLE_FILTER,
   TARGET_POPULATION_FILTER,
   TOPICS_FILTER,
+  REPORT_ID_FILTER,
 } from '../constants';
 
 const filtersConfig = [
@@ -31,6 +32,7 @@ const filtersConfig = [
   ROLE_FILTER,
   TARGET_POPULATION_FILTER,
   TOPICS_FILTER,
+  REPORT_ID_FILTER,
 ];
 
 const selectedTopic = filtersConfig[0];

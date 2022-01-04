@@ -91,6 +91,23 @@ export const GRANT_NUMBER_FILTER = {
   ),
 };
 
+export const REPORT_ID_FILTER = {
+  id: 'reportId',
+  display: 'Report ID',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`report-id-${condition}-${id}`}
+      onApply={onApplyQuery}
+      type="reportId"
+      label="Enter a report id"
+    />
+  ),
+};
+
 export const PROGRAM_SPECIALIST_FILTER = {
   id: 'programSpecialist',
   display: 'Program specialist',
