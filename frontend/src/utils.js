@@ -21,6 +21,7 @@ import {
   ROLE_FILTER,
   TARGET_POPULATION_FILTER,
   TOPICS_FILTER,
+  REPORT_ID_FILTER,
 } from './components/filter/constants';
 
 /**
@@ -152,6 +153,7 @@ export function queryStringToFilters(queryString) {
         ROLE_FILTER,
         TARGET_POPULATION_FILTER,
         TOPICS_FILTER,
+        REPORT_ID_FILTER,
       ].find((f) => f.id === topic);
 
       return {

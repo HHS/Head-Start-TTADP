@@ -18,6 +18,7 @@ import {
   ROLE_FILTER,
   TARGET_POPULATION_FILTER,
   TOPICS_FILTER,
+  REPORT_ID_FILTER,
 } from '../constants';
 
 describe('Filter Menu', () => {
@@ -42,6 +43,7 @@ describe('Filter Menu', () => {
               ROLE_FILTER,
               TARGET_POPULATION_FILTER,
               TOPICS_FILTER,
+              REPORT_ID_FILTER,
             ]}
             filters={filters}
             onApplyFilters={onApplyFilters}

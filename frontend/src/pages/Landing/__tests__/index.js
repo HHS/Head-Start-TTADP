@@ -465,6 +465,8 @@ describe('Landing Page error', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     mockFetchWithRegionOne();
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     fetchMock.get(base, { count: 0, rows: [] });
@@ -531,6 +533,8 @@ describe('Landing Page error', () => {
 
 describe('handleApplyFilters', () => {
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     mockFetchWithRegionOne();
     fetchMock.get(base, { count: 2, rows: activityReports });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
@@ -581,6 +585,8 @@ describe('handleApplyFilters', () => {
 
 describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     fetchMock.get(baseAlertsWithRegionOne, {
       count: 10,
       alerts: generateXFakeReports(10),

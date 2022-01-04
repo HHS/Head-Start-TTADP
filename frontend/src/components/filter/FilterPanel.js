@@ -15,6 +15,7 @@ import {
   ROLE_FILTER,
   TARGET_POPULATION_FILTER,
   TOPICS_FILTER,
+  REPORT_ID_FILTER,
 } from './constants';
 
 export default function FilterPanel(props) {
@@ -82,6 +83,7 @@ FilterPanel.defaultProps = {
     ROLE_FILTER,
     TARGET_POPULATION_FILTER,
     TOPICS_FILTER,
+    REPORT_ID_FILTER,
   ],
   dateRangeOptions: [
     {
