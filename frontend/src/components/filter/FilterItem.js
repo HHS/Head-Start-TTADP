@@ -28,7 +28,6 @@ export default function FilterItem({
   setErrors,
   index,
   validate,
-  stateCodes,
   topicOptions,
   selectedTopic,
 }) {
@@ -173,7 +172,6 @@ export default function FilterItem({
           query, // filter query
           onApplyQuery, // the on apply query function handler
           dateRangeOptions, // date range options, configurable per filter menu
-          stateCodes, // state codes specific for the user
         )
         : <DummySelect /> }
       <button
@@ -202,7 +200,6 @@ FilterItem.propTypes = {
   setErrors: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   validate: PropTypes.func.isRequired,
-  stateCodes: PropTypes.arrayOf(PropTypes.string).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.node).isRequired,
   selectedTopic: PropTypes.shape({
     display: PropTypes.string,
