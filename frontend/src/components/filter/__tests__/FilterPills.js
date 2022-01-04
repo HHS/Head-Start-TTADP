@@ -43,7 +43,7 @@ describe('Filter Pills', () => {
       // Date.
       expect(await screen.findByText(/date range/i)).toBeVisible();
       expect(await screen.findByText(/is within/i)).toBeVisible();
-      expect(await screen.findByText(/2021\/10\/01-2021\/10\/31/i)).toBeVisible();
+      expect(await screen.findByText(/10\/01\/2021-10\/31\/2021/i)).toBeVisible();
       expect(await screen.findByRole('button', { name: /this button removes the filter: date range is within 2021\/10\/01-2021\/10\/31/i })).toBeVisible();
     });
 
