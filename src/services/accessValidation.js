@@ -87,6 +87,17 @@ export async function setReadRegions(query, userId, useFirstReadRegion = false) 
 
   // if region.in is part of query (user has requested specific regions)
   if ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) {
+    // first check to see if "all regions (central office)" is selected
+    // if so, return all regions has access to
+
+    if (query['region.in'].length === 1 && parseInt(query['region.in'][0], DECIMAL_BASE) === 14) {
+      return {
+        ...query,
+        'region.in': readRegions,
+      };
+    }
+
+    // otherwise return filtered array of all regions user has access to vs requested regions
     return {
       ...query,
       'region.in': query['region.in'].filter((r) => readRegions.includes(parseInt(r, DECIMAL_BASE))),
