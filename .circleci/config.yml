@@ -190,7 +190,7 @@ jobs:
     description: "Notify acf-eng on daily scan fail"    
     steps:
       - slack/notify:
-          event: always
+          event: fail
           template: basic_fail_1
   build_and_lint:
     executor: docker-executor
@@ -518,7 +518,6 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-                - << pipeline.parameters.sandbox_git_branch >>
     jobs:
       - build_and_lint      
       - test_backend:
