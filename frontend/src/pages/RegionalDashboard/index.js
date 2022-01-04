@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { START_DATE_FILTER, REGION_FILTER } from '../../components/filter/constants';
 import { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
@@ -44,8 +43,6 @@ export default function RegionalDashboard() {
           topic: 'startDate',
           condition: 'Is within',
           query: defaultDate,
-          display: START_DATE_FILTER.display,
-          displayQuery: START_DATE_FILTER.displayQuery,
         },
       ];
     }
@@ -56,16 +53,12 @@ export default function RegionalDashboard() {
         topic: 'region',
         condition: 'Contains',
         query: defaultRegion,
-        display: REGION_FILTER.display,
-        displayQuery: REGION_FILTER.displayQuery,
       },
       {
         id: uuidv4(),
         topic: 'startDate',
         condition: 'Is within',
         query: defaultDate,
-        display: START_DATE_FILTER.display,
-        displayQuery: START_DATE_FILTER.displayQuery,
       },
     ];
   }, [defaultRegion, hasCentralOffice]);

@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
+import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
 import { formatDateRange } from '../DateRangeSelect';
 import usePrevious from '../../hooks/usePrevious';
 import { filterProp } from './props';
@@ -45,6 +46,9 @@ export default function FilterMenu({
 
   // filters currently selected. these will be excluded from filter selection
   const selectedFilters = items.map((filter) => filter.topic);
+
+  // filters that aren't allowed per our allowedFilters prop
+  const prohibitedFilters = AVAILABLE_FILTERS.filter((f) => !allowedFilters.includes(f));
 
   // If filters were changed outside of this component, we need to update the items
   // (for example, the "remove filter" button on the filter pills)
@@ -134,10 +138,8 @@ export default function FilterMenu({
        * if the condition is changed, we need to do a lookup in the filter config
        * and set the query to the new default value
        */
-      const f = allowedFilters.find(((config) => config.id === toUpdate.topic));
+      const f = FILTER_CONFIG.find(((config) => config.id === toUpdate.topic));
       const defaultQuery = f.defaultValues[value];
-      toUpdate.display = f.display;
-      toUpdate.displayQuery = f.displayQuery;
 
       if (defaultQuery) {
         toUpdate.query = defaultQuery;
@@ -192,9 +194,13 @@ export default function FilterMenu({
             {items.map((filter, index) => {
               const { topic } = filter;
 
-              const topicOptions = allowedFilters.filter((config) => (
+              if (prohibitedFilters.includes(topic)) {
+                return null;
+              }
+
+              const topicOptions = FILTER_CONFIG.filter((config) => (
                 topic === config.id
-                || ![...selectedFilters].includes(config.id)
+                || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
               )).map(({ id: filterId, display }) => (
                 <option key={filterId} value={filterId}>{display}</option>
               ));
@@ -204,7 +210,7 @@ export default function FilterMenu({
                 conditions: [],
               };
 
-              const selectedTopic = allowedFilters.find((f) => f.id === topic);
+              const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
 
               return (
                 <FilterItem
@@ -234,30 +240,7 @@ export default function FilterMenu({
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
-  allowedFilters: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string,
-      display: PropTypes.string,
-      conditions: PropTypes.arrayOf(PropTypes.string),
-      defaultValues: PropTypes.shape({
-        'Is within': PropTypes.string,
-        'Is after': PropTypes.string,
-        'Is before': PropTypes.string,
-        Is: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.arrayOf(PropTypes.string),
-        ]),
-        'Is not': PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.arrayOf(PropTypes.string),
-        ]),
-        Contains: PropTypes.string,
-        'Does not contain': PropTypes.string,
-      }),
-      displayQuery: PropTypes.func,
-      renderInput: PropTypes.func,
-    }),
-  ).isRequired,
+  allowedFilters: PropTypes.arrayOf(PropTypes.string),
   dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
@@ -267,6 +250,7 @@ FilterMenu.propTypes = {
 };
 
 FilterMenu.defaultProps = {
+  allowedFilters: AVAILABLE_FILTERS,
   dateRangeOptions: [
     {
       label: 'Year to date',

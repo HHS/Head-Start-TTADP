@@ -7,19 +7,6 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
-import {
-  START_DATE_FILTER,
-  GRANT_NUMBER_FILTER,
-  PROGRAM_SPECIALIST_FILTER,
-  PROGRAM_TYPE_FILTER,
-  REASON_FILTER,
-  RECIPIENT_NAME_FILTER,
-  REGION_FILTER,
-  ROLE_FILTER,
-  TARGET_POPULATION_FILTER,
-  TOPICS_FILTER,
-  REPORT_ID_FILTER,
-} from '../constants';
 
 describe('Filter Menu', () => {
   afterAll(() => {
@@ -32,19 +19,6 @@ describe('Filter Menu', () => {
         <h1>Filter menu</h1>
         <div>
           <FilterMenu
-            allowedFilters={[
-              START_DATE_FILTER,
-              GRANT_NUMBER_FILTER,
-              PROGRAM_SPECIALIST_FILTER,
-              PROGRAM_TYPE_FILTER,
-              REASON_FILTER,
-              RECIPIENT_NAME_FILTER,
-              REGION_FILTER,
-              ROLE_FILTER,
-              TARGET_POPULATION_FILTER,
-              TOPICS_FILTER,
-              REPORT_ID_FILTER,
-            ]}
             filters={filters}
             onApplyFilters={onApplyFilters}
             applyButtonAria="apply test filters"
@@ -274,12 +248,10 @@ describe('Filter Menu', () => {
   it('validates input and sets focus', async () => {
     const filters = [
       {
-        id: 'filter-3',
-        display: '',
-        conditions: [],
-        topic: 'programSpecialist',
-        query: '',
-        condition: 'Contains',
+        id: 'filter1234',
+        topic: 'startDate',
+        condition: 'Is after',
+        query: '2021/10/31',
       },
     ];
 
