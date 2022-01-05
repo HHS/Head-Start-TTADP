@@ -13,7 +13,7 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   const { user } = useContext(UserContext);
 
   const regions = getUserRegions(user);
-  const firstRegion = regions[0].toString();
+  const firstRegion = regions[0];
 
   /**
    * I'm Helping
@@ -21,10 +21,10 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
    * by making sure a region is selected
    */
   useEffect(() => {
-    if (!appliedRegion) {
+    if (!appliedRegion && firstRegion) {
       onApplyRegion({
         target: {
-          value: firstRegion,
+          value: firstRegion.toString(),
         },
       });
     }

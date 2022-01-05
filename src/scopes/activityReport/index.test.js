@@ -523,6 +523,17 @@ describe('filtersToScopes', () => {
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
     });
+
+    it('within returns reports with start dates when the filters are an array', async () => {
+      const filters = { 'startDate.win': ['2020/06/06-2022/06/06', '2020/06/05-2021/06/05'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+    });
   });
 
   describe('lastSaved', () => {
@@ -566,6 +577,17 @@ describe('filtersToScopes', () => {
 
     it('after returns reports with updated ats before the given date', async () => {
       const filters = { 'lastSaved.aft': '2021/06/06' };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([thirdReport.id, fourthReport.id]));
+    });
+
+    it('handles an array of querys', async () => {
+      const filters = { 'lastSaved.aft': ['2021/06/06', '2021/06/05'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -664,7 +686,7 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('includes authors with a partial match', async () => {
+    it('includes topic with a partial match', async () => {
       const filters = { 'topic.in': ['tes'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
@@ -675,7 +697,7 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
-    it('excludes authors that do not partial match', async () => {
+    it('excludes topics that do not partial match', async () => {
       const filters = { 'topic.nin': ['tes'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
