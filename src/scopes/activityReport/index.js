@@ -1,6 +1,5 @@
 /* eslint-disable import/prefer-default-export */
 import { map, pickBy } from 'lodash';
-
 import { withRecipientName, withoutRecipientName } from './recipient';
 import withRecipientId from './recipientId';
 import { withoutReportIds, withReportIds } from './reportId';
@@ -20,11 +19,6 @@ import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 import withStateCode from './stateCode';
 import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 
-const withinDateRange = (query) => {
-  const [startDate, endDate] = query.split('-');
-  return withinStartDates(startDate, endDate);
-};
-
 export const topicToQuery = {
   reportId: {
     in: (query) => withReportIds(query),
@@ -40,16 +34,13 @@ export const topicToQuery = {
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
-    win: (query) => withinDateRange(query),
-    in: (query) => withinDateRange(query),
+    win: (query) => withinStartDates(query),
+    in: (query) => withinStartDates(query),
   },
   lastSaved: {
     bef: (query) => beforeLastSaveDate(query),
     aft: (query) => afterLastSaveDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinLastSaveDates(startDate, endDate);
-    },
+    win: (query) => withinLastSaveDates(query),
   },
   role: {
     in: (query) => withRole(query),
@@ -101,10 +92,7 @@ export const topicToQuery = {
   createDate: {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinCreateDate(startDate, endDate);
-    },
+    win: (query) => withinCreateDate(query),
   },
 };
 
@@ -116,6 +104,6 @@ export function activityReportsFiltersToScopes(filters) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition](query);
+    return topicToQuery[topic][condition]([query].flat());
   });
 }

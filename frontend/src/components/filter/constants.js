@@ -142,19 +142,6 @@ export const FILTER_CONFIG = [
     ),
   },
   {
-    id: 'region',
-    display: 'Region',
-    conditions: FILTER_CONDITIONS,
-    defaultValues: EMPTY_SINGLE_SELECT,
-    displayQuery: handleArrayQuery,
-    renderInput: (id, condition, query, onApplyQuery) => (
-      <FilterRegionalSelect
-        appliedRegion={query}
-        onApply={onApplyQuery}
-      />
-    ),
-  },
-  {
     id: 'reportId',
     display: 'Report ID',
     conditions: SELECT_CONDITIONS,
@@ -166,6 +153,19 @@ export const FILTER_CONFIG = [
         inputId={`reportId-${condition}-${id}`}
         onApply={onApplyQuery}
         label="Enter a report id"
+      />
+    ),
+  },
+  {
+    id: 'region',
+    display: 'Region',
+    conditions: FILTER_CONDITIONS,
+    defaultValues: EMPTY_SINGLE_SELECT,
+    displayQuery: handleStringQuery,
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterRegionalSelect
+        appliedRegion={query}
+        onApply={onApplyQuery}
       />
     ),
   },

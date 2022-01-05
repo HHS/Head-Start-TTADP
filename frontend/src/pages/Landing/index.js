@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useContext,
   useMemo,
+  useRef,
 } from 'react';
 import {
   Alert, Grid, Button,
@@ -11,6 +12,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
+import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
@@ -29,6 +31,7 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
+import { formatDateRange } from '../../components/DateRangeSelect';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -47,16 +50,19 @@ function Landing() {
 
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
-  const regionToUse = regions[0] || user.homeRegionId || 0;
-  const defaultRegion = user.homeRegionId === 14 ? 14 : regionToUse;
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
 
-  const [filters, setFilters] = useUrlFilters(defaultRegion === 14 ? [] : [
-    {
-      topic: 'region',
-      condition: 'Contains',
-      query: defaultRegion.toString(),
-    },
-  ]);
+  const [filters, setFilters] = useUrlFilters(
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      ? [{
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'Contains',
+        query: defaultRegion,
+      },
+      ] : [],
+  );
 
   const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
@@ -74,6 +80,7 @@ function Landing() {
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
   const [downloadAlertsError, setDownloadAlertsError] = useState('');
+  const downloadAllAlertsButtonRef = useRef();
 
   function getAppliedRegion() {
     const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
@@ -114,6 +121,7 @@ function Landing() {
       setDownloadAlertsError(true);
     } finally {
       setIsDownloadingAlerts(false);
+      downloadAllAlertsButtonRef.current.focus();
     }
   };
 
@@ -168,7 +176,7 @@ function Landing() {
     );
   }
 
-  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All' : appliedRegionNumber.toString();
+  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All regions' : `Region ${appliedRegionNumber.toString()}`;
 
   // Apply filters.
   const onApply = (newFilters) => {
@@ -188,6 +196,18 @@ function Landing() {
     }
   };
 
+  const dateRangeOptions = [
+    {
+      label: 'Last 30 days',
+      value: 1,
+      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
+    },
+    {
+      label: 'Custom date range',
+      value: 2,
+      range: '',
+    },
+  ];
   return (
     <>
       <Helmet>
@@ -229,9 +249,10 @@ function Landing() {
           <Grid col={10} className="flex-align-self-center">
             <div className="display-flex flex-wrap margin-bottom-2">
               <FilterPanel
-                applyButtonAria="apply filters"
+                applyButtonAria="apply filters for activity reports"
                 filters={filters}
                 onApplyFilters={onApply}
+                dateRangeOptions={dateRangeOptions}
                 onRemoveFilter={onRemoveFilter}
               />
             </div>
@@ -240,8 +261,9 @@ function Landing() {
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
             <Overview
-              filters={filtersToApply}
               regionLabel={regionLabel}
+              tableCaption="TTA overview"
+              filters={filtersToApply}
             />
           </Grid>
         </Grid>
@@ -268,11 +290,12 @@ function Landing() {
           message={message}
           isDownloadingAlerts={isDownloadingAlerts}
           downloadAlertsError={downloadAlertsError}
+          downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
         <ActivityReportsTable
           filters={filtersToApply}
           showFilter={false}
-          tableCaption={`Region ${regionLabel} Activity reports`}
+          tableCaption="Approved activity reports"
         />
       </>
     </>

@@ -125,7 +125,7 @@ describe('Landing Page', () => {
   });
 
   test('displays activity reports heading', async () => {
-    expect(await screen.findByText('Activity reports')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /Activity reports - /i })).toBeVisible();
   });
 
   test('displays report id column', async () => {
@@ -469,6 +469,8 @@ describe('My alerts sorting', () => {
 describe('handleApplyFilters', () => {
   beforeAll(() => fetchMock.reset());
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     mockFetchWithRegionOne();
     fetchMock.get(base, { count: 2, rows: activityReports });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
@@ -523,6 +525,8 @@ describe('handleApplyFilters', () => {
 describe('handleApplyAlertFilters', () => {
   beforeAll(() => fetchMock.reset());
   beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
     fetchMock.get(baseAlertsWithRegionOne, {
       alertsCount: 10,
       alerts: generateXFakeReports(10),

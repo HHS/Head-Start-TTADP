@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Table, Checkbox, Grid, Alert,
@@ -34,6 +34,9 @@ function ActivityReportsTable({
     sortBy: 'updatedAt',
     direction: 'desc',
   });
+
+  const downloadAllButtonRef = useRef();
+  const downloadSelectedButtonRef = useRef();
 
   useEffect(() => {
     async function fetchReports() {
@@ -140,6 +143,7 @@ function ActivityReportsTable({
       setDownloadError(true);
     } finally {
       setIsDownloading(false);
+      downloadAllButtonRef.current.focus();
     }
   };
 
@@ -166,6 +170,7 @@ function ActivityReportsTable({
         setDownloadError(true);
       } finally {
         setIsDownloading(false);
+        downloadSelectedButtonRef.current.focus();
       }
     }
   };
@@ -232,6 +237,8 @@ function ActivityReportsTable({
           handlePageChange={handlePageChange}
           downloadError={downloadError}
           isDownloading={isDownloading}
+          downloadAllButtonRef={downloadAllButtonRef}
+          downloadSelectedButtonRef={downloadSelectedButtonRef}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
