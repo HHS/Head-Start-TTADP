@@ -515,7 +515,6 @@ workflows:
           filters:
             branches:
               only:
-                - << pipeline.parameters.sandbox_git_branch >>
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
