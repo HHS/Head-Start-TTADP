@@ -40,6 +40,8 @@ export default function TableHeader({
   downloadError,
   isDownloading,
   dateTime,
+  downloadAllButtonRef,
+  downloadSelectedButtonRef,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -82,6 +84,8 @@ export default function TableHeader({
               count={count}
               downloadError={downloadError}
               isDownloading={isDownloading}
+              downloadAllButtonRef={downloadAllButtonRef}
+              downloadSelectedButtonRef={downloadSelectedButtonRef}
             />
           )}
         </span>
@@ -143,6 +147,14 @@ TableHeader.propTypes = {
     timestamp: PropTypes.string, label: PropTypes.string,
   }),
   isDownloading: PropTypes.bool,
+  downloadAllButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 TableHeader.defaultProps = {
@@ -164,4 +176,6 @@ TableHeader.defaultProps = {
   downloadError: false,
   dateTime: { timestamp: '', label: '' },
   isDownloading: false,
+  downloadAllButtonRef: () => {},
+  downloadSelectedButtonRef: () => {},
 };
