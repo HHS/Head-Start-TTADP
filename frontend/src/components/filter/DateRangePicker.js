@@ -113,32 +113,33 @@ export default function DateRangePicker({ onApply, query }) {
   const onChangeStartDate = (date) => {
     const { startDate, endDate } = dateRange;
 
-    // knock knock its the validity inspector
-    const { valid } = document.querySelector('#start-date').validity;
+    const newStartDate = moment(date, DATE_DISPLAY_FORMAT);
 
-    if (valid) {
-      const newStartDate = moment(date, DATE_DISPLAY_FORMAT);
+    if (newStartDate.isValid()) {
+      const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
+      const isBeforeMax = currentEndDate.isBefore(newStartDate);
 
-      if (newStartDate.isValid()) {
-        const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
-        const isBeforeMax = currentEndDate.isBefore(newStartDate);
+      if (isBeforeMax) {
+        const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
+        const diff = currentEndDate.diff(currentStartDate, 'days');
+        let newEndDate = moment(newStartDate).add(diff, 'days');
 
-        if (isBeforeMax) {
-          const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
-          const diff = currentEndDate.diff(currentStartDate, 'days');
-          const newEndDate = moment(newStartDate).add(diff, 'days').format(DATE_DISPLAY_FORMAT);
-          const newEndDateKey = `end-date-${newEndDate}`;
-          setDateRange({
-            endDate: newEndDate,
-            startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
-            endDateKey: newEndDateKey,
-          });
-        } else {
-          setDateRange({
-            ...dateRange,
-            startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
-          });
+        if (newEndDate.isAfter(moment())) {
+          newEndDate = moment();
         }
+
+        const newEndDateKey = `end-date-${newEndDate.format(DATE_DISPLAY_FORMAT)}`;
+
+        setDateRange({
+          endDate: newEndDate.format(DATE_DISPLAY_FORMAT),
+          startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          endDateKey: newEndDateKey,
+        });
+      } else {
+        setDateRange({
+          ...dateRange,
+          startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+        });
       }
     }
   };
@@ -189,9 +190,9 @@ export default function DateRangePicker({ onApply, query }) {
       ref={customDatePicker}
     >
       <button aria-label="change custom date range" type="button" className="usa-select text-left" aria-expanded={!hidden} aria-controls="custom-date-range" onClick={toggleHidden}>
-        { query || 'Custom date range' }
+        { startDate && endDate ? `${startDate}-${endDate}` : 'Custom date range' }
       </button>
-      <fieldset id="custom-date-range" className="width-mobile bg-white border margin-0 margin-top-1 padding-1 ttahub-custom-date-range-picker-fields position-absolute" hidden={hidden}>
+      <fieldset id="custom-date-range" className="width-mobile border-0 bg-white margin-0 margin-top-1 padding-2 ttahub-custom-date-range-picker-fields position-absolute" hidden={hidden}>
         { error.message
           && (
           <Alert type="error" noIcon={!error.icon} className="margin-bottom-2">

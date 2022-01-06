@@ -1,8 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.css';
+import FilterErrorContext from './FilterErrorContext';
+
+const CANCEL_ARIA = 'discard changes and close filter menu';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
@@ -23,10 +27,6 @@ export default function FilterItem({
   filter,
   onRemoveFilter,
   onUpdateFilter,
-  errors,
-  setErrors,
-  index,
-  validate,
   topicOptions,
   selectedTopic,
 }) {
@@ -37,13 +37,36 @@ export default function FilterItem({
     query,
   } = filter;
 
-  const fieldset = useRef();
+  const { error, setError } = useContext(FilterErrorContext);
 
-  const setError = (message) => {
-    const newErrors = [...errors];
-    newErrors.splice(index, 1, message);
-    setErrors(newErrors);
+  const validate = () => {
+    if (!topic) {
+      return 'Please enter a filter';
+    }
+
+    if (!condition) {
+      return 'Please enter a condition';
+    }
+
+    if (!query || !query.toString().length) {
+      return 'Please enter a value';
+    }
+
+    if (topic === 'startDate') {
+      const q = query.split('-');
+      if (q.length > 1) {
+        if (!moment(q[0], 'YYYY/MM/DD').isValid() || !moment(q[1], 'YYYY/MM/DD').isValid()) {
+          return 'Please enter a valid date range';
+        }
+      } else if (!moment(query, 'YYYY/MM/DD').isValid()) {
+        return 'Please enter a valid date';
+      }
+    }
+
+    return '';
   };
+
+  const fieldset = useRef();
 
   const onBlur = (e) => {
     let willValidate = true;
@@ -54,15 +77,19 @@ export default function FilterItem({
     }
 
     // no validation if you are clicking on the cancel button
-    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
+    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === CANCEL_ARIA) {
+      willValidate = false;
+    }
+
+    if (topic === 'startDate') {
       willValidate = false;
     }
 
     if (willValidate) {
-      const message = validate(filter);
+      const message = validate();
       // if there is an error (either new or existing), we want to refresh
       // the validation message that's there
-      if (message || errors[index]) {
+      if (message) {
         setError(message);
       }
     }
@@ -101,12 +128,16 @@ export default function FilterItem({
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
-  const error = errors[index];
-
   const fieldsetBaseClass = 'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
   let fieldsetErrorClass = '';
 
   switch (error) {
+    case 'Please enter a valid date':
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
+    case 'Please enter a valid date range':
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
     case 'Please enter a value':
       fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
@@ -189,10 +220,6 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.string).isRequired,
-  setErrors: PropTypes.func.isRequired,
-  index: PropTypes.number.isRequired,
-  validate: PropTypes.func.isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.node).isRequired,
   selectedTopic: PropTypes.shape({
     display: PropTypes.string,

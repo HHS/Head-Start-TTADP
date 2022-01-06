@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   DatePicker,
@@ -10,13 +10,13 @@ import DateRangePicker from './DateRangePicker';
 import { formatDateRange } from '../../utils';
 import './FilterDateRange.css';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import FilterErrorContext from './FilterErrorContext';
 
+const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
+const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
 const MIN_DATE = '2020-09-01';
-const MAX_DATE = moment().format('YYYY-MM-DD');
+const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
 
-/**
- * this date picker has bespoke date options
- */
 const DATE_OPTIONS = [
   {
     label: 'Year to date',
@@ -33,21 +33,40 @@ export default function FilterDateRange({
   onApplyDateRange,
   query,
 }) {
+  const { setError } = useContext(FilterErrorContext);
+
   // we'll need this to do some of that vanilla stuff
   const container = useRef();
 
   const isOnChange = (e) => onApplyDateRange(e.target.value);
 
   const onChange = (date) => {
-    // inspecting validity state per truss docs
-    // without a ref to the actual input, I think this is the way to do it
-    if (container.current && !container.current.querySelector('input:invalid')) {
-      const d = moment(date, DATE_DISPLAY_FORMAT);
-      if (d.isValid()) {
-        onApplyDateRange(d.format('YYYY/MM/DD'));
-      }
+    const d = moment(date, DATE_DISPLAY_FORMAT);
+
+    if (!d.isValid()) {
+      setError('Please enter a valid date');
+      return;
     }
+
+    if (d.isBefore(moment(MIN_DATE).format(DATEPICKER_DATE_FORMAT))) {
+      setError('Please enter a valid date');
+      return;
+    }
+
+    if (d.isAfter(moment(MAX_DATE).format(DATEPICKER_DATE_FORMAT))) {
+      setError('Please enter a valid date');
+      return;
+    }
+
+    onApplyDateRange(d.format(QUERY_DATE_FORMAT));
+    setError('');
   };
+
+  let defaultValue = '';
+
+  if (query && moment(query, QUERY_DATE_FORMAT).isValid()) {
+    defaultValue = moment(query, QUERY_DATE_FORMAT).format(DATEPICKER_DATE_FORMAT);
+  }
 
   switch (condition) {
     case 'In':
@@ -89,12 +108,13 @@ export default function FilterDateRange({
             date
           </label>
           <DatePicker
+            key="date-range-before"
             id="filter-date-range"
             name="filter-date-range"
             onChange={onChange}
             minDate={MIN_DATE}
             maxDate={MAX_DATE}
-            defaultValue={query}
+            defaultValue={defaultValue}
           />
         </span>
       );
@@ -105,12 +125,13 @@ export default function FilterDateRange({
             date
           </label>
           <DatePicker
+            key="date-range-after"
             id="filter-date-range"
             name="filter-date-range"
             onChange={onChange}
             minDate={MIN_DATE}
             maxDate={MAX_DATE}
-            defaultValue={query}
+            defaultValue={defaultValue}
           />
         </span>
       );
