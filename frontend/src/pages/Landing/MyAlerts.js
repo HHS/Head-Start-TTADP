@@ -247,9 +247,9 @@ function MyAlerts(props) {
     <>
       {reports && reports.length === 0 && (
         <Container className="landing" padding={0} loading={loading}>
-          <div id="caughtUp">
+          <div className="smart-hub--caught-up">
             <div>
-              <h2>You&apos;re all caught up!</h2>
+              <h2 className="padding-left-0">You&apos;re all caught up!</h2>
             </div>
             {newBtn && (
               <p id="beginNew">

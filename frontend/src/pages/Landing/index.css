@@ -250,14 +250,10 @@ a.desc {
   background: #c5c5c5;
 }
 
-#caughtUp {
+.smart-hub--caught-up {
   padding: 100px 320px;
   white-space: nowrap;
-}
-
-#caughtUp h2 {
-  white-space: nowrap;
-  padding-left: 50px;
+  text-align: center;
 }
 
 #beginNew {
