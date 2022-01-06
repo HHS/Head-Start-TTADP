@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
 function transformDate(field) {
@@ -62,15 +63,58 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
-function transformGrantModel(field) {
+function transformHTML(field) {
+  async function transformer(instance) {
+    const html = instance[field] || '';
+    const value = convert(html, { selectors: [{ selector: 'table', format: 'dataTable' }] });
+    const obj = {};
+    Object.defineProperty(obj, field, {
+      value,
+      enumerable: true,
+    });
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
+function transformApproversModel(prop) {
   async function transformer(instance) {
     const obj = {};
-    const activityRecipients = await instance.activityRecipients;
-    if (activityRecipients) {
-      const distinctPS = [...new Set(activityRecipients.map((recipient) => (recipient.grant && recipient.grant[field] !== null ? recipient.grant[field] : '')))];
-      const programSpecialistNames = distinctPS.sort().join('\n');
-      Object.defineProperty(obj, field, {
-        value: programSpecialistNames,
+    const values = await instance.approvers;
+    if (values) {
+      const distinctValues = [
+        ...new Set(
+          values.filter(
+            (approver) => approver.User && approver.User[prop] !== null,
+          ).map((r) => r.User[prop]).flat(),
+        ),
+      ];
+      const approversList = distinctValues.sort().join('\n');
+      Object.defineProperty(obj, 'approvers', {
+        value: approversList,
+        enumerable: true,
+      });
+    }
+    return Promise.resolve(obj);
+  }
+  return transformer;
+}
+
+function transformGrantModel(prop) {
+  async function transformer(instance) {
+    const obj = {};
+    const values = await instance.activityRecipients;
+    if (values) {
+      const distinctValues = [
+        ...new Set(
+          values.filter(
+            (recipient) => recipient.grant && recipient.grant[prop] !== null,
+          ).map((r) => r.grant[prop]).flat(),
+        ),
+      ];
+      const grantValueList = distinctValues.sort().join('\n');
+      Object.defineProperty(obj, prop, {
+        value: grantValueList,
         enumerable: true,
       });
     }
@@ -80,8 +124,8 @@ function transformGrantModel(field) {
 }
 
 /*
- * Helper function for transformGoalsAndObjectives
- */
+   * Helper function for transformGoalsAndObjectives
+   */
 function sortObjectives(a, b) {
   if (!b.goal || !a.goal) {
     return 1;
@@ -96,9 +140,9 @@ function sortObjectives(a, b) {
 }
 
 /*
- * Create an object with goals and objectives. Used by transformGoalsAndObjectives
- * @param {Array<Objectives>} objectiveRecords
- */
+   * Create an object with goals and objectives. Used by transformGoalsAndObjectives
+   * @param {Array<Objectives>} objectiveRecords
+   */
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
@@ -132,7 +176,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     // same with objective num
 
     /**
-     * this will start non-grantee objectives at 1.1, which will prevent the creation
+     * this will start other entity objectives at 1.1, which will prevent the creation
      * of columns that don't fit the current schema (for example, objective-1.0)
      */
     if (!objectiveNum) {
@@ -150,7 +194,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
-      value: ttaProvided,
+      value: convert(ttaProvided),
       enumerable: true,
     });
     objectiveNum += 1;
@@ -160,10 +204,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 }
 
 /*
- * Transform goals and objectives into a format suitable for a CSV
- * @param {ActivityReport} ActivityReport instance
- * @returns {Promise<object>} Object with key-values for goals and objectives
- */
+* Transform goals and objectives into a format suitable for a CSV
+* @param {ActivityReport} ActivityReport instance
+* @returns {Promise<object>} Object with key-values for goals and objectives
+*/
 async function transformGoalsAndObjectives(report) {
   let obj = {};
 
@@ -181,7 +225,7 @@ const arTransformers = [
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
   transformRelatedModel('collaborators', 'fullName'),
-  'programTypes',
+  transformApproversModel('name'),
   'targetPopulations',
   'virtualDeliveryType',
   'reason',
@@ -194,15 +238,16 @@ const arTransformers = [
   'endDate',
   'startDate',
   transformRelatedModel('activityRecipients', 'name'),
+  transformGrantModel('programTypes'),
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
   transformRelatedModel('attachments', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformRelatedModel('granteeNextSteps', 'note'),
+  transformRelatedModel('recipientNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),
-  'context',
-  'additionalNotes',
+  transformHTML('context'),
+  transformHTML('additionalNotes'),
   'lastSaved',
   transformDate('createdAt'),
   transformDate('approvedAt'),
@@ -210,14 +255,14 @@ const arTransformers = [
 ];
 
 /**
- * csvRows is an array of objects representing csv data. Sometimes,
- * some objects can have keys that other objects will not.
- * We also want the goals and objectives to appear at the end
- * of the report. This extracts a list of all the goals and objectives.
- *
- * @param {object[]} csvRows
- * @returns object[]
- */
+   * csvRows is an array of objects representing csv data. Sometimes,
+   * some objects can have keys that other objects will not.
+   * We also want the goals and objectives to appear at the end
+   * of the report. This extracts a list of all the goals and objectives.
+   *
+   * @param {object[]} csvRows
+   * @returns object[]
+   */
 function extractListOfGoalsAndObjectives(csvRows) {
   // an empty array to hold our keys
   let keys = [];

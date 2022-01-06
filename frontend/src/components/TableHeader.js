@@ -6,6 +6,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import Filter from './Filter';
 import ReportMenu from '../pages/Landing/ReportMenu';
+import DateTime from './DateTime';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -37,79 +38,89 @@ export default function TableHeader({
   hidePagination,
   forMyAlerts,
   downloadError,
+  isDownloading,
+  dateTime,
+  downloadAllButtonRef,
+  downloadSelectedButtonRef,
 }) {
   return (
     <div className="desktop:display-flex">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
-        <h2 className="font-body-lg margin-x-2 margin-y-3">{title}</h2>
+        <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
+        {dateTime
+          ? <DateTime classNames="display-flex flex-align-center padding-x-1 flex-align-self-center" timestamp={dateTime.timestamp} label={dateTime.label} />
+          : null}
         <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row flex-align-center">
           {numberOfSelected > 0
-        && (
-          <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
-            {numberOfSelected}
-            {' '}
-            selected
-            {' '}
-            <Button
-              className="smart-hub--select-tag__button"
-              unstyled
-              aria-label="deselect all reports"
-              onClick={() => {
-                toggleSelectAll({ target: { checked: false } });
-              }}
-            >
-              <FontAwesomeIcon
-                color="blue"
-                inverse
-                icon={faTimesCircle}
-              />
-            </Button>
-          </span>
-        )}
+            && (
+              <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
+                {numberOfSelected}
+                {' '}
+                selected
+                {' '}
+                <Button
+                  className="smart-hub--select-tag__button"
+                  unstyled
+                  aria-label="deselect all reports"
+                  onClick={() => {
+                    toggleSelectAll({ target: { checked: false } });
+                  }}
+                >
+                  <FontAwesomeIcon
+                    color="blue"
+                    inverse
+                    icon={faTimesCircle}
+                  />
+                </Button>
+              </span>
+            )}
           {showFilter && <Filter applyFilters={onUpdateFilters} forMyAlerts={forMyAlerts} />}
           {!hideMenu && (
-          <ReportMenu
-            label={menuAriaLabel}
-            hasSelectedReports={numberOfSelected > 0}
-            onExportAll={handleDownloadAll}
-            onExportSelected={handleDownloadClick}
-            count={count}
-            downloadError={downloadError}
-          />
-          ) }
+            <ReportMenu
+              label={menuAriaLabel}
+              hasSelectedReports={numberOfSelected > 0}
+              onExportAll={handleDownloadAll}
+              onExportSelected={handleDownloadClick}
+              count={count}
+              downloadError={downloadError}
+              isDownloading={isDownloading}
+              downloadAllButtonRef={downloadAllButtonRef}
+              downloadSelectedButtonRef={downloadSelectedButtonRef}
+            />
+          )}
         </span>
       </div>
-      { !hidePagination && (
-      <span className="smart-hub--table-nav">
-        <span aria-label="Pagination for activity reports">
-          <span
-            className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
-            aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-              offset,
-              perPage,
-              activePage,
-              count,
-            )}`}
-          >
-            <span>{renderTotal(offset, perPage, activePage, count)}</span>
-            <Pagination
-              innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
-              hideFirstLastPages
-              prevPageText="<Prev"
-              nextPageText="Next>"
-              activePage={activePage}
-              itemsCountPerPage={perPage}
-              totalItemsCount={count}
-              pageRangeDisplayed={4}
-              onChange={handlePageChange}
-              linkClassPrev="smart-hub--link-prev"
-              linkClassNext="smart-hub--link-next"
-              tabIndex={0}
-            />
+      {!hidePagination && (
+        <span className="smart-hub--table-nav">
+          <span aria-label="Pagination for activity reports">
+            <span
+              className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
+              aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+                offset,
+                perPage,
+                activePage,
+                count,
+              )}`}
+            >
+              <span>{renderTotal(offset, perPage, activePage, count)}</span>
+              <Pagination
+                innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
+                hideFirstLastPages
+                prevPageText="<Prev"
+                nextPageText="Next>"
+                activePage={activePage}
+                itemsCountPerPage={perPage}
+                totalItemsCount={count}
+                pageRangeDisplayed={4}
+                onChange={handlePageChange}
+                linkClassPrev="smart-hub--link-prev"
+                linkClassNext="smart-hub--link-next"
+                tabIndex={0}
+              />
+            </span>
           </span>
         </span>
-      </span>
-      ) }
+      )}
     </div>
   );
 }
@@ -132,23 +143,39 @@ TableHeader.propTypes = {
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   downloadError: PropTypes.bool,
+  dateTime: PropTypes.shape({
+    timestamp: PropTypes.string, label: PropTypes.string,
+  }),
+  isDownloading: PropTypes.bool,
+  downloadAllButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 TableHeader.defaultProps = {
   numberOfSelected: 0,
-  toggleSelectAll: () => {},
+  toggleSelectAll: () => { },
   showFilter: false,
   forMyAlerts: false,
   hidePagination: false,
-  onUpdateFilters: () => {},
-  handleDownloadAll: () => {},
-  handleDownloadClick: () => {},
+  onUpdateFilters: () => { },
+  handleDownloadAll: () => { },
+  handleDownloadClick: () => { },
   count: 0,
   activePage: 0,
   offset: 0,
   perPage: 10,
-  handlePageChange: () => {},
+  handlePageChange: () => { },
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
+  dateTime: { timestamp: '', label: '' },
+  isDownloading: false,
+  downloadAllButtonRef: () => {},
+  downloadSelectedButtonRef: () => {},
 };

@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
+      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
@@ -142,9 +142,6 @@ export default (sequelize, DataTypes) => {
     requester: {
       type: DataTypes.STRING,
     },
-    programTypes: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-    },
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
@@ -187,7 +184,6 @@ export default (sequelize, DataTypes) => {
             this.startDate,
             this.activityRecipientType,
             this.requester,
-            this.programTypes,
             this.targetPopulations,
             this.reason,
             this.participants,
