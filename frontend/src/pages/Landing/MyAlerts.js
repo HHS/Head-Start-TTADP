@@ -47,7 +47,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const justSubmitted = message && message.reportId === id;
 
     const recipients = activityRecipients.map((ar) => (
-      ar.grant ? ar.grant.grantee.name : ar.name
+      ar.grant ? ar.grant.recipient.name : ar.name
     ));
 
     const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
@@ -192,6 +192,10 @@ function MyAlerts(props) {
     handleDownloadAllAlerts,
     loading,
     message,
+    isDownloadingAlerts,
+    downloadAlertsError,
+    downloadAllAlertsButtonRef,
+    downloadSelectedAlertsButtonRef,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -239,7 +243,6 @@ function MyAlerts(props) {
     setAlertReportsCount(alertReportsCount - 1);
     updateReportAlerts(newReports);
   };
-
   return (
     <>
       {reports && reports.length === 0 && !hasFilters && (
@@ -272,6 +275,10 @@ function MyAlerts(props) {
             offset={alertsOffset}
             perPage={alertsPerPage}
             hidePagination
+            isDownloading={isDownloadingAlerts}
+            downloadError={downloadAlertsError}
+            downloadAllButtonRef={downloadAllAlertsButtonRef}
+            downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
@@ -281,7 +288,7 @@ function MyAlerts(props) {
               <thead>
                 <tr>
                   {renderColumnHeader('Report ID', 'regionId')}
-                  {renderColumnHeader('Grantee', 'activityRecipients')}
+                  {renderColumnHeader('Recipient', 'activityRecipients')}
                   {renderColumnHeader('Start date', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
@@ -323,6 +330,16 @@ MyAlerts.propTypes = {
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
+  isDownloadingAlerts: PropTypes.bool,
+  downloadAlertsError: PropTypes.bool,
+  downloadAllAlertsButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedAlertsButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 MyAlerts.defaultProps = {
@@ -338,6 +355,10 @@ MyAlerts.defaultProps = {
     displayId: '',
     status: '',
   },
+  isDownloadingAlerts: false,
+  downloadAlertsError: false,
+  downloadAllAlertsButtonRef: () => {},
+  downloadSelectedAlertsButtonRef: () => {},
 };
 
 export default MyAlerts;

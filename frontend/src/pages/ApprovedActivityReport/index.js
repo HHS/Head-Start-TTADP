@@ -23,7 +23,7 @@ function calculateGoalsAndObjectives(report) {
   const data = [];
 
   if (report.goals.length > 0) {
-    // assume grantee
+    // assume recipient
     const { goals } = report;
 
     goals.forEach((goal, index) => {
@@ -43,7 +43,7 @@ function calculateGoalsAndObjectives(report) {
     return [headings, data];
   }
 
-  // else, we assume non grantee
+  // else, we assume other entity
   const { objectivesWithoutGoals } = report;
   objectivesWithoutGoals.forEach((objective, index) => {
     const displayNumber = index + 1;
@@ -58,8 +58,8 @@ function calculateGoalsAndObjectives(report) {
 }
 
 function formatRequester(requester) {
-  if (requester === 'grantee') {
-    return 'Grantee';
+  if (requester === 'recipient') {
+    return 'Recipient';
   }
 
   if (requester === 'regionalOffice') {
@@ -94,7 +94,18 @@ function mapAttachments(attachments) {
         {
           attachments.map((attachment) => (
             <li key={attachment.url.url}>
-              <a href={attachment.url.url}>{attachment.originalFileName}</a>
+              <a
+                href={attachment.url.url}
+                target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
+                rel="noreferrer"
+              >
+                {
+                  `${attachment.originalFileName}
+                   ${attachment.originalFileName.endsWith('.txt')
+                    ? ' (opens in new tab)'
+                    : ''}`
+                }
+              </a>
             </li>
           ))
         }
@@ -129,7 +140,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const [report, setReport] = useState({
     reportId: 0,
     displayId: '',
-    recipientType: 'Grantee',
+    recipientType: 'Recipient',
     creator: '',
     collaborators: [],
     approvingManagers: '',
@@ -152,7 +163,7 @@ export default function ApprovedActivityReport({ match, user }) {
     goalsAndObjectives: [],
     managerNotes: '',
     creatorNotes: '',
-    granteeNextSteps: [],
+    recipientNextSteps: [],
     specialistNextSteps: [],
     createdAt: '',
     approvedAt: '',
@@ -178,9 +189,9 @@ export default function ApprovedActivityReport({ match, user }) {
         }
 
         // first table
-        let recipientType = data.activityRecipients[0].grantId ? 'Grantee' : 'Non-grantee';
+        let recipientType = data.activityRecipients[0].grantId ? 'Recipient' : 'Other entity';
         if (data.activityRecipients.length > 1) {
-          recipientType = `${recipientType}s`;
+          recipientType = data.activityRecipients[0].grantId ? 'Recipients' : 'Other entities';
         }
 
         const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
@@ -215,7 +226,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
         // next steps table
         const specialistNextSteps = data.specialistNextSteps.map((step) => step.note);
-        const granteeNextSteps = data.granteeNextSteps.map((step) => step.note);
+        const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
         const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
         const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
 
@@ -246,7 +257,7 @@ export default function ApprovedActivityReport({ match, user }) {
           goalsAndObjectives,
           managerNotes,
           creatorNotes: additionalNotes,
-          granteeNextSteps,
+          recipientNextSteps,
           specialistNextSteps,
           createdAt,
           approvedAt,
@@ -333,7 +344,7 @@ export default function ApprovedActivityReport({ match, user }) {
     goalsAndObjectives,
     managerNotes,
     creatorNotes,
-    granteeNextSteps,
+    recipientNextSteps,
     specialistNextSteps,
     createdAt,
     approvedAt,
@@ -526,13 +537,13 @@ export default function ApprovedActivityReport({ match, user }) {
           headings={
             [
               'Specialist next steps',
-              "Grantee's next steps",
+              "Recipient's next steps",
             ]
           }
           data={
             [
               specialistNextSteps,
-              granteeNextSteps,
+              recipientNextSteps,
             ]
           }
         />

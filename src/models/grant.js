@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
-      Grant.belongsTo(models.Grantee, { foreignKey: 'granteeId', as: 'grantee' });
+      Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'grantId', as: 'goals' });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
-    granteeId: {
+    recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -63,7 +63,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const programTypes = this.programTypes.length > 0 ? ` - ${this.programTypes.join(', ')}` : '';
-        return `${this.grantee.name} - ${this.number}${programTypes}`;
+        return `${this.recipient.name} - ${this.number}${programTypes}`;
       },
     },
   }, {

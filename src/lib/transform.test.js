@@ -6,7 +6,7 @@ import {
   ActivityRecipient,
   ActivityReportApprover,
   Grant,
-  Grantee,
+  Recipient,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -138,28 +138,28 @@ describe('activityReportToCsvRecord', () => {
       id: 4,
       grantId: 4,
       grant: {
-        name: 'test4', programSpecialistName: 'Program Specialist 4', granteeId: 4, grantee: { name: 'test4' },
+        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, recipient: { name: 'test4' },
       },
     },
     {
       id: 1,
       grantId: 1,
       grant: {
-        name: 'test1', programSpecialistName: 'Program Specialist 1', granteeId: 1, grantee: { name: 'test1' },
+        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, recipient: { name: 'test1' },
       },
     },
     {
       id: 2,
       grantId: 2,
       grant: {
-        name: 'test2', programSpecialistName: 'Program Specialist 2', granteeId: 2, grantee: { name: 'test2' },
+        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, recipient: { name: 'test2' },
       },
     },
     {
       id: 3,
       grantId: 3,
       grant: {
-        name: 'test3', programSpecialistName: 'Program Specialist 1', granteeId: 3, grantee: { name: 'test3' },
+        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, recipient: { name: 'test3' },
       },
     },
   ];
@@ -197,6 +197,106 @@ describe('activityReportToCsvRecord', () => {
     expect(output).toMatchObject(expectedOutput);
   });
 
+  describe('HTML Tag removal', () => {
+    it('removes tags from the context field', async () => {
+      const report = ActivityReport.build({
+        context: '<p data-attribute="test">test text</p>',
+      });
+      const output = await activityReportToCsvRecord(report);
+      const expectedOutput = {
+        context: 'test text',
+      };
+      expect(output).toMatchObject(expectedOutput);
+    });
+
+    it('handles ordered lists', async () => {
+      const report = ActivityReport.build({
+        context: `
+        <ol>
+          <li>first</li>
+          <li>second</li>
+        </ol>
+        `,
+      });
+      const output = await activityReportToCsvRecord(report);
+      const expectedOutput = {
+        context: ' 1. first\n 2. second',
+      };
+      expect(output).toMatchObject(expectedOutput);
+    });
+
+    it('handles nested lists', async () => {
+      const report = ActivityReport.build({
+        context: `
+        <ol>
+          <li>
+            <ol>
+              <li>
+                one
+              </li>
+              <li>
+                two
+              </li>
+            </ol>
+          </li>
+          <li>second</li>
+        </ol>
+        `,
+      });
+      const output = await activityReportToCsvRecord(report);
+      const expectedOutput = {
+        context: ' 1. 1. one\n    2. two\n 2. second',
+      };
+      expect(output).toMatchObject(expectedOutput);
+    });
+
+    it('handles unordered lists', async () => {
+      const report = ActivityReport.build({
+        context: `
+        <ul>
+          <li>first</li>
+          <li>second</li>
+        </ul>
+        `,
+      });
+      const output = await activityReportToCsvRecord(report);
+      const expectedOutput = {
+        context: ' * first\n * second',
+      };
+      expect(output).toMatchObject(expectedOutput);
+    });
+
+    it('handles tables', async () => {
+      const report = ActivityReport.build({
+        context: `
+        <table>
+          <thead>
+            <tr>
+              <td>First</td>
+              <td>Second</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>One</td>
+              <td>Two</td>
+            </tr>
+            <tr>
+              <td>Three</td>
+              <td>Four</td>
+            </tr>
+          </tbody>
+        </table>
+        `,
+      });
+      const output = await activityReportToCsvRecord(report);
+      const expectedOutput = {
+        context: 'First   Second\nOne     Two\nThree   Four',
+      };
+      expect(output).toMatchObject(expectedOutput);
+    });
+  });
+
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
       include: [{ model: User, as: 'author' },
@@ -205,7 +305,7 @@ describe('activityReportToCsvRecord', () => {
         {
           model: ActivityRecipient,
           as: 'activityRecipients',
-          include: [{ model: Grant, as: 'grant', include: [{ model: Grantee, as: 'grantee' }] }],
+          include: [{ model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] }],
         },
         {
           model: ActivityReportApprover,

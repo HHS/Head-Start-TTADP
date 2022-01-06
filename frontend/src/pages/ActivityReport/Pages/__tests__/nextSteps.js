@@ -12,18 +12,18 @@ const SPECIALIST_INPUT = 'specialistNextSteps-input';
 const SPECIALIST_BUTTON = 'specialistNextSteps-button';
 const SPECIALIST_CANCEL_BUTTON = 'specialistNextSteps-cancel-button';
 
-const GRANTEE_NEXT_STEPS = "Grantee's Next Steps";
-const GRANTEE_INPUT = 'granteeNextSteps-input';
-const GRANTEE_BUTTON = 'granteeNextSteps-button';
-const GRANTEE_CANCEL_BUTTON = 'granteeNextSteps-cancel-button';
+const RECIPIENT_NEXT_STEPS = "Recipient's Next Steps";
+const RECIPIENT_INPUT = 'recipientNextSteps-input';
+const RECIPIENT_BUTTON = 'recipientNextSteps-button';
+const RECIPIENT_CANCEL_BUTTON = 'recipientNextSteps-cancel-button';
 
 const RenderNextSteps = ({
   // eslint-disable-next-line react/prop-types
-  specialistNextSteps, granteeNextSteps,
+  specialistNextSteps, recipientNextSteps,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { specialistNextSteps, granteeNextSteps },
+    defaultValues: { specialistNextSteps, recipientNextSteps },
   });
 
   return (
@@ -33,40 +33,40 @@ const RenderNextSteps = ({
   );
 };
 
-const renderNextSteps = (specialist = [], grantee = []) => {
+const renderNextSteps = (specialist = [], recipient = []) => {
   render(
-    <RenderNextSteps specialistNextSteps={specialist} granteeNextSteps={grantee} />,
+    <RenderNextSteps specialistNextSteps={specialist} recipientNextSteps={recipient} />,
   );
 };
 
 describe('next steps', () => {
-  it('displays both specialists and grantee questions', async () => {
+  it('displays both specialists and recipient questions', async () => {
     // When a user is on the next steps page
     renderNextSteps();
 
-    // Then they can see prompts for both Specialist and Grantees
+    // Then they can see prompts for both Specialist and Recipients
     expect(await screen.findByText(SPECIALIST_NEXT_STEPS)).toBeVisible();
     expect(await screen.findByTestId(SPECIALIST_BUTTON)).toBeVisible();
     expect(await screen.findByTestId(SPECIALIST_INPUT)).toBeVisible();
 
-    expect(await screen.findByText(GRANTEE_NEXT_STEPS)).toBeVisible();
-    expect(await screen.findByTestId(GRANTEE_BUTTON)).toBeVisible();
-    expect(await screen.findByTestId(GRANTEE_INPUT)).toBeVisible();
+    expect(await screen.findByText(RECIPIENT_NEXT_STEPS)).toBeVisible();
+    expect(await screen.findByTestId(RECIPIENT_BUTTON)).toBeVisible();
+    expect(await screen.findByTestId(RECIPIENT_INPUT)).toBeVisible();
   });
 
-  it('allows input for both specialists and grantees', async () => {
+  it('allows input for both specialists and recipients', async () => {
     renderNextSteps();
 
     // Given a user filling out the form
     const specialistInput = await screen.findByTestId(SPECIALIST_INPUT);
     userEvent.type(specialistInput, 'capture pikachu');
 
-    const granteeInput = await screen.findByTestId(GRANTEE_INPUT);
-    userEvent.type(granteeInput, 'help capture pikachu');
+    const recipientInput = await screen.findByTestId(RECIPIENT_INPUT);
+    userEvent.type(recipientInput, 'help capture pikachu');
 
     // When they press enter
     userEvent.click(await screen.findByTestId(SPECIALIST_BUTTON));
-    userEvent.click(await screen.findByTestId(GRANTEE_BUTTON));
+    userEvent.click(await screen.findByTestId(RECIPIENT_BUTTON));
 
     // Then they see the list of their items
     expect(await screen.findByText('capture pikachu')).toBeVisible();
@@ -95,7 +95,7 @@ describe('next steps', () => {
 
     // Then the user can see the prompts again
     expect(await screen.findByTestId(SPECIALIST_INPUT)).toBeVisible();
-    expect(await screen.findByTestId(GRANTEE_INPUT)).toBeVisible();
+    expect(await screen.findByTestId(RECIPIENT_INPUT)).toBeVisible();
   });
 
   it('can edit item', async () => {
@@ -137,7 +137,7 @@ describe('next steps', () => {
     expect(input).toBeNull();
   });
 
-  it('can cancel an entry for grantee', async () => {
+  it('can cancel an entry for recipient', async () => {
     // Given a user wants the add a new entry
     renderNextSteps(
       [],
@@ -147,11 +147,11 @@ describe('next steps', () => {
     userEvent.click(newEntry);
 
     // When the user presses cancel to change their mind
-    const cancelBtn = await screen.findByTestId(GRANTEE_CANCEL_BUTTON);
+    const cancelBtn = await screen.findByTestId(RECIPIENT_CANCEL_BUTTON);
     userEvent.click(cancelBtn);
 
     // Then we see there is no more input box
-    const input = screen.queryByTestId(GRANTEE_INPUT);
+    const input = screen.queryByTestId(RECIPIENT_INPUT);
     expect(input).toBeNull();
   });
 });

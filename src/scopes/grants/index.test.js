@@ -1,51 +1,51 @@
 import { Op } from 'sequelize';
 import filtersToScopes from '../index';
-import { Grantee, Grant, sequelize } from '../../models';
+import { Recipient, Grant, sequelize } from '../../models';
 
-const grantees = [
+const recipients = [
   {
     id: 13259,
-    name: 'grantee 13259',
+    name: 'recipient 13259',
   },
   {
     id: 13269,
-    name: 'grantee 13269',
+    name: 'recipient 13269',
   },
   {
     id: 13279,
-    name: 'grantee 13279',
+    name: 'recipient 13279',
   },
 ];
 
-const possibleIds = grantees.map((grantee) => grantee.id);
+const possibleIds = recipients.map((recipient) => recipient.id);
 
-describe('granteeFiltersToScopes', () => {
+describe('recipientFiltersToScopes', () => {
   beforeAll(async () => {
-    await Promise.all(grantees.map((g) => Grantee.create(g)));
+    await Promise.all(recipients.map((g) => Recipient.create(g)));
     await Promise.all([
       Grant.create({
-        id: grantees[0].id,
+        id: recipients[0].id,
         number: '1195543',
         regionId: 1,
-        granteeId: grantees[0].id,
+        recipientId: recipients[0].id,
         status: 'Active',
         startDate: new Date('07/01/1997'),
         endDate: new Date('07/01/1997'),
       }),
       Grant.create({
-        id: grantees[1].id,
+        id: recipients[1].id,
         number: '1195341',
         regionId: 1,
-        granteeId: grantees[1].id,
+        recipientId: recipients[1].id,
         status: 'Active',
         startDate: new Date('08/01/1997'),
         endDate: new Date('08/01/1997'),
       }),
       Grant.create({
-        id: grantees[2].id,
+        id: recipients[2].id,
         number: '1195343',
         regionId: 3,
-        granteeId: grantees[2].id,
+        recipientId: recipients[2].id,
         status: 'Active',
         startDate: new Date('08/01/1997'),
         endDate: new Date('08/01/1997'),
@@ -60,7 +60,7 @@ describe('granteeFiltersToScopes', () => {
       },
     });
 
-    await Grantee.destroy({
+    await Recipient.destroy({
       where: {
         id: possibleIds,
       },
@@ -78,7 +78,7 @@ describe('granteeFiltersToScopes', () => {
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([grantees[0].id]));
+        .toEqual(expect.arrayContaining([recipients[0].id]));
     });
 
     it('after', async () => {
@@ -89,7 +89,7 @@ describe('granteeFiltersToScopes', () => {
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([grantees[1].id, grantees[2].id]));
+        .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id]));
     });
 
     it('within', async () => {
@@ -100,7 +100,7 @@ describe('granteeFiltersToScopes', () => {
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([grantees[1].id, grantees[2].id]));
+        .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id]));
     });
   });
 
@@ -113,7 +113,7 @@ describe('granteeFiltersToScopes', () => {
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([grantees[2].id]));
+        .toEqual(expect.arrayContaining([recipients[2].id]));
     });
   });
 });
