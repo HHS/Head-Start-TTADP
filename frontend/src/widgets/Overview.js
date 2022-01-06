@@ -55,7 +55,6 @@ function Overview({
         <h2>
           {title}
         </h2>
-        <span className="smart-hub--overview-period"> 9/01/2020 to Today</span>
       </Grid>
       <Grid row gap className="smart-hub--overview-data">
         <Field col="fill" tablet={{ col: true }} label="Grants served " data={data.numGrants} />
