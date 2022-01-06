@@ -11,19 +11,19 @@ import findOrCreateUser from './findOrCreateUser';
  */
 export function currentUserId(req, res) {
   if (req.session && req.session.userId) {
-    return 259;
+    return req.session.userId;
   }
   if (res.locals && res.locals.userId) {
-    return 259;
+    return res.locals.userId;
   }
   // bypass authorization, used for cucumber UAT and axe accessibility testing
   if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    const userId = 259;
+    const userId = process.env.CURRENT_USER_ID;
     auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`);
     if (req.session) {
-      req.session.userId = 259;
+      req.session.userId = userId;
     }
-    return 259;
+    return userId;
   }
   return null;
 }
