@@ -244,16 +244,14 @@ function Landing({ user }) {
               && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
-          <Grid col={10} className="flex-align-self-center">
-            <div className="display-flex flex-wrap margin-bottom-2">
-              <FilterPanel
-                applyButtonAria="apply filters for activity reports"
-                filters={filters}
-                onApplyFilters={onApply}
-                dateRangeOptions={dateRangeOptions}
-                onRemoveFilter={onRemoveFilter}
-              />
-            </div>
+          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+            <FilterPanel
+              applyButtonAria="apply filters for activity reports"
+              filters={filters}
+              onApplyFilters={onApply}
+              dateRangeOptions={dateRangeOptions}
+              onRemoveFilter={onRemoveFilter}
+            />
           </Grid>
         </Grid>
         <Grid row gap className="smart-hub--overview">
