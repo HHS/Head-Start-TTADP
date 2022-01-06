@@ -74,8 +74,7 @@ export default function FilterMenu({
     }
   }, [itemLength, items.length]);
 
-  const onApply = () => {
-    // first, we validate
+  const totalValidation = () => {
     const hasErrors = items.reduce((acc, curr, index) => {
       if (acc) {
         return true;
@@ -97,8 +96,13 @@ export default function FilterMenu({
       return false;
     }, false);
 
-    // if validation was not successful
-    if (hasErrors) {
+    // return whether or not there are errors
+    return !hasErrors;
+  };
+
+  const onApply = () => {
+    // first, we validate
+    if (!totalValidation()) {
       return false;
     }
 
@@ -155,14 +159,18 @@ export default function FilterMenu({
   };
 
   const onAddFilter = () => {
-    const newItems = [...items.map((item) => ({ ...item }))];
-    const newItem = {
-      id: uuidv4(),
-      display: '',
-      conditions: [],
-    };
-    newItems.push(newItem);
-    setItems(newItems);
+    // validating will trigger any error states visually
+    // and also prevent the adding of new items when previous ones are in error
+    if (totalValidation()) {
+      const newItems = [...items.map((item) => ({ ...item }))];
+      const newItem = {
+        id: uuidv4(),
+        display: '',
+        conditions: [],
+      };
+      newItems.push(newItem);
+      setItems(newItems);
+    }
   };
 
   const clearAllFilters = () => {
