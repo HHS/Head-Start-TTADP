@@ -19,9 +19,7 @@ const roles = [
   'System Specialist',
 ];
 
-export const featureFlags = [
-  'grantee_record_page',
-];
+export const featureFlags = [];
 
 const generateFullName = (name, role) => {
   const combinedRoles = Array.isArray(role) ? role.reduce((result, val) => {

@@ -1,8 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { map, pickBy } from 'lodash';
-
-import { withGranteeName, withoutGranteeName } from './grantee';
-import withGranteeId from './granteeId';
+import { withRecipientName, withoutRecipientName } from './recipient';
+import withRecipientId from './recipientId';
 import { withoutReportIds, withReportIds } from './reportId';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withoutTopics, withTopics } from './topic';
@@ -25,28 +24,22 @@ export const topicToQuery = {
     in: (query) => withReportIds(query),
     nin: (query) => withoutReportIds(query),
   },
-  grantee: {
-    in: (query) => withGranteeName(query),
-    nin: (query) => withoutGranteeName(query),
+  recipient: {
+    in: (query) => withRecipientName(query),
+    nin: (query) => withoutRecipientName(query),
   },
-  granteeId: {
-    in: (query) => withGranteeId(query),
+  recipientId: {
+    in: (query) => withRecipientId(query),
   },
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinStartDates(startDate, endDate);
-    },
+    win: (query) => withinStartDates(query),
   },
   lastSaved: {
     bef: (query) => beforeLastSaveDate(query),
     aft: (query) => afterLastSaveDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinLastSaveDates(startDate, endDate);
-    },
+    win: (query) => withinLastSaveDates(query),
   },
   role: {
     in: (query) => withRole(query),
@@ -97,10 +90,7 @@ export const topicToQuery = {
   createDate: {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinCreateDate(startDate, endDate);
-    },
+    win: (query) => withinCreateDate(query),
   },
 };
 
@@ -112,6 +102,6 @@ export function activityReportsFiltersToScopes(filters) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition](query);
+    return topicToQuery[topic][condition]([query].flat());
   });
 }

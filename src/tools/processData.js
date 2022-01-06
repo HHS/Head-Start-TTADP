@@ -6,7 +6,7 @@ import sequelize, { Op } from 'sequelize';
 import cheerio from 'cheerio';
 import faker from 'faker';
 import {
-  ActivityReport, User, Grantee, Grant, File, Permission, RequestErrors,
+  ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors,
 } from '../models';
 
 const SITE_ACCESS = 1;
@@ -16,7 +16,7 @@ const READ_REPORTS = 4;
 const APPROVE_REPORTS = 5;
 
 /**
- * processData script replaces user names, emails, grantee and grant information,
+ * processData script replaces user names, emails, recipient and grant information,
  * file names as well as certain html fields with generated data while preserving
  * existing relationships and non-PII data.
  *
@@ -25,7 +25,7 @@ const APPROVE_REPORTS = 5;
 
 let realUsers = [];
 let transformedUsers = [];
-let transformedGrantees = [];
+let transformedRecipients = [];
 let realGrants = [];
 let transformedGrants = [];
 const hsesUsers = [
@@ -145,31 +145,31 @@ const convertFileName = (fileName) => {
   return `${faker.system.fileName()}${extension}`;
 };
 
-const convertGranteeName = (granteesGrants) => {
-  if (granteesGrants === null) {
-    return granteesGrants;
+const convertRecipientName = (recipientsGrants) => {
+  if (recipientsGrants === null) {
+    return recipientsGrants;
   }
 
-  const granteeGrantsArray = granteesGrants ? granteesGrants.split('\n') : [];
+  const recipientGrantsArray = recipientsGrants ? recipientsGrants.split('\n') : [];
 
-  const convertedGranteesGrants = granteeGrantsArray.map((granteeGrant) => {
-    const granteeGrantArray = granteeGrant.split('|');
-    const grant = granteeGrantArray.length > 1 ? granteeGrantArray[1].trim() : 'Missing Grant';
+  const convertedRecipientsGrants = recipientGrantsArray.map((recipientGrant) => {
+    const recipientGrantArray = recipientGrant.split('|');
+    const grant = recipientGrantArray.length > 1 ? recipientGrantArray[1].trim() : 'Missing Grant';
 
     const foundGrant = realGrants.find((g) => g.number === grant);
-    // get ids of real grants and grantees;
-    const granteeId = foundGrant ? foundGrant.granteeId : null;
+    // get ids of real grants and recipients;
+    const recipientId = foundGrant ? foundGrant.recipientId : null;
     const grantId = foundGrant ? foundGrant.id : null;
-    // find corresponding transformed grants and grantees
-    const foundTransformedGrantee = transformedGrantees.find((g) => g.id === granteeId);
+    // find corresponding transformed grants and recipients
+    const foundTransformedRecipient = transformedRecipients.find((g) => g.id === recipientId);
     const foundTransformedGrant = transformedGrants.find((g) => g.id === grantId);
 
-    const transformedGranteeName = foundTransformedGrantee ? foundTransformedGrantee.name : 'Unknown Grantee';
+    const transformedRecipientName = foundTransformedRecipient ? foundTransformedRecipient.name : 'Unknown Recipient';
     const transformedGrantNumber = foundTransformedGrant ? foundTransformedGrant.number : 'UnknownGrant';
-    return `${transformedGranteeName} | ${transformedGrantNumber}`;
+    return `${transformedRecipientName} | ${transformedGrantNumber}`;
   });
 
-  return convertedGranteesGrants.join('\n');
+  return convertedRecipientsGrants.join('\n');
 };
 
 export const hideUsers = async (userIds) => {
@@ -204,25 +204,27 @@ export const hideUsers = async (userIds) => {
   }).map((u) => u.dataValues);
 };
 
-export const hideGranteesGrants = async (granteesGrants) => {
+export const hideRecipientsGrants = async (recipientsGrants) => {
   realGrants = await Grant.findAll({
-    attributes: ['id', 'granteeId', 'number'],
+    attributes: ['id', 'recipientId', 'number'],
   }).map((g) => g.dataValues);
 
-  const granteesArray = granteesGrants ? granteesGrants.split('\n').map((el) => el.split('|')[0].trim()) : null;
-  const grantsArray = (granteesArray && granteesArray.length > 1) ? granteesGrants.split('\n').map((el) => el.split('|')[1].trim()) : null;
-  const granteeWhere = granteesArray ? { name: { [Op.like]: { [Op.any]: granteesArray } } } : {};
+  const recipientsArray = recipientsGrants ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim()) : null;
+  const grantsArray = (recipientsArray && recipientsArray.length > 1) ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim()) : null;
+  const recipientWhere = recipientsArray
+    ? { name: { [Op.like]: { [Op.any]: recipientsArray } } }
+    : {};
   const grantWhere = grantsArray ? { number: { [Op.like]: { [Op.any]: grantsArray } } } : {};
-  const grantees = await Grantee.findAll({
-    where: granteeWhere,
+  const recipients = await Recipient.findAll({
+    where: recipientWhere,
   });
 
   const promises = [];
 
   // loop through the found reports
-  for (const grantee of grantees) {
+  for (const recipient of recipients) {
     promises.push(
-      grantee.update({
+      recipient.update({
         name: faker.company.companyName(),
       }),
     );
@@ -256,10 +258,10 @@ export const hideGranteesGrants = async (granteesGrants) => {
   }
   await Promise.all(promises);
 
-  // Retrieve transformed grantees
-  transformedGrantees = await Grantee.findAll({
+  // Retrieve transformed recipients
+  transformedRecipients = await Recipient.findAll({
     attributes: ['id', 'name'],
-    where: { id: grantees.map((g) => g.id) },
+    where: { id: recipients.map((g) => g.id) },
   }).map((g) => g.dataValues);
 
   // Retrieve transformed grants
@@ -339,7 +341,7 @@ const processData = async (mockReport) => {
   const filesWhere = activityReportId ? { activityReportId } : {};
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
-  const granteesGrants = mockReport ? mockReport.imported.granteeName : null;
+  const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
   const reports = await ActivityReport.unscoped().findAll({
     where,
   });
@@ -352,8 +354,8 @@ const processData = async (mockReport) => {
 
   // Hide users
   await hideUsers(userIds);
-  // Hide grantees and grants
-  await hideGranteesGrants(granteesGrants);
+  // Hide recipients and grants
+  await hideRecipientsGrants(recipientsGrants);
 
   // loop through the found reports
   for await (const report of reports) {
@@ -385,7 +387,7 @@ const processData = async (mockReport) => {
         granteeFollowUpTasksObjectives: await processHtml(
           imported.granteeFollowUpTasksObjectives,
         ),
-        granteeName: convertGranteeName(imported.granteeName),
+        granteeName: convertRecipientName(imported.granteeName),
         granteeParticipants: imported.granteeParticipants,
         granteesLearningLevelGoal1: imported.granteesLearningLevelGoal1,
         granteesLearningLevelGoal2: imported.granteesLearningLevelGoal2,
@@ -396,7 +398,7 @@ const processData = async (mockReport) => {
         nonGranteeActivity: imported.nonGranteeActivity,
         nonGranteeParticipants: imported.nonGranteeParticipants,
         nonOhsResources: imported.nonOhsResources,
-        numerOfParticipants: imported.numberOfParticipants,
+        numberOfParticipants: imported.numberOfParticipants,
         objective11: imported.objective11,
         objective11Status: imported.objective11Status,
         objective12: imported.objective12,

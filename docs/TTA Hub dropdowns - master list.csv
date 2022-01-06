@@ -1,8 +1,8 @@
-RECIPIENT (Grantee) (multi-select),PROGRAM TYPE (temporary; being added to Grantee),TARGET POPULATION (multi-select),REASON for TTA (multi-select),T or TA?,HOW DELIVERED?,TOPIC COVERED (multi-select),GRANTEE PARTICIPANT ROLES (multi-select),NON-GRANTEE activity reports (multi-select),NON-GRANTEE PARTICIPANT ROLES (multi-select)
+RECIPIENT (Recipient) (multi-select),PROGRAM TYPE (temporary; being added to Recipient),TARGET POPULATION (multi-select),REASON for TTA (multi-select),T or TA?,HOW DELIVERED?,TOPIC COVERED (multi-select),RECIPIENT PARTICIPANT ROLES (multi-select),Other entity activity reports (multi-select),Other entity PARTICIPANT ROLES (multi-select)
 "E.g.: Paladin, Inc. - 05CH011061",EHS,Infants and Toddlers (birth to 3),Below Competitive Threshold (CLASS),Technical Assistance,In-person,Behavioral / Mental Health / Trauma,CEO / CFO / Executive,,CCDF / Child Care Administrator
 List is from HSES.,HS,Preschool Children (ages 3-5),Below Quality Threshold (CLASS),Training,Virtual,"Child Assessment, Development, Screening",Center Director / Site Director,,Head Start Collaboration Office
 Updated nightly.,EHS-CCP,Pregnant Women,Change in Scope,Both,--video,CLASS: Classroom Organization,Coach,,QRIS System
-Grantee name + grant number,,Affected by Child Welfare Involvement,Child Incidents (added 7/2021),,--telephone,CLASS: Emotional Support,Family Service Worker / Case Manager,,Regional Head Start Assn.
+Recipient name + grant number,,Affected by Child Welfare Involvement,Child Incidents (added 7/2021),,--telephone,CLASS: Emotional Support,Family Service Worker / Case Manager,,Regional Head Start Assn.
 Program type will be added soon,,Affected by Disaster,Complaint (added 7/2021),,,CLASS: Instructional Support,Fiscal Manager / Team,,Regional TTA / Other Specialists
 Includes CDI grants,,Affected by Substance Use,COVID-19 response (added 7/2021),,,Coaching,Governing Body / Tribal Council / Policy Council,,State CCR&R
 ,,Children with Disabilities,Full Enrollment,,,Communication,Home Visitor,,State Early Learning Standards

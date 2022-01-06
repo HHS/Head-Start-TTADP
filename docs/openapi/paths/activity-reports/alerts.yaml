@@ -9,8 +9,8 @@ get:
   parameters:
     - $ref: '../../index.yaml#/components/parameters/reportId.in'
     - $ref: '../../index.yaml#/components/parameters/reportId.nin'
-    - $ref: '../../index.yaml#/components/parameters/grantee.in'
-    - $ref: '../../index.yaml#/components/parameters/grantee.nin'
+    - $ref: '../../index.yaml#/components/parameters/recipient.in'
+    - $ref: '../../index.yaml#/components/parameters/recipient.nin'
     - $ref: '../../index.yaml#/components/parameters/creator.in'
     - $ref: '../../index.yaml#/components/parameters/creator.nin'
     - $ref: '../../index.yaml#/components/parameters/collaborators.in'
