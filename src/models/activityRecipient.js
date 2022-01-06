@@ -1,6 +1,6 @@
-import { Model } from 'sequelize';
+const { Model } = require('sequelize');
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class ActivityRecipient extends Model {
     static associate(models) {
       ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
