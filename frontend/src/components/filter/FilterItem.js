@@ -104,32 +104,33 @@ export default function FilterItem({
 
   const error = errors[index];
 
-  const fieldsetBaseClass = 'ttahub-filter-menu-item gap-1 desktop:display-flex border-0 padding-0 position-relative';
+  const fieldsetBaseClass = 'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
   let fieldsetErrorClass = '';
 
   switch (error) {
     case 'Please enter a value':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
     case 'Please enter a condition':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
       break;
     case 'Please enter a filter':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
       break;
     default:
       break;
   }
 
   const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
+  const errorId = `error-message-${id}`;
   return (
-    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
+    <div className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
       {
         error
         && (
-        <span className="ttahub-filter-menu-error" role="status">
-          <strong>{error}</strong>
-        </span>
+          <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>
+            {error}
+          </span>
         )
       }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -143,7 +144,6 @@ export default function FilterItem({
         value={topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
-
       >
         <option value="" disabled selected hidden>- Select -</option>
         {topicOptions}
@@ -183,7 +183,7 @@ export default function FilterItem({
         <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
-    </fieldset>
+    </div>
   );
 }
 
