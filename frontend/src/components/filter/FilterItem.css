@@ -11,15 +11,13 @@
 }
 
 .ttahub-filter-menu-item.ttahub-filter-menu-item--error {
-    border-left: 4px solid #b50909;
-    padding: 2em 1em 1em;
+    padding: 1em 1em 0em;
     margin: 1em 0 1em calc( -1em - 4px );
 }
 
 .ttahub-filter-menu-error {
-    color: #b50909;
     position: absolute;
-    top: 0.5em;
+    top: 0;
 }
 
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--filter [name="topic"],

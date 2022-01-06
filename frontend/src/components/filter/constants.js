@@ -114,7 +114,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'reason',
-    display: 'Reason',
+    display: 'Reasons',
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
@@ -171,7 +171,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'role',
-    display: 'Specialist role',
+    display: 'Specialist roles',
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
@@ -185,7 +185,7 @@ export const FILTER_CONFIG = [
   },
   {
     id: 'targetPopulation',
-    display: 'Target population',
+    display: 'Target populations',
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
