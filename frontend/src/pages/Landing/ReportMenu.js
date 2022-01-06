@@ -15,6 +15,8 @@ function ReportMenu({
   count,
   downloadError,
   isDownloading,
+  downloadAllButtonRef,
+  downloadSelectedButtonRef,
 }) {
   const [open, updateOpen] = useState(false);
 
@@ -120,6 +122,7 @@ function ReportMenu({
             )
               : (
                 <button
+                  ref={downloadAllButtonRef}
                   role="menuitem"
                   onClick={onExportAll}
                   type="button"
@@ -131,6 +134,7 @@ function ReportMenu({
               ) }
             {hasSelectedReports && onExportSelected && (
               <button
+                ref={downloadSelectedButtonRef}
                 role="menuitem"
                 onClick={onExportSelected}
                 type="button"
@@ -155,6 +159,14 @@ ReportMenu.propTypes = {
   count: PropTypes.number,
   downloadError: PropTypes.bool,
   isDownloading: PropTypes.bool,
+  downloadAllButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  downloadSelectedButtonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
 };
 
 ReportMenu.defaultProps = {
@@ -163,6 +175,8 @@ ReportMenu.defaultProps = {
   label: 'Reports menu',
   onExportSelected: null,
   isDownloading: false,
+  downloadAllButtonRef: () => {},
+  downloadSelectedButtonRef: () => {},
 };
 
 export default ReportMenu;
