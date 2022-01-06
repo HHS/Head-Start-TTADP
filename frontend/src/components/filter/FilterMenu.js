@@ -75,8 +75,7 @@ export default function FilterMenu({
     }
   }, [itemLength, items.length]);
 
-  const onApply = () => {
-    // first, we validate
+  const totalValidation = () => {
     const hasErrors = items.reduce((acc, curr, index) => {
       if (acc) {
         return true;
@@ -98,8 +97,13 @@ export default function FilterMenu({
       return false;
     }, false);
 
-    // if validation was not successful
-    if (hasErrors) {
+    // return whether or not there are errors
+    return !hasErrors;
+  };
+
+  const onApply = () => {
+    // first, we validate
+    if (!totalValidation()) {
       return false;
     }
 
@@ -156,14 +160,18 @@ export default function FilterMenu({
   };
 
   const onAddFilter = () => {
-    const newItems = [...items.map((item) => ({ ...item }))];
-    const newItem = {
-      id: uuidv4(),
-      display: '',
-      conditions: [],
-    };
-    newItems.push(newItem);
-    setItems(newItems);
+    // validating will trigger any error states visually
+    // and also prevent the adding of new items when previous ones are in error
+    if (totalValidation()) {
+      const newItems = [...items.map((item) => ({ ...item }))];
+      const newItem = {
+        id: uuidv4(),
+        display: '',
+        conditions: [],
+      };
+      newItems.push(newItem);
+      setItems(newItems);
+    }
   };
 
   const clearAllFilters = () => {
@@ -173,6 +181,15 @@ export default function FilterMenu({
   const canBlur = () => false;
 
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
+
+  const onOpen = () => {
+    // The onOpen is passed into the DropdownMenu component
+    // this will add an empty item into the list if there
+    // are no filters, to cut down on user clicking
+    if (!items.length) {
+      onAddFilter();
+    }
+  };
 
   return (
     <DropdownMenu
@@ -187,6 +204,7 @@ export default function FilterMenu({
       menuName="filter menu"
       canBlur={canBlur}
       AlternateActionButton={ClearAllButton}
+      onOpen={onOpen}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
@@ -233,7 +251,6 @@ export default function FilterMenu({
           <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
-
     </DropdownMenu>
   );
 }

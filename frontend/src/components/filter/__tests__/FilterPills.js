@@ -38,7 +38,7 @@ describe('Filter Pills', () => {
 
       // Role.
       expect(await screen.findByText(/contains/i)).toBeVisible();
-      expect(await screen.findByRole('button', { name: /this button removes the filter: specialist role contains/i })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /this button removes the filter: specialist roles contains/i })).toBeVisible();
 
       // Date.
       expect(await screen.findByText(/date range/i)).toBeVisible();

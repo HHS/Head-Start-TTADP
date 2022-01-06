@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import {
+  render, screen, act,
+} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -76,7 +78,7 @@ describe('Recipient Record - TTA History', () => {
     });
 
     const button = await screen.findByRole('button', {
-      name: /this button removes the filter: specialist role is family engagement specialist, grantee specialist/i,
+      name: /this button removes the filter: specialist roles is family engagement specialist, grantee specialist/i,
     });
 
     expect(button).toBeVisible();
