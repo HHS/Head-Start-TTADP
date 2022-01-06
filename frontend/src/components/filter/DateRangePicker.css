@@ -1,4 +1,4 @@
-.ttahub-custom-date-range-picker {
+.ttahub-custom-date-range-picker {    
     z-index: 2;
 }
 
@@ -6,4 +6,8 @@
 .ttahub-custom-date-range-picker--error-start-date #start-date,
 .ttahub-custom-date-range-picker--error-end-date  #end-date{
     border: 2px solid #b50909;
+}
+
+.ttahub-custom-date-range-picker-fields {
+    box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
 }

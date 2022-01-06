@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   DatePicker as RawDatePicker,
@@ -22,10 +22,17 @@ export default function DatePicker(
     ...props
   },
 ) {
+  const [error, setError] = useState('');
+  const dpRef = useRef();
+
   const tomorrow = useMemo(() => moment().add(1, 'days').format(DATE_PICKER_DATE_FORMAT), []);
 
   const onDatePickerChange = (date) => {
-    onChange(date);
+    if (dpRef.current && dpRef.current.querySelector(':invalid')) {
+      setError('Please enter a valid date');
+    } else {
+      onChange(date);
+    }
   };
 
   const formattedDefaultValue = moment(
@@ -37,14 +44,17 @@ export default function DatePicker(
   const formattedMinDate = moment(minDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT);
 
   return (
-    <RawDatePicker
-      {...props}
-      key={datePickerKey}
-      maxDate={formattedMaxDate}
-      minDate={formattedMinDate}
-      defaultValue={formattedDefaultValue}
-      onChange={onDatePickerChange}
-    />
+    <span ref={dpRef}>
+      {error}
+      <RawDatePicker
+        {...props}
+        key={datePickerKey}
+        maxDate={formattedMaxDate}
+        minDate={formattedMinDate}
+        defaultValue={formattedDefaultValue}
+        onChange={onDatePickerChange}
+      />
+    </span>
   );
 }
 

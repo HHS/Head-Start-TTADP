@@ -51,6 +51,10 @@ export default function ControlledDatePicker({
   function validate(v) {
     const newValue = moment(v, DATE_DISPLAY_FORMAT);
 
+    if (!newValue.isValid()) {
+      return 'Please enter a valid date';
+    }
+
     if (newValue.isBefore(min.moment)) {
       return `Please enter a date after ${min.display}`;
     }

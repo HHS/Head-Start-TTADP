@@ -227,7 +227,7 @@ const ActivitySummary = ({
         <div id="date" />
         <div>
           <Grid row>
-            <Grid col={6}>
+            <Grid col={8}>
               <FormItem
                 label="Start Date"
                 name="startDate"
@@ -248,7 +248,9 @@ const ActivitySummary = ({
                 />
               </FormItem>
             </Grid>
-            <Grid col={6}>
+          </Grid>
+          <Grid row>
+            <Grid col={8}>
               <FormItem
                 label="End Date"
                 name="endDate"
@@ -268,6 +270,8 @@ const ActivitySummary = ({
                 />
               </FormItem>
             </Grid>
+          </Grid>
+          <Grid row>
             <Grid col={5}>
               <FormItem
                 label="Duration in hours (round to the nearest half hour)"

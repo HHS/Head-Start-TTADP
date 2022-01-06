@@ -10,6 +10,7 @@ import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
 
 import usePrevious from '../../hooks/usePrevious';
 import { filterProp } from './props';
+import FilterErrorContext from './FilterErrorContext';
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
@@ -24,26 +25,6 @@ export default function FilterMenu({
 
   const itemLength = usePrevious(items.length);
 
-  const validate = ({ topic, query, condition }) => {
-    if (!topic) {
-      return 'Please enter a filter';
-    }
-
-    if (!condition) {
-      return 'Please enter a condition';
-    }
-
-    if (!query || !query.toString().length) {
-      return 'Please enter a value';
-    }
-
-    if (query.toString().includes('Invalid date') || (topic === 'startDate' && query.toString() === '-')) {
-      return 'Please enter a value';
-    }
-
-    return '';
-  };
-
   // filters currently selected. these will be excluded from filter selection
   const selectedFilters = items.map((filter) => filter.topic);
 
@@ -55,13 +36,6 @@ export default function FilterMenu({
   useEffect(() => {
     setItems(filters);
   }, [filters]);
-
-  // if an item was deleted, we need to update the errors
-  useEffect(() => {
-    if (items.length < errors.length) {
-      setErrors(items.map(() => ''));
-    }
-  }, [errors.length, items]);
 
   // focus on the first topic if we add more
   useEffect(() => {
@@ -75,21 +49,8 @@ export default function FilterMenu({
   }, [itemLength, items.length]);
 
   const totalValidation = () => {
-    const hasErrors = items.reduce((acc, curr, index) => {
-      if (acc) {
-        return true;
-      }
-
-      const setError = (message) => {
-        const newErrors = [...errors];
-        newErrors.splice(index, 1, message);
-        setErrors(newErrors);
-      };
-
-      const message = validate(curr);
-
-      if (message) {
-        setError(message);
+    const hasErrors = errors.reduce((acc, curr) => {
+      if (acc || curr) {
         return true;
       }
 
@@ -116,8 +77,11 @@ export default function FilterMenu({
     const index = newItems.findIndex((item) => item.id === id);
 
     if (index !== -1) {
+      const newErrors = [...errors];
+      newErrors.splice(index, 1);
       newItems.splice(index, 1);
       setItems(newItems);
+      setErrors(newErrors);
     }
   };
 
@@ -147,12 +111,17 @@ export default function FilterMenu({
 
       if (defaultQuery) {
         toUpdate.query = defaultQuery;
+      } else {
+        toUpdate.query = '';
       }
     }
 
     if (name === 'topic') {
+      const f = FILTER_CONFIG.find(((config) => config.id === toUpdate.topic));
+      const defaultQuery = f.defaultValues[value];
+
       toUpdate.condition = '';
-      toUpdate.query = '';
+      toUpdate.query = defaultQuery;
     }
 
     setItems(newItems);
@@ -207,6 +176,7 @@ export default function FilterMenu({
       AlternateActionButton={ClearAllButton}
       onOpen={onOpen}
     >
+
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
@@ -232,19 +202,25 @@ export default function FilterMenu({
 
               const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
 
+              const setError = (message) => {
+                const newErrors = [...errors];
+                newErrors.splice(index, 1, message);
+                setErrors(newErrors);
+              };
+
               return (
-                <FilterItem
-                  onRemoveFilter={onRemoveFilter}
-                  onUpdateFilter={onUpdateFilter}
-                  key={filter.id}
-                  filter={filter}
-                  errors={errors}
-                  setErrors={setErrors}
-                  validate={validate}
-                  index={index}
-                  topicOptions={topicOptions}
-                  selectedTopic={selectedTopic || newTopic}
-                />
+                <FilterErrorContext.Provider value={{ setError, error: errors[index] }}>
+                  <FilterItem
+                    onRemoveFilter={onRemoveFilter}
+                    onUpdateFilter={onUpdateFilter}
+                    key={filter.id}
+                    filter={filter}
+                    errors={errors}
+                    setErrors={setErrors}
+                    topicOptions={topicOptions}
+                    selectedTopic={selectedTopic || newTopic}
+                  />
+                </FilterErrorContext.Provider>
               );
             })}
           </div>
