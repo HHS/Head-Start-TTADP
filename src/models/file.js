@@ -1,5 +1,5 @@
-import { Model } from 'sequelize';
-import { getPresignedURL } from '../lib/s3';
+const { Model } = require('sequelize');
+const { getPresignedURL } = require('../lib/s3');
 
 module.exports = (sequelize, DataTypes) => {
   class File extends Model {

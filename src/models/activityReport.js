@@ -1,7 +1,7 @@
-import { Model, Op } from 'sequelize';
-import moment from 'moment';
-import { isEqual, uniqWith } from 'lodash';
-import { REPORT_STATUSES } from '../constants';
+const { Op, Model } = require('sequelize');
+const moment = require('moment');
+const { isEqual, uniqWith } = require('lodash');
+const { REPORT_STATUSES } = require('../constants');
 
 function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
@@ -29,7 +29,7 @@ function copyStatus(report) {
   }
 }
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
