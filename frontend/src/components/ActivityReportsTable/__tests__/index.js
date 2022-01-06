@@ -23,11 +23,22 @@ const withRegionOne = '&region.in[]=1';
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
 const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
 
+const defaultUser = {
+  name: 'test@test.com',
+  homeRegionId: 14,
+  permissions: [
+    {
+      scopeId: 3,
+      regionId: 1,
+    },
+  ],
+};
+
 const mockFetchWithRegionOne = () => {
   fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
 };
 
-const renderTable = (user) => {
+const renderTable = (user, dateTime) => {
   render(
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -40,8 +51,9 @@ const renderTable = (user) => {
               query: '1',
             }]}
             showFilter
-            onUpdateFilters={() => {}}
+            onUpdateFilters={() => { }}
             tableCaption="Activity Reports"
+            dateTime={dateTime}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -160,6 +172,25 @@ describe('Table menus & selections', () => {
 
       fireEvent.click(singleReportCheck);
       expect(singleReportCheck.checked).toBe(false);
+    });
+  });
+
+  describe('Date display', () => {
+    afterEach(() => fetchMock.restore());
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get(
+        defaultBaseUrlWithRegionOne,
+        { count: 10, rows: generateXFakeReports(10) },
+      );
+    });
+
+    it('Shows date display', async () => {
+      const dateTime = { label: '11/03/2021 - 12/03/2021', timestamp: '2021/11/03-2021/12/03' };
+      renderTable(defaultUser, dateTime);
+      expect(await screen.findByRole('heading', { name: /activity reports/i })).toBeVisible();
+      expect(await screen.findByText(/11\/03\/2021 - 12\/03\/2021/i)).toBeVisible();
     });
   });
 
@@ -290,6 +321,27 @@ describe('Table menus & selections', () => {
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
     });
   });
+
+  it('disables download button while downloading', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderTable(user);
+    const reportMenu = await screen.findByLabelText(/reports menu/i);
+    userEvent.click(reportMenu);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+    const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+    userEvent.click(downloadButton);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
+    expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+  });
 });
 
 describe('Table sorting', () => {
@@ -381,9 +433,9 @@ describe('Table sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('02/08/2021'));
   });
 
-  it('clicking Grantee column header will sort by grantee', async () => {
+  it('clicking Recipient column header will sort by recipient', async () => {
     const columnHeader = await screen.findByRole('button', {
-      name: /grantee\. activate to sort ascending/i,
+      name: /recipient\. activate to sort ascending/i,
     });
 
     fetchMock.get(
@@ -392,7 +444,7 @@ describe('Table sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Grantee Name'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Recipient Name'));
   });
 
   it('clicking Report id column header will sort by region and id', async () => {

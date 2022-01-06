@@ -5,14 +5,14 @@ import {
   ActivityReport,
   ActivityRecipient,
   User,
-  Grantee,
+  Recipient,
   Grant,
   Region,
 } from './models';
 
 function defaultReport() {
   return {
-    activityRecipientType: 'grantee',
+    activityRecipientType: 'recipient',
     submissionStatus: REPORT_STATUSES.SUBMITTED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     ECLKCResourcesUsed: [faker.random.words(1)],
@@ -23,7 +23,6 @@ function defaultReport() {
     endDate: '2021-01-01T12:00:00Z',
     startDate: '2021-01-01T12:00:00Z',
     requester: 'requester',
-    programTypes: ['type'],
     targetPopulations: ['pop'],
     reason: ['reason'],
     participants: ['participants', 'genies'],
@@ -49,9 +48,9 @@ async function createUser(user) {
 }
 
 function defaultRegion() {
-  const number = faker.datatype.number({ min: 1, max: 12 });
+  const number = faker.datatype.number({ min: 1, max: 1000 });
   return {
-    id: faker.unique(() => number),
+    id: faker.unique(() => number, { maxRetries: 20 }),
     name: number,
   };
 }
@@ -70,21 +69,21 @@ function defaultGrant() {
   };
 }
 
-async function createGrantee(grantee) {
-  return Grantee.create({
+async function createRecipient(recipient) {
+  return Recipient.create({
     id: faker.datatype.number({ min: 10000, max: 100000 }),
     name: faker.company.companyName(),
-    ...grantee,
+    ...recipient,
   });
 }
 
-async function createGrant(grant) {
-  let g = await Grantee.findByPk(grant.granteeId);
+export async function createGrant(grant) {
+  let g = await Recipient.findByPk(grant.recipientId);
   if (!g) {
-    g = await createGrantee({});
+    g = await createRecipient({});
   }
 
-  return Grant.create({ ...defaultGrant(), ...grant, granteeId: g.id });
+  return Grant.create({ ...defaultGrant(), ...grant, recipientId: g.id });
 }
 
 export async function createReport(report) {
@@ -140,8 +139,8 @@ export async function destroyReport(report) {
         model: Grant,
         as: 'grant',
         include: [{
-          model: Grantee,
-          as: 'grantee',
+          model: Recipient,
+          as: 'recipient',
         }],
       }],
     }],
@@ -179,9 +178,9 @@ export async function destroyReport(report) {
         },
       });
 
-      await Grantee.destroy({
+      await Recipient.destroy({
         where: {
-          id: grant.granteeId,
+          id: grant.recipientId,
         },
       });
     } catch (e) {

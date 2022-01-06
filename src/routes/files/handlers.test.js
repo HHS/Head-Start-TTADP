@@ -36,7 +36,7 @@ mockSession.userId = mockUser.id;
 const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() => jest.fn());
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
@@ -195,7 +195,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/test.txt`)
+        .attach('file', `${__dirname}/testfiles/test.log`)
         .expect(400)
         .then((res) => {
           expect(res.text).toBe('Could not determine file type');

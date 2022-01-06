@@ -28,10 +28,10 @@ Boundary(aws, "AWS GovCloud") {
   }
 }
 System(HSES, "HSES", "Single Sign On\nMFA via Time-Based App or PIV card\n\nSource of Grantee Data")
-Boundary(gsa_saas, "SaaS") {
+Boundary(saas, "SaaS") {
   System_Ext(google_tag_manager, "Google Tag Manager", "Tag Manager")
 }
-Boundary(gsa_saas, "SaaS") {
+Boundary(saas, "SaaS") {
   System_Ext(google_analytics, "Google Analytics", "Web Analytics")
 }
 Boundary(gsa_fed_saas, "FedRAMP-approved SaaS") {
@@ -51,7 +51,7 @@ Rel(www_s3, personnel, "download file attachments", "https GET (443)")
 Rel(aws_alb, cloudgov_router, "proxies requests", "https GET/POST/PUT/DELETE (443)")
 Rel(cloudgov_router, www_app, "proxies requests", "https GET/POST/PUT/DELETE (443)")
 Rel(worker_app, clamav, "scans files", "https POST (9443)")
-Rel(worker_app, HSES, "retrieve Grantee data", "https GET (443)")
+Rel(worker_app, HSES, "retrieve Recipient data", "https GET (443)")
 Rel(www_app, HSES, "authenticates user", "OAuth2")
 Rel(personnel, HSES, "verify identity", "https GET/POST (443)")
 BiRel(www_app, www_db, "reads/writes dataset records", "psql")
