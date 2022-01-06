@@ -7,7 +7,7 @@ import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import TTAHistory from '../TTAHistory';
-import { formatDateRange } from '../../../../components/DateRangeSelect';
+import { formatDateRange } from '../../../../utils';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
