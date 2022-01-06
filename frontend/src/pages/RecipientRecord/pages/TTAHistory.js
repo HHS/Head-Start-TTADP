@@ -3,13 +3,12 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import { v4 as uuidv4 } from 'uuid';
-import { formatDateRange } from '../../../components/DateRangeSelect';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
-import { expandFilters } from '../../../utils';
+import { expandFilters, formatDateRange } from '../../../utils';
 
 import './TTAHistory.css';
 import useUrlFilters from '../../../hooks/useUrlFilters';

@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment';
-import { formatDateRange } from '../DateRangeSelect';
+import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,

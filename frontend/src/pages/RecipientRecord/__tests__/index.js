@@ -7,7 +7,7 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import RecipientRecord from '../index';
-import { formatDateRange } from '../../../components/DateRangeSelect';
+import { formatDateRange } from '../../../utils';
 
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 

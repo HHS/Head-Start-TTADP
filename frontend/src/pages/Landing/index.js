@@ -25,13 +25,12 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString, expandFilters } from '../../utils';
+import { filtersToQueryString, expandFilters, formatDateRange } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
-import { formatDateRange } from '../../components/DateRangeSelect';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;

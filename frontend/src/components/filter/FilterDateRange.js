@@ -7,7 +7,7 @@ import {
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import DateRangePicker from './DateRangePicker';
-import { formatDateRange } from '../DateRangeSelect';
+import { formatDateRange } from '../../utils';
 import './FilterDateRange.css';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 

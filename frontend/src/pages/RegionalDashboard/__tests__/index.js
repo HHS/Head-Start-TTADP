@@ -10,7 +10,7 @@ import {
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import RegionalDashboard from '../index';
-import { formatDateRange } from '../../../components/DateRangeSelect';
+import { formatDateRange } from '../../../utils';
 import { SCOPE_IDS } from '../../../Constants';
 import UserContext from '../../../UserContext';
 
