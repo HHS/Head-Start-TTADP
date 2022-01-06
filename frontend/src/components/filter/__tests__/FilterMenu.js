@@ -113,7 +113,7 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const date = screen.getByRole('textbox', { name: /date/i });
+    let date = screen.getByRole('textbox', { name: /date/i });
     expect(date.value).toBe('10/31/2021');
 
     const topic = screen.getByRole('combobox', { name: 'topic' });
@@ -123,6 +123,12 @@ describe('Filter Menu', () => {
     await screen.findByRole('combobox', { name: 'select a topic and condition first and then select a query' });
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
+
+    const condition = await screen.findByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, 'Is before');
+
+    date = await screen.findByRole('textbox', { name: /date/i });
+    userEvent.type(date, '10/31/2020');
 
     const addNew = screen.getByRole('button', { name: /Add new filter/i });
     userEvent.click(addNew);
