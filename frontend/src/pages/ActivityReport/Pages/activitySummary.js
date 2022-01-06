@@ -226,7 +226,7 @@ const ActivitySummary = ({
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Activity date">
         <div id="date" />
         <div>
-          <Grid row gap>
+          <Grid row>
             <Grid col={6}>
               <FormItem
                 label="Start Date"
