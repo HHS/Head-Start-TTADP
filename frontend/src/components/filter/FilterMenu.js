@@ -182,6 +182,9 @@ export default function FilterMenu({
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
 
   const onOpen = () => {
+    // The onOpen is passed into the DropdownMenu component
+    // this will add an empty item into the list if there
+    // are no filters, to cut down on user clicking
     if (!items.length) {
       onAddFilter();
     }
