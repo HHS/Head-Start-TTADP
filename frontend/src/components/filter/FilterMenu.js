@@ -181,6 +181,12 @@ export default function FilterMenu({
 
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
 
+  const onOpen = () => {
+    if (!items.length) {
+      onAddFilter();
+    }
+  };
+
   return (
     <DropdownMenu
       buttonText="Filters"
@@ -194,6 +200,7 @@ export default function FilterMenu({
       menuName="filter menu"
       canBlur={canBlur}
       AlternateActionButton={ClearAllButton}
+      onOpen={onOpen}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
@@ -240,7 +247,6 @@ export default function FilterMenu({
           <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
-
     </DropdownMenu>
   );
 }

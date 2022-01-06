@@ -38,6 +38,7 @@ export default function DropdownMenu({
   cancelAriaLabel,
   forwardedRef,
   AlternateActionButton,
+  onOpen,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
@@ -68,6 +69,10 @@ export default function DropdownMenu({
   };
 
   const onClick = () => {
+    if (!menuIsOpen) {
+      onOpen();
+    }
+
     setMenuIsOpen(!menuIsOpen);
   };
 
@@ -170,12 +175,12 @@ DropdownMenu.propTypes = {
     PropTypes.func,
   ]),
   AlternateActionButton: PropTypes.func,
+  onOpen: PropTypes.func,
 };
 
 function DefaultAlternateActionButton() {
   return <span />;
 }
-
 DropdownMenu.defaultProps = {
   className: 'margin-left-1',
   buttonAriaLabel: '',
@@ -189,4 +194,5 @@ DropdownMenu.defaultProps = {
   onCancel: () => {},
   forwardedRef: () => {},
   AlternateActionButton: DefaultAlternateActionButton,
+  onOpen: () => {},
 };
