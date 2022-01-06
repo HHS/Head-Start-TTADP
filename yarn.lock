@@ -2,19 +2,19 @@
 # yarn lockfile v1
 
 
-"@axe-core/cli@^4.3.1":
-  version "4.3.2"
-  resolved "https://registry.yarnpkg.com/@axe-core/cli/-/cli-4.3.2.tgz#63c971125223b0ee8105f0b888d9238a373dad79"
-  integrity sha512-c1Es4sOd625dzRzJbO1IyMIbi9/lheRo4+pgZKjcPsDbaKCsS1WhOrc4TzT3RNDSwOs/CwBswoumBBM8GA1uzA==
+"@axe-core/cli@4.3.1":
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/@axe-core/cli/-/cli-4.3.1.tgz#cf90b09d8d2abb1eb8aa1c486beab702aeb23d88"
+  integrity sha512-pzBTUvOav1HC7+y6KipiD79WSnPy3+wx1HdbJkIe4PYZIm7WkaOAyrT117db0lbywoVWzStFWPpW97kHmnarwg==
   dependencies:
-    "@axe-core/webdriverjs" "^4.3.2"
+    "@axe-core/webdriverjs" "^4.3.1"
     axe-core "^4.3.3"
-    chromedriver "^96.0.0"
+    chromedriver "^93.0.1"
     colors "^1.4.0"
     commander "^7.1.0"
     selenium-webdriver "^4.0.0-beta.4"
 
-"@axe-core/webdriverjs@^4.3.2":
+"@axe-core/webdriverjs@^4.3.1":
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/@axe-core/webdriverjs/-/webdriverjs-4.3.2.tgz#1eb3e76d4811558ca05cde34c9ef503f51de5fee"
   integrity sha512-04gjm/+L5X6lue1sikeoJKthEAkxbH6+Cq2HzCctPZ5kTuFOKzNS/cGGgJwlMIFIStnNJ2zUtimiDaUDgiw4bQ==
@@ -2775,10 +2775,10 @@ chownr@^1.1.1:
   resolved "https://registry.yarnpkg.com/chownr/-/chownr-1.1.4.tgz#6fc9d7b42d32a583596337666e7d08084da2cc6b"
   integrity sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==
 
-chromedriver@^96.0.0:
-  version "96.0.0"
-  resolved "https://registry.yarnpkg.com/chromedriver/-/chromedriver-96.0.0.tgz#c8473498e4c94950fa168187b112019cce9e5c6c"
-  integrity sha512-4g6Hn5RHGsbaBmOrJbDlz/hdVPOc22eRsbvoAAMqkZxR2NJCcddHzCw2FAQeW8lX/C7xWVz3nyDsKX3fE9lIIw==
+chromedriver@^93.0.1:
+  version "93.0.1"
+  resolved "https://registry.yarnpkg.com/chromedriver/-/chromedriver-93.0.1.tgz#3ed1f7baa98a754fc1788c42ac8e4bb1ab27db32"
+  integrity sha512-KDzbW34CvQLF5aTkm3b5VdlTrvdIt4wEpCzT2p4XJIQWQZEPco5pNce7Lu9UqZQGkhQ4mpZt4Ky6NKVyIS2N8A==
   dependencies:
     "@testim/chrome-version" "^1.0.7"
     axios "^0.21.2"
@@ -8762,7 +8762,17 @@ selderee@^0.6.0:
   dependencies:
     parseley "^0.7.0"
 
-selenium-webdriver@^4.0.0, selenium-webdriver@^4.0.0-beta.4:
+selenium-webdriver@4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/selenium-webdriver/-/selenium-webdriver-4.0.0.tgz#7dc8969facee3be634459e173f557b7e34308e73"
+  integrity sha512-tOlu6FnTjPq2FKpd153pl8o2cB7H40Rvl/ogiD2sapMv4IDjQqpIxbd+swDJe9UDLdszeh5CDis6lgy4e9UG1w==
+  dependencies:
+    jszip "^3.6.0"
+    rimraf "^3.0.2"
+    tmp "^0.2.1"
+    ws ">=7.4.6"
+
+selenium-webdriver@^4.0.0-beta.4:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/selenium-webdriver/-/selenium-webdriver-4.1.0.tgz#d11e5d43674e2718265a30684bcbf6ec734fd3bd"
   integrity sha512-kUDH4N8WruYprTzvug4Pl73Th+WKb5YiLz8z/anOpHyUNUdM3UzrdTOxmSNaf9AczzBeY+qXihzku8D1lMaKOg==
