@@ -56,13 +56,6 @@ export default function FilterMenu({
     setItems(filters);
   }, [filters]);
 
-  // if an item was deleted, we need to update the errors
-  useEffect(() => {
-    if (items.length < errors.length) {
-      setErrors(items.map(() => ''));
-    }
-  }, [errors.length, items]);
-
   // focus on the first topic if we add more
   useEffect(() => {
     if (items.length > itemLength) {
@@ -116,8 +109,11 @@ export default function FilterMenu({
     const index = newItems.findIndex((item) => item.id === id);
 
     if (index !== -1) {
+      const newErrors = [...errors];
+      newErrors.splice(index, 1);
       newItems.splice(index, 1);
       setItems(newItems);
+      setErrors(newErrors);
     }
   };
 
@@ -169,6 +165,10 @@ export default function FilterMenu({
         conditions: [],
       };
       newItems.push(newItem);
+
+      const newErrors = [...errors, ''];
+      setErrors(newErrors);
+
       setItems(newItems);
     }
   };
