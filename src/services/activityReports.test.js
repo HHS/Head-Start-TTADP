@@ -226,6 +226,7 @@ describe('Retrieve Alerts', () => {
       activityReportId: isOnlyCollabReport.id,
       userId: mockUserFour.id,
     });
+
     const { count, rows } = await activityReportAlerts(mockUserFour.id, {});
     expect(count).toBe(5);
     expect(rows[0].userId).toBe(mockUserFour.id);
