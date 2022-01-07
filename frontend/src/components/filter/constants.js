@@ -193,7 +193,7 @@ export const FILTER_CONFIG = [
     ),
   },
   {
-    id: 'targetPopulation',
+    id: 'targetPopulations',
     display: 'Target populations',
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_MULTI_SELECT,
