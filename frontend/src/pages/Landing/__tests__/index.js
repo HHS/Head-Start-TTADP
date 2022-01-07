@@ -24,7 +24,8 @@ const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&o
 const withRegionOne = '&region.in[]=1';
 const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
 const baseWithRegionOne = `${base}${withRegionOne}`;
-const defaultOverviewUrl = '/api/widgets/overview';
+
+const defaultOverviewUrl = '/api/widgets/overview?';
 const defaultOverviewUrlWithRegionOne = `${defaultOverviewUrl}${withRegionOne}`;
 const overviewUrlWithRegionOne = `${defaultOverviewUrl}?region.in[]=1`;
 
@@ -241,14 +242,14 @@ describe('Landing page table menus & selections', () => {
       beforeAll(async () => {
         fetchMock.reset();
         fetchMock.get(
-          baseAlertsWithRegionOne,
+          baseAlerts,
           { count: 10, alerts: generateXFakeReports(10) },
         );
         fetchMock.get(
-          baseWithRegionOne,
+          base,
           { count: 10, rows: [] },
         );
-        fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
+        fetchMock.get(defaultOverviewUrl, overviewRegionOne);
       });
 
       it('downloads all reports', async () => {
@@ -271,12 +272,13 @@ describe('Landing page table menus & selections', () => {
         userEvent.click(reportMenu);
         const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
-        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
       });
 
       it('disables alert download button while downloading', async () => {
         const user = {
           name: 'test@test.com',
+          homeRegionId: 1,
           permissions: [
             {
               scopeId: 3,
@@ -296,7 +298,7 @@ describe('Landing page table menus & selections', () => {
         const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
         expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
-        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
       });
     });
   });
@@ -308,28 +310,28 @@ describe('My alerts sorting', () => {
   beforeEach(async () => {
     fetchMock.reset();
 
-    // Alerts (All Regions).
+    // Alerts.
     fetchMock.get(baseAlerts, {
       alertsCount: 2,
       alerts: activityReports,
     });
 
-    // Alerts (Region 1).
+    // Alerts Region 1.
     fetchMock.get(baseAlertsWithRegionOne, {
       alertsCount: 2,
       alerts: activityReports,
     });
 
-    // Activity Reports (All Regions).
+    // Activity Reports.
     fetchMock.get(base, { count: 0, rows: [] });
 
-    // Activity Reports (Region 1).
+    // Activity Reports Region 1.
     fetchMock.get(baseWithRegionOne, { count: 0, rows: [] });
 
-    // Overview (All Regions).
+    // Overview.
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 
-    // Overview (Region 1).
+    // Overview Region 1.
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
 
     fetchMock.get(defaultOverviewUrlWithRegionOne, overviewRegionOne);
@@ -364,7 +366,7 @@ describe('My alerts sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
 
-    fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
 
     fireEvent.click(statusColumnHeaders[0]);
@@ -376,7 +378,7 @@ describe('My alerts sorting', () => {
     const reportIdHeaders = await screen.findAllByRole('columnheader', { name: /report id/i });
     expect(reportIdHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       base,
@@ -394,7 +396,7 @@ describe('My alerts sorting', () => {
     });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       base,
@@ -413,7 +415,7 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       base,
@@ -431,7 +433,7 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1',
+    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       base,
@@ -448,9 +450,10 @@ describe('My alerts sorting', () => {
     const columnHeaders = await screen.findAllByText(/collaborator\(s\)/i);
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get(`/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10${withRegionOne}`,
+
+    fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10',
       { alertsCount: 2, alerts: activityReportsSorted });
-    fetchMock.get(`${base}${withRegionOne}`, { count: 0, rows: [] });
+    fetchMock.get(`${base}`, { count: 0, rows: [] });
 
     fireEvent.click(columnHeaders[0]);
 
@@ -560,8 +563,13 @@ describe('handleApplyFilters', () => {
     const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
 
-    const topic = await screen.findByRole('combobox', { name: /topic/i });
-    userEvent.selectOptions(topic, 'reportId');
+    // Add new filter
+    const addNewFilterButton = await screen.findByRole('button', { name: /add new filter/i });
+    fireEvent.click(addNewFilterButton);
+
+    // Get filter group.
+    const topic = await screen.findAllByRole('combobox', { name: /topic/i });
+    userEvent.selectOptions(topic[0], 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'Contains');
@@ -587,13 +595,16 @@ describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
-    fetchMock.get(baseAlertsWithRegionOne, {
+
+    fetchMock.get(baseAlerts, {
       count: 10,
       alerts: generateXFakeReports(10),
     });
-    fetchMock.get(baseWithRegionOne,
+
+    fetchMock.get(base,
       { count: 1, rows: generateXFakeReports(1) });
-    fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
+
+    fetchMock.get(defaultOverviewUrl, overviewRegionOne);
   });
 
   afterEach(() => fetchMock.restore());
@@ -618,6 +629,10 @@ describe('handleApplyAlertFilters', () => {
 
     const filterMenuButton = allFilterButtons[0];
     fireEvent.click(filterMenuButton);
+
+    // Add new filter
+    const addFilter = await screen.findByRole('button', { name: /add new filter/i });
+    fireEvent.click(addFilter);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'reportId');
