@@ -2,11 +2,11 @@ import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
 function expandArray(column, searchTerms, operator) {
-  return searchTerms.map((term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(term)}`));
+  return searchTerms.map((term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(`%${term}%`)}`));
 }
 
 function reportInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term)})`));
+  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)}`));
 }
 
 export default function filterArray(column, searchTerms, exclude) {
@@ -14,14 +14,14 @@ export default function filterArray(column, searchTerms, exclude) {
     return {
       [Op.or]: [
         {
-          [Op.and]: expandArray(column, searchTerms, '!~*'),
+          [Op.and]: expandArray(column, searchTerms, 'NOT ILIKE'),
         },
         sequelize.literal(`${column} IS NULL`),
       ],
     };
   }
   return {
-    [Op.or]: expandArray(column, searchTerms, '~*'),
+    [Op.or]: expandArray(column, searchTerms, 'ILIKE'),
   };
 }
 
@@ -48,12 +48,12 @@ export default function filterArray(column, searchTerms, exclude) {
  * @param {*} baseQuery a partial sql statement
  * @param {*} searchTerms an array of search terms from the query string
  * @param {*} exclude whether this should exclude or include reports
- * @param {*} comparator default ~*
+ * @param {*} comparator default ILIKE
  * what is used to compare the end of the baseQuery to the searchTerm
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {
+export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 'ILKE') {
   if (exclude) {
     return {
       [Op.and]:
