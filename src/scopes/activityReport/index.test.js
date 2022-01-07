@@ -49,7 +49,7 @@ const submittedReport = {
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
-  targetPopulations: ['Children with Disabilities', 'Pregnant Women'],
+  targetPopulations: ['Children with Disabilities', 'Infants and Toddlers (ages birth to 3)'],
   reason: ['reason'],
   participants: ['participants'],
   topics: ['topics'],
@@ -937,7 +937,7 @@ describe('filtersToScopes', () => {
       reportOne = await ActivityReport.create(submittedReport);
       reportTwo = await ActivityReport.create({
         ...submittedReport,
-        targetPopulations: ['Pregnant Women'],
+        targetPopulations: ['Infants and Toddlers (ages birth to 3)'],
       });
       reportThree = await ActivityReport.create({
         ...submittedReport,
@@ -965,7 +965,7 @@ describe('filtersToScopes', () => {
     });
 
     it('filters by reports containing said population', async () => {
-      const filters = { 'targetPopulations.in': ['Pregnant Women'] };
+      const filters = { 'targetPopulations.in': ['Infants and Toddlers (ages birth to 3)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -977,7 +977,7 @@ describe('filtersToScopes', () => {
     });
 
     it('filters out the appropriate population', async () => {
-      const filters = { 'targetPopulations.nin': ['Pregnant Women'] };
+      const filters = { 'targetPopulations.nin': ['Infants and Toddlers (ages birth to 3)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -988,7 +988,7 @@ describe('filtersToScopes', () => {
     });
 
     it('only filters by possible population values', async () => {
-      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Pregnant Women'] };
+      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Infants and Toddlers (ages birth to 3)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
