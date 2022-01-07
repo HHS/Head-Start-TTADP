@@ -49,10 +49,12 @@ function Landing({ user }) {
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const hasMultipleRegions = regions && regions.length > 1;
 
   const [filters, setFilters] = useUrlFilters(
     defaultRegion !== 14
       && defaultRegion !== 0
+      && hasMultipleRegions
       ? [{
         id: uuidv4(),
         topic: 'region',
@@ -174,7 +176,15 @@ function Landing({ user }) {
     );
   }
 
-  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All regions' : `Region ${appliedRegionNumber.toString()}`;
+  const regionLabel = () => {
+    if (defaultRegion === 14) {
+      return 'All regions';
+    }
+    if (defaultRegion > 0) {
+      return `Region ${defaultRegion.toString()}`;
+    }
+    return '';
+  };
 
   // Apply filters.
   const onApply = (newFilters) => {
@@ -235,7 +245,7 @@ function Landing({ user }) {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">{`Activity reports - ${regionLabel}`}</h1>
+            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
           </Grid>
           <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
