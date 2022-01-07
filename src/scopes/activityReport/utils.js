@@ -53,7 +53,7 @@ export default function filterArray(column, searchTerms, exclude) {
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 'ILKE') {
+export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 'ILIKE') {
   if (exclude) {
     return {
       [Op.and]:
