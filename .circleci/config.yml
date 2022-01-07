@@ -531,7 +531,3 @@ workflows:
             - build_and_lint
       - notify_daily_scan_fail:
           context: ohs-eng-daily-scan-slack 
-          requires:
-            - dynamic_security_scan
-            - test_backend
-            - test_frontend
