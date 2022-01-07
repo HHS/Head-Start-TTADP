@@ -6,7 +6,7 @@ function expandArray(column, searchTerms, operator) {
 }
 
 function reportInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)}`));
+  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term)})`));
 }
 
 export default function filterArray(column, searchTerms, exclude) {
@@ -48,12 +48,12 @@ export default function filterArray(column, searchTerms, exclude) {
  * @param {*} baseQuery a partial sql statement
  * @param {*} searchTerms an array of search terms from the query string
  * @param {*} exclude whether this should exclude or include reports
- * @param {*} comparator default ILIKE
+ * @param {*} comparator default ~*
  * what is used to compare the end of the baseQuery to the searchTerm
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 'ILIKE') {
+export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {
   if (exclude) {
     return {
       [Op.and]:
