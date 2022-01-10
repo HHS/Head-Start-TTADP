@@ -771,7 +771,7 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.send).toHaveBeenCalled();
 
       const [[value]] = mockResponse.send.mock.calls;
-      expect(value).toEqual('');
+      expect(value).toEqual('\ufeff');
     });
   });
 });
