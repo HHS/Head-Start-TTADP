@@ -19,7 +19,7 @@ export default function FilterSelect({
 
   useSpellCheck(inputId);
 
-  const value = selectedValues.map((selection) => (
+  const value = [selectedValues].flat().map((selection) => (
     options.find((option) => option.label === selection)
   ));
 

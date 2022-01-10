@@ -226,13 +226,13 @@ describe('Retrieve Alerts', () => {
       activityReportId: isOnlyCollabReport.id,
       userId: mockUserFour.id,
     });
+
     const { count, rows } = await activityReportAlerts(mockUserFour.id, {});
     expect(count).toBe(5);
-    expect(rows.length).toBe(5);
     expect(rows[0].userId).toBe(mockUserFour.id);
-    expect(rows[1].userId).toBe(mockUserFour.id);
+    expect(rows[1].userId).toBe(mockUserFive.id);
     expect(rows[2].userId).toBe(mockUserFour.id);
-    expect(rows[3].userId).toBe(mockUserFive.id); // Approver Only.
+    expect(rows[3].userId).toBe(mockUserFour.id); // Approver Only.
     expect(rows[4].userId).toBe(mockUserFive.id); // Collaborator Only.
   });
 });
