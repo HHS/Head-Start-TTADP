@@ -89,7 +89,8 @@
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
   "resolutions": {
-    "ansi-regex": "^5.0.1"
+    "ansi-regex": "^5.0.1",
+    "colors": "1.4.0"
   },
   "eslintConfig": {
     "extends": [
