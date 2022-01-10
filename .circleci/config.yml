@@ -170,7 +170,7 @@ parameters:
     default: "TTAHUB-555-exclude-inactive-grants-with-end-date-greater-than-today"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-458-update-be-dependencies"
+    default: "js-458-update-fe-dependencies"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
