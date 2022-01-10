@@ -213,7 +213,9 @@ describe('activityReportApprovers services', () => {
       const afterRestore = await syncApprovers(report.id, [mockManager.id, secondMockManager.id]);
       // check restored
       expect(afterRestore.length).toBe(2);
-      expect(afterRestore[0].userId).toBe(secondMockManager.id);
+      const approverIds = afterRestore.map((a) => a.userId);
+      expect(approverIds).toContain(secondMockManager.id);
+      expect(approverIds).toContain(mockManager.id);
       expect(afterRestore[0].status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
     });
   });
