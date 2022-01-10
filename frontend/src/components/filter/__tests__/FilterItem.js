@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterItem from '../FilterItem';
+import FilterErrorContext from '../FilterErrorContext';
 import { FILTER_CONFIG } from '../constants';
 
 const selectedTopic = FILTER_CONFIG[0];
@@ -24,47 +25,19 @@ describe('Filter menu item', () => {
       setErrors([error]);
     });
 
-    const validate = jest.fn(() => {
-      const { topic, query, condition } = filter;
-      let message = '';
-      if (!topic) {
-        message = 'Please enter a value';
-        setError(message);
-        return false;
-      }
-      if (!condition) {
-        message = 'Please enter a condition';
-        setError(message);
-        return false;
-      }
-      if (!query || !query.length) {
-        message = 'Please enter a parameter';
-        setError(message);
-        return false;
-      }
-      if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
-        message = 'Please enter a parameter';
-        setError(message);
-        return false;
-      }
-      setError(message);
-      return true;
-    });
-
     render(
       <div>
-        <FilterItem
-          filter={filter}
-          onRemoveFilter={onRemoveFilter}
-          onUpdateFilter={onUpdateFilter}
-          errors={['']}
-          setErrors={setErrors}
-          index={0}
-          validate={validate}
-          key={filter.id}
-          topicOptions={topicOptions}
-          selectedTopic={selectedTopic}
-        />
+        <FilterErrorContext.Provider value={{ setError, error: '' }}>
+          <FilterItem
+            filter={filter}
+            onRemoveFilter={onRemoveFilter}
+            onUpdateFilter={onUpdateFilter}
+            index={0}
+            key={filter.id}
+            topicOptions={topicOptions}
+            selectedTopic={selectedTopic}
+          />
+        </FilterErrorContext.Provider>
         <button type="button">BIG DUMB BUTTON</button>
       </div>,
     );
@@ -130,6 +103,8 @@ describe('Filter menu item', () => {
     userEvent.tab();
     userEvent.tab();
 
+    screen.logTestingPlaygroundURL();
+
     expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
   });
 
@@ -149,7 +124,7 @@ describe('Filter menu item', () => {
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
-    expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a filter']);
   });
 
   it('validates condition', async () => {
@@ -169,25 +144,5 @@ describe('Filter menu item', () => {
     userEvent.tab();
     userEvent.tab();
     expect(setErrors).toHaveBeenCalledWith(['Please enter a condition']);
-  });
-
-  it('validates query', async () => {
-    const filter = {
-      id: 'blah-de-dah',
-      display: '',
-      topic: 'startDate',
-      condition: 'Is within',
-      query: '',
-    };
-    const onRemove = jest.fn();
-    const onUpdate = jest.fn();
-    const setErrors = jest.fn();
-    renderFilterItem(filter, onRemove, onUpdate, setErrors);
-    userEvent.tab();
-    userEvent.tab();
-    userEvent.tab();
-    userEvent.tab();
-    userEvent.tab();
-    expect(setErrors).toHaveBeenCalledWith(['Please enter a parameter']);
   });
 });
