@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -658,5 +658,76 @@ describe('handleApplyAlertFilters', () => {
     expect(mockAnnounce).toHaveBeenCalled();
     // wait for everything to finish loading
     await waitFor(() => expect(screen.queryByText(/Loading data/i)).toBeNull());
+  });
+});
+
+describe('handles region filter', () => {
+  beforeEach(() => {
+    delete window.location;
+    window.location = new URL('https://www.test.gov');
+  });
+
+  afterEach(() => fetchMock.restore());
+
+  it('adds region filter', async () => {
+    fetchMock.get(baseAlertsWithRegionOne, {
+      count: 10,
+      alerts: generateXFakeReports(10),
+    });
+
+    fetchMock.get(baseWithRegionOne,
+      { count: 1, rows: generateXFakeReports(1) });
+
+    fetchMock.get(defaultOverviewUrlWithRegionOne, overviewRegionOne);
+
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+        {
+          scopeId: 3,
+          regionId: 2,
+        },
+      ],
+    };
+    renderLanding(user);
+
+    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
+    fireEvent.click(filterMenuButton);
+
+    const regionFilter = await screen.findByRole('combobox', { name: /select region to filter by/i });
+    expect(await within(regionFilter).findByText(/region 1/i)).toBeVisible();
+  });
+  it('hides region filter', async () => {
+    fetchMock.get(baseAlerts, {
+      count: 10,
+      alerts: generateXFakeReports(10),
+    });
+
+    fetchMock.get(base,
+      { count: 1, rows: generateXFakeReports(1) });
+
+    fetchMock.get(defaultOverviewUrl, overviewRegionOne);
+
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+    renderLanding(user);
+
+    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
+    fireEvent.click(filterMenuButton);
+    const regionFilter = screen.queryByRole('combobox', { name: /select region to filter by/i });
+    expect(regionFilter).not.toBeInTheDocument();
   });
 });
