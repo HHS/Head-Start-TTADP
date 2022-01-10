@@ -88,6 +88,9 @@
     "type": "git",
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
+  "resolutions": {
+    "ansi-regex": "^5.0.1"
+  },
   "eslintConfig": {
     "extends": [
       "airbnb-base",
