@@ -68,7 +68,7 @@ export default function FilterDateRange({
   }
 
   switch (condition) {
-    case 'In':
+    case 'Is':
       return (
         <>
           <label htmlFor="filter-date-range" className="sr-only">
