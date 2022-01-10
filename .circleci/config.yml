@@ -185,13 +185,6 @@ parameters:
     default: "867346799"
     type: string
 jobs:
-  notify_daily_scan_fail:
-    executor: docker-executor
-    description: "Notify acf-eng on daily scan fail"    
-    steps:
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
   build_and_lint:
     executor: docker-executor
     steps:
@@ -529,9 +522,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
-      - notify_daily_scan_fail:
-          context: ohs-eng-daily-scan-slack 
-          requires:
-            - dynamic_security_scan
-            - test_backend
-            - test_frontend
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+          context: ohs-eng-daily-scan-slack
