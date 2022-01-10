@@ -8,7 +8,6 @@ import {
 import moment from 'moment';
 import DateRangePicker from './DateRangePicker';
 import { formatDateRange } from '../../utils';
-import './FilterDateRange.css';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import FilterErrorContext from './FilterErrorContext';
 

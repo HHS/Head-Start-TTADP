@@ -2,7 +2,6 @@
     z-index: 2;
 }
 
-.ttahub-custom-date-range-picker input:invalid,
 .ttahub-custom-date-range-picker--error-start-date #start-date,
 .ttahub-custom-date-range-picker--error-end-date  #end-date{
     border: 2px solid #b50909;
