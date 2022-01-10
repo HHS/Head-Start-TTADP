@@ -138,6 +138,10 @@ export default function FilterMenu({
         conditions: [],
       };
       newItems.push(newItem);
+
+      const newErrors = [...errors, ''];
+      setErrors(newErrors);
+
       setItems(newItems);
     }
   };
