@@ -160,7 +160,7 @@ describe('filtersToQueryString', () => {
     ];
 
     const queryString = filtersToQueryString(filters);
-    expect(queryString).toEqual('reportId.in[]=test');
+    expect(queryString).toEqual('reportId.ctn[]=test');
   });
 
   it('excludes within filters without a start and end date', () => {
@@ -170,7 +170,7 @@ describe('filtersToQueryString', () => {
     ];
 
     const queryString = filtersToQueryString(filters);
-    expect(queryString).toEqual('reportId.in[]=test');
+    expect(queryString).toEqual('reportId.ctn[]=test');
   });
 
   it('properly builds the query with no filters', () => {
@@ -185,6 +185,6 @@ describe('filtersToQueryString', () => {
     ];
 
     const queryString = filtersToQueryString(filters);
-    expect(queryString).toEqual('reportId.in[]=first&reportId.nin[]=second');
+    expect(queryString).toEqual('reportId.ctn[]=first&reportId.nctn[]=second');
   });
 });
