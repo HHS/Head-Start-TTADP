@@ -39,7 +39,7 @@ const EMPTY_TEXT_INPUT = {
 
 const handleArrayQuery = (q) => {
   if (q.length) {
-    return q.join(', ');
+    return [q].flat().join(', ');
   }
   return '';
 };
@@ -136,9 +136,9 @@ export const FILTER_CONFIG = [
     ),
   },
   {
-    id: 'grantee',
+    id: 'recipient',
     display: 'Recipient name',
-    conditions: FILTER_CONDITIONS,
+    conditions: SELECT_CONDITIONS,
     defaultValues: EMPTY_TEXT_INPUT,
     displayQuery: handleStringQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
@@ -209,7 +209,7 @@ export const FILTER_CONFIG = [
     ),
   },
   {
-    id: 'targetPopulation',
+    id: 'targetPopulations',
     display: 'Target populations',
     conditions: FILTER_CONDITIONS,
     defaultValues: EMPTY_MULTI_SELECT,
