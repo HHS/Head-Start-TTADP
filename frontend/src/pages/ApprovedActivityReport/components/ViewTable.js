@@ -28,9 +28,10 @@ function renderEditor(data) {
 
 function renderData(data) {
   if (Array.isArray(data)) {
+    const cleanData = data.filter((d) => d);
     return (
       <ul>
-        {data.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(line)}</li>)}
+        {cleanData.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(line)}</li>)}
       </ul>
     );
   }
@@ -46,7 +47,7 @@ export default function ViewTable({
       <table className={`ttahub-activity-report-view-table usa-table usa-table--striped ${allowBreakWithin ? 'allow-break-within' : 'no-break-within'}`}>
         <caption className="padding-y-1 padding-left-2">{caption}</caption>
         <tbody>
-          { headings.map((heading, index) => (
+          {headings.map((heading, index) => (
             <tr key={uuidv4()}>
               <th scope="row">{heading}</th>
               <td>
