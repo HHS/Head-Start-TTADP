@@ -452,7 +452,7 @@ describe('filtersToScopes', () => {
       });
 
       it('includes recipients with a matching id', async () => {
-        const filters = { 'recipientId.in': [recipientIncluded.id] };
+        const filters = { 'recipientId.ctn': [recipientIncluded.id] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1392,7 +1392,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes reports with grants with the given state code', async () => {
-      const filters = { 'stateCode.in': ['KS'] };
+      const filters = { 'stateCode.ctn': ['KS'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
