@@ -5,7 +5,7 @@ import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
   act,
-  render, screen, waitFor,
+  render, screen,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -73,7 +73,7 @@ describe('Regional Dashboard page', () => {
         regionId: 1,
         scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       }, {
-        regionId: 1,
+        regionId: 2,
         scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       }],
     };
@@ -100,9 +100,6 @@ describe('Regional Dashboard page', () => {
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
 
-    const addNew = await screen.findByRole('button', { name: /add new filter/i });
-    act(() => userEvent.click(addNew));
-
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     act(() => userEvent.selectOptions(lastTopic, 'region'));
 
@@ -126,6 +123,12 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`, activityReportsResponse);
 
+    fetchMock.get(`${overViewUrl}?${lastThirtyDaysParams}`, overViewResponse);
+    fetchMock.get(`${reasonListUrl}?${lastThirtyDaysParams}`, reasonListResponse);
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${lastThirtyDaysParams}`, totalHoursResponse);
+    fetchMock.get(`${topicFrequencyGraphUrl}?${lastThirtyDaysParams}`, topicFrequencyResponse);
+    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${lastThirtyDaysParams}`, activityReportsResponse);
+
     const user = {
       homeRegionId: 1,
       permissions: [{
@@ -133,11 +136,8 @@ describe('Regional Dashboard page', () => {
         scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       }],
     };
-    // fetchMock.get(userUrl, user);
     renderDashboard(user);
 
-    await waitFor(() => {
-      expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/reasons in activity reports/i)).toBeInTheDocument();
   });
 });
