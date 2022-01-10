@@ -61,7 +61,7 @@ describe('Landing Page error', () => {
 
     renderLanding(user);
 
-    const alert = await screen.findByRole('alert');
+    const [alert] = await screen.findAllByRole('alert');
     expect(alert).toBeVisible();
     expect(alert.textContent).toBe('Unable to fetch reports');
   });

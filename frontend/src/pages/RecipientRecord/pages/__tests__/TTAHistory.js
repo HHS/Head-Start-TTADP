@@ -12,7 +12,7 @@ import TTAHistory from '../TTAHistory';
 import { formatDateRange } from '../../../../utils';
 
 const memoryHistory = createMemoryHistory();
-const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
 describe('Recipient Record - TTA History', () => {
   const overviewResponse = {
@@ -33,13 +33,14 @@ describe('Recipient Record - TTA History', () => {
   };
 
   beforeEach(async () => {
-    const overviewUrl = `/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
-    const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
+    const overviewUrl = `/api/widgets/overview?startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
+    const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
+
     fetchMock.get(overviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
 
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
+    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
   });
 
   afterEach(() => {
@@ -70,7 +71,6 @@ describe('Recipient Record - TTA History', () => {
       userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
       userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'role');
       userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
-      userEvent.click(await screen.findByRole('button', { name: /apply filters to recipient record data/i }));
       const specialistSelect = await screen.findByLabelText('Select specialist role to filter by');
       await selectEvent.select(specialistSelect, ['Family Engagement Specialist (FES)', 'Grantee Specialist (GS)']);
       const apply = await screen.findByRole('button', { name: /apply filters to recipient record data/i });

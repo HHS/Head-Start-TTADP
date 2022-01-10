@@ -103,6 +103,8 @@ describe('Filter menu item', () => {
     userEvent.tab();
     userEvent.tab();
 
+    screen.logTestingPlaygroundURL();
+
     expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
   });
 

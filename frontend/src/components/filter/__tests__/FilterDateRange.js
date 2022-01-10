@@ -6,20 +6,23 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterDateRange from '../FilterDateRange';
+import FilterErrorContext from '../FilterErrorContext';
 
 describe('FilterDateRange', () => {
   const renderFilterDateRange = (query, onApplyDateRange = jest.fn()) => {
     const condition = 'Is after';
-
     const updateSingleDate = jest.fn();
+    const setError = jest.fn();
 
     render(
-      <FilterDateRange
-        condition={condition}
-        query={query}
-        updateSingleDate={updateSingleDate}
-        onApplyDateRange={onApplyDateRange}
-      />,
+      <FilterErrorContext.Provider value={{ setError }}>
+        <FilterDateRange
+          condition={condition}
+          query={query}
+          updateSingleDate={updateSingleDate}
+          onApplyDateRange={onApplyDateRange}
+        />
+      </FilterErrorContext.Provider>,
     );
   };
 
