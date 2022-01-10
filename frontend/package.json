@@ -63,6 +63,12 @@
     "lint:fix": "eslint --fix src",
     "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
+  "resolutions": {
+    "glob-parent": "^5.1.2",
+    "nth-check": "^2.0.1",
+    "browserslist": "^4.16.5",
+    "ansi-regex": "^5.0.1"
+  },
   "eslintConfig": {
     "root": true,
     "plugins": [
