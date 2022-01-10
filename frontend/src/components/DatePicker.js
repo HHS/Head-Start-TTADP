@@ -28,6 +28,13 @@ export default function DatePicker(
   const tomorrow = useMemo(() => moment().add(1, 'days').format(DATE_PICKER_DATE_FORMAT), []);
 
   const onDatePickerChange = (date) => {
+    // we want to allow "" as a valid thing to enter
+    if (!date) {
+      onChange(date);
+      return;
+    }
+
+    // otherwise we go through the validation steps
     const dateAsMoment = moment(date, DATE_DISPLAY_FORMAT);
     const minDateAsMoment = moment(minDate, DATE_DISPLAY_FORMAT);
     const maxDateAsMoment = maxDate ? moment(maxDate, DATE_DISPLAY_FORMAT) : moment().add(1, 'days');

@@ -119,7 +119,7 @@ export default function DateRangePicker({ onApply, query }) {
       const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
       const isBeforeMax = currentEndDate.isBefore(newStartDate);
 
-      if (isBeforeMax) {
+      if (isBeforeMax && endDate) {
         const currentStartDate = moment(startDate, DATE_DISPLAY_FORMAT);
         const diff = currentEndDate.diff(currentStartDate, 'days');
         let newEndDate = moment(newStartDate).add(diff, 'days');
