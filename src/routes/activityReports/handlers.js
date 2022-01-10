@@ -197,7 +197,7 @@ async function sendActivityReportCSV(reports, res) {
   );
 
   res.attachment('activity-reports.csv');
-  res.send(`${warning}${csvData}`);
+  res.send(`\ufeff${warning}${csvData}`);
 }
 
 export async function updateLegacyFields(req, res) {

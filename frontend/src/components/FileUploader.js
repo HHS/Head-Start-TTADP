@@ -98,7 +98,7 @@ function Dropzone(props) {
   const {
     fileRejections, getRootProps, getInputProps,
   } = useDropzone({
-    onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip',
+    onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv',
   });
 
   return (
@@ -176,7 +176,7 @@ const DeleteFileModal = ({
         <p>
           Are you sure you want to delete
           {' '}
-          { files[index] ? files[index].originalFileName : null }
+          {files[index] ? files[index].originalFileName : null}
           {' '}
           ?
         </p>
