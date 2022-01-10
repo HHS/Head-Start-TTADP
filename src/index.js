@@ -10,4 +10,4 @@ const server = app.listen(port, () => {
   auditLogger.info(`Listening on port ${port}`);
 });
 
-module.exports = server;
+export default server;

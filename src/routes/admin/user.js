@@ -60,10 +60,13 @@ export async function createUser(req, res) {
   let user;
   try {
     await sequelize.transaction(async (transaction) => {
-      user = await User.create(newUser,
+      user = await User.create(
+        newUser,
         {
           include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-        }, transaction);
+        },
+        transaction,
+      );
     });
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
@@ -84,11 +87,14 @@ export async function updateUser(req, res) {
 
   try {
     await sequelize.transaction(async (transaction) => {
-      await User.update(requestUser,
+      await User.update(
+        requestUser,
         {
           include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
           where: { id: userId },
-        }, { transaction });
+        },
+        { transaction },
+      );
       await Permission.destroy({ where: { userId } }, { transaction });
       await Permission.bulkCreate(requestUser.permissions, { transaction });
     });
