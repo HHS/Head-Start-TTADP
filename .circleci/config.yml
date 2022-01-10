@@ -239,6 +239,20 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
+      - when:
+          condition:
+            or:
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+                context: ohs-eng-daily-scan-slack
   test_frontend:
     executor: docker-executor
     steps:
@@ -257,6 +271,20 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+      - when:
+          condition:
+            or:
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1
+                context: ohs-eng-daily-scan-slack
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -522,7 +550,3 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
-          context: ohs-eng-daily-scan-slack
