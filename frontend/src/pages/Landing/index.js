@@ -216,6 +216,26 @@ function Landing({ user }) {
       range: '',
     },
   ];
+
+  const getAllowedFilters = () => {
+    const allowedFilters = [
+      'startDate',
+      'grantNumber',
+      'programSpecialist',
+      'programType',
+      'reason',
+      'grantee',
+      'reportId',
+      'role',
+      'targetPopulation',
+      'topic',
+    ];
+    if (hasMultipleRegions) {
+      allowedFilters.push('region');
+    }
+    return allowedFilters;
+  };
+
   return (
     <>
       <Helmet>
@@ -261,6 +281,7 @@ function Landing({ user }) {
               onApplyFilters={onApply}
               dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
+              allowedFilters={getAllowedFilters()}
             />
           </Grid>
         </Grid>
