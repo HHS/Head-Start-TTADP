@@ -102,6 +102,11 @@ describe('Filter menu item', () => {
     // so we simulate blur with this test
     userEvent.tab();
     userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+
+    expect(await screen.findByRole('button', { name: /big dumb button/i })).toHaveFocus();
 
     screen.logTestingPlaygroundURL();
 
