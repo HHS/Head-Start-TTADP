@@ -45,7 +45,7 @@ export default function DatePicker(
 
   return (
     <span ref={dpRef}>
-      {error}
+      {error && <span className="usa-error-message">{error}</span> }
       <RawDatePicker
         {...props}
         key={datePickerKey}
