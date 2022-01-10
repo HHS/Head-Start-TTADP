@@ -56,13 +56,6 @@ export default function FilterMenu({
     setItems(filters);
   }, [filters]);
 
-  // if an item was deleted, we need to update the errors
-  useEffect(() => {
-    if (items.length < errors.length) {
-      setErrors(items.map(() => ''));
-    }
-  }, [errors.length, items]);
-
   // focus on the first topic if we add more
   useEffect(() => {
     if (items.length > itemLength) {
@@ -116,8 +109,11 @@ export default function FilterMenu({
     const index = newItems.findIndex((item) => item.id === id);
 
     if (index !== -1) {
+      const newErrors = [...errors];
+      newErrors.splice(index, 1);
       newItems.splice(index, 1);
       setItems(newItems);
+      setErrors(newErrors);
     }
   };
 
@@ -169,6 +165,10 @@ export default function FilterMenu({
         conditions: [],
       };
       newItems.push(newItem);
+
+      const newErrors = [...errors, ''];
+      setErrors(newErrors);
+
       setItems(newItems);
     }
   };
@@ -180,6 +180,15 @@ export default function FilterMenu({
   const canBlur = () => false;
 
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
+
+  const onOpen = () => {
+    // The onOpen is passed into the DropdownMenu component
+    // this will add an empty item into the list if there
+    // are no filters, to cut down on user clicking
+    if (!items.length) {
+      onAddFilter();
+    }
+  };
 
   return (
     <DropdownMenu
@@ -194,6 +203,7 @@ export default function FilterMenu({
       menuName="filter menu"
       canBlur={canBlur}
       AlternateActionButton={ClearAllButton}
+      onOpen={onOpen}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
@@ -240,7 +250,6 @@ export default function FilterMenu({
           <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
-
     </DropdownMenu>
   );
 }
