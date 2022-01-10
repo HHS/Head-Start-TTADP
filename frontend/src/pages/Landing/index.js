@@ -224,10 +224,10 @@ function Landing({ user }) {
       'programSpecialist',
       'programType',
       'reason',
-      'grantee',
+      'recipient',
       'reportId',
       'role',
-      'targetPopulation',
+      'targetPopulations',
       'topic',
     ];
     if (hasMultipleRegions) {
