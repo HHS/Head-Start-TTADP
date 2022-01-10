@@ -6,7 +6,9 @@ module.exports = {
       }, {}, { transaction });
     },
   ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    // whoops, don't think this can be rolled back
-  ),
+  down: async () => {
+    /**
+     * Non-reversible
+     */
+  },
 };

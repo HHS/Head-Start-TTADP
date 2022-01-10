@@ -65,28 +65,34 @@ export default class ActivityReport {
   }
 
   canApproveInRegion() {
-    const permissions = _.find(this.user.permissions,
+    const permissions = _.find(
+      this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.APPROVE_REPORTS
-        && permission.regionId === this.activityReport.regionId));
+        && permission.regionId === this.activityReport.regionId),
+    );
     return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
-    const permissions = _.find(this.user.permissions,
+    const permissions = _.find(
+      this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.READ_WRITE_REPORTS
-        && permission.regionId === this.activityReport.regionId));
+        && permission.regionId === this.activityReport.regionId),
+    );
     return !_.isUndefined(permissions);
   }
 
   canReadInRegion() {
-    const permissions = _.find(this.user.permissions,
+    const permissions = _.find(
+      this.user.permissions,
       (permission) => (
         (permission.scopeId === SCOPES.READ_REPORTS
           || permission.scopeId === SCOPES.APPROVE_REPORTS
           || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
-        && permission.regionId === this.activityReport.regionId));
+        && permission.regionId === this.activityReport.regionId),
+    );
     return !_.isUndefined(permissions);
   }
 
