@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@axe-core/cli@^4.3.1":
+"@axe-core/cli@4.3.1":
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/@axe-core/cli/-/cli-4.3.1.tgz#cf90b09d8d2abb1eb8aa1c486beab702aeb23d88"
   integrity sha512-pzBTUvOav1HC7+y6KipiD79WSnPy3+wx1HdbJkIe4PYZIm7WkaOAyrT117db0lbywoVWzStFWPpW97kHmnarwg==
