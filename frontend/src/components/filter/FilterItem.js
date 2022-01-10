@@ -121,7 +121,7 @@ export default function FilterItem({
       break;
   }
 
-  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass} ${!fieldsetErrorClass ? 'margin-0' : ''}`;
   const errorId = `error-message-${id}`;
   return (
     <div className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
