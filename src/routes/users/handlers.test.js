@@ -1,9 +1,6 @@
-import { getPossibleCollaborators, getPossibleStateCodes } from './handlers';
+import { getPossibleCollaborators } from './handlers';
 import { userById, usersWithPermissions } from '../../services/users';
 import User from '../../policies/user';
-import {
-  Grant,
-} from '../../models';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -27,26 +24,6 @@ const mockRequest = {
 describe('User handlers', () => {
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('getPossibleStateCodes', () => {
-    it('returns state codes', async () => {
-      const response = ['NM', 'NV', 'AZ', 'OK', 'MN'];
-      Grant.findAll = jest.fn();
-      Grant.findAll.mockResolvedValue([{ stateCode: 'NM' }, { stateCode: 'NV' }, { stateCode: 'AZ' }, { stateCode: 'OK' }, { stateCode: 'MN' }]);
-      userById.mockResolvedValue({
-        permissions: [
-          {
-            regionId: 1,
-          },
-          {
-            regionId: 2,
-          },
-        ],
-      });
-      await getPossibleStateCodes(mockRequest, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(response);
-    });
   });
 
   describe('getPossibleCollaborators', () => {
