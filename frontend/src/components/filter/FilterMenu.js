@@ -213,11 +213,13 @@ export default function FilterMenu({
               };
 
               return (
-                <FilterErrorContext.Provider value={{ setError, error: errors[index] }}>
+                <FilterErrorContext.Provider
+                  key={filter.id}
+                  value={{ setError, error: errors[index] }}
+                >
                   <FilterItem
                     onRemoveFilter={onRemoveFilter}
                     onUpdateFilter={onUpdateFilter}
-                    key={filter.id}
                     filter={filter}
                     errors={errors}
                     setErrors={setErrors}
