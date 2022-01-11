@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { useForm } from 'react-hook-form/dist/index.ie11';
 import userEvent from '@testing-library/user-event';
 import { Grid } from '@trussworks/react-uswds';
@@ -64,15 +64,28 @@ describe('Controlled Date Picker', () => {
 
     const sd = await screen.findByRole('textbox', { name: /start date/i });
 
-    userEvent.type(sd, '01/01/1999');
+    act(() => userEvent.type(sd, '01/01/1999'));
     await screen.findByText('Please enter a date after 09/01/2020');
-    userEvent.clear(sd);
+
+    act(() => userEvent.clear(sd));
 
     const ed = await screen.findByRole('textbox', { name: /end date/i });
 
-    userEvent.type(sd, '01/01/2021');
-    userEvent.type(ed, '12/31/2020');
+    act(() => {
+      userEvent.type(sd, '01/01/2021');
+      userEvent.type(ed, '12/31/2020');
+    });
 
     expect(await screen.findByText('Please enter a date after 01/01/2021')).toBeVisible();
+
+    act(() => {
+      userEvent.clear(ed);
+      userEvent.type(ed, '01/02/2021');
+
+      userEvent.clear(sd);
+      userEvent.type(sd, '01/03/2021');
+    });
+
+    expect(setEndDate).toHaveBeenCalled();
   });
 });
