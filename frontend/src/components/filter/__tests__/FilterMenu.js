@@ -6,7 +6,6 @@ import {
   act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
 import FilterMenu from '../FilterMenu';
 
 describe('Filter Menu', () => {
@@ -165,7 +164,6 @@ describe('Filter Menu', () => {
   });
 
   it('the clear all button works', async () => {
-    fetchMock.get('/api/users/stateCodes', ['MA', 'RI']);
     const filters = [
       {
         id: 'filter-2',
