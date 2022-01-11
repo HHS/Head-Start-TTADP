@@ -19,7 +19,9 @@ const roles = [
   'System Specialist',
 ];
 
-const featureFlags = [];
+const featureFlags = [
+  'recipient_goals_objectives',
+];
 
 const generateFullName = (name, role) => {
   const combinedRoles = Array.isArray(role) ? role.reduce((result, val) => {
