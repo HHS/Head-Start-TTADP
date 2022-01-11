@@ -85,4 +85,4 @@ if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'productio
   job.start();
 }
 
-module.exports = app;
+export default app;

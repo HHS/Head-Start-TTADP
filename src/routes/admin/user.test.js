@@ -68,10 +68,12 @@ describe('User route handler', () => {
   });
 
   it('Returns a user by id', async () => {
-    await User.create(mockUser,
+    await User.create(
+      mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],
-      });
+      },
+    );
     const user = await User.findOne({ where: { id: mockUser.id } });
 
     expect(user).not.toBeNull();
@@ -91,10 +93,12 @@ describe('User route handler', () => {
     mockUser.permissions[0].userId = mockUser.id;
     mockUser.permissions[1].userId = mockUser.id;
 
-    await User.create(mockUser,
+    await User.create(
+      mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],
-      });
+      },
+    );
 
     // Verify that once the user exists, it will be retrieved
     await getUsers(mockRequest, mockResponse);
@@ -162,10 +166,12 @@ describe('User route handler', () => {
     mockRequest.params.userId = 53;
 
     await User.destroy({ where: { id: 53 } });
-    const user = await User.create(testUpdateUser,
+    const user = await User.create(
+      testUpdateUser,
       {
         include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-      });
+      },
+    );
 
     expect(user).toBeInstanceOf(User);
     expect(user.email).toBe(testUpdateUser.email);
@@ -207,10 +213,12 @@ describe('User route handler', () => {
     mockUser.permissions[1].userId = mockUser.id;
     mockRequest.params.userId = mockUser.id;
 
-    await User.create(mockUser,
+    await User.create(
+      mockUser,
       {
         include: [{ model: Permission, as: 'permissions' }],
-      });
+      },
+    );
     // Check that the above `user` exists
     const existingUser = await User.findOne({
       where: {
