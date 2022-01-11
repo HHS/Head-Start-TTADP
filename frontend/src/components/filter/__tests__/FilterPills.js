@@ -51,7 +51,7 @@ describe('Filter Pills', () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Contains',
+        condition: 'Is',
         query: [],
         displayQuery: (q) => q.join(', '),
         display: 'Specialist role',
@@ -82,7 +82,7 @@ describe('Filter Pills', () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Contains',
+        condition: 'Is',
         query: ['Specialist 1', 'Specialist 2', 'Specialist 3', 'Specialist 4', 'Specialist 5', 'Specialist 6', 'Specialist 7'],
         displayQuery: (q) => q.join(', '),
         display: 'Specialist role',
