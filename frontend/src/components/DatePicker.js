@@ -8,7 +8,7 @@ import moment from 'moment';
 
 import { DATE_DISPLAY_FORMAT } from '../Constants';
 
-const DATE_PICKER_DATE_FORMAT = 'YYYY-MM-DD';
+export const DATE_PICKER_DATE_FORMAT = 'YYYY-MM-DD';
 
 // this is just a pass through component to simplify the date formats not
 // matching and the way the USDWS is weird about the change/values not all matching
