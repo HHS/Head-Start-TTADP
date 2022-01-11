@@ -765,8 +765,11 @@ describe('Activity Reports DB service', () => {
       const ids = rows.map((row) => row.id);
       expect(ids).toContain(legacyReport.id);
 
-      const secondResult = await getDownloadableActivityReportsByIds([14],
-        { report: [legacyReport.id] }, true);
+      const secondResult = await getDownloadableActivityReportsByIds(
+        [14],
+        { report: [legacyReport.id] },
+        true,
+      );
 
       expect(secondResult.rows.length).toEqual(1);
       expect(secondResult.rows[0].id).toEqual(legacyReport.id);
@@ -842,8 +845,10 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReportsByIds([1],
-        { report: [report.id, legacyReport.id] });
+      const result = await getDownloadableActivityReportsByIds(
+        [1],
+        { report: [report.id, legacyReport.id] },
+      );
 
       const { rows } = result;
 
@@ -858,8 +863,10 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReportsByIds([1],
-        { report: [report.id, 'invalidIdentifier'] });
+      const result = await getDownloadableActivityReportsByIds(
+        [1],
+        { report: [report.id, 'invalidIdentifier'] },
+      );
       const { rows } = result;
 
       expect(rows.length).toEqual(1);
