@@ -24,13 +24,7 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     query,
   } = filter;
 
-  const determineFilterName = () => {
-    const topicMatch = FILTER_CONFIG.find((f) => f.id === topic);
-    if (topicMatch) {
-      return topicMatch.display;
-    }
-    return topic;
-  };
+  const filterName = FILTER_CONFIG.find((f) => f.id === topic).display;
 
   let showToolTip = false;
 
@@ -53,7 +47,6 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     return query;
   };
 
-  const filterName = determineFilterName();
   const queryValue = determineQuery();
   const ariaButtonText = `This button removes the filter: ${filterName} ${condition} ${queryValue}`;
   const queryShortValue = determineQuery(false);
