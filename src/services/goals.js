@@ -164,7 +164,8 @@ export async function saveGoalsForReport(goals, report, transaction) {
       }
 
       const savedObjective = await Objective.upsert(
-        updatedObjective, { returning: true, transaction },
+        updatedObjective,
+        { returning: true, transaction },
       );
 
       return ActivityReportObjective.create({
