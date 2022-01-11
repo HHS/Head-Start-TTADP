@@ -145,7 +145,7 @@ describe('Filter Menu', () => {
         query: [
           'Family Engagement Specialist',
         ],
-        condition: 'Contains',
+        condition: 'Is',
       },
     ];
 
@@ -173,7 +173,7 @@ describe('Filter Menu', () => {
         query: [
           'Family Engagement Specialist',
         ],
-        condition: 'Contains',
+        condition: 'Is',
       },
       {
         id: 'filter-3',
@@ -197,7 +197,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'programType',
         query: ['EHS'],
-        condition: 'Contains',
+        condition: 'Is',
       },
       {
         id: 'filter-6',
@@ -205,7 +205,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'reason',
         query: ['COVID-19 response'],
-        condition: 'Contains',
+        condition: 'Is',
       },
       {
         id: 'filter-7',
@@ -221,7 +221,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'targetPopulations',
         query: [],
-        condition: 'Contains',
+        condition: 'Is',
       },
       {
         id: 'filter-9',
@@ -229,7 +229,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'topic',
         query: [],
-        condition: 'Contains',
+        condition: 'Is',
       },
     ];
 
