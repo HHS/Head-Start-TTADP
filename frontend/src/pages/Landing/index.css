@@ -250,16 +250,6 @@ a.desc {
   background: #c5c5c5;
 }
 
-.smart-hub--caught-up {
-  padding: 100px 320px;
-  white-space: nowrap;
-  text-align: center;
-}
-
-#beginNew {
-  padding-bottom: 15px;
-}
-
 .smart-hub--reports-button {
   display: block;
   text-decoration: none;
