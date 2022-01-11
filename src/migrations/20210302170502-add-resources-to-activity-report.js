@@ -2,17 +2,23 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     queryInterface.sequelize.transaction(async (transaction) => {
       await Promise.all([
-        queryInterface.addColumn('ActivityReports',
+        queryInterface.addColumn(
+          'ActivityReports',
           'nonECLKCResourcesUsed',
           {
             type: Sequelize.ARRAY(Sequelize.TEXT),
-          }, { transaction }),
+          },
+          { transaction },
+        ),
         queryInterface.removeColumn('ActivityReports', 'resourcesUsed', { transaction }),
-        queryInterface.addColumn('ActivityReports',
+        queryInterface.addColumn(
+          'ActivityReports',
           'ECLKCResourcesUsed',
           {
             type: Sequelize.ARRAY(Sequelize.TEXT),
-          }, { transaction }),
+          },
+          { transaction },
+        ),
       ]);
     });
   },

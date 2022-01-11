@@ -1,10 +1,12 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('ActivityReports',
+    await queryInterface.addColumn(
+      'ActivityReports',
       'virtualDeliveryType',
       {
         type: Sequelize.STRING,
-      });
+      },
+    );
   },
 
   down: async (queryInterface) => {
