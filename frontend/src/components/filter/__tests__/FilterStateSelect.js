@@ -5,24 +5,26 @@ import {
   screen,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
-import fetchMock from 'fetch-mock';
 import FilterStateSelect from '../FilterStateSelect';
+import UserContext from '../../../UserContext';
 
 const { findByText } = screen;
 
 describe('FilterStateSelect', () => {
-  const renderStateSelect = (onApply) => (
+  const renderStateSelect = (onApply) => {
+    const user = {
+      permissions: [],
+    };
     render(
-      <FilterStateSelect
-        onApply={onApply}
-        inputId="curly"
-        query={[]}
-      />,
-    ));
-
-  beforeEach(async () => {
-    fetchMock.get('/api/users/stateCodes', ['MA', 'RI']);
-  });
+      <UserContext.Provider {...{ user }}>
+        <FilterStateSelect
+          onApply={onApply}
+          inputId="curly"
+          query={[]}
+        />
+      </UserContext.Provider>,
+    );
+  };
 
   it('calls the onapply handler', async () => {
     const onApply = jest.fn();
