@@ -50,7 +50,7 @@ function Overview({
 }) {
   const title = !tableCaption ? 'TTA overview' : tableCaption;
   return (
-    <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview loading">
+    <Container loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
         <h2>
           {title}

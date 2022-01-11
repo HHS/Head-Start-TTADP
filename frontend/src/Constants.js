@@ -12,8 +12,8 @@ export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 
 export const QUERY_CONDITIONS = {
-  [CONTAINS]: 'in[]',
-  [NOT_CONTAINS]: 'nin[]',
+  [CONTAINS]: 'ctn[]',
+  [NOT_CONTAINS]: 'nctn[]',
   [BEFORE]: 'bef',
   [AFTER]: 'aft',
   [WITHIN]: 'win',

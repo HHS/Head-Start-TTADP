@@ -21,15 +21,15 @@ import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDat
 
 export const topicToQuery = {
   reportId: {
-    in: (query) => withReportIds(query),
-    nin: (query) => withoutReportIds(query),
+    ctn: (query) => withReportIds(query),
+    nctn: (query) => withoutReportIds(query),
   },
   recipient: {
-    in: (query) => withRecipientName(query),
-    nin: (query) => withoutRecipientName(query),
+    ctn: (query) => withRecipientName(query),
+    nctn: (query) => withoutRecipientName(query),
   },
   recipientId: {
-    in: (query) => withRecipientId(query),
+    ctn: (query) => withRecipientId(query),
   },
   startDate: {
     bef: (query) => beforeStartDate(query),
@@ -47,24 +47,24 @@ export const topicToQuery = {
     nin: (query) => withoutRole(query),
   },
   creator: {
-    in: (query) => withAuthor(query),
-    nin: (query) => withoutAuthor(query),
+    ctn: (query) => withAuthor(query),
+    nctn: (query) => withoutAuthor(query),
   },
   topic: {
     in: (query) => withTopics(query),
     nin: (query) => withoutTopics(query),
   },
   collaborators: {
-    in: (query) => withCollaborators(query),
-    nin: (query) => withoutCollaborators(query),
+    ctn: (query) => withCollaborators(query),
+    nctn: (query) => withoutCollaborators(query),
   },
   calculatedStatus: {
     in: (query) => withCalculatedStatus(query),
     nin: (query) => withoutCalculatedStatus(query),
   },
   programSpecialist: {
-    in: (query) => withProgramSpecialist(query),
-    nin: (query) => withoutProgramSpecialist(query),
+    ctn: (query) => withProgramSpecialist(query),
+    nctn: (query) => withoutProgramSpecialist(query),
   },
   programType: {
     in: (query) => withProgramTypes(query),
@@ -83,11 +83,11 @@ export const topicToQuery = {
     nin: (query) => withoutReason(query),
   },
   grantNumber: {
-    in: (query) => withGrantNumber(query),
-    nin: (query) => withoutGrantNumber(query),
+    ctn: (query) => withGrantNumber(query),
+    nctn: (query) => withoutGrantNumber(query),
   },
   stateCode: {
-    in: (query) => withStateCode(query),
+    ctn: (query) => withStateCode(query),
   },
   createDate: {
     bef: (query) => beforeCreateDate(query),

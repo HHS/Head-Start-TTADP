@@ -50,7 +50,7 @@ export default function RegionalDashboard() {
       {
         id: uuidv4(),
         topic: 'region',
-        condition: 'Contains',
+        condition: 'Is',
         query: defaultRegion,
       },
       {
