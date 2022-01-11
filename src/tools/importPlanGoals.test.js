@@ -66,9 +66,9 @@ describe('Import TTA plan goals', () => {
       expect(topicNames[0]).toEqual('Behavioral / Mental Health'); // topicNames is just an array of topic names without the key "name"
 
       // test lazy loading
-      const roleTopics = await role.getTopics({
+      const roleTopics = (await role.getTopics({
         attributes: ['name'],
-      }).map((tp) => tp.get('name'));
+      })).map((tp) => tp.get('name'));
 
       expect(roleTopics.length).toBe(5);
       expect(roleTopics[0]).toEqual('Behavioral / Mental Health');
