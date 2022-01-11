@@ -64,28 +64,23 @@ describe('Controlled Date Picker', () => {
 
     const sd = await screen.findByRole('textbox', { name: /start date/i });
 
-    act(() => userEvent.type(sd, '01/01/1999'));
+    userEvent.type(sd, '01/01/1999');
     await screen.findByText('Please enter a date after 09/01/2020');
 
     act(() => userEvent.clear(sd));
 
     const ed = await screen.findByRole('textbox', { name: /end date/i });
 
-    act(() => {
-      userEvent.type(sd, '01/01/2021');
-      userEvent.type(ed, '12/31/2020');
-    });
+    userEvent.type(sd, '01/01/2021');
+    userEvent.type(ed, '12/31/2020');
 
     expect(await screen.findByText('Please enter a date after 01/01/2021')).toBeVisible();
 
-    act(() => {
-      userEvent.clear(ed);
-      userEvent.type(ed, '01/02/2021');
+    act(() => userEvent.clear(ed));
+    userEvent.type(ed, '01/02/2021');
 
-      userEvent.clear(sd);
-      userEvent.type(sd, '01/03/2021');
-    });
-
+    act(() => userEvent.clear(sd));
+    userEvent.type(sd, '01/03/2021');
     expect(setEndDate).toHaveBeenCalled();
   });
 });
