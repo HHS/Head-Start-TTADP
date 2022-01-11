@@ -7,6 +7,10 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
+import UserContext from '../../../UserContext';
+import { SCOPE_IDS } from '../../../Constants';
+
+const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
 describe('Filter Menu', () => {
   afterAll(() => {
@@ -14,8 +18,17 @@ describe('Filter Menu', () => {
   });
 
   const renderFilterMenu = (filters = [], onApplyFilters = jest.fn()) => {
+    const user = {
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: READ_ACTIVITY_REPORTS,
+        },
+      ],
+    };
+
     render(
-      <div>
+      <UserContext.Provider value={{ user }}>
         <h1>Filter menu</h1>
         <div>
           <FilterMenu
@@ -24,7 +37,7 @@ describe('Filter Menu', () => {
             applyButtonAria="apply test filters"
           />
         </div>
-      </div>,
+      </UserContext.Provider>,
     );
   };
 
