@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
+require('dotenv').config();
 
-dotenv.config();
 exports.bool = (key) => process.env[key] === 'true';

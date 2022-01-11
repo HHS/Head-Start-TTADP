@@ -176,10 +176,10 @@ export const hideUsers = async (userIds) => {
   const ids = userIds || null;
   const where = ids ? { id: ids } : {};
   // save real users
-  realUsers = await User.findAll({
+  realUsers = (await User.findAll({
     attributes: ['id', 'email', 'name'],
     where,
-  }).map((u) => u.dataValues);
+  })).map((u) => u.dataValues);
 
   const users = await User.findAll({
     where,
@@ -199,15 +199,15 @@ export const hideUsers = async (userIds) => {
 
   await Promise.all(promises);
   // Retrieve transformed users
-  transformedUsers = await User.findAll({
+  transformedUsers = (await User.findAll({
     attributes: ['id', 'email', 'name'],
-  }).map((u) => u.dataValues);
+  })).map((u) => u.dataValues);
 };
 
 export const hideRecipientsGrants = async (recipientsGrants) => {
-  realGrants = await Grant.findAll({
+  realGrants = (await Grant.findAll({
     attributes: ['id', 'recipientId', 'number'],
-  }).map((g) => g.dataValues);
+  })).map((g) => g.dataValues);
 
   const recipientsArray = recipientsGrants ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim()) : null;
   const grantsArray = (recipientsArray && recipientsArray.length > 1) ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim()) : null;
@@ -259,16 +259,16 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   await Promise.all(promises);
 
   // Retrieve transformed recipients
-  transformedRecipients = await Recipient.findAll({
+  transformedRecipients = (await Recipient.findAll({
     attributes: ['id', 'name'],
     where: { id: recipients.map((g) => g.id) },
-  }).map((g) => g.dataValues);
+  })).map((g) => g.dataValues);
 
   // Retrieve transformed grants
-  transformedGrants = await Grant.findAll({
+  transformedGrants = (await Grant.findAll({
     attributes: ['id', 'number'],
     where: { id: grants.map((g) => g.id) },
-  }).map((g) => g.dataValues);
+  })).map((g) => g.dataValues);
 };
 
 const givePermissions = (id) => {
