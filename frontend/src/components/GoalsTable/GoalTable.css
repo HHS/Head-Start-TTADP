@@ -1,0 +1,52 @@
+.usa-table-container--scrollable, 
+.usa-checkbox__label {
+  margin-top: 0px;
+}
+
+
+.goals-table .usa-table {
+    line-height: 2.5;
+  }
+  
+  .goals-table .usa-table thead th a {
+    cursor: pointer;
+  }
+  
+  .goals-table .usa-table thead th {
+    white-space: nowrap;
+    background-color: white;
+    border-top: solid 1.5px;
+    border-color: #eceef1;
+    border-bottom: none;
+    padding-right: 0px;
+  }
+  
+  .goals-table .usa-table td {
+    background-color: transparent;
+    border-style: none;
+    font-size: 15px;
+    min-width: 120px;
+    white-space: normal;
+    line-height: 1.5;
+    vertical-align: top;
+  }
+  
+  .goals-table .usa-table td:first-child,
+  .goals-table .usa-table td:last-child{
+    min-width: auto;
+  }
+  
+  .goals-table .usa-table .usa-checkbox__label {
+    padding-left: 0;
+  }
+  .goals-table .usa-table .usa-checkbox__label::before{
+    position: relative;
+  }
+  
+  .goals-table .usa-table th {
+    font-size: 15px;
+    white-space: nowrap;
+    background-color: transparent;
+    border-style: none;
+    color: black;
+  }
