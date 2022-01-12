@@ -7,32 +7,18 @@ import {
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import { filtersToQueryString } from '../Filter';
+import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
 import './index.css';
 
-const emptyReport = {
-  id: 0,
-  displayId: '',
-  activityRecipients: [],
-  startDate: '',
-  author: {},
-  legacyId: '',
-  topics: [],
-  collaborators: [],
-  lastSaved: '',
-  calculatedStatus: '',
-};
-
 function ActivityReportsTable({
   filters,
   showFilter,
   onUpdateFilters,
   tableCaption,
-  dateTime,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -222,7 +208,7 @@ function ActivityReportsTable({
     );
   };
 
-  const displayReports = reports.length ? reports : [emptyReport];
+  const displayReports = reports.length ? reports : [];
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
@@ -235,7 +221,7 @@ function ActivityReportsTable({
         )}
       </Grid>
 
-      <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
+      <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
         <TableHeader
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
@@ -250,7 +236,6 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
-          dateTime={dateTime}
           isDownloading={isDownloading}
           downloadAllButtonRef={downloadAllButtonRef}
           downloadSelectedButtonRef={downloadSelectedButtonRef}
@@ -309,7 +294,12 @@ ActivityReportsTable.propTypes = {
     PropTypes.shape({
       condition: PropTypes.string,
       id: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.arrayOf(PropTypes.number),
+      ]),
       topic: PropTypes.string,
     }),
   ).isRequired,

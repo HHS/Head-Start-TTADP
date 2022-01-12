@@ -32,7 +32,7 @@ describe('Regional Select', () => {
     const onApplyRegion = jest.fn();
     renderRegionalSelect(onApplyRegion);
     const button = screen.getByRole('button', { name: 'toggle regional select menu' });
-    expect(button.textContent).toBe('All Regions');
+    expect(button.textContent).toBe('All regions');
   });
 
   test('changes input value on apply', async () => {

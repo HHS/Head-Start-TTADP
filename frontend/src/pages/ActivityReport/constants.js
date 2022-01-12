@@ -1,25 +1,3 @@
-// Note that if this topic list is changed, it needs also to be changed in
-// - src/constants.js
-export const reasons = [
-  'Below Competitive Threshold (CLASS)',
-  'Below Quality Threshold (CLASS)',
-  'Change in Scope',
-  'Child Incidents',
-  'Complaint',
-  'COVID-19 response',
-  'Full Enrollment',
-  'New Recipient',
-  'New Director or Management',
-  'New Program Option',
-  'New Staff / Turnover',
-  'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
-  'School Readiness Goals',
-  'Monitoring | Area of Concern',
-  'Monitoring | Noncompliance',
-  'Monitoring | Deficiency',
-];
-
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
@@ -47,22 +25,6 @@ export const otherEntityParticipants = [
   'State Early Learning System',
   'State Head Start Association',
   'Other',
-];
-
-// Note that if this topic list is changed, it needs also to be changed in
-// - src/constants.js
-export const targetPopulations = [
-  'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
-  '--------------------',
-  'Affected by Child Welfare Involvement',
-  'Affected by Disaster',
-  'Affected by Substance Use',
-  'Children Experiencing Homelessness',
-  'Children with Disabilities',
-  'Children with Special Health Care Needs',
-  'Dual-Language Learners',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in

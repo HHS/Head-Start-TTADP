@@ -54,29 +54,25 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
   // Get the Date Range.
   const dateRange = query['startDate.win'];
 
-  if (!dateRange) {
-    return res;
-  }
-
-  const dates = dateRange.split('-');
-
   // Parse out Start and End Date.
   let startDate;
   let endDate;
-
   let useDays = true;
   let multipleYrs = false;
 
-  // Check if we have a Start Date.
-  if (dates.length > 0) {
+  if (dateRange) {
+    const dates = dateRange.split('-');
+    // Check if we have a Start Date.
+    if (dates.length > 0) {
     // eslint-disable-next-line prefer-destructuring
-    startDate = dates[0];
-  }
+      startDate = dates[0];
+    }
 
-  // Check if we have and End Date.
-  if (dates.length > 1) {
+    // Check if we have and End Date.
+    if (dates.length > 1) {
     // eslint-disable-next-line prefer-destructuring
-    endDate = dates[1];
+      endDate = dates[1];
+    }
   }
 
   if (startDate && endDate) {
@@ -90,6 +86,9 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
     // const yearDiff = edDate.diff(sdDate, 'years', true);
     // multipleYrs = yearDiff > 1;
     multipleYrs = moment(sdDate).format('YY') !== moment(edDate).format('YY');
+  } else {
+    multipleYrs = true;
+    useDays = false;
   }
 
   // Query Approved AR's.
@@ -115,9 +114,14 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
   reports.forEach((r) => {
     if (r.startDate && r.startDate !== null) {
       // Get X Axis value to use.
-      // eslint-disable-next-line no-nested-ternary
-      const xValue = useDays ? moment(r.startDate).format('D')
-        : multipleYrs ? moment(r.startDate).format('MMM-YY') : moment(r.startDate).format('MMM');
+      let xValue;
+      if (useDays) {
+        xValue = moment(r.startDate).format('D');
+      } else if (multipleYrs) {
+        xValue = moment(r.startDate).format('MMM-YY');
+      } else {
+        xValue = moment(r.startDate).format('MMM');
+      }
 
       const month = useDays ? moment(r.startDate).format('MMM') : false;
 

@@ -126,7 +126,7 @@ function App() {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId([0-9]*)"
+          path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <RecipientRecord location={location} match={match} user={user} />

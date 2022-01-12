@@ -13,8 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
 import DropdownMenu from './DropdownMenu';
-import { DATE_FORMAT } from './constants';
-import { DATE_FMT as DATETIME_DATE_FORMAT, EARLIEST_INC_FILTER_DATE } from '../Constants';
+import { DATE_FMT as DATETIME_DATE_FORMAT, DATE_FORMAT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 
 // I think we need 'em both
 import './ButtonSelect.css';
