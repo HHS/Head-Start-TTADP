@@ -2,18 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import moment from 'moment';
-
 import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuidv4 } from 'uuid';
-
 import Container from './Container';
 import FilterItem from './FilterItem';
-import {
-  WITHIN,
-  QUERY_CONDITIONS,
-} from './constants';
-import { DECIMAL_BASE, DATE_FMT } from '../Constants';
+
 import './Filter.css';
 
 const defaultFilter = () => (
@@ -190,23 +183,5 @@ Filter.propTypes = {
 Filter.defaultProps = {
   forMyAlerts: false,
 };
-
-export function filtersToQueryString(filters, region) {
-  const filtersWithValues = filters.filter((f) => {
-    if (f.condition === WITHIN) {
-      const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
-    }
-    return f.query !== '';
-  });
-  const queryFragments = filtersWithValues.map((filter) => {
-    const con = QUERY_CONDITIONS[filter.condition];
-    return `${filter.topic}.${con}=${filter.query}`;
-  });
-  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
-    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
-  }
-  return queryFragments.join('&');
-}
 
 export default Filter;
