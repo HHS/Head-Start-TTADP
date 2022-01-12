@@ -101,7 +101,7 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       'duration',
     ],
     where: {
-      [Op.and]: [scopes],
+      [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
 
     },

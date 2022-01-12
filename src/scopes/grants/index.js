@@ -8,13 +8,14 @@ export const topicToQuery = {
     bef: (query) => beforeGrantStartDate(query),
     aft: (query) => afterGrantStartDate(query),
     win: (query) => withinGrantStartDates(query),
+    in: (query) => withinGrantStartDates(query),
   },
   region: {
     in: (query) => withGrantsRegion(query),
   },
 };
 
-export function grantsReportFiltersToScopes(filters) {
+export function grantsFiltersToScopes(filters) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic] = topicAndCondition.split('.');
     return topic in topicToQuery;

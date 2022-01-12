@@ -211,7 +211,7 @@ describe('Recipient DB service', () => {
   describe('recipientById', () => {
     it('returns a recipient by recipient id and region id', async () => {
       const query = { 'region.in': ['1'], 'recipientId.in': [75] };
-      const grantScopes = filtersToScopes(query, 'grant');
+      const { grant: grantScopes } = filtersToScopes(query);
       const recipient3 = await recipientById(75, grantScopes);
 
       // Recipient Name.
@@ -237,7 +237,7 @@ describe('Recipient DB service', () => {
     });
     it('returns recipient and grants without a region specified', async () => {
       const query = { 'recipientId.in': [74] };
-      const grantScopes = filtersToScopes(query, 'grant');
+      const { grant: grantScopes } = filtersToScopes(query);
       const recipient2 = await recipientById(74, grantScopes);
 
       // Recipient Name.
@@ -259,7 +259,7 @@ describe('Recipient DB service', () => {
 
     it('returns null when nothing is found', async () => {
       const query = { 'recipientId.in': [100] };
-      const grantScopes = filtersToScopes(query, 'grant');
+      const { grant: grantScopes } = filtersToScopes(query);
       const recipient = await recipientById(100, grantScopes);
 
       expect(recipient).toBeNull();
@@ -267,7 +267,7 @@ describe('Recipient DB service', () => {
 
     it('returns active grants and inactive grants after cutoff', async () => {
       const query = { 'recipientId.in': [76] };
-      const grantScopes = filtersToScopes(query, 'grant');
+      const { grant: grantScopes } = filtersToScopes(query);
       const recipient = await recipientById(76, grantScopes);
 
       expect(recipient.name).toBe('recipient 4');
@@ -449,7 +449,8 @@ describe('Recipient DB service', () => {
 
     function regionToScope(regionId) {
       const query = { 'region.in': [regionId] };
-      return filtersToScopes(query, 'grant');
+      const { grant } = filtersToScopes(query);
+      return grant;
     }
 
     beforeAll(async () => {
