@@ -1,7 +1,12 @@
 import { Op } from 'sequelize';
 
 import {
-  ActivityReport, ActivityRecipient, Grant, OtherEntity, sequelize,
+  ActivityReport,
+  ActivityRecipient,
+  Grant,
+  OtherEntity,
+  // Recipient,
+  sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -20,7 +25,7 @@ export default async function overview(scopes) {
       'numberOfParticipants',
     ],
     where: {
-      [Op.and]: [scopes],
+      [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     raw: true,
@@ -45,7 +50,7 @@ export default async function overview(scopes) {
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."otherEntityId"'))), 'numOtherEntities'],
     ],
     where: {
-      [Op.and]: [scopes],
+      [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     raw: true,

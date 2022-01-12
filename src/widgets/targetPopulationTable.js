@@ -10,7 +10,7 @@ export default async function targetPopulationTable(scopes) {
     ],
     where: {
       [Op.and]: [
-        scopes,
+        scopes.activityReport,
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
