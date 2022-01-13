@@ -96,15 +96,7 @@ describe('Filter menu item', () => {
     userEvent.type(sd, '01/01/2021');
     userEvent.type(ed, '01/02/2021');
 
-    // on apply fires on "blur" of the filter item
-    // once the values have been validated
-    // so we simulate blur with this test
-    userEvent.tab();
-    userEvent.tab();
-    userEvent.tab();
-
-    expect(await screen.findByRole('button', { name: /big dumb button/i })).toHaveFocus();
-
+    userEvent.click(await screen.findByRole('button', { name: /apply date range changes/i }));
     expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
   });
 

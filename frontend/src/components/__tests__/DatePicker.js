@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import DatePicker from '../DatePicker';
 
 describe('DatePicker', () => {
-  const renderDatePicker = (value, onChange = jest.fn, maxDate = '12/31/2020') => {
+  const renderDatePicker = (value, onChange = jest.fn(), maxDate = '12/31/2020') => {
     render(
       <div>
         <DatePicker
@@ -16,6 +16,8 @@ describe('DatePicker', () => {
           onChange={onChange}
           minDate="2020-09-01"
           maxDate={maxDate}
+          error=""
+          setError={jest.fn()}
         />
         <button type="button">Dumb button</button>
       </div>,
@@ -36,6 +38,7 @@ describe('DatePicker', () => {
     act(() => userEvent.clear(date));
     userEvent.type(date, '12/30/2020');
 
+    userEvent.tab();
     userEvent.tab();
     userEvent.tab();
 

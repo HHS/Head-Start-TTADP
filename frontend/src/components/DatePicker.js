@@ -1,12 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   DatePicker as RawDatePicker,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
-
 import { DATE_DISPLAY_FORMAT } from '../Constants';
+import './DatePicker.css';
 
 export const DATE_PICKER_DATE_FORMAT = 'YYYY-MM-DD';
 
@@ -20,24 +20,20 @@ export default function DatePicker(
     minDate,
     maxDate,
     datePickerKey,
+    error,
+    setError,
     ...props
   },
 ) {
   const [currentDate, setCurrentDate] = useState('');
-  const [error, setError] = useState('');
-
-  const tomorrow = useMemo(() => moment().add(1, 'days').format(DATE_PICKER_DATE_FORMAT), []);
-
-  useEffect(() => {
-    setError('');
-  }, [defaultValue]);
+  const today = useMemo(() => moment().format(DATE_PICKER_DATE_FORMAT), []);
 
   const formattedDefaultValue = moment(
     defaultValue, DATE_DISPLAY_FORMAT,
   ).format(DATE_PICKER_DATE_FORMAT);
 
   const formattedMaxDate = maxDate
-    ? moment(maxDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT) : tomorrow;
+    ? moment(maxDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT) : today;
   const formattedMinDate = moment(minDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT);
 
   const onBlur = () => {
@@ -47,12 +43,18 @@ export default function DatePicker(
     const maxDateAsMoment = maxDate ? moment(maxDate, DATE_DISPLAY_FORMAT) : moment().add(1, 'days');
 
     if (!dateAsMoment.isValid()) {
-      setError(`Please enter a valid date after ${minDate}`);
+      setError(`Please enter a valid date before ${maxDate || 'today'} and after ${minDate}`);
       return;
     }
 
     if (dateAsMoment.isBefore(minDateAsMoment)) {
-      setError(`The earliest date you can enter is ${minDate}`);
+      setError(`Please enter a date after ${minDate}`);
+
+      // automatically set the min date to the first available
+      if (minDate === '09/01/2020') {
+        onChange(minDate);
+      }
+
       return;
     }
 
@@ -61,6 +63,7 @@ export default function DatePicker(
       return;
     }
 
+    setError('');
     onChange(currentDate);
   };
 
@@ -86,6 +89,8 @@ DatePicker.propTypes = {
   minDate: PropTypes.string,
   maxDate: PropTypes.string,
   datePickerKey: PropTypes.string,
+  error: PropTypes.string.isRequired,
+  setError: PropTypes.func.isRequired,
 };
 
 DatePicker.defaultProps = {

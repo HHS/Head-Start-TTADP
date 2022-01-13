@@ -10,12 +10,12 @@ import './DateRangePicker.css';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
-
 export default function DateRangePicker({ onApply, query }) {
   let defaultDateRange = {
     startDate: '',
     endDate: '',
     endDateKey: 'end-date',
+    startDateKey: 'start-date',
   };
 
   if (query && query.split('-').length === 2) {
@@ -24,9 +24,12 @@ export default function DateRangePicker({ onApply, query }) {
       startDate: moment(start, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
       endDate: moment(end, QUERY_DATE_FORMAT).format(DATE_DISPLAY_FORMAT),
       endDateKey: 'end-date',
+      startDateKey: 'start-date',
     };
   }
 
+  const [startDateError, setStartDateError] = useState('');
+  const [endDateError, setEndDateError] = useState('');
   const [hidden, setHidden] = useState(true);
   const [dateRange, setDateRange] = useState(defaultDateRange);
   const [range, setRange] = useState('');
@@ -44,7 +47,11 @@ export default function DateRangePicker({ onApply, query }) {
     }
   }, [dateRange]);
 
-  const toggleHidden = () => setHidden(!hidden);
+  const toggleHidden = () => {
+    if (!startDateError && !endDateError) {
+      setHidden(!hidden);
+    }
+  };
 
   const onChangeStartDate = (date) => {
     const { startDate, endDate } = dateRange;
@@ -52,6 +59,7 @@ export default function DateRangePicker({ onApply, query }) {
     const newStartDate = moment(date, DATE_DISPLAY_FORMAT);
 
     if (newStartDate.isValid()) {
+      const startDateKey = `start-date-${newStartDate.format(DATE_DISPLAY_FORMAT)}`;
       const currentEndDate = moment(endDate, DATE_DISPLAY_FORMAT);
       const isBeforeMax = currentEndDate.isBefore(newStartDate);
 
@@ -70,11 +78,13 @@ export default function DateRangePicker({ onApply, query }) {
           endDate: newEndDate.format(DATE_DISPLAY_FORMAT),
           startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
           endDateKey: newEndDateKey,
+          startDateKey,
         });
       } else {
         setDateRange({
           ...dateRange,
           startDate: newStartDate.format(DATE_DISPLAY_FORMAT),
+          startDateKey,
         });
       }
     }
@@ -89,14 +99,16 @@ export default function DateRangePicker({ onApply, query }) {
   };
 
   const onApplyClick = () => {
-    if (range) {
+    if (range && !startDateError && !endDateError) {
       // if we're all clear, then onApply
       onApply(range);
       setHidden(true);
     }
   };
 
-  const { startDate, endDate, endDateKey } = dateRange;
+  const {
+    startDate, endDate, endDateKey, startDateKey,
+  } = dateRange;
 
   return (
     <div
@@ -115,7 +127,11 @@ export default function DateRangePicker({ onApply, query }) {
           name="startDate"
           defaultValue={startDate}
           onChange={onChangeStartDate}
+          error={startDateError}
+          setError={setStartDateError}
+          datePickerKey={startDateKey}
         />
+
         <label id="endDateLabel" className="usa-label" htmlFor="end-date">End date</label>
         <span className="usa-hint">mm/dd/yyyy</span>
         <DatePicker
@@ -126,8 +142,10 @@ export default function DateRangePicker({ onApply, query }) {
           defaultValue={endDate}
           minDate={startDate}
           onChange={onChangeEndDate}
+          error={endDateError}
+          setError={setEndDateError}
         />
-        <Button className="margin-y-2" onClick={onApplyClick}>Set date range</Button>
+        <Button className="margin-top-3" onClick={onApplyClick} aria-label="apply date range changes">Apply</Button>
       </fieldset>
     </div>
   );
