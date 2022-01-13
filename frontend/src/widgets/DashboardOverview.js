@@ -7,12 +7,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
-import FormatNumber from './WidgetHelper';
+
 import Loader from '../components/Loader';
 import Tooltip from '../components/Tooltip';
 
-function Field({
-  label, data, icon, iconColor, backgroundColor, decimalPlaces, showTooltip, tooltipText,
+export function Field({
+  label, data, icon, iconColor, backgroundColor, showTooltip, tooltipText,
 }) {
   return (
     <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-2">
@@ -22,7 +22,7 @@ function Field({
         </span>
       </span>
       <span className="smart-hub--dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center">
-        <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
+        <span className="text-bold smart-hub--overview-font-size">{data}</span>
         {showTooltip ? (
           <Tooltip
             displayText={label}
@@ -39,7 +39,6 @@ function Field({
 Field.propTypes = {
   label: PropTypes.string.isRequired,
   data: PropTypes.string.isRequired,
-  decimalPlaces: PropTypes.number,
   icon: PropTypes.shape({
     prefix: PropTypes.string,
     iconName: PropTypes.string,
@@ -53,7 +52,6 @@ Field.propTypes = {
 };
 
 Field.defaultProps = {
-  decimalPlaces: 0,
   tooltipText: '',
   showTooltip: false,
 };
@@ -78,6 +76,21 @@ const DASHBOARD_FIELDS = [
   {
     key: 'In-person activities',
     render: (data, showTooltip) => <Field key="in-person-activities" icon={faUser} showTooltip={showTooltip} tooltipText="Number of activities that were conducted in-person vs. virtual." iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
+  },
+  {
+    key: 'Recipients served',
+    render: (data, showTooltip) => (
+      <Field
+        key="recipients-served"
+        icon={faUser}
+        showTooltip={showTooltip}
+        label={`Recipients served out of ${data.totalRecipients}`}
+        iconColor="#A12854"
+        backgroundColor="#FFE8F0"
+        tooltipText="Percentage of recipients served out of active grants"
+        data={data.recipientPercentage}
+      />
+    ),
   },
 ];
 
@@ -105,6 +118,8 @@ DashboardOverviewWidget.propTypes = {
     numGrants: PropTypes.string,
     sumDuration: PropTypes.string,
     inPerson: PropTypes.string,
+    recipientPercentage: PropTypes.string,
+    totalRecipients: PropTypes.string,
   }),
   loading: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.string),
@@ -118,6 +133,8 @@ DashboardOverviewWidget.defaultProps = {
     numGrants: '0',
     sumDuration: '0',
     inPerson: '0',
+    totalRecipients: '0',
+    recipientPercentage: '0%',
   },
   loading: false,
   showTooltips: false,

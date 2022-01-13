@@ -1,26 +1,62 @@
 import { Op } from 'sequelize';
-import { withinDateRange, compareDate } from '../utils';
 
-export function beforeGrantStartDate(date) {
-  return {
-    [Op.and]: {
-      [Op.or]: compareDate(date, 'startDate', Op.lt),
+export function beforeGrantStartDate(dates) {
+  return dates.reduce((acc, date) => [
+    ...acc,
+    {
+      [Op.and]: [
+        {
+          startDate: {
+            [Op.lte]: date,
+          },
+        },
+        {
+          endDate: {
+            [Op.gte]: date,
+          },
+        },
+      ],
     },
-  };
+  ], []);
 }
 
-export function afterGrantStartDate(date) {
-  return {
-    [Op.and]: {
-      [Op.or]: compareDate(date, 'startDate', Op.gt),
+export function afterGrantStartDate(dates) {
+  return dates.reduce((acc, date) => [
+    ...acc,
+    {
+      [Op.and]: {
+        startDate: {
+          [Op.gte]: date,
+        },
+        status: 'Active',
+      },
     },
-  };
+  ], []);
 }
 
 export function withinGrantStartDates(dates) {
-  return {
-    [Op.and]: {
-      [Op.or]: withinDateRange(dates, 'startDate'),
-    },
-  };
+  return dates.reduce((acc, range) => {
+    if (!range.split) {
+      return acc;
+    }
+
+    const [startDate, endDate] = range.split('-');
+    if (!startDate || !endDate) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        [Op.and]: {
+          startDate: {
+            [Op.lte]: startDate,
+          },
+          endDate: {
+            [Op.gte]: endDate,
+          },
+        },
+      },
+    ];
+  }, []);
 }
