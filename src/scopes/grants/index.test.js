@@ -19,7 +19,7 @@ const recipients = [
 
 const possibleIds = recipients.map((recipient) => recipient.id);
 
-describe('recipientFiltersToScopes', () => {
+describe('grant filtersToScopes', () => {
   beforeAll(async () => {
     await Promise.all(recipients.map((g) => Recipient.create(g)));
     await Promise.all([

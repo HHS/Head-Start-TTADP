@@ -118,6 +118,13 @@ export default function RegionalDashboard() {
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
             filters={filtersToApply}
+            fields={[
+              'Recipients served',
+              'Activity reports',
+              'Grants served',
+              'Participants',
+              'Hours of TTA',
+            ]}
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>

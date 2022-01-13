@@ -4,14 +4,13 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import './Overview.css';
-import FormatNumber from './WidgetHelper';
 
 function Field({
-  label, labelExt, data, col, decimalPlaces,
+  label, labelExt, data, col,
 }) {
   return (
     <Grid col={col} className="smart-hub--overview">
-      <span className="text-bold smart-hub--overview-font-size">{FormatNumber(data, decimalPlaces)}</span>
+      <span className="text-bold smart-hub--overview-font-size">{data}</span>
       <br />
       {label}
       <span className="smart-hub--overview-nowrap">{labelExt}</span>
@@ -23,7 +22,6 @@ Field.propTypes = {
   label: PropTypes.string.isRequired,
   labelExt: PropTypes.string,
   data: PropTypes.string,
-  decimalPlaces: PropTypes.number,
   col: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number,
@@ -34,7 +32,6 @@ Field.defaultProps = {
   labelExt: '',
   col: 2,
   data: '',
-  decimalPlaces: 0,
 };
 
 /*
