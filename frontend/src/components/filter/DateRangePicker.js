@@ -1,7 +1,10 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useRef, useEffect } from 'react';
+import React, {
+  useState, useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { Button } from '@trussworks/react-uswds';
 import DatePicker from '../DatePicker';
 import './DateRangePicker.css';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
@@ -40,8 +43,6 @@ export default function DateRangePicker({ onApply, query }) {
       setRange('');
     }
   }, [dateRange]);
-
-  const customDatePicker = useRef();
 
   const toggleHidden = () => setHidden(!hidden);
 
@@ -87,24 +88,11 @@ export default function DateRangePicker({ onApply, query }) {
     });
   };
 
-  const onBlur = (e) => {
-    // no need to fire anything if the menu is closed
-    if (!hidden) {
-    // if( clicking on something within the item )
-      if (
-        e.relatedTarget
-        && customDatePicker.current
-        && customDatePicker.current.contains(e.relatedTarget)
-      ) {
-        return;
-      }
-
-      // if we've got everything undercontrol
-      if (range) {
-        // if we're all clear, then onApply
-        onApply(range);
-        setHidden(true);
-      }
+  const onApplyClick = () => {
+    if (range) {
+      // if we're all clear, then onApply
+      onApply(range);
+      setHidden(true);
     }
   };
 
@@ -113,8 +101,6 @@ export default function DateRangePicker({ onApply, query }) {
   return (
     <div
       className="ttahub-custom-date-range-picker position-relative"
-      onBlur={onBlur}
-      ref={customDatePicker}
     >
       <button aria-label="change custom date range" type="button" className="usa-select text-left" aria-expanded={!hidden} aria-controls="custom-date-range" onClick={toggleHidden}>
         { startDate && endDate ? `${startDate}-${endDate}` : 'Custom date range' }
@@ -141,6 +127,7 @@ export default function DateRangePicker({ onApply, query }) {
           minDate={startDate}
           onChange={onChangeEndDate}
         />
+        <Button className="margin-y-2" onClick={onApplyClick}>Set date range</Button>
       </fieldset>
     </div>
   );
