@@ -136,16 +136,14 @@ export async function processFiles() {
     await Grant.bulkCreate(
       nonCdiGrants,
       {
-        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
-      },
-    );
+        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode'],
+      });
 
     await Grant.bulkCreate(
       cdiGrants,
       {
-        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
-      },
-    );
+        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode'],
+      });
 
     // Load and Process grant replacement data.
     const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');

@@ -99,8 +99,15 @@ describe('Update grants and recipients', () => {
 
   it('includes the grants state', async () => {
     await processFiles();
-    const grant = await Grant.findOne({ where: { id: 11835 } });
-    expect(grant.stateCode).toEqual('KS');
+    // const grant = await Grant.findOne({ where: { id: 11835 } });
+    const grant = await Grant.findOne({ where: { id: 11630 } });
+    // simulate updating an existing grant with null stateCode
+    await grant.update({ stateCode: null });
+    const grantWithNullStateCode = await Grant.findOne({ where: {id: 11630}});
+    expect(grantWithNullStateCode.stateCode).toBeNull();
+    await processFiles();
+    const grantWithStateCode = await Grant.findOne({ where: {id: 11630}});
+    expect(grantWithStateCode.stateCode).toEqual('KS');
   });
 
   it('handles nil states codes', async () => {
