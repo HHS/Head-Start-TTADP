@@ -23,39 +23,10 @@ export default function DatePicker(
     ...props
   },
 ) {
+  const [currentDate, setCurrentDate] = useState('');
   const [error, setError] = useState('');
 
   const tomorrow = useMemo(() => moment().add(1, 'days').format(DATE_PICKER_DATE_FORMAT), []);
-
-  const onDatePickerChange = (date) => {
-    // we want to allow "" as a valid thing to enter
-    if (!date) {
-      onChange(date);
-      return;
-    }
-
-    // otherwise we go through the validation steps
-    const dateAsMoment = moment(date, DATE_DISPLAY_FORMAT);
-    const minDateAsMoment = moment(minDate, DATE_DISPLAY_FORMAT);
-    const maxDateAsMoment = maxDate ? moment(maxDate, DATE_DISPLAY_FORMAT) : moment().add(1, 'days');
-
-    if (!dateAsMoment.isValid()) {
-      setError(`Please enter a valid date after ${minDate}`);
-      return;
-    }
-
-    if (dateAsMoment.isBefore(minDateAsMoment)) {
-      setError(`Please enter a date after ${minDate}`);
-      return;
-    }
-
-    if (dateAsMoment.isAfter(maxDateAsMoment)) {
-      setError(`Please enter a date before ${maxDate || 'today'}`);
-      return;
-    }
-
-    onChange(date);
-  };
 
   useEffect(() => {
     setError('');
@@ -69,6 +40,30 @@ export default function DatePicker(
     ? moment(maxDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT) : tomorrow;
   const formattedMinDate = moment(minDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT);
 
+  const onBlur = () => {
+    // otherwise we go through the validation steps
+    const dateAsMoment = moment(currentDate, DATE_DISPLAY_FORMAT);
+    const minDateAsMoment = moment(minDate, DATE_DISPLAY_FORMAT);
+    const maxDateAsMoment = maxDate ? moment(maxDate, DATE_DISPLAY_FORMAT) : moment().add(1, 'days');
+
+    if (!dateAsMoment.isValid()) {
+      setError(`Please enter a valid date after ${minDate}`);
+      return;
+    }
+
+    if (dateAsMoment.isBefore(minDateAsMoment)) {
+      setError(`The earliest date you can enter is ${minDate}`);
+      return;
+    }
+
+    if (dateAsMoment.isAfter(maxDateAsMoment)) {
+      setError(`Please enter a date before ${maxDate || 'today'}`);
+      return;
+    }
+
+    onChange(currentDate);
+  };
+
   return (
     <>
       {error && <span className="usa-error-message">{error}</span>}
@@ -78,7 +73,8 @@ export default function DatePicker(
         maxDate={formattedMaxDate}
         minDate={formattedMinDate}
         defaultValue={formattedDefaultValue}
-        onChange={onDatePickerChange}
+        onChange={setCurrentDate}
+        onBlur={onBlur}
       />
     </>
   );
@@ -94,7 +90,7 @@ DatePicker.propTypes = {
 
 DatePicker.defaultProps = {
   defaultValue: '',
-  minDate: '09/02/2020',
+  minDate: '09/01/2020',
   maxDate: '',
   datePickerKey: 'date-picker',
 };
