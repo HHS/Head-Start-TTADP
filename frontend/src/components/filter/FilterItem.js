@@ -102,7 +102,6 @@ export default function FilterItem({
    * function below
    */
   const onUpdate = (name, value) => {
-    console.log(id, name, value);
     onUpdateFilter(id, name, value);
   };
 
