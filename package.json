@@ -92,7 +92,8 @@
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
-    "colors": "1.4.0"
+    "colors": "1.4.0",
+    "follow-redirects":"^1.14.7"
   },
   "eslintConfig": {
     "extends": [
