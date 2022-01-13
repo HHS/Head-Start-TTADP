@@ -93,7 +93,6 @@ describe('Filter menu item', () => {
 
     userEvent.clear(sd);
     userEvent.clear(ed);
-
     userEvent.type(sd, '01/01/2021');
     userEvent.type(ed, '01/02/2021');
 

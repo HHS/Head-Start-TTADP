@@ -99,15 +99,6 @@ export default function DateRangePicker({ onApply, query }) {
         return;
       }
 
-      // samesies
-      if (
-        customDatePicker.current
-        && e.currentTarget
-        && e.currentTarget === customDatePicker.current
-      ) {
-        return;
-      }
-
       // if we've got everything undercontrol
       if (range) {
         // if we're all clear, then onApply
