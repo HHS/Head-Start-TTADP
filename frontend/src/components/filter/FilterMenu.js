@@ -93,6 +93,7 @@ export default function FilterMenu({
 
   const onUpdateFilter = (id, name, value) => {
     const newItems = items.map((item) => ({ ...item }));
+    const index = newItems.findIndex((item) => item.id === id);
     const toUpdate = newItems.find((item) => item.id === id);
 
     if (toUpdate[name] === value) {
@@ -125,6 +126,12 @@ export default function FilterMenu({
     }
 
     setItems(newItems);
+
+    if (index !== -1) {
+      const newErrors = [...errors];
+      newErrors.splice(index, 1);
+      setErrors(newErrors);
+    }
   };
 
   const onAddFilter = () => {
