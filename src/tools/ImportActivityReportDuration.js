@@ -7,10 +7,6 @@ const { argv } = option('file', {
   alias: 'f',
   description: 'Input .csv file',
   type: 'string',
-}).option('region', {
-  alias: 'r',
-  description: 'grant\'s region',
-  type: 'number',
 })
   .help()
   .alias('help', 'h');
