@@ -28,7 +28,7 @@ export default async function importDuration(fileKey) {
         auditLogger.info(`No duration set for report: ${id}, skipping`);
       } else {
         const report = await ActivityReport.unscoped().findOne({ where: { id } });
-        if (report && report.legacyId && !report.duration) {
+        if (report !== null && report && report.legacyId && !report.duration) {
           auditLogger.info(`Changing duration of report: ${id} from ${report.duration} to ${duration}`);
           promises.push(
             report.update({
