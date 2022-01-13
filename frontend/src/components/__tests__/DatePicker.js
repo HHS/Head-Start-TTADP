@@ -7,14 +7,19 @@ import DatePicker from '../DatePicker';
 
 describe('DatePicker', () => {
   const renderDatePicker = (value, onChange = jest.fn, maxDate = '12/31/2020') => {
-    render(<DatePicker
-      defaultValue={value}
-      name="toby"
-      id="toby"
-      onChange={onChange}
-      minDate="2020-09-01"
-      maxDate={maxDate}
-    />);
+    render(
+      <div>
+        <DatePicker
+          defaultValue={value}
+          name="toby"
+          id="toby"
+          onChange={onChange}
+          minDate="2020-09-01"
+          maxDate={maxDate}
+        />
+        <button type="button">Dumb button</button>
+      </div>,
+    );
   };
 
   it('knows what to do with a max date', async () => {
@@ -30,6 +35,10 @@ describe('DatePicker', () => {
     expect(invalid).toBeTruthy();
     act(() => userEvent.clear(date));
     userEvent.type(date, '12/30/2020');
+
+    userEvent.tab();
+    userEvent.tab();
+
     expect(onChange).toHaveBeenCalled();
   });
 });
