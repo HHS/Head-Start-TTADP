@@ -250,6 +250,7 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
+          setDownloadError={setDownloadError}
           dateTime={dateTime}
           isDownloading={isDownloading}
           downloadAllButtonRef={downloadAllButtonRef}
