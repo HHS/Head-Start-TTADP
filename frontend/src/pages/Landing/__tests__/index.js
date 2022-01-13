@@ -503,10 +503,6 @@ describe('handleApplyFilters', () => {
     const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
 
-    // Add new filter
-    const addNewFilterButton = await screen.findByRole('button', { name: /add new filter/i });
-    fireEvent.click(addNewFilterButton);
-
     // Get filter group.
     const topic = await screen.findAllByRole('combobox', { name: /topic/i });
     userEvent.selectOptions(topic[0], 'reportId');
@@ -570,16 +566,8 @@ describe('handleApplyAlertFilters', () => {
     };
     renderLanding(user);
 
-    // Only one filters button should be shown.
-    const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
-    expect(allFilterButtons.length).toBe(1);
-
-    const filterMenuButton = allFilterButtons[0];
+    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
-
-    // Add new filter
-    const addFilter = await screen.findByRole('button', { name: /add new filter/i });
-    fireEvent.click(addFilter);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'reportId');
