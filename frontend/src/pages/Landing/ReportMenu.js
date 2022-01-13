@@ -4,6 +4,7 @@ import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
+import './ReportMenu.css';
 
 export const MAXIMUM_EXPORTED_REPORTS = 2000;
 
@@ -50,10 +51,9 @@ function ReportMenu({
     }
   };
 
-  const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'width-tablet' : 'width-mobile'}`;
+  const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'desktop:width-tablet' : 'desktop:width-mobile'}`;
   return (
     <span className="position-relative">
-
       <button
         ref={menuButtonRef}
         type="button"
@@ -80,10 +80,11 @@ function ReportMenu({
                 noIcon
                 slim
                 type="error"
-                className="margin-bottom-3"
+                className="margin-bottom-3 ttahub-report-menu-alert"
                 role="alert"
                 cta={(
                   <Button
+                    autoFocus
                     outline
                     onClick={() => setDownloadError(false)}
                   >
