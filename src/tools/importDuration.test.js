@@ -13,7 +13,6 @@ const reportObject = {
   submissionStatus: REPORT_STATUSES.APPROVED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
-  duration: 0,
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
@@ -40,6 +39,8 @@ describe('update activity report duration', () => {
       });
       await ActivityReport.create({ ...reportObject, id: 785464, legacyId: 'legacy report 3' });
 
+      await ActivityReport.create({ ...reportObject, id: 785465 });
+
       // Import duration file.
       await importDuration(fileName);
     } catch (error) {
@@ -50,7 +51,7 @@ describe('update activity report duration', () => {
 
   afterAll(async () => {
     // Cleanup Ar's.
-    await ActivityReport.destroy({ where: { id: [785462, 785463, 785464] } });
+    await ActivityReport.destroy({ where: { id: [785462, 785463, 785464, 785465] } });
     await db.sequelize.close();
   });
 
@@ -61,5 +62,8 @@ describe('update activity report duration', () => {
     expect(Number(report2.duration)).toBe(10.5);
     const report3 = await ActivityReport.findOne({ where: { id: 785464 } });
     expect(Number(report3.duration)).toBe(3.5);
+
+    const report4 = await ActivityReport.findOne({ where: { id: 785465 } });
+    expect(Number(report4.duration)).toBe(0);
   });
 });

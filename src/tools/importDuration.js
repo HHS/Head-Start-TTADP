@@ -28,7 +28,7 @@ export default async function importDuration(fileKey) {
         auditLogger.info(`No duration set for report: ${id}, skipping`);
       } else {
         const report = await ActivityReport.findOne({ where: { id } });
-        if (report) {
+        if (report && report.legacyId && !report.duration) {
           auditLogger.info(`Changing duration of report: ${id} from ${report.duration} to ${duration}`);
           promises.push(
             report.update({
@@ -36,7 +36,7 @@ export default async function importDuration(fileKey) {
             }),
           );
         } else {
-          auditLogger.info(`Couldn't find any reports with the id: ${id}`);
+          auditLogger.info(`Couldn't find a legacy report with the id: ${id}`);
         }
       }
     }
