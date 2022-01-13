@@ -55,9 +55,10 @@ module.exports = {
         type: Sequelize.DATE,
       },
     });
-    await queryInterface.addConstraint('ActivityReportApprovers', ['activityReportId', 'userId'], {
+    await queryInterface.addConstraint('ActivityReportApprovers', {
       type: 'unique',
       name: 'unique_activityReportId_userId',
+      fields: ['activityReportId', 'userId'],
     });
   },
   down: (queryInterface) => queryInterface.dropTable('ActivityReportApprovers'),

@@ -36,10 +36,12 @@ async function parseCsv(fileKey) {
 }
 
 async function prePopulateRoles() {
-  await Role.bulkCreate(hubRoles,
+  await Role.bulkCreate(
+    hubRoles,
     {
       updateOnDuplicate: ['updatedAt'],
-    });
+    },
+  );
 }
 
 const grantNumRE = /\s(?<grantNumber>[0-9]{2}[A-Z]{2}[0-9]+)(?:[,\s]|$)/g;
@@ -197,17 +199,21 @@ export default async function importGoals(fileKey, region) {
     }
 
     // The associations data has been prepared. Insert it into the database
-    await RoleTopic.bulkCreate(cleanRoleTopics,
+    await RoleTopic.bulkCreate(
+      cleanRoleTopics,
       {
         ignoreDuplicates: true,
-      });
+      },
+    );
     await TopicGoal.bulkCreate(cleanTopicGoals, {
       ignoreDuplicates: true,
     });
-    await GrantGoal.bulkCreate(cleanGrantGoals,
+    await GrantGoal.bulkCreate(
+      cleanGrantGoals,
       {
         ignoreDuplicates: true,
-      });
+      },
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log(err);
