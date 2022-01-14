@@ -150,12 +150,13 @@ describe('Filter menu item', () => {
     const onUpdate = jest.fn();
     const setErrors = jest.fn();
     renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    const bigDumbButton = await screen.findByRole('button', { name: /big dumb button/i });
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
-    expect(await screen.findByRole('button', { name: /big dumb button/i })).toHaveFocus();
+    expect(bigDumbButton).toHaveFocus();
     expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
   });
 });

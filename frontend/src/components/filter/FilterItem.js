@@ -1,6 +1,5 @@
 import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.css';
@@ -50,17 +49,6 @@ export default function FilterItem({
 
     if (!query || !query.toString().length) {
       return 'Please enter a value';
-    }
-
-    if (topic === 'startDate') {
-      const q = query.split('-');
-      if (q.length > 1) {
-        if (!moment(q[0], 'YYYY/MM/DD').isValid() || !moment(q[1], 'YYYY/MM/DD').isValid()) {
-          return 'Please enter a valid date range';
-        }
-      } else if (!moment(query, 'YYYY/MM/DD').isValid()) {
-        return 'Please enter a valid date';
-      }
     }
 
     return '';
