@@ -33,6 +33,11 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import { formatDateRange } from '../../components/DateRangeSelect';
 
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
+
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
   const offsetTo = perPage * activePage;
@@ -61,7 +66,18 @@ function Landing({ user }) {
         condition: 'Is',
         query: defaultRegion,
       },
-      ] : [],
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }]
+      : [{
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }],
   );
 
   const history = useHistory();
@@ -316,6 +332,7 @@ function Landing({ user }) {
           message={message}
           isDownloadingAlerts={isDownloadingAlerts}
           downloadAlertsError={downloadAlertsError}
+          setDownloadAlertsError={setDownloadAlertsError}
           downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
         <ActivityReportsTable
