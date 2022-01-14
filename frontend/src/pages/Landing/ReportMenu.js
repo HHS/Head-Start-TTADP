@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert } from '@trussworks/react-uswds';
+import { Alert, Button } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
+import './ReportMenu.css';
 
 export const MAXIMUM_EXPORTED_REPORTS = 2000;
 
@@ -14,6 +15,7 @@ function ReportMenu({
   label,
   count,
   downloadError,
+  setDownloadError,
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
@@ -49,10 +51,9 @@ function ReportMenu({
     }
   };
 
-  const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'width-tablet' : 'width-mobile'}`;
+  const menuClassNames = `tta-report-menu z-400 position-absolute left-0 ${downloadError ? 'desktop:width-tablet' : 'desktop:width-mobile'}`;
   return (
     <span className="position-relative">
-
       <button
         ref={menuButtonRef}
         type="button"
@@ -75,21 +76,35 @@ function ReportMenu({
         <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames}>
           <Container padding={2} className="margin-bottom-0">
             {downloadError && (
-              <Alert noIcon slim type="error" className="margin-bottom-3" role="alert">
+              <Alert
+                noIcon
+                slim
+                type="error"
+                className="margin-bottom-3 ttahub-report-menu-alert"
+                role="alert"
+                cta={(
+                  <Button
+                    autoFocus
+                    outline
+                    onClick={() => setDownloadError(false)}
+                  >
+                    Dismiss
+                  </Button>
+                )}
+              >
                 Sorry, something went wrong. Please try your request again.
                 <br />
                 You may export up to
-                {' '}
-                {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
-                {' '}
+                  {' '}
+                  {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                  {' '}
                 reports at a time.
-                {' '}
+                  {' '}
                 <br />
                 For assistance, please
                   {' '}
                 <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
                 .
-
               </Alert>
             )}
             {count > MAXIMUM_EXPORTED_REPORTS ? (
@@ -167,6 +182,7 @@ ReportMenu.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
+  setDownloadError: PropTypes.func.isRequired,
 };
 
 ReportMenu.defaultProps = {
