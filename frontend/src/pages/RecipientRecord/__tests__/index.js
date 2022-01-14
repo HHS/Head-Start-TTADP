@@ -8,15 +8,20 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import RecipientRecord from '../index';
 import { formatDateRange } from '../../../utils';
+import UserContext from '../../../UserContext';
+import { SCOPE_IDS } from '../../../Constants';
 
+const { ADMIN } = SCOPE_IDS;
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
-
 const memoryHistory = createMemoryHistory();
 
 describe('recipient record page', () => {
   const user = {
     id: 2,
     permissions: [
+      {
+        scopeId: ADMIN,
+      },
       {
         regionId: 45,
         userId: 2,
@@ -64,7 +69,9 @@ describe('recipient record page', () => {
 
     render(
       <Router history={history}>
-        <RecipientRecord user={user} match={match} />
+        <UserContext.Provider value={{ user }}>
+          <RecipientRecord user={user} match={match} />
+        </UserContext.Provider>
       </Router>,
     );
   }
@@ -135,7 +142,7 @@ describe('recipient record page', () => {
   it('navigates to the profile page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/profile');
-    act(() => renderRecipientRecord(memoryHistory));
+    act(() => renderRecipientRecord());
     const heading = await screen.findByRole('heading', { name: /recipient summary/i });
     expect(heading).toBeInTheDocument();
   });
@@ -143,7 +150,7 @@ describe('recipient record page', () => {
   it('navigates to the tta history page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
-    act(() => renderRecipientRecord(memoryHistory));
+    act(() => renderRecipientRecord());
     await waitFor(() => {
       const ar = screen.getByText(/the total number of approved activity reports\. click to visually reveal this information/i);
       expect(ar).toBeInTheDocument();

@@ -193,6 +193,7 @@ function MyAlerts(props) {
     message,
     isDownloadingAlerts,
     downloadAlertsError,
+    setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
   } = props;
@@ -275,6 +276,7 @@ function MyAlerts(props) {
             hidePagination
             isDownloading={isDownloadingAlerts}
             downloadError={downloadAlertsError}
+            setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
           />
@@ -329,6 +331,7 @@ MyAlerts.propTypes = {
   }),
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
+  setDownloadAlertsError: PropTypes.func.isRequired,
   downloadAllAlertsButtonRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
