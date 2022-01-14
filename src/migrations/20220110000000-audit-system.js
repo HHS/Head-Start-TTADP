@@ -871,8 +871,10 @@ module.exports = {
         .catch((error) => {
           console.error(error);
         });
-      syncronizer = 'Audit log';
-      console.log(syncronizer);
+
+      if (syncronizer != null) {
+        syncronizer = null;
+      }
     },
   )
     .catch((error) => {
