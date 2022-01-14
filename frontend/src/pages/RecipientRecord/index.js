@@ -7,11 +7,12 @@ import { Helmet } from 'react-helmet';
 import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
-
+import FeatureFlag from '../../components/FeatureFlag';
 import { HTTPError } from '../../fetchers';
 import './index.css';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
+import GoalsObjectives from './pages/GoalsObjectives';
 
 export default function RecipientRecord({ match, location }) {
   const { recipientId } = match.params;
@@ -112,6 +113,14 @@ export default function RecipientRecord({ match, location }) {
                   />
                 )}
               />
+              <FeatureFlag flag="recipient_goals_objectives">
+                <Route
+                  path="/recipient-tta-records/:recipientId/goals-objectives"
+                  render={() => (
+                    <GoalsObjectives />
+                  )}
+                />
+              </FeatureFlag>
             </Switch>
           </>
         )
