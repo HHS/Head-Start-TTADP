@@ -109,6 +109,18 @@ describe('Update grants and recipients', () => {
     expect(grantWithStateCode.stateCode).toEqual('CT');
   });
 
+  it('includes the annual funding month', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 11630 } });
+    // simulate updating an existing grant with null stateCode
+    await grant.update({ annualFundingMonth: null });
+    const grantWithNullAfm = await Grant.findOne({ where: { id: 11630 } });
+    expect(grantWithNullAfm.annualFundingMonth).toBeNull();
+    await processFiles();
+    const grantWithAfm = await Grant.findOne({ where: { id: 11630 } });
+    expect(grantWithAfm.annualFundingMonth).toEqual('February');
+  });
+
   it('handles nil states codes', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 10448 } });
