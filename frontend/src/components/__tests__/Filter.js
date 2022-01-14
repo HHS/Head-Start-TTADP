@@ -4,7 +4,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Filter, { filtersToQueryString } from '../Filter';
+import Filter from '../Filter';
+import { filtersToQueryString } from '../../utils';
 
 const RenderFilterItem = ({ applyFilters = () => { } }) => (
   <Filter applyFilters={applyFilters} />
@@ -159,7 +160,7 @@ describe('filtersToQueryString', () => {
     ];
 
     const queryString = filtersToQueryString(filters);
-    expect(queryString).toEqual('reportId.in[]=test');
+    expect(queryString).toEqual('reportId.ctn[]=test');
   });
 
   it('excludes within filters without a start and end date', () => {
@@ -169,7 +170,7 @@ describe('filtersToQueryString', () => {
     ];
 
     const queryString = filtersToQueryString(filters);
-    expect(queryString).toEqual('reportId.in[]=test');
+    expect(queryString).toEqual('reportId.ctn[]=test');
   });
 
   it('properly builds the query with no filters', () => {
@@ -184,6 +185,6 @@ describe('filtersToQueryString', () => {
     ];
 
     const queryString = filtersToQueryString(filters);
-    expect(queryString).toEqual('reportId.in[]=first&reportId.nin[]=second');
+    expect(queryString).toEqual('reportId.ctn[]=first&reportId.nctn[]=second');
   });
 });

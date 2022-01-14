@@ -1,30 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import DateRangeSelect, { formatDateRange } from '../DateRangeSelect';
+import DateRangeSelect from '../DateRangeSelect';
 import DatePicker from '../FilterDatePicker';
 import './FilterDateRange.css';
-
-/**
- * this date picker has bespoke date options
- */
-const DATE_OPTIONS = [
-  {
-    label: 'Year to Date',
-    value: 1,
-    range: formatDateRange({ yearToDate: true, forDateTime: true }),
-  },
-  {
-    label: 'Custom Date Range',
-    value: 2,
-    range: '',
-  },
-];
 
 export default function FilterDateRange({
   id,
   condition,
   query,
   onApplyDateRange,
+  options,
 }) {
   const onChange = (dateRange) => {
     onApplyDateRange(dateRange);
@@ -33,7 +18,7 @@ export default function FilterDateRange({
   if (condition === 'Is within') {
     return (
       <DateRangeSelect
-        options={DATE_OPTIONS}
+        options={options}
         updateDateRange={onApplyDateRange}
         styleAsSelect
         onChange={onChange}
@@ -67,5 +52,10 @@ FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]).isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+    range: PropTypes.string,
+  })).isRequired,
   id: PropTypes.string.isRequired,
 };

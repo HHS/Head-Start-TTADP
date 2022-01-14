@@ -136,14 +136,14 @@ export async function processFiles() {
     await Grant.bulkCreate(
       nonCdiGrants,
       {
-        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
+        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode'],
       },
     );
 
     await Grant.bulkCreate(
       cdiGrants,
       {
-        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
+        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode'],
       },
     );
 
