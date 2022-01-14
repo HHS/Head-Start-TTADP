@@ -37,6 +37,7 @@ export default function TableHeader({
   hidePagination,
   forMyAlerts,
   downloadError,
+  setDownloadError,
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
@@ -78,6 +79,7 @@ export default function TableHeader({
               onExportSelected={handleDownloadClick}
               count={count}
               downloadError={downloadError}
+              setDownloadError={setDownloadError}
               isDownloading={isDownloading}
               downloadAllButtonRef={downloadAllButtonRef}
               downloadSelectedButtonRef={downloadSelectedButtonRef}
@@ -137,6 +139,7 @@ TableHeader.propTypes = {
   handlePageChange: PropTypes.func,
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
+  setDownloadError: PropTypes.func,
   downloadError: PropTypes.bool,
   isDownloading: PropTypes.bool,
   downloadAllButtonRef: PropTypes.oneOfType([
@@ -166,6 +169,7 @@ TableHeader.defaultProps = {
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
+  setDownloadError: () => {},
   isDownloading: false,
   downloadAllButtonRef: () => {},
   downloadSelectedButtonRef: () => {},
