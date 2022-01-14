@@ -329,7 +329,7 @@ module.exports = {
         query: {
           allowNull: true,
           default: null,
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
         },
         ddl_timestamp: {
           allowNull: false,
