@@ -6,24 +6,33 @@ import {
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FeatureFlag from '../FeatureFlag';
+import UserContext from '../../UserContext';
+import { SCOPE_IDS } from '../../Constants';
 
-const history = createMemoryHistory();
+const { ADMIN } = SCOPE_IDS;
 
 describe('feature flag', () => {
+  const renderFeatureFlag = (flag, user, renderNotFound = false) => {
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <UserContext.Provider value={{ user }}>
+          <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
+            <h1>This is a test</h1>
+          </FeatureFlag>
+        </UserContext.Provider>
+      </Router>,
+    );
+  };
+
   it('shows content if the user has the flag', () => {
     const flag = 'tell_your_children';
     const user = {
-      flags: ['tell_your_children'],
+      flags: [flag],
+      permissions: [],
     };
-    render(
-      <Router history={history}>
-        <div>
-          <FeatureFlag admin={false} flag={flag} user={user}>
-            <h1>This is a test</h1>
-          </FeatureFlag>
-        </div>
-      </Router>,
-    );
+    renderFeatureFlag(flag, user);
 
     expect(screen.getByText('This is a test')).toBeVisible();
   });
@@ -32,16 +41,9 @@ describe('feature flag', () => {
     const flag = 'tell_your_children';
     const user = {
       flags: [],
+      permissions: [],
     };
-    render(
-      <Router history={history}>
-        <div>
-          <FeatureFlag admin={false} flag={flag} user={user}>
-            <h1>This is a test</h1>
-          </FeatureFlag>
-        </div>
-      </Router>,
-    );
+    renderFeatureFlag(flag, user);
 
     expect(document.querySelectorAll('h1').length).toBe(0);
   });
@@ -50,16 +52,13 @@ describe('feature flag', () => {
     const flag = 'tell_your_children';
     const user = {
       flags: [],
+      permissions: [
+        {
+          scopeId: ADMIN,
+        },
+      ],
     };
-    render(
-      <Router history={history}>
-        <div>
-          <FeatureFlag admin flag={flag} user={user}>
-            <h1>This is a test</h1>
-          </FeatureFlag>
-        </div>
-      </Router>,
-    );
+    renderFeatureFlag(flag, user);
 
     expect(screen.getByText('This is a test')).toBeVisible();
   });
@@ -68,16 +67,10 @@ describe('feature flag', () => {
     const flag = 'tell_your_children';
     const user = {
       flags: [],
+      permissions: [],
     };
-    render(
-      <Router history={history}>
-        <div>
-          <FeatureFlag admin={false} flag={flag} renderNotFound user={user}>
-            <h1>This is a test</h1>
-          </FeatureFlag>
-        </div>
-      </Router>,
-    );
+    const renderNotFound = true;
+    renderFeatureFlag(flag, user, renderNotFound);
     expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
   });
 });
