@@ -7,6 +7,12 @@ import {
 import userEvent from '@testing-library/user-event';
 import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
+import { FILTER_CONFIG } from '../constants';
+
+const selectedTopic = FILTER_CONFIG[0];
+const topicOptions = FILTER_CONFIG.map(({ id: filterId, display }) => (
+  <option key={filterId} value={filterId}>{display}</option>
+));
 
 describe('Filter menu item', () => {
   const renderFilterItem = (
@@ -56,6 +62,9 @@ describe('Filter menu item', () => {
           setErrors={setErrors}
           index={0}
           validate={validate}
+          key={filter.id}
+          topicOptions={topicOptions}
+          selectedTopic={selectedTopic}
         />
         <button type="button">BIG DUMB BUTTON</button>
       </div>,
@@ -123,42 +132,17 @@ describe('Filter menu item', () => {
     userEvent.click(button);
 
     userEvent.click(screen.getByRole('button', {
-      name: /select to view data from year to date\. select apply filters button to apply selection/i,
+      name: /Select to view data from Last 30 Days. Select Apply filters button to apply selection/i,
     }));
 
     userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
 
-    const yearToDate = formatDateRange({
-      yearToDate: true,
+    const lastThirtyDays = formatDateRange({
+      lastThirtyDays: true,
       forDateTime: true,
     });
 
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', yearToDate);
-  });
-
-  it('display a specialist filter correctly', () => {
-    const filter = {
-      topic: 'role',
-      condition: 'Is within',
-      query: ['Early Childhood Specialist'],
-      id: 'gibberish',
-    };
-    const onRemove = jest.fn();
-    const onUpdate = jest.fn();
-    renderFilterItem(filter, onRemove, onUpdate);
-
-    const button = screen.getByRole('button', { name: /toggle the change filter by specialists menu/i });
-    userEvent.click(button);
-
-    const apply = screen.getByRole('button', { name: /apply filters for the change filter by specialists menu/i });
-    userEvent.click(apply);
-    expect(onUpdate).toHaveBeenCalled();
-
-    userEvent.click(screen.getByRole('button', {
-      name: /remove Specialist Is within Early Childhood Specialist filter. click apply filters to make your changes/i,
-    }));
-
-    expect(onRemove).toHaveBeenCalled();
+    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', lastThirtyDays);
   });
 
   it('validates topic', async () => {
