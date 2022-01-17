@@ -200,7 +200,6 @@ module.exports = {
                 CREATED_BY bigint;
                 TRANSACTION_ID uuid;
                 DESCRIPTOR_ID int;
-                v1 text;
               BEGIN
                 CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
 
@@ -214,17 +213,11 @@ module.exports = {
                 IF ( DESCRIPTOR_ID = "ZAFDescriptorToID"('ARCHIVE AUDIT LOG') ) THEN
                   RAISE NOTICE 'Archive Data: %% by %%', %L, CREATED_BY;
 
-                  SELECT query
-                  INTO v1
-                  FROM pg_stat_activity
-                  WHERE pid=pg_backend_pid();
-
                   INSERT INTO "ZALDDL" (
                     command_tag,
                     object_type,
                     schema_name,
                     object_identity,
-                    query,
                     ddl_timestamp,
                     ddl_by,
                     ddl_txid,
@@ -234,7 +227,6 @@ module.exports = {
                     'AUDIT LOG TABLE',
                     'ttasmarthub',
                     %L,
-                    v1,
                     CURRENT_TIMESTAMP,
                     CREATED_BY,
                     TRANSACTION_ID,
@@ -326,11 +318,6 @@ module.exports = {
           default: null,
           type: Sequelize.STRING,
         },
-        query: {
-          allowNull: true,
-          default: null,
-          type: Sequelize.TEXT,
-        },
         ddl_timestamp: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -369,7 +356,6 @@ module.exports = {
             CREATED_BY BIGINT;
             TRANSACTION_ID UUID;
             DESCRIPTOR_ID INT;
-            v1 text;
             --is_superuser bool = false;
             r RECORD;
         BEGIN
@@ -387,18 +373,12 @@ module.exports = {
             DESCRIPTOR_ID := "ZAFDescriptorToID"(
                 NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
 
-            SELECT query
-            INTO v1
-            FROM pg_stat_activity
-            WHERE pid=pg_backend_pid();
-
             FOR r IN SELECT * FROM pg_event_trigger_ddl_commands() LOOP
               INSERT INTO "ZALDDL" (
                 command_tag,
                 object_type,
                 schema_name,
                 object_identity,
-                query,
                 ddl_timestamp,
                 ddl_by,
                 ddl_txid,
@@ -408,7 +388,6 @@ module.exports = {
                 r.object_type,
                 r.schema_name,
                 r.object_identity,
-                v1,
                 CURRENT_TIMESTAMP,
                 CREATED_BY,
                 TRANSACTION_ID,
@@ -671,7 +650,6 @@ module.exports = {
                 CREATED_BY bigint;
                 TRANSACTION_ID uuid;
                 DESCRIPTOR_ID int;
-                v1 TEXT;
               BEGIN
                 CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
 
@@ -682,17 +660,20 @@ module.exports = {
                 DESCRIPTOR_ID := "ZAFDescriptorToID"(
                     NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
 
-                SELECT query
-                INTO v1
-                FROM pg_stat_activity
-                WHERE pid=pg_backend_pid();
+                RAISE NOTICE 'command_tag: %%','TRUNCATE';
+                RAISE NOTICE 'object_type: %%','TABLE';
+                RAISE NOTICE 'schema_name: %%','ttasmarthub';
+                RAISE NOTICE 'object_identity: %%',%L;
+                RAISE NOTICE 'ddl_timestamp: %%',CURRENT_TIMESTAMP;
+                RAISE NOTICE 'ddl_by: %%',CREATED_BY;
+                RAISE NOTICE 'ddl_txid: %%',TRANSACTION_ID;
+                RAISE NOTICE 'descriptor_id: %%',DESCRIPTOR_ID;
 
                 INSERT INTO "ZALDDL" (
                   command_tag,
                   object_type,
                   schema_name,
                   object_identity,
-                  query,
                   ddl_timestamp,
                   ddl_by,
                   ddl_txid,
@@ -702,7 +683,6 @@ module.exports = {
                   'TABLE',
                   'ttasmarthub',
                   %L,
-                  v1,
                   CURRENT_TIMESTAMP,
                   CREATED_BY,
                   TRANSACTION_ID,
@@ -710,6 +690,7 @@ module.exports = {
               END;
               $body$;$sql$,
               'ZALTruncateF' || t_name,
+              t_name,
               t_name);
 
           EXECUTE format($sql$
@@ -797,6 +778,7 @@ module.exports = {
           AND table_type='BASE TABLE'
           AND table_catalog='ttasmarthub'
           AND table_name != 'SequelizeMeta'
+          AND table_name != 'RequestErrors'
           AND table_name NOT LIKE 'ZAL%';`,
         { transaction },
       )
