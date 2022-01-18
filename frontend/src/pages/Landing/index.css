@@ -116,9 +116,6 @@ h1.landing {
   min-width: auto;
 }
 
-.landing .usa-table .usa-checkbox__label {
-  padding-left: 0;
-}
 .landing .usa-table .usa-checkbox__label::before{
   position: relative;
 }
