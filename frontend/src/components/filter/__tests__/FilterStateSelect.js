@@ -102,7 +102,7 @@ describe('FilterStateSelect', () => {
     const select = await findByText(/Select state to filter by/i);
     await selectEvent.select(select, ['GU']);
     const options = document.querySelectorAll('div[class$="-option"]');
-    expect(options.length).toBe(55);
+    expect(options.length).toBe(59);
     expect(onApply).toHaveBeenCalledWith(['GU']);
   });
 });
