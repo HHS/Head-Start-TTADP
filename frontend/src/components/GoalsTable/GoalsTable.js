@@ -11,14 +11,31 @@ import GoalRow from './GoalRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import './GoalTable.css';
 
-const emptyGoal = {
+const emptyGoals = [{
   id: 0,
   goalStatus: 'In progress',
   createdOn: '06/15/2021',
   goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR. (R14-G-4598)',
   goalTopics: 'Human Resources, Safety Practices, Program Planning and Services',
+  objectives: 5,
+},
+{
+  id: 1,
+  goalStatus: 'In progress',
+  createdOn: '01/15/2021',
+  goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR. (R14-G-4598)',
+  goalTopics: 'Human Resources, Safety Practices, Program Planning and Services',
   objectives: 2,
-};
+},
+{
+  id: 2,
+  goalStatus: 'Not started',
+  createdOn: '10/15/2021',
+  goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR. (R14-G-4598)',
+  goalTopics: 'Compliance',
+  objectives: 4,
+},
+];
 
 function GoalsTable({
   filters,
@@ -124,7 +141,7 @@ function GoalsTable({
     );
   };
 
-  const displayGoals = goals.length ? goals : [emptyGoal];
+  const displayGoals = goals.length ? goals : emptyGoals;
 
   return (
     <>
@@ -147,8 +164,8 @@ function GoalsTable({
           handlePageChange={handlePageChange}
           hideMenu
         />
-        <div className="usa-table-container--scrollable">
-          <Table fullWidth striped>
+        <div className="usa-table-container">
+          <Table className="goals-table-content" fullWidth>
             <caption className="usa-sr-only">
               TTA goals and objectives with sorting and pagination
             </caption>
