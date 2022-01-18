@@ -1,7 +1,8 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
 import UserContext from '../../UserContext';
+import { getStateCodes } from '../../fetchers/users';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 
 const ALL_STATES = [
@@ -22,29 +23,50 @@ export default function FilterStateSelect({
   query,
 }) {
   const { user } = useContext(UserContext);
+  const [stateCodes, setStateCodes] = useState([]);
 
-  const stateCodes = useMemo(() => {
-    const allowedRegions = allRegionsUserHasPermissionTo(user);
+  useEffect(() => {
+    async function fetchStateCodes() {
+      const allowedRegions = allRegionsUserHasPermissionTo(user);
 
-    if (allowedRegions.includes(11) || allowedRegions.includes(12)) {
-      return ALL_STATES.flat().sort();
+      let codes = [];
+
+      if (allowedRegions.includes(11) || allowedRegions.includes(12)) {
+        try {
+          codes = await getStateCodes();
+        } catch (err) {
+          codes = ALL_STATES.flat();
+        }
+      }
+
+      codes = [...codes, ...Array.from(
+        new Set(
+          allowedRegions.reduce(
+            (acc, curr) => {
+              if (curr === 11 || curr === 12) {
+                // we've already handled these in the fetch above
+                return acc;
+              }
+
+              if (!ALL_STATES[curr - 1]) {
+                return acc;
+              }
+              return [...acc, ...ALL_STATES[curr - 1]];
+            }, [],
+          ),
+        ),
+      )];
+
+      codes.sort();
+
+      setStateCodes(codes);
     }
 
-    const codes = Array.from(
-      new Set(
-        allowedRegions.reduce(
-          (acc, curr) => {
-            if (!ALL_STATES[curr - 1]) {
-              return acc;
-            }
-            return [...acc, ...ALL_STATES[curr - 1]];
-          }, [],
-        ),
-      ),
-    );
-
-    return codes.sort();
-  }, [user]);
+    // we're only fetching these once
+    if (!stateCodes.length) {
+      fetchStateCodes();
+    }
+  }, [stateCodes, user]);
 
   const options = stateCodes.map((label, value) => ({
     value, label,
