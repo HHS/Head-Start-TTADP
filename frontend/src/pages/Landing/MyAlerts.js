@@ -194,6 +194,7 @@ function MyAlerts(props) {
     showFilter,
     isDownloadingAlerts,
     downloadAlertsError,
+    setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
   } = props;
@@ -247,12 +248,12 @@ function MyAlerts(props) {
     <>
       {reports && reports.length === 0 && (
         <Container className="landing" padding={0} loading={loading}>
-          <div id="caughtUp">
+          <div className="text-center padding-10">
             <div>
               <h2>You&apos;re all caught up!</h2>
             </div>
             {newBtn && (
-              <p id="beginNew">
+              <p className="padding-bottom-2">
                 Would you like to begin a new activity report?
               </p>
             )}
@@ -277,6 +278,7 @@ function MyAlerts(props) {
             hidePagination
             isDownloading={isDownloadingAlerts}
             downloadError={downloadAlertsError}
+            setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
           />
@@ -332,6 +334,7 @@ MyAlerts.propTypes = {
   showFilter: PropTypes.bool.isRequired,
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
+  setDownloadAlertsError: PropTypes.func.isRequired,
   downloadAllAlertsButtonRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),

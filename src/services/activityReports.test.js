@@ -634,7 +634,7 @@ describe('Activity Reports DB service', () => {
     });
 
     it('retrieves reports with default sort by updatedAt', async () => {
-      const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nin': idsToExclude });
+      const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude });
       expect(rows.length).toBe(5);
       expect(count).toBeDefined();
       expect(rows[0].id).toBe(latestReport.id);
@@ -644,7 +644,7 @@ describe('Activity Reports DB service', () => {
       reportObject.userId = mockUserTwo.id;
 
       const { rows } = await activityReports({
-        sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2, 'region.in': ['1'], 'reportId.nin': idsToExclude,
+        sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
       });
       expect(rows.length).toBe(2);
       expect(rows[0].author.name).toBe(mockUser.name);
@@ -654,7 +654,7 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports({
-        sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nin': idsToExclude,
+        sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
       });
       expect(rows.length).toBe(5);
       expect(rows[0].collaborators[0].name).toBe(mockUser.name);
@@ -664,7 +664,7 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create({ ...reportObject, regionId: 1 });
 
       const { rows } = await activityReports({
-        sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
+        sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
       });
       expect(rows.length).toBe(6);
       expect(rows[0].regionId).toBe(2);
@@ -672,7 +672,7 @@ describe('Activity Reports DB service', () => {
 
     it('retrieves reports sorted by activity recipients', async () => {
       const { rows } = await activityReports({
-        sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
+        sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
       });
       expect(rows.length).toBe(6);
       expect(rows[0].activityRecipients[0].grantId).toBe(firstGrant.id);
@@ -683,7 +683,7 @@ describe('Activity Reports DB service', () => {
       await ActivityReport.create(reportObject);
 
       const { rows } = await activityReports({
-        sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nin': idsToExclude,
+        sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
       });
       expect(rows.length).toBe(6);
       expect(rows[0].sortedTopics[0]).toBe('topic a');
@@ -765,8 +765,11 @@ describe('Activity Reports DB service', () => {
       const ids = rows.map((row) => row.id);
       expect(ids).toContain(legacyReport.id);
 
-      const secondResult = await getDownloadableActivityReportsByIds([14],
-        { report: [legacyReport.id] }, true);
+      const secondResult = await getDownloadableActivityReportsByIds(
+        [14],
+        { report: [legacyReport.id] },
+        true,
+      );
 
       expect(secondResult.rows.length).toEqual(1);
       expect(secondResult.rows[0].id).toEqual(legacyReport.id);
@@ -842,8 +845,10 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReportsByIds([1],
-        { report: [report.id, legacyReport.id] });
+      const result = await getDownloadableActivityReportsByIds(
+        [1],
+        { report: [report.id, legacyReport.id] },
+      );
 
       const { rows } = result;
 
@@ -858,8 +863,10 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReportsByIds([1],
-        { report: [report.id, 'invalidIdentifier'] });
+      const result = await getDownloadableActivityReportsByIds(
+        [1],
+        { report: [report.id, 'invalidIdentifier'] },
+      );
       const { rows } = result;
 
       expect(rows.length).toEqual(1);

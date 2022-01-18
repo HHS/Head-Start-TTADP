@@ -12,31 +12,39 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
   });
 
   const objectiveIds = reportObjectives.map((reportObjective) => reportObjective.objectiveId);
-  await ActivityReportObjective.destroy({
-    where: {
-      activityReportId: report.id,
+  await ActivityReportObjective.destroy(
+    {
+      where: {
+        activityReportId: report.id,
+      },
     },
-  },
-  { transaction });
+    { transaction },
+  );
 
-  await Objective.destroy({
-    where: {
-      id: objectiveIds,
+  await Objective.destroy(
+    {
+      where: {
+        id: objectiveIds,
+      },
     },
-  },
-  { transaction });
+    { transaction },
+  );
 
   return Promise.all(objectives.map(async (objective) => {
     const { status, title, ttaProvided } = objective;
 
-    const createdObjective = await Objective.create(
-      { title, ttaProvided, status }, { transaction },
-    );
+    const createdObjective = await Objective.create({
+      title,
+      ttaProvided,
+      status,
+    }, { transaction });
 
-    return ActivityReportObjective.create({
-      objectiveId: createdObjective.id,
-      activityReportId: report.id,
-    },
-    { transaction });
+    return ActivityReportObjective.create(
+      {
+        objectiveId: createdObjective.id,
+        activityReportId: report.id,
+      },
+      { transaction },
+    );
   }));
 }
