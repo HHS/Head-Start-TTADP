@@ -19,8 +19,6 @@ import AriaLiveContext from '../../AriaLiveContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
