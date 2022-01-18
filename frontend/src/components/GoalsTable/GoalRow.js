@@ -7,8 +7,8 @@ import {
   faClock, faCheckCircle, faExclamationCircle, faPencilAlt, faMinusCircle, faTimesCircle, faFlag,
 } from '@fortawesome/free-solid-svg-icons';
 import ContextMenu from '../ContextMenu';
-// import TooltipWithCollection from '../TooltipWithCollection';
-// import Tooltip from '../Tooltip';
+//import TooltipWithCollection from '../TooltipWithCollection';
+import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import './GoalRow.css';
@@ -93,10 +93,23 @@ function GoalRow({
   const determineFlagStatus = (goalReasons) => {
     const reasonsToWatch = goalReasons.filter((t) => reasonsToMonitor.includes(t));
     if (reasonsToWatch && reasonsToWatch.length > 0) {
-      return <FontAwesomeIcon className="margin-left-1"  size="16px" color="#d42240" icon={faFlag} />;
+      return <FontAwesomeIcon className="margin-left-1" size="16px" color="#d42240" icon={faFlag} />;
     }
     return null;
   };
+
+  let showToolTip = false;
+  const truncateGoalTopics = (goalTopicsToTruncate) => {
+    let queryToReturn = goalTopicsToTruncate.join(', ');
+    if (queryToReturn.length > 60) {
+      queryToReturn = queryToReturn.substring(0, 60);
+      queryToReturn += '...';
+      showToolTip = true;
+    }
+    return queryToReturn;
+  };
+
+  const displayGoalTopics = truncateGoalTopics(goalTopics);
 
   return (
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`goal_row_${id}`}>
@@ -113,7 +126,21 @@ function GoalRow({
         )
         {determineFlagStatus(reasons)}
       </td>
-      <td className="text-wrap maxw-mobile">{goalTopics.join(', ')}</td>
+      <td className="text-wrap maxw-mobile">
+        {
+            showToolTip
+              ? (
+                <Tooltip
+                  displayText={displayGoalTopics}
+                  screenReadDisplayText={false}
+                  buttonLabel={`Click to reveal topics for goal ${goalNumber}`}
+                  tooltipText={goalTopics.join(', ')}
+                  hideUnderline
+                />
+              )
+              : displayGoalTopics
+          }
+      </td>
       <td>
         <strong>{objectives}</strong>
         {' '}
