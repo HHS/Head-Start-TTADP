@@ -40,7 +40,7 @@ export default function TTAHistory({
     ...expandFilters(filters),
     {
       topic: 'region',
-      condition: 'Contains',
+      condition: 'Is',
       query: regionId,
     },
     {

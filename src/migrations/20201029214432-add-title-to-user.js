@@ -36,7 +36,8 @@ module.exports = {
       ),
       queryInterface.changeColumn(
         'Users',
-        'email', {
+        'email',
+        {
           type: Sequelize.STRING,
           unique: true,
         },
@@ -54,7 +55,8 @@ module.exports = {
       }),
       queryInterface.changeColumn(
         'Users',
-        'email', {
+        'email',
+        {
           type: Sequelize.STRING,
           unique: false,
         },

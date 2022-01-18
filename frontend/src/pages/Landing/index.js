@@ -33,6 +33,11 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import { formatDateRange } from '../../components/DateRangeSelect';
 
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
+
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
   const offsetTo = perPage * activePage;
@@ -49,17 +54,30 @@ function Landing({ user }) {
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const hasMultipleRegions = regions && regions.length > 1;
 
   const [filters, setFilters] = useUrlFilters(
     defaultRegion !== 14
       && defaultRegion !== 0
+      && hasMultipleRegions
       ? [{
         id: uuidv4(),
         topic: 'region',
-        condition: 'Contains',
+        condition: 'Is',
         query: defaultRegion,
       },
-      ] : [],
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }]
+      : [{
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }],
   );
 
   const history = useHistory();
@@ -174,7 +192,15 @@ function Landing({ user }) {
     );
   }
 
-  const regionLabel = appliedRegionNumber === null || appliedRegionNumber === 14 ? 'All regions' : `Region ${appliedRegionNumber.toString()}`;
+  const regionLabel = () => {
+    if (defaultRegion === 14) {
+      return 'All regions';
+    }
+    if (defaultRegion > 0) {
+      return `Region ${defaultRegion.toString()}`;
+    }
+    return '';
+  };
 
   // Apply filters.
   const onApply = (newFilters) => {
@@ -206,6 +232,26 @@ function Landing({ user }) {
       range: '',
     },
   ];
+
+  const getAllowedFilters = () => {
+    const allowedFilters = [
+      'startDate',
+      'grantNumber',
+      'programSpecialist',
+      'programType',
+      'reason',
+      'recipient',
+      'reportId',
+      'role',
+      'targetPopulations',
+      'topic',
+    ];
+    if (hasMultipleRegions) {
+      allowedFilters.push('region');
+    }
+    return allowedFilters;
+  };
+
   return (
     <>
       <Helmet>
@@ -235,7 +281,7 @@ function Landing({ user }) {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">{`Activity reports - ${regionLabel}`}</h1>
+            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
           </Grid>
           <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
@@ -244,16 +290,15 @@ function Landing({ user }) {
               && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
-          <Grid col={10} className="flex-align-self-center">
-            <div className="display-flex flex-wrap margin-bottom-2">
-              <FilterPanel
-                applyButtonAria="apply filters for activity reports"
-                filters={filters}
-                onApplyFilters={onApply}
-                dateRangeOptions={dateRangeOptions}
-                onRemoveFilter={onRemoveFilter}
-              />
-            </div>
+          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+            <FilterPanel
+              applyButtonAria="apply filters for activity reports"
+              filters={filters}
+              onApplyFilters={onApply}
+              dateRangeOptions={dateRangeOptions}
+              onRemoveFilter={onRemoveFilter}
+              allowedFilters={getAllowedFilters()}
+            />
           </Grid>
         </Grid>
         <Grid row gap className="smart-hub--overview">
@@ -287,6 +332,7 @@ function Landing({ user }) {
           message={message}
           isDownloadingAlerts={isDownloadingAlerts}
           downloadAlertsError={downloadAlertsError}
+          setDownloadAlertsError={setDownloadAlertsError}
           downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
         <ActivityReportsTable
