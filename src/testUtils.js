@@ -152,16 +152,6 @@ export async function destroyReport(report) {
     },
   });
 
-  try {
-    User.destroy({
-      where: {
-        id: dbReport.userId,
-      },
-    });
-  } catch (error) {
-    // ignore fk errors
-  }
-
   const destroys = dbReport.activityRecipients.map(async (recipient) => {
     const grant = await Grant.findByPk(recipient.grantId);
 
