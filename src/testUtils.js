@@ -172,17 +172,27 @@ export async function destroyReport(report) {
         },
       });
 
-      await Grant.destroy({
-        where: {
-          id: grant.id,
-        },
-      });
+      await ActivityRecipient.findAll({ where: { grantId: grant.id } })
+        .then(async (results) => {
+          if (results.length === 0) {
+            await Grant.destroy({
+              where: {
+                id: grant.id,
+              },
+            });
+          }
+        });
 
-      await Recipient.destroy({
-        where: {
-          id: grant.recipientId,
-        },
-      });
+      await Grant.findAll({ where: { recipientId: grant.recipientId } })
+        .then(async (results) => {
+          if (results.length === 0) {
+            await Recipient.destroy({
+              where: {
+                id: grant.recipientId,
+              },
+            });
+          }
+        });
     } catch (e) {
       // ignore fk errors
     }
@@ -194,12 +204,33 @@ export async function destroyReport(report) {
       id: report.id,
     },
   });
+
   try {
-    await Region.destroy({
-      where: {
-        id: report.regionId,
-      },
-    });
+    await ActivityReport.findAll({ where: { userId: dbReport.userId } })
+      .then(async (results) => {
+        if (results.length === 0) {
+          await User.destroy({
+            where: {
+              id: dbReport.userId,
+            },
+          });
+        }
+      });
+  } catch (error) {
+    // ignore fk errors
+  }
+
+  try {
+    await ActivityReport.findAll({ where: { regionId: report.regionId } })
+      .then(async (results) => {
+        if (results.length === 0) {
+          await Region.destroy({
+            where: {
+              id: report.regionId,
+            },
+          });
+        }
+      });
   } catch (e) {
     // ignore fk errors
   }
