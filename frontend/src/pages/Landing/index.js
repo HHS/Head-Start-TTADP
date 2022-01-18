@@ -243,6 +243,7 @@ function Landing({ user }) {
       'recipient',
       'reportId',
       'role',
+      'stateCode',
       'targetPopulations',
       'topic',
     ];

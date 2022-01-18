@@ -5,16 +5,28 @@ import UserContext from '../../UserContext';
 import { getStateCodes } from '../../fetchers/users';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 
+// List of states, by region
+// see: https://www.acf.hhs.gov/oro/regional-offices
 const ALL_STATES = [
+  // Region 1 States
   ['MA', 'ME', 'CT', 'RI', 'VT', 'NH'],
+  // Region 2 States
   ['NY', 'NJ', 'PR'],
-  ['PA', 'WV', 'MD', 'DE', 'VA'],
+  // Region 3 States
+  ['PA', 'WV', 'MD', 'DE', 'VA', 'DC'],
+  // Region 4 States
   ['KY', 'TN', 'NC', 'AL', 'MS', 'GA', 'SC', 'FL'],
+  // Region 5 States
   ['MN', 'WI', 'IL', 'IN', 'MI', 'OH'],
+  // Region 6 States
   ['NM', 'OK', 'AR', 'TX', 'LA'],
+  // Region 7 States
   ['NE', 'IA', 'KS', 'MO'],
+  // Region 8 States
   ['MT', 'ND', 'SD', 'WY', 'UT', 'CO'],
-  ['NV', 'CA', 'AZ', 'HI', 'GU', 'AS', 'VI', 'MP'],
+  // Region 9 States
+  ['NV', 'CA', 'AZ', 'HI', 'GU', 'AS', 'VI', 'MP', 'FM', 'MH', 'PW'],
+  // 'Region 10 States
   ['WA', 'OR', 'ID', 'AK'],
 ];
 export default function FilterStateSelect({
@@ -31,6 +43,8 @@ export default function FilterStateSelect({
 
       let codes = [];
 
+      // if we've permissions in region 11 or 12, we have to manually
+      // build the list of state codes for our user
       if (allowedRegions.includes(11) || allowedRegions.includes(12)) {
         try {
           codes = await getStateCodes();
@@ -39,6 +53,8 @@ export default function FilterStateSelect({
         }
       }
 
+      // and then, just in case they have permissions to other regions,
+      // we loop through and add to the list
       codes = [...codes, ...Array.from(
         new Set(
           allowedRegions.reduce(
@@ -57,9 +73,11 @@ export default function FilterStateSelect({
         ),
       )];
 
-      codes.sort();
+      // de-dupe state codes
+      codes = Array.from(new Set(codes));
 
-      setStateCodes(codes);
+      // return list sorted alphabetically
+      setStateCodes(codes.sort());
     }
 
     // we're only fetching these once
