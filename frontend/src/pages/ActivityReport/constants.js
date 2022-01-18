@@ -20,6 +20,12 @@ export const reasons = [
   'Monitoring | Deficiency',
 ];
 
+export const reasonsToMonitor = [
+  'Monitoring | Deficiency',
+  'Monitoring | Noncompliance',
+  'Monitoring | Area of Concern',
+];
+
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
