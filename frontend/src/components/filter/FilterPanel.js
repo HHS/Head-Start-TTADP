@@ -6,6 +6,9 @@ import { formatDateRange } from '../DateRangeSelect';
 import { filterProp } from './props';
 import { AVAILABLE_FILTERS } from './constants';
 
+// The allowed filters prop that's passed into the filtermenu is representative of
+// the "id" values of the FILTER_CONFIG object in constants
+// for them to be used here, they have to be defined there
 export default function FilterPanel(props) {
   const { onRemoveFilter, filters } = props;
 

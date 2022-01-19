@@ -2,10 +2,12 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const topicFilter = `
-SELECT "Objectives"."goalId" FROM "ActivityReportObjectives" 
-INNER JOIN "Objectives" on "ActivityReportObjectives"."objectiveId" = "Objectives"."id" 
-INNER JOIN "ActivityReports" ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
-WHERE ARRAY_TO_STRING("ActivityReports"."topics", ',')`; // ~* var topics
+SELECT DISTINCT g.id
+FROM "ActivityReports" ar
+INNER JOIN "ActivityReportObjectives" aro ON ar."id" = aro."activityReportId"
+INNER JOIN "Objectives" o ON aro."objectiveId" = o.id
+INNER JOIN "Goals" g ON o."goalId" = g.id
+WHERE ARRAY_TO_STRING(ar."topics", ',')`;
 
 export function withTopics(topics) {
   return {
