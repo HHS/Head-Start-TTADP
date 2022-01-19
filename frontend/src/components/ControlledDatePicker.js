@@ -82,8 +82,12 @@ export default function ControlledDatePicker({
       const isBeforeMax = max.compare.isBefore(newDate);
       if (isBeforeMax) {
         const diff = max.compare.diff(currentDate, 'days');
-        const newEnd = newDate.add(diff, 'days').format(DATE_DISPLAY_FORMAT);
-        setEndDate(newEnd);
+        const newEnd = newDate.add(diff, 'days');
+        if (newEnd.isAfter(moment())) {
+          setEndDate(moment().format(DATE_DISPLAY_FORMAT));
+        } else {
+          setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
+        }
       }
     }
     onChange(d);
