@@ -5,7 +5,6 @@ import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
-  IS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -197,7 +196,7 @@ export const FILTER_CONFIG = [
   {
     id: 'stateCode',
     display: 'State',
-    conditions: [IS],
+    conditions: ['Contains'],
     defaultValues: EMPTY_MULTI_SELECT,
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
