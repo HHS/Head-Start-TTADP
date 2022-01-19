@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 
 function NewReport() {
