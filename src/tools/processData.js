@@ -6,7 +6,7 @@ import sequelize, { Op } from 'sequelize';
 import cheerio from 'cheerio';
 import faker from 'faker';
 import {
-  ActivityReport, User, Grantee, Grant, File, Permission,
+  ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors,
 } from '../models';
 
 const SITE_ACCESS = 1;
@@ -16,7 +16,7 @@ const READ_REPORTS = 4;
 const APPROVE_REPORTS = 5;
 
 /**
- * processData script replaces user names, emails, grantee and grant information,
+ * processData script replaces user names, emails, recipient and grant information,
  * file names as well as certain html fields with generated data while preserving
  * existing relationships and non-PII data.
  *
@@ -25,7 +25,7 @@ const APPROVE_REPORTS = 5;
 
 let realUsers = [];
 let transformedUsers = [];
-let transformedGrantees = [];
+let transformedRecipients = [];
 let realGrants = [];
 let transformedGrants = [];
 const hsesUsers = [
@@ -94,7 +94,7 @@ const processHtml = async (input) => {
 };
 
 const convertEmails = (emails) => {
-  if (emails === null) {
+  if (!emails) {
     return emails;
   }
   const emailsArray = emails.split(', ');
@@ -105,10 +105,36 @@ const convertEmails = (emails) => {
       const foundTransformedUser = transformedUsers.find((user) => user.id === userId);
       return foundTransformedUser ? foundTransformedUser.email : '';
     }
-    return '';
+    return emails.includes('@') ? faker.internet.email() : '';
   });
 
   return convertedEmails.join(', ');
+};
+
+const convertName = (name, email) => {
+  if (!name) {
+    return { name, email };
+  }
+  const additionalId = 99999;
+  let foundUser = realUsers.find((user) => user.email === email);
+
+  // Not all program specialists or grant specialist are in the Hub yet
+  // Add it to the realUsers
+  if (!foundUser && email.includes('@')) {
+    foundUser = { id: additionalId + 1, name, email };
+    realUsers.push(foundUser);
+  }
+
+  let foundTransformedUser = transformedUsers.find((user) => user.id === foundUser.id);
+  if (!foundTransformedUser) {
+    foundTransformedUser = {
+      id: foundUser.id,
+      name: faker.name.findName(),
+      email: faker.internet.email(),
+    };
+    transformedUsers.push(foundTransformedUser);
+  }
+  return foundTransformedUser;
 };
 
 const convertFileName = (fileName) => {
@@ -119,48 +145,48 @@ const convertFileName = (fileName) => {
   return `${faker.system.fileName()}${extension}`;
 };
 
-const convertGranteeName = (granteesGrants) => {
-  if (granteesGrants === null) {
-    return granteesGrants;
+const convertRecipientName = (recipientsGrants) => {
+  if (recipientsGrants === null) {
+    return recipientsGrants;
   }
 
-  const granteeGrantsArray = granteesGrants ? granteesGrants.split('\n') : [];
+  const recipientGrantsArray = recipientsGrants ? recipientsGrants.split('\n') : [];
 
-  const convertedGranteesGrants = granteeGrantsArray.map((granteeGrant) => {
-    const granteeGrantArray = granteeGrant.split('|');
-    const grant = granteeGrantArray.length > 1 ? granteeGrantArray[1].trim() : 'Missing Grant';
+  const convertedRecipientsGrants = recipientGrantsArray.map((recipientGrant) => {
+    const recipientGrantArray = recipientGrant.split('|');
+    const grant = recipientGrantArray.length > 1 ? recipientGrantArray[1].trim() : 'Missing Grant';
 
     const foundGrant = realGrants.find((g) => g.number === grant);
-    // get ids of real grants and grantees;
-    const granteeId = foundGrant ? foundGrant.granteeId : null;
+    // get ids of real grants and recipients;
+    const recipientId = foundGrant ? foundGrant.recipientId : null;
     const grantId = foundGrant ? foundGrant.id : null;
-    // find corresponding transformed grants and grantees
-    const foundTransformedGrantee = transformedGrantees.find((g) => g.id === granteeId);
+    // find corresponding transformed grants and recipients
+    const foundTransformedRecipient = transformedRecipients.find((g) => g.id === recipientId);
     const foundTransformedGrant = transformedGrants.find((g) => g.id === grantId);
 
-    const transformedGranteeName = foundTransformedGrantee ? foundTransformedGrantee.name : 'Unknown Grantee';
+    const transformedRecipientName = foundTransformedRecipient ? foundTransformedRecipient.name : 'Unknown Recipient';
     const transformedGrantNumber = foundTransformedGrant ? foundTransformedGrant.number : 'UnknownGrant';
-    return `${transformedGranteeName} | ${transformedGrantNumber}`;
+    return `${transformedRecipientName} | ${transformedGrantNumber}`;
   });
 
-  return convertedGranteesGrants.join('\n');
+  return convertedRecipientsGrants.join('\n');
 };
 
 export const hideUsers = async (userIds) => {
   const ids = userIds || null;
   const where = ids ? { id: ids } : {};
   // save real users
-  realUsers = await User.findAll({
-    attributes: ['id', 'email'],
+  realUsers = (await User.findAll({
+    attributes: ['id', 'email', 'name'],
     where,
-  }).map((u) => u.dataValues);
+  })).map((u) => u.dataValues);
 
   const users = await User.findAll({
     where,
   });
   const promises = [];
   // loop through the found users
-  for await (const user of users) {
+  for (const user of users) {
     promises.push(
       user.update({
         hsesUsername: faker.internet.email(),
@@ -173,30 +199,32 @@ export const hideUsers = async (userIds) => {
 
   await Promise.all(promises);
   // Retrieve transformed users
-  transformedUsers = await User.findAll({
-    attributes: ['id', 'email'],
-  }).map((u) => u.dataValues);
+  transformedUsers = (await User.findAll({
+    attributes: ['id', 'email', 'name'],
+  })).map((u) => u.dataValues);
 };
 
-export const hideGranteesGrants = async (granteesGrants) => {
-  realGrants = await Grant.findAll({
-    attributes: ['id', 'granteeId', 'number'],
-  }).map((g) => g.dataValues);
+export const hideRecipientsGrants = async (recipientsGrants) => {
+  realGrants = (await Grant.findAll({
+    attributes: ['id', 'recipientId', 'number'],
+  })).map((g) => g.dataValues);
 
-  const granteesArray = granteesGrants ? granteesGrants.split('\n').map((el) => el.split('|')[0].trim()) : null;
-  const grantsArray = (granteesArray && granteesArray.length > 1) ? granteesGrants.split('\n').map((el) => el.split('|')[1].trim()) : null;
-  const granteeWhere = granteesArray ? { name: { [Op.like]: { [Op.any]: granteesArray } } } : {};
+  const recipientsArray = recipientsGrants ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim()) : null;
+  const grantsArray = (recipientsArray && recipientsArray.length > 1) ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim()) : null;
+  const recipientWhere = recipientsArray
+    ? { name: { [Op.like]: { [Op.any]: recipientsArray } } }
+    : {};
   const grantWhere = grantsArray ? { number: { [Op.like]: { [Op.any]: grantsArray } } } : {};
-  const grantees = await Grantee.findAll({
-    where: granteeWhere,
+  const recipients = await Recipient.findAll({
+    where: recipientWhere,
   });
 
   const promises = [];
 
   // loop through the found reports
-  for await (const grantee of grantees) {
+  for (const recipient of recipients) {
     promises.push(
-      grantee.update({
+      recipient.update({
         name: faker.company.companyName(),
       }),
     );
@@ -205,29 +233,42 @@ export const hideGranteesGrants = async (granteesGrants) => {
     where: grantWhere,
   });
 
-  for await (const grant of grants) {
+  for (const grant of grants) {
+    // run this first
+    const programSpecialist = convertName(
+      grant.programSpecialistName,
+      grant.programSpecialistEmail,
+    );
+    const grantSpecialist = convertName(
+      grant.grantSpecialistName,
+      grant.grantSpecialistEmail,
+    );
     const trailingNumber = grant.id;
     const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
 
     promises.push(
       grant.update({
         number: newGrantNumber,
+        programSpecialistName: programSpecialist.name,
+        programSpecialistEmail: programSpecialist.email,
+        grantSpecialistName: grantSpecialist.name,
+        grantSpecialistEmail: grantSpecialist.email,
       }),
     );
   }
   await Promise.all(promises);
 
-  // Retrieve transformed grantees
-  transformedGrantees = await Grantee.findAll({
+  // Retrieve transformed recipients
+  transformedRecipients = (await Recipient.findAll({
     attributes: ['id', 'name'],
-    where: { id: grantees.map((g) => g.id) },
-  }).map((g) => g.dataValues);
+    where: { id: recipients.map((g) => g.id) },
+  })).map((g) => g.dataValues);
 
   // Retrieve transformed grants
-  transformedGrants = await Grant.findAll({
+  transformedGrants = (await Grant.findAll({
     attributes: ['id', 'number'],
     where: { id: grants.map((g) => g.id) },
-  }).map((g) => g.dataValues);
+  })).map((g) => g.dataValues);
 };
 
 const givePermissions = (id) => {
@@ -300,7 +341,7 @@ const processData = async (mockReport) => {
   const filesWhere = activityReportId ? { activityReportId } : {};
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
-  const granteesGrants = mockReport ? mockReport.imported.granteeName : null;
+  const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
   const reports = await ActivityReport.unscoped().findAll({
     where,
   });
@@ -313,8 +354,8 @@ const processData = async (mockReport) => {
 
   // Hide users
   await hideUsers(userIds);
-  // Hide grantees and grants
-  await hideGranteesGrants(granteesGrants);
+  // Hide recipients and grants
+  await hideRecipientsGrants(recipientsGrants);
 
   // loop through the found reports
   for await (const report of reports) {
@@ -346,7 +387,7 @@ const processData = async (mockReport) => {
         granteeFollowUpTasksObjectives: await processHtml(
           imported.granteeFollowUpTasksObjectives,
         ),
-        granteeName: convertGranteeName(imported.granteeName),
+        granteeName: convertRecipientName(imported.granteeName),
         granteeParticipants: imported.granteeParticipants,
         granteesLearningLevelGoal1: imported.granteesLearningLevelGoal1,
         granteesLearningLevelGoal2: imported.granteesLearningLevelGoal2,
@@ -357,7 +398,7 @@ const processData = async (mockReport) => {
         nonGranteeActivity: imported.nonGranteeActivity,
         nonGranteeParticipants: imported.nonGranteeParticipants,
         nonOhsResources: imported.nonOhsResources,
-        numerOfParticipants: imported.numberOfParticipants,
+        numberOfParticipants: imported.numberOfParticipants,
         objective11: imported.objective11,
         objective11Status: imported.objective11Status,
         objective12: imported.objective12,
@@ -386,7 +427,7 @@ const processData = async (mockReport) => {
     }
   }
 
-  for await (const file of files) {
+  for (const file of files) {
     promises.push(
       file.update({
         originalFileName: convertFileName(file.originalFileName),
@@ -395,6 +436,12 @@ const processData = async (mockReport) => {
   }
 
   await bootstrapUsers();
+
+  // Delete from RequestErrors
+  await RequestErrors.destroy({
+    where: {},
+    truncate: true,
+  });
 
   return Promise.all(promises);
 };

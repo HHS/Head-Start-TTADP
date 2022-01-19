@@ -1,151 +1,146 @@
-import React, { useState } from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
-import RegionalSelect from '../../components/RegionalSelect';
-import DateRangeSelect, { formatDateRange } from '../../components/DateRangeSelect';
+import FilterPanel from '../../components/filter/FilterPanel';
+import { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
-import DateTime from '../../components/DateTime';
 import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
-import TotalHrsAndGrantee from '../../widgets/TotalHrsAndGranteeGraph';
+import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
+import { expandFilters } from '../../utils';
+import useUrlFilters from '../../hooks/useUrlFilters';
+import ActivityReportsTable from '../../components/ActivityReportsTable';
+import UserContext from '../../UserContext';
 
-/**
- *
- * format the date range for display
- */
-function getDateTimeObject(dateRange) {
-  const timestamp = formatDateRange({
-    forDateTime: true,
-    string: dateRange,
-  });
-  const label = formatDateRange({
-    withSpaces: true,
-    string: dateRange,
-  });
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
 
-  return { timestamp, label };
-}
+export default function RegionalDashboard() {
+  const { user } = useContext(UserContext);
 
-export default function RegionalDashboard({ user }) {
-  const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
-  const defaultDate = formatDateRange({
-    lastThirtyDays: true,
-    forDateTime: true,
-  });
+  /**
+   * we are going to memoize all this stuff so it doesn't get recomputed each time
+   * this is re-rendered. it would (generally) only get recomputed should the user change
+   */
 
-  const regions = getUserRegions(user);
+  const hasCentralOffice = useMemo(() => (
+    user && user.homeRegionId && user.homeRegionId === 14
+  ), [user]);
+  const regions = useMemo(() => getUserRegions(user), [user]);
+  const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
 
-  // eslint-disable-next-line max-len
-  const [appliedRegion, updateAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
-  const [dateRange, updateDateRange] = useState(defaultDate);
+  const defaultFilters = useMemo(() => {
+    if (hasCentralOffice) {
+      return [
+        {
+          id: uuidv4(),
+          topic: 'startDate',
+          condition: 'Is within',
+          query: defaultDate,
+        },
+      ];
+    }
 
-  // this can be killed when we add the new filters to this page
-  const [roleFilter, updateRoleFilter] = useState();
+    return [
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'Is',
+        query: defaultRegion,
+      },
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      },
+    ];
+  }, [defaultRegion, hasCentralOffice]);
 
-  /*
-    *    the idea is that this filters variable, which roughly matches
-    *    the implementation on the landing page,
-    *    would be passed down into each visualization
-    */
+  const [filters, setFilters] = useUrlFilters(defaultFilters);
 
-  const filters = [
+  const regionFilter = filters.find((filter) => filter.topic === 'region');
+  const appliedRegion = regionFilter ? regionFilter.query : false;
+
+  const onApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+  };
+
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
+  };
+
+  const filtersToApply = expandFilters(filters);
+
+  const dateRangeOptions = [
     {
-      id: uuidv4(),
-      topic: 'region',
-      condition: 'Contains',
-      query: appliedRegion,
+      label: 'Last 30 days',
+      value: 1,
+      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
     },
     {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'Is within',
-      query: dateRange,
+      label: 'Custom date range',
+      value: 2,
+      range: '',
     },
   ];
 
-  const dateTime = getDateTimeObject(dateRange);
-
-  const onApplyRegion = (region) => {
-    const regionId = region.value;
-    updateAppliedRegion(regionId);
-  };
-
-  const updateRoles = (selectedRoles) => {
-    updateRoleFilter(selectedRoles);
-  };
-
-  if (!user) {
-    return (
-      <div>Loading...</div>
-    );
-  }
-
   return (
     <div className="ttahub-dashboard">
-
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
-        <Grid className="ttahub-dashboard--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
-          <Grid col="auto" className="flex-wrap">
-            <h1 className="ttahub--dashboard-title">
-              {appliedRegion === 14 ? 'Regional' : `Region ${appliedRegion}`}
-              {' '}
-              TTA Activity Dashboard
-            </h1>
-          </Grid>
-          <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-top-2 desktop:margin-top-0">
-            {regions.length > 1
-              && (
-                <RegionalSelect
-                  regions={regions}
-                  onApply={onApplyRegion}
-                  hasCentralOffice={hasCentralOffice}
-                  appliedRegion={appliedRegion}
-                />
-              )}
-            <DateRangeSelect
-              updateDateRange={updateDateRange}
-            />
-            <DateTime classNames="display-flex flex-align-center" timestamp={dateTime.timestamp} label={dateTime.label} />
-          </Grid>
+        <h1 className="ttahub--dashboard-title">
+          {appliedRegion ? `Region ${appliedRegion}` : 'Regional'}
+          {' '}
+          TTA Activity Dashboard
+        </h1>
+        <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+          <FilterPanel
+            applyButtonAria="apply filters for regional dashboard"
+            filters={filters}
+            onApplyFilters={onApplyFilters}
+            dateRangeOptions={dateRangeOptions}
+            onRemoveFilter={onRemoveFilter}
+          />
         </Grid>
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
-            filters={filters}
+            filters={filtersToApply}
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
               <ReasonList
-                filters={filters}
-                dateTime={dateTime}
+                filters={filtersToApply}
               />
             </Grid>
             <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-              <TotalHrsAndGrantee
-                filters={filters}
-                dateTime={dateTime}
+              <TotalHrsAndRecipient
+                filters={filtersToApply}
               />
             </Grid>
           </Grid>
           <Grid row>
             <TopicFrequencyGraph
-              filters={
-                roleFilter
-                  ? [...filters,
-                    ...roleFilter.map((role) => ({
-                      id: uuidv4(),
-                      topic: 'role',
-                      condition: 'Contains',
-                      query: role,
-                    }))] : filters
-              }
-              onApplyRoles={updateRoles}
-              dateTime={dateTime}
+              filters={filtersToApply}
+            />
+          </Grid>
+          <Grid row>
+            <ActivityReportsTable
+              filters={filters}
+              showFilter={false}
+              tableCaption="Activity reports"
             />
           </Grid>
         </GridContainer>

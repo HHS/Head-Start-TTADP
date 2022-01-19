@@ -1,4 +1,5 @@
-.tta-report-menu .smart-hub--reports-button {
-    display: inline;
-    width: auto;    
+@media(max-width: 40em) {
+  .ttahub-report-menu-alert {
+    flex-direction: column;
+  }
 }

@@ -10,14 +10,15 @@ import ReviewPage from './Review/ReviewPage';
 import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
-  nonGranteeParticipants,
-  granteeParticipants,
-  reasons,
-  programTypes,
-  targetPopulations,
+  otherEntityParticipants,
+  recipientParticipants,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
+import {
+  REASONS as reasons,
+  TARGET_POPULATIONS as targetPopulations,
+} from '../../../Constants';
 
 const ActivitySummary = ({
   recipients,
@@ -35,29 +36,28 @@ const ActivitySummary = ({
   const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
-  const { nonGrantees: rawNonGrantees, grants: rawGrants } = recipients;
+  const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
-  const grants = rawGrants.map((grantee) => ({
-    label: grantee.name,
-    options: grantee.grants.map((grant) => ({
+  const grants = rawGrants.map((recipient) => ({
+    label: recipient.name,
+    options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
       label: grant.name,
     })),
   }));
 
-  const nonGrantees = rawNonGrantees.map((nonGrantee) => ({
-    label: nonGrantee.name,
-    value: nonGrantee.activityRecipientId,
+  const otherEntities = rawOtherEntities.map((entity) => ({
+    label: entity.name,
+    value: entity.activityRecipientId,
   }));
 
   const disableRecipients = isEmpty(activityRecipientType);
-  const nonGranteeSelected = activityRecipientType === 'non-grantee';
-  const granteeSelected = activityRecipientType === 'grantee';
-  const selectedRecipients = nonGranteeSelected ? nonGrantees : grants;
+  const otherEntitySelected = activityRecipientType === 'other-entity';
+  const selectedRecipients = otherEntitySelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = nonGranteeSelected ? 'Non-grantee name(s)' : 'Grantee name(s)';
-  const participantsLabel = nonGranteeSelected ? 'Non-grantee participants' : 'Grantee participants';
-  const participants = nonGranteeSelected ? nonGranteeParticipants : granteeParticipants;
+  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient name(s)';
+  const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
+  const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
@@ -65,9 +65,8 @@ const ActivitySummary = ({
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: true });
       setValue('participants', [], { shouldValidate: true });
-      setValue('programTypes', [], { shouldValidate: true });
       // Goals and objectives (page 3) has required fields when the recipient
-      // type is grantee, so we need to make sure that page is set as "not started"
+      // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
       // selected goals and objectives
       setValue('goals', []);
@@ -92,6 +91,10 @@ const ActivitySummary = ({
     />
   );
 
+  const setEndDate = (newEnd) => {
+    setValue('endDate', newEnd);
+  };
+
   return (
     <>
       <Helmet>
@@ -101,25 +104,25 @@ const ActivitySummary = ({
         <div id="activity-for" />
         <div className="margin-top-2">
           <FormItem
-            label="Was this activity for a grantee or non-grantee?"
+            label="Was this activity for a recipient or other entity?"
             name="activityRecipientType"
             fieldSetWrapper
           >
             <Radio
-              id="category-grantee"
+              id="category-recipient"
               name="activityRecipientType"
-              label="Grantee"
-              value="grantee"
+              label="Recipient"
+              value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or non-grantee' })}
+              inputRef={register({ required: 'Please specify recipient or other entity' })}
             />
             <Radio
-              id="category-non-grantee"
+              id="category-other-entity"
               name="activityRecipientType"
-              label="Non-Grantee"
-              value="non-grantee"
+              label="Other entity"
+              value="other-entity"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or non-grantee' })}
+              inputRef={register({ required: 'Please specify recipient or other entity' })}
             />
           </FormItem>
         </div>
@@ -135,7 +138,7 @@ const ActivitySummary = ({
               valueProperty="activityRecipientId"
               labelProperty="name"
               simple={false}
-              required="Please select at least one grantee or non-grantee"
+              required="Please select at least one recipient or other entity"
               options={selectedRecipients}
             />
           </FormItem>
@@ -157,23 +160,6 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        {granteeSelected
-        && (
-        <div className="margin-top-2">
-          <FormItem
-            label="Program type(s)"
-            name="programTypes"
-          >
-            <MultiSelect
-              name="programTypes"
-              label="Program type(s)"
-              control={control}
-              required="Please select at least one program type"
-              options={programTypes.map((pt) => ({ value: pt, label: pt }))}
-            />
-          </FormItem>
-        </div>
-        )}
         <div className="margin-top-2">
           <FormItem
             label="Target Populations addressed. You may choose more than one."
@@ -193,17 +179,17 @@ const ActivitySummary = ({
         <div id="reasons" />
         <div className="margin-top-2">
           <FormItem
-            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by grantee."
+            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by recipient."
             name="requester"
             fieldSetWrapper
           >
             <Radio
-              id="granteeRequest"
+              id="recipientRequest"
               name="requester"
-              label="Grantee"
-              value="grantee"
+              label="Recipient"
+              value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or regional office' })}
+              inputRef={register({ required: 'Please specify recipient or regional office' })}
             />
             <Radio
               id="requestorRegionalOffice"
@@ -211,7 +197,7 @@ const ActivitySummary = ({
               label="Regional Office"
               value="regionalOffice"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify grantee or regional office' })}
+              inputRef={register({ required: 'Please specify recipient or regional office' })}
             />
           </FormItem>
         </div>
@@ -240,9 +226,10 @@ const ActivitySummary = ({
                 <DatePicker
                   ariaName="Start Date (Required)"
                   control={control}
-                  maxDate={endDate}
-                  maxDateInclusive
                   name="startDate"
+                  isStartDate
+                  maxDate={endDate}
+                  setEndDate={setEndDate}
                   openUp
                 />
               </FormItem>
@@ -419,7 +406,7 @@ ActivitySummary.propTypes = {
         ),
       }),
     ),
-    nonGrantees: PropTypes.arrayOf(
+    otherEntities: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
         activityRecipientId: PropTypes.number.isRequired,
@@ -433,12 +420,11 @@ const sections = [
     title: 'Who was the activity for?',
     anchor: 'activity-for',
     items: [
-      { label: 'Grantee or Non-grantee', name: 'activityRecipientType', sort: true },
+      { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
         label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
       },
-      { label: 'Program type(s)', name: 'programTypes' },
       { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],
   },
@@ -447,7 +433,7 @@ const sections = [
     anchor: 'reasons',
     items: [
       { label: 'Requested by', name: 'requester' },
-      { label: 'reason(s)', name: 'reason', sort: true },
+      { label: 'Reason(s)', name: 'reason', sort: true },
     ],
   },
   {
@@ -471,7 +457,7 @@ const sections = [
     title: 'Other participants',
     anchor: 'other-participants',
     items: [
-      { label: 'Grantee participants', name: 'participants', sort: true },
+      { label: 'Recipient participants', name: 'participants', sort: true },
       { label: 'Number of participants', name: 'numberOfParticipants' },
     ],
   },

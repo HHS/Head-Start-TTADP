@@ -1,5 +1,5 @@
 import {
-  ActivityReport, ActivityRecipient, Grant, Grantee, NonGrantee, sequelize, Objective,
+  ActivityReport, ActivityRecipient, Grant, Recipient, OtherEntity, sequelize, Objective,
 } from '../models';
 
 /*
@@ -17,11 +17,11 @@ export default async function example(scopes) {
   const res = await ActivityReport.findAll({
     attributes: [
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
-      // I really don't like `"activityRecipients->grant->grantee"."id"` but couldn't find a way
+      // I really don't like `"activityRecipients->grant->recipient"."id"` but couldn't find a way
       // to have sequelize leave table names alone (`required: false` makes sequelize alias tables
       // for some reason)
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant->grantee"."id"'))), 'numGrantees'],
-      [filterGen('(WHERE "requester" = \'Grantee\')'), 'numGranteeRequests'],
+      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant->recipient"."id"'))), 'numRecipients'],
+      [filterGen('(WHERE "requester" = \'Recipient\')'), 'numRecipientRequests'],
       [filterGen('(WHERE "requester" = \'Regional Office\')'), 'numRegionalOfficeRequests'],
       [sequelize.fn('SUM', sequelize.col('duration')), 'sumDuration'],
       [filterGen('(WHERE "objectives"."status" = \'Complete\')'), 'numCompleteObjectives'],
@@ -46,15 +46,15 @@ export default async function example(scopes) {
             attributes: [],
             required: false,
             include: [{
-              model: Grantee,
+              model: Recipient,
               attributes: [],
-              as: 'grantee',
+              as: 'recipient',
             }],
           },
           {
-            model: NonGrantee,
+            model: OtherEntity,
             attributes: [],
-            as: 'nonGrantee',
+            as: 'otherEntity',
             required: false,
           },
         ],

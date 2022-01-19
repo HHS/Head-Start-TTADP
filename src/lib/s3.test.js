@@ -84,7 +84,7 @@ const mockVersioningData = {
 
 describe('verifyVersioning', () => {
   let mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
-  const mockPut = jest.spyOn(s3, 'putBucketVersioning').mockImplementation(async (params) => new Promise((res) => res(params)));
+  const mockPut = jest.spyOn(s3, 'putBucketVersioning').mockImplementation(async (params) => new Promise((res) => { res(params); }));
   beforeEach(() => {
     mockGet.mockClear();
     mockPut.mockClear();
@@ -118,7 +118,7 @@ describe('uploadFile', () => {
     Bucket: `${process.env.S3_BUCKET}`,
   };
   const promise = {
-    promise: () => new Promise((resolve) => resolve(response)),
+    promise: () => new Promise((resolve) => { resolve(response); }),
   };
   const mockUpload = jest.spyOn(s3, 'upload').mockImplementation(() => promise);
   const mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);

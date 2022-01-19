@@ -1,6 +1,10 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, {
-  useState, useEffect, useContext,
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -9,23 +13,28 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
+import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
-
 import AriaLiveContext from '../../AriaLiveContext';
-import { getReportAlerts } from '../../fetchers/activityReports';
+import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString } from '../../components/Filter';
+import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
-import RegionalSelect from '../../components/RegionalSelect';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
+import FilterPanel from '../../components/filter/FilterPanel';
+import useUrlFilters from '../../hooks/useUrlFilters';
+import { formatDateRange } from '../../components/DateRangeSelect';
+
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -39,16 +48,36 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   return `${from}-${to} of ${reportsCount}`;
 }
 
-function regionFilter(regionId) {
-  return {
-    topic: 'region',
-    condition: 'Contains',
-    query: regionId.toString(),
-  };
-}
-
 function Landing({ user }) {
+  // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const hasMultipleRegions = regions && regions.length > 1;
+
+  const [filters, setFilters] = useUrlFilters(
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      && hasMultipleRegions
+      ? [{
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'Is',
+        query: defaultRegion,
+      },
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }]
+      : [{
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }],
+  );
+
   const history = useHistory();
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [reportAlerts, updateReportAlerts] = useState([]);
@@ -63,19 +92,20 @@ function Landing({ user }) {
   const [alertsPerPage] = useState(ALERTS_PER_PAGE);
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
-  const [alertFilters, setAlertFilters] = useState([]);
+  const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
+  const downloadAllAlertsButtonRef = useRef();
 
-  const defaultRegion = regions[0] || user.homeRegionId || 0;
+  function getAppliedRegion() {
+    const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
+    if (regionFilters && regionFilters.length > 0) {
+      return regionFilters[0];
+    }
+    return null;
+  }
 
-  const [
-    appliedRegion,
-    updateAppliedRegion,
-  ] = useState(user.homeRegionId === 14 ? 14 : defaultRegion);
-  const [filters, setFilters] = useState([
-    regionFilter(appliedRegion),
-  ]);
+  const appliedRegionNumber = getAppliedRegion();
 
-  const [regionLabel, setRegionLabel] = useState('');
   const ariaLiveContext = useContext(AriaLiveContext);
 
   const requestAlertsSort = (sortBy) => {
@@ -92,39 +122,30 @@ function Landing({ user }) {
     setAlertsSortConfig({ sortBy, direction });
   };
 
-  const onApplyRegion = (region) => {
-    const regionId = region ? region.value : appliedRegion;
-    const filtersToApply = filters.filter((f) => f.topic !== 'region');
-    filtersToApply.push(
-      regionFilter(regionId),
-    );
-
-    setFilters(filtersToApply);
-    updateAppliedRegion(regionId);
-  };
-
-  // Update ariaLiveContext outside of effects to avoid infinite re-renders and
-  // the initial "0 filters applied" on first render
-  const handleApplyFilters = (newFilters) => {
-    setFilters([...newFilters, regionFilter(appliedRegion)]);
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
-  };
-
-  const handleApplyAlertFilters = (newFilters) => {
-    setAlertFilters(newFilters);
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to my alerts`);
-  };
-
-  const handleDownloadAllAlerts = () => {
-    const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
+  const handleDownloadAllAlerts = async () => {
+    const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllAlertsDownloadURL(filterQuery);
-    window.location.assign(downloadURL);
+
+    try {
+      setIsDownloadingAlerts(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (e) {
+      setDownloadAlertsError(true);
+    } finally {
+      setIsDownloadingAlerts(false);
+      downloadAllAlertsButtonRef.current.focus();
+    }
   };
+
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
   useEffect(() => {
     async function fetchAlertReports() {
       setAlertsLoading(true);
-      const filterQuery = filtersToQueryString(alertFilters, appliedRegion);
+      // Filters passed also contains region.
+      const filterQuery = filtersToQueryString(filtersToApply);
       try {
         const { alertsCount, alerts } = await getReportAlerts(
           alertsSortConfig.sortBy,
@@ -145,11 +166,7 @@ function Landing({ user }) {
       setAlertsLoading(false);
     }
     fetchAlertReports();
-  }, [alertsSortConfig, alertsOffset, alertsPerPage, alertFilters, appliedRegion]);
-
-  useEffect(() => {
-    setRegionLabel(appliedRegion === 14 ? 'All' : appliedRegion.toString());
-  }, [appliedRegion]);
+  }, [alertsSortConfig, alertsOffset, alertsPerPage, filtersToApply]);
 
   let msg;
   const message = history.location.state && history.location.state.message;
@@ -173,13 +190,65 @@ function Landing({ user }) {
     );
   }
 
-  const overviewFilters = [
+  const regionLabel = () => {
+    if (defaultRegion === 14) {
+      return 'All regions';
+    }
+    if (defaultRegion > 0) {
+      return `Region ${defaultRegion.toString()}`;
+    }
+    return '';
+  };
+
+  // Apply filters.
+  const onApply = (newFilters) => {
+    setFilters([
+      ...newFilters,
+    ]);
+    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
+  };
+
+  // Remove Filters.
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
+  };
+
+  const dateRangeOptions = [
     {
-      topic: 'region',
-      condition: 'Contains',
-      query: appliedRegion,
+      label: 'Last 30 days',
+      value: 1,
+      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
+    },
+    {
+      label: 'Custom date range',
+      value: 2,
+      range: '',
     },
   ];
+
+  const getAllowedFilters = () => {
+    const allowedFilters = [
+      'startDate',
+      'grantNumber',
+      'programSpecialist',
+      'programType',
+      'reason',
+      'recipient',
+      'reportId',
+      'role',
+      'targetPopulations',
+      'topic',
+    ];
+    if (hasMultipleRegions) {
+      allowedFilters.push('region');
+    }
+    return allowedFilters;
+  };
 
   return (
     <>
@@ -210,32 +279,31 @@ function Landing({ user }) {
         )}
         <Grid row gap>
           <Grid>
-            <h1 className="landing">Activity Reports</h1>
+            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
           </Grid>
-          <Grid col={2} className="flex-align-self-center">
-            {regions.length > 1
-              && (
-                <RegionalSelect
-                  regions={allRegionsUserHasPermissionTo(user)}
-                  onApply={onApplyRegion}
-                  appliedRegion={appliedRegion}
-                  hasCentralOffice={user.homeRegionId === 14}
-                />
-              )}
-          </Grid>
-          <Grid className="flex-align-self-center">
+          <Grid className="grid-col-2 flex-align-self-center">
             {reportAlerts
               && reportAlerts.length > 0
               && hasReadWrite(user)
-              && appliedRegion !== 14
+              && appliedRegionNumber !== 14
               && <NewReport />}
+          </Grid>
+          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+            <FilterPanel
+              applyButtonAria="apply filters for activity reports"
+              filters={filters}
+              onApplyFilters={onApply}
+              dateRangeOptions={dateRangeOptions}
+              onRemoveFilter={onRemoveFilter}
+              allowedFilters={getAllowedFilters()}
+            />
           </Grid>
         </Grid>
         <Grid row gap className="smart-hub--overview">
           <Grid col={10}>
             <Overview
-              filters={overviewFilters}
-              regionLabel={regionLabel}
+              tableCaption="TTA overview"
+              filters={filtersToApply}
             />
           </Grid>
         </Grid>
@@ -256,18 +324,19 @@ function Landing({ user }) {
           alertsActivePage={alertsActivePage}
           alertReportsCount={alertReportsCount}
           sortHandler={requestAlertsSort}
-          updateReportFilters={handleApplyAlertFilters}
-          hasFilters={alertFilters.length > 0}
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
           handleDownloadAllAlerts={handleDownloadAllAlerts}
           message={message}
+          isDownloadingAlerts={isDownloadingAlerts}
+          downloadAlertsError={downloadAlertsError}
+          setDownloadAlertsError={setDownloadAlertsError}
+          downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
         <ActivityReportsTable
-          filters={filters}
-          showFilter
-          onUpdateFilters={handleApplyFilters}
-          tableCaption={`Region ${regionLabel} Activity reports`}
+          filters={filtersToApply}
+          showFilter={false}
+          tableCaption="Approved activity reports"
         />
       </>
     </>

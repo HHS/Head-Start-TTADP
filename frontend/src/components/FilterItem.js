@@ -14,7 +14,7 @@ import {
   SELECT_CONDITIONS,
   DATE_CONDITIONS,
   WITHIN,
-} from './constants';
+} from '../Constants';
 
 export const selectRoleInput = (query, onUpdateFilter) => (
   <select
@@ -72,8 +72,8 @@ const commonFilters = [
     renderInput: singleSelectInput,
   },
   {
-    id: 'grantee',
-    display: 'Grantee',
+    id: 'recipient',
+    display: 'Recipient',
     conditions: SELECT_CONDITIONS,
     renderInput: singleSelectInput,
   },

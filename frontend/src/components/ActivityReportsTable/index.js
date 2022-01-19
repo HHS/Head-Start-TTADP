@@ -1,48 +1,18 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Table, Button, Checkbox, Grid, Alert,
+  Table, Checkbox, Grid, Alert,
 } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-
-import Pagination from 'react-js-pagination';
-
-import { getReports } from '../../fetchers/activityReports';
+import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import Filter, { filtersToQueryString } from '../Filter';
-import ReportMenu from '../../pages/Landing/ReportMenu';
+import { filtersToQueryString } from '../../utils';
+import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
 import './index.css';
-
-const emptyReport = {
-  id: 0,
-  displayId: '',
-  activityRecipients: [],
-  startDate: '',
-  author: {},
-  legacyId: '',
-  topics: [],
-  collaborators: [],
-  lastSaved: '',
-  calculatedStatus: '',
-};
-
-export function renderTotal(offset, perPage, activePage, reportsCount) {
-  const from = offset >= reportsCount ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > reportsCount) {
-    to = reportsCount;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${reportsCount}`;
-}
 
 function ActivityReportsTable({
   filters,
@@ -59,10 +29,15 @@ function ActivityReportsTable({
   const [perPage] = useState(REPORTS_PER_PAGE);
   const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
+  const [downloadError, setDownloadError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [sortConfig, setSortConfig] = React.useState({
     sortBy: 'updatedAt',
     direction: 'desc',
   });
+
+  const downloadAllButtonRef = useRef();
+  const downloadSelectedButtonRef = useRef();
 
   useEffect(() => {
     async function fetchReports() {
@@ -149,13 +124,29 @@ function ActivityReportsTable({
     setSortConfig({ sortBy, direction });
   };
 
-  const handleDownloadAllReports = () => {
+  const handleDownloadAllReports = async () => {
     const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllReportsDownloadURL(filterQuery);
-    window.location.assign(downloadURL);
+
+    try {
+      // changed the way this works ever so slightly because I was thinking
+      // you'd want a try/catch around the fetching of the reports and not the
+      // window.location.assign
+      setIsDownloading(true);
+      const blob = await downloadReports(downloadURL);
+      const csv = URL.createObjectURL(blob);
+      window.location.assign(csv);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      setDownloadError(true);
+    } finally {
+      setIsDownloading(false);
+      downloadAllButtonRef.current.focus();
+    }
   };
 
-  const handleDownloadClick = () => {
+  const handleDownloadClick = async () => {
     const toDownloadableReportIds = (accumulator, entry) => {
       if (!reports) return accumulator;
       const [key, value] = entry;
@@ -167,7 +158,19 @@ function ActivityReportsTable({
     const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
     if (downloadable.length) {
       const downloadURL = getReportsDownloadURL(downloadable);
-      window.location.assign(downloadURL);
+      try {
+        setIsDownloading(true);
+        const blob = await downloadReports(downloadURL);
+        const csv = URL.createObjectURL(blob);
+        window.location.assign(csv);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log(err);
+        setDownloadError(true);
+      } finally {
+        setIsDownloading(false);
+        downloadSelectedButtonRef.current.focus();
+      }
     }
   };
 
@@ -205,84 +208,44 @@ function ActivityReportsTable({
     );
   };
 
-  const displayReports = reports.length ? reports : [emptyReport];
+  const displayReports = reports.length ? reports : [];
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
     <>
       <Grid row>
         {error && (
-        <Alert type="error" role="alert">
-          {error}
-        </Alert>
+          <Alert type="error" role="alert">
+            {error}
+          </Alert>
         )}
       </Grid>
-      <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
-        <span className="smart-hub--table-controls display-flex flex-row flex-align-center">
-          {numberOfSelectedReports > 0
-        && (
-          <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
-            {numberOfSelectedReports}
-            {' '}
-            selected
-            {' '}
-            <Button
-              className="smart-hub--select-tag__button"
-              unstyled
-              aria-label="deselect all reports"
-              onClick={() => {
-                toggleSelectAll({ target: { checked: false } });
-              }}
-            >
-              <FontAwesomeIcon
-                color="blue"
-                inverse
-                icon={faTimesCircle}
-              />
-            </Button>
-          </span>
-        )}
-          {showFilter && <Filter applyFilters={onUpdateFilters} />}
-          <ReportMenu
-            hasSelectedReports={numberOfSelectedReports > 0}
-            onExportAll={handleDownloadAllReports}
-            onExportSelected={handleDownloadClick}
-            count={reportsCount}
-          />
-        </span>
-        <span className="smart-hub--table-nav">
-          <span aria-label="Pagination for activity reports">
-            <span
-              className="smart-hub--total-count"
-              aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                offset,
-                perPage,
-                activePage,
-                reportsCount,
-              )}`}
-            >
-              {renderTotal(offset, perPage, activePage, reportsCount)}
-              <Pagination
-                hideFirstLastPages
-                prevPageText="<Prev"
-                nextPageText="Next>"
-                activePage={activePage}
-                itemsCountPerPage={perPage}
-                totalItemsCount={reportsCount}
-                pageRangeDisplayed={4}
-                onChange={handlePageChange}
-                linkClassPrev="smart-hub--link-prev"
-                linkClassNext="smart-hub--link-next"
-                tabIndex={0}
-              />
-            </span>
-          </span>
-        </span>
+
+      <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
+        <TableHeader
+          title={tableCaption}
+          numberOfSelected={numberOfSelectedReports}
+          toggleSelectAll={toggleSelectAll}
+          showFilter={showFilter}
+          onUpdateFilters={onUpdateFilters}
+          handleDownloadAll={handleDownloadAllReports}
+          handleDownloadClick={handleDownloadClick}
+          count={reportsCount}
+          activePage={activePage}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          downloadError={downloadError}
+          setDownloadError={setDownloadError}
+          isDownloading={isDownloading}
+          downloadAllButtonRef={downloadAllButtonRef}
+          downloadSelectedButtonRef={downloadSelectedButtonRef}
+        />
         <div className="usa-table-container--scrollable">
-          <Table className="usa-table usa-table--borderless usa-table--striped" fullWidth>
-            <caption>
+          <Table fullWidth striped>
+            <caption className="usa-sr-only">
               {tableCaption}
-              <p className="usa-sr-only">with sorting and pagination</p>
+              with sorting and pagination
             </caption>
             <thead>
               <tr>
@@ -296,7 +259,7 @@ function ActivityReportsTable({
                   />
                 </th>
                 {renderColumnHeader('Report ID', 'regionId')}
-                {renderColumnHeader('Grantee', 'activityRecipients')}
+                {renderColumnHeader('Recipient', 'activityRecipients')}
                 {renderColumnHeader('Start date', 'startDate')}
                 {renderColumnHeader('Creator', 'author')}
                 {renderColumnHeader('Created date', 'createdAt')}
@@ -315,6 +278,8 @@ function ActivityReportsTable({
                   handleReportSelect={handleReportSelect}
                   isChecked={reportCheckboxes[report.id] || false}
                   openMenuUp={index > displayReports.length - 1}
+                  numberOfSelectedReports={numberOfSelectedReports}
+                  exportSelected={handleDownloadClick}
                 />
               ))}
             </tbody>
@@ -330,17 +295,26 @@ ActivityReportsTable.propTypes = {
     PropTypes.shape({
       condition: PropTypes.string,
       id: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.arrayOf(PropTypes.number),
+      ]),
       topic: PropTypes.string,
     }),
   ).isRequired,
   showFilter: PropTypes.bool.isRequired,
   onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
+  dateTime: PropTypes.shape({
+    timestamp: PropTypes.string, label: PropTypes.string,
+  }),
 };
 
 ActivityReportsTable.defaultProps = {
-  onUpdateFilters: () => {},
+  onUpdateFilters: () => { },
+  dateTime: { timestamp: '', label: '' },
 };
 
 export default ActivityReportsTable;

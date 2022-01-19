@@ -36,9 +36,9 @@ function Example({ data }) {
   return (
     <Container>
       <Grid row>
-        <Field label="Grantees served" data={data.numGrantees} />
+        <Field label="Recipients served" data={data.numRecipients} />
         <Field label="Activity reports" data={data.numReports} />
-        <Field label="Grantee requests" data={data.numGranteeRequests} />
+        <Field label="Recipient requests" data={data.numRecipientRequests} />
         <Field label="Regional Office requests" data={data.numRegionalOfficeRequests} />
         <Field label="Hours of TTA" data={data.sumDuration} />
         <Field label="Complete Objectives" data={data.numCompleteObjectives} />
@@ -50,8 +50,8 @@ function Example({ data }) {
 Example.propTypes = {
   data: PropTypes.shape({
     numReports: PropTypes.string,
-    numGrantees: PropTypes.string,
-    numGranteeRequests: PropTypes.string,
+    numRecipients: PropTypes.string,
+    numRecipientRequests: PropTypes.string,
     numRegionalOfficeRequests: PropTypes.string,
     sumDuration: PropTypes.string,
     numCompleteObjectives: PropTypes.string,

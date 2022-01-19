@@ -1,78 +1,63 @@
 .ttahub-activity-report-view-table-container {
-    border: 1px solid #C5C5C5;  
-    width: calc(100% - 4rem);
+  border: 1px solid #c5c5c5;
+  width: calc(100% - 4rem);
 }
 
- .ttahub-activity-report-view-table {
-    font-size: 0.9rem; 
-    width: 100%;
+.ttahub-activity-report-view-table {
+  font-size: 0.9rem;
+  width: 100%;
 }
 
 .ttahub-activity-report-view-table caption {
-   font-size: 1.25rem;
+  font-size: 1.25rem;
 }
 
- .ttahub-activity-report-view-table tr:nth-child(even) th,
- .ttahub-activity-report-view-table tr:nth-child(even) td {
-  background-color: #F8F8F8;
-}
-
- .ttahub-activity-report-view-table th,
- .ttahub-activity-report-view-table td {
-    border: 0;
-    padding: 1rem;
+.ttahub-activity-report-view-table th,
+.ttahub-activity-report-view-table td {
+  border: 0;
+  padding: 1rem;
 }
 
 .ttahub-activity-report-view-table td h2 {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .ttahub-activity-report-view-table th {
-    font-weight: bold;
-}
-
-.ttahub-activity-report-view-table ul {
-    list-style: none;
-    padding: 0;
+  font-weight: bold;
 }
 
 .ttahub-activity-report-view-table .public-DraftStyleDefault-block {
+  margin: 0;
+}
+
+@media screen and (min-width: 768px) {
+  .ttahub-activity-report-view-table th {
+    width: 200px;
+  }
+}
+
+@media print {
+  .ttahub-activity-report-view-table-container {
+    border: none;
+    width: 100%;
+  }
+
+  .ttahub-activity-report-view-table.no-break-within {
+    break-inside: avoid;
+  }
+
+  .ttahub-activity-report-view-table th {
+    padding: 0.5em 1em;
+    vertical-align: top;
+    width: 200px;
+  }
+
+  .ttahub-activity-report-view-table td {
+    padding: 0.5em 1em;
+    vertical-align: top;
+  }
+
+  .ttahub-activity-report-view-table td ul {
     margin: 0;
-}
-
-.ttahub-activity-report-view-table .public-DraftStyleDefault-unorderedListItem.public-DraftStyleDefault-depth0 {
-    list-style-type: none;
-    margin: 0;
-}
-
-@media screen and ( min-width: 768px ) {
-    .ttahub-activity-report-view-table th {     
-        width: 200px;
-    }
-}
-
-@media print {    
-    .ttahub-activity-report-view-table-container {
-        border: none;
-        width: 100%;
-    }
-
-    .ttahub-activity-report-view-table.no-break-within {
-        break-inside: avoid;
-    }
-
-    .ttahub-activity-report-view-table th {     
-        padding: 0.5em 1em;
-        vertical-align: top;
-        width: 200px;
-    } 
-
-    .ttahub-activity-report-view-table td {
-        padding: 0.5em 1em;
-        vertical-align: top;
-    }
-
-    .ttahub-activity-report-view-table td ul {
-        margin: 0
-    }
+  }
 }

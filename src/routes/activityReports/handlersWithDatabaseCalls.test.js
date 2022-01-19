@@ -7,7 +7,7 @@ import db, {
 } from '../../models';
 
 const draftObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   regionId: 1,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -17,7 +17,6 @@ const draftObject = {
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
-  programTypes: ['type'],
   targetPopulations: ['pop'],
   reason: ['reason'],
   participants: ['participants'],

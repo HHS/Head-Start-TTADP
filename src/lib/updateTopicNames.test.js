@@ -11,7 +11,7 @@ const mockUser = {
 };
 
 const reportObject = {
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   calculatedStatus: REPORT_STATUSES.APPROVED,
   submissionStatus: REPORT_STATUSES.SUBMITTED,
   userId: mockUser.id,
@@ -23,7 +23,6 @@ const reportObject = {
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
-  programTypes: ['type'],
   targetPopulations: ['pop'],
   reason: ['reason'],
   participants: ['participants'],

@@ -1,8 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { map, pickBy } from 'lodash';
-
-import { withGranteeName, withoutGranteeName } from './grantee';
-import withGranteeId from './granteeId';
+import { withRecipientName, withoutRecipientName } from './recipient';
+import withRecipientId from './recipientId';
 import { withoutReportIds, withReportIds } from './reportId';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withoutTopics, withTopics } from './topic';
@@ -12,62 +11,87 @@ import { withCollaborators, withoutCollaborators } from './collaborators';
 import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatus';
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withRole, withoutRole } from './role';
-import withRegion from './region';
+import { withRegion, withoutRegion } from './region';
+import { withoutProgramTypes, withProgramTypes } from './programType';
+import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
+import { withoutReason, withReason } from './reason';
+import { withoutGrantNumber, withGrantNumber } from './grantNumber';
+import withStateCode from './stateCode';
+import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 
 export const topicToQuery = {
   reportId: {
-    in: (query) => withReportIds(query),
-    nin: (query) => withoutReportIds(query),
+    ctn: (query) => withReportIds(query),
+    nctn: (query) => withoutReportIds(query),
   },
-  grantee: {
-    in: (query) => withGranteeName(query),
-    nin: (query) => withoutGranteeName(query),
+  recipient: {
+    ctn: (query) => withRecipientName(query),
+    nctn: (query) => withoutRecipientName(query),
   },
-  granteeId: {
-    in: (query) => withGranteeId(query),
+  recipientId: {
+    ctn: (query) => withRecipientId(query),
   },
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinStartDates(startDate, endDate);
-    },
+    win: (query) => withinStartDates(query),
   },
   lastSaved: {
     bef: (query) => beforeLastSaveDate(query),
     aft: (query) => afterLastSaveDate(query),
-    win: (query) => {
-      const [startDate, endDate] = query.split('-');
-      return withinLastSaveDates(startDate, endDate);
-    },
+    win: (query) => withinLastSaveDates(query),
   },
   role: {
     in: (query) => withRole(query),
     nin: (query) => withoutRole(query),
   },
   creator: {
-    in: (query) => withAuthor(query),
-    nin: (query) => withoutAuthor(query),
+    ctn: (query) => withAuthor(query),
+    nctn: (query) => withoutAuthor(query),
   },
   topic: {
     in: (query) => withTopics(query),
     nin: (query) => withoutTopics(query),
   },
   collaborators: {
-    in: (query) => withCollaborators(query),
-    nin: (query) => withoutCollaborators(query),
+    ctn: (query) => withCollaborators(query),
+    nctn: (query) => withoutCollaborators(query),
   },
   calculatedStatus: {
     in: (query) => withCalculatedStatus(query),
     nin: (query) => withoutCalculatedStatus(query),
   },
   programSpecialist: {
-    in: (query) => withProgramSpecialist(query),
-    nin: (query) => withoutProgramSpecialist(query),
+    ctn: (query) => withProgramSpecialist(query),
+    nctn: (query) => withoutProgramSpecialist(query),
+  },
+  programType: {
+    in: (query) => withProgramTypes(query),
+    nin: (query) => withoutProgramTypes(query),
   },
   region: {
     in: (query) => withRegion(query),
+    nin: (query) => withoutRegion(query),
+  },
+  targetPopulations: {
+    in: (query) => withTargetPopulations(query),
+    nin: (query) => withoutTargetPopulations(query),
+  },
+  reason: {
+    in: (query) => withReason(query),
+    nin: (query) => withoutReason(query),
+  },
+  grantNumber: {
+    ctn: (query) => withGrantNumber(query),
+    nctn: (query) => withoutGrantNumber(query),
+  },
+  stateCode: {
+    ctn: (query) => withStateCode(query),
+  },
+  createDate: {
+    bef: (query) => beforeCreateDate(query),
+    aft: (query) => afterCreateDate(query),
+    win: (query) => withinCreateDate(query),
   },
 };
 
@@ -79,6 +103,6 @@ export function activityReportsFiltersToScopes(filters) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition](query);
+    return topicToQuery[topic][condition]([query].flat());
   });
 }

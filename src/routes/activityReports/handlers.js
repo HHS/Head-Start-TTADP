@@ -41,7 +41,7 @@ const logContext = {
   namespace,
 };
 
-export const LEGACY_WARNING = 'Reports done before March 1, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
+export const LEGACY_WARNING = 'Reports done before March 17, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
 
 async function sendActivityReportCSV(reports, res) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
@@ -75,20 +75,28 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Collaborators',
         },
         {
+          key: 'approvers',
+          header: 'Approvers',
+        },
+        {
+          key: 'programSpecialistName',
+          header: 'Program Specialists',
+        },
+        {
           key: 'requester',
           header: 'Requester',
         },
         {
           key: 'activityRecipientType',
-          header: 'Grantee or non-grantee',
+          header: 'Recipient or other entity',
         },
         {
           key: 'activityRecipients',
-          header: 'Grantee name/non-grantee name',
+          header: 'Recipient name/other entity name',
         },
         {
           key: 'programTypes',
-          header: 'Program type',
+          header: 'Program types',
         },
         {
           key: 'reason',
@@ -161,8 +169,8 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
-          key: 'granteeNextSteps',
-          header: 'Grantee next steps',
+          key: 'recipientNextSteps',
+          header: 'Recipient next steps',
         },
         {
           key: 'createdAt',
@@ -189,7 +197,7 @@ async function sendActivityReportCSV(reports, res) {
   );
 
   res.attachment('activity-reports.csv');
-  res.send(`${warning}${csvData}`);
+  res.send(`\ufeff${warning}${csvData}`);
 }
 
 export async function updateLegacyFields(req, res) {
@@ -305,7 +313,7 @@ export async function reviewReport(req, res) {
     const reviewedReport = await activityReportById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      if (reviewedReport.activityRecipientType === 'grantee') {
+      if (reviewedReport.activityRecipientType === 'recipient') {
         await copyGoalsToGrants(
           reviewedReport.goals,
           reviewedReport.activityRecipients.map((recipient) => recipient.activityRecipientId),
@@ -500,7 +508,7 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const query = await setReadRegions(req.query, req.session.userId, true);
+  const query = await setReadRegions(req.query, req.session.userId);
   const reportsWithCount = await activityReports(query);
   if (!reportsWithCount) {
     res.sendStatus(404);

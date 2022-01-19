@@ -30,6 +30,7 @@ const Objective = ({
   const firstInput = useRef();
   const { errors, trigger } = useFormContext();
   const isValid = !errors[parentLabel];
+  const [oldObjective, updateOldObjective] = useState(objective);
 
   useEffect(() => {
     if (firstInput.current) {
@@ -37,15 +38,14 @@ const Objective = ({
     }
   }, []);
 
-  const [editableObject, updateEditableObject] = useState(objective);
   const onChange = (e) => {
-    updateEditableObject({
-      ...editableObject,
+    onUpdate({
+      ...objective,
       [e.target.name]: e.target.value,
     });
   };
 
-  const { title, ttaProvided, status } = editableObject;
+  const { title, ttaProvided, status } = objective;
   const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
   const [showEdit, updateShowEdit] = useState(defaultShowEdit);
 
@@ -54,7 +54,7 @@ const Objective = ({
       updateShowEdit(true);
     } else if (title && ttaProvided !== EMPTY_TEXT_BOX) {
       updateShowEdit(false);
-      onUpdate(editableObject);
+      updateOldObjective(objective);
     } else {
       trigger(parentLabel);
     }
@@ -66,8 +66,8 @@ const Objective = ({
 
   const onCancel = () => {
     if (objective.title || objective.ttaProvided !== EMPTY_TEXT_BOX) {
-      updateEditableObject(objective);
       updateShowEdit(false);
+      onUpdate(oldObjective);
     } else {
       onRemove();
     }
@@ -103,7 +103,7 @@ const Objective = ({
               onChange={onChange}
               inputRef={firstInput}
               value={title}
-              spellcheck="true"
+              spellCheck="true"
             />
           </ObjectiveFormItem>
           <ObjectiveFormItem
@@ -118,8 +118,8 @@ const Objective = ({
                 ariaLabel={`TTA provided for objective ${objectiveAriaLabel}`}
                 defaultValue={ttaProvided}
                 onChange={(content) => {
-                  updateEditableObject({
-                    ...editableObject,
+                  onUpdate({
+                    ...objective,
                     ttaProvided: content,
                   });
                 }}

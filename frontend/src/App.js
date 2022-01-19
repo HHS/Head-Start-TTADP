@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import 'uswds/dist/css/uswds.css';
+import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
@@ -28,10 +28,9 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
-import FeatureFlag from './components/FeatureFlag';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
-import GranteeRecord from './pages/GranteeRecord';
-import GranteeSearch from './pages/GranteeSearch';
+import RecipientRecord from './pages/RecipientRecord';
+import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 
 function App() {
@@ -127,12 +126,10 @@ function App() {
           )}
         />
         <Route
-          path="/grantee/:granteeId([0-9]*)"
+          path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
-              <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound>
-                <GranteeRecord location={location} match={match} user={user} />
-              </FeatureFlag>
+              <RecipientRecord location={location} match={match} user={user} />
             </AppWrapper>
           )}
         />
@@ -153,10 +150,10 @@ function App() {
         )}
         <Route
           exact
-          path="/grantee"
+          path="/recipient-tta-records"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag user={user} flag="grantee_record_page" admin={admin} renderNotFound><GranteeSearch user={user} /></FeatureFlag>
+              <RecipientSearch user={user} />
             </AppWrapper>
           )}
         />

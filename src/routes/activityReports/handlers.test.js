@@ -235,7 +235,7 @@ describe('Activity Report handlers', () => {
       };
       activityReportById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        activityRecipientType: 'grantee',
+        activityRecipientType: 'recipient',
         activityRecipients: [{
           activityRecipientId: 10,
         }],
@@ -261,7 +261,7 @@ describe('Activity Report handlers', () => {
       };
       activityReportById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        activityRecipientType: 'grantee',
+        activityRecipientType: 'recipient',
         activityRecipients: [{
           activityRecipientId: 10,
         }],
@@ -281,7 +281,7 @@ describe('Activity Report handlers', () => {
     it('handles unauthorizedRequests', async () => {
       activityReportById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        activityRecipientType: 'grantee',
+        activityRecipientType: 'recipient',
         activityRecipients: [{
           activityRecipientId: 10,
         }],
@@ -771,7 +771,7 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.send).toHaveBeenCalled();
 
       const [[value]] = mockResponse.send.mock.calls;
-      expect(value).toEqual('');
+      expect(value).toEqual('\ufeff');
     });
   });
 });

@@ -1,7 +1,7 @@
-import { Model, Op } from 'sequelize';
-import moment from 'moment';
-import { isEqual, uniqWith } from 'lodash';
-import { REPORT_STATUSES } from '../constants';
+const { Op, Model } = require('sequelize');
+const moment = require('moment');
+const { isEqual, uniqWith } = require('lodash');
+const { REPORT_STATUSES } = require('../constants');
 
 function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
@@ -29,7 +29,7 @@ function copyStatus(report) {
   }
 }
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
@@ -48,7 +48,7 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'granteeNextSteps' });
+      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
@@ -142,9 +142,6 @@ export default (sequelize, DataTypes) => {
     requester: {
       type: DataTypes.STRING,
     },
-    programTypes: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-    },
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
@@ -187,7 +184,6 @@ export default (sequelize, DataTypes) => {
             this.startDate,
             this.activityRecipientType,
             this.requester,
-            this.programTypes,
             this.targetPopulations,
             this.reason,
             this.participants,

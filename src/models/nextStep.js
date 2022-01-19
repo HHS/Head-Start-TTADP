@@ -1,4 +1,4 @@
-import { Model } from 'sequelize';
+const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class NextStep extends Model {
@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     noteType: {
       allowNull: false,
-      type: DataTypes.ENUM('SPECIALIST', 'GRANTEE'),
+      type: DataTypes.ENUM('SPECIALIST', 'RECIPIENT'),
     },
   }, {
     sequelize,

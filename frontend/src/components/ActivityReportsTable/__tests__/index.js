@@ -27,7 +27,7 @@ const mockFetchWithRegionOne = () => {
   fetchMock.get(defaultBaseUrlWithRegionOne, { count: 2, rows: activityReports });
 };
 
-const renderTable = (user) => {
+const renderTable = (user, dateTime) => {
   render(
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -36,12 +36,13 @@ const renderTable = (user) => {
             filters={[{
               id: '1',
               topic: 'region',
-              condition: 'Contains',
+              condition: 'Is',
               query: '1',
             }]}
             showFilter
-            onUpdateFilters={() => {}}
+            onUpdateFilters={() => { }}
             tableCaption="Activity Reports"
+            dateTime={dateTime}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -290,6 +291,27 @@ describe('Table menus & selections', () => {
       expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
     });
   });
+
+  it('disables download button while downloading', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderTable(user);
+    const reportMenu = await screen.findByLabelText(/reports menu/i);
+    userEvent.click(reportMenu);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+    const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+    userEvent.click(downloadButton);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
+    expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+  });
 });
 
 describe('Table sorting', () => {
@@ -381,9 +403,9 @@ describe('Table sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[12]).toHaveTextContent('02/08/2021'));
   });
 
-  it('clicking Grantee column header will sort by grantee', async () => {
+  it('clicking Recipient column header will sort by recipient', async () => {
     const columnHeader = await screen.findByRole('button', {
-      name: /grantee\. activate to sort ascending/i,
+      name: /recipient\. activate to sort ascending/i,
     });
 
     fetchMock.get(
@@ -392,7 +414,7 @@ describe('Table sorting', () => {
     );
 
     fireEvent.click(columnHeader);
-    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Grantee Name'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('Johnston-Romaguera Johnston-Romaguera Recipient Name'));
   });
 
   it('clicking Report id column header will sort by region and id', async () => {

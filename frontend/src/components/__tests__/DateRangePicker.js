@@ -12,11 +12,13 @@ const RenderDateRangePicker = ({
   onUpdateFilter = () => {},
   id = 'id',
   query = null,
+  gainFocus = false,
 }) => (
   <DateRangePicker
     onUpdateFilter={onUpdateFilter}
     id={id}
     query={query}
+    gainFocus={gainFocus}
   />
 );
 
@@ -24,21 +26,21 @@ describe('DateRangePicker', () => {
   describe('query parsing', () => {
     it('parses both dates', async () => {
       render(<RenderDateRangePicker query="2021/05/05-2021/05/06" />);
-      const firstDate = await screen.findByRole('textbox', { name: 'Start Date' });
-      const endDate = await screen.findByRole('textbox', { name: 'End Date' });
+      const firstDate = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
+      const endDate = await screen.findByRole('textbox', { name: /please enter a end date in the format mm\/dd\/yyyy\./i });
       expect(firstDate).toHaveValue('05/05/2021');
       expect(endDate).toHaveValue('05/06/2021');
     });
 
     it('parses just the start date', async () => {
       render(<RenderDateRangePicker query="2021/05/05-" />);
-      const firstDate = await screen.findByRole('textbox', { name: 'Start Date' });
+      const firstDate = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
       expect(firstDate).toHaveValue('05/05/2021');
     });
 
     it('parses just the end date', async () => {
       render(<RenderDateRangePicker query="-2021/05/06" />);
-      const endDate = await screen.findByRole('textbox', { name: 'End Date' });
+      const endDate = await screen.findByRole('textbox', { name: /please enter a end date in the format mm\/dd\/yyyy\./i });
       expect(endDate).toHaveValue('05/06/2021');
     });
   });
@@ -46,7 +48,7 @@ describe('DateRangePicker', () => {
   it('calls "onChange" and sets the start date', async () => {
     const onUpdateFilter = jest.fn();
     render(<RenderDateRangePicker onUpdateFilter={onUpdateFilter} />);
-    const text = await screen.findByRole('textbox', { name: 'Start Date' });
+    const text = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
     userEvent.type(text, '02/02/2022');
     await waitFor(() => expect(onUpdateFilter).toHaveBeenCalledWith('query', '2022/02/02-'));
   });
@@ -54,8 +56,14 @@ describe('DateRangePicker', () => {
   it('calls "onChange" and sets the end date', async () => {
     const onUpdateFilter = jest.fn();
     render(<RenderDateRangePicker onUpdateFilter={onUpdateFilter} />);
-    const text = await screen.findByRole('textbox', { name: 'End Date' });
+    const text = await screen.findByRole('textbox', { name: /please enter a end date in the format mm\/dd\/yyyy\./i });
     userEvent.type(text, '02/02/2022');
     await waitFor(() => expect(onUpdateFilter).toHaveBeenCalledWith('query', '-2022/02/02'));
+  });
+
+  it('sets focus properly', async () => {
+    render(<RenderDateRangePicker gainFocus />);
+    const text = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
+    expect(text).toHaveFocus();
   });
 });
