@@ -12,6 +12,9 @@ import '@testing-library/jest-dom/extend-expect';
 // 'MutationObserver shim removed'
 import MutationObserver from '@sheerun/mutationobserver-shim';
 
+import '@trussworks/react-uswds/lib/uswds.css';
+import '@trussworks/react-uswds/lib/index.css';
+
 // See https://github.com/plotly/react-plotly.js/issues/115
 window.URL.createObjectURL = () => {};
 

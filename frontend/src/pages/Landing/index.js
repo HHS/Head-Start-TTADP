@@ -19,8 +19,6 @@ import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
@@ -31,6 +29,11 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
+
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -62,7 +65,18 @@ function Landing() {
         condition: 'Is',
         query: defaultRegion,
       },
-      ] : [],
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }]
+      : [{
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: defaultDate,
+      }],
   );
 
   const history = useHistory();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import 'uswds/dist/css/uswds.css';
+import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';

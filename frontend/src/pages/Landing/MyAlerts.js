@@ -8,8 +8,6 @@ import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
