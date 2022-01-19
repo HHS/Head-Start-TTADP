@@ -35,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       */
     },
+    annualFundingMonth: DataTypes.STRING,
     cdi: DataTypes.BOOLEAN,
     status: DataTypes.STRING,
     grantSpecialistName: DataTypes.STRING,

@@ -149,8 +149,9 @@ const staticUsers = [
   },
 ];
 
-const generatedUsers = hsesUsernames.map((u) => ({
-  email: u,
+const generatedUsers = hsesUsernames.map((u, i) => ({
+  hsesUserId: `${i + 10}`,
+  email: `${u}@test.com`,
   hsesUsername: u,
   role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
   name: u.split('.')[2],

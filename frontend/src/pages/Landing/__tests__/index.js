@@ -8,24 +8,41 @@ import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
+import { v4 as uuidv4 } from 'uuid';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
+import { filtersToQueryString, formatDateRange } from '../../../utils';
 
 jest.mock('../../../fetchers/helpers');
 
 const mockAnnounce = jest.fn();
 
-const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
-const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
+// Get last 30 day filter.
+const defaultDate = formatDateRange({
+  lastThirtyDays: true,
+  forDateTime: true,
+});
+
+const filters = [{
+  id: uuidv4(),
+  topic: 'startDate',
+  condition: 'Is within',
+  query: defaultDate,
+}];
+
+const dateFilter = filtersToQueryString(filters);
+
+const base = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${dateFilter}`;
+const baseAlerts = `/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10&${dateFilter}`;
 
 const withRegionOne = '&region.in[]=1';
 const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
 const baseWithRegionOne = `${base}${withRegionOne}`;
 
-const defaultOverviewUrl = '/api/widgets/overview?';
+const defaultOverviewUrl = `/api/widgets/overview?${dateFilter}`;
 const defaultOverviewUrlWithRegionOne = `${defaultOverviewUrl}${withRegionOne}`;
 const overviewUrlWithRegionOne = `${defaultOverviewUrl}?region.in[]=1`;
 const inTest = 'reportId.in[]=test';
@@ -278,7 +295,7 @@ describe('Landing page table menus & selections', () => {
         userEvent.click(reportMenu);
         const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
-        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith(dateFilter);
       });
 
       it('disables alert download button while downloading', async () => {
@@ -304,7 +321,7 @@ describe('Landing page table menus & selections', () => {
         const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
         userEvent.click(downloadButton);
         expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
-        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith('');
+        expect(getAllAlertsDownloadURL).toHaveBeenCalledWith(dateFilter);
       });
     });
   });
@@ -372,7 +389,7 @@ describe('My alerts sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/draft/i));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
 
-    fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10',
+    fetchMock.get(`/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&${dateFilter}`,
       { alertsCount: 2, alerts: activityReportsSorted });
 
     fireEvent.click(statusColumnHeaders[0]);
@@ -384,7 +401,7 @@ describe('My alerts sorting', () => {
     const reportIdHeaders = await screen.findAllByRole('columnheader', { name: /report id/i });
     expect(reportIdHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10',
+    fetchMock.get(`/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&${dateFilter}`,
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       base,
@@ -402,7 +419,7 @@ describe('My alerts sorting', () => {
     });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10',
+    fetchMock.get(`/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10&${dateFilter}`,
       { alertsCount: 2, alerts: activityReports });
     fetchMock.get(
       base,
@@ -417,11 +434,10 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Start date', async () => {
-    const columnHeaders = await screen.findAllByText(/start date/i);
-
+    const columnHeaders = await screen.findAllByRole('button', { name: /start date\. activate to sort ascending/i });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10',
+    fetchMock.get(`/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&${dateFilter}`,
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       base,
@@ -439,7 +455,7 @@ describe('My alerts sorting', () => {
 
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
-    fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10',
+    fetchMock.get(`/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&${dateFilter}`,
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(
       base,
@@ -457,7 +473,7 @@ describe('My alerts sorting', () => {
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
 
-    fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10',
+    fetchMock.get(`/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10&${dateFilter}`,
       { alertsCount: 2, alerts: activityReportsSorted });
     fetchMock.get(`${base}`, { count: 0, rows: [] });
 
@@ -504,8 +520,8 @@ describe('handleApplyFilters', () => {
     fireEvent.click(filterMenuButton);
 
     // Get filter group.
-    const topic = await screen.findAllByRole('combobox', { name: /topic/i });
-    userEvent.selectOptions(topic[0], 'reportId');
+    const topic = await screen.findByRole('combobox', { name: /topic/i });
+    userEvent.selectOptions(topic, 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'Contains');
@@ -532,7 +548,6 @@ describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
-
     fetchMock.get(baseAlerts, {
       count: 10,
       alerts: generateXFakeReports(10),
