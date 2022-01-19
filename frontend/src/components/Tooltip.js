@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import './Tooltip.css';
 
 export default function Tooltip({
-  displayText, tooltipText, buttonLabel, screenReadDisplayText, hideUnderline,
+  displayText, tooltipText, buttonLabel, screenReadDisplayText, hideUnderline, svgLineTo,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -14,6 +14,7 @@ export default function Tooltip({
     setShowTooltip(!showTooltip);
   };
 
+  const svgLineToValue = svgLineTo || 190;
   return (
     <span className={cssClasses} data-testid="tooltip">
       <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltipText}</div>
@@ -26,7 +27,7 @@ export default function Tooltip({
                 : (
                   <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true">
                     <path
-                      d="M 0 5 L 190 5"
+                      d={`M 0 5 L ${svgLineToValue} 5`}
                       stroke="black"
                       strokeLinecap="round"
                       strokeWidth="1"
@@ -60,9 +61,11 @@ Tooltip.propTypes = {
   buttonLabel: PropTypes.string.isRequired,
   screenReadDisplayText: PropTypes.bool,
   hideUnderline: PropTypes.bool,
+  svgLineTo: PropTypes.number,
 };
 
 Tooltip.defaultProps = {
   screenReadDisplayText: true,
   hideUnderline: false,
+  svgLineTo: null,
 };

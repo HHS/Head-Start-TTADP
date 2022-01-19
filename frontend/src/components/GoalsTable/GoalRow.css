@@ -45,13 +45,10 @@
   z-index: 100000;
 }
 
-
 .tta-smarthub--goal-row .smart-hub--ellipsis {
 	max-width: none;
 }
 
-.tta-smarthub--goal-row .smart-hub--ellipsis > span {
-
-	border-bottom: 1px dashed #000;
+.tta-smarthub--goal-row .svg-inline--fa {
+  position: relative;
 }
-

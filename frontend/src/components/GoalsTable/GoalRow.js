@@ -93,16 +93,27 @@ function GoalRow({
   const determineFlagStatus = (goalReasons) => {
     const reasonsToWatch = goalReasons.filter((t) => reasonsToMonitor.includes(t));
     if (reasonsToWatch && reasonsToWatch.length > 0) {
-      return <FontAwesomeIcon className="margin-left-1" size="16px" color="#d42240" icon={faFlag} />;
+      return (
+        <>
+          <Tooltip
+            displayText={<FontAwesomeIcon className="margin-left-1" size="16px" color="#d42240" icon={faFlag} />}
+            screenReadDisplayText={false}
+            buttonLabel={`Click to reveal reason for flag ${goalNumber}`}
+            tooltipText="Related to monitoring"
+            hideUnderline
+          />
+        </>
+      );
     }
     return null;
   };
 
   let showToolTip = false;
+  const toolTipChars = 39;
   const truncateGoalTopics = (goalTopicsToTruncate) => {
     let queryToReturn = goalTopicsToTruncate.join(', ');
-    if (queryToReturn.length > 50) {
-      queryToReturn = queryToReturn.substring(0, 50);
+    if (queryToReturn.length > toolTipChars) {
+      queryToReturn = queryToReturn.substring(0, toolTipChars);
       queryToReturn += '...';
       showToolTip = true;
     }
@@ -115,7 +126,7 @@ function GoalRow({
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`goal_row_${id}`}>
       <td>
         {getGoalStatusIcon(goalStatus)}
-        { goalStatus }
+        {goalStatus}
       </td>
       <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
       <td className="text-wrap maxw-mobile">
@@ -128,18 +139,19 @@ function GoalRow({
       </td>
       <td className="text-wrap maxw-mobile">
         {
-            showToolTip
-              ? (
-                <Tooltip
-                  displayText={displayGoalTopics}
-                  screenReadDisplayText={false}
-                  buttonLabel={`Click to reveal topics for goal ${goalNumber}`}
-                  tooltipText={goalTopics.join(', ')}
-                  hideUnderline
-                />
-              )
-              : displayGoalTopics
-          }
+          showToolTip
+            ? (
+              <Tooltip
+                displayText={displayGoalTopics}
+                screenReadDisplayText={false}
+                buttonLabel={`Click to reveal topics for goal ${goalNumber}`}
+                tooltipText={goalTopics.join(', ')}
+                hideUnderline={false}
+                svgLineTo={300}
+              />
+            )
+            : displayGoalTopics
+        }
       </td>
       <td>
         <strong>{objectives}</strong>
