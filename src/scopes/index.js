@@ -1,11 +1,11 @@
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { grantsReportFiltersToScopes as grant } from './grants';
-import { goalsReportFiltersToScopes as goals } from './goals';
+import { goalsReportFiltersToScopes as goal } from './goals';
 
 const modelTypes = {
   activityReport,
   grant,
-  goals,
+  goal,
 };
 
 export default function filtersToScopes(filters, model = 'activityReport') {

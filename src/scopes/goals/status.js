@@ -11,10 +11,18 @@ export function withStatus(status) {
 }
 
 export function withoutStatus(status) {
-  return sequelize.where(
-    sequelize.col('"Goal".status'),
-    {
-      [Op.notIn]: status,
-    },
-  );
+  return {
+    [Op.or]: [
+      {
+        status: {
+          [Op.not]: status,
+        },
+      },
+      {
+        status: {
+          [Op.is]: null,
+        },
+      },
+    ],
+  };
 }
