@@ -22,7 +22,7 @@ export default function RecipientTabs({ region, recipientId }) {
           </li>
           <FeatureFlag flag="recipient_goals_objectives">
             <li className={liClass}>
-              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/goals-objectives?region=${region}`}>Goals & Objectives</NavLink>
+              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>Goals & Objectives</NavLink>
             </li>
           </FeatureFlag>
         </ul>
