@@ -16,7 +16,7 @@ describe('goal filtersToScopes', () => {
       calculatedStatus: 'approved',
       reason: [],
       topics: [],
-      region: 1,
+      region: 15,
     });
 
     const reportWithReasons = await createReport({
@@ -24,14 +24,14 @@ describe('goal filtersToScopes', () => {
       reason: ['Full Enrollment'],
       topics: ['CLASS: Emotional Support'],
       activityRecipients: [],
-      region: 1,
+      region: 15,
     });
     const reportWithTopics = await createReport({
       calculatedStatus: 'approved',
       reason: ['Complaint'],
       topics: ['Behavioral / Mental Health / Trauma'],
       activityRecipients: [],
-      region: 1,
+      region: 15,
     });
     const goals = await Promise.all(
       [
@@ -274,7 +274,6 @@ describe('goal filtersToScopes', () => {
       const filters = { 'reason.nin': 'Full Enrollment' };
       const scope = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
-        // logging: console.log,
         where: {
           [Op.and]: [
             scope,
@@ -310,7 +309,6 @@ describe('goal filtersToScopes', () => {
       const filters = { 'topic.nin': 'Behavioral / Mental Health / Trauma' };
       const scope = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
-        // logging: console.log,
         where: {
           [Op.and]: [
             scope,
