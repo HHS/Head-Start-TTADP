@@ -2,35 +2,38 @@ import { Op } from 'sequelize';
 import { createReport, destroyReport } from '../../testUtils';
 import filtersToScopes from '../index';
 import {
-  Goal, Objective, ActivityReportObjectives,
+  Goal, Objective, ActivityReportObjective,
 } from '../../models';
 
-let emptyReport;
-let reportWithReasons;
-let reportWithTopics;
-let goals;
-let objectives;
-let possibleIds;
+describe('goal filtersToScopes', () => {
+  let reportIds;
+  let objectiveIds = [];
+  let possibleGoalIds = [];
 
-describe('recipientFiltersToScopes', () => {
   beforeAll(async () => {
-    emptyReport = await createReport({
+    const emptyReport = await createReport({
+      activityRecipients: [],
       calculatedStatus: 'approved',
-      reasons: [],
+      reason: [],
       topics: [],
+      region: 1,
     });
 
-    reportWithReasons = await createReport({
+    const reportWithReasons = await createReport({
       calculatedStatus: 'approved',
-      reasons: ['Full Enrollment'],
+      reason: ['Full Enrollment'],
       topics: ['CLASS: Emotional Support'],
+      activityRecipients: [],
+      region: 1,
     });
-    reportWithTopics = await createReport({
+    const reportWithTopics = await createReport({
       calculatedStatus: 'approved',
-      reasons: ['Complaint'],
+      reason: ['Complaint'],
       topics: ['Behavioral / Mental Health / Trauma'],
+      activityRecipients: [],
+      region: 1,
     });
-    goals = await Promise.all(
+    const goals = await Promise.all(
       [
         // goal for reasons
         await Goal.create({
@@ -66,18 +69,18 @@ describe('recipientFiltersToScopes', () => {
         }),
       ],
     );
-    objectives = await Promise.all(
+    const objectives = await Promise.all(
       [
         // goal for reasons
         await Objective.create({
-          goalId: goals[0],
+          goalId: goals[0].id,
           title: 'objective 1',
           ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for topics
         await Objective.create({
-          goalId: goals[1],
+          goalId: goals[1].id,
           title: 'objective 2',
           ttaProvided: 'asdfadf',
           status: 'Not Started',
@@ -85,14 +88,14 @@ describe('recipientFiltersToScopes', () => {
         }),
         // goal for status
         await Objective.create({
-          goalId: goals[2],
+          goalId: goals[2].id,
           title: 'objective 3',
           ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for startDate
         await Objective.create({
-          goalId: goals[3],
+          goalId: goals[3].id,
           title: 'objective 4',
           ttaProvided: 'asdfadf',
           status: 'Not Started',
@@ -103,57 +106,53 @@ describe('recipientFiltersToScopes', () => {
     await Promise.all(
       [
         // goal for reasons
-        await ActivityReportObjectives.create({
-          objectiveId: objectives[0],
-          reportId: reportWithReasons.id,
+        await ActivityReportObjective.create({
+          objectiveId: objectives[0].id,
+          activityReportId: reportWithReasons.id,
         }),
         // goal for topics
-        await ActivityReportObjectives.create({
-          objectiveId: objectives[1],
-          reportId: reportWithTopics.id,
+        await ActivityReportObjective.create({
+          objectiveId: objectives[1].id,
+          activityReportId: reportWithTopics.id,
         }),
         // goal for status
-        await ActivityReportObjectives.create({
-          objectiveId: objectives[2],
-          reportId: emptyReport.id,
+        await ActivityReportObjective.create({
+          objectiveId: objectives[2].id,
+          activityReportId: emptyReport.id,
         }),
         // goal for startDate
-        await ActivityReportObjectives.create({
-          objectiveId: objectives[3],
-          reportId: emptyReport.id,
+        await ActivityReportObjective.create({
+          objectiveId: objectives[3].id,
+          activityReportId: emptyReport.id,
         }),
       ],
     );
 
-    possibleIds = goals.map((g) => g.id);
+    reportIds = [emptyReport.id, reportWithReasons.id, reportWithTopics.id];
+    objectiveIds = objectives.map((o) => o.id);
+    possibleGoalIds = goals.map((g) => g.id);
   });
 
   afterAll(async () => {
-    await ActivityReportObjectives.destroy({
+    await ActivityReportObjective.destroy({
       where: {
-        reportId: [
-          emptyReport.id,
-          reportWithTopics.id,
-          reportWithReasons.id,
-        ],
+        reportId: reportIds,
       },
     });
 
     await Objective.destroy({
       where: {
-        id: objectives.map((o) => o.id),
+        id: objectiveIds,
       },
     });
 
     await Goal.destroy({
       where: {
-        id: possibleIds,
+        id: possibleGoalIds,
       },
     });
 
-    await destroyReport(emptyReport);
-    await destroyReport(reportWithReasons);
-    await destroyReport(reportWithTopics);
+    await Promise.all(reportIds.map(async (report) => destroyReport(report)));
   });
 
   describe('createDate', () => {
@@ -165,7 +164,7 @@ describe('recipientFiltersToScopes', () => {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -185,7 +184,7 @@ describe('recipientFiltersToScopes', () => {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -203,7 +202,7 @@ describe('recipientFiltersToScopes', () => {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -223,7 +222,7 @@ describe('recipientFiltersToScopes', () => {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -240,7 +239,7 @@ describe('recipientFiltersToScopes', () => {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -262,7 +261,7 @@ describe('recipientFiltersToScopes', () => {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -275,12 +274,11 @@ describe('recipientFiltersToScopes', () => {
       const filters = { 'reason.nin': 'Full Enrollment' };
       const scope = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
+        // logging: console.log,
         where: {
           [Op.and]: [
             scope,
-            {
-              id: possibleIds,
-            },
+            { id: possibleGoalIds },
           ],
         },
       });
@@ -292,14 +290,14 @@ describe('recipientFiltersToScopes', () => {
 
   describe('topics', () => {
     it('filters in by topics', async () => {
-      const filters = { 'topic.in': 'CLASS: Emotional Support' };
+      const filters = { 'topic.in': 'Behavioral / Mental Health / Trauma' };
       const scope = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },
@@ -309,14 +307,15 @@ describe('recipientFiltersToScopes', () => {
       expect(found.map((g) => g.name)).toContain('Goal 2');
     });
     it('filters out by topics', async () => {
-      const filters = { 'topic.nin': 'CLASS: Emotional Support' };
+      const filters = { 'topic.nin': 'Behavioral / Mental Health / Trauma' };
       const scope = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
+        // logging: console.log,
         where: {
           [Op.and]: [
             scope,
             {
-              id: possibleIds,
+              id: possibleGoalIds,
             },
           ],
         },

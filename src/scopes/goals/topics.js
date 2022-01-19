@@ -4,8 +4,8 @@ import { filterAssociation } from './utils';
 const topicFilter = `
 SELECT "Objectives"."goalId" FROM "ActivityReportObjectives" 
 INNER JOIN "Objectives" on "ActivityReportObjectives"."objectiveId" = "Objectives"."id" 
-WHERE "ActivityReportObjectives"."activityReportId" 
-IN (SELECT "id" from "ActivityReports" WHERE (ARRAY_TO_STRING(topic, ',')))`;
+INNER JOIN "ActivityReports" ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id"
+WHERE ARRAY_TO_STRING("ActivityReports"."topics", ',')`; // ~* var topics
 
 export function withTopics(topics) {
   return {
