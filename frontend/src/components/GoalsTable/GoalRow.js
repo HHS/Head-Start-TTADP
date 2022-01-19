@@ -7,7 +7,7 @@ import {
   faClock, faCheckCircle, faExclamationCircle, faPencilAlt, faMinusCircle, faTimesCircle, faFlag,
 } from '@fortawesome/free-solid-svg-icons';
 import ContextMenu from '../ContextMenu';
-//import TooltipWithCollection from '../TooltipWithCollection';
+// import TooltipWithCollection from '../TooltipWithCollection';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
@@ -101,8 +101,8 @@ function GoalRow({
   let showToolTip = false;
   const truncateGoalTopics = (goalTopicsToTruncate) => {
     let queryToReturn = goalTopicsToTruncate.join(', ');
-    if (queryToReturn.length > 60) {
-      queryToReturn = queryToReturn.substring(0, 60);
+    if (queryToReturn.length > 50) {
+      queryToReturn = queryToReturn.substring(0, 50);
       queryToReturn += '...';
       showToolTip = true;
     }

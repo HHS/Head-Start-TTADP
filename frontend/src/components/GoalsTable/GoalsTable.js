@@ -36,7 +36,7 @@ const emptyGoals = [{
   goalStatus: 'Needs status',
   createdOn: '10/15/2021',
   goalText: 'Professional development opportunity provided by the Office of Head Start Region V TTA Network to strengthen participants leadership skills.',
-  goalTopics: ['Compliance'],
+  goalTopics: ['Compliance', 'New Staff / Turnover', 'Data and Evaluation'],
   objectives: 4,
   goalNumber: 'R14-G-65478',
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance', 'Monitoring | Area of Concern'],
