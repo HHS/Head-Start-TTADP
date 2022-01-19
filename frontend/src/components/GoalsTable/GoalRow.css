@@ -1,5 +1,5 @@
 .tta-smarthub--goal-row td:first-child {
-    position: relative;
+  position: relative;
 }
 
 /**
@@ -9,7 +9,7 @@
 */
 
 .tta-smarthub--goal-row .ttahub-export-reports {
-	display: none;
+  display: none;
 }
 
 /**
@@ -18,7 +18,7 @@
 */
 
 .tta-smarthub--goal-row.focused .ttahub-export-reports {
-	display: inline;
+  display: inline;
 }
 
 /**
@@ -27,20 +27,31 @@
 */
 
 .tta-smarthub--goal-row .ttahub-export-reports:not(:focus) {
-	border: 0;
-	clip: rect(1px, 1px, 1px, 1px);
-	clip-path: inset(50%);
-	height: 1px;
-	margin: -1px;
-	overflow: hidden;
-	padding: 0;
-	width: 1px;
+  border: 0;
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  width: 1px;
 }
 
 .tta-smarthub--goal-row .ttahub-export-reports {
-    background: white;
-    left: 50px;  
-    top: -10px;
-    position: absolute;
-    z-index: 100000;
+  background: white;
+  left: 50px;
+  top: -10px;
+  position: absolute;
+  z-index: 100000;
 }
+
+
+.tta-smarthub--goal-row .smart-hub--ellipsis {
+	max-width: none;
+}
+
+.tta-smarthub--goal-row .smart-hub--ellipsis > span {
+
+	border-bottom: 1px dashed #000;
+}
+
