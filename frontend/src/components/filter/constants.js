@@ -14,6 +14,7 @@ import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
+import FilterStatus from './FilterStatus';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -45,6 +46,35 @@ const handleArrayQuery = (q) => {
 const handleStringQuery = (q) => q;
 
 export const FILTER_CONFIG = [
+  {
+    id: 'createDate',
+    display: 'Date range',
+    conditions: DATE_CONDITIONS,
+    defaultValues: {
+      'Is within': YEAR_TO_DATE,
+      'Is after': '',
+      'Is before': '',
+    },
+    displayQuery: (query) => {
+      if (query.includes('-')) {
+        return formatDateRange({
+          string: query,
+          withSpaces: false,
+        });
+      }
+      return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    },
+    renderInput: (id, condition, query, onApplyQuery, dateRangeOptions) => (
+      <FilterDateRange
+        condition={condition}
+        query={query}
+        updateSingleDate={onApplyQuery}
+        onApplyDateRange={onApplyQuery}
+        options={dateRangeOptions}
+        id={id}
+      />
+    ),
+  },
   {
     id: 'startDate',
     display: 'Date range',
@@ -187,6 +217,20 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterSpecialistSelect
         inputId={`role-${condition}-${id}`}
+        onApply={onApplyQuery}
+        query={query}
+      />
+    ),
+  },
+  {
+    id: 'status',
+    display: 'Status',
+    conditions: FILTER_CONDITIONS,
+    defaultValues: EMPTY_MULTI_SELECT,
+    displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterStatus
+        inputId={`status-${condition}-${id}`}
         onApply={onApplyQuery}
         query={query}
       />
