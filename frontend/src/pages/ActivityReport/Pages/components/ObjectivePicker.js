@@ -37,9 +37,9 @@ const ObjectivePicker = () => {
   const singleObjective = objectives.length <= 1;
 
   return (
-    <div className="margin-top-4">
+    <div>
       <FormItem
-        label='Because goals are associated with grantees, there is no "goal" field in this section. You must create at least one objective for this activity.'
+        label='Because goals are associated with recipients, there is no "goal" field in this section. You must create at least one objective for this activity.'
         name={OBJECTIVE_LABEL}
         fieldSetWrapper
       >

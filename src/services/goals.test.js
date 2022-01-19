@@ -19,7 +19,7 @@ describe('Goals DB service', () => {
   describe('copyGoalsToGrants', () => {
     it('creates a new grantGoal for every grant goal pair', async () => {
       Grant.findAll = jest.fn();
-      Grant.findAll.mockResolvedValue([{ id: 1, granteeId: 1 }, { id: 2, granteeId: 1 }]);
+      Grant.findAll.mockResolvedValue([{ id: 1, recipientId: 1 }, { id: 2, recipientId: 1 }]);
 
       GrantGoal.bulkCreate = jest.fn();
 
@@ -28,22 +28,22 @@ describe('Goals DB service', () => {
       const expected = [
         {
           grantId: 1,
-          granteeId: 1,
+          recipientId: 1,
           goalId: 1,
         },
         {
           grantId: 1,
-          granteeId: 1,
+          recipientId: 1,
           goalId: 2,
         },
         {
           grantId: 2,
-          granteeId: 1,
+          recipientId: 1,
           goalId: 1,
         },
         {
           grantId: 2,
-          granteeId: 1,
+          recipientId: 1,
           goalId: 2,
         },
       ];
@@ -212,6 +212,9 @@ describe('goalsForGrants', () => {
           },
           {
             status: 'In Progress',
+          },
+          {
+            status: null,
           },
         ],
       },

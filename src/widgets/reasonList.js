@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { ActivityReport } from '../models';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES, REASONS } from '../constants';
 import { countBySingleKey } from './helpers';
 
 export default async function reasonList(scopes) {
@@ -18,6 +18,7 @@ export default async function reasonList(scopes) {
     raw: true,
   });
 
-  // Return only top 14.
-  return countBySingleKey(res, 'reason');
+  const reasons = REASONS.map((reason) => ({ name: reason, count: 0 }));
+
+  return countBySingleKey(res, 'reason', reasons);
 }

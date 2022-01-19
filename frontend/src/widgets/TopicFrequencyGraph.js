@@ -4,11 +4,9 @@ import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
-import DateTime from '../components/DateTime';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
-import SpecialistSelect from '../components/SpecialistSelect';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -53,7 +51,7 @@ export function topicsWithLineBreaks(reason) {
 }
 
 export function TopicFrequencyGraphWidget({
-  data, dateTime, onApplyRoles, loading,
+  data, loading,
 }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
@@ -164,10 +162,7 @@ export function TopicFrequencyGraphWidget({
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 4 }} className="display-flex desktop:padding-x-1 desktop:margin-y-0 margin-y-2 flex-align-self-center">
-          <DateTime classNames="display-flex flex-align-center padding-x-1" timestamp={dateTime.timestamp} label={dateTime.label} />
-        </Grid>
-        <Grid col="auto" className="ttahub--topic-frequency-graph-control-row display-flex desktop:padding-x-2">
+        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex desktop:padding-x-2">
           <ButtonSelect
             styleAsSelect
             labelId="tfGraphOrder"
@@ -192,7 +187,6 @@ export function TopicFrequencyGraphWidget({
               ]
             }
           />
-          <SpecialistSelect labelId="tf-role-select" onApplyRoles={onApplyRoles} />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button
@@ -215,9 +209,6 @@ export function TopicFrequencyGraphWidget({
 }
 
 TopicFrequencyGraphWidget.propTypes = {
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -227,11 +218,10 @@ TopicFrequencyGraphWidget.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-  onApplyRoles: PropTypes.func.isRequired,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {
-  dateTime: { timestamp: '', label: '' },
+
   data: [],
 };
 

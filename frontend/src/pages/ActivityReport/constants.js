@@ -1,26 +1,4 @@
-// Note that if this topic list is changed, it needs also to be changed in
-// - src/constants.js
-export const reasons = [
-  'Below Competitive Threshold (CLASS)',
-  'Below Quality Threshold (CLASS)',
-  'Change in Scope',
-  'Child Incidents',
-  'Complaint',
-  'COVID-19 response',
-  'Full Enrollment',
-  'New Grantee',
-  'New Director or Management',
-  'New Program Option',
-  'New Staff / Turnover',
-  'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
-  'School Readiness Goals',
-  'Monitoring | Area of Concern',
-  'Monitoring | Noncompliance',
-  'Monitoring | Deficiency',
-];
-
-export const granteeParticipants = [
+export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
   'Coach',
@@ -37,7 +15,7 @@ export const granteeParticipants = [
   'Volunteer',
 ];
 
-export const nonGranteeParticipants = [
+export const otherEntityParticipants = [
   'Local/State Agency(ies)',
   'HSCO',
   'OCC Regional Office',
@@ -47,27 +25,6 @@ export const nonGranteeParticipants = [
   'State Early Learning System',
   'State Head Start Association',
   'Other',
-];
-
-export const targetPopulations = [
-  'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
-  '--------------------',
-  'Affected by Child Welfare Involvement',
-  'Affected by Disaster',
-  'Affected by Substance Use',
-  'Children Experiencing Homelessness',
-  'Children with Disabilities',
-  'Children with Special Health Care Needs',
-  'Dual-Language Learners',
-  'Pregnant Women',
-];
-
-export const programTypes = [
-  'Early Head Start (ages 0-3)',
-  'Head Start (ages 3-5)',
-  'EHS-CCP',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in

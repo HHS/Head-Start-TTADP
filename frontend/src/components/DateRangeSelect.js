@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  createRef,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {
@@ -8,8 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
 import DropdownMenu from './DropdownMenu';
-import { DATE_FORMAT } from './constants';
-import { DATE_FMT as DATETIME_DATE_FORMAT, EARLIEST_INC_FILTER_DATE } from '../Constants';
+import { DATE_FMT as DATETIME_DATE_FORMAT, DATE_FORMAT, EARLIEST_INC_FILTER_DATE } from '../Constants';
 
 // I think we need 'em both
 import './ButtonSelect.css';
@@ -107,24 +111,55 @@ const CUSTOM_DATE_RANGE = OPTIONS[1].value;
  * @returns JSX object
  */
 
-function DateRangeSelect(props) {
-  const {
-    options,
-    styleAsSelect,
-    updateDateRange,
-    disabled,
-  } = props;
-
+function DateRangeSelect({
+  options,
+  styleAsSelect,
+  updateDateRange,
+  disabled,
+  onChange,
+  dateRange,
+}) {
   const [selectedItem, setSelectedItem] = useState(1);
   const [showDateError, setShowDateError] = useState(false);
 
-  // to handle the internal range
-  const [startDate, setStartDate] = useState();
-  const [startDateFocused, setStartDateFocused] = useState(false);
-  const [endDate, setEndDate] = useState();
-  const [endDateFocused, setEndDateFocused] = useState(false);
+  // this is a ref for the dropdown menu so that we can create accurate blur logic
+  const menu = createRef();
 
+  const [dates, setDates] = useState({
+    startDate: false,
+    endDate: false,
+  });
+
+  // to handle the internal range
+  const [startDateFocused, setStartDateFocused] = useState(false);
+  const [endDateFocused, setEndDateFocused] = useState(false);
   const startDatePickerId = 'startDatePicker';
+
+  const getDateRange = useCallback(() => {
+    const { startDate, endDate } = dates;
+
+    if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
+      const range = `${startDate ? startDate.format(DATETIME_DATE_FORMAT) : ''}-${endDate ? endDate.format(DATETIME_DATE_FORMAT) : ''}`;
+      return range;
+    }
+
+    if (selectedItem) {
+      const option = options.find((o) => selectedItem === o.value);
+      if (option) {
+        const { range } = option;
+        return range;
+      }
+    }
+
+    return '';
+  }, [dates, options, selectedItem]);
+
+  useEffect(() => {
+    const range = getDateRange();
+    if (range) {
+      onChange(range);
+    }
+  }, [dateRange, dates, getDateRange, onChange]);
 
   /** when to focus on the start date input */
   useEffect(() => {
@@ -141,23 +176,13 @@ function DateRangeSelect(props) {
    *
    */
   const onApplyClick = () => {
-    if (selectedItem && selectedItem === CUSTOM_DATE_RANGE) {
-      const range = `${startDate ? startDate.format(DATETIME_DATE_FORMAT) : ''}-${endDate ? endDate.format(DATETIME_DATE_FORMAT) : ''}`;
-      const isValidDateRange = range.trim().split('-').filter((str) => str !== '').length === 2;
-
-      if (!isValidDateRange) {
-        setShowDateError(true);
-        return;
-      }
-
+    const range = getDateRange();
+    if (range) {
       updateDateRange(range);
-    } else if (selectedItem) {
-      const option = options.find((o) => selectedItem === o.value);
-      if (option) {
-        const { range } = option;
-        updateDateRange(range);
-      }
+      return true;
     }
+
+    return false;
   };
 
   /**
@@ -169,6 +194,11 @@ function DateRangeSelect(props) {
   const canBlur = (e) => {
     // if we're within the same menu, do nothing
     if (e.relatedTarget && e.relatedTarget.matches('.smart-hub--button-select-menu *')) {
+      return false;
+    }
+
+    // clicking between the dropdowns should also not close the date select
+    if (e.relatedTarget === menu.current) {
       return false;
     }
 
@@ -188,9 +218,10 @@ function DateRangeSelect(props) {
    */
 
   const isOutsideRange = (day, startOrEnd) => {
+    const { startDate } = dates;
+
     if (startOrEnd === 'start') {
-      return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)
-        || (endDate && day.isAfter(endDate));
+      return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE);
     }
 
     return isInclusivelyBeforeDay(day, EARLIEST_INC_FILTER_DATE)
@@ -200,6 +231,9 @@ function DateRangeSelect(props) {
   // get label text
   const { label } = options.find((option) => option.value === selectedItem);
   const ariaLabel = 'Toggle the date range select menu';
+
+  // css classes dependent on error
+  const cssClasses = `smart-hub--button-select-menu-date-picker ${showDateError ? `smart-hub--button-select-menu-date-picker--error-${showDateError}` : ''}`;
 
   return (
     <DropdownMenu
@@ -211,6 +245,8 @@ function DateRangeSelect(props) {
       onApply={onApplyClick}
       menuName="Date range select menu"
       applyButtonAria="Apply date range filters"
+      className=""
+      forwardedRef={menu}
     >
       <div className="smart-hub--button-select-menu" role="group" aria-describedby="dateRangeSelectLabel">
         <span className="smart-hub--button-select-menu-label" id="dateRangeSelectLabel">
@@ -235,7 +271,7 @@ function DateRangeSelect(props) {
 
           { selectedItem && selectedItem === CUSTOM_DATE_RANGE
             ? (
-              <div className="smart-hub--button-select-menu-date-picker">
+              <div className={cssClasses}>
                 { showDateError ? (
                   <div className="usa-alert usa-alert--warning usa-alert--no-icon margin-top-1 margin-0" role="alert">
                     <p className="usa-alert__text padding-1">
@@ -246,27 +282,46 @@ function DateRangeSelect(props) {
                   </div>
                 ) : null }
                 {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <label className="display-block margin-top-2" htmlFor={startDatePickerId}>Start Date</label>
-                <p><small>mm/dd/yyyy</small></p>
+                <label className="display-block margin-top-2" htmlFor={startDatePickerId}>
+                  Start Date
+                  <br />
+                  <span className="sr-only">Please enter in the format</span>
+                  <small className="display-block margin-y-2">mm/dd/yyyy</small>
+                </label>
                 <div className="smart-hub--button-select-menu-date-picker-single">
                   <SingleDatePicker
+                    ariaLabel=""
                     small
-                    ariaLabel="start date"
                     id={startDatePickerId}
                     focused={startDateFocused}
                     numberOfMonths={1}
                     hideKeyboardShortcutsPanel
-                    isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onFocusChange={({ focused }) => {
                       if (!focused) {
                         setStartDateFocused(focused);
                       }
                     }}
+                    isOutsideRange={(day) => isOutsideRange(day, 'start')}
                     onDateChange={(selectedDate) => {
-                      setStartDate(selectedDate);
+                      // weird that we'd have to explicitly do this
+                      // but otherwise things get all wacky when you
+                      // type in a date that's different than the end date
+                      if (!selectedDate) {
+                        return;
+                      }
+
+                      const { startDate, endDate } = dates;
+                      if (endDate && endDate.isBefore(selectedDate)) {
+                        const diff = endDate.diff(startDate, 'days');
+                        const newEnd = moment(selectedDate).add(diff, 'days');
+                        setDates({ endDate: newEnd, startDate: selectedDate });
+                      } else {
+                        setDates({ ...dates, startDate: selectedDate });
+                      }
+
                       setStartDateFocused(false);
                     }}
-                    date={startDate}
+                    date={dates.startDate || null /* this is to prevent prop type warnings */}
                   />
                   <Button
                     onClick={() => setStartDateFocused(true)}
@@ -279,11 +334,15 @@ function DateRangeSelect(props) {
                   </Button>
                 </div>
                 {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <label className="display-block margin-top-2" htmlFor="endDatePicker">End Date</label>
-                <p><small>mm/dd/yyyy</small></p>
+                <label className="display-block margin-top-2" htmlFor="endDatePicker">
+                  End Date
+                  <br />
+                  <span className="sr-only">Please enter in the format</span>
+                  <small className="display-block margin-y-2">mm/dd/yyyy</small>
+                </label>
                 <div className="smart-hub--button-select-menu-date-picker-single">
                   <SingleDatePicker
-                    ariaLabel="end date"
+                    ariaLabel=""
                     small
                     id="endDatePicker"
                     focused={endDateFocused}
@@ -296,10 +355,11 @@ function DateRangeSelect(props) {
                       }
                     }}
                     onDateChange={(selectedDate) => {
-                      setEndDate(selectedDate);
+                      const endDate = selectedDate;
+                      setDates({ ...dates, endDate });
                       setEndDateFocused(false);
                     }}
-                    date={endDate}
+                    date={dates.endDate || null /* this is to prevent prop type warnings */}
                   />
                   <Button
                     onClick={() => setEndDateFocused(true)}
@@ -331,15 +391,17 @@ DateRangeSelect.propTypes = {
   options: PropTypes.arrayOf(optionProp),
   disabled: PropTypes.bool,
   styleAsSelect: PropTypes.bool,
-
   // props for handling the date range select
   updateDateRange: PropTypes.func.isRequired,
+  onChange: PropTypes.func,
+  dateRange: PropTypes.string.isRequired,
 };
 
 DateRangeSelect.defaultProps = {
   styleAsSelect: false,
   disabled: false,
   options: OPTIONS,
+  onChange: () => {},
 };
 
 export default DateRangeSelect;

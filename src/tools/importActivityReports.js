@@ -225,15 +225,14 @@ export default async function importActivityReports(fileKey, region) {
     if (legacyId) {
       logger.debug(`Processing legacyId: ${legacyId}`);
 
-      const granteeActivity = getValue(data, 'granteeActivity');
-      const activityRecipientType = granteeActivity ? 'grantee' : 'nonGrantee';
+      const recipientActivity = getValue(data, 'granteeActivity');
+      const activityRecipientType = recipientActivity ? 'recipient' : 'other-entity';
 
       // Coerce values into appropriate data type
       const submissionStatus = coerceStatus(getValue(data, 'managerApproval'));
       const duration = coerceDuration(getValue(data, 'duration'));
       const numberOfParticipants = coerceInt(getValue(data, 'numberOfParticipants'));
 
-      const programTypes = coerceToArray(getValue(data, 'programType')); // FIXME: Check this key
       const targetPopulations = coerceToArray(getValue(data, 'targetPopulations'));
       const reason = coerceToArray(getValue(data, 'reasons'));
       const participants = coerceToArray(getValue(data, 'granteeParticipants'))
@@ -256,7 +255,6 @@ export default async function importActivityReports(fileKey, region) {
         endDate,
         activityRecipientType,
         requester: getValue(data, 'sourceOfRequest'), // 'Grantee' or 'Regional Office'
-        programTypes, // Array of strings
         targetPopulations, // Array of strings
         reason, // Array of strings
         numberOfParticipants, // Integer

@@ -1,83 +1,193 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
-
-// save this to cut down on repeated boilerplate in PropTypes
-const filterProp = PropTypes.shape({
-  topic: PropTypes.string,
-  condition: PropTypes.string,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
-  id: PropTypes.string,
-});
+import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
+import { formatDateRange } from '../DateRangeSelect';
+import usePrevious from '../../hooks/usePrevious';
+import { filterProp } from './props';
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
  * @param {Object} props
  * @returns JSX Object
  */
-export default function FilterMenu({ filters, onApplyFilters }) {
-  const [items, setItems] = useState([...filters]);
+export default function FilterMenu({
+  filters, onApplyFilters, allowedFilters, dateRangeOptions, applyButtonAria,
+}) {
+  const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
+  const [errors, setErrors] = useState(filters.map(() => ''));
 
+  const itemLength = usePrevious(items.length);
+
+  const validate = ({ topic, query, condition }) => {
+    if (!topic) {
+      return 'Please enter a filter';
+    }
+
+    if (!condition) {
+      return 'Please enter a condition';
+    }
+
+    if (!query || !query.toString().length) {
+      return 'Please enter a value';
+    }
+
+    if (query.toString().includes('Invalid date') || (topic === 'startDate' && query.toString() === '-')) {
+      return 'Please enter a value';
+    }
+
+    return '';
+  };
+
+  // filters currently selected. these will be excluded from filter selection
+  const selectedFilters = items.map((filter) => filter.topic);
+
+  // filters that aren't allowed per our allowedFilters prop
+  const prohibitedFilters = AVAILABLE_FILTERS.filter((f) => !allowedFilters.includes(f));
+
+  // If filters were changed outside of this component, we need to update the items
+  // (for example, the "remove filter" button on the filter pills)
   useEffect(() => {
-    // If filters where changes outside of this component update.
     setItems(filters);
   }, [filters]);
 
+  // focus on the first topic if we add more
+  useEffect(() => {
+    if (items.length > itemLength) {
+      const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+
+      if (topic && !topic.value) {
+        topic.focus();
+      }
+    }
+  }, [itemLength, items.length]);
+
+  const totalValidation = () => {
+    const hasErrors = items.reduce((acc, curr, index) => {
+      if (acc) {
+        return true;
+      }
+
+      const setError = (message) => {
+        const newErrors = [...errors];
+        newErrors.splice(index, 1, message);
+        setErrors(newErrors);
+      };
+
+      const message = validate(curr);
+
+      if (message) {
+        setError(message);
+        return true;
+      }
+
+      return false;
+    }, false);
+
+    // return whether or not there are errors
+    return !hasErrors;
+  };
+
   const onApply = () => {
-    onApplyFilters(items.filter((item) => item.topic && item.condition && item.query));
+    // first, we validate
+    if (!totalValidation()) {
+      return false;
+    }
+
+    // otherwise, we apply
+    onApplyFilters(items);
+    return true;
   };
 
   const onRemoveFilter = (id) => {
-    const newItems = [...items];
+    const newItems = items.map((item) => ({ ...item }));
     const index = newItems.findIndex((item) => item.id === id);
 
     if (index !== -1) {
+      const newErrors = [...errors];
+      newErrors.splice(index, 1);
       newItems.splice(index, 1);
       setItems(newItems);
+      setErrors(newErrors);
     }
   };
 
   // reset state if we hit cancel
-  const onCancel = () => setItems([...filters]);
+  const onCancel = () => {
+    const copyOfFilters = filters.map((filter) => ({ ...filter }));
+    setItems(copyOfFilters);
+  };
 
-  const onUpdateFilter = (id, name, value, toggleAllChecked) => {
-    const newItems = [...items];
+  const onUpdateFilter = (id, name, value) => {
+    const newItems = items.map((item) => ({ ...item }));
     const toUpdate = newItems.find((item) => item.id === id);
+
+    if (toUpdate[name] === value) {
+      return;
+    }
+
     toUpdate[name] = value;
+
+    if (name === 'condition') {
+      /**
+       * if the condition is changed, we need to do a lookup in the filter config
+       * and set the query to the new default value
+       */
+      const f = FILTER_CONFIG.find(((config) => config.id === toUpdate.topic));
+      const defaultQuery = f.defaultValues[value];
+
+      if (defaultQuery) {
+        toUpdate.query = defaultQuery;
+      }
+    }
 
     if (name === 'topic') {
       toUpdate.condition = '';
       toUpdate.query = '';
     }
-    toUpdate.toggleAllChecked = toggleAllChecked;
+
     setItems(newItems);
   };
+
   const onAddFilter = () => {
-    const newItems = [...items];
-    const newItem = {
-      id: uuidv4(),
-      display: '',
-      conditions: [],
-      toggleAllChecked: true,
-    };
-    newItems.push(newItem);
-    setItems(newItems);
+    // validating will trigger any error states visually
+    // and also prevent the adding of new items when previous ones are in error
+    if (totalValidation()) {
+      const newItems = [...items.map((item) => ({ ...item }))];
+      const newItem = {
+        id: uuidv4(),
+        display: '',
+        conditions: [],
+      };
+      newItems.push(newItem);
+
+      const newErrors = [...errors, ''];
+      setErrors(newErrors);
+
+      setItems(newItems);
+    }
   };
 
-  const canBlur = (e) => {
-    if (e.relatedTarget && e.relatedTarget.matches('.ttahub-filter-menu')) {
-      return false;
-    }
+  const clearAllFilters = () => {
+    setItems([]);
+  };
 
-    // if we've a date range, also do nothing on blur when we click on those. this is kind of an
-    // annoyance created because we have nested dropdownmenus
-    if (e.target.matches('.CalendarDay, .DayPickerNavigation, .DayPickerNavigation_button')) {
-      return false;
-    }
+  const canBlur = () => false;
 
-    return true;
+  const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
+
+  const onOpen = () => {
+    // The onOpen is passed into the DropdownMenu component
+    // this will add an empty item into the list if there
+    // are no filters, to cut down on user clicking
+    if (!items.length) {
+      onAddFilter();
+    }
   };
 
   return (
@@ -85,31 +195,61 @@ export default function FilterMenu({ filters, onApplyFilters }) {
       buttonText="Filters"
       buttonAriaLabel="open filters for this page"
       onApply={onApply}
-      applyButtonAria="apply filters to grantee record data"
+      applyButtonAria={applyButtonAria}
       showCancel
       onCancel={onCancel}
       cancelAriaLabel="discard changes and close filter menu"
       className="ttahub-filter-menu margin-right-1"
       menuName="filter menu"
       canBlur={canBlur}
+      AlternateActionButton={ClearAllButton}
+      onOpen={onOpen}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
-        <p className="margin-bottom-2"><strong>Show results matching the following conditions.</strong></p>
+        <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
-          <ul className="usa-list usa-list--unstyled margin-bottom-1">
-            {items.map((filter) => (
-              <FilterItem
-                onRemoveFilter={onRemoveFilter}
-                onUpdateFilter={onUpdateFilter}
-                key={filter.id}
-                filter={filter}
-              />
-            ))}
-          </ul>
-          <button type="button" className="usa-button usa-button--unstyled margin-top-1" onClick={onAddFilter}>Add new filter</button>
+          <div className="margin-bottom-1">
+            {items.map((filter, index) => {
+              const { topic } = filter;
+
+              if (prohibitedFilters.includes(topic)) {
+                return null;
+              }
+
+              const topicOptions = FILTER_CONFIG.filter((config) => (
+                topic === config.id
+                || ![...selectedFilters, ...prohibitedFilters].includes(config.id)
+              )).map(({ id: filterId, display }) => (
+                <option key={filterId} value={filterId}>{display}</option>
+              ));
+              const newTopic = {
+                display: '',
+                renderInput: () => {},
+                conditions: [],
+              };
+
+              const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
+
+              return (
+                <FilterItem
+                  onRemoveFilter={onRemoveFilter}
+                  onUpdateFilter={onUpdateFilter}
+                  key={filter.id}
+                  filter={filter}
+                  dateRangeOptions={dateRangeOptions}
+                  errors={errors}
+                  setErrors={setErrors}
+                  validate={validate}
+                  index={index}
+                  topicOptions={topicOptions}
+                  selectedTopic={selectedTopic || newTopic}
+                />
+              );
+            })}
+          </div>
+          <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
         </div>
       </div>
-
     </DropdownMenu>
   );
 }
@@ -117,4 +257,27 @@ export default function FilterMenu({ filters, onApplyFilters }) {
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
+  allowedFilters: PropTypes.arrayOf(PropTypes.string),
+  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+    range: PropTypes.string,
+  })),
+  applyButtonAria: PropTypes.string.isRequired,
+};
+
+FilterMenu.defaultProps = {
+  allowedFilters: AVAILABLE_FILTERS,
+  dateRangeOptions: [
+    {
+      label: 'Year to date',
+      value: 1,
+      range: formatDateRange({ yearToDate: true, forDateTime: true }),
+    },
+    {
+      label: 'Custom date range',
+      value: 2,
+      range: '',
+    },
+  ],
 };

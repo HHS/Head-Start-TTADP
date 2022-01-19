@@ -1,14 +1,16 @@
 version: 2.1
 orbs:
   node: circleci/node@4.1.0
+  browser-tools: circleci/browser-tools@1.2.3
+  slack: circleci/slack@4.5.1
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:14.17.6-browsers
+      - image: circleci/node:14.18.1-browsers
   docker-postgres-executor:
     docker:
-      - image: circleci/node:14.17.6-browsers
+      - image: circleci/node:14.18.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -97,13 +99,13 @@ commands:
           holds the New Relic License key, a required application variable"
         type: env_var_name
       hses_data_file_url:
-        description: "Url to download HSES grants and grantee data from"
+        description: "Url to download HSES grants and recipient data from"
         type: env_var_name
       hses_data_username:
-        description: "Username used to access the HSES grants and grantee data"
+        description: "Username used to access the HSES grants and recipient data"
         type: env_var_name
       hses_data_password:
-        description: "Password used to access the HSES grants and grantee data"
+        description: "Password used to access the HSES grants and recipient data"
         type: env_var_name
     steps:
       - run:
@@ -153,7 +155,7 @@ parameters:
     type: string
   sandbox_git_url:
     description: "URL of github repo that will deploy to sandbox"
-    default: "https://github.com/adhocteam/Head-Start-TTADP"
+    default: "https://github.com/HHS/Head-Start-TTADP"
     type: string
   prod_git_branch:
     description: "Name of github branch that will deploy to prod"
@@ -165,10 +167,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB276"
+    default: "TTAHUB-359/add-filters-to-dashboard"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB276"
+    default: "js-458-update-fe-dependencies"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -183,6 +185,13 @@ parameters:
     default: "867346799"
     type: string
 jobs:
+  notify_daily_scan_fail:
+    executor: docker-executor
+    description: "Notify acf-eng on daily scan fail"    
+    steps:
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
   build_and_lint:
     executor: docker-executor
     steps:
@@ -305,6 +314,10 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - browser-tools/install-chrome:   
+          chrome-version: 93.0.4577.63
+          replace-existing: true
+      - browser-tools/install-chromedriver
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -481,7 +494,7 @@ workflows:
       - accessibility_scan:
           requires:
             - build_and_lint
-      - deploy:
+      - deploy:          
           requires:
             - test_backend
             - test_frontend
@@ -495,7 +508,7 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-  daily_scan:
+  daily_scan:   
     triggers:
       - schedule:
           cron: "0 12 * * 1-5"
@@ -506,7 +519,7 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build_and_lint
+      - build_and_lint      
       - test_backend:
           requires:
             - build_and_lint
@@ -516,3 +529,5 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+      - notify_daily_scan_fail:
+          context: ohs-eng-daily-scan-slack 

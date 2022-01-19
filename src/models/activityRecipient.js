@@ -1,11 +1,11 @@
-import { Model } from 'sequelize';
+const { Model } = require('sequelize');
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class ActivityRecipient extends Model {
     static associate(models) {
       ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
       ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
-      ActivityRecipient.belongsTo(models.NonGrantee, { foreignKey: 'nonGranteeId', as: 'nonGrantee' });
+      ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
     }
   }
   ActivityRecipient.init({
@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.INTEGER,
     },
-    nonGranteeId: {
+    otherEntityId: {
       allowNull: true,
       type: DataTypes.INTEGER,
     },
@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
         if (this.grantId) {
           return this.grantId;
         }
-        return this.nonGranteeId;
+        return this.otherEntityId;
       },
     },
     name: {
@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
         if (this.grant) {
           return this.grant.name;
         }
-        return this.nonGrantee.name;
+        return this.otherEntity.name;
       },
     },
   }, {
@@ -47,15 +47,15 @@ export default (sequelize, DataTypes) => {
       },
       {
         unique: true,
-        fields: ['nonGranteeId', 'activityReportId'],
+        fields: ['otherEntityId', 'activityReportId'],
       },
     ],
     sequelize,
     modelName: 'ActivityRecipient',
     validate: {
       oneNull() {
-        if (this.grantId && this.nonGranteeId) {
-          throw new Error('Can not specify both grantId and nonGranteeId');
+        if (this.grantId && this.otherEntityId) {
+          throw new Error('Can not specify both grantId and otherEntityId');
         }
       },
     },

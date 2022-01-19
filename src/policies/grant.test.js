@@ -1,13 +1,13 @@
 import Grant from './grant';
 
 describe('Grant policies', () => {
-  describe('canAssignRegionAndGrantee', () => {
+  describe('canAssignRegionAndRecipient', () => {
     it('is true if the grant is cdi', () => {
       const grant = {
         cdi: true,
       };
       const policy = new Grant(grant);
-      expect(policy.canAssignRegionAndGrantee()).toBeTruthy();
+      expect(policy.canAssignRegionAndRecipient()).toBeTruthy();
     });
 
     it('is false if the grant is not cdi', () => {
@@ -15,7 +15,7 @@ describe('Grant policies', () => {
         cdi: false,
       };
       const policy = new Grant(grant);
-      expect(policy.canAssignRegionAndGrantee()).toBeFalsy();
+      expect(policy.canAssignRegionAndRecipient()).toBeFalsy();
     });
   });
 });

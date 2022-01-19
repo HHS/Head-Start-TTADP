@@ -1,11 +1,5 @@
-.landing {
-  font-family: "Merriweather", serif;
-}
-
 .pagination {
-  float: right;
   white-space: nowrap;
-  margin-top: -9px;
   margin-bottom: 0px;
   padding-left: 20px;
 }
@@ -53,7 +47,6 @@ div.smart-hub--total-count {
 .smart-hub--link-prev {
   text-decoration-line: underline !important;
   color: #0166ab !important;
-  padding-left: 20px;
   margin-right: 12px;
 }
 
@@ -62,36 +55,16 @@ div.smart-hub--total-count {
   padding: 2px;
 }
 
-.smart-hub--table-controls {
-  position: relative;
-  float: left;
-  margin-left: 275px;
-  margin-bottom: -90px;
-  margin-top: 24px;
-}
-
-.smart-hub--alerts-table-controls {
-  position: relative;
-  float: left;
-  margin-left: 275px;
-  margin-bottom: -90px;
-  margin-top: 24px;
-}
-
 .smart-hub-bg-vivid {
   background-color: #0166ab;
 }
 
 .landing .smart-hub--table-nav {
   position: relative;
-  float: right;
   font-size: 16px;
   font-weight: 500;
   font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
     sans-serif;
-  margin-right: 20px;
-  margin-top: 27px;
-  margin-bottom: -90px;
 }
 
 #alertsTotalCount {
@@ -110,19 +83,11 @@ h1.landing {
   font-family: "Merriweather", serif;
   font-weight: 700;
   white-space: nowrap;
-  margin-right: 30px;
+  margin-right: 0px;
 }
 
 .landing .usa-table {
   line-height: 2.5;
-}
-
-.landing .usa-table caption {
-  font-size: 21px;
-  font-weight: 900;
-  padding: 8px 0px 17px 20px;
-  margin-bottom: -0.25rem;
-  margin-top: 1px;
 }
 
 .landing .usa-table thead th a {
@@ -135,7 +100,6 @@ h1.landing {
   border-top: solid 1.5px;
   border-color: #eceef1;
   border-bottom: none;
-
   padding-right: 0px;
 }
 
@@ -152,9 +116,6 @@ h1.landing {
   min-width: auto;
 }
 
-.landing .usa-table .usa-checkbox__label {
-  padding-left: 0;
-}
 .landing .usa-table .usa-checkbox__label::before{
   position: relative;
 }
@@ -178,10 +139,6 @@ h1.landing {
 
 .landing .smart-hub--context-menu-button {
   padding: 2px;
-}
-
-.usa-table tr:nth-child(odd) {
-  background-color: #f8f8f8;
 }
 
 .smart-hub--status-draft {
@@ -288,31 +245,6 @@ a.desc {
 
 .simplebar-scrollbar:before {
   background: #c5c5c5;
-}
-
-#caughtUp {
-  padding: 100px 320px;
-  white-space: nowrap;
-}
-
-#caughtUp h2 {
-  white-space: nowrap;
-  padding-left: 50px;
-}
-
-#beginNew {
-  padding-bottom: 15px;
-}
-
-.landing .smart-hub--table-controls__button {
-  color: black;
-  text-decoration: none;
-  margin-right: 12px;
-  padding: 6px 12px;
-  margin-left: 0px;
-  border-radius: 3px;
-  font-weight: normal;
-  box-shadow: inset 0 0 0 1px black;
 }
 
 .smart-hub--reports-button {

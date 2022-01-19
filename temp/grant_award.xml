@@ -4,8 +4,10 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01105</grant_number>
+  <grantee_state>CO</grantee_state>
   <grant_start_date>2014-03-01</grant_start_date>
   <grant_end_date>2019-02-28</grant_end_date>
+  <annual_funding_month>February</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Inactive</grant_status>
@@ -15,8 +17,10 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01106</grant_number>
+  <grantee_state>MS</grantee_state>
   <grant_start_date>2014-07-01</grant_start_date>
   <grant_end_date>2020-04-30</grant_end_date>
+  <annual_funding_month>March</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Inactive</grant_status>
@@ -26,8 +30,10 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01107</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2013-07-01</grant_start_date>
   <grant_end_date>2018-11-30</grant_end_date>
+  <annual_funding_month>April</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Inactive</grant_status>
@@ -37,8 +43,11 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01108</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2020-05-01</grant_start_date>
   <grant_end_date>2025-04-30</grant_end_date>
+  <annual_funding_month>February</annual_funding_month>
+  <grantee_state>KS</grantee_state>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Active</grant_status>
@@ -48,9 +57,12 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01109</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2018-12-01</grant_start_date>
   <grant_end_date>2023-11-30</grant_end_date>
+  <annual_funding_month>June</annual_funding_month>
   <program_acronym>CH</program_acronym>
+  <grantee_state xsi:nil="true" />
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Active</grant_status>
 </grant_award>
@@ -59,8 +71,10 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01110</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>1992-03-01</grant_start_date>
   <grant_end_date>2025-06-30</grant_end_date>
+  <annual_funding_month>July</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>BERGEN COUNTY COMMUNITY ACTION PROGRAM, INC</grantee_name>
   <grant_status>Inactive</grant_status>
@@ -70,8 +84,10 @@
   <agency_id>1335</agency_id>
   <region_id>2</region_id>
   <grant_number>02CH01111</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2019-03-01</grant_start_date>
   <grant_end_date>2024-02-29</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Active</grant_status>
@@ -86,8 +102,10 @@
   <agency_id>119</agency_id>
   <region_id>11</region_id>
   <grant_number>90CI4444</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>1994-08-01</grant_start_date>
   <grant_end_date>2025-06-30</grant_end_date>
+  <annual_funding_month>February</annual_funding_month>
   <program_acronym>CI</program_acronym>
   <grantee_name>Multi ID Agency</grantee_name>
   <grant_status>Inactive</grant_status>
@@ -97,8 +115,10 @@
   <agency_id>119</agency_id>
   <region_id>11</region_id>
   <grant_number>90CI5555</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2015-01-01</grant_start_date>
   <grant_end_date>2019-12-31</grant_end_date>
+  <annual_funding_month>February</annual_funding_month>
   <program_acronym>CI</program_acronym>
   <grantee_name>Multi ID Agency</grantee_name>
   <grant_status>Inactive</grant_status>
@@ -108,8 +128,10 @@
   <agency_id>7709</agency_id>
   <region_id>11</region_id>
   <grant_number>90CI090022</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2020-01-01</grant_start_date>
   <grant_end_date>2024-12-31</grant_end_date>
+  <annual_funding_month>February</annual_funding_month>
   <program_acronym>CI</program_acronym>
   <grantee_name>Multi ID Agency</grantee_name>
   <grant_status>Active</grant_status>
@@ -119,8 +141,10 @@
   <agency_id>119</agency_id>
   <region_id>13</region_id>
   <grant_number>13CDI0001</grant_number>
+  <grantee_state>CT</grantee_state>
   <grant_start_date>2020-01-01</grant_start_date>
   <grant_end_date>2024-12-31</grant_end_date>
+  <annual_funding_month>February</annual_funding_month>
   <program_acronym>CI</program_acronym>
   <grantee_name>Multi ID Agency</grantee_name>
   <grant_status>Active</grant_status>

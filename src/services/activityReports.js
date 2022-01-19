@@ -14,12 +14,13 @@ import {
   ActivityRecipient,
   File,
   Grant,
-  Grantee,
-  NonGrantee,
+  Recipient,
+  OtherEntity,
   Goal,
   User,
   NextStep,
   Objective,
+  Program,
 } from '../models';
 
 import { saveGoalsForReport } from './goals';
@@ -37,26 +38,30 @@ async function saveReportCollaborators(activityReportId, collaborators, transact
       newCollaborators,
       { transaction, ignoreDuplicates: true },
     );
-    await ActivityReportCollaborator.destroy({
-      where: {
-        activityReportId,
-        userId: {
-          [Op.notIn]: collaborators,
+    await ActivityReportCollaborator.destroy(
+      {
+        where: {
+          activityReportId,
+          userId: {
+            [Op.notIn]: collaborators,
+          },
         },
       },
-    },
-    {
-      transaction,
-    });
-  } else {
-    await ActivityReportCollaborator.destroy({
-      where: {
-        activityReportId,
+      {
+        transaction,
       },
-    },
-    {
-      transaction,
-    });
+    );
+  } else {
+    await ActivityReportCollaborator.destroy(
+      {
+        where: {
+          activityReportId,
+        },
+      },
+      {
+        transaction,
+      },
+    );
   }
 }
 
@@ -70,12 +75,12 @@ async function saveReportRecipients(
     const activityRecipient = {
       activityReportId,
       grantId: null,
-      nonGranteeId: null,
+      otherEntityId: null,
     };
 
-    if (activityRecipientType === 'non-grantee') {
-      activityRecipient.nonGranteeId = activityRecipientId;
-    } else if (activityRecipientType === 'grantee') {
+    if (activityRecipientType === 'other-entity') {
+      activityRecipient.otherEntityId = activityRecipientId;
+    } else if (activityRecipientType === 'recipient') {
       activityRecipient.grantId = activityRecipientId;
     }
     return activityRecipient;
@@ -86,21 +91,21 @@ async function saveReportRecipients(
   };
 
   const empty = activityRecipientIds.length === 0;
-  if (!empty && activityRecipientType === 'non-grantee') {
+  if (!empty && activityRecipientType === 'other-entity') {
     where[Op.or] = {
-      nonGranteeId: {
+      otherEntityId: {
         [Op.notIn]: activityRecipientIds,
       },
       grantId: {
         [Op.not]: null,
       },
     };
-  } else if (!empty && activityRecipientType === 'grantee') {
+  } else if (!empty && activityRecipientType === 'recipient') {
     where[Op.or] = {
       grantId: {
         [Op.notIn]: activityRecipientIds,
       },
-      nonGranteeId: {
+      otherEntityId: {
         [Op.not]: null,
       },
     };
@@ -110,8 +115,8 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where }, { transaction });
 }
 
-async function saveNotes(activityReportId, notes, isGranteeNotes, transaction) {
-  const noteType = isGranteeNotes ? 'GRANTEE' : 'SPECIALIST';
+async function saveNotes(activityReportId, notes, isRecipientNotes, transaction) {
+  const noteType = isRecipientNotes ? 'RECIPIENT' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
   const where = {
     activityReportId,
@@ -192,7 +197,7 @@ export function activityReportById(activityReportId) {
     include: [
       {
         model: ActivityRecipient,
-        attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
+        attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
         as: 'activityRecipients',
         required: false,
         separate: true,
@@ -202,15 +207,23 @@ export function activityReportById(activityReportId) {
             attributes: ['id', 'number'],
             as: 'grant',
             required: false,
-            include: [{
-              model: Grantee,
-              as: 'grantee',
-              attributes: ['name'],
-            }],
+            include:
+            [
+              {
+                model: Recipient,
+                as: 'recipient',
+                attributes: ['name'],
+              },
+              {
+                model: Program,
+                as: 'programs',
+                attributes: ['programType'],
+              },
+            ],
           },
           {
-            model: NonGrantee,
-            as: 'nonGrantee',
+            model: OtherEntity,
+            as: 'otherEntity',
             required: false,
           },
         ],
@@ -263,11 +276,11 @@ export function activityReportById(activityReportId) {
         model: NextStep,
         where: {
           noteType: {
-            [Op.eq]: 'GRANTEE',
+            [Op.eq]: 'RECIPIENT',
           },
         },
         attributes: ['note', 'id'],
-        as: 'granteeNextSteps',
+        as: 'recipientNextSteps',
         required: false,
         separate: true,
       },
@@ -343,17 +356,17 @@ export function activityReports(
         ),
         sequelize.literal(
           // eslint-disable-next-line quotes
-          `(SELECT "NonGrantees".name as nonGranteeName from "NonGrantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."nonGranteeId" = "NonGrantees".id order by nonGranteeName ${sortDir} limit 1)`,
+          `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
         ),
         sequelize.literal(
           // eslint-disable-next-line quotes
-          `(SELECT "Grantees".name as granteeName FROM "Grantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Grantees"."id" = "Grants"."granteeId" order by granteeName ${sortDir} limit 1)`,
+          `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
       ],
       include: [
         {
           model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
           as: 'activityRecipients',
           required: false,
           include: [
@@ -364,15 +377,15 @@ export function activityReports(
               required: false,
               include: [
                 {
-                  model: Grantee,
-                  as: 'grantee',
+                  model: Recipient,
+                  as: 'recipient',
                   attributes: ['name'],
                 },
               ],
             },
             {
-              model: NonGrantee,
-              as: 'nonGrantee',
+              model: OtherEntity,
+              as: 'otherEntity',
               required: false,
             },
           ],
@@ -424,118 +437,120 @@ export async function activityReportAlerts(userId, {
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
   const scopes = filtersToScopes(updatedFilters);
-  return ActivityReport.findAndCountAll({
-    where: {
-      [Op.and]: scopes,
-      [Op.or]: [
+  return ActivityReport.findAndCountAll(
+    {
+      where: {
+        [Op.and]: scopes,
+        [Op.or]: [
+          {
+            [Op.or]: [
+              { calculatedStatus: REPORT_STATUSES.SUBMITTED },
+              { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+            ],
+            '$approvers.userId$': userId,
+          },
+          {
+            [Op.and]: [
+              {
+                [Op.and]: [
+                  {
+                    calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED },
+                  },
+                ],
+              },
+              {
+                [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+              },
+            ],
+          },
+        ],
+        legacyId: null,
+      },
+      attributes: [
+        'id',
+        'displayId',
+        'startDate',
+        'calculatedStatus',
+        'regionId',
+        'userId',
+        'createdAt',
+        sequelize.literal(
+          '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
+        ),
+        sequelize.literal(
+          '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
+        ),
+        sequelize.literal(
+        // eslint-disable-next-line quotes
+          `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
+        ),
+        sequelize.literal(
+        // eslint-disable-next-line quotes
+          `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
+        ),
+        // eslint-disable-next-line quotes
+        [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
+      ],
+      include: [
         {
-          [Op.or]: [
-            { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-            { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-          ],
-          '$approvers.userId$': userId,
-        },
-        {
-          [Op.and]: [
+          model: ActivityRecipient,
+          attributes: ['id', 'name', 'activityRecipientId'],
+          as: 'activityRecipients',
+          required: false,
+          include: [
             {
-              [Op.and]: [
+              model: Grant,
+              attributes: ['id', 'number'],
+              as: 'grant',
+              required: false,
+              include: [
                 {
-                  calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED },
+                  model: Recipient,
+                  as: 'recipient',
+                  attributes: ['name'],
                 },
               ],
             },
             {
-              [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+              model: OtherEntity,
+              as: 'otherEntity',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: User,
+          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          as: 'author',
+        },
+        {
+          model: User,
+          attributes: ['id', 'name', 'role', 'fullName'],
+          as: 'collaborators',
+          duplicating: true,
+          through: { attributes: [] },
+        },
+        {
+          model: ActivityReportApprover,
+          attributes: ['id', 'status', 'note'],
+          as: 'approvers',
+          required: false,
+          include: [
+            {
+              model: User,
+              attributes: ['id', 'name', 'role', 'fullName'],
             },
           ],
         },
       ],
-      legacyId: null,
+      order: orderReportsBy(sortBy, sortDir),
+      offset,
+      distinct: true,
     },
-    attributes: [
-      'id',
-      'displayId',
-      'startDate',
-      'calculatedStatus',
-      'regionId',
-      'userId',
-      'createdAt',
-      sequelize.literal(
-        '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
-      ),
-      sequelize.literal(
-        '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
-      ),
-      sequelize.literal(
-        // eslint-disable-next-line quotes
-        `(SELECT "NonGrantees".name as nonGranteeName from "NonGrantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."nonGranteeId" = "NonGrantees".id order by nonGranteeName ${sortDir} limit 1)`,
-      ),
-      sequelize.literal(
-        // eslint-disable-next-line quotes
-        `(SELECT "Grantees".name as granteeName FROM "Grantees" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Grantees"."id" = "Grants"."granteeId" order by granteeName ${sortDir} limit 1)`,
-      ),
-      // eslint-disable-next-line quotes
-      [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
-    ],
-    include: [
-      {
-        model: ActivityRecipient,
-        attributes: ['id', 'name', 'activityRecipientId'],
-        as: 'activityRecipients',
-        required: false,
-        include: [
-          {
-            model: Grant,
-            attributes: ['id', 'number'],
-            as: 'grant',
-            required: false,
-            include: [
-              {
-                model: Grantee,
-                as: 'grantee',
-                attributes: ['name'],
-              },
-            ],
-          },
-          {
-            model: NonGrantee,
-            as: 'nonGrantee',
-            required: false,
-          },
-        ],
-      },
-      {
-        model: User,
-        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
-        as: 'author',
-      },
-      {
-        model: User,
-        attributes: ['id', 'name', 'role', 'fullName'],
-        as: 'collaborators',
-        duplicating: true,
-        through: { attributes: [] },
-      },
-      {
-        model: ActivityReportApprover,
-        attributes: ['id', 'status', 'note'],
-        as: 'approvers',
-        required: false,
-        include: [
-          {
-            model: User,
-            attributes: ['id', 'name', 'role', 'fullName'],
-          },
-        ],
-      },
-    ],
-    order: orderReportsBy(sortBy, sortDir),
-    offset,
-    distinct: true,
-  },
-  {
-    subQuery: false,
-  });
+    {
+      subQuery: false,
+    },
+  );
 }
 
 export async function createOrUpdate(newActivityReport, report) {
@@ -550,7 +565,7 @@ export async function createOrUpdate(newActivityReport, report) {
     activityRecipients,
     attachments,
     author,
-    granteeNextSteps,
+    recipientNextSteps,
     specialistNextSteps,
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
@@ -588,9 +603,9 @@ export async function createOrUpdate(newActivityReport, report) {
       );
       await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
     }
-    if (granteeNextSteps) {
+    if (recipientNextSteps) {
       const { id } = savedReport;
-      await saveNotes(id, granteeNextSteps, true, transaction);
+      await saveNotes(id, recipientNextSteps, true, transaction);
     }
     if (specialistNextSteps) {
       const { id } = savedReport;
@@ -615,9 +630,9 @@ export async function createOrUpdate(newActivityReport, report) {
 
     const activityRecipientType = recipientType();
 
-    if (activityRecipientType === 'non-grantee' && objectivesWithoutGoals) {
+    if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
       await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
-    } else if (activityRecipientType === 'grantee' && goals) {
+    } else if (activityRecipientType === 'recipient' && goals) {
       await saveGoalsForReport(goals, savedReport, transaction);
     }
 
@@ -637,10 +652,10 @@ export async function setStatus(report, status) {
 /*
  * Queries the db for relevant recipients depending on the region id.
  * If no region id is passed, then default to returning all available recipients.
- * Note: This only affects grants and grantees. Non Grantees remain unaffected by the region id.
+ * Note: This only affects grants and recipients. Non Recipients remain unaffected by the region id.
  *
  * @param {number} [regionId] - A region id to query against
- * @returns {*} Grants and Non grantees
+ * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId) {
   let where = { status: 'Active' };
@@ -648,7 +663,7 @@ export async function possibleRecipients(regionId) {
     where = { ...where, regionId };
   }
 
-  const grants = await Grantee.findAll({
+  const grants = await Recipient.findAll({
     attributes: ['id', 'name'],
     order: ['name'],
     include: [{
@@ -657,16 +672,22 @@ export async function possibleRecipients(regionId) {
       as: 'grants',
       attributes: [['id', 'activityRecipientId'], 'name', 'number'],
       include: [{
-        model: Grantee,
-        as: 'grantee',
-      }],
+        model: Recipient,
+        as: 'recipient',
+      },
+      {
+        model: Program,
+        as: 'programs',
+        attributes: ['programType'],
+      },
+      ],
     }],
   });
-  const nonGrantees = await NonGrantee.findAll({
+  const otherEntities = await OtherEntity.findAll({
     raw: true,
     attributes: [['id', 'activityRecipientId'], 'name'],
   });
-  return { grants, nonGrantees };
+  return { grants, otherEntities };
 }
 
 async function getDownloadableActivityReports(where) {
@@ -689,26 +710,31 @@ async function getDownloadableActivityReports(where) {
         },
         {
           model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'nonGranteeId'],
+          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
           as: 'activityRecipients',
           required: false,
           include: [
             {
               model: Grant,
-              attributes: ['id', 'number'],
+              attributes: ['id', 'number', 'programSpecialistName'],
               as: 'grant',
               required: false,
               include: [
                 {
-                  model: Grantee,
-                  as: 'grantee',
+                  model: Recipient,
+                  as: 'recipient',
                   attributes: ['name'],
+                },
+                {
+                  model: Program,
+                  as: 'programs',
+                  attributes: ['programType'],
                 },
               ],
             },
             {
-              model: NonGrantee,
-              as: 'nonGrantee',
+              model: OtherEntity,
+              as: 'otherEntity',
               required: false,
             },
           ],
@@ -749,11 +775,11 @@ async function getDownloadableActivityReports(where) {
           model: NextStep,
           where: {
             noteType: {
-              [Op.eq]: 'GRANTEE',
+              [Op.eq]: 'RECIPIENT',
             },
           },
           attributes: ['note', 'id'],
-          as: 'granteeNextSteps',
+          as: 'recipientNextSteps',
           required: false,
         },
         {
@@ -761,6 +787,12 @@ async function getDownloadableActivityReports(where) {
           attributes: ['userId'],
           as: 'approvers',
           required: false,
+          include: [
+            {
+              model: User,
+              attributes: ['name'],
+            },
+          ],
         },
       ],
       distinct: true,

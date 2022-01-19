@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 14.17.6 installed.
+2. Make sure you have Node 14.18.1 installed.
 4. Copy `.env.example` to `.env`.
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
@@ -387,7 +387,21 @@ For details on how to perform a backup and restore, there is information on the 
 
 <https://cloud.gov/docs/management/database-backup-restore/>
 
-### Using Maintenance Mode
+**Refreshing data in non-production environments**
+
+In order to keep the non-production environments as close to production as possible we developed a way to transform a restored
+version of the production database locally if using local database. The script can be run using the following:
+
+```
+	yarn processData:local
+
+```
+The transformed database can then be restored in the non-production environments.
+For details on how to perform a backup and restore, there is information on the cloud.gov site:
+
+<https://cloud.gov/docs/management/database-backup-restore/>
+
+**Using Maintenance Mode**
 
 if you need to put the application into maintenance mode, you can run the maintenance script located at `bin/maintenance`.
 
@@ -405,7 +419,7 @@ Ex.
 ./bin/maintenance -e dev -m on
 ```
 
-If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode.
+If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
 
 <!-- Links -->

@@ -35,8 +35,8 @@ describe('FilterItem', () => {
     const onUpdate = jest.fn();
     render(<RenderFilterItem onUpdateFilter={onUpdate} />);
     const topic = await screen.findByRole('combobox', { name: 'topic' });
-    userEvent.selectOptions(topic, 'grantee');
-    expect(onUpdate).toHaveBeenCalledWith('topic', 'grantee');
+    userEvent.selectOptions(topic, 'recipient');
+    expect(onUpdate).toHaveBeenCalledWith('topic', 'recipient');
   });
 
   it('calls `onUpdateFilter` when the condition is updated', async () => {
@@ -79,7 +79,7 @@ describe('FilterItem', () => {
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
-        'Grantee',
+        'Recipient',
         'Start date',
         'Creator',
         'Collaborator',
@@ -102,7 +102,7 @@ describe('FilterItem', () => {
       const text = options.map((o) => o.textContent);
       const expectedOptions = [
         'Report ID',
-        'Grantee',
+        'Recipient',
         'Start date',
         'Creator',
         'Collaborator',
@@ -171,7 +171,7 @@ describe('FilterItem', () => {
 
     it('uses the date range picker', async () => {
       render(<RenderFilterItem topic="startDate" condition="Is within" />);
-      const input = await screen.findByRole('textbox', { name: 'Start Date' });
+      const input = await screen.findByRole('textbox', { name: /please enter a start date in the format mm\/dd\/yyyy\./i });
       expect(input).toBeVisible();
     });
   });

@@ -30,18 +30,16 @@ async function updateReportStatuses(oldStatus) {
 
   try {
     auditLogger.info(`Updating ${oldStatus} report(s)...`);
-    const updatedReports = await ActivityReport.update(
-      newValues, {
-        where: {
-          submissionStatus: oldStatus,
-          calculatedStatus: null,
-        },
-        hooks: false,
-        silent: true,
-        validate: false,
-        individualHooks: false,
+    const updatedReports = await ActivityReport.update(newValues, {
+      where: {
+        submissionStatus: oldStatus,
+        calculatedStatus: null,
       },
-    );
+      hooks: false,
+      silent: true,
+      validate: false,
+      individualHooks: false,
+    });
     auditLogger.info(`...Updated {${updatedReports[0] || 0}} ${oldStatus} report(s).`);
   } catch (error) {
     auditLogger.error(`Script encountered error ${error}`);
@@ -53,7 +51,8 @@ const transitionToMultApprovers = async () => {
     // Create approvers for: submitted, draft, and deleted reports.
     // - These are done separately from approved, and needs_action reports, because the
     // status of the approver entry is going to be null
-    const notReviewedApproverEntries = await sequelize.query(`SELECT "ActivityReports"."id" as "activityReportId",
+    const notReviewedApproverEntries = await sequelize.query(
+      `SELECT "ActivityReports"."id" as "activityReportId",
           "oldApprovingManagerId" as "userId"
         FROM "ActivityReports"
         LEFT JOIN "ActivityReportApprovers"
@@ -63,20 +62,22 @@ const transitionToMultApprovers = async () => {
           AND "submissionStatus" NOT IN (:excludeStatus)
           AND ("calculatedStatus" IS NULL OR "calculatedStatus" NOT IN (:excludeStatus))
           AND "oldApprovingManagerId" IS NOT NULL`,
-    {
-      type: QueryTypes.SELECT,
-      replacements: {
-        status: [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED],
-        excludeStatus: [REPORT_STATUSES.NEEDS_ACTION, REPORT_STATUSES.APPROVED],
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          status: [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED],
+          excludeStatus: [REPORT_STATUSES.NEEDS_ACTION, REPORT_STATUSES.APPROVED],
+        },
       },
-    });
+    );
     if (notReviewedApproverEntries.length > 0) {
       await createApprovers(notReviewedApproverEntries);
     }
 
     // Create approvers for: approved, and needs_action reports where submissionStatus
     // holds our status
-    const reviewedApproverEntries = await sequelize.query(`SELECT "ActivityReports"."id" as "activityReportId",
+    const reviewedApproverEntries = await sequelize.query(
+      `SELECT "ActivityReports"."id" as "activityReportId",
         "oldApprovingManagerId" as "userId",
         "submissionStatus" as "status",
         "oldManagerNotes" as "note"
@@ -86,12 +87,13 @@ const transitionToMultApprovers = async () => {
       WHERE "ActivityReportApprovers"."activityReportId" IS NULL
         AND "submissionStatus" IN(:status)
         AND "oldApprovingManagerId" IS NOT NULL`,
-    {
-      type: QueryTypes.SELECT,
-      replacements: {
-        status: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.NEEDS_ACTION],
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          status: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.NEEDS_ACTION],
+        },
       },
-    });
+    );
     if (reviewedApproverEntries.length > 0) {
       await createApprovers(reviewedApproverEntries);
     }
@@ -99,7 +101,8 @@ const transitionToMultApprovers = async () => {
     // Create approvers for: approved, and needs_action reports where calculatedStatus
     // holds our status. This is done to clean up reports where the calculatedStatus col
     // was updated but the approver record was not created
-    const reviewedAndCalculatedApproverEntries = await sequelize.query(`SELECT "ActivityReports"."id" as "activityReportId",
+    const reviewedAndCalculatedApproverEntries = await sequelize.query(
+      `SELECT "ActivityReports"."id" as "activityReportId",
         "oldApprovingManagerId" as "userId",
         "calculatedStatus" as "status",
         "oldManagerNotes" as "note"
@@ -109,12 +112,13 @@ const transitionToMultApprovers = async () => {
       WHERE "ActivityReportApprovers"."activityReportId" IS NULL
         AND "calculatedStatus" IN(:status)
         AND "oldApprovingManagerId" IS NOT NULL`,
-    {
-      type: QueryTypes.SELECT,
-      replacements: {
-        status: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.NEEDS_ACTION],
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          status: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.NEEDS_ACTION],
+        },
       },
-    });
+    );
     if (reviewedAndCalculatedApproverEntries.length > 0) {
       await createApprovers(reviewedAndCalculatedApproverEntries);
     }

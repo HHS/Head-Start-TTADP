@@ -27,14 +27,13 @@ const formData = () => ({
     4: 'in-progress',
   },
   endDate: moment().format('MM/DD/YYYY'),
-  activityRecipients: ['Grantee Name 1'],
+  activityRecipients: ['Recipient Name 1'],
   numberOfParticipants: '1',
   reason: ['reason 1'],
-  activityRecipientType: 'grantee',
+  activityRecipientType: 'recipient',
   collaborators: [],
   participants: ['CEO / CFO / Executive'],
-  programTypes: ['type 1'],
-  requester: 'grantee',
+  requester: 'recipient',
   calculatedStatus: REPORT_STATUSES.DRAFT,
   submissionStatus: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
@@ -64,8 +63,8 @@ const renderActivityReport = (id, location = 'activity-summary', showLastUpdated
 };
 
 const recipients = {
-  grants: [{ name: 'grantee', grants: [{ activityRecipientId: 1, name: 'Grantee Name' }] }],
-  nonGrantees: [{ activityRecipientId: 1, name: 'nonGrantee' }],
+  grants: [{ name: 'recipient', grants: [{ activityRecipientId: 1, name: 'Recipient Name' }] }],
+  otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
 };
 
 describe('ActivityReport', () => {
@@ -121,15 +120,6 @@ describe('ActivityReport', () => {
     });
   });
 
-  it('program type is hidden unless grantee is selected', async () => {
-    renderActivityReport('new');
-    const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-    await waitFor(() => expect(screen.queryByLabelText('Program type(s)')).toBeNull());
-    const nonGrantee = within(information).getByLabelText('Grantee');
-    fireEvent.click(nonGrantee);
-    await waitFor(() => expect(screen.queryByLabelText('Program type(s) (Required)')).toBeVisible());
-  });
-
   it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport('new', null);
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
@@ -150,15 +140,37 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       fetchMock.post('/api/activity-reports', { id: 1 });
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const grantee = within(information).getByLabelText('Grantee');
-      fireEvent.click(grantee);
-      const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-      await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
+      const recipient = within(information).getByLabelText('Recipient');
+      fireEvent.click(recipient);
+      const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+      await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
       userEvent.click(button);
 
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+    });
+
+    it('assigns save alert fade animation', async () => {
+      renderActivityReport('new');
+      fetchMock.post('/api/activity-reports', { id: 1 });
+      let alerts = screen.queryByTestId('alert');
+      expect(alerts).toBeNull();
+      const button = await screen.findByRole('button', { name: 'Save draft' });
+      userEvent.click(button);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      alerts = await screen.findAllByTestId('alert');
+      expect(alerts.length).toBe(2);
+      expect(alerts[0]).toHaveClass('alert-fade');
+    });
+
+    it('displays review submit save alert', async () => {
+      renderActivityReport('new', 'review');
+      fetchMock.post('/api/activity-reports', { id: 1 });
+      const button = await screen.findByRole('button', { name: 'Save Draft' });
+      await userEvent.click(button);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
+      expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
 
     it('finds whats changed', () => {
@@ -191,79 +203,52 @@ describe('ActivityReport', () => {
     });
   });
 
-  describe('grantee select', () => {
+  describe('recipient select', () => {
     describe('changes the recipient selection to', () => {
-      it('Grantee', async () => {
+      it('Recipient', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const grantee = within(information).getByLabelText('Grantee');
-        fireEvent.click(grantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-        reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
+        const recipient = within(information).getByLabelText('Recipient');
+        fireEvent.click(recipient);
+        const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+        reactSelectEvent.openMenu(recipientSelectbox);
+
+        const recipientNames = await screen.findByText(/recipient name\(s\)/i);
+        expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
-      it('Non-grantee', async () => {
+      it('Other entity', async () => {
         renderActivityReport('new');
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-        const nonGrantee = within(information).getByLabelText('Non-Grantee');
-        fireEvent.click(nonGrantee);
-        const granteeSelectbox = await screen.findByRole('textbox', { name: 'Non-grantee name(s) (Required)' });
-        reactSelectEvent.openMenu(granteeSelectbox);
-        expect(await screen.findByText(withText('nonGrantee'))).toBeVisible();
+        const otherEntity = within(information).getByLabelText('Other entity');
+        fireEvent.click(otherEntity);
+        const recipientSelectbox = await screen.findByRole('textbox', { name: 'Other entities (Required)' });
+        reactSelectEvent.openMenu(recipientSelectbox);
+        expect(await screen.findByText(withText('otherEntity'))).toBeVisible();
       });
     });
 
-    it('clears selection when non-grantee is selected', async () => {
+    it('clears selection when other entity is selected', async () => {
       renderActivityReport('new');
       let information = await screen.findByRole('group', { name: 'Who was the activity for?' });
 
-      const grantee = within(information).getByLabelText('Grantee');
-      fireEvent.click(grantee);
+      const recipient = within(information).getByLabelText('Recipient');
+      fireEvent.click(recipient);
 
-      let granteeSelectbox = await screen.findByRole('textbox', { name: 'Grantee name(s) (Required)' });
-      reactSelectEvent.openMenu(granteeSelectbox);
-      await reactSelectEvent.select(granteeSelectbox, ['Grantee Name']);
-      expect(await screen.findByText(withText('Grantee Name'))).toBeVisible();
+      let recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+      reactSelectEvent.openMenu(recipientSelectbox);
+      await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
+
+      const recipientNames = await screen.findByText(/recipient name\(s\)/i);
+      expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const nonGrantee = within(information).getByLabelText('Non-Grantee');
-      fireEvent.click(nonGrantee);
-      fireEvent.click(grantee);
+      const otherEntity = within(information).getByLabelText('Other entity');
+      fireEvent.click(otherEntity);
+      fireEvent.click(recipient);
 
-      granteeSelectbox = await screen.findByLabelText(/grantee name\(s\)/i);
-      expect(within(granteeSelectbox).queryByText('Grantee Name')).toBeNull();
-    });
-
-    it('allows you to pick the same start and end date', async () => {
-      // render a new activity report
-      renderActivityReport('new');
-
-      // we need to wait for the page to render, that's what this is for
-      const dateSection = await screen.findByRole('group', { name: 'Activity date' });
-
-      // get the start date text box and type in a date
-      const startDate = within(dateSection).getByRole('textbox', { name: /start date \(required\), month\/day\/year, edit text/i });
-      userEvent.type(startDate, '12/25/1967');
-
-      // then type in a different date in the end date box
-      const endDate = within(dateSection).getByRole('textbox', { name: /end date \(required\), month\/day\/year, edit text/i });
-      userEvent.type(endDate, '12/26/1967');
-
-      // then change the start date to a date after the end date
-      userEvent.clear(startDate);
-      userEvent.type(startDate, '12/28/1967');
-
-      // expect an error
-      expect(endDate).toBeDisabled();
-
-      // then change the start date to a date after the end date
-      userEvent.clear(startDate);
-      userEvent.type(startDate, '12/26/1967');
-
-      // expect everything to be ok
-      expect(endDate).toBeEnabled();
-      await screen.findAllByDisplayValue('12/26/1967');
+      recipientSelectbox = await screen.findByLabelText(/recipient name\(s\)/i);
+      expect(within(recipientSelectbox).queryByText('Recipient Name')).toBeNull();
     });
 
     it('unflattens resources properly', async () => {

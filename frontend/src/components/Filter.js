@@ -2,18 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import moment from 'moment';
-
 import { faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuidv4 } from 'uuid';
-
 import Container from './Container';
 import FilterItem from './FilterItem';
-import {
-  WITHIN,
-  QUERY_CONDITIONS,
-} from './constants';
-import { DECIMAL_BASE, DATE_FMT } from '../Constants';
+
 import './Filter.css';
 
 const defaultFilter = () => (
@@ -116,11 +109,11 @@ function Filter({ applyFilters, forMyAlerts }) {
         onClick={() => {
           updateOpen(!open);
         }}
-        className={`usa-button usa-button--outline font-sans-xs margin-left-1 smart-hub--table-controls__button ${filterClass}`}
+        className={`usa-button usa-button--outline font-sans-xs margin-left-1 ${filterClass}`}
       >
         {`Filters ${filters.length > 0 ? `(${filters.length})` : ''}`}
         {' '}
-        <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="black" icon={faSortDown} />
+        <FontAwesomeIcon className="margin-left-1" size="1x" style={{ paddingBottom: '2px' }} color="#005ea2" icon={faSortDown} />
       </button>
       {open && (
       <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className="z-400 left-0 position-absolute">
@@ -190,23 +183,5 @@ Filter.propTypes = {
 Filter.defaultProps = {
   forMyAlerts: false,
 };
-
-export function filtersToQueryString(filters, region) {
-  const filtersWithValues = filters.filter((f) => {
-    if (f.condition === WITHIN) {
-      const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
-    }
-    return f.query !== '';
-  });
-  const queryFragments = filtersWithValues.map((filter) => {
-    const con = QUERY_CONDITIONS[filter.condition];
-    return `${filter.topic}.${con}=${filter.query}`;
-  });
-  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
-    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
-  }
-  return queryFragments.join('&');
-}
 
 export default Filter;

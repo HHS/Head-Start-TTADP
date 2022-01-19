@@ -98,9 +98,10 @@ function Navigator({
 
     updateFormData(data);
     try {
+      // Always clear the previous error message before a save.
+      updateErrorMessage();
       await onSave(data);
       updateLastSaveTime(moment());
-      updateErrorMessage();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
@@ -185,6 +186,7 @@ function Navigator({
               navigatorPages,
               reportCreator,
               updateShowValidationErrors,
+              lastSaveTime,
             )}
             {!page.review
             && (
@@ -214,9 +216,10 @@ function Navigator({
                 <DismissingComponentWrapper
                   shown={showSavedDraft}
                   updateShown={updateShowSavedDraft}
+                  hideFromScreenReader={false}
                 >
                   {lastSaveTime && (
-                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success">
+                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
                     Draft saved on
                     {' '}
                     {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}

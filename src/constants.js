@@ -23,7 +23,7 @@ export const DATE_FORMAT = 'MM/DD/YYYY';
 export const DECIMAL_BASE = 10;
 
 export const REPORTS_PER_PAGE = 10;
-export const GRANTEES_PER_PAGE = 12;
+export const RECIPIENTS_PER_PAGE = 12;
 
 export const APPROVER_STATUSES = {
   APPROVED: 'approved',
@@ -80,7 +80,7 @@ export const REASONS = [
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
-  'New Grantee',
+  'New Recipient',
   'New Director or Management',
   'New Program Option',
   'New Staff / Turnover',
@@ -90,4 +90,18 @@ export const REASONS = [
   'Monitoring | Area of Concern',
   'Monitoring | Noncompliance',
   'Monitoring | Deficiency',
+];
+
+// copied from /frontend/src/pages/ActivityReports/constants.js
+export const TARGET_POPULATIONS = [
+  'Infants and Toddlers (ages birth to 3)',
+  'Preschool (ages 3-5)',
+  'Pregnant Women',
+  'Affected by Child Welfare Involvement',
+  'Affected by Disaster',
+  'Affected by Substance Use',
+  'Children Experiencing Homelessness',
+  'Children with Disabilities',
+  'Children with Special Health Care Needs',
+  'Dual-Language Learners',
 ];

@@ -1,14 +1,14 @@
 get:
   tags:
     - admin
-  operationId: getGrantees
-  description: Get all grantees
+  operationId: getRecipients
+  description: Get all recipients
   responses:
     200:
-      description: Grantees
+      description: Recipients
       content:
         application/json:
           schema:
             type: array
             items:
-              $ref: '../index.yaml#/components/schemas/grantee'
+              $ref: '../index.yaml#/components/schemas/recipient'
