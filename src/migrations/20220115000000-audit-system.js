@@ -495,14 +495,14 @@ module.exports = {
                     UNIQUE_NEW jsonb;
                     IS_LOGGABLE boolean;
                 BEGIN
-                    CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
+                    CREATED_BY := COALESCE(NULLIF(current_setting('var.loggedUser', true),'')::BIGINT, -1);
 
                     TRANSACTION_ID := COALESCE(
-                        current_setting('var.transactionId', true)::uuid,
+                        NULLIF(current_setting('var.transactionId', true),'')::uuid,
                         lpad(txid_current()::text,32,'0')::uuid);
 
                     DESCRIPTOR_ID := "ZAFDescriptorToID"(
-                        NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
+                        NULLIF(current_setting('var.auditDescriptor', true), '')::TEXT);
 
                     IF (TG_OP = 'INSERT') THEN
                         INSERT INTO %I (
