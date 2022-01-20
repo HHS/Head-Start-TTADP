@@ -48,7 +48,7 @@ const ALL_STATES = [
     { label: 'Minnesota (MN)', value: 'MN' },
     { label: 'Wisconsin (WI)', value: 'WI' },
     { label: 'Illinois (IL)', value: 'IL' },
-    { label: 'Indiana (IN)', value: 'AL' },
+    { label: 'Indiana (IN)', value: 'IN' },
     { label: 'Michigan (MI)', value: 'MI' },
     { label: 'Ohio (OH)', value: 'OH' },
   ],
