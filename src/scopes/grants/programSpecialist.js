@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 
-export function withProgramSpecialistName(name) {
+export function withProgramSpecialist(name) {
   return {
     programSpecialistName: {
       [Op.in]: name,
@@ -8,7 +8,7 @@ export function withProgramSpecialistName(name) {
   };
 }
 
-export function withoutProgramSpecialistName(name) {
+export function withoutProgramSpecialist(name) {
   return {
     programSpecialistName: {
       [Op.not]: name,

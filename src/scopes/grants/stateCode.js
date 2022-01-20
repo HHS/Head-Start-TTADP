@@ -8,7 +8,7 @@ export function withStateCode(stateCodes) {
   };
 }
 
-export function withoutStateCodes(stateCodes) {
+export function withoutStateCode(stateCodes) {
   return {
     stateCode: {
       [Op.not]: stateCodes,

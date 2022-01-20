@@ -2,8 +2,8 @@
 import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
-function goalInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"Grant"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term)})`));
+function grantInSubQuery(baseQuery, searchTerms, operator, comparator) {
+  return searchTerms.map((term) => sequelize.literal(`"Grant"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)}`));
 }
 
 /**
@@ -16,6 +16,6 @@ function goalInSubQuery(baseQuery, searchTerms, operator, comparator) {
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {
-  return filter(baseQuery, searchTerms, exclude, goalInSubQuery, comparator);
+export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 'ILIKE') {
+  return filter(baseQuery, searchTerms, exclude, grantInSubQuery, comparator);
 }
