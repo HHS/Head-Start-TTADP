@@ -9,6 +9,7 @@ export default function FilterSelect({
   inputId,
   options,
   selectedValues,
+  mapByValue,
 }) {
   /**
    * unfortunately, given our support for ie11, we can't
@@ -19,8 +20,10 @@ export default function FilterSelect({
 
   useSpellCheck(inputId);
 
+  const key = mapByValue ? 'value' : 'label';
+
   const value = [selectedValues].flat().map((selection) => (
-    options.find((option) => option.label === selection)
+    options.find((option) => option[key] === selection)
   ));
 
   const styles = {
@@ -73,7 +76,7 @@ export default function FilterSelect({
   };
 
   const onChange = (selected) => {
-    onApply(selected.map((selection) => selection.label));
+    onApply(selected.map((selection) => selection[key]));
   };
 
   return (
@@ -106,4 +109,9 @@ FilterSelect.propTypes = {
   options: PropTypes.arrayOf(option).isRequired,
   inputId: PropTypes.string.isRequired,
   selectedValues: PropTypes.arrayOf(PropTypes.string).isRequired,
+  mapByValue: PropTypes.bool,
+};
+
+FilterSelect.defaultProps = {
+  mapByValue: false,
 };
