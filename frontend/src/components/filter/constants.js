@@ -14,6 +14,7 @@ import FilterTopicSelect from './FilterTopicSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
+import FilterStateSelect from './FilterStateSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -187,6 +188,20 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterSpecialistSelect
         inputId={`role-${condition}-${id}`}
+        onApply={onApplyQuery}
+        query={query}
+      />
+    ),
+  },
+  {
+    id: 'stateCode',
+    display: 'State',
+    conditions: ['Contains'],
+    defaultValues: EMPTY_MULTI_SELECT,
+    displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterStateSelect
+        inputId={`state-${condition}-${id}`}
         onApply={onApplyQuery}
         query={query}
       />
