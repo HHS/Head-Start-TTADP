@@ -37,7 +37,6 @@ export default function DatePicker(
   const formattedMinDate = moment(minDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT);
 
   const onBlur = () => {
-    // otherwise we go through the validation steps
     const dateAsMoment = moment(currentDate, DATE_DISPLAY_FORMAT);
     const minDateAsMoment = moment(minDate, DATE_DISPLAY_FORMAT);
     const maxDateAsMoment = maxDate ? moment(maxDate, DATE_DISPLAY_FORMAT) : moment().add(1, 'days');
