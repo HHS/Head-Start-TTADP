@@ -4,8 +4,7 @@ import { filterAssociation } from './utils';
 const recipientNameFilter = `
 SELECT "Grant"."id" FROM "Grants" as "Grant"
 INNER JOIN "Recipients" as "Recipient" ON "Recipient"."id" = "Grant"."recipientId"
-WHERE "Recipient"."name"
-`;
+WHERE "Recipient"."name"`;
 
 export function withRecipientName(name) {
   return {
