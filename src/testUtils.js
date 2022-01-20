@@ -154,33 +154,28 @@ export async function destroyReport(report) {
 
   const destroys = dbReport.activityRecipients.map(async (recipient) => {
     const grant = await Grant.findByPk(recipient.grantId);
+    await ActivityRecipient.destroy({
+      where: {
+        id: recipient.id,
+      },
+    });
 
-    try {
-      await ActivityRecipient.destroy({
+    let results = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
+    if (results.length === 0) {
+      await Grant.destroy({
         where: {
-          id: recipient.id,
+          id: grant.id,
         },
       });
+    }
 
-      let results = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
-      if (results.length === 0) {
-        await Grant.destroy({
-          where: {
-            id: grant.id,
-          },
-        });
-      }
-
-      results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
-      if (results.length === 0) {
-        await Recipient.destroy({
-          where: {
-            id: grant.recipientId,
-          },
-        });
-      }
-    } catch (e) {
-      // ignore fk errors
+    results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
+    if (results.length === 0) {
+      await Recipient.destroy({
+        where: {
+          id: grant.recipientId,
+        },
+      });
     }
   });
 
@@ -191,29 +186,21 @@ export async function destroyReport(report) {
     },
   });
 
-  try {
-    const results = await ActivityReport.findAll({ where: { userId: dbReport.userId } });
-    if (results.length === 0) {
-      await User.destroy({
-        where: {
-          id: dbReport.userId,
-        },
-      });
-    }
-  } catch (error) {
-    // ignore fk errors
+  let results = await ActivityReport.findAll({ where: { userId: dbReport.userId } });
+  if (results.length === 0) {
+    await User.destroy({
+      where: {
+        id: dbReport.userId,
+      },
+    });
   }
 
-  try {
-    const results = await ActivityReport.findAll({ where: { regionId: report.regionId } });
-    if (results.length === 0) {
-      await Region.destroy({
-        where: {
-          id: report.regionId,
-        },
-      });
-    }
-  } catch (e) {
-    // ignore fk errors
+  results = await ActivityReport.findAll({ where: { regionId: report.regionId } });
+  if (results.length === 0) {
+    await Region.destroy({
+      where: {
+        id: report.regionId,
+      },
+    });
   }
 }
