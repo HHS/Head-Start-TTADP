@@ -12,7 +12,7 @@ const ALL_STATES = [
   [
     { label: 'Massachusetts (MA)', value: 'MA' },
     { label: 'Maine (ME)', value: 'ME' },
-    { label: 'Conneticut (CT)', value: 'CT' },
+    { label: 'Connecticut (CT)', value: 'CT' },
     { label: 'Rhode Island (RI)', value: 'RI' },
     { label: 'Vermont (VT)', value: 'VT' },
     { label: 'New Hampshire (NH)', value: 'NH' },
