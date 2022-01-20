@@ -2,8 +2,31 @@
 import { map, pickBy } from 'lodash';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withRegion, withoutRegion } from './region';
+import { withRecipientName, withoutRecipientName } from './recipient';
+import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
+import { withProgramTypes, withoutProgramTypes } from './programType';
+import { withStateCode } from './stateCode';
 
 export const topicToQuery = {
+  recipient: {
+    ctn: (query) => withRecipientName(query),
+    nctn: (query) => withoutRecipientName(query),
+  },
+  programSpecialist: {
+    ctn: (query) => withProgramSpecialist(query),
+    nctn: (query) => withoutProgramSpecialist(query),
+  },
+  programType: {
+    in: (query) => withProgramTypes(query),
+    nin: (query) => withoutProgramTypes(query),
+  },
+  // grantNumber: {
+  //   ctn: (query) => withGrantNumber(query),
+  //   nctn: (query) => withoutGrantNumber(query),
+  // },
+  stateCode: {
+    ctn: (query) => withStateCode(query),
+  },
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
