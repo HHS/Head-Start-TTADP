@@ -7,6 +7,7 @@ const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config')[env];
+const audit = require('./audit/auditModelGenerator');
 
 const db = {};
 
@@ -24,6 +25,8 @@ fs
     const modelDef = require(path.join(__dirname, file));
     const model = modelDef(sequelize, Sequelize);
     db[model.name] = model;
+    const auditModel = audit.generateAuditModel(sequelize, model);
+    db[auditModel.name] = auditModel;
   });
 
 Object.keys(db).forEach((modelName) => {
