@@ -103,6 +103,16 @@ export default function DateRangePicker({ onApply, query }) {
       // if we're all clear, then onApply
       onApply(range);
       setHidden(true);
+    } else {
+      const { startDate, endDate } = dateRange;
+
+      if (!startDate) {
+        setStartDateError('Please enter a valid start date');
+      }
+
+      if (!endDate) {
+        setEndDateError('Please enter a valid end date');
+      }
     }
   };
 
@@ -120,7 +130,7 @@ export default function DateRangePicker({ onApply, query }) {
       <fieldset id="custom-date-range" className="width-mobile border-0 bg-white margin-0 margin-top-1 padding-2 ttahub-custom-date-range-picker-fields position-absolute" hidden={hidden}>
 
         <label className="usa-label margin-top-0" id="startDateLabel" htmlFor="start-date">Start date</label>
-        <span className="usa-hint" id="custom-date-range-hint">mm/dd/yyyy</span>
+        <span className="usa-hint" id="custom-date-range-hint">mm/dd/yyyy (after 08/31/2020)</span>
         <DatePicker
           aria-describedby="startDateLabel custom-date-range-hint"
           id="start-date"

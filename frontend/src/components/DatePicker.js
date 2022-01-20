@@ -48,12 +48,13 @@ export default function DatePicker(
     }
 
     if (dateAsMoment.isBefore(minDateAsMoment)) {
-      setError(`Please enter a date after ${minDate}`);
-
       // automatically set the min date to the first available
       if (minDate === '09/01/2020') {
+        setError('The date must be after 08/31/2020');
         onChange(minDate);
       }
+
+      setError(`Please enter a date after ${minDate}`);
 
       return;
     }
