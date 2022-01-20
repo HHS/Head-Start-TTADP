@@ -6,6 +6,7 @@ import { withRecipientName, withoutRecipientName } from './recipient';
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
 import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
+import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 
 export const topicToQuery = {
   recipient: {
@@ -20,10 +21,10 @@ export const topicToQuery = {
     in: (query) => withProgramTypes(query),
     nin: (query) => withoutProgramTypes(query),
   },
-  // grantNumber: {
-  //   ctn: (query) => withGrantNumber(query),
-  //   nctn: (query) => withoutGrantNumber(query),
-  // },
+  grantNumber: {
+    ctn: (query) => withGrantNumber(query),
+    nctn: (query) => withoutGrantNumber(query),
+  },
   stateCode: {
     ctn: (query) => withStateCode(query),
   },

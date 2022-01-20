@@ -1,62 +1,26 @@
 import { Op } from 'sequelize';
+import { withinDateRange, compareDate } from '../utils';
 
-export function beforeStartDate(dates) {
-  return dates.reduce((acc, date) => [
-    ...acc,
-    {
-      [Op.and]: [
-        {
-          startDate: {
-            [Op.lte]: date,
-          },
-        },
-        {
-          endDate: {
-            [Op.gte]: date,
-          },
-        },
-      ],
+export function beforeStartDate(date) {
+  return {
+    [Op.and]: {
+      [Op.or]: compareDate(date, 'startDate', Op.lt),
     },
-  ], []);
+  };
 }
 
-export function afterStartDate(dates) {
-  return dates.reduce((acc, date) => [
-    ...acc,
-    {
-      [Op.and]: {
-        startDate: {
-          [Op.gte]: date,
-        },
-        status: 'Active',
-      },
+export function afterStartDate(date) {
+  return {
+    [Op.and]: {
+      [Op.or]: compareDate(date, 'startDate', Op.gt),
     },
-  ], []);
+  };
 }
 
 export function withinStartDates(dates) {
-  return dates.reduce((acc, range) => {
-    if (!range.split) {
-      return acc;
-    }
-
-    const [startDate, endDate] = range.split('-');
-    if (!startDate || !endDate) {
-      return acc;
-    }
-
-    return [
-      ...acc,
-      {
-        [Op.and]: {
-          startDate: {
-            [Op.lte]: startDate,
-          },
-          endDate: {
-            [Op.gte]: endDate,
-          },
-        },
-      },
-    ];
-  }, []);
+  return {
+    [Op.and]: {
+      [Op.or]: withinDateRange(dates, 'startDate'),
+    },
+  };
 }
