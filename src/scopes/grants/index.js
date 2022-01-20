@@ -1,17 +1,18 @@
 /* eslint-disable import/prefer-default-export */
 import { map, pickBy } from 'lodash';
-import { beforeGrantStartDate, afterGrantStartDate, withinGrantStartDates } from './startDate';
-import withGrantsRegion from './region';
+import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
+import { withRegion, withoutRegion } from './region';
 
 export const topicToQuery = {
   startDate: {
-    bef: (query) => beforeGrantStartDate(query),
-    aft: (query) => afterGrantStartDate(query),
-    win: (query) => withinGrantStartDates(query),
-    in: (query) => withinGrantStartDates(query),
+    bef: (query) => beforeStartDate(query),
+    aft: (query) => afterStartDate(query),
+    win: (query) => withinStartDates(query),
+    in: (query) => withinStartDates(query),
   },
   region: {
-    in: (query) => withGrantsRegion(query),
+    in: (query) => withRegion(query),
+    nin: (query) => withoutRegion(query),
   },
 };
 

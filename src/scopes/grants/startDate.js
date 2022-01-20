@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 
-export function beforeGrantStartDate(dates) {
+export function beforeStartDate(dates) {
   return dates.reduce((acc, date) => [
     ...acc,
     {
@@ -20,7 +20,7 @@ export function beforeGrantStartDate(dates) {
   ], []);
 }
 
-export function afterGrantStartDate(dates) {
+export function afterStartDate(dates) {
   return dates.reduce((acc, date) => [
     ...acc,
     {
@@ -34,7 +34,7 @@ export function afterGrantStartDate(dates) {
   ], []);
 }
 
-export function withinGrantStartDates(dates) {
+export function withinStartDates(dates) {
   return dates.reduce((acc, range) => {
     if (!range.split) {
       return acc;
