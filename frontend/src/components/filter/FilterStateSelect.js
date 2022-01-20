@@ -86,7 +86,6 @@ const ALL_STATES = [
     { label: 'American Samoa (AS)', value: 'AS' },
     { label: 'Virgin Islands (VI)', value: 'VI' },
     { label: 'Northern Mariana Islands (MP)', value: 'MP' },
-    { label: 'Northern Mariana Islands (FC)', value: 'FC' },
     { label: 'Federated States of Micronesia (FM)', value: 'FM' },
     { label: 'Marshall Islands (MH)', value: 'MH' },
     { label: 'Republic of Palau (PW)', value: 'PW' },
