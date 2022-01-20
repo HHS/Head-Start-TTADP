@@ -1,10 +1,20 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import {
-  Grant, Recipient, Program, sequelize,
+  Grant,
+  Recipient,
+  Program,
+  sequelize,
+  Goal,
+  ActivityReport,
+  ActivityRecipient,
+  ActivityReportObjective,
+  Objective,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
-import { RECIPIENTS_PER_PAGE } from '../constants';
+import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
+import filtersToScopes from '../scopes';
+import orderReportsBy from '../lib/orderReportsBy';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -142,4 +152,74 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
     count: parseInt(count, 10),
     rows,
   };
+}
+
+export function getGoalsByActivityRecipient(
+  recipientId,
+  {
+    sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
+  },
+) {
+  const scopes = filtersToScopes(filters);
+  const res = Recipient.findAndCountAll(
+    {
+      where: {
+        id: recipientId,
+      },
+      attributes: [
+        'id',
+      ],
+      include: [
+        {
+          attributes: ['id'],
+          model: Grant,
+          as: 'grants',
+          required: true,
+          where: {
+            status: 'Active',
+          },
+          include: [
+            {
+              attributes: ['id', 'name', 'status', 'createdAt'],
+              model: Goal,
+              as: 'goals',
+              required: true,
+              //limit,
+            },
+            {
+              attributes: ['id', 'activityReportId', 'grantId'],
+              model: ActivityRecipient,
+              as: 'activityRecipients',
+              required: true,
+              include: [
+                {
+                  attributes: ['id', 'reason', 'topics'],
+                  model: ActivityReport,
+                  as: 'ActivityReport',
+                  required: true,
+                  include: [
+                    {
+                      attributes: ['id', 'title', 'ttaProvided'],
+                      model: Objective,
+                      as: 'objectives',
+                      required: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      order: orderReportsBy(sortBy, sortDir),
+      offset,
+      distinct: true,
+    },
+    {
+      subQuery: false,
+    },
+  );
+
+  console.log('\n\n\n\n\n\nIn test 3', res);
+  return res;
 }
