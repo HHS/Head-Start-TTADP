@@ -5,8 +5,8 @@ import {
   screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { formatDateRange } from '../../DateRangeSelect';
 import FilterItem from '../FilterItem';
+import FilterErrorContext from '../FilterErrorContext';
 import { FILTER_CONFIG } from '../constants';
 
 const selectedTopic = FILTER_CONFIG[0];
@@ -25,47 +25,19 @@ describe('Filter menu item', () => {
       setErrors([error]);
     });
 
-    const validate = jest.fn(() => {
-      const { topic, query, condition } = filter;
-      let message = '';
-      if (!topic) {
-        message = 'Please enter a value';
-        setError(message);
-        return false;
-      }
-      if (!condition) {
-        message = 'Please enter a condition';
-        setError(message);
-        return false;
-      }
-      if (!query || !query.length) {
-        message = 'Please enter a parameter';
-        setError(message);
-        return false;
-      }
-      if (query.includes('Invalid date') || (topic === 'startDate' && query === '-')) {
-        message = 'Please enter a parameter';
-        setError(message);
-        return false;
-      }
-      setError(message);
-      return true;
-    });
-
     render(
       <div>
-        <FilterItem
-          filter={filter}
-          onRemoveFilter={onRemoveFilter}
-          onUpdateFilter={onUpdateFilter}
-          errors={['']}
-          setErrors={setErrors}
-          index={0}
-          validate={validate}
-          key={filter.id}
-          topicOptions={topicOptions}
-          selectedTopic={selectedTopic}
-        />
+        <FilterErrorContext.Provider value={{ setError, error: '' }}>
+          <FilterItem
+            filter={filter}
+            onRemoveFilter={onRemoveFilter}
+            onUpdateFilter={onUpdateFilter}
+            index={0}
+            key={filter.id}
+            topicOptions={topicOptions}
+            selectedTopic={selectedTopic}
+          />
+        </FilterErrorContext.Provider>
         <button type="button">BIG DUMB BUTTON</button>
       </div>,
     );
@@ -111,38 +83,21 @@ describe('Filter menu item', () => {
     renderFilterItem(filter, onRemove, onUpdate);
 
     const button = screen.getByRole('button', {
-      name: /Toggle the date range select menu/i,
+      name: /change custom date range/i,
     });
 
     userEvent.click(button);
-
-    userEvent.click(await screen.findByRole('button', {
-      name: /select to view data from custom date range\. select apply filters button to apply selection/i,
-    }));
 
     const sd = screen.getByRole('textbox', { name: /start date/i });
     const ed = screen.getByRole('textbox', { name: /end date/i });
 
+    userEvent.clear(sd);
+    userEvent.clear(ed);
     userEvent.type(sd, '01/01/2021');
     userEvent.type(ed, '01/02/2021');
 
-    userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
+    userEvent.click(await screen.findByRole('button', { name: /apply date range changes/i }));
     expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
-
-    userEvent.click(button);
-
-    userEvent.click(screen.getByRole('button', {
-      name: /Select to view data from Last 30 Days. Select Apply filters button to apply selection/i,
-    }));
-
-    userEvent.click(screen.getByRole('button', { name: /apply date range filters/i }));
-
-    const lastThirtyDays = formatDateRange({
-      lastThirtyDays: true,
-      forDateTime: true,
-    });
-
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', lastThirtyDays);
   });
 
   it('validates topic', async () => {
@@ -161,7 +116,7 @@ describe('Filter menu item', () => {
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
-    expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a filter']);
   });
 
   it('validates condition', async () => {
@@ -187,19 +142,21 @@ describe('Filter menu item', () => {
     const filter = {
       id: 'blah-de-dah',
       display: '',
-      topic: 'startDate',
-      condition: 'Is within',
+      topic: 'grantNumber',
+      condition: 'Contains',
       query: '',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
     const setErrors = jest.fn();
     renderFilterItem(filter, onRemove, onUpdate, setErrors);
+    const bigDumbButton = await screen.findByRole('button', { name: /big dumb button/i });
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
     userEvent.tab();
-    expect(setErrors).toHaveBeenCalledWith(['Please enter a parameter']);
+    expect(bigDumbButton).toHaveFocus();
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a value']);
   });
 });
