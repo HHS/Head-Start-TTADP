@@ -1,4 +1,4 @@
-import { recipientById, recipientsByName, getGoalsByActivityRecipient } from '../../services/recipient';
+import getGoalsByActivityRecipient, { recipientById, recipientsByName } from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
