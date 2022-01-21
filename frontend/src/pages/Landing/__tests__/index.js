@@ -14,8 +14,7 @@ import AriaLiveContext from '../../../AriaLiveContext';
 import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
-import { formatDateRange } from '../../../components/DateRangeSelect';
-import { filtersToQueryString } from '../../../utils';
+import { filtersToQueryString, formatDateRange } from '../../../utils';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -46,6 +45,7 @@ const baseWithRegionOne = `${base}${withRegionOne}`;
 const defaultOverviewUrl = `/api/widgets/overview?${dateFilter}`;
 const defaultOverviewUrlWithRegionOne = `${defaultOverviewUrl}${withRegionOne}`;
 const overviewUrlWithRegionOne = `${defaultOverviewUrl}?region.in[]=1`;
+const inTest = 'reportId.in[]=test';
 
 const mockFetchWithRegionOne = () => {
   fetchMock.get(baseWithRegionOne, { count: 2, rows: activityReports });
@@ -61,7 +61,7 @@ const renderLanding = (user) => {
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <Landing authenticated user={user} />
+          <Landing authenticated />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
     </MemoryRouter>,
@@ -80,6 +80,7 @@ describe('Landing Page', () => {
       alertsCount: 0,
       alerts: [],
     });
+    fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
 
     const user = {
@@ -118,7 +119,7 @@ describe('Landing Page', () => {
       { pathname: '/activity-reports/1', state: { message } },
     ];
 
-    await render(
+    render(
       <MemoryRouter initialEntries={pastLocations}>
         <UserContext.Provider value={{ user }}>
           <Landing authenticated user={user} />
@@ -245,7 +246,6 @@ describe('Landing Page', () => {
 
   test('displays the new activity report button', async () => {
     const newActivityReportBtns = await screen.findAllByText(/New Activity Report/);
-
     expect(newActivityReportBtns.length).toBe(1);
   });
 });
@@ -267,6 +267,11 @@ describe('Landing page table menus & selections', () => {
           base,
           { count: 10, rows: [] },
         );
+        fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
+
+        window.location = {
+          assign: jest.fn(),
+        };
         fetchMock.get(defaultOverviewUrl, overviewRegionOne);
       });
 
@@ -481,77 +486,8 @@ describe('My alerts sorting', () => {
   });
 });
 
-describe('Landing Page error', () => {
-  afterEach(() => fetchMock.restore());
-
-  beforeEach(() => {
-    delete window.location;
-    window.location = new URL('https://www.test.gov');
-    mockFetchWithRegionOne();
-    fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-    fetchMock.get(base, { count: 0, rows: [] });
-    fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
-  });
-
-  it('handles errors by displaying an error message', async () => {
-    fetchMock.get(base, 500, { overwriteRoutes: true });
-    fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] }, { overwriteRoutes: true });
-    const user = {
-      name: 'test@test.com',
-      homeRegionId: 14,
-      permissions: [
-        {
-          scopeId: 3,
-          regionId: 1,
-        },
-      ],
-    };
-    renderLanding(user);
-    const alert = await screen.findByRole('alert');
-    expect(alert).toBeVisible();
-    expect(alert).toHaveTextContent('Unable to fetch reports');
-  });
-
-  it('no empty row is shown if there are no reports', async () => {
-    fetchMock.get(
-      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1',
-      { count: 0, rows: [] },
-      { overwriteRoutes: true },
-    );
-    const user = {
-      name: 'test@test.com',
-      permissions: [
-        {
-          scopeId: 3,
-          regionId: 1,
-        },
-      ],
-    };
-    renderLanding(user);
-    expect(await screen.findByText(/0-0 of 0/i)).toBeVisible();
-  });
-
-  it('does not displays new activity report button without permission', async () => {
-    fetchMock.get(
-      base,
-      { count: 2, rows: activityReports }, { overwriteRoutes: true },
-    );
-    const user = {
-      name: 'test@test.com',
-      permissions: [
-        {
-          scopeId: 4,
-          regionId: 1,
-        },
-      ],
-    };
-    renderLanding(user);
-
-    await expect(screen.findAllByText(/New Activity Report/)).rejects.toThrow();
-  });
-});
-
 describe('handleApplyFilters', () => {
+  beforeAll(() => fetchMock.reset());
   beforeEach(() => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
@@ -559,6 +495,9 @@ describe('handleApplyFilters', () => {
     fetchMock.get(base, { count: 2, rows: activityReports });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
+
+    fetchMock.get(`${defaultOverviewUrl}?${inTest}`, overviewRegionOne);
+    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [] });
   });
 
   afterEach(() => fetchMock.restore());
@@ -605,6 +544,7 @@ describe('handleApplyFilters', () => {
 });
 
 describe('handleApplyAlertFilters', () => {
+  beforeAll(() => fetchMock.reset());
   beforeEach(() => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
@@ -615,6 +555,13 @@ describe('handleApplyAlertFilters', () => {
 
     fetchMock.get(base,
       { count: 1, rows: generateXFakeReports(1) });
+    fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
+    fetchMock.get(`${base}&${inTest}`, {
+      count: 0,
+      rows: [],
+    });
+    fetchMock.get(`${defaultOverviewUrl}?${inTest}`, overviewRegionOne);
+    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [] });
 
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
   });
@@ -634,12 +581,7 @@ describe('handleApplyAlertFilters', () => {
     };
     renderLanding(user);
 
-    await screen.findByRole('heading', { name: /My activity report alerts/i });
-    // Only one filters button should be shown.
-    const allFilterButtons = await screen.findAllByRole('button', { name: /filters/i });
-    expect(allFilterButtons.length).toBe(1);
-
-    const filterMenuButton = allFilterButtons[0];
+    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
 
     const topic = await screen.findByRole('combobox', { name: 'topic' });

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { queryStringToFilters, filtersToQueryString } from '../utils';
+import { queryStringToFilters, filtersToQueryString, formatDateRange } from '../utils';
 
 describe('queryStringToFilters', () => {
   it('correct parses the query string', () => {
@@ -30,5 +30,26 @@ describe('filtersToQueryString', () => {
     ];
     const str = filtersToQueryString(filters);
     expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
+  });
+});
+
+describe('formatDateRange', () => {
+  it('returns a formatted date string', () => {
+    const str = formatDateRange({
+      lastThirtyDays: false,
+      string: '2021/06/07-2021/06/08',
+      withSpaces: true,
+    });
+
+    expect(str).toBe('06/07/2021 - 06/08/2021');
+  });
+
+  it('returns a formatted date string without spaces', () => {
+    const str = formatDateRange({
+      string: '2021/06/07-2021/06/08',
+      withSpaces: false,
+    });
+
+    expect(str).toBe('06/07/2021-06/08/2021');
   });
 });

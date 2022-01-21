@@ -8,8 +8,6 @@ import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
@@ -191,7 +189,6 @@ function MyAlerts(props) {
     handleDownloadAllAlerts,
     loading,
     message,
-    showFilter,
     isDownloadingAlerts,
     downloadAlertsError,
     setDownloadAlertsError,
@@ -267,7 +264,6 @@ function MyAlerts(props) {
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
-            showFilter={showFilter}
             forMyAlerts
             onUpdateFilters={updateReportFilters}
             handleDownloadAll={handleDownloadAllAlerts}
@@ -331,7 +327,6 @@ MyAlerts.propTypes = {
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
-  showFilter: PropTypes.bool.isRequired,
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
   setDownloadAlertsError: PropTypes.func.isRequired,

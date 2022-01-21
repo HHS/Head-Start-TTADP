@@ -16,7 +16,6 @@ import './index.css';
 
 function ActivityReportsTable({
   filters,
-  showFilter,
   onUpdateFilters,
   tableCaption,
 }) {
@@ -51,14 +50,16 @@ function ActivityReportsTable({
           perPage,
           filterQuery,
         );
+
         setReports(rows);
         setReportsCount(count || 0);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
         setError('Unable to fetch reports');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchReports();
   }, [sortConfig, offset, perPage, filters]);
@@ -226,7 +227,6 @@ function ActivityReportsTable({
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
           toggleSelectAll={toggleSelectAll}
-          showFilter={showFilter}
           onUpdateFilters={onUpdateFilters}
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
@@ -304,17 +304,12 @@ ActivityReportsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
-  showFilter: PropTypes.bool.isRequired,
   onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
 };
 
 ActivityReportsTable.defaultProps = {
   onUpdateFilters: () => { },
-  dateTime: { timestamp: '', label: '' },
 };
 
 export default ActivityReportsTable;
