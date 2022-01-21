@@ -17,7 +17,7 @@ const emptyGoals = [{
   createdOn: '06/15/2021',
   goalText: 'Recipient will identify systems to strengthen and mitigate risk.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectives: 5,
+  objectiveCount: 5,
   goalNumber: 'R14-G-4598',
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance', 'Monitoring | Area of Concern'],
 },
@@ -27,7 +27,7 @@ const emptyGoals = [{
   createdOn: '01/15/2021',
   goalText: 'Recipient will identify systems.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectives: 2,
+  objectiveCount: 2,
   goalNumber: 'R14-G-8547',
   reasons: ['New Staff / Turnover', 'Monitoring | Area of Concern'],
 },
@@ -37,7 +37,7 @@ const emptyGoals = [{
   createdOn: '10/15/2021',
   goalText: 'Professional development opportunity provided by the Office of Head Start Region V TTA Network to strengthen participants leadership skills.',
   goalTopics: ['Compliance', 'New Staff / Turnover', 'Data and Evaluation'],
-  objectives: 4,
+  objectiveCount: 4,
   goalNumber: 'R14-G-65478',
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance', 'Monitoring | Area of Concern'],
 },
@@ -47,7 +47,7 @@ const emptyGoals = [{
   createdOn: '10/15/2021',
   goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectives: 4,
+  objectiveCount: 4,
   goalNumber: 'R14-G-5874',
   reasons: ['Complaint', 'Full Enrollment'],
 },
@@ -57,7 +57,7 @@ const emptyGoals = [{
   createdOn: '10/15/2021',
   goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectives: 4,
+  objectiveCount: 4,
   goalNumber: 'R14-G-88554',
   reasons: ['Complaint', 'Full Enrollment'],
 },
@@ -82,7 +82,7 @@ const emptyGoals = [{
     'Equity',
     'Facilities',
     'Family Support Services'],
-  objectives: 4,
+  objectiveCount: 4,
   goalNumber: 'R14-G-58742',
   reasons: ['Complaint', 'Full Enrollment'],
 },
@@ -206,7 +206,7 @@ function GoalsTable({
 
       <Container className="goals-table inline-size maxw-full" padding={0} loading={loading} loadingLabel="Goals table loading">
         <TableHeader
-          title="TTA goals and objectives"
+          title="TTA goals and objectiveCount"
           onUpdateFilters={onUpdateFilters}
           count={goalsCount}
           activePage={activePage}
@@ -218,7 +218,7 @@ function GoalsTable({
         <div className="usa-table-container">
           <Table className="goals-table-content" fullWidth>
             <caption className="usa-sr-only">
-              TTA goals and objectives with sorting and pagination
+              TTA goals and objectiveCount with sorting and pagination
             </caption>
             <thead>
               <tr>
@@ -226,7 +226,7 @@ function GoalsTable({
                 {renderColumnHeader('Created on', 'createdOn')}
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText')}
                 {renderColumnHeader('Goal topic(s)', 'goalTopics')}
-                {renderColumnHeader('Objectives', 'objectives')}
+                {renderColumnHeader('objectiveCount', 'objectiveCount')}
                 <th scope="col" aria-label="context menu" />
               </tr>
             </thead>

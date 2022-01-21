@@ -23,7 +23,7 @@ function GoalRow({
     createdOn,
     goalText,
     goalTopics,
-    objectives,
+    objectiveCount,
     goalNumber,
     reasons,
   } = goal;
@@ -154,7 +154,7 @@ function GoalRow({
         }
       </td>
       <td>
-        <strong>{objectives}</strong>
+        <strong>{objectiveCount}</strong>
         {' '}
         Objective(s)
       </td>
@@ -172,7 +172,7 @@ export const goalPropTypes = PropTypes.shape({
   goalText: PropTypes.string.isRequired,
   goalTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
-  objectives: PropTypes.string.isRequired,
+  objectiveCount: PropTypes.string.isRequired,
   goalNumber: PropTypes.string.isRequired,
 });
 

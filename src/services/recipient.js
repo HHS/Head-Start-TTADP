@@ -167,13 +167,13 @@ export default async function getGoalsByActivityRecipient(
       attributes: ['id', 'name', 'status', 'createdAt'],
       include: [
         {
-          attributes: ['id', 'title', 'ttaProvided'],
+          attributes: ['id', 'title', 'ttaProvided', 'status'],
           model: Objective,
           as: 'objectives',
           required: true,
           include: [
             {
-              attributes: ['id', 'reason', 'topics', 'regionId'],
+              attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
               model: ActivityReport,
               as: 'activityReports',
               required: true,
@@ -221,13 +221,15 @@ export default async function getGoalsByActivityRecipient(
       createdOn: g.createdAt,
       goalText: g.name,
       goalNumber: '',
+      objectiveCount: 0,
       goalTopics: [],
       reasons: [],
+      objectives: [],
     };
 
     if (g.objectives) {
       // Objectives.
-      goalToAdd.objectives = g.objectives.length;
+      goalToAdd.objectiveCount = g.objectives.length;
       g.objectives.forEach((o) => {
         if (o.activityReports) {
           // Activity Reports.
@@ -235,6 +237,16 @@ export default async function getGoalsByActivityRecipient(
             goalToAdd.goalNumber = `R${a.regionId}-G-${g.id}`;
             goalToAdd.goalTopics = a.topics;
             goalToAdd.reasons = a.reason;
+            // Add Objective.
+            goalToAdd.objectives.push({
+              id: o.id,
+              title: o.title,
+              arNumber: a.displayId,
+              ttaProvided: o.ttaProvided,
+              endDate: a.endDate,
+              reasons: a.reason,
+              status: o.status,
+            });
           });
         }
       });
