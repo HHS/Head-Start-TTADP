@@ -6,45 +6,50 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterDateRange from '../FilterDateRange';
+import FilterErrorContext from '../FilterErrorContext';
 
 describe('FilterDateRange', () => {
-  const renderFilterDateRange = (query, onApplyDateRange = jest.fn()) => {
-    const condition = 'Is after';
-
+  const renderFilterDateRange = (query, condition = 'Is after', onApplyDateRange = jest.fn(), setError = jest.fn()) => {
     const updateSingleDate = jest.fn();
 
     render(
-      <FilterDateRange
-        condition={condition}
-        query={query}
-        updateSingleDate={updateSingleDate}
-        onApplyDateRange={onApplyDateRange}
-      />,
+      <FilterErrorContext.Provider value={{ setError }}>
+        <FilterDateRange
+          condition={condition}
+          query={query}
+          updateSingleDate={updateSingleDate}
+          onApplyDateRange={onApplyDateRange}
+        />
+      </FilterErrorContext.Provider>,
     );
   };
 
-  it('handles an empty query', () => {
+  it('handles an empty query', async () => {
     const onApplyDateRange = jest.fn();
-    renderFilterDateRange('', onApplyDateRange);
+    renderFilterDateRange('', 'Is after', onApplyDateRange);
     const date = screen.getByRole('textbox', { name: /date/i });
-    userEvent.type(date, '10/31');
-
-    expect(onApplyDateRange).toHaveBeenCalledWith('');
-    expect(onApplyDateRange).not.toHaveBeenCalledWith('2021/10/31');
-
-    userEvent.type(date, '/2021');
-
-    expect(onApplyDateRange).toHaveBeenCalledWith('2021/10/31');
-    expect(date.value).toBe('10/31/2021');
+    userEvent.type(date, '10/31/2021');
+    expect(onApplyDateRange).toHaveBeenCalled();
+    const [hidden] = await screen.findAllByRole('textbox', { hidden: true });
+    expect(hidden).toHaveValue('2021-10-31');
   });
 
-  it('handles an string query', () => {
-    renderFilterDateRange('2021/10/31');
-    expect(screen.getByRole('textbox', { name: /date/i }).value).toBe('10/31/2021');
+  it('checks for valid dates', async () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'Is after', onApplyDateRange, setError);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, 'pppppp');
+
+    const message = 'Please enter a valid date';
+    expect(setError).toHaveBeenCalledWith(message);
   });
 
-  it('handles an array query', () => {
-    renderFilterDateRange(['Early childhood specialist']);
-    expect(screen.getByRole('textbox', { name: /date/i }).value).toBe('');
+  it('renders the is dropdown', async () => {
+    const onApplyDateRange = jest.fn();
+    renderFilterDateRange('', 'Is', onApplyDateRange);
+    const date = screen.getByRole('combobox', { name: /date/i });
+    userEvent.selectOptions(date, 'Last thirty days');
+    expect(onApplyDateRange).toHaveBeenCalled();
   });
 });

@@ -35,6 +35,7 @@ export const topicToQuery = {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
     win: (query) => withinStartDates(query),
+    in: (query) => withinStartDates(query),
   },
   lastSaved: {
     bef: (query) => beforeLastSaveDate(query),
