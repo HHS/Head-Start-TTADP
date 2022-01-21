@@ -12,7 +12,7 @@ import {
 } from '../models';
 
 import getGoalsByActivityRecipient from './recipient';
-import filtersToScopes from '../scopes';
+// import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 
 describe('Goals by Recipient Test', () => {
@@ -136,10 +136,12 @@ describe('Goals by Recipient Test', () => {
   let objectiveIds = [];
   let goalIds = [];
 
+  /*
   function regionToScope(regionId) {
     const query = { 'region.in': [regionId] };
     return filtersToScopes(query, 'grant');
   }
+  */
 
   beforeAll(async () => {
     // Create User.

@@ -12,7 +12,7 @@ import {
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
-import filtersToScopes from '../scopes';
+// import filtersToScopes from '../scopes';
 import orderReportsBy from '../lib/orderReportsBy';
 
 export async function allRecipients() {
@@ -156,10 +156,10 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
 export default async function getGoalsByActivityRecipient(
   recipientId,
   {
-    sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
+    sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
   },
 ) {
-  const scopes = filtersToScopes(filters);
+  // const scopes = filtersToScopes(filters);
 
   const res = await Goal.findAll(
     {
