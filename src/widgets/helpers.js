@@ -71,15 +71,12 @@ export function countBySingleKey(data, key, results) {
 }
 
 export function formatNumber(numberToFormat, decimalPlaces = 0) {
-  if (!numberToFormat || Number.isNaN(numberToFormat)) {
+  if (!numberToFormat || Number.isNaN(parseFloat(numberToFormat))) {
     return '0';
   }
 
-  return numberToFormat.toLocaleString(
+  return parseFloat(numberToFormat).toLocaleString(
     'en-US',
-    {
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces,
-    },
+    { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces },
   );
 }

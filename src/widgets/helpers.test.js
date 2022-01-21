@@ -17,7 +17,10 @@ describe('Format Number', () => {
     // Three Decimal Places Rounded.
     expect(formatNumber(578976238.1237, 3)).toBe('578,976,238.124');
 
-    // NaN Passed.
-    expect(formatNumber('100f', 3)).toBe('0');
+    expect(formatNumber('100f', 3)).toBe('100.000');
+
+    expect(formatNumber('sdfgdfg', 3)).toBe('0');
+
+    expect(formatNumber()).toBe('0');
   });
 });

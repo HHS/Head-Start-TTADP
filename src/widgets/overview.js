@@ -127,5 +127,5 @@ export default async function overview(scopes) {
   };
 
   return Object.keys(response)
-    .reduce((acc, curr) => ({ ...acc, curr: formatNumber(response[curr]) }), {});
+    .reduce((acc, curr) => ({ ...acc, [curr]: formatNumber(response[curr]) }), {});
 }
