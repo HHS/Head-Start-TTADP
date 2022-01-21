@@ -10,7 +10,8 @@ import {
   ActivityReportObjective,
   Objective,
 } from '../models';
-import { getGoalsByActivityRecipient } from './recipient';
+
+import getGoalsByActivityRecipient from './recipient';
 import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 
@@ -18,6 +19,11 @@ describe('Goals by Recipient Test', () => {
   const recipient = {
     id: 300,
     name: 'Recipient with Goals',
+  };
+
+  const recipient2 = {
+    id: 301,
+    name: 'Recipient 2 with Goals',
   };
 
   const grant1 = {
@@ -36,6 +42,17 @@ describe('Goals by Recipient Test', () => {
     recipientId: 300,
     regionId: 1,
     number: '12346',
+    programSpecialistName: 'Joe',
+    status: 'Active',
+    endDate: new Date(2020, 10, 2),
+    grantSpecialistName: 'Glen',
+  };
+
+  const grant3 = {
+    id: 302,
+    recipientId: 301,
+    regionId: 1,
+    number: '12334',
     programSpecialistName: 'Joe',
     status: 'Active',
     endDate: new Date(2020, 10, 2),
@@ -66,9 +83,9 @@ describe('Goals by Recipient Test', () => {
     startDate: '2020-09-01T12:00:00Z',
     requester: 'requester',
     targetPopulations: ['pop'],
-    reason: ['reason'],
     participants: ['participants'],
-    topics: ['topics'],
+    reason: ['COVID-19 response', 'Complaint'],
+    topics: ['Learning Environments', 'Nutrition', 'Physical Health and Screenings'],
     ttaType: ['type'],
   };
 
@@ -88,9 +105,31 @@ describe('Goals by Recipient Test', () => {
     startDate: '2020-09-01T12:00:00Z',
     requester: 'requester',
     targetPopulations: ['pop'],
-    reason: ['reason'],
     participants: ['participants'],
-    topics: ['topics'],
+    reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
+    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    ttaType: ['type'],
+  };
+
+  const goalReport3 = {
+    activityRecipientType: 'recipient',
+    userId: mockGoalUser.id,
+    regionId: 1,
+    lastUpdatedById: mockGoalUser.id,
+    ECLKCResourcesUsed: ['test'],
+    activityRecipients: [{ grantId: 302 }],
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    oldApprovingManagerId: 1,
+    numberOfParticipants: 1,
+    deliveryMethod: 'method',
+    duration: 0,
+    endDate: '2020-09-01T12:00:00Z',
+    startDate: '2020-09-01T12:00:00Z',
+    requester: 'requester',
+    targetPopulations: ['pop'],
+    participants: ['participants'],
+    reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
+    topics: ['Child Assessment, Development, Screening', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -108,14 +147,17 @@ describe('Goals by Recipient Test', () => {
 
     // Create Recipient.
     await Recipient.create(recipient);
+    await Recipient.create(recipient2);
 
     // Create Grants.
     const savedGrant1 = await Grant.create(grant1);
     const savedGrant2 = await Grant.create(grant2);
+    const savedGrant3 = await Grant.create(grant3);
 
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
     const savedGoalReport2 = await ActivityReport.create(goalReport2);
+    const savedGoalReport3 = await ActivityReport.create(goalReport3);
 
     // Create AR Recipients.
     await ActivityRecipient.create({
@@ -126,6 +168,11 @@ describe('Goals by Recipient Test', () => {
     await ActivityRecipient.create({
       activityReportId: savedGoalReport2.id,
       grantId: savedGrant2.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport3.id,
+      grantId: savedGrant3.id,
     });
 
     // Create Goals.
@@ -163,6 +210,14 @@ describe('Goals by Recipient Test', () => {
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
         }),
+        // goal 5 (AR3 Exclude)
+        await Goal.create({
+          name: 'Goal 5',
+          status: 'Active',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          createdAt: new Date('2021-01-02'),
+        }),
       ],
     );
 
@@ -195,6 +250,12 @@ describe('Goals by Recipient Test', () => {
           recipientId: 300,
           grantId: 301,
           goalId: goals[3].id,
+        }),
+        // grant goal 5 (AR3 Exclude)
+        await GrantGoal.create({
+          recipientId: 301,
+          grantId: 302,
+          goalId: goals[4].id,
         }),
       ],
     );
@@ -237,6 +298,13 @@ describe('Goals by Recipient Test', () => {
           ttaProvided: 'Objective for Goal 4',
           status: 'Not Started',
         }),
+        // objective 6 (AR3)
+        await Objective.create({
+          goalId: goals[4].id,
+          title: 'objective 6',
+          ttaProvided: 'Objective for Goal 5 Exclude',
+          status: 'Not Started',
+        }),
       ],
     );
 
@@ -271,12 +339,16 @@ describe('Goals by Recipient Test', () => {
           objectiveId: objectives[4].id,
           activityReportId: savedGoalReport2.id,
         }),
+        // AR 3 Obj 6 (Exclude).
+        await ActivityReportObjective.create({
+          objectiveId: objectives[5].id,
+          activityReportId: savedGoalReport3.id,
+        }),
       ],
     );
   });
 
   afterAll(async () => {
-    /*
     // Get Report Ids.
     const reportsToDelete = await ActivityReport.findAll({ where: { userId: mockGoalUser.id } });
     const reportIdsToDelete = reportsToDelete.map((report) => report.id);
@@ -296,7 +368,7 @@ describe('Goals by Recipient Test', () => {
     });
 
     // Delete Grant Goals.
-    const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: 300 } });
+    const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: [300, 301] } });
     const grantGoalIdsToDelete = grantGoalsToDelete.map((grantGoal) => grantGoal.id);
     await GrantGoal.destroy({ where: { id: grantGoalIdsToDelete } });
 
@@ -312,23 +384,46 @@ describe('Goals by Recipient Test', () => {
     await ActivityReport.destroy({ where: { id: reportIdsToDelete } });
 
     // Delete Recipient, Grant, User.
-    await Grant.destroy({ where: { id: [300, 301] } });
-    await Recipient.destroy({ where: { id: 300 } });
+    await Grant.destroy({ where: { id: [300, 301, 302] } });
+    await Recipient.destroy({ where: { id: [300, 301] } });
     await User.destroy({ where: { id: mockGoalUser.id } });
-*/
+
     // Close SQL Connection.
     await sequelize.close();
   });
 
   describe('Retrieves All Goals', () => {
     it('Retrieves Goals by Recipient', async () => {
-      const { count, rows } = await getGoalsByActivityRecipient(300, {
-        sortBy: 'createdAt', sortDir: 'desc', offset: 0, limit: 2, 'region.in': ['1'],
+      const { goalCount, goals } = await getGoalsByActivityRecipient(300, {
+        sortBy: 'createdAt', sortDir: 'desc', offset: 0, limit: 10, 'region.in': ['1'],
       });
 
-      //console.log('\n\n\n\n\nROWS', count, rows[0].grants[0].goals[0].name);
-      console.log('\n\n\n\n\nROW123S', count, rows[0].grants[0].activityRecipients[0].ActivityReport.objectives);
-      expect(true).toBe(false);
+      expect(goalCount).toBe(4);
+      expect(goals.length).toBe(4);
+
+      expect(goals[0].goalText).toBe('Goal 3');
+      expect(goals[0].goalNumber).toBe(`R1-G-${goals[0].id}`);
+      expect(goals[0].objectives).toBe(2);
+      expect(goals[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goals[0].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+
+      expect(goals[1].goalText).toBe('Goal 2');
+      expect(goals[1].goalNumber).toBe(`R1-G-${goals[1].id}`);
+      expect(goals[1].objectives).toBe(1);
+      expect(goals[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goals[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+
+      expect(goals[2].goalText).toBe('Goal 1');
+      expect(goals[2].goalNumber).toBe(`R1-G-${goals[2].id}`);
+      expect(goals[2].objectives).toBe(1);
+      expect(goals[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goals[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+
+      expect(goals[3].goalText).toBe('Goal 4');
+      expect(goals[3].goalNumber).toBe(`R1-G-${goals[3].id}`);
+      expect(goals[3].objectives).toBe(1);
+      expect(goals[3].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
+      expect(goals[3].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
     });
   });
 });
