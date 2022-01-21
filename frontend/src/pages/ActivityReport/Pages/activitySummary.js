@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
@@ -7,7 +7,6 @@ import {
   Fieldset, Radio, Grid, TextInput, Checkbox,
 } from '@trussworks/react-uswds';
 import ReviewPage from './Review/ReviewPage';
-import DatePicker from '../../../components/DatePicker';
 import MultiSelect from '../../../components/MultiSelect';
 import {
   otherEntityParticipants,
@@ -15,6 +14,7 @@ import {
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
+import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import {
   REASONS as reasons,
   TARGET_POPULATIONS as targetPopulations,
@@ -24,6 +24,9 @@ const ActivitySummary = ({
   recipients,
   collaborators,
 }) => {
+  // we store this to cause the end date to re-render when updated by the start date (and only then)
+  const [endDateKey, setEndDateKey] = useState('endDate');
+
   const {
     register,
     watch,
@@ -32,6 +35,7 @@ const ActivitySummary = ({
     getValues,
   } = useFormContext();
   const activityRecipientType = watch('activityRecipientType');
+
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const pageState = watch('pageState');
@@ -93,6 +97,11 @@ const ActivitySummary = ({
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
+
+    // this will trigger the re-render of the
+    // uncontrolled end date input
+    // it's a little clumsy, but it does work
+    setEndDateKey(`endDate-${newEnd}`);
   };
 
   return (
@@ -217,38 +226,52 @@ const ActivitySummary = ({
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Activity date">
         <div id="date" />
         <div>
-          <Grid row gap>
-            <Grid col={6}>
+          <Grid row>
+            <Grid col={8}>
               <FormItem
                 label="Start Date"
                 name="startDate"
+                id="startDate-label"
               >
-                <DatePicker
-                  ariaName="Start Date (Required)"
+                <div
+                  className="usa-hint"
+                >
+                  mm/dd/yyyy
+                </div>
+                <ControlledDatePicker
                   control={control}
                   name="startDate"
-                  isStartDate
-                  maxDate={endDate}
+                  value={startDate}
                   setEndDate={setEndDate}
-                  openUp
+                  maxDate={endDate}
+                  isStartDate
                 />
               </FormItem>
             </Grid>
-            <Grid col={6}>
+          </Grid>
+          <Grid row>
+            <Grid col={8}>
               <FormItem
                 label="End Date"
                 name="endDate"
+                id="endDate-label"
               >
-                <DatePicker
-                  ariaName="End Date (required)"
+                <div
+                  className="usa-hint"
+                >
+                  mm/dd/yyyy
+                </div>
+                <ControlledDatePicker
                   control={control}
-                  minDate={startDate}
-                  disabled={!startDate}
                   name="endDate"
-                  openUp
+                  value={endDate}
+                  minDate={startDate}
+                  key={endDateKey}
                 />
               </FormItem>
             </Grid>
+          </Grid>
+          <Grid row>
             <Grid col={5}>
               <FormItem
                 label="Duration in hours (round to the nearest half hour)"
