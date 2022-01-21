@@ -123,7 +123,7 @@ export default function RegionalDashboard() {
           </Grid>
           <Grid row>
             <ActivityReportsTable
-              filters={filters}
+              filters={filtersToApply}
               showFilter={false}
               tableCaption="Activity reports"
             />
