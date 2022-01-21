@@ -3,13 +3,12 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import { v4 as uuidv4 } from 'uuid';
-import { formatDateRange } from '../../../components/DateRangeSelect';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
-import { expandFilters, queryStringToFilters } from '../../../utils';
+import { expandFilters, formatDateRange } from '../../../utils';
 
 import './TTAHistory.css';
 import useUrlFilters from '../../../hooks/useUrlFilters';
@@ -22,8 +21,7 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   recipientName, recipientId, regionId,
 }) {
-  const params = queryStringToFilters(new URL(window.location).search.substr(1));
-  const [filters, setFilters] = useUrlFilters(params.length ? params : [
+  const [filters, setFilters] = useUrlFilters([
     {
       id: uuidv4(),
       topic: 'startDate',
@@ -64,17 +62,6 @@ export default function TTAHistory({
       ...newFilters,
     ]);
   };
-
-  // we don't want to double query the API
-  if (!filtersToApply.length) {
-    return (
-      <Helmet>
-        <title>
-          Grantee TTA History loading
-        </title>
-      </Helmet>
-    );
-  }
 
   return (
     <>

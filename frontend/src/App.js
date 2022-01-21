@@ -21,8 +21,6 @@ import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
 import isAdmin from './permissions';
-import 'react-dates/initialize';
-import 'react-dates/lib/css/_datepicker.css';
 import './App.css';
 import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
@@ -100,7 +98,9 @@ function App() {
           path="/activity-reports"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <LandingLayout><Landing match={match} user={user} /></LandingLayout>
+              <LandingLayout>
+                <Landing match={match} />
+              </LandingLayout>
             </AppWrapper>
           )}
         />

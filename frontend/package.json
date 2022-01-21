@@ -26,7 +26,6 @@
     "react": "^17.0.1",
     "react-admin": "^3.15.0",
     "react-app-polyfill": "^3.0.0",
-    "react-dates": "^21.8.0",
     "react-dom": "^17.0.1",
     "react-draft-wysiwyg": "^1.14.6",
     "react-dropzone": "^11.5.1",
