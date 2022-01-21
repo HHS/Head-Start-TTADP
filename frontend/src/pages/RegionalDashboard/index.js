@@ -4,14 +4,13 @@ import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { formatDateRange } from '../../components/DateRangeSelect';
 import DashboardOverview from '../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
 import { getUserRegions } from '../../permissions';
 import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
-import { expandFilters } from '../../utils';
+import { expandFilters, formatDateRange } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
@@ -83,19 +82,6 @@ export default function RegionalDashboard() {
 
   const filtersToApply = expandFilters(filters);
 
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
-
   return (
     <div className="ttahub-dashboard">
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
@@ -111,7 +97,6 @@ export default function RegionalDashboard() {
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}
             onApplyFilters={onApplyFilters}
-            dateRangeOptions={dateRangeOptions}
             onRemoveFilter={onRemoveFilter}
           />
         </Grid>
@@ -145,7 +130,7 @@ export default function RegionalDashboard() {
           </Grid>
           <Grid row>
             <ActivityReportsTable
-              filters={filters}
+              filters={filtersToApply}
               showFilter={false}
               tableCaption="Activity reports"
             />

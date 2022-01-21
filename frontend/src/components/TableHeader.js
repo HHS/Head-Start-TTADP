@@ -4,7 +4,6 @@ import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
-import Filter from './Filter';
 import ReportMenu from '../pages/Landing/ReportMenu';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
@@ -23,10 +22,8 @@ export default function TableHeader({
   title,
   numberOfSelected,
   toggleSelectAll,
-  showFilter,
   hideMenu,
   menuAriaLabel,
-  onUpdateFilters,
   handleDownloadAll,
   handleDownloadClick,
   count,
@@ -35,7 +32,6 @@ export default function TableHeader({
   perPage,
   handlePageChange,
   hidePagination,
-  forMyAlerts,
   downloadError,
   setDownloadError,
   isDownloading,
@@ -70,7 +66,6 @@ export default function TableHeader({
                 </Button>
               </span>
             )}
-          {showFilter && <Filter applyFilters={onUpdateFilters} forMyAlerts={forMyAlerts} />}
           {!hideMenu && (
             <ReportMenu
               label={menuAriaLabel}
@@ -126,9 +121,6 @@ TableHeader.propTypes = {
   title: PropTypes.string.isRequired,
   numberOfSelected: PropTypes.number,
   toggleSelectAll: PropTypes.func,
-  showFilter: PropTypes.bool,
-  onUpdateFilters: PropTypes.func,
-  forMyAlerts: PropTypes.bool,
   handleDownloadAll: PropTypes.func,
   handleDownloadClick: PropTypes.func,
   hidePagination: PropTypes.bool,
@@ -155,10 +147,7 @@ TableHeader.propTypes = {
 TableHeader.defaultProps = {
   numberOfSelected: 0,
   toggleSelectAll: () => { },
-  showFilter: false,
-  forMyAlerts: false,
   hidePagination: false,
-  onUpdateFilters: () => { },
   handleDownloadAll: () => { },
   handleDownloadClick: () => { },
   count: 0,

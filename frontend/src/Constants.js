@@ -10,7 +10,6 @@ export const IS_NOT = 'Is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
-export const DATE_CONDITIONS = [BEFORE, AFTER, WITHIN];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
@@ -21,6 +20,13 @@ export const QUERY_CONDITIONS = {
   [IS]: 'in[]',
   [IS_NOT]: 'nin[]',
 };
+
+export const DATE_CONDITIONS = [
+  AFTER,
+  BEFORE,
+  WITHIN,
+  IS,
+];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';
 

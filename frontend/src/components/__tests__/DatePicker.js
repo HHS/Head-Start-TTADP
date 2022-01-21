@@ -1,83 +1,87 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import {
-  render, screen, fireEvent, waitFor,
-} from '@testing-library/react';
-import { useForm } from 'react-hook-form/dist/index.ie11';
+import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import DatePicker from '../DatePicker';
 
-// react-dates when opening the calendar in these tests. For details see
-// https://github.com/airbnb/react-dates/issues/1426#issuecomment-593420014
-Object.defineProperty(window, 'getComputedStyle', {
-  value: () => ({
-    paddingLeft: 0,
-    paddingRight: 0,
-    paddingTop: 0,
-    paddingBottom: 0,
-    marginLeft: 0,
-    marginRight: 0,
-    marginTop: 0,
-    marginBottom: 0,
-    borderBottomWidth: 0,
-    borderTopWidth: 0,
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
-  }),
-});
-
 describe('DatePicker', () => {
-  const RenderDatePicker = ({
-    // eslint-disable-next-line react/prop-types
-    disabled = false, setEndDate = jest.fn(), isStartDate = false, maxDate = '07/04/2021',
-  }) => {
-    const { control } = useForm();
-    return (
-      <form>
+  const renderDatePicker = (value, onChange = jest.fn(), setError = jest.fn(), minDate = '09/01/2020', maxDate = '12/31/2020') => {
+    render(
+      <div>
         <DatePicker
-          control={control}
-          label="label"
-          name="picker"
-          disabled={disabled}
-          ariaName="datepicker"
-          setEndDate={setEndDate}
-          isStartDate={isStartDate}
+          defaultValue={value}
+          name="toby"
+          id="toby"
+          onChange={onChange}
+          minDate={minDate}
           maxDate={maxDate}
+          error=""
+          setError={setError}
         />
-      </form>
+        <button type="button">Dumb button</button>
+      </div>,
     );
   };
 
-  it('disabled flag disables text input', async () => {
-    render(<RenderDatePicker disabled />);
-    expect(screen.getByRole('textbox')).toBeDisabled();
+  it('knows what to do with a max date', async () => {
+    const onChange = jest.fn();
+
+    renderDatePicker('01/01/2021', onChange);
+
+    const date = await screen.findByRole('textbox');
+    act(() => userEvent.clear(date));
+    userEvent.type(date, '01/01/2021');
+
+    const invalid = document.querySelector(':invalid');
+    expect(invalid).toBeTruthy();
+    act(() => userEvent.clear(date));
+    userEvent.type(date, '12/30/2020');
+
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+
+    expect(onChange).toHaveBeenCalled();
   });
 
-  it('accepts text input', async () => {
-    render(<RenderDatePicker />);
-    const textbox = screen.getByRole('textbox');
-    fireEvent.change(textbox, { target: { value: '01/01/2000' } });
-    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('01/01/2000'));
+  it('handles validation', async () => {
+    const onChange = jest.fn();
+    const setError = jest.fn();
+
+    renderDatePicker('01/01/2021', onChange, setError);
+
+    const dumbButton = await screen.findByRole('button', { name: /dumb button/i });
+
+    const date = await screen.findByRole('textbox');
+    act(() => userEvent.clear(date));
+    userEvent.type(date, '08/31/2020');
+
+    userEvent.click(dumbButton);
+
+    expect(setError).toHaveBeenCalledWith('The date must be after 08/31/2020');
+
+    act(() => userEvent.clear(date));
+    userEvent.type(date, '01/01/2021');
+
+    userEvent.click(dumbButton);
+    expect(setError).toHaveBeenCalledWith('Please enter a date before 12/31/2020');
   });
 
-  it('clicking the open button will open the calendar', async () => {
-    render(<RenderDatePicker />);
-    const openCalendar = screen.getByRole('button');
-    fireEvent.click(openCalendar);
-    const button = await screen.findByLabelText('Move backward to switch to the previous month.');
-    await waitFor(() => expect(button).toBeVisible());
-  });
+  it('handles more validation', async () => {
+    const onChange = jest.fn();
+    const setError = jest.fn();
 
-  it('changing the start date can move the end date', () => {
-    const setEndDate = jest.fn();
-    render(<RenderDatePicker isStartDate setEndDate={setEndDate} />);
-    const textbox = screen.getByRole('textbox');
-    // set initial date
-    fireEvent.change(textbox, { target: { value: '07/03/2021' } });
+    renderDatePicker('01/01/2021', onChange, setError, '10/31/2020', '');
 
-    // set to a date past the max date
-    fireEvent.change(textbox, { target: { value: '07/10/2021' } });
+    const dumbButton = await screen.findByRole('button', { name: /dumb button/i });
 
-    // see that the delta is preserved
-    expect(setEndDate).toHaveBeenCalledWith('07/11/2021');
+    const date = await screen.findByRole('textbox');
+    act(() => userEvent.clear(date));
+    userEvent.type(date, '08/31/2020');
+
+    userEvent.click(dumbButton);
+
+    expect(setError).toHaveBeenCalledWith('Please enter a date after 10/31/2020');
   });
 });
