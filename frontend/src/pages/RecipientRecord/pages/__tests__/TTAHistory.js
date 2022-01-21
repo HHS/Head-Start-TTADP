@@ -33,14 +33,14 @@ describe('Recipient Record - TTA History', () => {
   };
 
   beforeEach(async () => {
-    const overviewUrl = `/api/widgets/overview?startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
-    const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`;
+    const overviewUrl = `/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
 
     fetchMock.get(overviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
 
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.in=${yearToDate}&region.in[]=1&recipientId.in[]=401`, 200);
+    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`, 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`, 200);
   });
 
   afterEach(() => {
@@ -61,11 +61,10 @@ describe('Recipient Record - TTA History', () => {
 
   it('combines filters appropriately', async () => {
     renderTTAHistory();
-
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Recipient%20Specialist&region.in[]=1&recipientId.in[]=401', tableResponse);
-    fetchMock.get('/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.in[]=401', 200);
-    fetchMock.get('/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.in[]=401', 200);
-    fetchMock.get('/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.in[]=401', overviewResponse);
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', tableResponse);
+    fetchMock.get('/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', 200);
+    fetchMock.get('/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', 200);
+    fetchMock.get('/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', overviewResponse);
 
     await act(async () => {
       userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));

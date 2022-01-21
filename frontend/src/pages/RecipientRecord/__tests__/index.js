@@ -90,18 +90,18 @@ describe('recipient record page', () => {
   beforeEach(() => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/widgets/overview', overview);
-    fetchMock.get('/api/widgets/overview?region.in[]=45&recipientId.in[]=1', overview);
-    fetchMock.get(`/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=45&recipientId.in[]=1`, overview);
+    fetchMock.get('/api/widgets/overview?region.in[]=45&recipientId.ctn[]=1', overview);
+    fetchMock.get(`/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, overview);
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10', { count: 0, rows: [] });
-    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=45&recipientId.in[]=1`, { count: 0, rows: [] });
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.in[]=1', { count: 0, rows: [] });
+    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, { count: 0, rows: [] });
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.ctn[]=1', { count: 0, rows: [] });
     fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [] });
     fetchMock.get('/api/widgets/frequencyGraph', 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&recipientId.in[]=1`, 200);
-    fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&recipientId.in[]=1', 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, 200);
+    fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&recipientId.ctn[]=1', 200);
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}`, 200);
-    fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&recipientId.in[]=1', 200);
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=45&recipientId.in[]=1`, 200);
+    fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&recipientId.ctn[]=1', 200);
+    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, 200);
   });
   afterEach(() => {
     fetchMock.restore();
@@ -157,10 +157,17 @@ describe('recipient record page', () => {
     });
 
     const remove = screen.getByRole('button', {
-      name: /this button removes the filter: date range in/i,
+      name: /this button removes the filter: date range is within/i,
     });
 
     act(() => userEvent.click(remove));
     expect(remove).not.toBeInTheDocument();
+  });
+
+  it('navigates to the goals & objectives page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/goals-objectives');
+    act(() => renderRecipientRecord());
+    expect(document.querySelector('#goalsObjectives')).toBeTruthy();
   });
 });
