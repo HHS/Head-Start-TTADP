@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import DatePicker from '../DatePicker';
 
 describe('DatePicker', () => {
-  const renderDatePicker = (value, onChange = jest.fn(), setError = jest.fn()) => {
+  const renderDatePicker = (value, onChange = jest.fn(), setError = jest.fn(), minDate = '09/01/2020', maxDate = '12/31/2020') => {
     render(
       <div>
         <DatePicker
@@ -14,8 +14,8 @@ describe('DatePicker', () => {
           name="toby"
           id="toby"
           onChange={onChange}
-          minDate="09/01/2020"
-          maxDate="12/31/2020"
+          minDate={minDate}
+          maxDate={maxDate}
           error=""
           setError={setError}
         />
@@ -59,12 +59,29 @@ describe('DatePicker', () => {
 
     userEvent.click(dumbButton);
 
-    expect(setError).toHaveBeenCalledWith('Please enter a date after 09/01/2020');
+    expect(setError).toHaveBeenCalledWith('The date must be after 08/31/2020');
 
     act(() => userEvent.clear(date));
     userEvent.type(date, '01/01/2021');
 
     userEvent.click(dumbButton);
     expect(setError).toHaveBeenCalledWith('Please enter a date before 12/31/2020');
+  });
+
+  it('handles more validation', async () => {
+    const onChange = jest.fn();
+    const setError = jest.fn();
+
+    renderDatePicker('01/01/2021', onChange, setError, '10/31/2020', '');
+
+    const dumbButton = await screen.findByRole('button', { name: /dumb button/i });
+
+    const date = await screen.findByRole('textbox');
+    act(() => userEvent.clear(date));
+    userEvent.type(date, '08/31/2020');
+
+    userEvent.click(dumbButton);
+
+    expect(setError).toHaveBeenCalledWith('Please enter a date after 10/31/2020');
   });
 });
