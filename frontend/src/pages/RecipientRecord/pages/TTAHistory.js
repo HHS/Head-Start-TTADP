@@ -63,11 +63,6 @@ export default function TTAHistory({
     ]);
   };
 
-  // we don't want to double query the API
-  if (!filtersToApply.length) {
-    return null;
-  }
-
   return (
     <>
       <Helmet>

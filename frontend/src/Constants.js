@@ -22,8 +22,8 @@ export const QUERY_CONDITIONS = {
 };
 
 export const DATE_CONDITIONS = [
-  BEFORE,
   AFTER,
+  BEFORE,
   WITHIN,
   IS,
 ];
