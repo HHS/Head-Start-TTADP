@@ -63,14 +63,16 @@ describe('Update HSES data', () => {
 
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
-    await Program.destroy({ where: { id: [1, 2, 3] } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    let result = await Program.destroy({ where: { id: [1, 2, 3] } });
+    console.log(JSON.stringify(Program.findAll({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } })));
+    result = await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    result = await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
-    await Program.destroy({ where: { id: [1, 2, 3] } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    let result = await Program.destroy({ where: { id: [1, 2, 3] } });
+    console.log(JSON.stringify(Program.findAll({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } })));
+    result = await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    result = await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
     await db.sequelize.close();

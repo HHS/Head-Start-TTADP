@@ -34,12 +34,12 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
   const result = await sequelize.queryInterface.sequelize.query(
     `SELECT
       -- Type: ${type}
-      set_config('audit.loggedUser', '${loggedUser}', TRUE),
-      set_config('audit.transactionId', '${transactionId}', TRUE),
-      set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE);`,
+      set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
+      set_config('audit.transactionId', '${transactionId}', TRUE) as "transactionId",
+      set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
     { transaction: options.transaction },
   );
-  console.log(JSON.stringify(result));
+  // console.log(JSON.stringify(result));
 };
 
 const generateAuditModel = (sequelize, model) => {
