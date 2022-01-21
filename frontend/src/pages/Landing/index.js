@@ -242,6 +242,7 @@ function Landing() {
       'recipient',
       'reportId',
       'role',
+      'stateCode',
       'targetPopulations',
       'topic',
     ];

@@ -17,6 +17,7 @@ import FilterErrorContext from './FilterErrorContext';
  * @param {Object} props
  * @returns JSX Object
  */
+
 export default function FilterMenu({
   filters, onApplyFilters, allowedFilters, applyButtonAria,
 }) {
