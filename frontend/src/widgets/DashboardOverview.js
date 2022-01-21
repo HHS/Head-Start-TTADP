@@ -12,7 +12,13 @@ import Loader from '../components/Loader';
 import Tooltip from '../components/Tooltip';
 
 export function Field({
-  label, data, icon, iconColor, backgroundColor, showTooltip, tooltipText,
+  label,
+  data,
+  icon,
+  iconColor,
+  backgroundColor,
+  showTooltip,
+  tooltipText,
 }) {
   return (
     <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 6 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-2">
@@ -56,35 +62,29 @@ Field.defaultProps = {
   showTooltip: false,
 };
 
-const DASHBOARD_FIELDS = [
-  {
-    key: 'Activity reports',
+const DASHBOARD_FIELDS = {
+  'Activity reports': {
     render: (data, showTooltip) => <Field key="activity-reports" showTooltip={showTooltip} tooltipText="The total number of approved activity reports." icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />,
   },
-  {
-    key: 'Grants served',
+  'Grants served': {
     render: (data) => <Field key="grants-served" showTooltip={false} icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />,
   },
-  {
-    key: 'Participants',
+  Participants: {
     render: (data, showTooltip) => <Field key="participants" showTooltip={showTooltip} tooltipText="The total number of people involved in all activities." icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
   },
-  {
-    key: 'Hours of TTA',
+  'Hours of TTA': {
     render: (data, showTooltip) => <Field key="hours-of-tta" showTooltip={showTooltip} tooltipText="The total number of hours spent on all TTA activities." icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />,
   },
-  {
-    key: 'In-person activities',
+  'In-person activities': {
     render: (data, showTooltip) => <Field key="in-person-activities" icon={faUser} showTooltip={showTooltip} tooltipText="Number of activities that were conducted in-person vs. virtual." iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
   },
-  {
-    key: 'Recipients served',
+  'Recipients served': {
     render: (data, showTooltip) => (
       <Field
         key="recipients-served"
         icon={faUser}
         showTooltip={showTooltip}
-        label={`Recipients served out of ${data.totalRecipients}`}
+        label={`${data.numRecipients} recipients of ${data.totalRecipients}`}
         iconColor="#A12854"
         backgroundColor="#FFE8F0"
         tooltipText="Percentage of recipients served out of active grants"
@@ -92,7 +92,7 @@ const DASHBOARD_FIELDS = [
       />
     ),
   },
-];
+};
 
 export function DashboardOverviewWidget({
   data, loading, fields, showTooltips,
@@ -100,13 +100,7 @@ export function DashboardOverviewWidget({
   return (
     <Grid row className="smart-hub--dashboard-overview margin-bottom-3 position-relative">
       <Loader loading={loading} loadingLabel="Overview loading" />
-      { fields.map((field) => {
-        const fieldToDisplay = DASHBOARD_FIELDS.find((dbField) => dbField.key === field);
-        if (fieldToDisplay) {
-          return fieldToDisplay.render(data, showTooltips, field);
-        }
-        return null;
-      })}
+      { fields.map((field) => DASHBOARD_FIELDS[field].render(data, showTooltips, field)) }
     </Grid>
   );
 }
@@ -135,6 +129,7 @@ DashboardOverviewWidget.defaultProps = {
     inPerson: '0',
     totalRecipients: '0',
     recipientPercentage: '0%',
+    numRecipients: '0',
   },
   loading: false,
   showTooltips: false,

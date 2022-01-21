@@ -88,6 +88,11 @@ export default async function overview(scopes) {
             as: 'grant',
             attributes: [],
             required: false,
+            where: {
+              [Op.and]: [
+                scopes.grant,
+              ],
+            },
             include: [
               {
                 model: Recipient,
@@ -112,7 +117,7 @@ export default async function overview(scopes) {
   const rawPercentage = (res.numRecipients / totalRecipients) * 100;
   const recipientPercentage = `${formatNumber(rawPercentage, 2)}%`;
 
-  return {
+  const response = {
     ...res,
     totalRecipients,
     recipientPercentage,
@@ -120,4 +125,7 @@ export default async function overview(scopes) {
     sumDuration,
     numParticipants,
   };
+
+  return Object.keys(response)
+    .reduce((acc, curr) => ({ ...acc, curr: formatNumber(response[curr]) }), {});
 }
