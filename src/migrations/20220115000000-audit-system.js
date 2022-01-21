@@ -56,7 +56,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       // Define a table and function to store, access, and add descriptors to aid in identifying
@@ -75,7 +75,7 @@ module.exports = {
         },
       }, { transaction })
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -100,7 +100,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -112,7 +112,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       // Define a table to allow for filtering on which fields with a change in value will be used
@@ -137,7 +137,7 @@ module.exports = {
         },
       }, { transaction })
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -146,7 +146,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       // Define three functions to dynamically create function/trigger to prevent modification or
@@ -182,7 +182,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -253,7 +253,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -286,7 +286,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       // Define a table/function/triggers to log all data definition language commands, this covers
@@ -344,7 +344,7 @@ module.exports = {
         updatedAt: false,
       })
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -398,7 +398,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -409,7 +409,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -420,7 +420,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -431,7 +431,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -441,7 +441,7 @@ module.exports = {
           "ZAFCreateALNoTruncate"('DDL');`,
         { transaction },
       ).catch((error) => {
-        console.error(error);
+        console.error(error); // eslint-disable-line no-console
       });
 
       // Define functions to generate the audit table/functions/triggers for a specified table.
@@ -473,7 +473,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -611,7 +611,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -632,7 +632,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -705,7 +705,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       // Define functions for adding/removing audit monitoring to a table. Removing auditing does
@@ -730,7 +730,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -757,7 +757,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       // syncronizer = await queryInterface.sequelize.query(
@@ -768,7 +768,7 @@ module.exports = {
       //   { transaction },
       // )
       //   .catch((error) => {
-      //     console.error(error);
+      //     console.error(error); // eslint-disable-line no-console
       //   });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -783,7 +783,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -816,7 +816,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -840,7 +840,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       syncronizer = await queryInterface.sequelize.query(
@@ -851,7 +851,7 @@ module.exports = {
         { transaction },
       )
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
 
       if (syncronizer != null) {
@@ -860,7 +860,7 @@ module.exports = {
     },
   )
     .catch((error) => {
-      console.error(error);
+      console.error(error); // eslint-disable-line no-console
     }),
   down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
@@ -879,7 +879,7 @@ module.exports = {
       )
         .then(async (result) => {
           const [{ tables }] = result;
-          console.log(`Find all tables: ${JSON.stringify(tables)}`);
+          console.log(`Find all tables: ${JSON.stringify(tables)}`); // eslint-disable-line no-console
           tables.forEach(async (table) => {
             await queryInterface.sequelize.query(
               `SELECT
@@ -887,12 +887,12 @@ module.exports = {
               { transaction },
             )
               .catch((error) => {
-                console.error(error);
+                console.error(error); // eslint-disable-line no-console
               });
           });
         })
         .catch((error) => {
-          console.error(error);
+          console.error(error); // eslint-disable-line no-console
         });
     },
   ),

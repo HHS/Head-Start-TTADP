@@ -1,6 +1,6 @@
 // Load in our dependencies
-import { Model, DataTypes } from 'sequelize';
-import httpContext from 'express-http-context';
+import { Model, DataTypes } from 'sequelize'; // eslint-disable-line import/no-import-module-exports
+import httpContext from 'express-http-context'; // eslint-disable-line import/no-import-module-exports
 
 const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 
@@ -39,7 +39,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
     { transaction: options.transaction },
   );
-  // console.log(JSON.stringify(result));
+  console.log(JSON.stringify(result)); // eslint-disable-line no-console
 };
 
 const generateAuditModel = (sequelize, model) => {
