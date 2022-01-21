@@ -8,7 +8,6 @@ import {
   Goal,
   ActivityReport,
   ActivityRecipient,
-  ActivityReportObjective,
   Objective,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
@@ -134,7 +133,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
       }],
     }],
     subQuery: false,
-    raw: true,
+    // raw: true,
     group: [
       'grants.regionId',
       'Recipient.id',
@@ -154,64 +153,52 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-export function getGoalsByActivityRecipient(
+export default async function getGoalsByActivityRecipient(
   recipientId,
   {
     sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
   },
 ) {
   const scopes = filtersToScopes(filters);
-  const res = Recipient.findAndCountAll(
+
+  const res = await Goal.findAll(
     {
-      where: {
-        id: recipientId,
-      },
-      attributes: [
-        'id',
-      ],
+      required: true,
+      attributes: ['id', 'name', 'status', 'createdAt'],
       include: [
         {
-          attributes: ['id'],
-          model: Grant,
-          as: 'grants',
+          attributes: ['id', 'title', 'ttaProvided'],
+          model: Objective,
+          as: 'objectives',
           required: true,
-          where: {
-            status: 'Active',
-          },
           include: [
             {
-              attributes: ['id', 'name', 'status', 'createdAt'],
-              model: Goal,
-              as: 'goals',
-              required: true,
-              //limit,
-            },
-            {
-              attributes: ['id', 'activityReportId', 'grantId'],
-              model: ActivityRecipient,
-              as: 'activityRecipients',
+              attributes: ['id', 'reason', 'topics', 'regionId'],
+              model: ActivityReport,
+              as: 'activityReports',
               required: true,
               include: [
                 {
-                  attributes: ['id', 'reason', 'topics'],
-                  model: ActivityReport,
-                  as: 'ActivityReport',
+                  attributes: ['id', 'activityReportId', 'grantId'],
+                  model: ActivityRecipient,
+                  as: 'activityRecipients',
                   required: true,
                   include: [
                     {
-                      attributes: ['id', 'title', 'ttaProvided'],
-                      model: Objective,
-                      as: 'objectives',
+                      model: Grant,
+                      as: 'grant',
+                      attributes: ['id', 'recipientId'],
                       required: true,
+                      where: { recipientId },
                     },
                   ],
                 },
               ],
             },
           ],
-        },
-      ],
+        }],
       order: orderReportsBy(sortBy, sortDir),
+      // limit,
       offset,
       distinct: true,
     },
@@ -220,6 +207,40 @@ export function getGoalsByActivityRecipient(
     },
   );
 
-  console.log('\n\n\n\n\n\nIn test 3', res);
-  return res;
+  // Build Array of Goals.
+  const goals = [];
+  let goalCount = 0;
+
+  res.forEach((g) => {
+    if (goalCount === limit) {
+      return;
+    }
+    const goalToAdd = {
+      id: g.id,
+      goalStatus: g.status,
+      createdOn: g.createdAt,
+      goalText: g.name,
+      goalNumber: '',
+      goalTopics: [],
+      reasons: [],
+    };
+
+    if (g.objectives) {
+      // Objectives.
+      goalToAdd.objectives = g.objectives.length;
+      g.objectives.forEach((o) => {
+        if (o.activityReports) {
+          // Activity Reports.
+          o.activityReports.forEach((a) => {
+            goalToAdd.goalNumber = `R${a.regionId}-G-${g.id}`;
+            goalToAdd.goalTopics = a.topics;
+            goalToAdd.reasons = a.reason;
+          });
+        }
+      });
+    }
+    goals.push(goalToAdd);
+    goalCount += 1;
+  });
+  return { goalCount, goals };
 }
