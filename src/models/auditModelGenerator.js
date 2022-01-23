@@ -11,8 +11,8 @@ const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 //   );
 // };
 
-const tryJsonParse = (fieldName) => {
-  const data = this.getDataValue(fieldName);
+const tryJsonParse = (self, fieldName) => {
+  const data = self.getDataValue(fieldName);
   if (typeof data === 'object') {
     Object.entries(data).forEach(([key, value]) => {
       if (typeof value === 'string') {
@@ -39,11 +39,11 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
     { transaction: options.transaction },
   );
-  console.log(JSON.stringify(result)); // eslint-disable-line no-console
+  //console.log(JSON.stringify(result)); // eslint-disable-line no-console
 };
 
 const generateAuditModel = (sequelize, model) => {
-  const auditModelName = `ZZAuditLog${model.name}`;
+  const auditModelName = `ZAL${model.name}`;
   const auditModel = class extends Model {};
 
   auditModel.init({
@@ -62,12 +62,12 @@ const generateAuditModel = (sequelize, model) => {
     old_row_data: {
       type: DataTypes.JSON,
       allowNull: true,
-      get: tryJsonParse,
+      // get: () => tryJsonParse(this, 'old_row_data'),
     },
     new_row_data: {
       type: DataTypes.JSON,
       allowNull: true,
-      get: tryJsonParse,
+      // get: () => tryJsonParse(this, 'new_row_data'),
     },
     dml_timestamp: {
       allowNull: false,
@@ -95,7 +95,11 @@ const generateAuditModel = (sequelize, model) => {
     createdAt: false,
     updatedAt: false,
   });
+  module.exports[auditModelName] = auditModel;
+  return auditModel;
+};
 
+const attachHooksForAuditing = (sequelize, model) => {
   model.addHook(
     'beforeBulkCreate',
     (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeBulkCreate'),
@@ -132,8 +136,6 @@ const generateAuditModel = (sequelize, model) => {
     'beforeUpsert',
     (created, options) => addAuditTransactionSettings(sequelize, created, options, 'beforeUpsert'),
   );
-
-  return auditModel;
 };
 
-module.exports = { generateAuditModel };
+module.exports = { generateAuditModel, attachHooksForAuditing };
