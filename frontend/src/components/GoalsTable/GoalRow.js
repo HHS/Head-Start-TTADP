@@ -69,23 +69,44 @@ function GoalRow({
     setTrClassname('tta-smarthub--goal-row');
   };
 
-  const getGoalStatusIcon = (status) => {
-    if (!status || status === 'Draft') {
+  const getGoalStatusIcon = () => {
+    if (!goalStatus) {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#475260" icon={faPencilAlt} />;
     }
-    if (status === 'In progress') {
+    if (goalStatus === 'In Progress') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#0166ab" icon={faClock} />;
-    } if (status === 'Closed') {
+    } if (goalStatus === 'Completed') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#148439" icon={faCheckCircle} />;
     }
-    if (status === 'Needs status') {
+    if (goalStatus === 'Needs status') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#c5c5c5" icon={faExclamationCircle} />;
     }
-    if (status === 'Not started') {
+    if (goalStatus === 'Not started') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#e2a04d" icon={faMinusCircle} />;
     }
-    if (status === 'Ceased/suspended') {
+    if (goalStatus === 'Ceased/Suspended') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#b50908" icon={faTimesCircle} />;
+    }
+    return null;
+  };
+
+  const getGoalStatusText = () => {
+    if (!goalStatus) {
+      return 'Draft';
+    }
+    if (goalStatus === 'In Progress') {
+      return 'In progress';
+    } if (goalStatus === 'Completed') {
+      return 'Closed';
+    }
+    if (goalStatus === 'Needs status') {
+      return 'Needs status';
+    }
+    if (goalStatus === 'Not Started') {
+      return 'Not started';
+    }
+    if (goalStatus === 'Ceased/Suspended') {
+      return 'Ceased/suspended';
     }
     return null;
   };
@@ -125,8 +146,8 @@ function GoalRow({
   return (
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`goal_row_${id}`}>
       <td>
-        {getGoalStatusIcon(goalStatus)}
-        {!goalStatus ? 'Draft' : goalStatus}
+        {getGoalStatusIcon()}
+        {getGoalStatusText()}
       </td>
       <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
       <td className="text-wrap maxw-mobile">

@@ -12,85 +12,8 @@ import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.css';
 import { getRecipientGoals } from '../../fetchers/recipient';
 
-/*
-const emptyGoals = [{
-  id: 4598,
-  goalStatus: 'In progress',
-  createdOn: '06/15/2021',
-  goalText: 'Recipient will identify systems to strengthen and mitigate risk.',
-  goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectiveCount: 5,
-  goalNumber: 'R14-G-4598',
-  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance', 'Monitoring | Area of Concern'],
-},
-{
-  id: 8547,
-  goalStatus: 'Closed',
-  createdOn: '01/15/2021',
-  goalText: 'Recipient will identify systems.',
-  goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectiveCount: 2,
-  goalNumber: 'R14-G-8547',
-  reasons: ['New Staff / Turnover', 'Monitoring | Area of Concern'],
-},
-{
-  id: 65478,
-  goalStatus: 'Needs status',
-  createdOn: '10/15/2021',
-  goalText: 'Professional development opportunity provided by the Office of Head Start Region V TTA Network to strengthen participants leadership skills.',
-  goalTopics: ['Compliance', 'New Staff / Turnover', 'Data and Evaluation'],
-  objectiveCount: 4,
-  goalNumber: 'R14-G-65478',
-  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance', 'Monitoring | Area of Concern'],
-},
-{
-  id: 5874,
-  goalStatus: 'Draft',
-  createdOn: '10/15/2021',
-  goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR.',
-  goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectiveCount: 4,
-  goalNumber: 'R14-G-5874',
-  reasons: ['Complaint', 'Full Enrollment'],
-},
-{
-  id: 88554,
-  goalStatus: 'Not started',
-  createdOn: '10/15/2021',
-  goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR.',
-  goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectiveCount: 4,
-  goalNumber: 'R14-G-88554',
-  reasons: ['Complaint', 'Full Enrollment'],
-},
-{
-  id: 58742,
-  goalStatus: 'Ceased/suspended',
-  createdOn: '10/15/2021',
-  goalText: 'Recipient will identify systems to strengthen and mitigate risk of future DEF in the areas of MH and HR.',
-  goalTopics: ['Behavioral / Mental Health / Trauma',
-    'Child Assessment, Development, Screening',
-    'CLASS: Classroom Organization',
-    'CLASS: Emotional Support',
-    'CLASS: Instructional Support',
-    'Coaching',
-    'Communication',
-    'Community and Self-Assessment',
-    'Culture & Language',
-    'Curriculum (Instructional or Parenting)',
-    'Data and Evaluation',
-    'ERSEA',
-    'Environmental Health and Safety / EPRR',
-    'Equity',
-    'Facilities',
-    'Family Support Services'],
-  objectiveCount: 4,
-  goalNumber: 'R14-G-58742',
-  reasons: ['Complaint', 'Full Enrollment'],
-},
-];
-*/
 function GoalsTable({
+  recipientId,
   filters,
   onUpdateFilters,
 }) {
@@ -116,9 +39,8 @@ function GoalsTable({
       setLoading(true);
       const filterQuery = filtersToQueryString(filters);
       try {
-        console.log('Offset Value:', offset);
         const { count, goalRows } = await getRecipientGoals(
-          '359',
+          recipientId,
           sortConfig.sortBy,
           sortConfig.direction,
           offset,
@@ -135,7 +57,7 @@ function GoalsTable({
       setLoading(false);
     }
     fetchGoals();
-  }, [sortConfig, offset, perPage, filters]);
+  }, [sortConfig, offset, perPage, filters, recipientId]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -254,6 +176,7 @@ function GoalsTable({
   );
 }
 GoalsTable.propTypes = {
+  recipientId: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(
     PropTypes.shape({
       condition: PropTypes.string,

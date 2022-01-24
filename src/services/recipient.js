@@ -159,12 +159,10 @@ export async function getGoalsByActivityRecipient(
     sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
   },
 ) {
-  console.log('\n\n\n\n\n\n\nSort By and Dir:', sortBy, sortDir);
   const { count, rows } = await Goal.findAndCountAll(
     {
       required: true,
       attributes: ['id', 'name', 'status', 'createdAt'],
-      logging: console.log,
       include: [
         {
           attributes: ['id', 'title', 'ttaProvided', 'status'],

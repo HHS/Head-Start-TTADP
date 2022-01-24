@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 
-export default function GoalsObjectives() {
+export default function GoalsObjectives({ recipientId }) {
   const [filters, setFilters] = useState([
     {
       topic: 'region',
@@ -25,6 +26,7 @@ export default function GoalsObjectives() {
       </Helmet>
       <div className="margin-x-2 maxw-widescreen">
         <GoalsTable
+          recipientId={recipientId}
           filters={filters}
           onUpdateFilters={handleApplyFilters}
         />
@@ -32,3 +34,7 @@ export default function GoalsObjectives() {
     </>
   );
 }
+
+GoalsObjectives.propTypes = {
+  recipientId: PropTypes.string.isRequired,
+};

@@ -117,7 +117,9 @@ export default function RecipientRecord({ match, location }) {
                 <Route
                   path="/recipient-tta-records/:recipientId/goals-objectives"
                   render={() => (
-                    <GoalsObjectives />
+                    <GoalsObjectives
+                      recipientId={recipientId}
+                    />
                   )}
                 />
               </FeatureFlag>
