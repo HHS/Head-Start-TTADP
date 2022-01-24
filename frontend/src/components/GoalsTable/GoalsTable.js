@@ -159,7 +159,7 @@ function GoalsTable({
   };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name) => {
+  const renderColumnHeader = (displayName, name, allowSort = true) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -176,19 +176,25 @@ function GoalsTable({
 
     return (
       <th scope="col" aria-sort={fullAriaSort}>
-        <a
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            requestSort(name);
-          }}
-          onKeyPress={() => requestSort(name)}
-          className={`sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
-        >
-          {displayName}
-        </a>
+        {
+          allowSort
+            ? (
+              <a
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  requestSort(name);
+                }}
+                onKeyPress={() => requestSort(name)}
+                className={`sortable ${sortClassName}`}
+                aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
+                }`}
+              >
+                {displayName}
+              </a>
+            )
+            : displayName
+        }
       </th>
     );
   };
@@ -225,9 +231,9 @@ function GoalsTable({
               <tr>
                 {renderColumnHeader('Goal status', 'goalStatus')}
                 {renderColumnHeader('Created on', 'createdOn')}
-                {renderColumnHeader('Goal text (Goal ID)', 'goalText')}
-                {renderColumnHeader('Goal topic(s)', 'goalTopics')}
-                {renderColumnHeader('Objectives', 'objectiveCount')}
+                {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
+                {renderColumnHeader('Goal topic(s)', 'goalTopics', false)}
+                {renderColumnHeader('Objectives', 'objectiveCount', false)}
                 <th scope="col" aria-label="context menu" />
               </tr>
             </thead>

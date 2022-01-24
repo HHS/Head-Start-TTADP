@@ -13,7 +13,7 @@ import {
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
 // import filtersToScopes from '../scopes';
-import orderReportsBy from '../lib/orderReportsBy';
+import orderGoalsBy from '../lib/orderGoalsBy';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -159,17 +159,12 @@ export async function getGoalsByActivityRecipient(
     sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
   },
 ) {
-  /*
-  let limitNumber = parseInt(limit, 10);
-  if (Number.isNaN(limitNumber)) {
-    limitNumber = GOALS_PER_PAGE;
-  }
-  */
-
+  console.log('\n\n\n\n\n\n\nSort By and Dir:', sortBy, sortDir);
   const { count, rows } = await Goal.findAndCountAll(
     {
       required: true,
       attributes: ['id', 'name', 'status', 'createdAt'],
+      logging: console.log,
       include: [
         {
           attributes: ['id', 'title', 'ttaProvided', 'status'],
@@ -203,7 +198,7 @@ export async function getGoalsByActivityRecipient(
             },
           ],
         }],
-      order: orderReportsBy(sortBy, sortDir),
+      order: orderGoalsBy(sortBy, sortDir),
       limit,
       offset,
       distinct: true,
@@ -215,13 +210,8 @@ export async function getGoalsByActivityRecipient(
 
   // Build Array of Goals.
   const goalRows = [];
-  //let limitCount = 0;
 
   rows.forEach((g) => {
-    /*
-    if (limitCount === limitNumber) {
-      return;
-    }*/
     const goalToAdd = {
       id: g.id,
       goalStatus: g.status,
@@ -259,7 +249,6 @@ export async function getGoalsByActivityRecipient(
       });
     }
     goalRows.push(goalToAdd);
-    //limitCount += 1;
   });
 
   return { count, goalRows };
