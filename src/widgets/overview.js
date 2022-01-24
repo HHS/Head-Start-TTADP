@@ -120,12 +120,14 @@ export default async function overview(scopes) {
   const response = {
     ...res,
     totalRecipients,
-    recipientPercentage,
     inPerson,
     sumDuration,
     numParticipants,
   };
 
-  return Object.keys(response)
-    .reduce((acc, curr) => ({ ...acc, [curr]: formatNumber(response[curr]) }), {});
+  return {
+    ...Object.keys(response)
+      .reduce((acc, curr) => ({ ...acc, [curr]: formatNumber(response[curr]) }), {}),
+    ...recipientPercentage,
+  };
 }
