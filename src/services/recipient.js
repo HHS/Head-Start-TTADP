@@ -159,9 +159,14 @@ export async function getGoalsByActivityRecipient(
     sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
   },
 ) {
-  // const scopes = filtersToScopes(filters);
+  /*
+  let limitNumber = parseInt(limit, 10);
+  if (Number.isNaN(limitNumber)) {
+    limitNumber = GOALS_PER_PAGE;
+  }
+  */
 
-  const res = await Goal.findAll(
+  const { count, rows } = await Goal.findAndCountAll(
     {
       required: true,
       attributes: ['id', 'name', 'status', 'createdAt'],
@@ -190,6 +195,7 @@ export async function getGoalsByActivityRecipient(
                       attributes: ['id', 'recipientId'],
                       required: true,
                       where: { recipientId },
+                      duplicating: true,
                     },
                   ],
                 },
@@ -198,7 +204,7 @@ export async function getGoalsByActivityRecipient(
           ],
         }],
       order: orderReportsBy(sortBy, sortDir),
-      // limit,
+      limit,
       offset,
       distinct: true,
     },
@@ -208,13 +214,14 @@ export async function getGoalsByActivityRecipient(
   );
 
   // Build Array of Goals.
-  const goals = [];
-  let goalCount = 0;
+  const goalRows = [];
+  //let limitCount = 0;
 
-  res.forEach((g) => {
-    if (goalCount === limit) {
+  rows.forEach((g) => {
+    /*
+    if (limitCount === limitNumber) {
       return;
-    }
+    }*/
     const goalToAdd = {
       id: g.id,
       goalStatus: g.status,
@@ -251,8 +258,9 @@ export async function getGoalsByActivityRecipient(
         }
       });
     }
-    goals.push(goalToAdd);
-    goalCount += 1;
+    goalRows.push(goalToAdd);
+    //limitCount += 1;
   });
-  return { goalCount, goals };
+
+  return { count, goalRows };
 }

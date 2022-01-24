@@ -1,6 +1,6 @@
 import join from 'url-join';
 import { get } from './index';
-import { DECIMAL_BASE } from '../Constants';
+import { DECIMAL_BASE, GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../components/Filter';
 
 const recipientUrl = join('/', 'api', 'recipient');
@@ -28,4 +28,18 @@ export const searchRecipients = async (query, filters, params = { sortBy: 'name'
   );
 
   return recipients.json();
+};
+
+export const getRecipientGoals = async (recipientId, sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, filters) => {
+  const id = parseInt(recipientId, DECIMAL_BASE);
+
+  console.log('Recipient ID:', recipientId);
+  if (Number.isNaN(id)) {
+    throw new Error('Recipient ID must be a number');
+  }
+  console.log('Recipient ID PASSED:', recipientId);
+  const recipientGoalsUrl = join(recipientUrl, 'goals', recipientId);
+  console.log('Recipient Goal Request URL:', recipientGoalsUrl);
+  const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
+  return goals.json();
 };
