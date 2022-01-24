@@ -1,4 +1,4 @@
-import getGoalsByActivityRecipient, { recipientById, recipientsByName } from '../../services/recipient';
+import { getGoalsByActivityRecipient, recipientById, recipientsByName } from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
@@ -44,7 +44,7 @@ export async function searchRecipients(req, res) {
   }
 }
 
-export async function getGoalsByRecipientId(req, res) {
+export async function getGoalsByRecipient(req, res) {
   try {
     const { recipientId } = req.params;
     const query = await setReadRegions(req.query, req.session.userId, true);
