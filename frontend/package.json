@@ -151,7 +151,7 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.6",
     "react-scripts": "^5.0.0",
     "react-select-event": "^5.1.0"
   },
