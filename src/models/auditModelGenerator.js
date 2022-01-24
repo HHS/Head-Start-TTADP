@@ -27,13 +27,13 @@ const tryJsonParse = (self, fieldName) => {
   return data;
 };
 
-const addAuditTransactionSettings = async (sequelize, instance, options, type) => {
+const addAuditTransactionSettings = async (sequelize, instance, options, type, name) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
   const result = await sequelize.queryInterface.sequelize.query(
     `SELECT
-      -- Type: ${type}
+      -- Type: ${type} Model: ${name}
       set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', '${transactionId}', TRUE) as "transactionId",
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
@@ -102,39 +102,39 @@ const generateAuditModel = (sequelize, model) => {
 const attachHooksForAuditing = (sequelize, model) => {
   model.addHook(
     'beforeBulkCreate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeBulkCreate'),
+    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeBulkCreate', model.name),
   );
   model.addHook(
     'beforeBulkDestroy',
-    (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkDestroy'),
+    (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkDestroy', model.name),
   );
   model.addHook(
     'beforeBulkUpdate',
-    (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkUpdate'),
+    (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkUpdate', model.name),
   );
   model.addHook(
     'afterValidate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'afterValidate'),
+    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'afterValidate', model.name),
   );
   model.addHook(
     'beforeCreate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeCreate'),
+    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeCreate', model.name),
   );
   model.addHook(
     'beforeDestroy',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeDestroy'),
+    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeDestroy', model.name),
   );
   model.addHook(
     'beforeUpdate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeUpdate'),
+    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeUpdate', model.name),
   );
   model.addHook(
     'beforeSave',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeSave'),
+    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeSave', model.name),
   );
   model.addHook(
     'beforeUpsert',
-    (created, options) => addAuditTransactionSettings(sequelize, created, options, 'beforeUpsert'),
+    (created, options) => addAuditTransactionSettings(sequelize, created, options, 'beforeUpsert', model.name),
   );
 };
 
