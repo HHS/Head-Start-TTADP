@@ -68,9 +68,9 @@ export function FreqGraph({ data, loading }) {
             aria-label={`display number of activity reports by ${toggleGraphLabel}`}
             onClick={toggleSelectedGraph}
           >
-            Display
+            {capitalize(toggleGraphLabel)}
             {' '}
-            { toggleGraphLabel }
+            in activity reports
           </button>
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
