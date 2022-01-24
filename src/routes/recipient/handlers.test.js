@@ -1,6 +1,6 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { setReadRegions } from '../../services/accessValidation';
-import { getRecipient, searchRecipients, getGoalsByRecipientId } from './handlers';
+import { getRecipient, searchRecipients, getGoalsByRecipient } from './handlers';
 import { getGoalsByActivityRecipient, recipientById, recipientsByName } from '../../services/recipient';
 
 jest.mock('../../services/recipient', () => ({
@@ -143,7 +143,7 @@ describe('getGoalsByActivityRecipient', () => {
     };
     getGoalsByActivityRecipient.mockResolvedValue(recipientWhere);
     setReadRegions.mockResolvedValue([1]);
-    await getGoalsByRecipientId(req, mockResponse);
+    await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 
@@ -162,7 +162,7 @@ describe('getGoalsByActivityRecipient', () => {
     };
     getGoalsByActivityRecipient.mockResolvedValue(null);
     setReadRegions.mockResolvedValue([1]);
-    await getGoalsByRecipientId(req, mockResponse);
+    await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
 
@@ -172,7 +172,7 @@ describe('getGoalsByActivityRecipient', () => {
         userId: 1000,
       },
     };
-    await getGoalsByRecipientId(req, mockResponse);
+    await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
