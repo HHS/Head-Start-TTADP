@@ -24,7 +24,7 @@ export const DECIMAL_BASE = 10;
 
 export const REPORTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
-export const GOALS_PER_PAGE = 10;
+export const GOALS_PER_PAGE = 5;
 
 export const APPROVER_STATUSES = {
   APPROVED: 'approved',

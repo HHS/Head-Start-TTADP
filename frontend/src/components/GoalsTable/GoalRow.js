@@ -70,6 +70,9 @@ function GoalRow({
   };
 
   const getGoalStatusIcon = (status) => {
+    if (!status || status === 'Draft') {
+      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#475260" icon={faPencilAlt} />;
+    }
     if (status === 'In progress') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#0166ab" icon={faClock} />;
     } if (status === 'Closed') {
@@ -77,9 +80,6 @@ function GoalRow({
     }
     if (status === 'Needs status') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#c5c5c5" icon={faExclamationCircle} />;
-    }
-    if (status === 'Draft') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#475260" icon={faPencilAlt} />;
     }
     if (status === 'Not started') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#e2a04d" icon={faMinusCircle} />;
@@ -126,7 +126,7 @@ function GoalRow({
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`goal_row_${id}`}>
       <td>
         {getGoalStatusIcon(goalStatus)}
-        {goalStatus}
+        {!goalStatus ? 'Draft' : goalStatus}
       </td>
       <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
       <td className="text-wrap maxw-mobile">

@@ -97,6 +97,7 @@ export const ALERTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
+export const GOALS_PER_PAGE = 5;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".

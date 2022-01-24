@@ -8,9 +8,11 @@ import { filtersToQueryString } from '../Filter';
 import TableHeader from '../TableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';
-import { REPORTS_PER_PAGE } from '../../Constants';
+import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.css';
+import { getRecipientGoals } from '../../fetchers/recipient';
 
+/*
 const emptyGoals = [{
   id: 4598,
   goalStatus: 'In progress',
@@ -87,7 +89,7 @@ const emptyGoals = [{
   reasons: ['Complaint', 'Full Enrollment'],
 },
 ];
-
+*/
 function GoalsTable({
   filters,
   onUpdateFilters,
@@ -103,7 +105,7 @@ function GoalsTable({
   const [activePage, setActivePage] = useState(1);
   const [goalsCount, setGoalsCount] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [perPage] = useState(REPORTS_PER_PAGE);
+  const [perPage] = useState(GOALS_PER_PAGE);
   const [sortConfig, setSortConfig] = React.useState({
     sortBy: 'updatedAt',
     direction: 'desc',
@@ -114,18 +116,17 @@ function GoalsTable({
       setLoading(true);
       const filterQuery = filtersToQueryString(filters);
       try {
-
-        /*
-                const { count, rows } = await getReports(
-                  sortConfig.sortBy,
-                  sortConfig.direction,
-                  offset,
-                  perPage,
-                  filterQuery,
-                );
-                setGoals(rows);
-                setGoalsCount(count || 0);
-                */
+        console.log('Offset Value:', offset);
+        const { count, goalRows } = await getRecipientGoals(
+          '359',
+          sortConfig.sortBy,
+          sortConfig.direction,
+          offset,
+          perPage,
+          filterQuery,
+        );
+        setGoals(goalRows);
+        setGoalsCount(count || 0);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -192,7 +193,7 @@ function GoalsTable({
     );
   };
 
-  const displayGoals = goals.length ? goals : emptyGoals;
+  const displayGoals = goals.length ? goals : [];
 
   return (
     <>
@@ -206,7 +207,7 @@ function GoalsTable({
 
       <Container className="goals-table inline-size maxw-full" padding={0} loading={loading} loadingLabel="Goals table loading">
         <TableHeader
-          title="TTA goals and objectiveCount"
+          title="TTA goals and objectives"
           onUpdateFilters={onUpdateFilters}
           count={goalsCount}
           activePage={activePage}
@@ -226,7 +227,7 @@ function GoalsTable({
                 {renderColumnHeader('Created on', 'createdOn')}
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText')}
                 {renderColumnHeader('Goal topic(s)', 'goalTopics')}
-                {renderColumnHeader('objectiveCount', 'objectiveCount')}
+                {renderColumnHeader('Objectives', 'objectiveCount')}
                 <th scope="col" aria-label="context menu" />
               </tr>
             </thead>
