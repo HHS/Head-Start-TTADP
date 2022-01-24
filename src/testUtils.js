@@ -195,8 +195,19 @@ export async function destroyReport(report) {
     });
   }
 
-  results = await ActivityReport.findAll({ where: { regionId: report.regionId } });
-  if (results.length === 0) {
+  results = await ActivityReport.findAll({
+    where: {
+      regionId: report.regionId,
+    },
+  });
+
+  const grantResults = await Grant.findAll({
+    where: {
+      regionId: report.regionId,
+    },
+  });
+
+  if (results.length === 0 && grantResults.length === 0) {
     await Region.destroy({
       where: {
         id: report.regionId,
