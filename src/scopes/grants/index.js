@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { map, pickBy } from 'lodash';
+import { createFiltersToScopes } from '../utils';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withRegion, withoutRegion } from './region';
 import { withRecipientName, withoutRecipientName } from './recipient';
@@ -7,11 +7,16 @@ import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecia
 import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
+import { withRecipientId, withoutRecipientId } from './recipientId';
 
 export const topicToQuery = {
   recipient: {
     ctn: (query) => withRecipientName(query),
     nctn: (query) => withoutRecipientName(query),
+  },
+  recipientId: {
+    ctn: (query) => withRecipientId(query),
+    nctn: (query) => withoutRecipientId(query),
   },
   programSpecialist: {
     ctn: (query) => withProgramSpecialist(query),
@@ -41,13 +46,5 @@ export const topicToQuery = {
 };
 
 export function grantsFiltersToScopes(filters) {
-  const validFilters = pickBy(filters, (query, topicAndCondition) => {
-    const [topic] = topicAndCondition.split('.');
-    return topic in topicToQuery;
-  });
-
-  return map(validFilters, (query, topicAndCondition) => {
-    const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition]([query].flat());
-  });
+  return createFiltersToScopes(filters, topicToQuery);
 }
