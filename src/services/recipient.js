@@ -153,7 +153,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-export default async function getGoalsByActivityRecipient(
+export async function getGoalsByActivityRecipient(
   recipientId,
   {
     sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
