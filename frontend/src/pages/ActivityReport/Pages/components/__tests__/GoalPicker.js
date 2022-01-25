@@ -12,7 +12,6 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
 
 import GoalPicker from '../GoalPicker';
-import { withText } from '../../../../../testHelpers';
 
 // eslint-disable-next-line react/prop-types
 const RenderGoal = ({ availableGoals, selectedGoals }) => {
