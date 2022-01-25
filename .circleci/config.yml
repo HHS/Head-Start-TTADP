@@ -217,7 +217,6 @@ jobs:
           paths:
             - .
   test_backend:
-    context: ohs-eng-daily-scan-slack
     executor: docker-postgres-executor
     steps:
       - attach_workspace:
@@ -253,9 +252,8 @@ jobs:
             - slack/notify:
                 event: fail
                 template: basic_fail_1                
-  test_frontend:
-    context: ohs-eng-daily-scan-slack
-    executor: docker-executor
+  test_frontend:    
+    executor: docker-executor    
     steps:
       - attach_workspace:
           at: .
@@ -542,9 +540,11 @@ workflows:
     jobs:
       - build_and_lint      
       - test_backend:
+          context: ohs-eng-daily-scan-slack
           requires:
             - build_and_lint
       - test_frontend:
+          context: ohs-eng-daily-scan-slack
           requires:
             - build_and_lint
       - dynamic_security_scan:
