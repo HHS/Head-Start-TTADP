@@ -49,7 +49,7 @@ const submittedReport = {
   endDate: '2000-01-01T12:00:00Z',
   startDate: '2000-01-01T12:00:00Z',
   requester: 'requester',
-  targetPopulations: ['Children with Disabilities', 'Pregnant Women'],
+  targetPopulations: ['Children with Disabilities', 'Infants and Toddlers (ages birth to 3)'],
   reason: ['reason'],
   participants: ['participants'],
   topics: ['topics'],
@@ -147,7 +147,7 @@ describe('filtersToScopes', () => {
     });
 
     it('included has conditions for legacy and non-legacy reports', async () => {
-      const filters = { 'reportId.in': ['12345'] };
+      const filters = { 'reportId.ctn': ['12345'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -158,7 +158,7 @@ describe('filtersToScopes', () => {
     });
 
     it('excluded has conditions for legacy and non-legacy reports', async () => {
-      const filters = { 'reportId.nin': ['12345'] };
+      const filters = { 'reportId.nctn': ['12345'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -233,7 +233,7 @@ describe('filtersToScopes', () => {
       });
 
       it('includes other-entities with a partial match', async () => {
-        const filters = { 'recipient.in': ['test'] };
+        const filters = { 'recipient.ctn': ['test'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -244,7 +244,7 @@ describe('filtersToScopes', () => {
       });
 
       it('excludes other-entities that do not partial match or have no other-entities', async () => {
-        const filters = { 'recipient.nin': ['test'] };
+        const filters = { 'recipient.nctn': ['test'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -335,7 +335,7 @@ describe('filtersToScopes', () => {
       });
 
       it('includes recipients with a partial match', async () => {
-        const filters = { 'recipient.in': ['1234'] };
+        const filters = { 'recipient.ctn': ['1234'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -346,7 +346,7 @@ describe('filtersToScopes', () => {
       });
 
       it('excludes recipients that do not partial match or have no recipients', async () => {
-        const filters = { 'recipient.nin': ['1234'] };
+        const filters = { 'recipient.nctn': ['1234'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -357,7 +357,7 @@ describe('filtersToScopes', () => {
       });
 
       it('grant number with matches', async () => {
-        const filters = { 'grantNumber.in': ['123'] };
+        const filters = { 'grantNumber.ctn': ['123'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -368,7 +368,7 @@ describe('filtersToScopes', () => {
       });
 
       it('grant number with no matches', async () => {
-        const filters = { 'grantNumber.in': ['789'] };
+        const filters = { 'grantNumber.ctn': ['789'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -377,7 +377,7 @@ describe('filtersToScopes', () => {
       });
 
       it('grant numbers excludes matches', async () => {
-        const filters = { 'grantNumber.nin': ['123'] };
+        const filters = { 'grantNumber.nctn': ['123'] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -452,7 +452,7 @@ describe('filtersToScopes', () => {
       });
 
       it('includes recipients with a matching id', async () => {
-        const filters = { 'recipientId.in': [recipientIncluded.id] };
+        const filters = { 'recipientId.ctn': [recipientIncluded.id] };
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -523,6 +523,17 @@ describe('filtersToScopes', () => {
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
     });
+
+    it('within returns reports with start dates when the filters are an array', async () => {
+      const filters = { 'startDate.win': ['2020/06/06-2022/06/06', '2020/06/05-2021/06/05'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+    });
   });
 
   describe('lastSaved', () => {
@@ -575,6 +586,17 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([thirdReport.id, fourthReport.id]));
     });
 
+    it('handles an array of querys', async () => {
+      const filters = { 'lastSaved.aft': ['2021/06/06', '2021/06/05'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([thirdReport.id, fourthReport.id]));
+    });
+
     it('within returns reports with updated ats between the two dates', async () => {
       const filters = { 'lastSaved.win': '2020/06/06-2022/06/06' };
       const scope = filtersToScopes(filters);
@@ -612,7 +634,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes authors with a partial match', async () => {
-      const filters = { 'creator.in': ['person'] };
+      const filters = { 'creator.ctn': ['person'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -623,7 +645,7 @@ describe('filtersToScopes', () => {
     });
 
     it('excludes authors that do not partial match', async () => {
-      const filters = { 'creator.nin': ['person'] };
+      const filters = { 'creator.nctn': ['person'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -664,7 +686,7 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('includes authors with a partial match', async () => {
+    it('includes topic with a partial match', async () => {
       const filters = { 'topic.in': ['tes'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
@@ -675,7 +697,7 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
-    it('excludes authors that do not partial match', async () => {
+    it('excludes topics that do not partial match', async () => {
       const filters = { 'topic.nin': ['tes'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
@@ -735,7 +757,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes authors with a partial match', async () => {
-      const filters = { 'collaborators.in': ['person'] };
+      const filters = { 'collaborators.ctn': ['person'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -746,7 +768,7 @@ describe('filtersToScopes', () => {
     });
 
     it('excludes authors that do not partial match', async () => {
-      const filters = { 'collaborators.nin': ['person'] };
+      const filters = { 'collaborators.nctn': ['person'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -915,7 +937,7 @@ describe('filtersToScopes', () => {
       reportOne = await ActivityReport.create(submittedReport);
       reportTwo = await ActivityReport.create({
         ...submittedReport,
-        targetPopulations: ['Pregnant Women'],
+        targetPopulations: ['Infants and Toddlers (ages birth to 3)'],
       });
       reportThree = await ActivityReport.create({
         ...submittedReport,
@@ -943,7 +965,7 @@ describe('filtersToScopes', () => {
     });
 
     it('filters by reports containing said population', async () => {
-      const filters = { 'targetPopulations.in': ['Pregnant Women'] };
+      const filters = { 'targetPopulations.in': ['Infants and Toddlers (ages birth to 3)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -955,7 +977,7 @@ describe('filtersToScopes', () => {
     });
 
     it('filters out the appropriate population', async () => {
-      const filters = { 'targetPopulations.nin': ['Pregnant Women'] };
+      const filters = { 'targetPopulations.nin': ['Infants and Toddlers (ages birth to 3)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -966,7 +988,7 @@ describe('filtersToScopes', () => {
     });
 
     it('only filters by possible population values', async () => {
-      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Pregnant Women'] };
+      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Infants and Toddlers (ages birth to 3)'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1133,7 +1155,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes program specialist with a partial match', async () => {
-      const filters = { 'programSpecialist.in': ['pat'] };
+      const filters = { 'programSpecialist.ctn': ['pat'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1144,7 +1166,7 @@ describe('filtersToScopes', () => {
     });
 
     it('excludes recipients that do not partial match or have no recipients', async () => {
-      const filters = { 'programSpecialist.nin': ['pat'] };
+      const filters = { 'programSpecialist.nctn': ['pat'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1370,7 +1392,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes reports with grants with the given state code', async () => {
-      const filters = { 'stateCode.in': ['KS'] };
+      const filters = { 'stateCode.ctn': ['KS'] };
       const scope = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1439,6 +1461,52 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+    });
+  });
+  describe('region id', () => {
+    let includedReport1;
+    let includedReport2;
+    let excludedReport;
+    let possibleIds;
+
+    beforeAll(async () => {
+      includedReport1 = await ActivityReport.create({ ...draftReport, regionId: 2 });
+      includedReport2 = await ActivityReport.create({ ...draftReport, regionId: 2 });
+      excludedReport = await ActivityReport.create({ ...draftReport, regionId: 3 });
+      possibleIds = [
+        includedReport1.id,
+        includedReport2.id,
+        excludedReport.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+      });
+    });
+
+    it('includes region id', async () => {
+      const filters = { 'region.in': ['2'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+    });
+
+    it('excludes region id', async () => {
+      const filters = { 'region.nin': ['2'] };
+      const scope = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
     });
   });
 });

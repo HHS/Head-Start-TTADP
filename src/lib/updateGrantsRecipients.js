@@ -61,10 +61,12 @@ export async function processFiles() {
     }));
 
     logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
-    await Recipient.bulkCreate(recipientsForDb,
+    await Recipient.bulkCreate(
+      recipientsForDb,
       {
         updateOnDuplicate: ['name', 'recipientType', 'updatedAt'],
-      });
+      },
+    );
 
     // process grants
     const grantData = await fs.readFile('./temp/grant_award.xml');
@@ -103,6 +105,7 @@ export async function processFiles() {
         programSpecialistEmail: valueFromXML(g.program_specialist_email),
         grantSpecialistName,
         grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
+        annualFundingMonth: valueFromXML(g.annual_funding_month),
       };
     });
 
@@ -131,15 +134,19 @@ export async function processFiles() {
     const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
 
     logger.debug(`updateGrantsRecipients: calling bulkCreate for ${grantsForDb.length} grants`);
-    await Grant.bulkCreate(nonCdiGrants,
+    await Grant.bulkCreate(
+      nonCdiGrants,
       {
-        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
-      });
+        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+      },
+    );
 
-    await Grant.bulkCreate(cdiGrants,
+    await Grant.bulkCreate(
+      cdiGrants,
       {
-        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
-      });
+        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+      },
+    );
 
     // Load and Process grant replacement data.
     const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');
@@ -165,10 +172,12 @@ export async function processFiles() {
 
     await Promise.all(grantUpdatePromises);
 
-    await Program.bulkCreate(programsForDb,
+    await Program.bulkCreate(
+      programsForDb,
       {
         updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
-      });
+      },
+    );
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);
     throw error;

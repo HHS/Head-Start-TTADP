@@ -11,12 +11,16 @@ const RenderReportMenu = ({
   onExportSelected = () => {},
   hasSelectedReports = true,
   count = 12,
+  downloadError = false,
+  setDownloadError = jest.fn(),
 }) => (
   <ReportMenu
     count={count}
     onExportAll={onExportAll}
     onExportSelected={onExportSelected}
     hasSelectedReports={hasSelectedReports}
+    downloadError={downloadError}
+    setDownloadError={setDownloadError}
   />
 );
 
@@ -78,6 +82,21 @@ describe('ReportMenu', () => {
     userEvent.click(button);
     const label = `This export has ${(MAXIMUM_EXPORTED_REPORTS + 1).toLocaleString('en-us')} reports. You can only export ${MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')} reports at a time.`;
     expect(await screen.findByText(label)).toBeVisible();
+  });
+
+  it('shows and dismisses a download error message', async () => {
+    const setDownloadError = jest.fn();
+    const downloadError = true;
+    render(<RenderReportMenu downloadError={downloadError} setDownloadError={setDownloadError} />);
+
+    const button = await screen.findByRole('button');
+    userEvent.click(button);
+
+    await screen.findByText(/sorry, something went wrong. Please try your request again/i);
+    const dismiss = await screen.findByRole('button', { name: /dismiss/i });
+    userEvent.click(dismiss);
+
+    expect(setDownloadError).toHaveBeenCalledWith(false);
   });
 
   it('closes when the Escape key is pressed', async () => {

@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
@@ -39,26 +38,30 @@ async function saveReportCollaborators(activityReportId, collaborators, transact
       newCollaborators,
       { transaction, ignoreDuplicates: true },
     );
-    await ActivityReportCollaborator.destroy({
-      where: {
-        activityReportId,
-        userId: {
-          [Op.notIn]: collaborators,
+    await ActivityReportCollaborator.destroy(
+      {
+        where: {
+          activityReportId,
+          userId: {
+            [Op.notIn]: collaborators,
+          },
         },
       },
-    },
-    {
-      transaction,
-    });
-  } else {
-    await ActivityReportCollaborator.destroy({
-      where: {
-        activityReportId,
+      {
+        transaction,
       },
-    },
-    {
-      transaction,
-    });
+    );
+  } else {
+    await ActivityReportCollaborator.destroy(
+      {
+        where: {
+          activityReportId,
+        },
+      },
+      {
+        transaction,
+      },
+    );
   }
 }
 
@@ -320,12 +323,9 @@ export function activityReports(
 ) {
   const scopes = filtersToScopes(filters);
 
-  const endDte = moment().format('MM/DD/yyyy');
-
   const where = {
     calculatedStatus: REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
-    startDate: { [Op.gte]: '2020-08-31', [Op.lte]: endDte },
   };
 
   if (excludeLegacy) {
@@ -437,118 +437,120 @@ export async function activityReportAlerts(userId, {
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
   const scopes = filtersToScopes(updatedFilters);
-  return ActivityReport.findAndCountAll({
-    where: {
-      [Op.and]: scopes,
-      [Op.or]: [
+  return ActivityReport.findAndCountAll(
+    {
+      where: {
+        [Op.and]: scopes,
+        [Op.or]: [
+          {
+            [Op.or]: [
+              { calculatedStatus: REPORT_STATUSES.SUBMITTED },
+              { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+            ],
+            '$approvers.userId$': userId,
+          },
+          {
+            [Op.and]: [
+              {
+                [Op.and]: [
+                  {
+                    calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED },
+                  },
+                ],
+              },
+              {
+                [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+              },
+            ],
+          },
+        ],
+        legacyId: null,
+      },
+      attributes: [
+        'id',
+        'displayId',
+        'startDate',
+        'calculatedStatus',
+        'regionId',
+        'userId',
+        'createdAt',
+        sequelize.literal(
+          '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
+        ),
+        sequelize.literal(
+          '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
+        ),
+        sequelize.literal(
+        // eslint-disable-next-line quotes
+          `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
+        ),
+        sequelize.literal(
+        // eslint-disable-next-line quotes
+          `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
+        ),
+        // eslint-disable-next-line quotes
+        [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
+      ],
+      include: [
         {
-          [Op.or]: [
-            { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-            { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-          ],
-          '$approvers.userId$': userId,
-        },
-        {
-          [Op.and]: [
+          model: ActivityRecipient,
+          attributes: ['id', 'name', 'activityRecipientId'],
+          as: 'activityRecipients',
+          required: false,
+          include: [
             {
-              [Op.and]: [
+              model: Grant,
+              attributes: ['id', 'number'],
+              as: 'grant',
+              required: false,
+              include: [
                 {
-                  calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED },
+                  model: Recipient,
+                  as: 'recipient',
+                  attributes: ['name'],
                 },
               ],
             },
             {
-              [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+              model: OtherEntity,
+              as: 'otherEntity',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: User,
+          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          as: 'author',
+        },
+        {
+          model: User,
+          attributes: ['id', 'name', 'role', 'fullName'],
+          as: 'collaborators',
+          duplicating: true,
+          through: { attributes: [] },
+        },
+        {
+          model: ActivityReportApprover,
+          attributes: ['id', 'status', 'note'],
+          as: 'approvers',
+          required: false,
+          include: [
+            {
+              model: User,
+              attributes: ['id', 'name', 'role', 'fullName'],
             },
           ],
         },
       ],
-      legacyId: null,
+      order: orderReportsBy(sortBy, sortDir),
+      offset,
+      distinct: true,
     },
-    attributes: [
-      'id',
-      'displayId',
-      'startDate',
-      'calculatedStatus',
-      'regionId',
-      'userId',
-      'createdAt',
-      sequelize.literal(
-        '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
-      ),
-      sequelize.literal(
-        '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
-      ),
-      sequelize.literal(
-        // eslint-disable-next-line quotes
-        `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
-      ),
-      sequelize.literal(
-        // eslint-disable-next-line quotes
-        `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
-      ),
-      // eslint-disable-next-line quotes
-      [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
-    ],
-    include: [
-      {
-        model: ActivityRecipient,
-        attributes: ['id', 'name', 'activityRecipientId'],
-        as: 'activityRecipients',
-        required: false,
-        include: [
-          {
-            model: Grant,
-            attributes: ['id', 'number'],
-            as: 'grant',
-            required: false,
-            include: [
-              {
-                model: Recipient,
-                as: 'recipient',
-                attributes: ['name'],
-              },
-            ],
-          },
-          {
-            model: OtherEntity,
-            as: 'otherEntity',
-            required: false,
-          },
-        ],
-      },
-      {
-        model: User,
-        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
-        as: 'author',
-      },
-      {
-        model: User,
-        attributes: ['id', 'name', 'role', 'fullName'],
-        as: 'collaborators',
-        duplicating: true,
-        through: { attributes: [] },
-      },
-      {
-        model: ActivityReportApprover,
-        attributes: ['id', 'status', 'note'],
-        as: 'approvers',
-        required: false,
-        include: [
-          {
-            model: User,
-            attributes: ['id', 'name', 'role', 'fullName'],
-          },
-        ],
-      },
-    ],
-    order: orderReportsBy(sortBy, sortDir),
-    offset,
-    distinct: true,
-  },
-  {
-    subQuery: false,
-  });
+    {
+      subQuery: false,
+    },
+  );
 }
 
 export async function createOrUpdate(newActivityReport, report) {

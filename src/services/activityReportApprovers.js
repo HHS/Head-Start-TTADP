@@ -12,17 +12,18 @@ export async function upsertApprover(values, transaction) {
     transaction,
     returning: true,
   });
-  if (approver) {
-    return approver;
-  }
 
   // Upsert returns null when trying to upsert soft deleted record.
   // If soft deleted record, restore instead.
-  return ActivityReportApprover.restore({
-    where: values,
-    transaction,
-    individualHooks: true,
-  });
+  if (approver.deletedAt) {
+    return ActivityReportApprover.restore({
+      where: values,
+      transaction,
+      individualHooks: true,
+    });
+  }
+
+  return approver;
 }
 
 /**
@@ -33,7 +34,7 @@ export async function upsertApprover(values, transaction) {
  * deleted or created to match this list
  * @param {*} transaction - sequelize transaction
  */
-export async function syncApprovers(activityReportId, userIds = [], transaction) {
+export async function syncApprovers(activityReportId, userIds = [], transaction = null) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
     transaction,

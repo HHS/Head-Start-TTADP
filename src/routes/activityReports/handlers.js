@@ -197,7 +197,7 @@ async function sendActivityReportCSV(reports, res) {
   );
 
   res.attachment('activity-reports.csv');
-  res.send(`${warning}${csvData}`);
+  res.send(`\ufeff${warning}${csvData}`);
 }
 
 export async function updateLegacyFields(req, res) {
@@ -508,7 +508,7 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const query = await setReadRegions(req.query, req.session.userId, true);
+  const query = await setReadRegions(req.query, req.session.userId);
   const reportsWithCount = await activityReports(query);
   if (!reportsWithCount) {
     res.sendStatus(404);
