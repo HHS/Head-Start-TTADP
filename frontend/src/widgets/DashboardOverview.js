@@ -86,7 +86,7 @@ const DASHBOARD_FIELDS = {
         iconColor="#2B7FB9"
         backgroundColor="#E2EFF7"
         label="Grants served"
-        tooltipText="Grants served"
+        tooltipText="The total number of grants served"
         data={data.numGrants}
       />
     ),
