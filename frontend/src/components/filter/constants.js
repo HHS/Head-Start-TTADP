@@ -49,7 +49,7 @@ const handleStringQuery = (q) => q;
 export const FILTER_CONFIG = [
   {
     id: 'createDate',
-    display: 'Date range',
+    display: 'Create date',
     conditions: DATE_CONDITIONS,
     defaultValues: {
       'Is within': YEAR_TO_DATE,
