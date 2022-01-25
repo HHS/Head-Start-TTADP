@@ -212,20 +212,34 @@ describe('Goals Table', () => {
     });
 
     it('clicking Created On column header sorts', async () => {
-      const columnHeader = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
-
-      const sortedGoals = goals.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
+      // Asc.
+      const columnHeaderAsc = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
+      const sortedGoalsAsc = goals.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
       fetchMock.get(
         `/api/recipient/goals/${recipientId}?sortBy=createdOn&sortDir=asc&offset=0&limit=5&region.in[]=1`,
-        { count: 6, goalRows: sortedGoals },
+        { count: 6, goalRows: sortedGoalsAsc },
       );
       expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
 
-      fireEvent.click(columnHeader);
+      fireEvent.click(columnHeaderAsc);
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021'));
       await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('06/15/2021'));
+
+      // Desc.
+      const columnHeaderDesc = await screen.findByRole('button', { name: /created on\. activate to sort descending/i });
+      const sortedGoalsDesc = goals.sort((a, b) => ((a.createdOn < b.createdOn) ? 1 : -1));
+      fetchMock.get(
+        `/api/recipient/goals/${recipientId}?sortBy=createdOn&sortDir=desc&offset=0&limit=5&region.in[]=1`,
+        { count: 6, goalRows: sortedGoalsDesc },
+      );
+
+      fireEvent.click(columnHeaderDesc);
+      await screen.findByText('TTA goals and objectives');
+
+      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('01/15/2021'));
     });
 
     it('clicking Goal status column header sorts', async () => {
@@ -235,7 +249,7 @@ describe('Goals Table', () => {
         `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&region.in[]=1`,
         { count: 6, goalRows: sortedGoals },
       );
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Ceased/suspended');
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent('In progress');
 
       fireEvent.click(columnHeader);
       await screen.findByText('TTA goals and objectives');
