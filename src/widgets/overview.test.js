@@ -168,11 +168,10 @@ describe('Dashboard overview widget', () => {
 
     expect(data.numReports).toBe('4');
     expect(data.numGrants).toBe('2');
-    expect(data.numGrants).toBe('2');
-    expect(data.numGrants).toBe('2');
     expect(data.inPerson).toBe('4.0');
     expect(data.sumDuration).toBe('12.0');
     expect(data.numParticipants).toBe('44');
+    expect(data.numRecipients).toBe('1');
     expect(data.totalRecipients).toBe('2');
     expect(data.recipientPercentage).toBe('50.00%');
   });
@@ -187,8 +186,9 @@ describe('Dashboard overview widget', () => {
     expect(data.inPerson).toBe('0');
     expect(data.sumDuration).toBe('6.0');
     expect(data.numParticipants).toBe('11');
-    expect(data.totalRecipients).toBe('1');
-    expect(data.recipientPercentage).toBe('100.00%');
+    expect(data.numRecipients).toBe('1');
+    expect(data.totalRecipients).toBe('2');
+    expect(data.recipientPercentage).toBe('50.00%');
   });
 
   it('accounts for different regions', async () => {
@@ -202,6 +202,7 @@ describe('Dashboard overview widget', () => {
     expect(data.numParticipants).toBe('8');
     expect(data.sumDuration).toBe('1.5');
     expect(data.totalRecipients).toBe('1');
+    expect(data.numRecipients).toBe('1');
     expect(data.recipientPercentage).toBe('100.00%');
   });
 });

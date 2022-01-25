@@ -50,11 +50,11 @@ export function withinStartDates(dates) {
       // date of the grant
       {
         startDate: {
-          [Op.gte]: new Date(sd), // start date is between start date and end date
+          [Op.gte]: new Date(sd),
           [Op.lte]: new Date(ed),
         },
         endDate: {
-          [Op.gte]: new Date(ed), // end date is greater than or equal to end date
+          [Op.gte]: new Date(ed),
         },
       },
 
@@ -78,6 +78,15 @@ export function withinStartDates(dates) {
         },
         endDate: {
           [Op.gt]: new Date(sd),
+        },
+      },
+      {
+        startDate: {
+          [Op.gte]: new Date(sd),
+          [Op.lte]: new Date(ed),
+        },
+        endDate: {
+          [Op.gte]: new Date(ed),
         },
       },
     ];
