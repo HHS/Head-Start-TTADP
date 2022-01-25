@@ -1,5 +1,5 @@
-import { Model } from 'sequelize';
-import isEmail from 'validator/lib/isEmail';
+const { Model } = require('sequelize');
+const isEmail = require('validator/lib/isEmail');
 
 const roles = [
   'Regional Program Manager',
@@ -19,8 +19,8 @@ const roles = [
   'System Specialist',
 ];
 
-export const featureFlags = [
-  'grantee_record_page',
+const featureFlags = [
+  'recipient_goals_objectives',
 ];
 
 const generateFullName = (name, role) => {
@@ -33,7 +33,7 @@ const generateFullName = (name, role) => {
   return combinedRoles.length > 0 ? `${name}${combinedRoles}` : name;
 };
 
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
@@ -104,3 +104,5 @@ export default (sequelize, DataTypes) => {
   });
   return User;
 };
+
+module.exports.featureFlags = featureFlags;

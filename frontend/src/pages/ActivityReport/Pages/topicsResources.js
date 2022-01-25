@@ -14,7 +14,7 @@ import MultiSelect from '../../../components/MultiSelect';
 import FileUploader from '../../../components/FileUploader';
 import FormItem from '../../../components/FormItem';
 import ResourceSelector from './components/ResourceSelector';
-import { topics } from '../constants';
+import { TOPICS as topics } from '../../../Constants';
 import { reportIsEditable } from '../../../utils';
 
 const TopicsResources = ({
@@ -81,7 +81,7 @@ const TopicsResources = ({
       <Fieldset legend="Supporting attachments" className="smart-hub--report-legend margin-top-4">
         <div id="attachments" />
         <Label htmlFor="attachments">Upload resources not available online, agenda, service plans, sign-in sheets, etc.</Label>
-        <span className="usa-hint">Max size: 30 MB | File types: images, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip</span>
+        <span className="usa-hint">Max size: 30 MB | File types: images, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv</span>
         <Controller
           name="attachments"
           defaultValue={[]}

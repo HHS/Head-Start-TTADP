@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Table, Checkbox, Grid, Alert,
@@ -7,32 +7,17 @@ import {
 import { getReports, downloadReports } from '../../fetchers/activityReports';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import Container from '../Container';
-import { filtersToQueryString } from '../Filter';
+import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
 import './index.css';
 
-const emptyReport = {
-  id: 0,
-  displayId: '',
-  activityRecipients: [],
-  startDate: '',
-  author: {},
-  legacyId: '',
-  topics: [],
-  collaborators: [],
-  lastSaved: '',
-  calculatedStatus: '',
-};
-
 function ActivityReportsTable({
   filters,
-  showFilter,
   onUpdateFilters,
   tableCaption,
-  dateTime,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +35,9 @@ function ActivityReportsTable({
     direction: 'desc',
   });
 
+  const downloadAllButtonRef = useRef();
+  const downloadSelectedButtonRef = useRef();
+
   useEffect(() => {
     async function fetchReports() {
       setLoading(true);
@@ -62,14 +50,16 @@ function ActivityReportsTable({
           perPage,
           filterQuery,
         );
+
         setReports(rows);
         setReportsCount(count || 0);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
         setError('Unable to fetch reports');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchReports();
   }, [sortConfig, offset, perPage, filters]);
@@ -153,6 +143,7 @@ function ActivityReportsTable({
       setDownloadError(true);
     } finally {
       setIsDownloading(false);
+      downloadAllButtonRef.current.focus();
     }
   };
 
@@ -179,6 +170,7 @@ function ActivityReportsTable({
         setDownloadError(true);
       } finally {
         setIsDownloading(false);
+        downloadSelectedButtonRef.current.focus();
       }
     }
   };
@@ -217,7 +209,7 @@ function ActivityReportsTable({
     );
   };
 
-  const displayReports = reports.length ? reports : [emptyReport];
+  const displayReports = reports.length ? reports : [];
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
@@ -230,12 +222,11 @@ function ActivityReportsTable({
         )}
       </Grid>
 
-      <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
+      <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
         <TableHeader
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
           toggleSelectAll={toggleSelectAll}
-          showFilter={showFilter}
           onUpdateFilters={onUpdateFilters}
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
@@ -245,8 +236,10 @@ function ActivityReportsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           downloadError={downloadError}
-          dateTime={dateTime}
+          setDownloadError={setDownloadError}
           isDownloading={isDownloading}
+          downloadAllButtonRef={downloadAllButtonRef}
+          downloadSelectedButtonRef={downloadSelectedButtonRef}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
@@ -302,21 +295,21 @@ ActivityReportsTable.propTypes = {
     PropTypes.shape({
       condition: PropTypes.string,
       id: PropTypes.string,
-      query: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.arrayOf(PropTypes.number),
+      ]),
       topic: PropTypes.string,
     }),
   ).isRequired,
-  showFilter: PropTypes.bool.isRequired,
   onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
 };
 
 ActivityReportsTable.defaultProps = {
   onUpdateFilters: () => { },
-  dateTime: { timestamp: '', label: '' },
 };
 
 export default ActivityReportsTable;
