@@ -70,54 +70,52 @@ function GoalRow({
   };
 
   const getGoalStatusIcon = () => {
-    if (!goalStatus) {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
+    if (goalStatus) {
+      if (goalStatus === 'In Progress') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
+      } if (goalStatus === 'Completed') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
+      }
+      if (goalStatus === 'Draft') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#475260" icon={faPencilAlt} />;
+      }
+      if (goalStatus === 'Not Started') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
+      }
+      if (goalStatus === 'Ceased/Suspended') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#b50908" icon={faTimesCircle} />;
+      }
     }
-    if (goalStatus === 'In Progress') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
-    } if (goalStatus === 'Completed') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
-    }
-    if (goalStatus === 'Draft') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#475260" icon={faPencilAlt} />;
-    }
-    if (goalStatus === 'Not Started') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
-    }
-    if (goalStatus === 'Ceased/Suspended') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#b50908" icon={faTimesCircle} />;
-    }
-    return null;
+    return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
   };
 
   const getGoalStatusText = () => {
-    if (!goalStatus) {
-      return 'Needs status';
+    if (goalStatus) {
+      if (goalStatus === 'In Progress') {
+        return 'In progress';
+      } if (goalStatus === 'Completed') {
+        return 'Closed';
+      }
+      if (goalStatus === 'Draft') {
+        return 'Draft';
+      }
+      if (goalStatus === 'Not Started') {
+        return 'Not started';
+      }
+      if (goalStatus === 'Ceased/Suspended') {
+        return 'Ceased/suspended';
+      }
     }
-    if (goalStatus === 'In Progress') {
-      return 'In progress';
-    } if (goalStatus === 'Completed') {
-      return 'Closed';
-    }
-    if (goalStatus === 'Draft') {
-      return 'Draft';
-    }
-    if (goalStatus === 'Not Started') {
-      return 'Not started';
-    }
-    if (goalStatus === 'Ceased/Suspended') {
-      return 'Ceased/suspended';
-    }
-    return null;
+    return 'Needs status';
   };
 
-  const determineFlagStatus = (goalReasons) => {
-    const reasonsToWatch = goalReasons.filter((t) => reasonsToMonitor.includes(t));
+  const determineFlagStatus = () => {
+    const reasonsToWatch = reasons.filter((t) => reasonsToMonitor.includes(t));
     if (reasonsToWatch && reasonsToWatch.length > 0) {
       return (
         <>
           <Tooltip
-            displayText={<FontAwesomeIcon className="margin-left-1" size="16px" color="#d42240" icon={faFlag} />}
+            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />}
             screenReadDisplayText={false}
             buttonLabel={`Click to reveal reason for flag ${goalNumber}`}
             tooltipText="Related to monitoring"
@@ -156,7 +154,7 @@ function GoalRow({
         (
         {goalNumber}
         )
-        {determineFlagStatus(reasons)}
+        {determineFlagStatus()}
       </td>
       <td className="text-wrap maxw-mobile">
         {
