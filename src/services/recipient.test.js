@@ -436,7 +436,7 @@ describe('Recipient DB service', () => {
         number: '582355',
         programSpecialistName: 'Grant West',
         status: 'Inactive',
-        endDate: new Date('09/01/2020'),
+        endDate: new Date('08/31/2020'),
         grantSpecialistName: 'Joe Allen',
       },
     ];

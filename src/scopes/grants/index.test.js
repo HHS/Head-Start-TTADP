@@ -43,7 +43,7 @@ describe('grant filtersToScopes', () => {
         recipientId: recipients[1].id,
         status: 'Active',
         startDate: new Date('08/01/1997'),
-        endDate: new Date('08/01/1997'),
+        endDate: new Date('08/01/2002'),
         programSpecialistName: 'Joe Bob',
         stateCode: 'AR',
       }),
@@ -54,7 +54,7 @@ describe('grant filtersToScopes', () => {
         recipientId: recipients[2].id,
         status: 'Active',
         startDate: new Date('08/01/1997'),
-        endDate: new Date('08/01/1997'),
+        endDate: new Date('08/01/2002'),
         programSpecialistName: 'Darcy',
         stateCode: 'AK',
       }),
@@ -149,7 +149,9 @@ describe('grant filtersToScopes', () => {
       const filters = { 'startDate.win': '1997/07/31-1997/08/02' };
       const scope = filtersToScopes(filters);
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: {
+          [Op.and]: [scope.grant, { id: possibleIds }],
+        },
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
