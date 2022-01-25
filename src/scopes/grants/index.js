@@ -7,16 +7,11 @@ import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecia
 import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
-import { withRecipientId, withoutRecipientId } from './recipientId';
 
 export const topicToQuery = {
   recipient: {
     ctn: (query) => withRecipientName(query),
     nctn: (query) => withoutRecipientName(query),
-  },
-  recipientId: {
-    ctn: (query) => withRecipientId(query),
-    nctn: (query) => withoutRecipientId(query),
   },
   programSpecialist: {
     ctn: (query) => withProgramSpecialist(query),
