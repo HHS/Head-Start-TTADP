@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 import {
+  sequelize,
   ActivityReport,
 } from '../models';
 import { auditLogger } from '../logger';
@@ -20,9 +21,12 @@ export default async function changeReportStatus(ids, status) {
     if (report) {
       auditLogger.info(`Changing status of report: ${id} to ${status}`);
       promises.push(
-        report.update({
-          submissionStatus: status,
-        }),
+        await sequelize.transaction(async (transaction) => report.update(
+          {
+            submissionStatus: status,
+          },
+          transaction,
+        )),
       );
     } else {
       auditLogger.info(`Couldn't find any reports with the id: ${id}`);
