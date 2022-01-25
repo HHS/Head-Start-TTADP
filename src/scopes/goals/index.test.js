@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { createReport, destroyReport } from '../../testUtils';
 import filtersToScopes from '../index';
-import {
+import db, {
   Goal, Objective, ActivityReportObjective,
 } from '../../models';
 
@@ -9,9 +9,12 @@ describe('goal filtersToScopes', () => {
   let reportIds;
   let objectiveIds = [];
   let possibleGoalIds = [];
+  let emptyReport;
+  let reportWithReasons;
+  let reportWithTopics;
 
   beforeAll(async () => {
-    const emptyReport = await createReport({
+    emptyReport = await createReport({
       activityRecipients: [],
       calculatedStatus: 'approved',
       reason: [],
@@ -19,14 +22,14 @@ describe('goal filtersToScopes', () => {
       region: 15,
     });
 
-    const reportWithReasons = await createReport({
+    reportWithReasons = await createReport({
       calculatedStatus: 'approved',
       reason: ['Full Enrollment'],
       topics: ['CLASS: Emotional Support'],
       activityRecipients: [],
       region: 15,
     });
-    const reportWithTopics = await createReport({
+    reportWithTopics = await createReport({
       calculatedStatus: 'approved',
       reason: ['Complaint'],
       topics: ['Behavioral / Mental Health / Trauma'],
@@ -136,7 +139,7 @@ describe('goal filtersToScopes', () => {
   afterAll(async () => {
     await ActivityReportObjective.destroy({
       where: {
-        reportId: reportIds,
+        activityReportId: reportIds,
       },
     });
 
@@ -152,7 +155,12 @@ describe('goal filtersToScopes', () => {
       },
     });
 
-    await Promise.all(reportIds.map(async (report) => destroyReport(report)));
+    await Promise.all(
+      [emptyReport, reportWithReasons, reportWithTopics]
+        .map(async (report) => destroyReport(report)),
+    );
+
+    await db.sequelize.close();
   });
 
   describe('createDate', () => {
