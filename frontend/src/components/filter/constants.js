@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment';
-import { formatDateRange } from '../DateRangeSelect';
+import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
@@ -15,6 +15,7 @@ import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStatus from './FilterStatus';
+import FilterStateSelect from './FilterStateSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -80,9 +81,10 @@ export const FILTER_CONFIG = [
     display: 'Date range',
     conditions: DATE_CONDITIONS,
     defaultValues: {
-      'Is within': YEAR_TO_DATE,
+      'Is within': '',
       'Is after': '',
       'Is before': '',
+      In: '',
     },
     displayQuery: (query) => {
       if (query.includes('-')) {
@@ -93,14 +95,12 @@ export const FILTER_CONFIG = [
       }
       return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
     },
-    renderInput: (id, condition, query, onApplyQuery, dateRangeOptions) => (
+    renderInput: (id, condition, query, onApplyQuery) => (
       <FilterDateRange
         condition={condition}
         query={query}
         updateSingleDate={onApplyQuery}
         onApplyDateRange={onApplyQuery}
-        options={dateRangeOptions}
-        id={id}
       />
     ),
   },
@@ -113,9 +113,8 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        inputId={`reason-${condition}-${id}`}
+        inputId={`grantNumber-${condition}-${id}`}
         onApply={onApplyQuery}
-        type="grantNumber"
         label="Enter a grant number"
       />
     ),
@@ -143,7 +142,7 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterProgramType
-        inputId={`reason-${condition}-${id}`}
+        inputId={`programType-${condition}-${id}`}
         onApply={onApplyQuery}
         query={query}
       />
@@ -187,10 +186,8 @@ export const FILTER_CONFIG = [
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterInput
         query={query}
-        id={id}
-        condition={condition}
+        inputId={`reportId-${condition}-${id}`}
         onApply={onApplyQuery}
-        type="reportId"
         label="Enter a report id"
       />
     ),
@@ -230,7 +227,21 @@ export const FILTER_CONFIG = [
     displayQuery: handleArrayQuery,
     renderInput: (id, condition, query, onApplyQuery) => (
       <FilterStatus
-        inputId={`status-${condition}-${id}`}
+        inputId={`state-${condition}-${id}`}
+        onApply={onApplyQuery}
+        query={query}
+      />
+    ),
+  },
+  {
+    id: 'stateCode',
+    display: 'State',
+    conditions: ['Contains'],
+    defaultValues: EMPTY_MULTI_SELECT,
+    displayQuery: handleArrayQuery,
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterStateSelect
+        inputId={`state-${condition}-${id}`}
         onApply={onApplyQuery}
         query={query}
       />

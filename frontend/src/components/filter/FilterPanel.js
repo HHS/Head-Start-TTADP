@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
-import { formatDateRange } from '../DateRangeSelect';
 import { filterProp } from './props';
 import { AVAILABLE_FILTERS } from './constants';
 
@@ -31,26 +30,9 @@ FilterPanel.propTypes = {
   onApplyFilters: PropTypes.func.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   allowedFilters: PropTypes.arrayOf(PropTypes.string),
-  dateRangeOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-    range: PropTypes.string,
-  })),
   applyButtonAria: PropTypes.string.isRequired,
 };
 
 FilterPanel.defaultProps = {
   allowedFilters: AVAILABLE_FILTERS,
-  dateRangeOptions: [
-    {
-      label: 'Year to date',
-      value: 1,
-      range: formatDateRange({ yearToDate: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ],
 };
