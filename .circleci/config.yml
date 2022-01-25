@@ -217,6 +217,7 @@ jobs:
           paths:
             - .
   test_backend:
+    context: ohs-eng-daily-scan-slack
     executor: docker-postgres-executor
     steps:
       - attach_workspace:
@@ -251,9 +252,9 @@ jobs:
           steps:
             - slack/notify:
                 event: fail
-                template: basic_fail_1
-                context: ohs-eng-daily-scan-slack
+                template: basic_fail_1                
   test_frontend:
+    context: ohs-eng-daily-scan-slack
     executor: docker-executor
     steps:
       - attach_workspace:
@@ -283,8 +284,7 @@ jobs:
           steps:
             - slack/notify:
                 event: fail
-                template: basic_fail_1
-                context: ohs-eng-daily-scan-slack
+                template: basic_fail_1                
   cucumber_test:
     executor: docker-postgres-executor
     steps:
