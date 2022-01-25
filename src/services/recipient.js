@@ -156,7 +156,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
 export async function getGoalsByActivityRecipient(
   recipientId,
   {
-    sortBy = 'createdAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
+    sortBy = 'createdOn', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
   },
 ) {
   const { count, rows } = await Goal.findAndCountAll(
