@@ -4,9 +4,7 @@ import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
-import Filter from './Filter';
 import ReportMenu from '../pages/Landing/ReportMenu';
-import DateTime from './DateTime';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -24,10 +22,8 @@ export default function TableHeader({
   title,
   numberOfSelected,
   toggleSelectAll,
-  showFilter,
   hideMenu,
   menuAriaLabel,
-  onUpdateFilters,
   handleDownloadAll,
   handleDownloadClick,
   count,
@@ -36,10 +32,9 @@ export default function TableHeader({
   perPage,
   handlePageChange,
   hidePagination,
-  forMyAlerts,
   downloadError,
+  setDownloadError,
   isDownloading,
-  dateTime,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
 }) {
@@ -47,9 +42,6 @@ export default function TableHeader({
     <div className="desktop:display-flex">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        {dateTime
-          ? <DateTime classNames="display-flex flex-align-center padding-x-1 flex-align-self-center" timestamp={dateTime.timestamp} label={dateTime.label} />
-          : null}
         <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row flex-align-center">
           {numberOfSelected > 0
             && (
@@ -74,7 +66,6 @@ export default function TableHeader({
                 </Button>
               </span>
             )}
-          {showFilter && <Filter applyFilters={onUpdateFilters} forMyAlerts={forMyAlerts} />}
           {!hideMenu && (
             <ReportMenu
               label={menuAriaLabel}
@@ -83,6 +74,7 @@ export default function TableHeader({
               onExportSelected={handleDownloadClick}
               count={count}
               downloadError={downloadError}
+              setDownloadError={setDownloadError}
               isDownloading={isDownloading}
               downloadAllButtonRef={downloadAllButtonRef}
               downloadSelectedButtonRef={downloadSelectedButtonRef}
@@ -129,9 +121,6 @@ TableHeader.propTypes = {
   title: PropTypes.string.isRequired,
   numberOfSelected: PropTypes.number,
   toggleSelectAll: PropTypes.func,
-  showFilter: PropTypes.bool,
-  onUpdateFilters: PropTypes.func,
-  forMyAlerts: PropTypes.bool,
   handleDownloadAll: PropTypes.func,
   handleDownloadClick: PropTypes.func,
   hidePagination: PropTypes.bool,
@@ -142,10 +131,8 @@ TableHeader.propTypes = {
   handlePageChange: PropTypes.func,
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
+  setDownloadError: PropTypes.func,
   downloadError: PropTypes.bool,
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
   isDownloading: PropTypes.bool,
   downloadAllButtonRef: PropTypes.oneOfType([
     PropTypes.func,
@@ -160,10 +147,7 @@ TableHeader.propTypes = {
 TableHeader.defaultProps = {
   numberOfSelected: 0,
   toggleSelectAll: () => { },
-  showFilter: false,
-  forMyAlerts: false,
   hidePagination: false,
-  onUpdateFilters: () => { },
   handleDownloadAll: () => { },
   handleDownloadClick: () => { },
   count: 0,
@@ -174,7 +158,7 @@ TableHeader.defaultProps = {
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
-  dateTime: { timestamp: '', label: '' },
+  setDownloadError: () => {},
   isDownloading: false,
   downloadAllButtonRef: () => {},
   downloadSelectedButtonRef: () => {},

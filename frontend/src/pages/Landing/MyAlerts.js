@@ -8,8 +8,6 @@ import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
-import 'uswds/dist/css/uswds.css';
-import '@trussworks/react-uswds/lib/index.css';
 import './index.css';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
@@ -185,7 +183,6 @@ function MyAlerts(props) {
     alertsActivePage,
     alertReportsCount,
     sortHandler,
-    hasFilters,
     updateReportFilters,
     updateReportAlerts,
     setAlertReportsCount,
@@ -194,6 +191,7 @@ function MyAlerts(props) {
     message,
     isDownloadingAlerts,
     downloadAlertsError,
+    setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
   } = props;
@@ -245,14 +243,14 @@ function MyAlerts(props) {
   };
   return (
     <>
-      {reports && reports.length === 0 && !hasFilters && (
+      {reports && reports.length === 0 && (
         <Container className="landing" padding={0} loading={loading}>
-          <div id="caughtUp">
+          <div className="text-center padding-10">
             <div>
               <h2>You&apos;re all caught up!</h2>
             </div>
             {newBtn && (
-              <p id="beginNew">
+              <p className="padding-bottom-2">
                 Would you like to begin a new activity report?
               </p>
             )}
@@ -261,12 +259,11 @@ function MyAlerts(props) {
         </Container>
       )}
 
-      {reports && (reports.length > 0 || hasFilters) && (
-        <Container className="landing inline-size maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
+      {reports && (reports.length > 0) && (
+        <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
-            showFilter
             forMyAlerts
             onUpdateFilters={updateReportFilters}
             handleDownloadAll={handleDownloadAllAlerts}
@@ -277,6 +274,7 @@ function MyAlerts(props) {
             hidePagination
             isDownloading={isDownloadingAlerts}
             downloadError={downloadAlertsError}
+            setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
           />
@@ -318,8 +316,7 @@ MyAlerts.propTypes = {
   alertsActivePage: PropTypes.number,
   alertReportsCount: PropTypes.number.isRequired,
   sortHandler: PropTypes.func.isRequired,
-  hasFilters: PropTypes.bool,
-  updateReportFilters: PropTypes.func.isRequired,
+  updateReportFilters: PropTypes.func,
   updateReportAlerts: PropTypes.func.isRequired,
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
@@ -332,6 +329,7 @@ MyAlerts.propTypes = {
   }),
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
+  setDownloadAlertsError: PropTypes.func.isRequired,
   downloadAllAlertsButtonRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
@@ -343,12 +341,12 @@ MyAlerts.propTypes = {
 };
 
 MyAlerts.defaultProps = {
+  updateReportFilters: () => { },
   reports: [],
   alertsSortConfig: { sortBy: 'startDate', direction: 'asc' },
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
-  hasFilters: false,
   message: {
     time: '',
     reportId: '',

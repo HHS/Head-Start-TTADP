@@ -5,6 +5,11 @@ import './CheckboxSelect.css';
 import DropdownMenu from './DropdownMenu';
 import usePrevious from '../hooks/usePrevious';
 
+const optionProp = PropTypes.shape({
+  value: PropTypes.number,
+  label: PropTypes.string,
+});
+
 export function renderCheckboxes(
   options,
   checkboxes,
@@ -16,7 +21,6 @@ export function renderCheckboxes(
     const { label, value } = option;
     const selectId = `${prefix}-${value}`;
     const isChecked = checkboxes[value] || false;
-
     return (
       <Checkbox
         key={selectId}
@@ -32,10 +36,9 @@ export function renderCheckboxes(
   });
 }
 
-export const makeCheckboxes = (options, checked) => {
-  const checkboxes = options.reduce((obj, r) => ({ ...obj, [r.value]: checked }), {});
-  return checkboxes;
-};
+export const makeCheckboxes = (options, checked) => (
+  options.reduce((obj, r) => ({ ...obj, [r.value]: checked }), {})
+);
 
 export default function CheckboxSelect({
   options,
@@ -157,14 +160,9 @@ export default function CheckboxSelect({
   );
 }
 
-const optionProp = PropTypes.shape({
-  value: PropTypes.number,
-  label: PropTypes.string,
-});
-
 CheckboxSelect.propTypes = {
   toggleAllInitial: PropTypes.bool.isRequired,
-  toggleAllText: PropTypes.string.isRequired,
+  toggleAllText: PropTypes.string,
   options: PropTypes.arrayOf(optionProp).isRequired,
   labelId: PropTypes.string.isRequired,
   labelText: PropTypes.string.isRequired,
@@ -176,12 +174,13 @@ CheckboxSelect.propTypes = {
 
   // style as a select box
   styleAsSelect: PropTypes.bool,
+
 };
 
 CheckboxSelect.defaultProps = {
   disabled: false,
   styleAsSelect: false,
   hideToggleAll: false,
+  toggleAllText: 'Toggle all checkboxes',
   onChange: () => {},
-
 };

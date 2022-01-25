@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
@@ -324,12 +323,9 @@ export function activityReports(
 ) {
   const scopes = filtersToScopes(filters);
 
-  const endDte = moment().format('MM/DD/yyyy');
-
   const where = {
     calculatedStatus: REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
-    startDate: { [Op.gte]: '2020-08-31', [Op.lte]: endDte },
   };
 
   if (excludeLegacy) {
