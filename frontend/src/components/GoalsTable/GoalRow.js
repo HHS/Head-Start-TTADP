@@ -71,17 +71,17 @@ function GoalRow({
 
   const getGoalStatusIcon = () => {
     if (!goalStatus) {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#475260" icon={faPencilAlt} />;
+      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#c5c5c5" icon={faExclamationCircle} />;
     }
     if (goalStatus === 'In Progress') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#0166ab" icon={faClock} />;
     } if (goalStatus === 'Completed') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#148439" icon={faCheckCircle} />;
     }
-    if (goalStatus === 'Needs status') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#c5c5c5" icon={faExclamationCircle} />;
+    if (goalStatus === 'Draft') {
+      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#475260" icon={faPencilAlt} />;
     }
-    if (goalStatus === 'Not started') {
+    if (goalStatus === 'Not Started') {
       return <FontAwesomeIcon className="margin-right-1" size="16px" color="#e2a04d" icon={faMinusCircle} />;
     }
     if (goalStatus === 'Ceased/Suspended') {
@@ -92,15 +92,15 @@ function GoalRow({
 
   const getGoalStatusText = () => {
     if (!goalStatus) {
-      return 'Draft';
+      return 'Needs status';
     }
     if (goalStatus === 'In Progress') {
       return 'In progress';
     } if (goalStatus === 'Completed') {
       return 'Closed';
     }
-    if (goalStatus === 'Needs status') {
-      return 'Needs status';
+    if (goalStatus === 'Draft') {
+      return 'Draft';
     }
     if (goalStatus === 'Not Started') {
       return 'Not started';
