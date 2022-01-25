@@ -189,7 +189,6 @@ function MyAlerts(props) {
     handleDownloadAllAlerts,
     loading,
     message,
-    showFilter,
     isDownloadingAlerts,
     downloadAlertsError,
     setDownloadAlertsError,
@@ -265,7 +264,6 @@ function MyAlerts(props) {
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
-            showFilter={showFilter}
             forMyAlerts
             onUpdateFilters={updateReportFilters}
             handleDownloadAll={handleDownloadAllAlerts}
@@ -329,7 +327,6 @@ MyAlerts.propTypes = {
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
-  showFilter: PropTypes.bool.isRequired,
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
   setDownloadAlertsError: PropTypes.func.isRequired,

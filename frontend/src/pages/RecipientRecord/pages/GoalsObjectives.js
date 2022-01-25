@@ -2,7 +2,7 @@ import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useUrlFilters from '../../../hooks/useUrlFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
-import { formatDateRange } from '../../../components/DateRangeSelect';
+import { formatDateRange } from '../../../utils';
 
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
@@ -24,7 +24,7 @@ export default function GoalsObjectives() {
   };
 
   return (
-    <div className="margin-x-2 maxw-widescreen">
+    <div className="margin-x-2 maxw-widescreen" id="goalsObjectives">
       <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
         <FilterPanel
           onRemoveFilter={onRemoveFilter}
