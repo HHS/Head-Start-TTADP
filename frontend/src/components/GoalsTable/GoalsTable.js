@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Table, Grid, Alert,
 } from '@trussworks/react-uswds';
-import { filtersToQueryString } from '../Filter';
+import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';

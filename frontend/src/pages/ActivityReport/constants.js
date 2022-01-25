@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const reasons = [
@@ -27,8 +26,6 @@ export const reasonsToMonitor = [
   'Monitoring | Area of Concern',
 ];
 
-=======
->>>>>>> main
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',

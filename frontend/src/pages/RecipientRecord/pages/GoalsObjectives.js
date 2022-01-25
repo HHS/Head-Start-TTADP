@@ -21,7 +21,6 @@ export default function GoalsObjectives({ recipientId }) {
   };
 
   return (
-<<<<<<< HEAD
     <>
       <Helmet>
         <title>
@@ -36,9 +35,6 @@ export default function GoalsObjectives({ recipientId }) {
         />
       </div>
     </>
-=======
-    <div id="goalsObjectives" />
->>>>>>> main
   );
 }
 
