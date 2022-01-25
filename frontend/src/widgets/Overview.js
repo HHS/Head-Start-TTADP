@@ -50,12 +50,11 @@ function Overview({
 }) {
   const title = !tableCaption ? 'TTA overview' : tableCaption;
   return (
-    <Container className="smart-hub--overview-border" loading={loading} loadingLabel="Overview loading">
+    <Container loading={loading} loadingLabel="Overview loading">
       <Grid row className="smart-hub--overview-header">
         <h2>
           {title}
         </h2>
-        <span className="smart-hub--overview-period"> 9/01/2020 to Today</span>
       </Grid>
       <Grid row gap className="smart-hub--overview-data">
         <Field col="fill" tablet={{ col: true }} label="Grants served " data={data.numGrants} />

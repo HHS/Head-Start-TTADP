@@ -1,32 +1,20 @@
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import FilterDateRange from './FilterDateRange';
-import { formatDateRange } from '../DateRangeSelect';
-import FilterSpecialistSelect from './FilterSpecialistSelect';
-import {
-  DATE_CONDITIONS,
-  SELECT_CONDITIONS,
-} from '../constants';
 import './FilterItem.css';
+import FilterErrorContext from './FilterErrorContext';
 
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
+const CANCEL_ARIA = 'discard changes and close filter menu';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+  query: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
+  ]),
   id: PropTypes.string,
 });
-
-const DEFAULT_VALUES = {
-  startDate: { 'Is within': YEAR_TO_DATE, 'Is after': '', 'Is before': '' },
-  role: { Contains: [], 'Does not contain': [] },
-};
 
 /**
  * The individual filter controls with the set of dropdowns
@@ -38,10 +26,8 @@ export default function FilterItem({
   filter,
   onRemoveFilter,
   onUpdateFilter,
-  errors,
-  setErrors,
-  index,
-  validate,
+  topicOptions,
+  selectedTopic,
 }) {
   const {
     id,
@@ -50,26 +36,51 @@ export default function FilterItem({
     query,
   } = filter;
 
-  const li = useRef();
+  const { error, setError } = useContext(FilterErrorContext);
 
-  const setError = (message) => {
-    const newErrors = [...errors];
-    newErrors.splice(index, 1, message);
-    setErrors(newErrors);
+  const validate = () => {
+    if (!topic) {
+      return 'Please enter a filter';
+    }
+
+    if (!condition) {
+      return 'Please enter a condition';
+    }
+
+    if (!query || !query.toString().length) {
+      return 'Please enter a value';
+    }
+
+    return '';
   };
 
+  const fieldset = useRef();
+
   const onBlur = (e) => {
+    let willValidate = true;
+
     // no validation if you are clicking on something within the filter item
-    if (li.current.contains(e.relatedTarget)) {
-      return;
+    if (fieldset.current.contains(e.relatedTarget)) {
+      willValidate = false;
     }
 
     // no validation if you are clicking on the cancel button
-    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === 'discard changes and close filter menu') {
-      return;
+    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === CANCEL_ARIA) {
+      willValidate = false;
     }
 
-    validate(filter, setError);
+    if (topic === 'startDate') {
+      willValidate = false;
+    }
+
+    if (willValidate) {
+      const message = validate();
+      // if there is an error (either new or existing), we want to refresh
+      // the validation message that's there
+      if (message) {
+        setError(message);
+      }
+    }
   };
 
   /**
@@ -79,12 +90,6 @@ export default function FilterItem({
    * function below
    */
   const onUpdate = (name, value) => {
-    if (name === 'condition') {
-      // Set default value.
-      const defaultQuery = DEFAULT_VALUES[topic][value];
-      onUpdateFilter(id, 'query', defaultQuery);
-    }
-
     onUpdateFilter(id, name, value);
   };
 
@@ -96,34 +101,6 @@ export default function FilterItem({
     onUpdate('query', q);
   };
 
-  const possibleFilters = [
-    {
-      id: 'role',
-      display: 'Specialist',
-      conditions: SELECT_CONDITIONS,
-      renderInput: () => (
-        <FilterSpecialistSelect
-          labelId={`role-${condition}-${id}`}
-          onApplyRoles={onApplyQuery}
-        />
-      ),
-    },
-    {
-      id: 'startDate',
-      display: 'Date range',
-      conditions: DATE_CONDITIONS,
-      renderInput: () => (
-        <FilterDateRange
-          condition={condition}
-          query={query}
-          onApplyDateRange={onApplyQuery}
-          id={id}
-        />
-      ),
-    },
-  ];
-
-  const selectedTopic = possibleFilters.find((f) => f.id === topic);
   const conditions = selectedTopic ? selectedTopic.conditions : [];
 
   const onRemove = () => {
@@ -139,35 +116,39 @@ export default function FilterItem({
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
-  const error = errors[index];
-
-  const fieldsetBaseClass = 'ttahub-filter-menu-item position-relative gap-1 desktop:display-flex border-0 padding-0';
+  const fieldsetBaseClass = 'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
   let fieldsetErrorClass = '';
 
   switch (error) {
+    case 'Please enter a valid date':
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
+    case 'Please enter a valid date range':
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      break;
     case 'Please enter a value':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
     case 'Please enter a condition':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
       break;
     case 'Please enter a filter':
-      fieldsetErrorClass = 'ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
+      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
       break;
     default:
       break;
   }
 
-  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass}`;
-
+  const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass} ${!fieldsetErrorClass ? 'margin-0' : ''}`;
+  const errorId = `error-message-${id}`;
   return (
-    <fieldset className={fieldsetClassNames} onBlur={onBlur} ref={li}>
+    <div className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
       {
         error
         && (
-        <span className="ttahub-filter-menu-error" role="status">
-          <strong>{error}</strong>
-        </span>
+          <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>
+            {error}
+          </span>
         )
       }
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -182,10 +163,8 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" hidden disabled selected>- Select -</option>
-        {possibleFilters.map(({ id: filterId, display }) => (
-          <option key={filterId} value={filterId}>{display}</option>
-        ))}
+        <option value="" disabled selected hidden>- Select -</option>
+        {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="sr-only" htmlFor={`condition-${id}`}>
@@ -199,12 +178,18 @@ export default function FilterItem({
         disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
+
       >
-        <option value="" hidden disabled selected>- Select -</option>
+        <option value="" disabled selected hidden>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition
-        ? selectedTopic.renderInput()
+        ? selectedTopic.renderInput(
+          id, // filter id
+          condition, // filter condition
+          query, // filter query
+          onApplyQuery, // the on apply query function handler
+        )
         : <DummySelect /> }
       <button
         type="button"
@@ -215,7 +200,7 @@ export default function FilterItem({
         <span className="desktop:display-none margin-right-1">Remove filter</span>
         <FontAwesomeIcon color="gray" icon={faTimesCircle} />
       </button>
-    </fieldset>
+    </div>
   );
 }
 
@@ -223,8 +208,10 @@ FilterItem.propTypes = {
   filter: filterProp.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
   onUpdateFilter: PropTypes.func.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.string).isRequired,
-  setErrors: PropTypes.func.isRequired,
-  index: PropTypes.number.isRequired,
-  validate: PropTypes.func.isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.node).isRequired,
+  selectedTopic: PropTypes.shape({
+    display: PropTypes.string,
+    renderInput: PropTypes.func,
+    conditions: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
 };

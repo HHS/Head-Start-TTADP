@@ -9,6 +9,9 @@ const renderFormattedNumber = (number, decimalPlaces) => {
 
 describe('Format Number', () => {
   it('renders with correct decimal places and separator', async () => {
+    renderFormattedNumber();
+    expect(screen.getByText('0')).toBeInTheDocument();
+
     // Multiple Decimal Places with Thousands Separator.
     renderFormattedNumber(14258.25697, 5);
     expect(screen.getByText(/14,258\.25697/i)).toBeInTheDocument();
@@ -31,6 +34,6 @@ describe('Format Number', () => {
 
     // NaN Passed.
     renderFormattedNumber('100f');
-    expect(screen.getByText(/0/i)).toBeInTheDocument();
+    expect(screen.getByText('100')).toBeInTheDocument();
   });
 });

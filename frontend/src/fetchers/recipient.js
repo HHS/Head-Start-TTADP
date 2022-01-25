@@ -1,7 +1,12 @@
 import join from 'url-join';
 import { get } from './index';
+<<<<<<< HEAD
 import { DECIMAL_BASE, GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../components/Filter';
+=======
+import { DECIMAL_BASE } from '../Constants';
+import { filtersToQueryString } from '../utils';
+>>>>>>> main
 
 const recipientUrl = join('/', 'api', 'recipient');
 

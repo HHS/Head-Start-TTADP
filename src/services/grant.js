@@ -1,7 +1,6 @@
 import { Op } from 'sequelize';
-import { Grant, Recipient } from '../models';
+import { sequelize, Grant, Recipient } from '../models';
 
-// eslint-disable-next-line import/prefer-default-export
 export async function cdiGrants(unassigned, active) {
   const where = [{ cdi: true }];
 
@@ -26,6 +25,24 @@ export async function cdiGrants(unassigned, active) {
       ['id', 'ASC'],
     ],
   });
+}
+
+export async function statesByGrantRegion(regions) {
+  const grants = await Grant.findAll({
+    attributes: [
+      [sequelize.fn('DISTINCT', sequelize.col('stateCode')), 'stateCode'],
+    ],
+    where: {
+      stateCode: {
+        [Op.not]: null,
+      },
+      regionId: regions,
+    },
+    raw: true,
+    order: ['stateCode'],
+  });
+
+  return grants.map((grant) => grant.stateCode);
 }
 
 export async function grantById(grantId) {

@@ -82,7 +82,9 @@
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "updateLegacyPopulations": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
-    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyPopulationsCLI.js"
+    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyPopulationsCLI.js",
+    "importActivityReportDuration": "node ./build/server/tools/importActivityReportDuration.js",
+    "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js"
   },
   "repository": {
     "type": "git",
@@ -90,7 +92,10 @@
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
-    "colors": "1.4.0"
+    "colors": "1.4.0",
+    "follow-redirects":"^1.14.7",
+    "nanoid": "^3.2.0",
+    "node-fetch": "^2.6.7"
   },
   "eslintConfig": {
     "extends": [
@@ -170,7 +175,7 @@
     "jest-cli": "^26.4.2",
     "jest-junit": "^12.0.0",
     "nodemon": "^2.0.4",
-    "puppeteer": "^8.0.0",
+    "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.0.0",

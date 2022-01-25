@@ -105,6 +105,7 @@ export async function processFiles() {
         programSpecialistEmail: valueFromXML(g.program_specialist_email),
         grantSpecialistName,
         grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
+        annualFundingMonth: valueFromXML(g.annual_funding_month),
       };
     });
 
@@ -136,14 +137,14 @@ export async function processFiles() {
     await Grant.bulkCreate(
       nonCdiGrants,
       {
-        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
+        updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
       },
     );
 
     await Grant.bulkCreate(
       cdiGrants,
       {
-        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail'],
+        updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
       },
     );
 

@@ -8,10 +8,12 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/extend-expect';
-import 'react-dates/initialize';
 // See https://github.com/testing-library/dom-testing-library/releases/tag/v7.0.0
 // 'MutationObserver shim removed'
 import MutationObserver from '@sheerun/mutationobserver-shim';
+
+import '@trussworks/react-uswds/lib/uswds.css';
+import '@trussworks/react-uswds/lib/index.css';
 
 // See https://github.com/plotly/react-plotly.js/issues/115
 window.URL.createObjectURL = () => {};

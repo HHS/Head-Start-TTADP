@@ -4,7 +4,6 @@ import React from 'react';
 import {
   render,
   screen,
-  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FreqGraph } from '../FrequencyGraph';
@@ -47,21 +46,16 @@ const renderFrequencyGraph = async () => (
 describe('Frequency Graph', () => {
   it('shows topics by default', async () => {
     renderFrequencyGraph();
-    const topics = await screen.findByRole('button', { name: 'toggle change graph type menu' });
-    expect(topics.textContent).toBe('Topics');
+    const topics = await screen.findByRole('heading', { name: /topics in activity reports/i });
+    expect(topics).toBeInTheDocument();
   });
 
   it('can switch to show reasons', async () => {
     renderFrequencyGraph();
-    const topics = await screen.findByRole('button', { name: 'toggle change graph type menu' });
-    expect(topics.textContent).toBe('Topics');
-    userEvent.click(topics);
-    const reasonBtn = await screen.findByRole('button', { name: /Select to view data from Reasons/i });
-    act(() => userEvent.click(reasonBtn));
-    const apply = await screen.findByRole('button', { name: /Apply filters for the change graph type menu/i });
-    userEvent.click(apply);
-    const reasons = await screen.findByRole('button', { name: 'toggle change graph type menu' });
-    expect(reasons.textContent).toBe('Reasons');
+    const toggleGraphButton = await screen.findByRole('button', { name: /display number of activity reports by reasons/i });
+    userEvent.click(toggleGraphButton);
+    const topics = await screen.findByRole('heading', { name: /reasons in activity reports/i });
+    expect(topics).toBeInTheDocument();
   });
 
   it('can show accessible data', async () => {

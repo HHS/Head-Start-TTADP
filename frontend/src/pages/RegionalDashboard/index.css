@@ -2,10 +2,6 @@
   max-width: 100%;
 }
 
-.ttahub-dashboard--filters {
-  gap: 1em;
-}
-
 @media( max-width: 768px ) {
   .ttahub-dashboard--filters {
     align-items: flex-start;
