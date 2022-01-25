@@ -54,7 +54,7 @@ function RecipientSearch({ user }) {
           filters.push({
             id: uuidv4(),
             topic: 'region',
-            condition: 'Contains',
+            condition: 'Is',
             query: region,
           });
         });
@@ -62,7 +62,7 @@ function RecipientSearch({ user }) {
         filters.push({
           id: uuidv4(),
           topic: 'region',
-          condition: 'Contains',
+          condition: 'Is',
           query: appliedRegion,
         });
       }

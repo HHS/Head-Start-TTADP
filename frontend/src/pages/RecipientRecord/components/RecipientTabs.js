@@ -4,6 +4,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import './RecipientTabs.css';
+import FeatureFlag from '../../../components/FeatureFlag';
 
 export default function RecipientTabs({ region, recipientId }) {
   const linkClass = 'display-block padding-2 ttahub-recipient-record--tabs_link';
@@ -14,11 +15,16 @@ export default function RecipientTabs({ region, recipientId }) {
       <nav className="ttahub-recipient-record--tabs_nav bg-white">
         <ul className="display-flex margin-0 margin-bottom-2 padding-0">
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/profile?region=${region}`}>Profile</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/profile`}>Profile</NavLink>
           </li>
           <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/tta-history?region=${region}`}>TTA History</NavLink>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/tta-history`}>TTA History</NavLink>
           </li>
+          <FeatureFlag flag="recipient_goals_objectives">
+            <li className={liClass}>
+              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>Goals & Objectives</NavLink>
+            </li>
+          </FeatureFlag>
         </ul>
       </nav>
       <FontAwesomeIcon className="margin-left-2 margin-right-1" color="#0166ab" icon={faArrowLeft} />

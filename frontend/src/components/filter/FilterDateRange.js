@@ -1,71 +1,146 @@
-import React from 'react';
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
-import DateRangeSelect, { formatDateRange } from '../DateRangeSelect';
-import DatePicker from '../FilterDatePicker';
-import './FilterDateRange.css';
+import {
+  DatePicker,
+  Dropdown,
+} from '@trussworks/react-uswds';
+import moment from 'moment';
+import DateRangePicker from './DateRangePicker';
+import { formatDateRange } from '../../utils';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import FilterErrorContext from './FilterErrorContext';
 
-/**
- * this date picker has bespoke date options
- */
+const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
+const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
+const MIN_DATE = '2020-09-01';
+const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
+
 const DATE_OPTIONS = [
   {
-    label: 'Year to Date',
-    value: 1,
-    range: formatDateRange({ yearToDate: true, forDateTime: true }),
+    label: 'Year to date',
+    value: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
   {
-    label: 'Custom Date Range',
-    value: 2,
-    range: '',
+    label: 'Last thirty days',
+    value: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
   },
 ];
 
 export default function FilterDateRange({
-  id,
   condition,
-  query,
   onApplyDateRange,
+  query,
 }) {
-  const onChange = (dateRange) => {
-    onApplyDateRange(dateRange);
-  };
+  const { setError } = useContext(FilterErrorContext);
 
-  if (condition === 'Is within') {
-    return (
-      <DateRangeSelect
-        options={DATE_OPTIONS}
-        updateDateRange={onApplyDateRange}
-        styleAsSelect
-        onChange={onChange}
-        dateRange={query}
-      />
-    );
-  }
+  // we'll need this to do some of that vanilla stuff
+  const container = useRef();
 
-  let singleDateQuery = '';
+  const isOnChange = (e) => onApplyDateRange(e.target.value);
 
-  if (!Array.isArray(query) && typeof query === 'string' && query.split('-').length === 1) {
-    singleDateQuery = query;
-  }
+  const onChange = (date) => {
+    const d = moment(date, DATE_DISPLAY_FORMAT);
 
-  const onChangeSingleDate = (name, value) => {
-    if (value) {
-      onApplyDateRange(value);
-    } else {
-      onApplyDateRange('');
+    if (!d.isValid()) {
+      setError('Please enter a valid date');
+      return;
     }
+
+    if (d.isBefore(moment(MIN_DATE).format(DATEPICKER_DATE_FORMAT))) {
+      setError('Please enter a valid date');
+      return;
+    }
+
+    if (d.isAfter(moment(MAX_DATE).format(DATEPICKER_DATE_FORMAT))) {
+      setError('Please enter a valid date');
+      return;
+    }
+
+    onApplyDateRange(d.format(QUERY_DATE_FORMAT));
+    setError('');
   };
 
-  return (
-    <span className="border display-flex margin-top-1 ttahub-filter-date-range-single-date">
-      <DatePicker query={singleDateQuery} onUpdateFilter={onChangeSingleDate} id={`filter-date-picker-${id}`} />
-    </span>
-  );
+  let defaultValue = '';
+
+  if (query && moment(query, QUERY_DATE_FORMAT).isValid()) {
+    defaultValue = moment(query, QUERY_DATE_FORMAT).format(DATEPICKER_DATE_FORMAT);
+  }
+
+  switch (condition) {
+    case 'Is':
+      return (
+        <>
+          <label htmlFor="filter-date-range" className="sr-only">
+            date
+          </label>
+          <Dropdown
+            id="filter-date-range"
+            name="filter-date-range"
+            onChange={isOnChange}
+          >
+            {DATE_OPTIONS.map(
+              (dateOption) => (
+                <option
+                  key={dateOption.value}
+                  value={dateOption.value}
+                >
+                  {dateOption.label}
+                </option>
+              ),
+            )}
+          </Dropdown>
+        </>
+      );
+
+    case 'Is within':
+      return (
+        <DateRangePicker
+          query={query}
+          onApply={onApplyDateRange}
+        />
+      );
+    case 'Is before':
+      return (
+        <span ref={container}>
+          <label htmlFor="filter-date-range" className="sr-only">
+            date
+          </label>
+          <DatePicker
+            key="date-range-before"
+            id="filter-date-range"
+            name="filter-date-range"
+            onChange={onChange}
+            minDate={MIN_DATE}
+            maxDate={MAX_DATE}
+            defaultValue={defaultValue}
+          />
+        </span>
+      );
+    case 'Is after':
+      return (
+        <span ref={container}>
+          <label htmlFor="filter-date-range" className="sr-only">
+            date
+          </label>
+          <DatePicker
+            key="date-range-after"
+            id="filter-date-range"
+            name="filter-date-range"
+            onChange={onChange}
+            minDate={MIN_DATE}
+            maxDate={MAX_DATE}
+            defaultValue={defaultValue}
+          />
+        </span>
+      );
+    default:
+      return <input />;
+  }
 }
 
 FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]).isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
-  id: PropTypes.string.isRequired,
+  query: PropTypes.string.isRequired,
 };

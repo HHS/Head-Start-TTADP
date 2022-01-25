@@ -2,15 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import moment from 'moment';
-import { formatDateRange } from '../DateRangeSelect';
 import Tooltip from '../Tooltip';
+import { FILTER_CONFIG } from './constants';
 import './FilterPills.css';
 
 const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+  query: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
+  ]),
   id: PropTypes.string,
 });
 
@@ -23,39 +24,7 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     query,
   } = filter;
 
-  const filterNameLookup = [
-    {
-      topic: 'role',
-      display: 'Specialist',
-      query: () => {
-        if (query.length) {
-          return query.join(', ');
-        }
-        return 'None selected';
-      },
-    },
-    {
-      topic: 'startDate',
-      display: 'Date Range',
-      query: () => {
-        if (query.includes('-')) {
-          return formatDateRange({
-            string: query,
-            withSpaces: false,
-          });
-        }
-        return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
-      },
-    },
-  ];
-
-  const determineFilterName = () => {
-    const topicMatch = filterNameLookup.find((f) => f.topic === topic);
-    if (topicMatch) {
-      return topicMatch.display;
-    }
-    return topic;
-  };
+  const filterName = FILTER_CONFIG.find((f) => f.id === topic).display;
 
   let showToolTip = false;
 
@@ -70,21 +39,20 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
   };
 
   const determineQuery = (keepOriginalLength = true) => {
-    const queryMatch = filterNameLookup.find((f) => f.topic === topic);
+    const queryMatch = FILTER_CONFIG.find((f) => f.id === topic);
     if (queryMatch) {
-      const queryToReturn = queryMatch.query();
+      const queryToReturn = queryMatch.displayQuery(query);
       return keepOriginalLength ? queryToReturn : truncateQuery(queryToReturn);
     }
     return query;
   };
 
-  const filterName = determineFilterName();
   const queryValue = determineQuery();
   const ariaButtonText = `This button removes the filter: ${filterName} ${condition} ${queryValue}`;
   const queryShortValue = determineQuery(false);
 
   return (
-    <span className="text-middle margin-right-05 padding-top-1 margin-bottom-105">
+    <span className="filter-pill text-middle margin-right-05 padding-top-1 margin-bottom-105">
       {isFirst ? null : <strong> AND </strong>}
       <span className="margin-right-05">
         <strong>
@@ -134,21 +102,15 @@ Pill.propTypes = {
 
 /* Filter Pills */
 export default function FilterPills({ filters, onRemoveFilter }) {
-  return (
-    <>
-      {
-        filters.map((filter, index) => (
-          <Pill
-            id={filter.id}
-            key={filter.id}
-            filter={filter}
-            isFirst={index === 0}
-            onRemoveFilter={onRemoveFilter}
-          />
-        ))
-      }
-    </>
-  );
+  return filters.map((filter, index) => (
+    <Pill
+      id={filter.id}
+      key={filter.id}
+      filter={filter}
+      isFirst={index === 0}
+      onRemoveFilter={onRemoveFilter}
+    />
+  ));
 }
 
 FilterPills.propTypes = {

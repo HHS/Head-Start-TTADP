@@ -7,6 +7,10 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
+import UserContext from '../../../UserContext';
+import { SCOPE_IDS } from '../../../Constants';
+
+const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
 describe('Filter Menu', () => {
   afterAll(() => {
@@ -14,8 +18,17 @@ describe('Filter Menu', () => {
   });
 
   const renderFilterMenu = (filters = [], onApplyFilters = jest.fn()) => {
+    const user = {
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: READ_ACTIVITY_REPORTS,
+        },
+      ],
+    };
+
     render(
-      <div>
+      <UserContext.Provider value={{ user }}>
         <h1>Filter menu</h1>
         <div>
           <FilterMenu
@@ -24,7 +37,7 @@ describe('Filter Menu', () => {
             applyButtonAria="apply test filters"
           />
         </div>
-      </div>,
+      </UserContext.Provider>,
     );
   };
 
@@ -112,7 +125,7 @@ describe('Filter Menu', () => {
 
     userEvent.click(button);
 
-    const date = screen.getByRole('textbox', { name: /date/i });
+    let date = screen.getByRole('textbox', { name: /date/i });
     expect(date.value).toBe('10/31/2021');
 
     const topic = screen.getByRole('combobox', { name: 'topic' });
@@ -122,6 +135,12 @@ describe('Filter Menu', () => {
     await screen.findByRole('combobox', { name: 'select a topic and condition first and then select a query' });
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
+
+    const condition = await screen.findByRole('combobox', { name: 'condition' });
+    userEvent.selectOptions(condition, 'Is before');
+
+    date = await screen.findByRole('textbox', { name: /date/i });
+    userEvent.type(date, '10/31/2020');
 
     const addNew = screen.getByRole('button', { name: /Add new filter/i });
     userEvent.click(addNew);
@@ -139,7 +158,7 @@ describe('Filter Menu', () => {
         query: [
           'Family Engagement Specialist',
         ],
-        condition: 'Contains',
+        condition: 'Is',
       },
     ];
 
@@ -154,13 +173,104 @@ describe('Filter Menu', () => {
     const message = await screen.findByText('Show results for the following filters.');
     userEvent.click(message);
 
-    const specialists = await screen.findByRole('button', { name: /toggle the Change filter by specialists menu/i });
-    userEvent.click(specialists);
-
-    const check = await screen.findByRole('checkbox', { name: /select health specialist \(hs\)/i });
-    userEvent.click(check);
-
     expect(message).toBeVisible();
+  });
+
+  it('the clear all button works', async () => {
+    const filters = [
+      {
+        id: 'filter-2',
+        display: '',
+        conditions: [],
+        topic: 'role',
+        query: [
+          'Family Engagement Specialist',
+        ],
+        condition: 'Is',
+      },
+      {
+        id: 'filter-3',
+        display: '',
+        conditions: [],
+        topic: 'programSpecialist',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-4',
+        display: '',
+        conditions: [],
+        topic: 'grantNumber',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-5',
+        display: '',
+        conditions: [],
+        topic: 'programType',
+        query: ['EHS'],
+        condition: 'Is',
+      },
+      {
+        id: 'filter-6',
+        display: '',
+        conditions: [],
+        topic: 'reason',
+        query: ['COVID-19 response'],
+        condition: 'Is',
+      },
+      {
+        id: 'filter-7',
+        display: '',
+        conditions: [],
+        topic: 'recipient',
+        query: '',
+        condition: 'Contains',
+      },
+      {
+        id: 'filter-8',
+        display: '',
+        conditions: [],
+        topic: 'targetPopulations',
+        query: [],
+        condition: 'Is',
+      },
+      {
+        id: 'filter-9',
+        display: '',
+        conditions: [],
+        topic: 'topic',
+        query: [],
+        condition: 'Is',
+      },
+      {
+        id: 'filter-10',
+        display: '',
+        conditions: [],
+        topic: 'stateCode',
+        query: [],
+        condition: 'Contains',
+      },
+    ];
+
+    renderFilterMenu(filters);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    let topics = await screen.findAllByRole('combobox', { name: 'topic' });
+    expect(topics.length).toBe(9);
+
+    const clear = await screen.findByRole('button', { name: /Clear all filters/i });
+    act(() => userEvent.click(clear));
+
+    // findAll errors out here
+    topics = document.querySelectorAll('[name="topic"]');
+    expect(topics.length).toBe(0);
   });
   it('validates input and sets focus', async () => {
     const filters = [
