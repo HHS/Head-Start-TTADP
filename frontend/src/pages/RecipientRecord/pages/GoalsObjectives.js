@@ -8,7 +8,7 @@ export default function GoalsObjectives({ recipientId }) {
   const [filters, setFilters] = useState([
     {
       topic: 'region',
-      condition: 'Contains',
+      condition: 'Is',
       query: '1',
     },
   ]);
@@ -27,7 +27,7 @@ export default function GoalsObjectives({ recipientId }) {
           Goals and Objectives
         </title>
       </Helmet>
-      <div className="margin-x-2 maxw-widescreen">
+      <div id="goalsObjectives" className="margin-x-2 maxw-widescreen">
         <GoalsTable
           recipientId={recipientId}
           filters={filters}

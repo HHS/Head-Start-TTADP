@@ -101,7 +101,7 @@ const renderTable = (user) => {
             filters={[{
               id: '1',
               topic: 'region',
-              condition: 'Contains',
+              condition: 'Is',
               query: '1',
             }]}
             recipientId={recipientId}
