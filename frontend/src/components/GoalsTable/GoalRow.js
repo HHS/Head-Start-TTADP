@@ -71,21 +71,21 @@ function GoalRow({
 
   const getGoalStatusIcon = () => {
     if (!goalStatus) {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#c5c5c5" icon={faExclamationCircle} />;
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
     }
     if (goalStatus === 'In Progress') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#0166ab" icon={faClock} />;
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
     } if (goalStatus === 'Completed') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#148439" icon={faCheckCircle} />;
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
     }
     if (goalStatus === 'Draft') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#475260" icon={faPencilAlt} />;
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#475260" icon={faPencilAlt} />;
     }
     if (goalStatus === 'Not Started') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#e2a04d" icon={faMinusCircle} />;
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
     }
     if (goalStatus === 'Ceased/Suspended') {
-      return <FontAwesomeIcon className="margin-right-1" size="16px" color="#b50908" icon={faTimesCircle} />;
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#b50908" icon={faTimesCircle} />;
     }
     return null;
   };
@@ -188,15 +188,18 @@ function GoalRow({
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
-  goalStatus: PropTypes.string.isRequired,
+  goalStatus: PropTypes.string,
   createdOn: PropTypes.string.isRequired,
   goalText: PropTypes.string.isRequired,
   goalTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
-  objectiveCount: PropTypes.string.isRequired,
+  objectiveCount: PropTypes.number.isRequired,
   goalNumber: PropTypes.string.isRequired,
 });
 
+goalPropTypes.defaultProps = {
+  goalStatus: null,
+};
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
   openMenuUp: PropTypes.bool.isRequired,

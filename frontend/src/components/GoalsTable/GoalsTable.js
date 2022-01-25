@@ -137,7 +137,7 @@ function GoalsTable({
         <TableHeader
           title="TTA goals and objectives"
           onUpdateFilters={onUpdateFilters}
-          count={goalsCount}
+          count={goalsCount || 0}
           activePage={activePage}
           offset={offset}
           perPage={perPage}
