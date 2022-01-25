@@ -1,5 +1,7 @@
-import db, { Grant } from '../models';
-import { cdiGrants, grantById, assignCDIGrant } from './grant';
+import db, { Grant, Region, Recipient } from '../models';
+import {
+  cdiGrants, grantById, assignCDIGrant, statesByGrantRegion,
+} from './grant';
 
 const grants = [
   {
@@ -23,15 +25,66 @@ const grants = [
     cdi: false,
     regionId: 13,
   },
+  {
+    id: 278,
+    recipientId: 129129,
+    number: 'grant278',
+    cdi: false,
+    regionId: 129129,
+    stateCode: null,
+  },
+  {
+    id: 279,
+    recipientId: 129129,
+    number: 'grant279',
+    cdi: false,
+    regionId: 129129,
+    stateCode: 'FM',
+  },
+  {
+    id: 280,
+    recipientId: 129129,
+    number: 'grant280',
+    cdi: false,
+    regionId: 129129,
+    stateCode: 'GA',
+  },
+  {
+    id: 281,
+    recipientId: 129129,
+    number: 'grant281',
+    cdi: false,
+    regionId: 129130,
+    stateCode: 'RI',
+  },
 ];
 
 describe('Grant DB service', () => {
   beforeAll(async () => {
+    await Recipient.create({ name: 'recipient', id: 129129 });
+    await Region.create(
+      {
+        id: 129129,
+        name: 'office 14',
+      },
+    );
+    await Region.create(
+      {
+        id: 129130,
+        name: 'office 15',
+      },
+    );
     await Promise.all(grants.map((g) => Grant.create(g)));
   });
 
   afterAll(async () => {
     await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
+    await Region.destroy({
+      where: {
+        id: [129129, 129130],
+      },
+    });
+    await Recipient.destroy({ where: { id: 129130 } });
     await db.sequelize.close();
   });
 
@@ -64,6 +117,13 @@ describe('Grant DB service', () => {
       const foundRecipients = await cdiGrants('true');
       const foundIds = foundRecipients.map((g) => g.id);
       expect(foundIds.length).toBe(5);
+    });
+  });
+
+  describe('statesByGrantRegion', () => {
+    it('returns the correct state codes given a region', async () => {
+      const codes = await statesByGrantRegion([129129]);
+      expect(codes).toStrictEqual(['FM', 'GA']);
     });
   });
 });

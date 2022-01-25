@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const reasons = [
@@ -26,6 +27,8 @@ export const reasonsToMonitor = [
   'Monitoring | Area of Concern',
 ];
 
+=======
+>>>>>>> main
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
@@ -53,22 +56,6 @@ export const otherEntityParticipants = [
   'State Early Learning System',
   'State Head Start Association',
   'Other',
-];
-
-// Note that if this topic list is changed, it needs also to be changed in
-// - src/constants.js
-export const targetPopulations = [
-  'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
-  '--------------------',
-  'Affected by Child Welfare Involvement',
-  'Affected by Disaster',
-  'Affected by Substance Use',
-  'Children Experiencing Homelessness',
-  'Children with Disabilities',
-  'Children with Special Health Care Needs',
-  'Dual-Language Learners',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in

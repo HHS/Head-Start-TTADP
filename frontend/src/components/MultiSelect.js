@@ -20,7 +20,7 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
@@ -28,6 +28,7 @@ import { Controller } from 'react-hook-form/dist/index.ie11';
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
+import useSpellCheck from '../hooks/useSpellCheck';
 
 export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
@@ -59,18 +60,13 @@ function MultiSelect({
 }) {
   const inputId = `select-${uuidv4()}`;
 
-  useEffect(() => {
-    /**
-     * unfortunately, given our support for ie11, we can't
-     * upgrade to react-select v5, which support a spellcheck
-     * attribute. Here is an awkward solution I've concocted
-     * in it's stead.
-     */
-    const input = document.querySelector(`#${inputId}`);
-    if (input) {
-      input.setAttribute('spellcheck', 'true');
-    }
-  });
+  /**
+   * unfortunately, given our support for ie11, we can't
+   * upgrade to react-select v5, which support a spellcheck
+   * attribute. Here is an awkward solution I've concocted
+   * in it's stead.
+  */
+  useSpellCheck(inputId);
 
   const styles = {
     container: (provided, state) => {

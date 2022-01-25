@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-
-import { Switch, Route } from 'react-router';
 import { Helmet } from 'react-helmet';
+import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
@@ -14,9 +13,8 @@ import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
 
-export default function RecipientRecord({ match, location }) {
-  const { recipientId } = match.params;
-  const regionId = new URLSearchParams(location.search).get('region');
+export default function RecipientRecord({ match }) {
+  const { recipientId, regionId } = match.params;
 
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
@@ -94,7 +92,7 @@ export default function RecipientRecord({ match, location }) {
             </h1>
             <Switch>
               <Route
-                path="/recipient-tta-records/:recipientId/tta-history"
+                path="/recipient-tta-records/:recipientId/region/:regionId/tta-history"
                 render={() => (
                   <TTAHistory
                     recipientId={recipientId}
@@ -104,7 +102,7 @@ export default function RecipientRecord({ match, location }) {
                 )}
               />
               <Route
-                path="/recipient-tta-records/:recipientId/profile"
+                path="/recipient-tta-records/:recipientId/region/:regionId/profile"
                 render={() => (
                   <Profile
                     recipientName={recipientName}
@@ -115,7 +113,7 @@ export default function RecipientRecord({ match, location }) {
               />
               <FeatureFlag flag="recipient_goals_objectives">
                 <Route
-                  path="/recipient-tta-records/:recipientId/goals-objectives"
+                  path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives"
                   render={() => (
                     <GoalsObjectives
                       recipientId={recipientId}
@@ -133,7 +131,6 @@ export default function RecipientRecord({ match, location }) {
 
 RecipientRecord.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
-  location: ReactRouterPropTypes.location.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
