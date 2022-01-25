@@ -110,6 +110,7 @@ export default function RegionalDashboard() {
               'Participants',
               'Hours of TTA',
             ]}
+            showTooltips
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>

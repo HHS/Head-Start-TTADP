@@ -64,10 +64,32 @@ Field.defaultProps = {
 
 const DASHBOARD_FIELDS = {
   'Activity reports': {
-    render: (data, showTooltip) => <Field key="activity-reports" showTooltip={showTooltip} tooltipText="The total number of approved activity reports." icon={faChartBar} iconColor="#148439" backgroundColor="#F0FCF4" label="Activity reports" data={data.numReports} />,
+    render: (data, showTooltip) => (
+      <Field
+        key="activity-reports"
+        showTooltip={showTooltip}
+        tooltipText="The total number of approved activity reports."
+        icon={faChartBar}
+        iconColor="#148439"
+        backgroundColor="#F0FCF4"
+        label="Activity reports"
+        data={data.numReports}
+      />
+    ),
   },
   'Grants served': {
-    render: (data) => <Field key="grants-served" showTooltip={false} icon={faBuilding} iconColor="#2B7FB9" backgroundColor="#E2EFF7" label="Grants served" data={data.numGrants} />,
+    render: (data, showTooltip) => (
+      <Field
+        key="grants-served"
+        showTooltip={showTooltip}
+        icon={faBuilding}
+        iconColor="#2B7FB9"
+        backgroundColor="#E2EFF7"
+        label="Grants served"
+        tooltipText="Grants served"
+        data={data.numGrants}
+      />
+    ),
   },
   Participants: {
     render: (data, showTooltip) => <Field key="participants" showTooltip={showTooltip} tooltipText="The total number of people involved in all activities." icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
