@@ -112,7 +112,7 @@ async function saveReportRecipients(
   }
 
   await ActivityRecipient.bulkCreate(newRecipients, { transaction, ignoreDuplicates: true });
-  await ActivityRecipient.destroy({ where, transaction });
+  await ActivityRecipient.destroy({ where }, { transaction });
 }
 
 async function saveNotes(activityReportId, notes, isRecipientNotes, transaction) {
@@ -126,7 +126,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes, transaction)
     },
   };
   // Remove any notes that are no longer relevant
-  await NextStep.destroy({ where, transaction });
+  await NextStep.destroy({ where }, { transaction });
 
   if (notes.length > 0) {
     // If a note has an id, and its content has changed, update to the newer content

@@ -397,12 +397,9 @@ export async function unlockReport(req, res) {
     }
 
     // Unlocking resets all Approving Managers to NEEDS_ACTION status.
-    await sequelize.transaction(async (transaction) => {
-      await ActivityReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
-        where: { activityReportId },
-        individualHooks: true,
-        transaction,
-      });
+    await ActivityReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
+      where: { activityReportId },
+      individualHooks: true,
     });
 
     res.sendStatus(204);
@@ -445,12 +442,9 @@ export async function submitReport(req, res) {
     approverAssignedNotification(savedReport, currentApprovers);
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await sequelize.transaction(async (transaction) => {
-      await ActivityReportApprover.update({ status: null }, {
-        where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
-        individualHooks: true,
-        transaction,
-      });
+    await ActivityReportApprover.update({ status: null }, {
+      where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
+      individualHooks: true,
     });
 
     const response = await ActivityReportModel.findByPk(activityReportId, {
