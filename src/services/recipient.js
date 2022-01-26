@@ -159,57 +159,69 @@ export async function getGoalsByActivityRecipient(
     sortBy = 'createdOn', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
   },
 ) {
-  const { count, rows } = await Goal.findAndCountAll(
-    {
-      required: true,
-      attributes: ['id', 'name', 'status', 'createdAt'],
-      include: [
-        {
-          attributes: ['id', 'title', 'ttaProvided', 'status'],
-          model: Objective,
-          as: 'objectives',
-          required: true,
-          include: [
-            {
-              attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
-              model: ActivityReport,
-              as: 'activityReports',
-              required: true,
-              include: [
-                {
-                  attributes: ['id', 'activityReportId', 'grantId'],
-                  model: ActivityRecipient,
-                  as: 'activityRecipients',
-                  required: true,
-                  include: [
-                    {
-                      model: Grant,
-                      as: 'grant',
-                      attributes: ['id', 'recipientId'],
-                      required: true,
-                      where: { recipientId },
-                      duplicating: true,
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        }],
-      order: orderGoalsBy(sortBy, sortDir),
-      limit,
-      offset,
-      distinct: true,
-    },
-    {
-      subQuery: false,
-    },
-  );
+  const limitNum = parseInt(limit, 10);
+  const offSetNum = parseInt(offset, 10);
+
+  const rows = await Goal.findAll({
+    required: true,
+    attributes: ['id', 'name', 'status', 'createdAt'],
+    include: [
+      {
+        attributes: ['id', 'title', 'ttaProvided', 'status'],
+        model: Objective,
+        as: 'objectives',
+        required: true,
+        include: [
+          {
+            attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
+            model: ActivityReport,
+            as: 'activityReports',
+            required: true,
+            include: [
+              {
+                attributes: ['id', 'activityReportId', 'grantId'],
+                model: ActivityRecipient,
+                as: 'activityRecipients',
+                required: true,
+                include: [
+                  {
+                    model: Grant,
+                    as: 'grant',
+                    attributes: ['id', 'recipientId'],
+                    required: true,
+                    where: { recipientId },
+                    duplicating: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }],
+    order: orderGoalsBy(sortBy, sortDir),
+    distinct: true,
+    subQuery: false,
+  });
 
   // Build Array of Goals.
   const goalRows = [];
+  let goalCount = 0;
+  const count = rows.length;
+
+  /*
+    We need to handle paging ourselves.
+    If subQuery: false is not set
+    query perf drops dramatically.
+  */
+  // Offset our rows array.
+  if (offset > 0) {
+    rows.splice(1, offSetNum);
+  }
 
   rows.forEach((g) => {
+    if (goalCount === limitNum) {
+      return;
+    }
     const goalToAdd = {
       id: g.id,
       goalStatus: g.status,
@@ -247,6 +259,7 @@ export async function getGoalsByActivityRecipient(
       });
     }
     goalRows.push(goalToAdd);
+    goalCount += 1;
   });
 
   return { count, goalRows };
