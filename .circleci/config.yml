@@ -2,7 +2,6 @@ version: 2.1
 orbs:
   node: circleci/node@4.1.0
   browser-tools: circleci/browser-tools@1.2.3
-  slack: circleci/slack@4.5.1
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
@@ -239,19 +238,7 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
-      - when:
-          condition:
-            or:
-              - and:
-                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
-              - and:
-                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
-                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1                
+             
   test_frontend:    
     executor: docker-executor    
     steps:
@@ -269,20 +256,7 @@ jobs:
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
-          path: frontend/coverage/
-      - when:
-          condition:
-            or:
-              - and:
-                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
-              - and:
-                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
-                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
-          steps:
-            - slack/notify:
-                event: fail
-                template: basic_fail_1                
+          path: frontend/coverage/           
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -540,11 +514,9 @@ workflows:
     jobs:
       - build_and_lint      
       - test_backend:
-          context: ohs-eng-daily-scan-slack
           requires:
             - build_and_lint
-      - test_frontend:
-          context: ohs-eng-daily-scan-slack
+      - test_frontend: 
           requires:
             - build_and_lint
       - dynamic_security_scan:
