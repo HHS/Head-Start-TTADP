@@ -38,27 +38,31 @@ describe('Filter Pills', () => {
 
       // Role.
       expect(await screen.findByText(/contains/i)).toBeVisible();
-      expect(await screen.findByRole('button', { name: /this button removes the filter: specialist contains/i })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /this button removes the filter: specialist roles contains/i })).toBeVisible();
 
       // Date.
       expect(await screen.findByText(/date range/i)).toBeVisible();
       expect(await screen.findByText(/is within/i)).toBeVisible();
       expect(await screen.findByText(/10\/01\/2021-10\/31\/2021/i)).toBeVisible();
-      expect(await screen.findByRole('button', { name: /this button removes the filter: date range is within 10\/01\/2021-10\/31\/2021/i })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /this button removes the filter: date range is within/i })).toBeVisible();
     });
 
     it('removes filters', async () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Contains',
+        condition: 'Is',
         query: [],
+        displayQuery: (q) => q.join(', '),
+        display: 'Specialist role',
       },
       {
         id: '2',
         topic: 'startDate',
         condition: 'Is after',
         query: '2021/01/01',
+        displayQuery: (q) => q,
+        display: 'Date range',
       },
       ];
 
@@ -69,7 +73,7 @@ describe('Filter Pills', () => {
       expect(await screen.findByText(/date range/i)).toBeVisible();
 
       // Remove filter pill.
-      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date range is after 01\/01\/2021/i });
+      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date range is after /i });
       userEvent.click(remoteButton);
       expect(onRemoveFilter).toHaveBeenCalledWith('2');
     });
@@ -78,13 +82,15 @@ describe('Filter Pills', () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Contains',
+        condition: 'Is',
         query: ['Specialist 1', 'Specialist 2', 'Specialist 3', 'Specialist 4', 'Specialist 5', 'Specialist 6', 'Specialist 7'],
+        displayQuery: (q) => q.join(', '),
+        display: 'Specialist role',
       },
       ];
 
       renderFilterMenu(filters);
-      expect(await (await screen.findAllByText(/specialist 1, specialist 2, specialist 3\.\.\./i)).length).toBe(2);
+      expect((await screen.findAllByText(/specialist 1, specialist 2, specialist 3\.\.\./i)).length).toBe(2);
     });
   });
 });
