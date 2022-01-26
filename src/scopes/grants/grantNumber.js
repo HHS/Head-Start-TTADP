@@ -1,4 +1,5 @@
-import sequelize, { Op } from 'sequelize';
+import { Op } from 'sequelize';
+import { sequelize } from '../../models';
 
 export function withGrantNumber(grantNumber) {
   const normalizedgrantNumber = `%${sequelize.escape(grantNumber)}%`;
