@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
-import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
+import { beforeStartDate, afterStartDate, activeWithinDates } from './startDate';
 import { withRegion, withoutRegion } from './region';
 import { withRecipientName, withoutRecipientName } from './recipient';
 import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
@@ -31,8 +31,8 @@ export const topicToQuery = {
   startDate: {
     bef: (query) => beforeStartDate(query),
     aft: (query) => afterStartDate(query),
-    win: (query) => withinStartDates(query),
-    in: (query) => withinStartDates(query),
+    win: (query) => activeWithinDates(query),
+    in: (query) => activeWithinDates(query),
   },
   region: {
     in: (query) => withRegion(query),
