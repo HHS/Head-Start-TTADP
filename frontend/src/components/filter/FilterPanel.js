@@ -5,7 +5,7 @@ import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
 
 export default function FilterPanel(props) {
-  const { onRemoveFilter, filters } = props;
+  const { onRemoveFilter, filters, filterConfig } = props;
 
   return (
     <>
@@ -14,6 +14,7 @@ export default function FilterPanel(props) {
         {...props}
       />
       <FilterPills
+        filterConfig={filterConfig}
         filters={filters}
         onRemoveFilter={onRemoveFilter}
       />
