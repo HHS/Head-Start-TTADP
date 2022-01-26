@@ -43,14 +43,14 @@ export default function GrantsList({ summary }) {
       <h2 className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0">Grants</h2>
       <div className="usa-table-container--scrollable margin-0 ttahub-recipient-record-table-container">
         <table className="usa-table usa-table--striped ttahub-recipient-record--table ttahub--recipient-summary-table usa-table--borderless width-full margin-y-1">
-          <caption className="padding-x-3 padding-y-1 sr-only">
+          <caption className="sr-only">
             Grants summary table data
           </caption>
           <thead>
             <tr>
               <th scope="col">Grant number</th>
               <th scope="col">Status</th>
-              <th scope="col">Program type(s)</th>
+              <th scope="col">Programs</th>
               <th scope="col">Program specialist</th>
               <th scope="col">Grant specialist</th>
               <th scope="col">Project start date</th>

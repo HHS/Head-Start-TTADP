@@ -13,7 +13,7 @@ describe('Grants List Widget', () => {
     renderGrantsList({ summaryData });
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /program type\(s\)/i })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project start date/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /program specialist/i })).toBeInTheDocument();
