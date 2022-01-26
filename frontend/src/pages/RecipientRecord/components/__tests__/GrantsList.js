@@ -18,6 +18,7 @@ describe('Grants List Widget', () => {
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /program specialist/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /grant specialist/i })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: /afm/i })).toBeInTheDocument();
   });
   it('renders correctly with data', async () => {
     const summary = {
@@ -38,6 +39,7 @@ describe('Grants List Widget', () => {
           id: 1,
           programSpecialistName: 'Tim',
           grantSpecialistName: 'Sam',
+          annualFundingMonth: 'January',
         },
         {
           name: 'Grant Name 2',
@@ -52,6 +54,7 @@ describe('Grants List Widget', () => {
           endDate: '2021-10-01',
           programSpecialistName: 'Jim',
           grantSpecialistName: 'Joe',
+          annualFundingMonth: null,
         },
       ],
     };
@@ -67,6 +70,7 @@ describe('Grants List Widget', () => {
     expect(await screen.findByRole('cell', { name: /ehs, hs/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /tim/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /sam/i })).toBeInTheDocument();
+    expect(await screen.findByRole('cell', { name: /january/i })).toBeInTheDocument();
 
     // Grant 2.
     expect(await screen.findByText(/grant number 2/i)).toBeInTheDocument();
