@@ -2,7 +2,6 @@ version: 2.1
 orbs:
   node: circleci/node@4.1.0
   browser-tools: circleci/browser-tools@1.2.3
-  slack: circleci/slack@4.5.1
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
