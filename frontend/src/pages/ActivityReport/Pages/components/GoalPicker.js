@@ -105,7 +105,7 @@ const GoalPicker = ({
         fieldSetWrapper
       >
         <Label>
-          Select from existing goal(s), type to create a new goal, or press CTRL+V to paste.
+          Select from existing goal(s) or type to create a new goal.
           <MultiSelect
             name="goals"
             control={control}
