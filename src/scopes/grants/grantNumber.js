@@ -1,20 +1,9 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { expandArrayContains } from './utils';
 
-export function withGrantNumber(grantNumber) {
-  const normalizedgrantNumber = `%${sequelize.escape(grantNumber)}%`;
-  return {
-    number: {
-      [Op.iLike]: normalizedgrantNumber,
-    },
-  };
+export function withGrantNumber(grantNumbers) {
+  return expandArrayContains('number', grantNumbers, false);
 }
 
-export function withoutGrantNumber(grantNumber) {
-  const normalizedgrantNumber = `%${sequelize.escape(grantNumber)}%`;
-  return {
-    number: {
-      [Op.notILike]: normalizedgrantNumber,
-    },
-  };
+export function withoutGrantNumber(grantNumbers) {
+  return expandArrayContains('number', grantNumbers, true);
 }

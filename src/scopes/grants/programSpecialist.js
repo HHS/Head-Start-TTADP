@@ -1,22 +1,9 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import { expandArrayContains } from './utils';
 
-export function withProgramSpecialist(name) {
-  const normalizedName = `%${sequelize.escape(name)}%`;
-
-  return {
-    programSpecialistName: {
-      [Op.iLike]: normalizedName,
-    },
-  };
+export function withProgramSpecialist(names) {
+  return expandArrayContains('programSpecialistName', names, false);
 }
 
-export function withoutProgramSpecialist(name) {
-  const normalizedName = `%${sequelize.escape(name)}%`;
-
-  return {
-    programSpecialistName: {
-      [Op.notILike]: normalizedName,
-    },
-  };
+export function withoutProgramSpecialist(names) {
+  return expandArrayContains('programSpecialistName', names, true);
 }
