@@ -213,8 +213,9 @@ describe('Goals Table', () => {
 
     it('clicking Created On column header sorts', async () => {
       // Asc.
+      const gaolsAsc = [...goals];
       const columnHeaderAsc = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
-      const sortedGoalsAsc = goals.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
+      const sortedGoalsAsc = gaolsAsc.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
       fetchMock.get(
         `/api/recipient/goals/${recipientId}?sortBy=createdOn&sortDir=asc&offset=0&limit=5&region.in[]=1`,
         { count: 6, goalRows: sortedGoalsAsc },
@@ -229,7 +230,8 @@ describe('Goals Table', () => {
 
       // Desc.
       const columnHeaderDesc = await screen.findByRole('button', { name: /created on\. activate to sort descending/i });
-      const sortedGoalsDesc = goals.sort((a, b) => ((a.createdOn < b.createdOn) ? 1 : -1));
+      const gaolsDesc = [...goals];
+      const sortedGoalsDesc = gaolsDesc.sort((a, b) => ((a.createdOn < b.createdOn) ? 1 : -1));
       fetchMock.get(
         `/api/recipient/goals/${recipientId}?sortBy=createdOn&sortDir=desc&offset=0&limit=5&region.in[]=1`,
         { count: 6, goalRows: sortedGoalsDesc },
@@ -243,19 +245,39 @@ describe('Goals Table', () => {
     });
 
     it('clicking Goal status column header sorts', async () => {
-      const columnHeader = await screen.findByRole('button', { name: /goal status\. activate to sort ascending/i });
-      const sortedGoals = goals.sort((a, b) => ((a.goalStatus > b.goalStatus) ? 1 : -1));
+      // Asc.
+      const columnHeaderAsc = await screen.findByRole('button', { name: /goal status\. activate to sort ascending/i });
+      const gaolsAsc = [...goals];
+      const sortedGoalsAsc = gaolsAsc.sort((a, b) => ((a.goalStatus > b.goalStatus) ? 1 : -1));
       fetchMock.get(
         `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&region.in[]=1`,
-        { count: 6, goalRows: sortedGoals },
+        { count: 6, goalRows: sortedGoalsAsc },
       );
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent('In progress');
 
-      fireEvent.click(columnHeader);
+      fireEvent.click(columnHeaderAsc);
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Needs status'));
       await waitFor(() => expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Not started'));
+
+      // Desc (via button press).
+      const gaolsDesc = [...goals];
+      const sortedGoalsDesc = gaolsDesc.sort((a, b) => ((a.goalStatus < b.goalStatus) ? 1 : -1));
+      fetchMock.get(
+        `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=desc&offset=0&limit=5&region.in[]=1`,
+        { count: 6, goalRows: sortedGoalsDesc },
+      );
+
+      const columnHeaderDesc = await screen.findByRole('button', { name: /goal status\. activate to sort descending/i });
+
+      columnHeaderDesc.focus();
+      expect(columnHeaderDesc).toHaveFocus();
+      fireEvent.keyPress(columnHeaderDesc, { key: 'Enter', code: 13, charCode: 13 });
+      await screen.findByText('TTA goals and objectives');
+
+      await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Not started'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Needs status'));
     });
   });
 
@@ -298,11 +320,11 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.get(
         defaultBaseUrlWithRegionOne,
-        { count: 6, goalRows: goals },
+        { count: 6, goalRows: [goals[0], goals[1], goals[2], goals[3], goals[4]] },
       );
       fireEvent.click(pageOne);
-      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('03/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('05/15/2021'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('01/15/2021'));
     });
 
     it('clicking on the second page updates page values', async () => {
