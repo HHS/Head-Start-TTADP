@@ -1,9 +1,25 @@
-/* eslint-disable import/prefer-default-export */
+import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function grantInSubQuery(baseQuery, searchTerms, operator, comparator) {
   return searchTerms.map((term) => sequelize.literal(`"Grant"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)})`));
+}
+
+export function expandArrayContains(key, array, exclude) {
+  const comparator = exclude ? Op.notILike : Op.iLike;
+  const scopes = array.map((member) => {
+    const normalizedMember = `%${member}%`;
+    return {
+      [key]: {
+        [comparator]: normalizedMember, // sequelize escapes this automatically :)
+      },
+    };
+  });
+
+  return {
+    [Op.or]: scopes,
+  };
 }
 
 /**

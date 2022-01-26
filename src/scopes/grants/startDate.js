@@ -18,7 +18,7 @@ export function afterStartDate(date) {
 }
 
 export function activeWithinDates(dates) {
-  return dates.reduce((acc, range) => {
+  const scopes = dates.reduce((acc, range) => {
     if (!range.split) {
       return acc;
     }
@@ -40,4 +40,8 @@ export function activeWithinDates(dates) {
       },
     ];
   }, []);
+
+  return {
+    [Op.or]: scopes,
+  };
 }
