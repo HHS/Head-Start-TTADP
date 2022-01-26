@@ -11,27 +11,27 @@ const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 //   );
 // };
 
-const tryJsonParse = (self, fieldName) => {
-  const data = self.getDataValue(fieldName);
-  if (typeof data === 'object') {
-    Object.entries(data).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        try {
-          data[key] = JSON.parse(value);
-        } catch (e) {
-          data[key] = value;
-        }
-      }
-    });
-  }
-  return data;
-};
+// const tryJsonParse = (self, fieldName) => {
+//   const data = self.getDataValue(fieldName);
+//   if (typeof data === 'object') {
+//     Object.entries(data).forEach(([key, value]) => {
+//       if (typeof value === 'string') {
+//         try {
+//           data[key] = JSON.parse(value);
+//         } catch (e) {
+//           data[key] = value;
+//         }
+//       }
+//     });
+//   }
+//   return data;
+// };
 
 const addAuditTransactionSettings = async (sequelize, instance, options, type, name) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
-  const result = await sequelize.queryInterface.sequelize.query(
+  /* const result = */ await sequelize.queryInterface.sequelize.query(
     `SELECT
       -- Type: ${type} Model: ${name}
       set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
@@ -39,7 +39,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, n
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
     { transaction: options.transaction },
   );
-  //console.log(JSON.stringify(result)); // eslint-disable-line no-console
+  // console.log(JSON.stringify(result)); // eslint-disable-line no-console
 };
 
 const generateAuditModel = (sequelize, model) => {
