@@ -3,20 +3,13 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Tooltip from '../Tooltip';
-import { FILTER_CONFIG } from './constants';
+import { filterConfigProp, filterProp } from './props';
 import './FilterPills.css';
 
-const filterProp = PropTypes.shape({
-  topic: PropTypes.string,
-  condition: PropTypes.string,
-  query: PropTypes.oneOfType([
-    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
-  ]),
-  id: PropTypes.string,
-});
-
 /* Pill */
-export function Pill({ filter, isFirst, onRemoveFilter }) {
+export function Pill({
+  filter, isFirst, onRemoveFilter, filterConfig,
+}) {
   const {
     id,
     topic,
@@ -24,7 +17,7 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
     query,
   } = filter;
 
-  const filterName = FILTER_CONFIG.find((f) => f.id === topic).display;
+  const filterName = filterConfig.find((f) => f.id === topic).display;
 
   let showToolTip = false;
 
@@ -39,7 +32,7 @@ export function Pill({ filter, isFirst, onRemoveFilter }) {
   };
 
   const determineQuery = (keepOriginalLength = true) => {
-    const queryMatch = FILTER_CONFIG.find((f) => f.id === topic);
+    const queryMatch = filterConfig.find((f) => f.id === topic);
     if (queryMatch) {
       const queryToReturn = queryMatch.displayQuery(query);
       return keepOriginalLength ? queryToReturn : truncateQuery(queryToReturn);
@@ -98,10 +91,11 @@ Pill.propTypes = {
   filter: filterProp.isRequired,
   isFirst: PropTypes.bool.isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
+  filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
 };
 
 /* Filter Pills */
-export default function FilterPills({ filters, onRemoveFilter }) {
+export default function FilterPills({ filters, onRemoveFilter, filterConfig }) {
   return filters.map((filter, index) => (
     <Pill
       id={filter.id}
@@ -109,6 +103,7 @@ export default function FilterPills({ filters, onRemoveFilter }) {
       filter={filter}
       isFirst={index === 0}
       onRemoveFilter={onRemoveFilter}
+      filterConfig={filterConfig}
     />
   ));
 }
@@ -116,4 +111,5 @@ export default function FilterPills({ filters, onRemoveFilter }) {
 FilterPills.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onRemoveFilter: PropTypes.func.isRequired,
+  filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
 };

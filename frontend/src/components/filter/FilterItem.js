@@ -4,17 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.css';
 import FilterErrorContext from './FilterErrorContext';
+import { filterProp } from './props';
 
 const CANCEL_ARIA = 'discard changes and close filter menu';
-
-const filterProp = PropTypes.shape({
-  topic: PropTypes.string,
-  condition: PropTypes.string,
-  query: PropTypes.oneOfType([
-    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
-  ]),
-  id: PropTypes.string,
-});
 
 /**
  * The individual filter controls with the set of dropdowns
