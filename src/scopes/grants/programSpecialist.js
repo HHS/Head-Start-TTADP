@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
+import sequelize, { Op } from 'sequelize';
 
 export function withProgramSpecialist(name) {
-  const normalizedName = `%${name}%`;
+  const normalizedName = `%${sequelize.escape(name)}%`;
 
   return {
     programSpecialistName: {
@@ -11,7 +11,7 @@ export function withProgramSpecialist(name) {
 }
 
 export function withoutProgramSpecialist(name) {
-  const normalizedName = `%${name}%`;
+  const normalizedName = `%${sequelize.escape(name)}%`;
 
   return {
     programSpecialistName: {

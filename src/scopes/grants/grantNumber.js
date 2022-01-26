@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
+import sequelize, { Op } from 'sequelize';
 
 export function withGrantNumber(grantNumber) {
-  const normalizedgrantNumber = `%${grantNumber}%`;
+  const normalizedgrantNumber = `%${sequelize.escape(grantNumber)}%`;
   return {
     number: {
       [Op.iLike]: normalizedgrantNumber,
@@ -10,7 +10,7 @@ export function withGrantNumber(grantNumber) {
 }
 
 export function withoutGrantNumber(grantNumber) {
-  const normalizedgrantNumber = `%${grantNumber}%`;
+  const normalizedgrantNumber = `%${sequelize.escape(grantNumber)}%`;
   return {
     number: {
       [Op.notILike]: normalizedgrantNumber,
