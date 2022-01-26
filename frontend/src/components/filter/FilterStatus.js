@@ -2,6 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import FilterSelect from './FilterSelect';
 
+// when/if we use this status filter for a different model, we can pass these in as a prop instead
+// of defining these here
+
 const options = [
   {
     label: 'Needs status',

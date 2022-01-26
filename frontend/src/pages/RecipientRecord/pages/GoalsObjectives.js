@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import useUrlFilters from '../../../hooks/useUrlFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { formatDateRange } from '../../../utils';
+import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
 
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
@@ -29,14 +30,7 @@ export default function GoalsObjectives() {
         <FilterPanel
           onRemoveFilter={onRemoveFilter}
           onApplyFilters={setFilters}
-          allowedFilters={
-          [
-            'status',
-            'createDate',
-            'topic',
-            'reason',
-          ]
-        }
+          filterConfig={GOALS_AND_OBJECTIVES_FILTER_CONFIG}
           applyButtonAria="Apply filters to goals"
           filters={filters}
         />
