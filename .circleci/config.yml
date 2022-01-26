@@ -185,13 +185,6 @@ parameters:
     default: "867346799"
     type: string
 jobs:
-  notify_daily_scan_fail:
-    executor: docker-executor
-    description: "Notify acf-eng on daily scan fail"    
-    steps:
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
   build_and_lint:
     executor: docker-executor
     steps:
@@ -246,8 +239,21 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
-  test_frontend:
-    executor: docker-executor
+      - when:
+          condition:
+            or:
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1                
+  test_frontend:    
+    executor: docker-executor    
     steps:
       - attach_workspace:
           at: .
@@ -264,6 +270,19 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+      - when:
+          condition:
+            or:
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - and:
+                - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
+                - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+          steps:
+            - slack/notify:
+                event: fail
+                template: basic_fail_1                
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -521,13 +540,13 @@ workflows:
     jobs:
       - build_and_lint      
       - test_backend:
+          context: ohs-eng-daily-scan-slack
           requires:
             - build_and_lint
       - test_frontend:
+          context: ohs-eng-daily-scan-slack
           requires:
             - build_and_lint
       - dynamic_security_scan:
           requires:
             - build_and_lint
-      - notify_daily_scan_fail:
-          context: ohs-eng-daily-scan-slack 
