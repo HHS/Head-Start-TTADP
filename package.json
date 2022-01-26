@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "14.18.1"
+    "node": "16.13.1"
   },
   "scripts": {
     "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
@@ -93,7 +93,9 @@
   "resolutions": {
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
-    "follow-redirects": "^1.14.7"
+    "follow-redirects":"^1.14.7",
+    "nanoid": "^3.2.0",
+    "node-fetch": "^2.6.7"
   },
   "eslintConfig": {
     "extends": [
@@ -173,7 +175,7 @@
     "jest-cli": "^26.4.2",
     "jest-junit": "^12.0.0",
     "nodemon": "^2.0.4",
-    "puppeteer": "^8.0.0",
+    "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.0.0",

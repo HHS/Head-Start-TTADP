@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import DropdownMenu from './DropdownMenu';
 import './ButtonSelect.css';
-import './DateRangeSelect.css';
 
 /**
  *
@@ -51,13 +50,25 @@ function ButtonSelect(props) {
   };
 
   // get label text
-  const label = options.find((option) => option.value === applied);
+  const label = () => {
+    const selected = options.find((option) => option.value === applied);
+
+    if (selected) {
+      return selected.label;
+    }
+
+    if (options[0] && options[0].label) {
+      return options[0].label;
+    }
+
+    return '';
+  };
 
   const ariaLabel = `toggle ${ariaName}`;
 
   return (
     <DropdownMenu
-      buttonText={label ? label.label : options[0].label}
+      buttonText={label()}
       buttonAriaLabel={ariaLabel}
       styleAsSelect={styleAsSelect}
       disabled={disabled}

@@ -7,7 +7,6 @@ import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import BarGraph from './BarGraph';
-import ButtonSelect from '../components/ButtonSelect';
 import './FrequencyGraph.css';
 
 const SORT_ORDER = {
@@ -25,81 +24,61 @@ function sortData(data, order) {
   return sortedData;
 }
 
-const TOPIC = 0;
-const REASON = 1;
-
 const TOPIC_STR = 'topics';
 const REASON_STR = 'reasons';
 
 const HEADINGS = {
-  [TOPIC]: ['Topic', 'Count'],
-  [REASON]: ['Reason', 'Count'],
+  [TOPIC_STR]: ['Topic', 'Count'],
+  [REASON_STR]: ['Reason', 'Count'],
 };
 
 export function FreqGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
-  const [selectedGraph, updateSelectedGraph] = useState(TOPIC);
-  const selectedGraphString = selectedGraph === TOPIC ? TOPIC_STR : REASON_STR;
+  const [selectedGraph, updateSelectedGraph] = useState(TOPIC_STR);
 
-  const selectedData = data[selectedGraphString];
+  const selectedData = data[selectedGraph];
   const sortedData = sortData(selectedData, SORT_ORDER.DESC);
   const accessibleRows = sortedData.map((row) => ({ data: [row.category, row.count] }));
 
   const columnHeadings = HEADINGS[selectedGraph];
+  const toggleGraphLabel = selectedGraph === TOPIC_STR ? REASON_STR : TOPIC_STR;
 
   // toggle the data table
-  function toggleType() {
-    updateShowAccessibleData(!showAccessibleData);
+  function toggleAccessibleData() {
+    updateShowAccessibleData((current) => !current);
   }
 
-  const onSelectedGraphChange = (e) => {
-    updateSelectedGraph(e.value);
-  };
+  function toggleSelectedGraph() {
+    updateSelectedGraph((current) => (current === TOPIC_STR ? REASON_STR : TOPIC_STR));
+  }
 
   return (
     <Container className="ttahub--frequency-graph" padding={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
-          <span className="sr-only">
-            {selectedGraphString}
+          <h2 className="display-inline desktop:margin-y-0 margin-left-1" aria-live="polite">
+            {capitalize(selectedGraph)}
             {' '}
-            in Activity reports by frequency
-          </span>
-          <ButtonSelect
-            styleAsSelect
-            labelId="graphType"
-            labelText="Change type of graph"
-            ariaName="change graph type menu"
-            initialValue={{
-              value: TOPIC,
-              label: 'Topics',
-            }}
-            applied={selectedGraph}
-            onApply={onSelectedGraphChange}
-            options={
-              [
-                {
-                  value: TOPIC,
-                  label: 'Topics',
-                },
-                {
-                  value: REASON,
-                  label: 'Reasons',
-                },
-              ]
-            }
-          />
-          <h2 className="display-inline desktop:margin-y-0 margin-left-1" aria-hidden>
-            in Activity Reports by Frequency
+            in activity reports
           </h2>
-        </Grid>
-        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
           <button
             type="button"
-            className="usa-button--unstyled margin-top-2"
-            aria-label={showAccessibleData ? `display number of activity reports by ${selectedGraphString} data as graph` : `display number of activity reports by ${selectedGraphString} data as table`}
-            onClick={toggleType}
+            className="usa-button--unstyled margin-left-2"
+            aria-label={`display number of activity reports by ${toggleGraphLabel}`}
+            onClick={toggleSelectedGraph}
+          >
+            {capitalize(toggleGraphLabel)}
+            {' '}
+            in activity reports
+          </button>
+        </Grid>
+        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
+          <button
+            type="button"
+            className="usa-button--unstyled"
+            aria-label={showAccessibleData ? `display number of activity reports by ${selectedGraph} data as graph` : `display number of activity reports by ${selectedGraph} data as table`}
+            onClick={toggleAccessibleData}
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>
@@ -108,12 +87,12 @@ export function FreqGraph({ data, loading }) {
       { showAccessibleData
         ? (
           <AccessibleWidgetData
-            caption={`Number of Activity Reports by ${selectedGraphString} Table`}
+            caption={`Number of Activity Reports by ${selectedGraph} Table`}
             columnHeadings={columnHeadings}
             rows={accessibleRows}
           />
         )
-        : <BarGraph data={sortedData} xAxisLabel={capitalize(selectedGraphString)} yAxisLabel="Number of Activity Reports" />}
+        : <BarGraph data={sortedData} xAxisLabel={capitalize(selectedGraph)} yAxisLabel="Number of activity reports" />}
     </Container>
   );
 }

@@ -2,15 +2,14 @@ version: 2.1
 orbs:
   node: circleci/node@4.1.0
   browser-tools: circleci/browser-tools@1.2.3
-  slack: circleci/slack@4.5.1
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:14.18.1-browsers
+      - image: circleci/node:16.13.1-browsers
   docker-postgres-executor:
     docker:
-      - image: circleci/node:14.18.1-browsers
+      - image: circleci/node:16.13.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -167,10 +166,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-555-exclude-inactive-grants-with-end-date-greater-than-today"
+    default: "TTAHUB-359/add-filters-to-dashboard"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "js-458-update-be-dependencies"
+    default: "TTAHUB-249/update-node-to-v16"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -185,13 +184,6 @@ parameters:
     default: "867346799"
     type: string
 jobs:
-  notify_daily_scan_fail:
-    executor: docker-executor
-    description: "Notify acf-eng on daily scan fail"    
-    steps:
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
   build_and_lint:
     executor: docker-executor
     steps:
@@ -246,8 +238,9 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
-  test_frontend:
-    executor: docker-executor
+             
+  test_frontend:    
+    executor: docker-executor    
     steps:
       - attach_workspace:
           at: .
@@ -263,7 +256,7 @@ jobs:
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
-          path: frontend/coverage/
+          path: frontend/coverage/           
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -523,11 +516,9 @@ workflows:
       - test_backend:
           requires:
             - build_and_lint
-      - test_frontend:
+      - test_frontend: 
           requires:
             - build_and_lint
       - dynamic_security_scan:
           requires:
             - build_and_lint
-      - notify_daily_scan_fail:
-          context: ohs-eng-daily-scan-slack 
