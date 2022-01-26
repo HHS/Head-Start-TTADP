@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ActivityReport } from '../models';
+import { ActivityReport, sequelize } from '../models';
 import { logger } from '../logger';
 
 /**
@@ -21,6 +21,14 @@ const TOPIC_DICTIONARY = [
   {
     old: 'Curriculum (Early Childhood or Parenting)',
     new: 'Curriculum (Instructional or Parenting)',
+  },
+  {
+    old: 'CLASS / Learning Environments / Classroom Management | ECS',
+    new: 'CLASS: Classroom Organization',
+  },
+  {
+    old: 'Coaching / Teaching / Instructional Support | ECS',
+    new: 'Coaching',
   },
   {
     old: 'Environmental Health and Safety',
@@ -135,6 +143,10 @@ const TOPIC_DICTIONARY = [
     old: 'parent/family engagement/program planning/QIP',
     new: ['Parent and Family Engagement', 'Program Planning and Services', 'Quality Improvement / QIP'],
   },
+  {
+    old: 'T/TA Planning',
+    new: 'Program Planning and Services',
+  },
 ];
 
 export default async function updateTopicNames() {
@@ -150,38 +162,32 @@ export default async function updateTopicNames() {
 
   logger.info(`updateTopicNames: ${reports.length} reports with out of date topics found and updated`);
 
-  // this will hold an array of promises which I
-  // frankly am only using to get the unit test timing to work out
-  const promises = [];
-
+  await sequelize.transaction(async (transaction) => {
   // loop through the found reports
-  reports.forEach(async (report) => {
+    await Promise.all(reports.map(async (report) => {
     // copy existing state
-    let topics = [...report.topics];
+      let topics = [...report.topics];
 
-    // within each report, check our array of topics to rename
-    TOPIC_DICTIONARY.forEach((topic) => {
+      // within each report, check our array of topics to rename
+      TOPIC_DICTIONARY.forEach((topic) => {
       // find the index of the old topic, if it exists
-      const index = topics.indexOf(topic.old);
+        const index = topics.indexOf(topic.old);
 
-      // -1 if it doesn't exist
-      if (index !== -1) {
-        logger.info(`Renaming ${topic.old} to ${topic.new} in ${report.id}`);
-        // mutate our copy
-        if (Array.isArray(topic.new)) {
-          topics.splice(index, 1);
-          topics = topics.concat(topic.new);
-        } else {
-          topics.splice(index, 1, topic.new);
+        // -1 if it doesn't exist
+        if (index !== -1) {
+          logger.info(`Renaming ${topic.old} to ${topic.new} in ${report.id}`);
+          // mutate our copy
+          if (Array.isArray(topic.new)) {
+            topics.splice(index, 1);
+            topics = topics.concat(topic.new);
+          } else {
+            topics.splice(index, 1, topic.new);
+          }
         }
-      }
-    });
+      });
 
-    // push our update operation to our promises array
-    promises.push(report.update({ topics }));
+      // push our update operation to our promises array
+      return report.update({ topics }, { transaction });
+    }));
   });
-
-  // return our updates as an array of promises
-  // (will return an array of updated Activity Report objects)
-  return Promise.all(promises);
 }
