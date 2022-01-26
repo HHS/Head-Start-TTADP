@@ -748,8 +748,8 @@ module.exports = {
               IF obj.command_tag = 'CREATE TABLE'
                 AND obj.object_type = 'table'
                 AND obj.schema_name = 'public'
-                AND obj.object_identity NOT LIKE 'ZAL%' THEN
-                    PERFORM "ZAFAddAuditingOnTable"(obj.object_identity);
+                AND (parse_ident(obj.object_identity))[2] NOT LIKE 'ZAL%' THEN
+                    PERFORM "ZAFAddAuditingOnTable"((parse_ident(obj.object_identity))[2]);
                 END IF;
             END LOOP;
         END
@@ -760,16 +760,16 @@ module.exports = {
           console.error(error); // eslint-disable-line no-console
         });
 
-      // syncronizer = await queryInterface.sequelize.query(
-      //   `CREATE EVENT TRIGGER "ZATAuditCreateTable"
-      //     ON ddl_command_end
-      //     WHEN TAG IN ('SELECT INTO', 'CREATE TABLE', 'CREATE TABLE AS')
-      //     EXECUTE FUNCTION "ZAFAuditCreateTable"();`,
-      //   { transaction },
-      // )
-      //   .catch((error) => {
-      //     console.error(error); // eslint-disable-line no-console
-      //   });
+      syncronizer = await queryInterface.sequelize.query(
+        `CREATE EVENT TRIGGER "ZATAuditCreateTable"
+          ON ddl_command_end
+          WHEN TAG IN ('SELECT INTO', 'CREATE TABLE', 'CREATE TABLE AS')
+          EXECUTE FUNCTION "ZAFAuditCreateTable"();`,
+        { transaction },
+      )
+        .catch((error) => {
+          console.error(error); // eslint-disable-line no-console
+        });
 
       syncronizer = await queryInterface.sequelize.query(
         `SELECT table_name, "ZAFAddAuditingOnTable"(table_name::varchar)
