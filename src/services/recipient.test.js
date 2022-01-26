@@ -381,7 +381,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Eugene',
         status: 'Active',
         grantSpecialistName: 'Eric',
-        annualFundingMonth: 'October',
+        annualFundingMonth: 'January',
       },
       {
         id: 55,
@@ -391,7 +391,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Farrah',
         status: 'Active',
         grantSpecialistName: 'Frank',
-        annualFundingMonth: 'October',
+        annualFundingMonth: null,
       },
       {
         id: 56,
@@ -421,7 +421,7 @@ describe('Recipient DB service', () => {
         status: 'Inactive',
         endDate: new Date(2020, 10, 31),
         grantSpecialistName: 'Allen',
-        annualFundingMonth: 'October',
+        annualFundingMonth: 'November',
       },
       {
         id: 59,
