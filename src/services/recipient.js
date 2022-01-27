@@ -215,7 +215,7 @@ export async function getGoalsByActivityRecipient(
   */
   // Offset our rows array.
   if (offset > 0) {
-    rows.splice(1, offSetNum);
+    rows.splice(0, offSetNum);
   }
 
   rows.forEach((g) => {
