@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   sequelize,
   User,
@@ -186,7 +187,7 @@ describe('Goals by Recipient Test', () => {
           status: null,
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
-          createdAt: new Date('2021-01-10'),
+          createdAt: '2021-01-10T19:16:15.842Z',
         }),
         // goal 2 (AR1)
         await Goal.create({
@@ -194,7 +195,7 @@ describe('Goals by Recipient Test', () => {
           status: 'Not Started',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
-          createdAt: new Date('2021-03-15'),
+          createdAt: '2021-02-15T19:16:15.842Z',
         }),
         // goal 3 (AR1)
         await Goal.create({
@@ -202,7 +203,7 @@ describe('Goals by Recipient Test', () => {
           status: 'Active',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
-          createdAt: new Date('2021-07-03'),
+          createdAt: '2021-03-03T19:16:15.842Z',
         }),
         // goal 4 (AR2)
         await Goal.create({
@@ -210,7 +211,7 @@ describe('Goals by Recipient Test', () => {
           status: 'Active',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
-          createdAt: new Date('2021-01-02'),
+          createdAt: '2021-04-02T19:16:15.842Z',
         }),
         // goal 5 (AR3 Exclude)
         await Goal.create({
@@ -218,7 +219,7 @@ describe('Goals by Recipient Test', () => {
           status: 'Active',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
-          createdAt: new Date('2021-01-02'),
+          createdAt: '2021-05-02T19:16:15.842Z',
         }),
       ],
     );
@@ -403,50 +404,54 @@ describe('Goals by Recipient Test', () => {
       expect(count).toBe(4);
       expect(goalRows.length).toBe(4);
 
-      // Goal 3.
-      expect(goalRows[0].goalText).toBe('Goal 3');
+      // Goal 4.
+      expect(moment(goalRows[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
+      expect(goalRows[0].goalText).toBe('Goal 4');
       expect(goalRows[0].goalNumber).toBe(`R1-G-${goalRows[0].id}`);
-      expect(goalRows[0].objectiveCount).toBe(2);
-      expect(goalRows[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[0].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRows[0].objectiveCount).toBe(1);
+      expect(goalRows[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
+      expect(goalRows[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
+      expect(goalRows[0].objectives.length).toBe(1);
 
-      // Goal 3 Objectives.
-      expect(goalRows[0].objectives.length).toBe(2);
-      expect(goalRows[0].objectives[0].title).toBe('objective 3');
-      expect(goalRows[0].objectives[0].ttaProvided).toBe('Objective for Goal 3');
-      expect(goalRows[0].objectives[0].endDate).toBe('09/01/2020');
-      expect(goalRows[0].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[0].objectives[0].status).toEqual('In Progress');
-
-      expect(goalRows[0].objectives.length).toBe(2);
-      expect(goalRows[0].objectives[1].title).toBe('objective 4');
-      expect(goalRows[0].objectives[1].ttaProvided).toBe('Objective for Goal 3 b');
-      expect(goalRows[0].objectives[1].endDate).toBe('09/01/2020');
-      expect(goalRows[0].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[0].objectives[1].status).toEqual('Completed');
-
-      // Goal 2.
-      expect(goalRows[1].goalText).toBe('Goal 2');
+      // Goal 3.
+      expect(moment(goalRows[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
+      expect(goalRows[1].goalText).toBe('Goal 3');
       expect(goalRows[1].goalNumber).toBe(`R1-G-${goalRows[1].id}`);
-      expect(goalRows[1].objectiveCount).toBe(1);
+      expect(goalRows[1].objectiveCount).toBe(2);
       expect(goalRows[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRows[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRows[1].objectives.length).toBe(1);
 
-      // Goal 1.
-      expect(goalRows[2].goalText).toBe('Goal 1');
+      // Goal 3 Objectives.
+      expect(goalRows[1].objectives.length).toBe(2);
+      expect(goalRows[1].objectives[0].title).toBe('objective 3');
+      expect(goalRows[1].objectives[0].ttaProvided).toBe('Objective for Goal 3');
+      expect(goalRows[1].objectives[0].endDate).toBe('09/01/2020');
+      expect(goalRows[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRows[1].objectives[0].status).toEqual('In Progress');
+
+      expect(goalRows[1].objectives.length).toBe(2);
+      expect(goalRows[1].objectives[1].title).toBe('objective 4');
+      expect(goalRows[1].objectives[1].ttaProvided).toBe('Objective for Goal 3 b');
+      expect(goalRows[1].objectives[1].endDate).toBe('09/01/2020');
+      expect(goalRows[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRows[1].objectives[1].status).toEqual('Completed');
+
+      // Goal 2.
+      expect(moment(goalRows[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
+      expect(goalRows[2].goalText).toBe('Goal 2');
       expect(goalRows[2].goalNumber).toBe(`R1-G-${goalRows[2].id}`);
       expect(goalRows[2].objectiveCount).toBe(1);
       expect(goalRows[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRows[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRows[2].objectives.length).toBe(1);
 
-      // Goal 4.
-      expect(goalRows[3].goalText).toBe('Goal 4');
+      // Goal 1.
+      expect(moment(goalRows[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
+      expect(goalRows[3].goalText).toBe('Goal 1');
       expect(goalRows[3].goalNumber).toBe(`R1-G-${goalRows[3].id}`);
       expect(goalRows[3].objectiveCount).toBe(1);
-      expect(goalRows[3].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
-      expect(goalRows[3].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
+      expect(goalRows[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRows[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRows[3].objectives.length).toBe(1);
     });
   });
