@@ -167,34 +167,33 @@ export async function getGoalsByActivityRecipient(
     attributes: ['id', 'name', 'status', 'createdAt'],
     include: [
       {
-        attributes: ['id', 'title', 'ttaProvided', 'status'],
-        model: Objective,
-        as: 'objectives',
+        model: Grant,
+        as: 'grants',
+        attributes: ['id', 'recipientId'],
         required: true,
+        where: { recipientId },
+        duplicating: true,
         include: [
           {
-            attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
-            model: ActivityReport,
-            as: 'activityReports',
+            attributes: ['id', 'activityReportId', 'grantId'],
+            model: ActivityRecipient,
+            as: 'activityRecipients',
             required: true,
             include: [
               {
-                attributes: ['id', 'activityReportId', 'grantId'],
-                model: ActivityRecipient,
-                as: 'activityRecipients',
+                attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
+                model: ActivityReport,
                 required: true,
                 include: [
                   {
-                    model: Grant,
-                    as: 'grant',
-                    attributes: ['id', 'recipientId'],
+                    attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],
+                    model: Objective,
+                    as: 'objectives',
                     required: true,
-                    where: { recipientId },
-                    duplicating: true,
+                    where: { goalId: { [Op.eq]: sequelize.col('Goal.id') } },
                   },
                 ],
-              },
-            ],
+              }],
           },
         ],
       }],
@@ -233,27 +232,35 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       objectives: [],
     };
-
-    if (g.objectives) {
-      // Objectives.
-      goalToAdd.objectiveCount = g.objectives.length;
-      g.objectives.forEach((o) => {
-        if (o.activityReports) {
-          // Activity Reports.
-          o.activityReports.forEach((a) => {
-            goalToAdd.goalNumber = `R${a.regionId}-G-${g.id}`;
-            goalToAdd.goalTopics = a.topics;
-            goalToAdd.reasons = a.reason;
-            // Add Objective.
-            goalToAdd.objectives.push({
-              id: o.id,
-              title: o.title,
-              arNumber: a.displayId,
-              ttaProvided: o.ttaProvided,
-              endDate: a.endDate,
-              reasons: a.reason,
-              status: o.status,
-            });
+    // Grants.
+    if (g.grants) {
+      g.grants.forEach((gr) => {
+        // Activity Recipients.
+        if (gr.activityRecipients) {
+          gr.activityRecipients.forEach((a) => {
+            // Activity Report.
+            if (a.ActivityReport) {
+              goalToAdd.goalNumber = `R${a.ActivityReport.regionId}-G-${g.id}`;
+              goalToAdd.goalTopics = a.ActivityReport.topics;
+              goalToAdd.reasons = a.ActivityReport.reason;
+              // Objectives.
+              if (a.ActivityReport.objectives) {
+                goalToAdd.objectiveCount = a.ActivityReport.objectives.length;
+                if (a.ActivityReport.objectives) {
+                  a.ActivityReport.objectives.forEach((o) => {
+                    goalToAdd.objectives.push({
+                      id: o.id,
+                      title: o.title,
+                      arNumber: a.displayId,
+                      ttaProvided: o.ttaProvided,
+                      endDate: a.ActivityReport.endDate,
+                      reasons: a.ActivityReport.reason,
+                      status: o.status,
+                    });
+                  });
+                }
+              }
+            }
           });
         }
       });
