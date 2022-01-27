@@ -55,7 +55,7 @@ export default function GrantsList({ summary }) {
               <th scope="col">Grant specialist</th>
               <th scope="col">Project start date</th>
               <th scope="col">Project end date</th>
-              <th scope="col">AFM</th>
+              <th scope="col">Annual funding month</th>
             </tr>
           </thead>
           <tbody>

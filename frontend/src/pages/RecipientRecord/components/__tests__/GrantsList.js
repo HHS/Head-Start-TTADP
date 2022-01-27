@@ -18,7 +18,7 @@ describe('Grants List Widget', () => {
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /program specialist/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /grant specialist/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /afm/i })).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader', { name: /annual funding month/i })).toBeInTheDocument();
   });
   it('renders correctly with data', async () => {
     const summary = {
