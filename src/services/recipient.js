@@ -12,7 +12,7 @@ import {
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
-// import filtersToScopes from '../scopes';
+import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 
 export async function allRecipients() {
@@ -156,15 +156,23 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
 export async function getGoalsByActivityRecipient(
   recipientId,
   {
-    sortBy = 'createdOn', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, // ...filters
+    sortBy = 'createdOn', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
   },
 ) {
+  // Scopes.
+  const scopes = filtersToScopes(filters, 'goal');
+
+  // Paging.
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
+  // Get Goals.
   const rows = await Goal.findAll({
     required: true,
     attributes: ['id', 'name', 'status', 'createdAt'],
+    where: {
+      [Op.and]: scopes,
+    },
     include: [
       {
         model: Grant,

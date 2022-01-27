@@ -1,23 +1,31 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Helmet } from 'react-helmet';
+import PropTypes from 'prop-types';
+import useUrlFilters from '../../../hooks/useUrlFilters';
+import FilterPanel from '../../../components/filter/FilterPanel';
+import { formatDateRange } from '../../../utils';
+import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 
 export default function GoalsObjectives({ recipientId }) {
   // eslint-disable-next-line no-unused-vars
-  const [filters, setFilters] = useState([
-    {
-      topic: 'region',
-      condition: 'Is',
-      query: '1',
-    },
-  ]);
+  const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
-  // eslint-disable-next-line no-unused-vars
-  const handleApplyFilters = (newFilters) => {
-    // setFilters([...newFilters, regionFilter(appliedRegion)]);
-    // eslint-disable-next-line max-len
-    // ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
+  const [filters, setFilters] = useUrlFilters([{
+    id: uuidv4(),
+    topic: 'createDate',
+    condition: 'Is within',
+    query: yearToDate,
+  }]);
+
+  const onRemoveFilter = (id) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      setFilters(newFilters);
+    }
   };
 
   return (
@@ -27,12 +35,22 @@ export default function GoalsObjectives({ recipientId }) {
           Goals and Objectives
         </title>
       </Helmet>
-      <div id="goalsObjectives" className="margin-x-2 maxw-widescreen">
-        <GoalsTable
-          recipientId={recipientId}
-          filters={filters}
-          onUpdateFilters={handleApplyFilters}
-        />
+      <div className="margin-x-2 maxw-widescreen" id="goalsObjectives">
+        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
+          <FilterPanel
+            onRemoveFilter={onRemoveFilter}
+            onApplyFilters={setFilters}
+            filterConfig={GOALS_AND_OBJECTIVES_FILTER_CONFIG}
+            applyButtonAria="Apply filters to goals"
+            filters={filters}
+          />
+        </div>
+        <div id="goalsObjectives">
+          <GoalsTable
+            recipientId={recipientId}
+            filters={filters}
+          />
+        </div>
       </div>
     </>
   );

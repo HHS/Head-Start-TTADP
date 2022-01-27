@@ -8,6 +8,8 @@
 import React from 'react';
 import AutosizeInput from 'react-input-autosize';
 
+import './GoalInput.css';
+
 const inputStyle = (isHidden) => ({
   label: 'input',
   background: 0,
@@ -17,6 +19,7 @@ const inputStyle = (isHidden) => ({
   outline: 0,
   padding: 0,
   color: 'inherit',
+  width: '100%',
 });
 
 const Input = ({
@@ -45,16 +48,18 @@ const Input = ({
     message = `${selectedGoals} goals selected`;
   }
 
+  const cssClasses = `${cx({ input: true }, className)} width-full smart-hub--dark-placeholder`;
+
   return (
     <>
       <AutosizeInput
-        className={cx({ input: true }, className)}
+        className={cssClasses}
         inputRef={innerRef}
         inputStyle={inputStyle(isHidden)}
         disabled={isDisabled}
+        placeholder={message}
         {...props}
       />
-      {message}
     </>
   );
 };
