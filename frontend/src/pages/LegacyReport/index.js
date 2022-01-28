@@ -1,19 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Table } from '@trussworks/react-uswds';
+import { Alert, Button, Table } from '@trussworks/react-uswds';
 import { map } from 'lodash';
 
 import Container from '../../components/Container';
 import FileReviewItem from '../ActivityReport/Pages/Review/FileReviewItem';
 import { legacyReportById } from '../../fetchers/activityReports';
 import reportColumns from './reportColumns';
+import UserContext from '../../UserContext';
+import { canEditLegacyReports } from '../../permissions';
+import EditMode from './EditMode';
 
 function LegacyReport({ match }) {
   const { params: { legacyId } } = match;
   const [legacyReport, updateLegacyReport] = useState();
   const [loading, updateLoading] = useState(true);
   const [error, updateError] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -67,31 +73,36 @@ function LegacyReport({ match }) {
     </tr>
   ));
 
+  const toggleEditMode = () => setEditMode(!editMode);
+
   return (
     <>
       <Helmet>
         <title>Legacy Report</title>
       </Helmet>
       <Container>
+        { canEditLegacyReports(user) && <Button onClick={toggleEditMode} className="float-right margin-2" type="button" outline>Edit</Button> }
         <h2>
           Legacy report
           {' '}
           {legacyId}
         </h2>
-        <Table className="usa-table">
-          <thead>
-            <tr key="heading">
-              <th scope="col" className="width-card">
-                Field
-              </th>
-              <th scope="col">
-                Value
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableEntries}
-            {attachments && attachments.length > 0
+        { editMode ? <EditMode report={legacyReport} />
+          : (
+            <Table className="usa-table">
+              <thead>
+                <tr key="heading">
+                  <th scope="col" className="width-card">
+                    Field
+                  </th>
+                  <th scope="col">
+                    Value
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableEntries}
+                {attachments && attachments.length > 0
               && (
               <tr>
                 <th scope="row" className="text-top">Attachments</th>
@@ -112,8 +123,9 @@ function LegacyReport({ match }) {
                 </td>
               </tr>
               )}
-          </tbody>
-        </Table>
+              </tbody>
+            </Table>
+          )}
       </Container>
     </>
   );

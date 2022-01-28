@@ -1,6 +1,13 @@
 import _ from 'lodash';
 import { SCOPE_IDS } from './Constants';
 
+const canEditLegacyReports = (user) => {
+  const permissions = _.get(user, 'permissions');
+  return permissions && permissions.find(
+    (p) => p.scopeId === SCOPE_IDS.EDIT_LEGACY_REPORTS,
+  ) !== undefined;
+};
+
 /**
  * Search the user's permissions for an ADMIN scope
  * @param {*} - user object
@@ -127,4 +134,5 @@ export {
   getRegionWithReadWrite,
   hasReadWrite,
   getUserRegions,
+  canEditLegacyReports,
 };

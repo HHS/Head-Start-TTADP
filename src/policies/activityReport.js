@@ -26,6 +26,10 @@ export default class ActivityReport {
   }
 
   canUpdate() {
+    if (this.canEditLegacy() && this.isLegacy()) {
+      return true;
+    }
+
     return (this.isAuthor() || this.isCollaborator())
       && this.canWriteInRegion()
       && this.reportHasEditableStatus();
@@ -124,6 +128,17 @@ export default class ActivityReport {
     }
     const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
     return approverUserIds.includes(this.user.id);
+  }
+
+  canEditLegacy() {
+    const scope = this.user.permissions.find(
+      (permission) => permission.scopeId === SCOPES.EDIT_LEGACY_REPORTS,
+    );
+    return !_.isUndefined(scope);
+  }
+
+  isLegacy() {
+    return this.activityReport.imported !== null;
   }
 
   reportHasEditableStatus() {

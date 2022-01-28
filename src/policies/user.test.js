@@ -1,3 +1,4 @@
+import { describe } from 'yargs';
 import User from './user';
 import SCOPES from '../middleware/scopeConstants';
 
@@ -74,4 +75,8 @@ describe('User policies', () => {
       expect(policy.canSeeBehindFeatureFlag('grantee_record_page')).toBeTruthy();
     });
   });
+});
+
+describe('can write legacy reports', () => {
+  // todo- write test
 });

@@ -38,4 +38,11 @@ export default class Users {
     );
     return !_.isUndefined(permissions);
   }
+
+  canEditLegacyReports() {
+    const permissions = this.user.permissions.find(
+      (permission) => (permission.scopeId === SCOPES.EDIT_LEGACY_REPORTS),
+    );
+    return !_.isUndefined(permissions);
+  }
 }

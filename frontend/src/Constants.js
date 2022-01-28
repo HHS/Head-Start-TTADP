@@ -37,6 +37,7 @@ export const SCOPE_IDS = {
   READ_ACTIVITY_REPORTS: 4,
   APPROVE_ACTIVITY_REPORTS: 5,
   UNLOCK_APPROVED_REPORTS: 6,
+  EDIT_LEGACY_REPORTS: 7,
 };
 
 export const REGIONAL_SCOPES = {
@@ -66,6 +67,10 @@ export const GLOBAL_SCOPES = {
   [SCOPE_IDS.UNLOCK_APPROVED_REPORTS]: {
     name: 'UNLOCK_APPROVED_REPORTS',
     description: 'User can unlock approved reports.',
+  },
+  [SCOPE_IDS.EDIT_LEGACY_REPORTS]: {
+    name: 'EDIT_LEGACY_REPORTS',
+    description: 'User can edit legacy reports.',
   },
 };
 
