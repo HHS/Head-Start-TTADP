@@ -21,7 +21,6 @@ describe('goal filtersToScopes', () => {
       topics: [],
       region: 15,
     });
-
     reportWithReasons = await createReport({
       calculatedStatus: 'approved',
       reason: ['Full Enrollment'],
@@ -62,10 +61,18 @@ describe('goal filtersToScopes', () => {
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
         }),
-        // goal for startDate
+        // goal for status
         await Goal.create({
           name: 'Goal 4',
           status: null,
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          createdAt: new Date('2021-01-02'),
+        }),
+        // goal for startDate
+        await Goal.create({
+          name: 'Goal 5',
+          status: 'Ceased/Suspended',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-10'),
@@ -178,10 +185,11 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(3);
+      expect(found.length).toBe(4);
       expect(found.map((g) => g.name)).toContain('Goal 1');
       expect(found.map((g) => g.name)).toContain('Goal 2');
       expect(found.map((g) => g.name)).toContain('Goal 3');
+      expect(found.map((g) => g.name)).toContain('Goal 4');
     });
 
     it('after', async () => {
@@ -199,7 +207,7 @@ describe('goal filtersToScopes', () => {
       });
 
       expect(found.length).toBe(1);
-      expect(found.map((g) => g.name)).toContain('Goal 4');
+      expect(found.map((g) => g.name)).toContain('Goal 5');
     });
 
     it('within', async () => {
@@ -217,30 +225,13 @@ describe('goal filtersToScopes', () => {
       });
 
       expect(found.length).toBe(1);
-      expect(found.map((g) => g.name)).toContain('Goal 4');
+      expect(found.map((g) => g.name)).toContain('Goal 5');
     });
   });
 
   describe('status', () => {
     it('filters in by status', async () => {
-      const filters = { 'status.in': 'Active' };
-      const scope = filtersToScopes(filters, 'goal');
-      const found = await Goal.findAll({
-        where: {
-          [Op.and]: [
-            scope,
-            {
-              id: possibleGoalIds,
-            },
-          ],
-        },
-      });
-
-      expect(found.length).toBe(1);
-      expect(found.map((g) => g.name)).toContain('Goal 3');
-    });
-    it('filters out by status', async () => {
-      const filters = { 'status.nin': 'Active' };
+      const filters = { 'status.in': ['Active', 'Needs Status'] };
       const scope = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
@@ -255,7 +246,27 @@ describe('goal filtersToScopes', () => {
 
       expect(found.length).toBe(3);
       expect(found.map((g) => g.name)).toContain('Goal 1');
+      expect(found.map((g) => g.name)).toContain('Goal 3');
+      expect(found.map((g) => g.name)).toContain('Goal 4');
+    });
+    it('filters out by status', async () => {
+      const filters = { 'status.nin': 'Ceased/Suspended' };
+      const scope = filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(4);
+      expect(found.map((g) => g.name)).toContain('Goal 1');
       expect(found.map((g) => g.name)).toContain('Goal 2');
+      expect(found.map((g) => g.name)).toContain('Goal 3');
       expect(found.map((g) => g.name)).toContain('Goal 4');
     });
   });
@@ -290,7 +301,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(3);
+      expect(found.length).toBe(4);
       expect(found.map((g) => g.name)).not.toContain('Goal 1');
     });
   });
@@ -327,7 +338,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(3);
+      expect(found.length).toBe(4);
       expect(found.map((g) => g.name)).not.toContain('Goal 2');
     });
   });
