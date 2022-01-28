@@ -7,7 +7,7 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
+// import selectEvent from 'react-select-event';
 import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
 
