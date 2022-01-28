@@ -29,9 +29,12 @@ router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 router.use((req, res, next) => {
   const { userId } = req.session;
   const transactionId = uuidv4();
+  const sessionSig = req.headers.cookie.split(' ')[1].replace('session.sig=', '');
+
   httpContext.set('loggedUser', userId);
   httpContext.set('transactionId', transactionId);
-  auditLogger.info(`Audit Data loggedUser: ${userId}`);
+  httpContext.set('sessionSig', sessionSig);
+  // auditLogger.info(`Audit Data loggedUser: ${userId}`);
   next();
 });
 
