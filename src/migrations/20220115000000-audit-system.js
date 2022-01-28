@@ -333,6 +333,11 @@ module.exports = {
           allowNull: false,
           validate: { isUUID: 'all' },
         },
+        session_sig: {
+          type: Sequelize.STRING,
+          allowNull: true,
+          defaultValue: null,
+        },
         descriptor_id: {
           type: Sequelize.INTEGER,
           allowNull: true,
@@ -464,6 +469,7 @@ module.exports = {
                   dml_timestamp timestamp NOT NULL,
                   dml_by int NOT NULL,
                   dml_txid uuid NOT NULL,
+                  session_sig varchar NULL,
                   descriptor_id INT,
                   PRIMARY KEY (id)
                   );$sql$,
@@ -490,6 +496,7 @@ module.exports = {
                 DECLARE
                     CREATED_BY bigint;
                     TRANSACTION_ID uuid;
+                    SESSION_SIG varchar;
                     DESCRIPTOR_ID int;
                     UNIQUE_OLD jsonb;
                     UNIQUE_NEW jsonb;
@@ -500,6 +507,8 @@ module.exports = {
                     TRANSACTION_ID := COALESCE(
                         NULLIF(current_setting('audit.transactionId', true),'')::uuid,
                         lpad(txid_current()::text,32,'0')::uuid);
+
+                    SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::VARCHAR;
 
                     DESCRIPTOR_ID := "ZAFDescriptorToID"(
                         NULLIF(current_setting('audit.auditDescriptor', true), '')::TEXT);
@@ -513,6 +522,7 @@ module.exports = {
                             dml_timestamp,
                             dml_by,
                             dml_txid,
+                            session_sig,
                             descriptor_id
                         )
                         VALUES(
@@ -523,6 +533,7 @@ module.exports = {
                             CURRENT_TIMESTAMP,
                             CREATED_BY,
                             TRANSACTION_ID,
+                            SESSION_SIG,
                             DESCRIPTOR_ID
                         );
 
@@ -560,6 +571,7 @@ module.exports = {
                             dml_timestamp,
                             dml_by,
                             dml_txid,
+                            session_sig,
                             descriptor_id
                         )
                         VALUES(
@@ -570,6 +582,7 @@ module.exports = {
                             CURRENT_TIMESTAMP,
                             CREATED_BY,
                             TRANSACTION_ID,
+                            SESSION_SIG,
                             DESCRIPTOR_ID
                         );
                         END IF;
@@ -583,6 +596,7 @@ module.exports = {
                         dml_timestamp,
                         dml_by,
                         dml_txid,
+                        session_sig,
                         descriptor_id
                     )
                     VALUES(
@@ -593,6 +607,7 @@ module.exports = {
                         CURRENT_TIMESTAMP,
                         CREATED_BY,
                         TRANSACTION_ID,
+                        SESSION_SIG,
                         DESCRIPTOR_ID
                     );
 
@@ -649,6 +664,7 @@ module.exports = {
               DECLARE
                 CREATED_BY bigint;
                 TRANSACTION_ID uuid;
+                SESSION_SIG varchar;
                 DESCRIPTOR_ID int;
               BEGIN
                 CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
@@ -656,6 +672,8 @@ module.exports = {
                 TRANSACTION_ID := COALESCE(
                     current_setting('var.transactionId', true)::uuid,
                     lpad(txid_current()::text,32,'0')::uuid);
+
+                SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::VARCHAR;
 
                 DESCRIPTOR_ID := "ZAFDescriptorToID"(
                     NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
@@ -677,6 +695,7 @@ module.exports = {
                   ddl_timestamp,
                   ddl_by,
                   ddl_txid,
+                  session_sig,
                   descriptor_id)
               VALUES (
                   'TRUNCATE'
@@ -686,6 +705,7 @@ module.exports = {
                   CURRENT_TIMESTAMP,
                   CREATED_BY,
                   TRANSACTION_ID,
+                  SESSION_SIG,
                   DESCRIPTOR_ID);
               END;
               $body$;$sql$,

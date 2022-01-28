@@ -30,12 +30,14 @@ const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 const addAuditTransactionSettings = async (sequelize, instance, options, type, name) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
+  const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
   /* const result = */ await sequelize.queryInterface.sequelize.query(
     `SELECT
       -- Type: ${type} Model: ${name}
       set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', '${transactionId}', TRUE) as "transactionId",
+      set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
     { transaction: options.transaction },
   );

@@ -6,7 +6,7 @@ describe('Audit models', () => {
   });
 
   describe('audit user model', () => {
-    const ids = [60, 61, 62, 63];
+    let transaction;
 
     describe('default scope', () => {
       const users = [
@@ -29,6 +29,7 @@ describe('Audit models', () => {
       ];
 
       beforeEach(async () => {
+        transaction = await db.sequelize.transaction();
         await Promise.all(
           users.map((u) => User.create({
             id: u.id,
@@ -40,23 +41,51 @@ describe('Audit models', () => {
       });
 
       afterEach(async () => {
-        await User.destroy({ where: { id: ids } });
+        transaction.rollback();
+        // await User.destroy({ where: { id: ids } });
       });
 
-      it('Properly orders users', async () => {
-        const foundAuditUsers = await ZALUser.findAll({ where: { data_id: ids } });
-        const auditedUserIds = foundAuditUsers.map((au) => parseInt(au.data_id, 10));
-        auditedUserIds.sort();
-        const auditedUserDMLType = foundAuditUsers.map((au) => au.dml_type);
-        const auditedUserNames = foundAuditUsers.map((au) => au.new_row_data.name);
-        auditedUserNames.sort();
-        // const foundUsers = await User.findAll({
-        //   where: { id: ids },
-        // });
-        // const names = foundAuditUsers.map((u) => u.name);
-        expect(auditedUserIds).toEqual([60, 61, 62, 63]);
-        expect(auditedUserDMLType).toEqual(['INSERT', 'INSERT', 'INSERT', 'INSERT']);
-        expect(auditedUserNames).toEqual(['a', 'b', 'c', 'd']);
+      it('Added users in audit record', async () => {
+        const auditUsers = await ZALUser.findAll({
+          where: { data_id: users.map((u) => u.id) },
+          transaction,
+        });
+        const dmlType = auditUsers.map((au) => au.dml_type);
+        dmlType.sort();
+        expect(dmlType).toEqual(['INSERT', 'INSERT', 'INSERT', 'INSERT']);
+
+        const data = auditUsers.map((au) => ({
+          id: parseInt(au.data_id, 10),
+          name: au.new_row_data.name,
+        }));
+        data.sort((a, b) => ((a.id > b.id) ? 1 : -1));
+        expect(data).toEqual(users);
+      });
+
+      it('Modified users in audit record', async () => {
+        await User.update(
+          { name: 'z', email: 'z@z.com' },
+          {
+            where: { id: users[0].id },
+            transaction,
+          },
+        );
+
+        const auditUsers = await ZALUser.findAll({
+          where: { data_id: users[0].id, dml_type: 'UPDATE' },
+          transaction,
+        });
+
+        const data = auditUsers.map((au) => ({
+          id: parseInt(au.data_id, 10),
+          oldName: au.old_row_data.name,
+          newName: au.new_row_data.name,
+        }));
+        data.sort((a, b) => ((a.id > b.id) ? 1 : -1));
+
+        const modified = [{ id: users[0].id, oldName: users[0].name, newName: 'z' }];
+
+        expect(data).toEqual(modified);
       });
     });
   });
