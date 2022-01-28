@@ -353,4 +353,39 @@ describe('Goals Table', () => {
       await waitFor(() => expect(screen.getByText(/6-6 of 6/i)).toBeVisible());
     });
   });
+
+  describe('Context Menu', () => {
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get(
+        defaultBaseUrlWithRegionOne,
+        { count: 1, goalRows: [goals[0]] },
+      );
+      renderTable(defaultUser);
+      await screen.findByText('TTA goals and objectives');
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      fetchMock.restore();
+    });
+
+    it('Removes Focus on Blur', async () => {
+      // Set Focus on Context Button.
+      const contextButton = await screen.findByRole('button', { name: /actions for goal 4598/i });
+      fireEvent.click(contextButton);
+      contextButton.focus();
+
+      // Verify Focused Class Set.
+      const status = await screen.findByRole('cell', { name: /in progress/i });
+      expect(status.parentElement).toHaveClass('focused');
+
+      // Remove Focus by setting focus on another Element.
+      const next = await screen.findByRole('link', { name: /go to next page/i });
+      next.focus();
+
+      // Focus class should be removed.
+      expect(status.parentElement).not.toHaveClass('focused');
+    });
+  });
 });
