@@ -121,7 +121,7 @@ function GoalsTable({
     );
   };
 
-  const displayGoals = goals.length ? goals : [];
+  const displayGoals = goals && goals.length ? goals : [];
 
   return (
     <>
