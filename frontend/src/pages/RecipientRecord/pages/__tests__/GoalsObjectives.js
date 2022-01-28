@@ -7,7 +7,7 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-// import selectEvent from 'react-select-event';
+import selectEvent from 'react-select-event';
 import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
 
@@ -49,6 +49,19 @@ describe('Goals and Objectives', () => {
   },
   ];
 
+  const filterStatusGoals = [
+    {
+      id: 4599,
+      goalStatus: 'Not Started',
+      createdOn: '07/15/2021',
+      goalText: 'This is goal text 2.',
+      goalTopics: ['Program Planning and Services'],
+      objectiveCount: 1,
+      goalNumber: 'R14-G-4599',
+      reasons: ['Monitoring | Deficiency'],
+    },
+  ];
+
   const renderGoalsAndObjectives = () => {
     render(
       <Router history={memoryHistory}>
@@ -62,6 +75,11 @@ describe('Goals and Objectives', () => {
     // Default.
     const goalsUrl = `/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
+
+    // Filters Status.
+    const filterStatusUrl = '/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&status.in[]=Not%20started';
+    fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
+
     // No Filters.
     const noFilterUrl = '/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
@@ -82,7 +100,35 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
   });
 
-  it('renders when filter is removed', async () => {
+  it('renders correctly when filter is changed', async () => {
+    // Default with 2 Rows.
+    const goalsUrl = `/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&createDate.win=${yearToDate}`;
+    fetchMock.get(goalsUrl, { count: 2, goalRows: noFilterGoals }, { overwriteRoutes: true });
+
+    act(() => renderGoalsAndObjectives());
+
+    expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
+    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
+
+    // Change Filter and Apply.
+    userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'status');
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
+
+    const statusSelect = await screen.findByLabelText(/select status to filter by/i);
+    await selectEvent.select(statusSelect, ['Not started']);
+
+    const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
+    userEvent.click(apply);
+
+    // Expect 1 Row.
+    expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
+    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/not started/i);
+  });
+
+  it('renders correctly when filter is removed', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
     const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
