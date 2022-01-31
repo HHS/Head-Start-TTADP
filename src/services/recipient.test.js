@@ -6,7 +6,6 @@ import {
   allRecipients, recipientById, recipientsByName, updateRecipientGoalStatusById,
 } from './recipient';
 import filtersToScopes from '../scopes';
-// import { createReport } from '../testUtils';
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -522,120 +521,34 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
     });
   });
+});
 
-  describe('Change Goal Status', () => {
-    // let reportWithGoal;
-    let goal;
-    // let objectiveIds;
+describe('Change Goal Status', () => {
+  let goal;
 
-    beforeAll(async () => {
-      // Create Report.
-      /*
-      reportWithGoal = await createReport({
-        calculatedStatus: 'approved',
-        reason: ['Full Enrollment'],
-        topics: ['CLASS: Emotional Support'],
-        activityRecipients: [],
-        region: 15,
-      });
-*/
-
-      // Create Goal.
-      goal = await Goal.create({
-        name: 'Goal with Objectives',
-        status: 'Not Started',
-        timeframe: '12 months',
-        isFromSmartsheetTtaPlan: false,
-        createdAt: new Date('2021-01-02'),
-      });
-
-      /*
-      // Create Objectives.
-      const objectives = await Promise.all(
-        [
-          // Objective 1.
-          await Objective.create({
-            goalId: goal.id,
-            title: 'objective 1',
-            ttaProvided: 'asdfadf',
-            status: 'In Progress',
-          }),
-          // Objective 2.
-          await Objective.create({
-            goalId: goal.id,
-            title: 'objective 2',
-            ttaProvided: 'asdfadf',
-            status: 'In Progress',
-
-          }),
-          // Objective 3.
-          await Objective.create({
-            goalId: goal.id,
-            title: 'objective 3',
-            ttaProvided: 'asdfadf',
-            status: 'In Progress',
-          }),
-        ],
-      );
-
-      // Link Objectives to AR.
-      await Promise.all(
-        [
-          // goal for reasons
-          await ActivityReportObjective.create({
-            objectiveId: objectives[0].id,
-            activityReportId: reportWithGoal.id,
-          }),
-          // goal for topics
-          await ActivityReportObjective.create({
-            objectiveId: objectives[1].id,
-            activityReportId: reportWithGoal.id,
-          }),
-          // goal for status
-          await ActivityReportObjective.create({
-            objectiveId: objectives[2].id,
-            activityReportId: reportWithGoal.id,
-          }),
-        ],
-      );
-      // Get list of objective and goals for clean up.
-      objectiveIds = objectives.map((o) => o.id);
-      */
+  beforeAll(async () => {
+    // Create Goal.
+    goal = await Goal.create({
+      name: 'Goal with Objectives',
+      status: 'Not Started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      createdAt: new Date('2021-01-02'),
     });
+  });
 
-    afterAll(async () => {
-      /*
-      // Cleanup AR Objectives.
-      await ActivityReportObjective.destroy({
-        where: {
-          activityReportId: reportWithGoal,
-        },
-      });
-
-      // Cleanup Objectives.
-      await Objective.destroy({
-        where: {
-          id: objectiveIds,
-        },
-      });
-*/
-
-      // Cleanup Goal.
-      await Goal.destroy({
-        where: {
-          id: goal.id,
-        },
-      });
-
-      // Cleanup AR.
-      // await ActivityReport.destroy(reportWithGoal);
-
-      await sequelize.close();
+  afterAll(async () => {
+    // Cleanup Goal.
+    await Goal.destroy({
+      where: {
+        id: goal.id,
+      },
     });
-    it('Updates goal status', async () => {
-      const newStatus = 'In Progress';
-      const updatedGoal = await updateRecipientGoalStatusById(goal.id.toString(), newStatus);
-      expect(updatedGoal.status).toEqual(newStatus);
-    });
+    await sequelize.close();
+  });
+  it('Updates goal status', async () => {
+    const newStatus = 'In Progress';
+    const updatedGoal = await updateRecipientGoalStatusById(goal.id.toString(), newStatus);
+    expect(updatedGoal.status).toEqual(newStatus);
   });
 });
