@@ -11,11 +11,13 @@ import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
+import { updateRecipientGoalStatus } from '../../fetchers/recipient';
 import './GoalRow.css';
 
 function GoalRow({
   goal,
   openMenuUp,
+  updateGoal,
 }) {
   const {
     id,
@@ -122,6 +124,11 @@ function GoalRow({
     },
   ];
 
+  const onUpdateGoalStatus = async (status) => {
+    const updatedGoal = await updateRecipientGoalStatus(id, status);
+    updateGoal(updatedGoal);
+  };
+
   const determineAvailableMenuItems = () => {
     const menuItemsToDisplay = availableMenuItems.filter((m) => m.status === displayStatus);
 
@@ -131,7 +138,7 @@ function GoalRow({
       menuItemsToReturn = menuItemsToDisplay[0].values.map((v) => (
         {
           label: v,
-          onClick: () => { console.log(`Clicked on ${v}`); },
+          onClick: () => { onUpdateGoalStatus(v); },
         }
       ));
     }
@@ -247,5 +254,6 @@ goalPropTypes.defaultProps = {
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
   openMenuUp: PropTypes.bool.isRequired,
+  updateGoal: PropTypes.func.isRequired,
 };
 export default GoalRow;

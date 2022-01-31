@@ -409,6 +409,48 @@ describe('Goals Table', () => {
       fetchMock.restore();
     });
 
+    it('Sets goal status', async () => {
+      fetchMock.reset();
+      fetchMock.put('/api/recipient/goals/4598', {
+        id: 4598,
+        goalStatus: 'Completed',
+        createdOn: '06/15/2021',
+        goalText: 'This is goal text 1.',
+        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+        objectiveCount: 5,
+        goalNumber: 'R14-G-4598',
+        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      });
+
+      /*
+      fetchMock.get(
+        defaultBaseUrlWithRegionOne,
+        {
+          count: 1,
+          goalRows: [{
+            id: 4598,
+            goalStatus: 'Completed',
+            createdOn: '06/15/2021',
+            goalText: 'This is goal text 1.',
+            goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+            objectiveCount: 5,
+            goalNumber: 'R14-G-4598',
+            reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+          }],
+        }, { overwriteRoutes: true },
+      );
+      */
+
+      // Open Context Menu.
+      const contextButton = await screen.findByRole('button', { name: /actions for goal 4598/i });
+      fireEvent.click(contextButton);
+
+      // Change goal status to 'Closed'.
+      const closeGoalButton = await screen.findByText(/close goal/i);
+      fireEvent.click(closeGoalButton);
+      await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Closed'));
+    });
+
     it('Removes Focus on Blur', async () => {
       // Set Focus on Context Button.
       const contextButton = await screen.findByRole('button', { name: /actions for goal 4598/i });
