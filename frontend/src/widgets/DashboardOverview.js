@@ -106,7 +106,7 @@ const DASHBOARD_FIELDS = {
         key="recipients-served"
         icon={faUser}
         showTooltip={showTooltip}
-        label={`${data.numRecipients} recipients of ${data.totalRecipients}`}
+        label={`${data.numRecipients} ${data.numRecipients === 1 ? 'Recipient' : 'Recipients'} of ${data.totalRecipients}`}
         iconColor="#A12854"
         backgroundColor="#FFE8F0"
         tooltipText="Percentage of recipients served out of active grants"

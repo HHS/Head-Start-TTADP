@@ -107,8 +107,8 @@ export default function RegionalDashboard() {
             filters={filtersToApply}
             fields={[
               'Recipients served',
-              'Activity reports',
               'Grants served',
+              'Activity reports',
               'Participants',
               'Hours of TTA',
             ]}
