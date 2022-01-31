@@ -1,4 +1,6 @@
-import { getGoalsByActivityRecipient, recipientById, recipientsByName } from '../../services/recipient';
+import {
+  getGoalsByActivityRecipient, recipientById, recipientsByName, updateRecipientGoalStatusById,
+} from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
@@ -56,6 +58,23 @@ export async function getGoalsByRecipient(req, res) {
     }
 
     res.json(recipient);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function changeRecipientGoalStatus(req, res) {
+  try {
+    const { goalId } = req.params;
+    const { newStatus } = req.body;
+    const updatedGoal = await updateRecipientGoalStatusById(goalId, newStatus);
+
+    if (!updatedGoal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(updatedGoal);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
