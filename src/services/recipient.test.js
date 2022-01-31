@@ -335,6 +335,7 @@ describe('Recipient DB service', () => {
         status: 'Active',
         endDate: new Date(2020, 10, 2),
         grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
       },
       {
         id: 51,
@@ -344,6 +345,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Belle',
         status: 'Active',
         grantSpecialistName: 'Ben',
+        annualFundingMonth: 'October',
       },
       {
         id: 52,
@@ -353,6 +355,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Caesar',
         status: 'Active',
         grantSpecialistName: 'Cassie',
+        annualFundingMonth: 'October',
       },
       {
         id: 53,
@@ -362,6 +365,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Doris',
         status: 'Active',
         grantSpecialistName: 'David',
+        annualFundingMonth: 'October',
       },
       {
         id: 54,
@@ -371,6 +375,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Eugene',
         status: 'Active',
         grantSpecialistName: 'Eric',
+        annualFundingMonth: 'January',
       },
       {
         id: 55,
@@ -380,6 +385,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Farrah',
         status: 'Active',
         grantSpecialistName: 'Frank',
+        annualFundingMonth: null,
       },
       {
         id: 56,
@@ -389,6 +395,7 @@ describe('Recipient DB service', () => {
         programSpecialistName: 'Aaron',
         status: 'Active',
         grantSpecialistName: 'Brom',
+        annualFundingMonth: 'October',
       },
       {
         id: 57,
@@ -397,6 +404,7 @@ describe('Recipient DB service', () => {
         number: '12352',
         programSpecialistName: 'Jim',
         status: 'Inactive',
+        annualFundingMonth: 'October',
       },
       {
         id: 58,
@@ -407,8 +415,8 @@ describe('Recipient DB service', () => {
         status: 'Inactive',
         endDate: new Date(2020, 10, 31),
         grantSpecialistName: 'Allen',
+        annualFundingMonth: 'November',
       },
-
       {
         id: 59,
         recipientId: 69,
@@ -418,6 +426,7 @@ describe('Recipient DB service', () => {
         status: 'Inactive',
         endDate: new Date(moment().add(2, 'days').format('MM/DD/yyyy')),
         grantSpecialistName: 'Bill Smith',
+        annualFundingMonth: 'October',
       },
       {
         id: 60,
@@ -428,6 +437,7 @@ describe('Recipient DB service', () => {
         status: 'Inactive',
         endDate: new Date(moment().format('MM/DD/yyyy')),
         grantSpecialistName: 'Bill Smith',
+        annualFundingMonth: 'October',
       },
       {
         id: 61,
@@ -438,6 +448,7 @@ describe('Recipient DB service', () => {
         status: 'Inactive',
         endDate: new Date('08/31/2020'),
         grantSpecialistName: 'Joe Allen',
+        annualFundingMonth: 'October',
       },
     ];
 
