@@ -123,6 +123,11 @@ function GoalsTable({
 
   const displayGoals = goals && goals.length ? goals : [];
 
+  const updateGoal = (newGoal) => {
+    const newGoals = goals.map((obj) => (obj.id === newGoal.id ? newGoal : obj));
+    setGoals(newGoals);
+  };
+
   return (
     <>
       <Grid row>
@@ -165,6 +170,7 @@ function GoalsTable({
                   key={goal.id}
                   goal={goal}
                   openMenuUp={index > displayGoals.length - 1}
+                  updateGoal={updateGoal}
                 />
               ))}
             </tbody>

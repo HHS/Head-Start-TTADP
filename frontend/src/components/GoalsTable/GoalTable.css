@@ -66,6 +66,10 @@
   border-right: 1px solid #c5c5c5;
 }
 
+.goals-table .usa-table td:nth-child(3) {
+  min-width: 500px;
+}
+
 .goals-table .usa-table .usa-checkbox__label {
   padding-left: 0;
 }

@@ -1,5 +1,5 @@
 import join from 'url-join';
-import { get } from './index';
+import { get, put } from './index';
 import { DECIMAL_BASE, GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../utils';
 
@@ -38,4 +38,11 @@ export const getRecipientGoals = async (recipientId, sortBy = 'updatedAt', sortD
   const recipientGoalsUrl = join(recipientUrl, 'goals', recipientId);
   const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
   return goals.json();
+};
+
+export const updateRecipientGoalStatus = async (goalId, newStatus) => {
+  // After the goal data change more than likely updating a goal will require a recipient id.
+  const recipientGoalsUrl = join(recipientUrl, 'goals', goalId.toString());
+  const updatedGoal = await put(recipientGoalsUrl, { newStatus });
+  return updatedGoal.json();
 };
