@@ -29,6 +29,7 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
+import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -232,25 +233,8 @@ function Landing() {
     },
   ];
 
-  const getAllowedFilters = () => {
-    const allowedFilters = [
-      'startDate',
-      'grantNumber',
-      'programSpecialist',
-      'programType',
-      'reason',
-      'recipient',
-      'reportId',
-      'role',
-      'stateCode',
-      'targetPopulations',
-      'topic',
-    ];
-    if (hasMultipleRegions) {
-      allowedFilters.push('region');
-    }
-    return allowedFilters;
-  };
+  const filterConfig = hasMultipleRegions
+    ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
 
   return (
     <>
@@ -297,7 +281,7 @@ function Landing() {
               onApplyFilters={onApply}
               dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
-              allowedFilters={getAllowedFilters()}
+              filterConfig={filterConfig}
             />
           </Grid>
         </Grid>

@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { map, pickBy } from 'lodash';
+import { createFiltersToScopes } from '../utils';
 import { beforeGrantStartDate, afterGrantStartDate, withinGrantStartDates } from './startDate';
 import withGrantsRegion from './region';
 
@@ -15,13 +15,5 @@ export const topicToQuery = {
 };
 
 export function grantsReportFiltersToScopes(filters) {
-  const validFilters = pickBy(filters, (query, topicAndCondition) => {
-    const [topic] = topicAndCondition.split('.');
-    return topic in topicToQuery;
-  });
-
-  return map(validFilters, (query, topicAndCondition) => {
-    const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition]([query].flat());
-  });
+  return createFiltersToScopes(filters, topicToQuery);
 }
