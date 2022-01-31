@@ -2,6 +2,12 @@
   position: relative;
 }
 
+.tta-smarthub--goal-row  .smart-hub--context-menu {
+  width: 180px;
+  /*box-shadow: 0.25rem 0.5rem 0 rgb(0 0 0 / 10%);*/
+  box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
+}
+
 /**
 * we only want 1 of these to be accessible at a time, so they are display none
 * when not in the direct path. This has the same practical effect of aria-hiding those buttons
@@ -10,6 +16,7 @@
 
 .tta-smarthub--goal-row .ttahub-export-reports {
   display: none;
+  border: 1px solid black;
 }
 
 /**
