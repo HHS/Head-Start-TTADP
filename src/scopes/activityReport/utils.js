@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
+import { filterAssociation as filter } from '../utils';
 
 function expandArray(column, searchTerms, operator) {
   return searchTerms.map((term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(`%${term}%`)}`));
@@ -54,14 +55,5 @@ export default function filterArray(column, searchTerms, exclude) {
  */
 
 export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {
-  if (exclude) {
-    return {
-      [Op.and]:
-        reportInSubQuery(baseQuery, searchTerms, 'NOT IN', comparator),
-    };
-  }
-
-  return {
-    [Op.or]: reportInSubQuery(baseQuery, searchTerms, 'IN', comparator),
-  };
+  return filter(baseQuery, searchTerms, exclude, reportInSubQuery, comparator);
 }

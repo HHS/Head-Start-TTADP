@@ -9,6 +9,7 @@ import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters, formatDateRange } from '../../../utils';
+import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
 import './TTAHistory.css';
 import useUrlFilters from '../../../hooks/useUrlFilters';
@@ -78,7 +79,7 @@ export default function TTAHistory({
             filters={filters}
             onApplyFilters={onApply}
             onRemoveFilter={onRemoveFilter}
-            allowedFilters={['startDate', 'role']}
+            filterConfig={TTAHISTORY_FILTER_CONFIG}
             applyButtonAria="Apply filters to recipient record data"
           />
         </div>
