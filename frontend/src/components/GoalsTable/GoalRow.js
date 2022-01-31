@@ -40,20 +40,7 @@ function GoalRow({
     : `/activity-reports/${id}`;
   */
 
-  const menuItems = [
-
-    /* TODO: Add Goal menu items. */
-    /*
-    {
-      label: 'Edit goal',
-      onClick: () => { history.push(linkTarget); },
-    },
-    */
-  ];
-
   const contextMenuLabel = `Actions for goal ${id}`;
-
-  //              <FontAwesomeIcon color="black" icon={faClock} />
 
   /**
    * we manage the class of the row as a sort of "focus-within" workaround
@@ -109,6 +96,55 @@ function GoalRow({
     return 'Needs status';
   };
 
+  const displayStatus = getGoalStatusText();
+
+  let showContextMenu = false;
+  const availableMenuItems = [
+    {
+      status: 'Needs status',
+      values: ['Mark not started', 'Mark in progress', 'Close goal', 'Cease/suspend goal'],
+    },
+    {
+      status: 'Not started',
+      values: ['Close goal', 'Cease/suspend goal'],
+    },
+    {
+      status: 'In progress',
+      values: ['Close goal', 'Cease/suspend goal'],
+    },
+    {
+      status: 'Closed',
+      values: ['Re-open goal'],
+    },
+    {
+      status: 'Ceased/suspended',
+      values: ['Re-open goal'],
+    },
+  ];
+
+  const determineAvailableMenuItems = () => {
+    const menuItemsToDisplay = availableMenuItems.filter((m) => m.status === displayStatus);
+
+    let menuItemsToReturn = [];
+    if (menuItemsToDisplay && menuItemsToDisplay.length === 1) {
+      showContextMenu = true;
+      menuItemsToReturn = menuItemsToDisplay[0].values.map((v) => (
+        {
+          label: v,
+          onClick: () => { console.log(`Clicked on ${v}`); },
+        }
+      ));
+    }
+    return menuItemsToReturn;
+  };
+
+  const menuItems = determineAvailableMenuItems();
+
+  /*
+  useEffect(() => {
+    determineMenuItems();
+  }, [Status]);
+*/
   const determineFlagStatus = () => {
     const reasonsToWatch = reasons.filter((t) => reasonsToMonitor.includes(t));
     if (reasonsToWatch && reasonsToWatch.length > 0) {
@@ -145,7 +181,7 @@ function GoalRow({
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`goal_row_${id}`}>
       <td>
         {getGoalStatusIcon()}
-        {getGoalStatusText()}
+        {displayStatus}
       </td>
       <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
       <td className="text-wrap maxw-mobile">
@@ -178,7 +214,17 @@ function GoalRow({
         Objective(s)
       </td>
       <td>
-        <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} />
+        {
+          showContextMenu
+            ? (
+              <ContextMenu
+                label={contextMenuLabel}
+                menuItems={menuItems}
+                up={openMenuUp}
+              />
+            )
+            : null
+        }
       </td>
     </tr>
   );

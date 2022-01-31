@@ -153,6 +153,13 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
       expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
 
+      // Click Context Menu on 'In progress'.
+      let rowContextBtn = await screen.findByRole('button', { name: /actions for goal 4598/i });
+      fireEvent.click(rowContextBtn);
+      let contextMenus = await screen.findByRole('menu');
+      expect(contextMenus).toHaveTextContent(/close goal/i);
+      expect(contextMenus).toHaveTextContent(/cease\/suspend goal/i);
+
       // Not started.
       expect(screen.getAllByRole('cell')[6].firstChild).toHaveClass('fa-minus-circle');
       expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
@@ -160,6 +167,14 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/this is goal text 2/i);
       expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/nutrition, oral health/i);
       expect(screen.getAllByRole('cell')[10]).toHaveTextContent('2 Objective(s)');
+
+      // Click Context Menu on 'Not started'.
+      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 8547/i });
+      fireEvent.click(rowContextBtn);
+      contextMenus = await screen.findAllByRole('menu');
+      expect(contextMenus.length).toBe(2);
+      expect(contextMenus[1]).toHaveTextContent(/close goal/i);
+      expect(contextMenus[1]).toHaveTextContent(/cease\/suspend goal/i);
 
       // Closed.
       expect(screen.getAllByRole('cell')[12].firstChild).toHaveClass('fa-check-circle');
@@ -169,6 +184,13 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/parent and family engagement/i);
       expect(screen.getAllByRole('cell')[16]).toHaveTextContent('4 Objective(s)');
 
+      // Click Context Menu on 'Closed'.
+      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65478/i });
+      fireEvent.click(rowContextBtn);
+      contextMenus = await screen.findAllByRole('menu');
+      expect(contextMenus.length).toBe(3);
+      expect(contextMenus[2]).toHaveTextContent(/Re-open goal/i);
+
       // Needs status.
       expect(screen.getAllByRole('cell')[18].firstChild).toHaveClass('fa-exclamation-circle ');
       expect(screen.getAllByRole('cell')[18]).toHaveTextContent(/needs status/i);
@@ -176,6 +198,16 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[20]).toHaveTextContent(/this is goal text 4/i);
       expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/partnerships and community engagement/i);
       expect(screen.getAllByRole('cell')[22]).toHaveTextContent('3 Objective(s)');
+
+      // Click Context Menu on 'Needs status'.
+      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65479/i });
+      fireEvent.click(rowContextBtn);
+      contextMenus = await screen.findAllByRole('menu');
+      expect(contextMenus.length).toBe(4);
+      expect(contextMenus[3]).toHaveTextContent(/Mark not started/i);
+      expect(contextMenus[3]).toHaveTextContent(/Mark in progress/i);
+      expect(contextMenus[3]).toHaveTextContent(/Close goal/i);
+      expect(contextMenus[3]).toHaveTextContent(/cease\/suspend goal/i);
 
       // Draft.
       expect(screen.getAllByRole('cell')[24].firstChild).toHaveClass('fa-pencil-alt');
@@ -192,6 +224,13 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[32]).toHaveTextContent(/this is goal text 6/i);
       expect(screen.getAllByRole('cell')[33]).toHaveTextContent(/recordkeeping and reporting/i);
       expect(screen.getAllByRole('cell')[34]).toHaveTextContent('8 Objective(s)');
+
+      // Click Context Menu on 'Ceased/Suspended'.
+      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65481/i });
+      fireEvent.click(rowContextBtn);
+      contextMenus = await screen.findAllByRole('menu');
+      expect(contextMenus.length).toBe(5);
+      expect(contextMenus[4]).toHaveTextContent(/Re-open goal/i);
     });
   });
 
