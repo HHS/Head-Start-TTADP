@@ -10,7 +10,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
-    "@trussworks/react-uswds": "2.6.0",
+    "@trussworks/react-uswds": "2.7.0",
     "@use-it/interval": "^1.0.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
@@ -48,7 +48,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "14.18.1"
+    "node": "16.13.1"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",

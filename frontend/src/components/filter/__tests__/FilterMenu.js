@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
 import UserContext from '../../../UserContext';
 import { SCOPE_IDS } from '../../../Constants';
+import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
@@ -35,6 +36,7 @@ describe('Filter Menu', () => {
             filters={filters}
             onApplyFilters={onApplyFilters}
             applyButtonAria="apply test filters"
+            filterConfig={TTAHISTORY_FILTER_CONFIG}
           />
         </div>
       </UserContext.Provider>,
