@@ -279,3 +279,11 @@ export async function getGoalsByActivityRecipient(
 
   return { count, goalRows };
 }
+
+export async function updateRecipientGoalStatusById(goalId, newStatus) {
+  await Goal.update(
+    { status: newStatus },
+    { where: { id: goalId } },
+  );
+  return Goal.findOne({ where: { id: goalId } });
+}
