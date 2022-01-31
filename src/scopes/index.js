@@ -1,9 +1,11 @@
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { grantsFiltersToScopes as grant } from './grants';
+import { goalsFiltersToScopes as goal } from './goals';
 
 const models = {
   activityReport,
   grant,
+  goal,
 };
 
 /**

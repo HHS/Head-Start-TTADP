@@ -14,6 +14,7 @@ import { expandFilters, formatDateRange } from '../../utils';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
+import { DASHBOARD_FILTER_CONFIG } from './constants';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -98,6 +99,7 @@ export default function RegionalDashboard() {
             filters={filters}
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
+            filterConfig={DASHBOARD_FILTER_CONFIG}
           />
         </Grid>
         <GridContainer className="margin-0 padding-0">
