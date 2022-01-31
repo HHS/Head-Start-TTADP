@@ -71,6 +71,21 @@ describe('update topic names job', () => {
           'Test',
         ],
       }),
+      ActivityReport.create({
+        ...reportObject,
+        requester: 'Bubert',
+        topics: [
+          '"Infant/Toddlers Preschool"',
+          'Environmental Health and Safety | HS',
+        ],
+      }),
+      ActivityReport.create({
+        ...reportObject,
+        requester: 'Bubert 2',
+        topics: [
+          'Children with Disabilities | ECS',
+        ],
+      }),
       ActivityReport.create({ ...reportObject, topics: ['Oral Health'] }),
     ]);
 
@@ -84,6 +99,7 @@ describe('update topic names job', () => {
 
     updatedReports.forEach((report) => {
       let topics = [];
+      let pop = ['pop'];
       if (report.requester === 'Bruce') {
         topics = [
           'Behavioral / Mental Health / Trauma',
@@ -109,7 +125,18 @@ describe('update topic names job', () => {
         topics = ['Oral Health'];
       }
 
+      if (report.requester === 'Bubert') {
+        topics = ['Environmental Health and Safety / EPRR'];
+        pop = ['pop', 'Infant/Toddlers', 'Preschool'];
+      }
+
+      if (report.requester === 'Bubert 2') {
+        topics = ['School Readiness'];
+        pop = ['pop', 'Children with Disabilities'];
+      }
+
       expect(report.topics).toStrictEqual(topics);
+      expect(report.targetPopulations).toStrictEqual(pop);
     });
   });
 });

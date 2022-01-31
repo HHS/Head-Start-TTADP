@@ -28,7 +28,11 @@ const TOPIC_DICTIONARY = [
   },
   {
     old: 'Coaching / Teaching / Instructional Support | ECS',
-    new: 'Coaching',
+    new: ['Coaching', 'CLASS: Instructional Support'],
+  },
+  {
+    old: 'Coaching / Teaching / Instructional Support | ECS',
+    new: ['Coaching', 'CLASS: Instructional Support'],
   },
   {
     old: 'Environmental Health and Safety',
@@ -46,22 +50,27 @@ const TOPIC_DICTIONARY = [
   {
     old: 'Child Assessment, Development, Screening | ECS',
     new: 'Child Assessment, Development, Screening',
-
+  },
+  {
+    old: 'Children with Disabilities | ECS',
+    new: 'School Readiness',
+    population: 'Children with Disabilities',
+  },
+  {
+    old: 'CLASS / Learning Environments / Classroom Management | ECS',
+    new: 'CLASS: Classroom Organization',
   },
   {
     old: 'Curriculum/a  (Instructional or Parenting) | ECS, FES',
     new: 'Curriculum (Instructional or Parenting)',
-
   },
   {
     old: 'Curriculum (Early Chidhood or Parenting)', // missing l in child
     new: 'Curriculum (Instructional or Parenting)',
-
   },
   {
     old: 'Eligibility (ERSEA) | ECS, FES, GS',
     new: 'ERSEA',
-
   },
   {
     old: 'Environmental Health and Safety | HS',
@@ -147,12 +156,20 @@ const TOPIC_DICTIONARY = [
     old: 'T/TA Planning',
     new: 'Program Planning and Services',
   },
+  {
+    old: 'Corrective Actions | GS',
+    new: 'Leadership / Governance',
+  },
+  {
+    old: '"Infant/Toddlers Preschool"',
+    population: ['Infant/Toddlers', 'Preschool'],
+  },
 ];
 
 export default async function updateTopicNames() {
   // we find any activity reports that have ANY of the old topics in their topics field
   const reports = await ActivityReport.findAll({
-    attributes: ['id', 'topics'],
+    attributes: ['id', 'topics', 'targetPopulations'],
     where: {
       topics: {
         [Op.overlap]: TOPIC_DICTIONARY.map((dict) => dict.old),
@@ -167,6 +184,7 @@ export default async function updateTopicNames() {
     await Promise.all(reports.map(async (report) => {
     // copy existing state
       let topics = [...report.topics];
+      let targetPopulations = [...report.targetPopulations];
 
       // within each report, check our array of topics to rename
       TOPIC_DICTIONARY.forEach((topic) => {
@@ -180,14 +198,27 @@ export default async function updateTopicNames() {
           if (Array.isArray(topic.new)) {
             topics.splice(index, 1);
             topics = topics.concat(topic.new);
-          } else {
+          } else if (topic.new) {
             topics.splice(index, 1, topic.new);
+          } else {
+            topics.splice(index, 1);
+          }
+        }
+
+        if (index !== -1 && topic.population) {
+          const popIndex = targetPopulations.indexOf(topic.population);
+          if (popIndex === -1) {
+            logger.info(`Renaming ${topic.old} to target population ${topic.population} in ${report.id}`);
+            // tricky tricky, sometimes an array and sometimes not
+            // we make it an array, spread it, and flatten it
+            // in this way, we get consistent behavior
+            targetPopulations = [...targetPopulations, ...[topic.population]].flat();
           }
         }
       });
 
       // push our update operation to our promises array
-      return report.update({ topics }, { transaction });
+      return report.update({ topics, targetPopulations }, { transaction });
     }));
   });
 }
