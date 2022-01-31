@@ -6,10 +6,8 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import DropdownMenu from '../DropdownMenu';
 import FilterItem from './FilterItem';
-import { FILTER_CONFIG, AVAILABLE_FILTERS } from './constants';
-
 import usePrevious from '../../hooks/usePrevious';
-import { filterProp } from './props';
+import { filterProp, filterConfigProp } from './props';
 import FilterErrorContext from './FilterErrorContext';
 
 /**
@@ -19,7 +17,10 @@ import FilterErrorContext from './FilterErrorContext';
  */
 
 export default function FilterMenu({
-  filters, onApplyFilters, allowedFilters, applyButtonAria,
+  filters,
+  onApplyFilters,
+  applyButtonAria,
+  filterConfig,
 }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
@@ -28,9 +29,6 @@ export default function FilterMenu({
 
   // filters currently selected. these will be excluded from filter selection
   const selectedFilters = items.map((filter) => filter.topic);
-
-  // filters that aren't allowed per our allowedFilters prop
-  const prohibitedFilters = AVAILABLE_FILTERS.filter((f) => !allowedFilters.includes(f));
 
   // If filters were changed outside of this component, we need to update the items
   // (for example, the "remove filter" button on the filter pills)
@@ -108,7 +106,7 @@ export default function FilterMenu({
        * if the condition is changed, we need to do a lookup in the filter config
        * and set the query to the new default value
        */
-      const f = FILTER_CONFIG.find(((config) => config.id === toUpdate.topic));
+      const f = filterConfig.find(((config) => config.id === toUpdate.topic));
       const defaultQuery = f.defaultValues[value];
 
       if (defaultQuery) {
@@ -119,7 +117,7 @@ export default function FilterMenu({
     }
 
     if (name === 'topic') {
-      const f = FILTER_CONFIG.find(((config) => config.id === toUpdate.topic));
+      const f = filterConfig.find(((config) => config.id === toUpdate.topic));
       const defaultQuery = f.defaultValues[value];
 
       toUpdate.condition = '';
@@ -162,8 +160,6 @@ export default function FilterMenu({
 
   const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
 
-  const selectItems = items.filter((item) => !prohibitedFilters.includes(item.topic));
-  const badFilters = [...selectedFilters, ...prohibitedFilters];
   const onOpen = () => {
     // The onOpen is passed into the DropdownMenu component
     // this will add an empty item into the list if there
@@ -193,13 +189,13 @@ export default function FilterMenu({
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">
-            {selectItems.map((filter, index) => {
+            {items.map((filter, index) => {
               const { topic } = filter;
               // this is some jujitsu
-              const topicOptions = FILTER_CONFIG
+              const topicOptions = filterConfig
                 // filter out the bad topics
                 .filter((config) => (
-                  topic === config.id || !badFilters.includes(config.id)
+                  topic === config.id || !selectedFilters.includes(config.id)
                 ))
                 // return a new array of option elements
                 .map(({ id: filterId, display }) => (
@@ -212,7 +208,7 @@ export default function FilterMenu({
                 conditions: [],
               };
 
-              const selectedTopic = FILTER_CONFIG.find((f) => f.id === topic);
+              const selectedTopic = filterConfig.find((f) => f.id === topic);
 
               const setError = (message) => {
                 const newErrors = [...errors];
@@ -248,10 +244,6 @@ export default function FilterMenu({
 FilterMenu.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
   onApplyFilters: PropTypes.func.isRequired,
-  allowedFilters: PropTypes.arrayOf(PropTypes.string),
   applyButtonAria: PropTypes.string.isRequired,
-};
-
-FilterMenu.defaultProps = {
-  allowedFilters: AVAILABLE_FILTERS,
+  filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
 };
