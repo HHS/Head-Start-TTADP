@@ -5,9 +5,3 @@
 .ttahub-recipient-record--grants-list th {
   vertical-align: bottom;
 }
-
-.ttahub-recipient-record--grants-list th,
-.ttahub-recipient-record--grants-list td {
-  padding-left: 24px;
-  padding-right: 24px;
-}
