@@ -73,15 +73,15 @@ describe('Goals and Objectives', () => {
   beforeEach(async () => {
     fetchMock.reset();
     // Default.
-    const goalsUrl = `/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&createDate.win=${yearToDate}`;
+    const goalsUrl = `/api/recipient/goals/401?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&status.in[]=Not%20Started';
+    const filterStatusUrl = '/api/recipient/goals/401?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&status.in[]=Not%20Started';
     fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
 
     // No Filters.
-    const noFilterUrl = '/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5';
+    const noFilterUrl = '/api/recipient/goals/401?sortBy=goalStatus&sortDir=asc&offset=0&limit=5';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
   });
 
@@ -102,7 +102,7 @@ describe('Goals and Objectives', () => {
 
   it('renders correctly when filter is changed', async () => {
     // Default with 2 Rows.
-    const goalsUrl = `/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&createDate.win=${yearToDate}`;
+    const goalsUrl = `/api/recipient/goals/401?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 2, goalRows: noFilterGoals }, { overwriteRoutes: true });
 
     act(() => renderGoalsAndObjectives());

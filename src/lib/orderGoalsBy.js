@@ -1,8 +1,12 @@
+import {
+  sequelize,
+} from '../models';
+
 const orderGoalsBy = (sortBy, sortDir) => {
   let result = '';
   switch (sortBy) {
     case 'goalStatus':
-      result = [['status', sortDir]];
+      result = [[sequelize.literal(`status_sort ${sortDir}`)]];
       break;
     case 'createdOn':
       result = [['createdAt', sortDir]];
