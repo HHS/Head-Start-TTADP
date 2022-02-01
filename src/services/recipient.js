@@ -37,7 +37,18 @@ export async function recipientById(recipientId, grantScopes) {
     },
     include: [
       {
-        attributes: ['id', 'number', 'regionId', 'status', 'startDate', 'endDate', 'programSpecialistName', 'grantSpecialistName', 'recipientId'],
+        attributes: [
+          'id',
+          'number',
+          'regionId',
+          'status',
+          'startDate',
+          'endDate',
+          'programSpecialistName',
+          'grantSpecialistName',
+          'recipientId',
+          'annualFundingMonth',
+        ],
         model: Grant,
         as: 'grants',
         where: [{

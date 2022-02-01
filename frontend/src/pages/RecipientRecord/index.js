@@ -22,6 +22,7 @@ export default function RecipientRecord({ match }) {
     'grants.startDate': '',
     'grants.endDate': '',
     'grants.number': '',
+    'grants.annualFundingMonth': '',
     recipientId,
     regionId,
     recipientName: '',
