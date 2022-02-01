@@ -77,7 +77,7 @@ describe('Goals and Objectives', () => {
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&status.in[]=Not%20started';
+    const filterStatusUrl = '/api/recipient/goals/401?sortBy=updatedAt&sortDir=desc&offset=0&limit=5&status.in[]=Not%20Started';
     fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
 
     // No Filters.
@@ -118,7 +118,7 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Not started']);
+    await selectEvent.select(statusSelect, ['Not Started']);
 
     const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
     userEvent.click(apply);
