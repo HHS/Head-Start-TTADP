@@ -9,8 +9,8 @@ describe('Audit models', () => {
   describe('audit user model', () => {
     describe('default scope', () => {
       let t;
-      let userIds = [];
-      let userIdNames = [];
+      // let userIds = [];
+      // let userIdNames = [];
 
       beforeEach(async () => {
         t = await db.sequelize.transaction();
@@ -21,101 +21,101 @@ describe('Audit models', () => {
           { transaction: t },
         );
         auditLogger.info(descriptor);
-
-        const users = await Promise.all([
-          await User.create({
-            name: 'aa',
-            email: 'aa@aa.com',
-            hsesUserId: 11111,
-            hsesUsername: 'aa',
-          }, { transaction: t })
-            .catch(() => console.error(users)), // eslint-disable-line no-console
-          await User.create({
-            name: 'bb',
-            email: 'bb@bb.com',
-            hsesUserId: 22222,
-            hsesUsername: 'bb',
-          }, { transaction: t })
-            .catch(() => console.error(users)), // eslint-disable-line no-console
-          await User.create({
-            name: 'cc',
-            email: 'cc@cc.com',
-            hsesUserId: 33333,
-            hsesUsername: 'cc',
-          }, { transaction: t })
-            .catch(() => console.error(users)), // eslint-disable-line no-console
-          await User.create({
-            name: 'dd',
-            email: 'dd@dd.com',
-            hsesUserId: 44444,
-            hsesUsername: 'dd',
-          }, { transaction: t })
-            .catch(() => console.error(users)), // eslint-disable-line no-console
-        ]);
-
-        userIds = users.map((u) => u.id)
-          .catch(() => console.error(users)); // eslint-disable-line no-console
-
-        userIdNames = users.map((u) => ({ id: u.id, name: u.name }))
-          .catch(() => console.error(users)); // eslint-disable-line no-console
       });
 
       afterEach(async () => {
         if (t) {
-          // t.rollback();
-          t.commit();
+          await t.rollback();
         }
       });
 
-      it('Added users in audit record', async () => {
+      it('Added user in audit record', async () => {
+        const addedUser = await User.create({
+          name: 'aa',
+          email: 'aa@aa.com',
+          hsesUserId: 11111,
+          hsesUsername: 'aa',
+        }, { transaction: t });
         const auditUsers = await ZALUser.findAll({
-          where: { data_id: userIds },
+          where: { data_id: addedUser.id },
           transaction: t,
         });
 
-        auditLogger.info(auditUsers);
+        expect(auditUsers[0].dml_type).toEqual('INSERT');
 
-        const dmlType = auditUsers.map((au) => au.dml_type);
-        dmlType.sort();
-        expect(dmlType).toEqual(['INSERT', 'INSERT', 'INSERT', 'INSERT']);
-
-        const data = auditUsers.map((au) => ({
-          id: parseInt(au.data_id, 10),
-          name: au.new_row_data.name,
-        }));
-        data.sort((a, b) => ((a.id > b.id) ? 1 : -1));
-        expect(data).toEqual(userIdNames);
+        expect({
+          id: parseInt(auditUsers[0].data_id, 10),
+          name: auditUsers[0].new_row_data.name,
+        })
+          .toEqual({
+            id: addedUser.id,
+            name: 'aa',
+          });
       });
 
       it('Modified users in audit record', async () => {
-        const updates = await User.update(
+        const addedUser = await User.create({
+          name: 'aa',
+          email: 'aa@aa.com',
+          hsesUserId: 11111,
+          hsesUsername: 'aa',
+        }, { transaction: t });
+        await User.update(
           { name: 'zz', email: 'zz@zz.com' },
           {
-            where: { id: userIds[0] },
+            where: { id: addedUser.id },
             transaction: t,
           },
-        ).catch((err) => console.error(err)); // eslint-disable-line no-console
-
-        auditLogger.info(updates);
+        );
 
         const auditUsers = await ZALUser.findAll({
-          where: { data_id: userIds[0], dml_type: 'UPDATE' },
+          where: { data_id: addedUser.id, dml_type: 'UPDATE' },
           transaction: t,
         });
 
-        auditLogger.info(auditUsers);
-
-        const data = auditUsers.map((au) => ({
-          id: parseInt(au.data_id, 10),
-          oldName: au.old_row_data.name,
-          newName: au.new_row_data.name,
-        }));
-        data.sort((a, b) => ((a.id > b.id) ? 1 : -1));
-
-        const modified = [{ id: userIdNames[0].id, oldName: userIdNames[0].name, newName: 'z' }];
-
-        expect(data).toEqual(modified);
+        expect({
+          id: parseInt(auditUsers[0].data_id, 10),
+          oldName: auditUsers[0].old_row_data.name,
+          newName: auditUsers[0].new_row_data.name,
+        })
+          .toEqual({
+            id: addedUser.id,
+            oldName: addedUser.name,
+            newName: 'zz',
+          });
       });
+
+      // it('Deleted users in audit record', async () => {
+      //   const addedUser = await User.create({
+      //     name: 'aa',
+      //     email: 'aa@aa.com',
+      //     hsesUserId: 11111,
+      //     hsesUsername: 'aa',
+      //   }, { transaction: t });
+      //   await User.update(
+      //     { name: 'zz', email: 'zz@zz.com' },
+      //     {
+      //       where: { id: addedUser.id },
+      //       transaction: t,
+      //     },
+      //   );
+
+      //   const auditUsers = await ZALUser.findAll({
+      //     where: { data_id: addedUser.id, dml_type: 'UPDATE' },
+      //     transaction: t,
+      //   });
+
+      //   expect({
+      //     id: parseInt(auditUsers[0].data_id, 10),
+      //     oldName: auditUsers[0].old_row_data.name,
+      //     newName: auditUsers[0].new_row_data.name,
+      //   })
+      //     .toEqual({
+      //       id: addedUser.id,
+      //       oldName: addedUser.name,
+      //       newName: 'zz',
+      //     });
+      // });
     });
   });
 });
