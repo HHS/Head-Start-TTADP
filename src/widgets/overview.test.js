@@ -192,7 +192,7 @@ describe('Dashboard overview widget', () => {
   });
 
   it('accounts for different regions', async () => {
-    const query = { 'region.in': [REGION_TWO_ID], 'startDate.win': '2021/01/01-2021/01/01' };
+    const query = { 'region.in': [REGION_TWO_ID] };
     const scopes = filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
