@@ -413,7 +413,7 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.put('/api/recipient/goals/4598', {
         id: 4598,
-        goalStatus: 'Completed',
+        status: 'Completed',
         createdOn: '06/15/2021',
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
