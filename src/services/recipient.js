@@ -167,7 +167,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
 export async function getGoalsByActivityRecipient(
   recipientId,
   {
-    sortBy = 'createdOn', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
+    sortBy = 'goalStatus', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
   },
 ) {
   // Scopes.
@@ -180,7 +180,9 @@ export async function getGoalsByActivityRecipient(
   // Get Goals.
   const rows = await Goal.findAll({
     required: true,
-    attributes: ['id', 'name', 'status', 'createdAt'],
+    attributes: ['id', 'name', 'status', 'createdAt',
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Completed\' THEN 4 WHEN "Goal"."status" = \'Ceased/Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+    ],
     where: {
       [Op.and]: scopes,
     },
@@ -240,6 +242,7 @@ export async function getGoalsByActivityRecipient(
     if (goalCount === limitNum) {
       return;
     }
+
     const goalToAdd = {
       id: g.id,
       goalStatus: g.status,
