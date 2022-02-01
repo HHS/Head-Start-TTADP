@@ -1,8 +1,8 @@
 env: prod
 web_instances: 3
-web_memory: 2GB
+web_memory: 2560MB
 worker_instances: 1
-worker_memory: 512M
+worker_memory: 512MB
 LOG_LEVEL: info
 AUTH_BASE: https://hses.ohs.acf.hhs.gov
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
