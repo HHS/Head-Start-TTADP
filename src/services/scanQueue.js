@@ -8,7 +8,11 @@ const addToScanQueue = (fileKey) => {
     type: 'exponential',
     delay,
   };
-  return scanQueue.add(fileKey, { attempts: retries, backoff: backOffOpts });
+  return scanQueue.add(
+    fileKey,
+    { attempts: retries, backoff: backOffOpts },
+    { removeOnComplete: true },
+  );
 };
 
 export {
