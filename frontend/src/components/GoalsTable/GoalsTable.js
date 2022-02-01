@@ -124,7 +124,10 @@ function GoalsTable({
   const displayGoals = goals && goals.length ? goals : [];
 
   const updateGoal = (newGoal) => {
-    const newGoals = goals.map((obj) => (obj.id === newGoal.id ? newGoal : obj));
+    // Update Status on Goal.
+    const newGoals = goals.map(
+      (g) => (g.id === newGoal.id ? { ...g, goalStatus: newGoal.status } : g),
+    );
     setGoals(newGoals);
   };
 

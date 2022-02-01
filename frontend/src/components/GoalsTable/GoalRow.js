@@ -7,7 +7,6 @@ import {
   faClock, faCheckCircle, faExclamationCircle, faPencilAlt, faMinusCircle, faTimesCircle, faFlag,
 } from '@fortawesome/free-solid-svg-icons';
 import ContextMenu from '../ContextMenu';
-// import TooltipWithCollection from '../TooltipWithCollection';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
@@ -124,8 +123,32 @@ function GoalRow({
     },
   ];
 
+  const mapToStoredStatus = [
+    {
+      display: 'Mark not started',
+      stored: 'Not Started',
+    },
+    {
+      status: 'Mark in progress',
+      stored: 'In Progress',
+    },
+    {
+      status: 'Close goal',
+      stored: 'Completed',
+    },
+    {
+      status: 'Cease/suspend goal',
+      stored: 'Ceased/Suspended',
+    },
+    {
+      status: 'Re-open goal',
+      stored: 'In Progress',
+    },
+  ];
+
   const onUpdateGoalStatus = async (status) => {
-    const updatedGoal = await updateRecipientGoalStatus(id, status);
+    const goalToSave = mapToStoredStatus.filter((m) => m.status === status);
+    const updatedGoal = await updateRecipientGoalStatus(id, goalToSave[0].stored);
     updateGoal(updatedGoal);
   };
 
@@ -147,11 +170,6 @@ function GoalRow({
 
   const menuItems = determineAvailableMenuItems();
 
-  /*
-  useEffect(() => {
-    determineMenuItems();
-  }, [Status]);
-*/
   const determineFlagStatus = () => {
     const reasonsToWatch = reasons.filter((t) => reasonsToMonitor.includes(t));
     if (reasonsToWatch && reasonsToWatch.length > 0) {
