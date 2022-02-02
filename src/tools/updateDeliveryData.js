@@ -2,44 +2,72 @@ import { Op } from 'sequelize';
 import { ActivityReport } from '../models';
 import { auditLogger } from '../logger';
 
+const DELIVERY_DICTIONARY = {
+  Email: {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: '',
+  },
+  'Email Multi-grantee: Recurring event (Community Practice) Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: '',
+  },
+  virutal: {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: '',
+  },
+  'Multi-grantee: Single event (Cluster) Telephone Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: 'Telephone',
+  },
+  'Multi-grantee: Recurring event (Community Practice) Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: '',
+  },
+  'Multi-grantee: Recurring event (Community Practice) Telephone Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: 'Telephone',
+  },
+  'Multi-grantee: Recurring event (Community Practice) Multi-grantee: Single event (Cluster) Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: '',
+  },
+  'Multi-grantee: Single event (Cluster)': {
+    deliveryMethod: '',
+    virtualDeliveryType: '',
+  },
+  'Email Telephone Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: 'Telephone',
+  },
+  'Multi-grantee: Recurring event (Community Practice)': {
+    deliveryMethod: '',
+    virtualDeliveryType: '',
+  },
+  'Multi-grantee: Single event (Cluster) Virtual': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: 'Telephone',
+  },
+  'Email Telephone': {
+    deliveryMethod: 'Virtual',
+    virtualDeliveryType: 'Telephone',
+  },
+};
+
 export default async function updateDeliveryData() {
   auditLogger.info(`Updating delivery method...
   
   `);
+
+  const deliveryMethods = Object.keys(DELIVERY_DICTIONARY);
 
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'deliveryMethod', 'virtualDeliveryType', 'imported'],
     where: {
       [Op.and]: [
         {
-          // only select legacy reports
-          imported: {
-            [Op.not]: null,
+          deliveryMethod: {
+            [Op.or]: deliveryMethods,
           },
-        },
-        {
-          [Op.or]: [
-            {
-              deliveryMethod: {
-                [Op.iLike]: '%Email%',
-              },
-            },
-            {
-              deliveryMethod: {
-                [Op.iLike]: '%Multi-grantee: Recurring event (Community Practice)%',
-              },
-            },
-            {
-              deliveryMethod: {
-                [Op.iLike]: '%Multi-grantee: Single event (Cluster)%',
-              },
-            },
-            {
-              deliveryMethod: {
-                [Op.iLike]: '%Telephone%',
-              },
-            },
-          ],
         },
       ],
     },
@@ -50,36 +78,15 @@ export default async function updateDeliveryData() {
   `);
 
   return Promise.all(reports.map(async (report) => {
-    let { deliveryMethod, virtualDeliveryType } = report;
+    const entry = DELIVERY_DICTIONARY[report.deliveryMethod];
+    const { deliveryMethod, virtualDeliveryType } = entry;
 
-    if (deliveryMethod.search(/virtual/i) !== -1 && deliveryMethod.search(/telephone/i) === -1) {
-      deliveryMethod = 'Virtual';
-    }
+    auditLogger.info(`changing deliverymethod: ${report.deliveryMethod} to ${deliveryMethod}`);
+    auditLogger.info(`changing deliverytype: ${report.virtualDeliveryType} to ${virtualDeliveryType}`);
 
-    if (deliveryMethod.search(/email/i) !== -1 && deliveryMethod.search(/telephone/i) === -1) {
-      deliveryMethod = 'Virtual';
-    }
-
-    if (deliveryMethod.search(/telephone/i) !== -1) {
-      deliveryMethod = 'Virtual';
-      virtualDeliveryType = 'Telephone';
-    }
-
-    if (deliveryMethod.search(/virtual/i) !== -1 && deliveryMethod.search(/virtual/i) !== -1) {
-      deliveryMethod = 'Virtual';
-      virtualDeliveryType = 'Telephone';
-    }
-
-    if (deliveryMethod.search(/Multi-grantee: Recurring event (Community Practice)/i) !== -1 && deliveryMethod.search(/virtual/i) === -1) {
-      deliveryMethod = '';
-      virtualDeliveryType = '';
-    }
-
-    console.log(`changing deliverymethod: ${report.deliveryMethod} to ${deliveryMethod}`);
-    console.log(`changing deliverytype: ${report.virtualDeliveryType} to ${virtualDeliveryType}`);
-    // return report.update({
-    //   deliveryMethod,
-    //   virtualDeliveryType,
-    // });
+    return report.update({
+      deliveryMethod,
+      virtualDeliveryType,
+    });
   }));
 }
