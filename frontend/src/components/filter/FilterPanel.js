@@ -8,7 +8,7 @@ export default function FilterPanel(props) {
   const { onRemoveFilter, filters, filterConfig } = props;
 
   return (
-    <div data-testid="filter-panel">
+    <>
       <FilterMenu
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...props}
@@ -18,7 +18,7 @@ export default function FilterPanel(props) {
         filters={filters}
         onRemoveFilter={onRemoveFilter}
       />
-    </div>
+    </>
   );
 }
 
