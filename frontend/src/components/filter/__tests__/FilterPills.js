@@ -6,6 +6,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterPills from '../FilterPills';
+import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 describe('Filter Pills', () => {
   afterAll(() => {
@@ -16,6 +17,7 @@ describe('Filter Pills', () => {
     const renderFilterMenu = (filters = [], onRemoveFilter = jest.fn()) => {
       render(<FilterPills
         filters={filters}
+        filterConfig={TTAHISTORY_FILTER_CONFIG}
         onRemoveFilter={onRemoveFilter}
       />);
     };
