@@ -411,7 +411,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/recipient/goals/4598', {
+      fetchMock.put('/api/recipient/goals/4598/changeStatus', {
         id: 4598,
         status: 'Completed',
         createdOn: '06/15/2021',
@@ -430,24 +430,6 @@ describe('Goals Table', () => {
       const closeGoalButton = await screen.findByText(/close goal/i);
       fireEvent.click(closeGoalButton);
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Closed'));
-    });
-
-    it('Removes Focus on Blur', async () => {
-      // Set Focus on Context Button.
-      const contextButton = await screen.findByRole('button', { name: /actions for goal 4598/i });
-      fireEvent.click(contextButton);
-      contextButton.focus();
-
-      // Verify Focused Class Set.
-      const status = await screen.findByRole('cell', { name: /in progress/i });
-      expect(status.parentElement).toHaveClass('focused');
-
-      // Remove Focus by setting focus on another Element.
-      const next = await screen.findByRole('link', { name: /go to next page/i });
-      next.focus();
-
-      // Focus class should be removed.
-      expect(status.parentElement).not.toHaveClass('focused');
     });
   });
 });

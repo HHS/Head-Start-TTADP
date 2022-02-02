@@ -8,50 +8,6 @@
   box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
 }
 
-/**
-* we only want 1 of these to be accessible at a time, so they are display none
-* when not in the direct path. This has the same practical effect of aria-hiding those buttons
-* but without altering any semantic values
-*/
-
-.tta-smarthub--goal-row .ttahub-export-reports {
-  display: none;
-  border: 1px solid black;
-}
-
-/**
-** Wish we didn't have to support IE 11, cause then we could just use
-* :focus-within and we wouldn't need to be managing classes with javascript as well
-*/
-
-.tta-smarthub--goal-row.focused .ttahub-export-reports {
-  display: inline;
-}
-
-/**
-* even if it's display: inline, we still want to hide the button visually unless it's focused. 
-* that's what the code does below (handles focus and not focused states)
-*/
-
-.tta-smarthub--goal-row .ttahub-export-reports:not(:focus) {
-  border: 0;
-  clip: rect(1px, 1px, 1px, 1px);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  width: 1px;
-}
-
-.tta-smarthub--goal-row .ttahub-export-reports {
-  background: white;
-  left: 50px;
-  top: -10px;
-  position: absolute;
-  z-index: 100000;
-}
-
 .tta-smarthub--goal-row .smart-hub--ellipsis {
 	max-width: none;
 }

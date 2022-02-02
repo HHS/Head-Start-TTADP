@@ -14,7 +14,7 @@ export default function Tooltip({
     setShowTooltip(!showTooltip);
   };
 
-  const svgLineToValue = svgLineTo || 190;
+  const svgLineToValue = svgLineTo;
   return (
     <span className={cssClasses} data-testid="tooltip">
       <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltipText}</div>
@@ -67,5 +67,5 @@ Tooltip.propTypes = {
 Tooltip.defaultProps = {
   screenReadDisplayText: true,
   hideUnderline: false,
-  svgLineTo: null,
+  svgLineTo: 190,
 };
