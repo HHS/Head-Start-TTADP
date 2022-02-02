@@ -158,7 +158,7 @@ const TOPIC_DICTIONARY = [
   },
   {
     old: 'Corrective Actions | GS',
-    new: 'Leadership / Governance',
+    new: 'Quality Improvement Plan / QIP',
   },
   {
     old: '"Infant/Toddlers Preschool"',
