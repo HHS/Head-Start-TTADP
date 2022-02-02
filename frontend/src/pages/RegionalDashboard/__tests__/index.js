@@ -4,8 +4,9 @@ import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
-  render, screen,
+  act, render, screen,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
 import RegionalDashboard from '../index';
@@ -79,8 +80,41 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${topicFrequencyGraphUrl}?${lastThirtyDaysParams}`, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${lastThirtyDaysParams}`, activityReportsResponse);
 
+    fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse);
+    fetchMock.get(`${reasonListUrl}?${regionInParams}`, reasonListResponse);
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse);
+    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse);
+    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`, activityReportsResponse);
+
     renderDashboard(user);
-    const heading = await screen.findByText(/regional tta activity dashboard/i);
+    let heading = await screen.findByText(/regional tta activity dashboard/i);
+    expect(heading).toBeVisible();
+
+    const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
+    act(() => userEvent.click(remove));
+
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'region'));
+
+    const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'Is'));
+
+    const select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
+    act(() => userEvent.selectOptions(select, 'Region 1'));
+
+    const apply = await screen.findByRole('button', { name: /apply filters for regional dashboard/i });
+    act(() => userEvent.click(apply));
+
+    heading = await screen.findByText(/regional tta activity dashboard/i);
+    expect(heading).toBeVisible();
+
+    const removeRegion = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
+    act(() => userEvent.click(removeRegion));
+
+    heading = await screen.findByText(/regional tta activity dashboard/i);
     expect(heading).toBeVisible();
   });
 
