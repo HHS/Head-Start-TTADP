@@ -398,7 +398,7 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.get(
         defaultBaseUrlWithRegionOne,
-        { count: 1, goalRows: [goals[0]] },
+        { count: 1, goalRows: [goals[0], goals[1]] },
       );
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
