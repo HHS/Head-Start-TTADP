@@ -31,7 +31,7 @@ function GoalRow({
 
   const [trClassname, setTrClassname] = useState('tta-smarthub--goal-row');
 
-  /* TODO: Setup Route for Edit Goal.
+  /* TODO: Setup Route for Edit Goal (TTAHUB-568).
   /*
   const history = useHistory();
   // eslint-disable-next-line max-len
@@ -77,27 +77,42 @@ function GoalRow({
     return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
   };
 
-  const getGoalStatusText = () => {
+  const mapToDisplay = [
+    {
+      stored: 'In Progress',
+      display: 'In progress',
+    },
+    {
+      stored: 'Completed',
+      display: 'Closed',
+    },
+    {
+      stored: 'Draft',
+      display: 'Draft',
+    },
+    {
+      stored: 'Not Started',
+      display: 'Not started',
+    },
+    {
+      stored: 'Ceased/Suspended',
+      display: 'Ceased/suspended',
+    },
+    {
+      stored: 'Needs Status',
+      display: 'Needs status',
+    },
+  ];
+
+  const getGoalDisplayStatusText = () => {
     if (goalStatus) {
-      if (goalStatus === 'In Progress') {
-        return 'In progress';
-      } if (goalStatus === 'Completed') {
-        return 'Closed';
-      }
-      if (goalStatus === 'Draft') {
-        return 'Draft';
-      }
-      if (goalStatus === 'Not Started') {
-        return 'Not started';
-      }
-      if (goalStatus === 'Ceased/Suspended') {
-        return 'Ceased/suspended';
-      }
+      const displayStatus = mapToDisplay.find((m) => m.stored === goalStatus);
+      return displayStatus ? displayStatus.display : 'Needs status';
     }
     return 'Needs status';
   };
 
-  const displayStatus = getGoalStatusText();
+  const displayStatus = getGoalDisplayStatusText();
 
   let showContextMenu = false;
   const availableMenuItems = [
@@ -125,7 +140,7 @@ function GoalRow({
 
   const mapToStoredStatus = [
     {
-      display: 'Mark not started',
+      status: 'Mark not started',
       stored: 'Not Started',
     },
     {
@@ -147,18 +162,20 @@ function GoalRow({
   ];
 
   const onUpdateGoalStatus = async (status) => {
-    const goalToSave = mapToStoredStatus.filter((m) => m.status === status);
-    const updatedGoal = await updateRecipientGoalStatus(id, goalToSave[0].stored);
-    updateGoal(updatedGoal);
+    const goalToSave = mapToStoredStatus.find((m) => m.status === status);
+    if (goalToSave) {
+      const updatedGoal = await updateRecipientGoalStatus(id, goalToSave.stored);
+      updateGoal(updatedGoal);
+    }
   };
 
   const determineAvailableMenuItems = () => {
-    const menuItemsToDisplay = availableMenuItems.filter((m) => m.status === displayStatus);
+    const menuItemsToDisplay = availableMenuItems.find((m) => m.status === displayStatus);
 
     let menuItemsToReturn = [];
-    if (menuItemsToDisplay && menuItemsToDisplay.length === 1) {
+    if (menuItemsToDisplay) {
       showContextMenu = true;
-      menuItemsToReturn = menuItemsToDisplay[0].values.map((v) => (
+      menuItemsToReturn = menuItemsToDisplay.values.map((v) => (
         {
           label: v,
           onClick: () => { onUpdateGoalStatus(v); },
@@ -171,8 +188,8 @@ function GoalRow({
   const menuItems = determineAvailableMenuItems();
 
   const determineFlagStatus = () => {
-    const reasonsToWatch = reasons.filter((t) => reasonsToMonitor.includes(t));
-    if (reasonsToWatch && reasonsToWatch.length > 0) {
+    const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
+    if (reasonsToWatch) {
       return (
         <>
           <Tooltip

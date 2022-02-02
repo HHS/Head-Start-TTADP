@@ -51,7 +51,7 @@ function GoalsTable({
         setGoalsCount(count || 0);
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.log(e);
+        console.error(e);
         setError('Unable to fetch reports');
       }
       setLoading(false);
