@@ -29,7 +29,7 @@ function GoalsTable({
   const [goalsCount, setGoalsCount] = useState(0);
   const [offset, setOffset] = useState(0);
   const [perPage] = useState(GOALS_PER_PAGE);
-  const [sortConfig, setSortConfig] = React.useState({
+  const [sortConfig, setSortConfig] = useState({
     sortBy: 'goalStatus',
     direction: 'asc',
   });

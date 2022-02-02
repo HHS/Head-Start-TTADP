@@ -41,7 +41,7 @@ export const getRecipientGoals = async (recipientId, sortBy = 'updatedAt', sortD
 };
 
 export const updateRecipientGoalStatus = async (goalId, newStatus) => {
-  const recipientGoalsUrl = join(recipientUrl, 'goals', goalId.toString());
+  const recipientGoalsUrl = join(recipientUrl, 'goals', goalId.toString(), 'changeStatus');
   const updatedGoal = await put(recipientGoalsUrl, { newStatus });
   return updatedGoal.json();
 };
