@@ -15,7 +15,7 @@ const {
 /**
  * Get's file Id from DB using the s3 key
  * @param {string} key - uuid with a file extension representing the s3 key of the file
- * @returns {number} File's Id
+ * @returns {Promise} File's Id
  */
 const getIdFromKey = async (key) => {
   const file = await File.findOne({ where: { key } });
