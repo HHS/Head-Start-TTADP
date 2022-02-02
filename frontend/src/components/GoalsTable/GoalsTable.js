@@ -48,7 +48,7 @@ function GoalsTable({
           filterQuery,
         );
         setGoals(goalRows);
-        setGoalsCount(count || 0);
+        setGoalsCount(count);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
