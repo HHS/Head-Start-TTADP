@@ -41,7 +41,6 @@ export const getRecipientGoals = async (recipientId, sortBy = 'updatedAt', sortD
 };
 
 export const updateRecipientGoalStatus = async (goalId, newStatus) => {
-  // After the goal data change more than likely updating a goal will require a recipient id.
   const recipientGoalsUrl = join(recipientUrl, 'goals', goalId.toString());
   const updatedGoal = await put(recipientGoalsUrl, { newStatus });
   return updatedGoal.json();

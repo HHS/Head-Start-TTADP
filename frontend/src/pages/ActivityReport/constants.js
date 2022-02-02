@@ -1,3 +1,9 @@
+export const reasonsToMonitor = [
+  'Monitoring | Deficiency',
+  'Monitoring | Noncompliance',
+  'Monitoring | Area of Concern',
+];
+
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const reasons = [
@@ -15,15 +21,7 @@ export const reasons = [
   'Ongoing Quality Improvement',
   'Planning/Coordination (also TTA Plan Agreement)',
   'School Readiness Goals',
-  'Monitoring | Area of Concern',
-  'Monitoring | Noncompliance',
-  'Monitoring | Deficiency',
-];
-
-export const reasonsToMonitor = [
-  'Monitoring | Deficiency',
-  'Monitoring | Noncompliance',
-  'Monitoring | Area of Concern',
+  ...reasonsToMonitor,
 ];
 
 export const recipientParticipants = [
