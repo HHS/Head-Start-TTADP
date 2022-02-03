@@ -4,8 +4,7 @@
 
 .tta-smarthub--goal-row  .smart-hub--context-menu {
   width: 180px;
-  /*box-shadow: 0.25rem 0.5rem 0 rgb(0 0 0 / 10%);*/
-  box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.1),0 4px 11px hsla(0, 0%, 0%, 0.1);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
 }
 
 .tta-smarthub--goal-row .smart-hub--ellipsis {
@@ -14,4 +13,18 @@
 
 .tta-smarthub--goal-row .svg-inline--fa {
   position: relative;
+
 }
+.tta-smarthub--goal-row td:nth-child(3) .svg-inline--fa {
+vertical-align: top;
+}
+
+.tta-smarthub--goal-row td:nth-child(3) .smart-hub--tooltip button {
+  line-height: 0;
+}
+
+.tta-smarthub--goal-row td:nth-child(4) .smart-hub--tooltip button {
+  line-height: 1.7;
+  vertical-align: baseline;
+}
+

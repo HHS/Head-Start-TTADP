@@ -12,7 +12,7 @@
 }
 
 .goals-table h2 {
-  margin: 16px;
+  margin-left: 0px;
 }
 
 .goals-table .usa-table thead th a {
@@ -52,8 +52,7 @@
   white-space: normal;
   line-height: 1.5;
   vertical-align: top;
-  padding-top: 32px;
-  padding-bottom: 32px;
+  padding: 24px;
   border-top: 1px solid #c5c5c5;
   border-bottom: 1px solid #c5c5c5;
 }
@@ -84,3 +83,17 @@
   border-style: none;
   color: black;
 }
+
+.goals-table .padding-0 > .desktop\:display-flex:first-child{
+  margin-left: 24px;
+  margin-right: 24px;
+}
+
+.goals-table .smart-hub--total-count {
+  padding-right: 0px;
+}
+
+.goals-table .smart-hub--link-next {
+  margin-right: 0px;
+}
+

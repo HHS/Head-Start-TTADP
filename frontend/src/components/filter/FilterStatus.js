@@ -23,8 +23,8 @@ const options = [
     value: 'In Progress',
   },
   {
-    label: 'Closed',
-    value: 'Closed',
+    label: 'Completed',
+    value: 'Completed',
   },
   {
     label: 'Ceased/Suspended',
