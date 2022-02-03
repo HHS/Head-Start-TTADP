@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import Cookies from 'js-cookie';
 import {
   render, screen, fireEvent, waitFor, act,
 } from '@testing-library/react';
@@ -368,13 +369,17 @@ describe('Table sorting', () => {
   it('clicking Topics column header will sort by topics', async () => {
     const columnHeader = await screen.findByText(/topic\(s\)/i);
 
+    const mockSet = jest.fn();
+    Cookies.set = mockSet;
+
     fetchMock.get(
       '/api/activity-reports?sortBy=topics&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { count: 2, rows: activityReportsSorted },
     );
 
-    await act(async () => fireEvent.click(columnHeader));
+    act(async () => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
+    expect(mockSet).toHaveBeenCalled();
   });
 
   it('clicking Creator column header will sort by author', async () => {
