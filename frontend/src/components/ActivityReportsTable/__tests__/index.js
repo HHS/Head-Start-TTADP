@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import Cookies from 'js-cookie';
 import {
   render, screen, fireEvent, waitFor, act,
 } from '@testing-library/react';
@@ -15,6 +14,7 @@ import activityReports, { activityReportsSorted, generateXFakeReports } from '..
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../../fetchers/helpers';
 
 jest.mock('../../../fetchers/helpers');
+jest.mock('js-cookie');
 
 const oldWindowLocation = window.location;
 
@@ -53,13 +53,16 @@ const renderTable = (user, dateTime) => {
 
 describe('Table menus & selections', () => {
   describe('Table row context menu', () => {
+    const oldGlobalUrl = global.URL;
+
     beforeAll(() => {
       delete global.window.location;
-
       global.window.location = {
         ...oldWindowLocation,
+        toString: jest.fn(() => 'http://window.location.com'),
         assign: jest.fn(),
       };
+      global.URL = jest.fn();
     });
 
     beforeEach(async () => {
@@ -95,6 +98,7 @@ describe('Table menus & selections', () => {
 
     afterAll(() => {
       window.location = oldWindowLocation;
+      global.URL = oldGlobalUrl;
     });
 
     it('can trigger an activity report download', async () => {
@@ -361,7 +365,7 @@ describe('Table sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    await act(async () => fireEvent.click(columnHeader));
+    act(() => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
   });
@@ -369,17 +373,13 @@ describe('Table sorting', () => {
   it('clicking Topics column header will sort by topics', async () => {
     const columnHeader = await screen.findByText(/topic\(s\)/i);
 
-    const mockSet = jest.fn();
-    Cookies.set = mockSet;
-
     fetchMock.get(
       '/api/activity-reports?sortBy=topics&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { count: 2, rows: activityReportsSorted },
     );
 
-    act(async () => fireEvent.click(columnHeader));
+    act(() => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
-    expect(mockSet).toHaveBeenCalled();
   });
 
   it('clicking Creator column header will sort by author', async () => {
