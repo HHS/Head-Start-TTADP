@@ -11,8 +11,10 @@ import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
+import useCookieSorting from '../../hooks/useCookieSorting';
 
 import './index.css';
+import useCookiePage from '../../hooks/useCookiePage';
 
 function ActivityReportsTable({
   filters,
@@ -24,16 +26,17 @@ function ActivityReportsTable({
   const [error, setError] = useState('');
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
-  const [offset, setOffset] = useState(0);
   const [perPage] = useState(REPORTS_PER_PAGE);
-  const [activePage, setActivePage] = useState(1);
+  // const [activePage, setActivePage] = useState(1);
+  const [activePage, setActivePage] = useCookiePage(1, 'activityReportsTable');
+  const [offset, setOffset] = useState((activePage - 1) * perPage);
   const [reportsCount, setReportsCount] = useState(0);
   const [downloadError, setDownloadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [sortConfig, setSortConfig] = React.useState({
+  const [sortConfig, setSortConfig] = useCookieSorting({
     sortBy: 'updatedAt',
     direction: 'desc',
-  });
+  }, 'activityReportsTable');
 
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
