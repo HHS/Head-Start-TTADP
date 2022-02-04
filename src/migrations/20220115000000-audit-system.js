@@ -243,7 +243,7 @@ module.exports = {
 
             EXECUTE format($sql$
                 CREATE TRIGGER %I
-                  BEFORE UPDATE ON %I
+                  BEFORE DELETE ON %I
                   FOR EACH ROW EXECUTE FUNCTION %I()$sql$,
                 'ZALNoDeleteT' || t_name,
                 'ZAL' || t_name,
