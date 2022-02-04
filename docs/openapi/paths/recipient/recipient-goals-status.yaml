@@ -1,0 +1,31 @@
+put:
+  tags:
+    - recipient
+  summary: Updates goal status for recipient
+  requestBody:
+    description: The new status of the goal
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            newStatus:
+              type: string
+              description: |
+                The new status of the goal.
+  parameters:
+    - in: path
+      name: goalId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The updated goal
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/recipient'
+    400:
+        description: Recipient for recipientId was not found
