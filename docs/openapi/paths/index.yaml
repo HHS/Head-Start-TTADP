@@ -48,12 +48,17 @@
   $ref: './files.yaml'
 '/recipient/{recipientId}':
   $ref: './recipient/recipient-id.yaml'
+'/recipient/search':
+  $ref: './recipient/recipient-search.yaml'
+'/recipient/goals/{recipientId}':
+  $ref: './recipient/recipient-goals.yaml'
+'/recipient/goals/{goalId}/changeStatus':
+  $ref: './recipient/recipient-goals-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
 '/widgets/reasonList':
   $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
-'/recipient/goals':
-  $ref: './recipient/recipient-goals.yaml'
+
 

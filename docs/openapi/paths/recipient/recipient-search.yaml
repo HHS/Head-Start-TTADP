@@ -1,21 +1,16 @@
 get:
   tags:
     - recipient
-  summary: Retrieve a recipient by id
+  summary: Retrieve a recipient by keyword search
   parameters:
-    - in: path
-      name: recipientId
-      required: true
-      schema:
-        type: number
     - in: query
-      name: region
+      name: s
       required: false
       schema:
-        type: number
+        type: string
   responses:
     200:
-      description: The recipient record with an Id of {recipientId}
+      description: The recipient with a name or grant number matching the "s" search string
       content:
         application/json:
           schema:
