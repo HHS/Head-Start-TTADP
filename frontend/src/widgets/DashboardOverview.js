@@ -96,7 +96,7 @@ const DASHBOARD_FIELDS = {
       <Field
         key="participants"
         showTooltip={showTooltip}
-        tooltipText="he number of people in all activities"
+        tooltipText="The number of people in all activities"
         icon={faUserFriends}
         iconColor="#264A64"
         backgroundColor="#ECEEF1"
