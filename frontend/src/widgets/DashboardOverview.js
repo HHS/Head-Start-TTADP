@@ -68,7 +68,7 @@ const DASHBOARD_FIELDS = {
       <Field
         key="activity-reports"
         showTooltip={showTooltip}
-        tooltipText="The total number of approved activity reports."
+        tooltipText="The number of approved activity reports."
         icon={faChartBar}
         iconColor="#148439"
         backgroundColor="#F0FCF4"
@@ -86,19 +86,53 @@ const DASHBOARD_FIELDS = {
         iconColor="#2B7FB9"
         backgroundColor="#E2EFF7"
         label="Grants served"
-        tooltipText="The total number of grants served"
+        tooltipText="Each grant is only counted once"
         data={data.numGrants}
       />
     ),
   },
   Participants: {
-    render: (data, showTooltip) => <Field key="participants" showTooltip={showTooltip} tooltipText="The total number of people involved in all activities." icon={faUserFriends} iconColor="#264A64" backgroundColor="#ECEEF1" label="Participants" data={data.numParticipants} />,
+    render: (data, showTooltip) => (
+      <Field
+        key="participants"
+        showTooltip={showTooltip}
+        tooltipText="he number of people in all activities"
+        icon={faUserFriends}
+        iconColor="#264A64"
+        backgroundColor="#ECEEF1"
+        label="Participants"
+        data={data.numParticipants}
+      />
+    ),
   },
   'Hours of TTA': {
-    render: (data, showTooltip) => <Field key="hours-of-tta" showTooltip={showTooltip} tooltipText="The total number of hours spent on all TTA activities." icon={faClock} iconColor="#E29F4D" backgroundColor="#FFF1E0" label="Hours of TTA" data={data.sumDuration} decimalPlaces={1} />,
+    render: (data, showTooltip) => (
+      <Field
+        key="hours-of-tta"
+        showTooltip={showTooltip}
+        tooltipText="Rounded to the nearest half hour"
+        icon={faClock}
+        iconColor="#E29F4D"
+        backgroundColor="#FFF1E0"
+        label="Hours of TTA"
+        data={data.sumDuration}
+        decimalPlaces={1}
+      />
+    ),
   },
   'In-person activities': {
-    render: (data, showTooltip) => <Field key="in-person-activities" icon={faUser} showTooltip={showTooltip} tooltipText="Number of activities that were conducted in-person vs. virtual." iconColor="#A12854" backgroundColor="#FFE8F0" label="In-person activities" data={data.inPerson} />,
+    render: (data, showTooltip) => (
+      <Field
+        key="in-person-activities"
+        icon={faUser}
+        showTooltip={showTooltip}
+        tooltipText="Excludes virtual activities"
+        iconColor="#A12854"
+        backgroundColor="#FFE8F0"
+        label="In-person activities"
+        data={data.inPerson}
+      />
+    ),
   },
   'Recipients served': {
     render: (data, showTooltip) => (
@@ -109,7 +143,7 @@ const DASHBOARD_FIELDS = {
         label={`${data.numRecipients} ${data.numRecipients === 1 ? 'Recipient' : 'Recipients'} of ${data.totalRecipients}`}
         iconColor="#A12854"
         backgroundColor="#FFE8F0"
-        tooltipText="Percentage of recipients served out of active grants"
+        tooltipText="Recipients have at least one active grant"
         data={data.recipientPercentage}
       />
     ),
