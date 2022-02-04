@@ -36,7 +36,6 @@ const reports = [
     updatedAt: new Date(),
     context: '',
     regionId: 1,
-    oldManagerNotes: '',
     nonECLKCResourcesUsed: ['http://www.website.com'],
     ECLKCResourcesUsed: ['https://www.website.com'],
     virtualDeliveryType: 'video',

@@ -52,7 +52,6 @@ const reportObject = {
   activityRecipients: [
     { activityRecipientId: GRANT_ID },
   ],
-  oldApprovingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',
   duration: 1,
