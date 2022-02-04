@@ -20,3 +20,46 @@ get:
         application/json:
           schema:
             $ref: '../../index.yaml#/components/schemas/recipient'
+get:
+  tags:
+    - recipient
+  summary: Retrieves goals for a recipient
+  parameters:
+    - in: path
+      name: goals/recipientId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The goals of a recipient with an Id of {recipientId}
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/recipient'
+    400:
+      description: Recipient for recipientId was not found
+put:
+  tags:
+    - recipient
+  summary: Updates goal status for recipient
+  requestBody:
+    description: Status to update on goal
+    required: true
+      schema:
+        type: string
+  parameters:
+    - in: path
+      name: recipientId
+      required: true
+      schema:
+        type: number
+  responses:
+    200:
+      description: The updated goal
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/recipient'
+    400:
+        description: Recipient for recipientId was not found
