@@ -1,32 +1,10 @@
 get:
   tags:
     - recipient
-  summary: Retrieve a recipient
-  parameters:
-    - in: path
-      name: recipientId
-      required: true
-      schema:
-        type: number
-    - in: query
-      name: region
-      required: false
-      schema:
-        type: number
-  responses:
-    200:
-      description: The recipient record with an Id of {recipientId}
-      content:
-        application/json:
-          schema:
-            $ref: '../../index.yaml#/components/schemas/recipient'
-get:
-  tags:
-    - recipient
   summary: Retrieves goals for a recipient
   parameters:
     - in: path
-      name: goals/recipientId
+      name: recipient/goals/{recipientId}
       required: true
       schema:
         type: number
@@ -44,13 +22,20 @@ put:
     - recipient
   summary: Updates goal status for recipient
   requestBody:
-    description: Status to update on goal
+    description: The new status of the goal
     required: true
-      schema:
-        type: string
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            newStatus:
+              type: string
+              description: |
+                The new status of the goal.
   parameters:
     - in: path
-      name: recipientId
+      name: recipient/goals/{goalId}/changeStatus
       required: true
       schema:
         type: number
