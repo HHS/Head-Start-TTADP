@@ -1,6 +1,7 @@
 // Load in our dependencies
 import { Model, DataTypes } from 'sequelize'; // eslint-disable-line import/no-import-module-exports
 import httpContext from 'express-http-context'; // eslint-disable-line import/no-import-module-exports
+import { auditLogger } from '../logger'; // eslint-disable-line import/no-import-module-exports
 
 const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 
@@ -32,7 +33,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, n
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
-  /* const result = */ await sequelize.queryInterface.sequelize.query(
+  const result = await sequelize.queryInterface.sequelize.query(
     `SELECT
       -- Type: ${type} Model: ${name}
       set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
@@ -42,6 +43,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, n
     { transaction: options.transaction },
   );
   // console.log(JSON.stringify(result)); // eslint-disable-line no-console
+  auditLogger.info(JSON.stringify(result));
 };
 
 const generateAuditModel = (sequelize, model) => {
