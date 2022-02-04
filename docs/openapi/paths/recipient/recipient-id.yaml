@@ -1,0 +1,22 @@
+get:
+  tags:
+    - recipient
+  summary: Retrieve a recipient
+  parameters:
+    - in: path
+      name: recipientId
+      required: true
+      schema:
+        type: number
+    - in: query
+      name: region
+      required: false
+      schema:
+        type: number
+  responses:
+    200:
+      description: The recipient record with an Id of {recipientId}
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/recipient'

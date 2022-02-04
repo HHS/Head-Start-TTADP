@@ -54,3 +54,6 @@
   $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
+'/recipient/goals':
+  $ref: './recipient/recipient-goals.yaml'
+
