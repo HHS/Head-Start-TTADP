@@ -1,10 +1,11 @@
+/* eslint-disable max-len */
 module.exports = {
-  up: async (queryInterface) => Promise.all([
-    queryInterface.removeColumn('ActivityRepors', 'oldMangagerNotes'),
-    queryInterface.removeColumn('ActivityReports', 'oldApprovingManagerId'),
-  ]),
-  down: async (queryInterface, Sequelize) => Promise.all([
-    queryInterface.addColumn('ActivityRepors', 'oldMangagerNotes', { type: Sequelize.DataTypes.TEXT }),
-    queryInterface.addColumn('ActivityReports', 'oldApprovingManagerId', { type: Sequelize.DataTypes.INTEGER }),
-  ]),
+  up: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => Promise.all([
+    queryInterface.removeColumn('ActivityReports', 'oldManagerNotes', { transaction }),
+    queryInterface.removeColumn('ActivityReports', 'oldApprovingManagerId', { transaction }),
+  ])),
+  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => Promise.all([
+    queryInterface.addColumn('ActivityReports', 'oldManagerNotes', { type: Sequelize.DataTypes.TEXT }, { transaction }),
+    queryInterface.addColumn('ActivityReports', 'oldApprovingManagerId', { type: Sequelize.DataTypes.INTEGER }, { transaction }),
+  ])),
 };
