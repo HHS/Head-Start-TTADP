@@ -32,6 +32,7 @@
     "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn cucumber",
+    "migrate:create": "npx sequelize-cli migration:generate --name",
     "db:bootstrap:admin:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapAdminCLI.js",
     "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
     "db:validation": "node ./build/server/tools/dataValidationCLI.js",
@@ -46,8 +47,6 @@
     "db:seed:prod": "node_modules/.bin/sequelize db:seed:all --options-path .production.sequelizerc",
     "db:seed:undo": "node_modules/.bin/sequelize db:seed:undo:all",
     "db:seed:undo:prod": "node_modules/.bin/sequelize db:seed:undo:all --options-path .production.sequelizerc",
-    "db:transitionToMultApprovers": "node ./build/server/tools/transitionToMultApproversCLI.js",
-    "db:transitionToMultApprovers:local": "./node_modules/.bin/babel-node ./src/tools/transitionToMultApproversCLI.js",
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:reset": "./bin/reset-all",
     "docker:start": "docker-compose up",
@@ -82,9 +81,14 @@
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "updateLegacyPopulations": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
-    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyPopulationsCLI.js",
+    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/uupdateLegacyParticipantsCLI.js",
+    "updateLegacyParticipants": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
+    "updateLegacyParticipants:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyParticipantsCLI.js",
     "importActivityReportDuration": "node ./build/server/tools/importActivityReportDuration.js",
-    "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js"
+    "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js",
+    "updateTopicNames": "node ./build/server/tools/updateTopicNamesCLI.js",
+    "updateTopicNames:local": "./node_modules/.bin/babel-node ./src/tools/updateTopicNamesCLI.js"
+ 
   },
   "repository": {
     "type": "git",
