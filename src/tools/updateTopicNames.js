@@ -231,7 +231,7 @@ export default async function updateTopicNames() {
       });
 
       // push our update operation to our promises array
-      return report.update({ topics, targetPopulations }, { transaction });
+      return report.update({ topics, targetPopulations, reason }, { transaction });
     }));
   });
 }
