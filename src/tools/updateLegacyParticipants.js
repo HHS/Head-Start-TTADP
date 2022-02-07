@@ -11,11 +11,7 @@ export default async function updateLegacyParticipants() {
     attributes: ['id', 'participants'],
     where: {
       participants: {
-        [Op.or]: [
-          {
-            [Op.contains]: ['Family Chlid Care'],
-          },
-        ],
+        [Op.contains]: ['Family Chlid Care'],
       },
     },
   });
