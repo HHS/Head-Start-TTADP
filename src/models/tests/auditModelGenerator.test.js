@@ -1,6 +1,5 @@
 import faker from 'faker';
 import { Model } from 'sequelize';
-import httpContext from 'express-http-context';
 import db, { User, ZALUser } from '..';
 import { auditLogger } from '../../logger';
 import audit from '../auditModelGenerator';
@@ -18,11 +17,6 @@ describe('Audit System', () => {
       auditDescriptor: 'Audit System Test',
     };
 
-    httpContext.set('loggedUser', transactionVariables.loggedUser);
-    httpContext.set('transactionId', transactionVariables.transactionId);
-    httpContext.set('sessionSig', transactionVariables.sessionSig);
-    httpContext.set('auditDescriptor', transactionVariables.auditDescriptor);
-
     const query = `SELECT
       set_config('audit.loggedUser', '${transactionVariables.loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', '${transactionVariables.transactionId}', TRUE) as "transactionId",
@@ -37,6 +31,7 @@ describe('Audit System', () => {
 
   afterEach(async () => {
     if (t) {
+      // await t.commit();
       await t.rollback();
     }
   });
@@ -86,10 +81,11 @@ describe('Audit System', () => {
             sequelize: db.sequelize,
             createdAt: false,
             updatedAt: false,
+            transaction: t,
           },
         );
 
-        await Test.sync({ force: true, alter: true })
+        await Test.sync({ force: true, alter: true, transaction: t })
           .catch((err) => auditLogger.error(err));
 
         const data = await db.sequelize.queryInterface.sequelize.query(
@@ -198,7 +194,10 @@ describe('Audit System', () => {
         const ZALTest = audit.generateAuditModel(db.sequelize, Test);
 
         const addTest = await Test
-          .create({ value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') })
+          .create(
+            { value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') },
+            { transaction: t },
+          )
           .catch((err) => auditLogger.error(`${err.line}: ${err}`));
 
         const auditTest = await ZALTest.findAll({
