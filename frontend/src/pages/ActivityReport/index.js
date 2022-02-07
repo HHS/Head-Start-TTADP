@@ -39,7 +39,6 @@ const defaultValues = {
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
-  oldApprovingManagerId: null,
   attachments: [],
   collaborators: [],
   context: '',

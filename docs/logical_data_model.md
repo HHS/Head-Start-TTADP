@@ -165,11 +165,9 @@ class ActivityReport {
   topics : array<string>
   context : string
   pageState : json
-  oldManagerNotes : string
   * submissionStatus : string
   calculatedStatus: string
   ttaType : array<string>
-  oldApprovingManagerId : integer(32) REFERENCES public.Users.id
   * userId : integer(32) REFERENCES public.Users.id
   lastUpdatedById : integer(32) REFERENCES public.Users.id
   * regionId : integer(32) REFERENCES public.Region.id

@@ -6,7 +6,6 @@ import { REPORT_STATUSES } from '../constants';
 const dumbReport = {
   submissionStatus: REPORT_STATUSES.SUBMITTED,
   calculatedStatus: REPORT_STATUSES.APPROVED,
-  oldApprovingManagerId: 1,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
