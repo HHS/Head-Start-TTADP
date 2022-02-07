@@ -1,9 +1,9 @@
 import moment from 'moment';
 import {
-  Recipient, Grant, Program, sequelize, Goal,
+  Recipient, Grant, Program, sequelize,
 } from '../models';
 import {
-  allRecipients, recipientById, recipientsByName, updateRecipientGoalStatusById,
+  allRecipients, recipientById, recipientsByName,
 } from './recipient';
 import filtersToScopes from '../scopes';
 
@@ -530,34 +530,6 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
-    });
-  });
-  describe('Change Goal Status', () => {
-    let goal;
-
-    beforeAll(async () => {
-      // Create Goal.
-      goal = await Goal.create({
-        name: 'Goal with Objectives',
-        status: 'Not Started',
-        timeframe: '12 months',
-        isFromSmartsheetTtaPlan: false,
-        createdAt: new Date('2021-01-02'),
-      });
-    });
-
-    afterAll(async () => {
-      // Cleanup Goal.
-      await Goal.destroy({
-        where: {
-          id: goal.id,
-        },
-      });
-    });
-    it('Updates goal status', async () => {
-      const newStatus = 'In Progress';
-      const updatedGoal = await updateRecipientGoalStatusById(goal.id.toString(), newStatus);
-      expect(updatedGoal.status).toEqual(newStatus);
     });
   });
 });

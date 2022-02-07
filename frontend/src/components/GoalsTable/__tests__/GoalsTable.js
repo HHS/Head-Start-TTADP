@@ -411,7 +411,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/recipient/goals/4598/changeStatus', {
+      fetchMock.put('/api/goals/4598/changeStatus', {
         id: 4598,
         status: 'Completed',
         createdOn: '06/15/2021',

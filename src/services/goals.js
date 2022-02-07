@@ -199,3 +199,11 @@ export async function copyGoalsToGrants(goals, grantIds, transaction) {
     transaction,
   });
 }
+
+export async function updateGoalStatusById(goalId, newStatus) {
+  await Goal.update(
+    { status: newStatus },
+    { where: { id: goalId } },
+  );
+  return Goal.findOne({ where: { id: goalId } });
+}
