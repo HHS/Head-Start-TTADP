@@ -34,7 +34,6 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
-      ActivityReport.belongsTo(models.User, { foreignKey: 'oldApprovingManagerId', as: 'oldApprovingManager' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
       ActivityReport.belongsToMany(models.User, {
         through: models.ActivityReportCollaborator,
@@ -106,10 +105,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    oldApprovingManagerId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
     ECLKCResourcesUsed: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
     },
@@ -166,10 +161,6 @@ module.exports = (sequelize, DataTypes) => {
     regionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    oldManagerNotes: {
-      type: DataTypes.TEXT,
-      allowNull: true,
     },
     submissionStatus: {
       allowNull: false,
