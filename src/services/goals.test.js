@@ -234,31 +234,31 @@ describe('goalsForGrants', () => {
 });
 
 describe('Change Goal Status', () => {
-  let goal;
-
+  const goalId = 598745;
   beforeAll(async () => {
     // Create Goal.
-    goal = await Goal.create({
+    await Promise.all([Goal.create({
+      id: goalId,
       name: 'Goal with Objectives',
       status: 'Not Started',
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
       createdAt: new Date('2021-01-02'),
-    });
+    })]);
   });
 
   afterAll(async () => {
     // Cleanup Goal.
     await Goal.destroy({
       where: {
-        id: goal.id,
+        id: goalId,
       },
     });
     await sequelize.close();
   });
   it('Updates goal status', async () => {
     const newStatus = 'In Progress';
-    const updatedGoal = await updateGoalStatusById(goal.id.toString(), newStatus);
+    const updatedGoal = await updateGoalStatusById(goalId.toString(), newStatus);
     expect(updatedGoal.status).toEqual(newStatus);
   });
 });
