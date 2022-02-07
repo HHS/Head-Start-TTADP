@@ -100,6 +100,8 @@ describe('update topic names job', () => {
     updatedReports.forEach((report) => {
       let topics = [];
       let pop = ['pop'];
+      let reason = ['reason'];
+
       if (report.requester === 'Bruce') {
         topics = [
           'Behavioral / Mental Health / Trauma',
@@ -131,10 +133,11 @@ describe('update topic names job', () => {
       }
 
       if (report.requester === 'Bubert 2') {
-        topics = ['School Readiness'];
+        reason = ['reason', 'School Readiness Goals'];
         pop = ['pop', 'Children with Disabilities'];
       }
 
+      expect(report.reason).toStrictEqual(reason);
       expect(report.topics).toStrictEqual(topics);
       expect(report.targetPopulations).toStrictEqual(pop);
     });
