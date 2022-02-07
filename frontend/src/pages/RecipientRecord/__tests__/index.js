@@ -12,7 +12,7 @@ import UserContext from '../../../UserContext';
 import { SCOPE_IDS } from '../../../Constants';
 
 const { ADMIN } = SCOPE_IDS;
-const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 const memoryHistory = createMemoryHistory();
 
 describe('recipient record page', () => {
@@ -152,7 +152,7 @@ describe('recipient record page', () => {
     memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
     act(() => renderRecipientRecord());
     await waitFor(() => {
-      const ar = screen.getByText(/the total number of approved activity reports\. click to visually reveal this information/i);
+      const ar = screen.getByText(/the number of approved activity reports\. click to visually reveal this information/i);
       expect(ar).toBeInTheDocument();
     });
 
