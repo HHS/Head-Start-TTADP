@@ -1,7 +1,7 @@
 put:
   tags:
-    - recipient
-  summary: Updates goal status for recipient
+    - goals
+  summary: Updates the status for a goal
   requestBody:
     description: The new status of the goal
     required: true
@@ -26,6 +26,6 @@ put:
       content:
         application/json:
           schema:
-            $ref: '../../index.yaml#/components/schemas/recipient'
+            $ref: '../../index.yaml#/components/schemas/goal'
     400:
-        description: Recipient for recipientId was not found
+        description: Goal id was not found

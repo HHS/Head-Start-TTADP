@@ -1,10 +1,10 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { setReadRegions } from '../../services/accessValidation';
 import {
-  getRecipient, searchRecipients, getGoalsByRecipient, changeRecipientGoalStatus,
+  getRecipient, searchRecipients, getGoalsByRecipient,
 } from './handlers';
 import {
-  getGoalsByActivityRecipient, recipientById, recipientsByName, updateRecipientGoalStatusById,
+  getGoalsByActivityRecipient, recipientById, recipientsByName,
 } from '../../services/recipient';
 
 jest.mock('../../services/recipient', () => ({
@@ -178,56 +178,6 @@ describe('getGoalsByActivityRecipient', () => {
       },
     };
     await getGoalsByRecipient(req, mockResponse);
-    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-  });
-});
-
-describe('changeRecipientGoalStatus', () => {
-  const goalWhere = { name: 'My updated goal' };
-
-  const mockResponse = {
-    attachment: jest.fn(),
-    json: jest.fn(),
-    send: jest.fn(),
-    sendStatus: jest.fn(),
-    status: jest.fn(() => ({
-      end: jest.fn(),
-    })),
-  };
-  it('updates status goal by id', async () => {
-    const req = {
-      params: {
-        goalId: 100000,
-      },
-      body: {
-        newStatus: 'New Status',
-
-      },
-    };
-    updateRecipientGoalStatusById.mockResolvedValue(goalWhere);
-    await changeRecipientGoalStatus(req, mockResponse);
-    expect(mockResponse.json).toHaveBeenCalledWith(goalWhere);
-  });
-
-  it('returns a 404 when a recipient can\'t be found', async () => {
-    const req = {
-      params: {
-        goalId: 100000,
-      },
-      body: {
-        newStatus: 'New Status',
-
-      },
-    };
-    updateRecipientGoalStatusById.mockResolvedValue(null);
-    await changeRecipientGoalStatus(req, mockResponse);
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
-  });
-
-  it('returns a 500 on error', async () => {
-    const req = {
-    };
-    await changeRecipientGoalStatus(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });

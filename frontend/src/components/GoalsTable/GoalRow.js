@@ -10,7 +10,7 @@ import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import { updateRecipientGoalStatus } from '../../fetchers/recipient';
+import { updateGoalStatus } from '../../fetchers/goals';
 import './GoalRow.css';
 
 function GoalRow({
@@ -148,7 +148,7 @@ function GoalRow({
   const onUpdateGoalStatus = async (status) => {
     const goalToSave = mapToStoredStatus.find((m) => m.status === status);
     if (goalToSave) {
-      const updatedGoal = await updateRecipientGoalStatus(id, goalToSave.stored);
+      const updatedGoal = await updateGoalStatus(id, goalToSave.stored);
       updateGoal(updatedGoal);
     }
   };
