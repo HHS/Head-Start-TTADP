@@ -43,7 +43,6 @@ const draftReport = {
 const submittedReport = {
   ...draftReport,
   submissionStatus: REPORT_STATUSES.SUBMITTED,
-  oldApprovingManagerId: mockManager.id,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,

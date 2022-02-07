@@ -7,10 +7,10 @@ import {
 import userEvent from '@testing-library/user-event';
 import FilterItem from '../FilterItem';
 import FilterErrorContext from '../FilterErrorContext';
-import { FILTER_CONFIG } from '../constants';
+import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
-const selectedTopic = FILTER_CONFIG[0];
-const topicOptions = FILTER_CONFIG.map(({ id: filterId, display }) => (
+const selectedTopic = TTAHISTORY_FILTER_CONFIG[0];
+const topicOptions = TTAHISTORY_FILTER_CONFIG.map(({ id: filterId, display }) => (
   <option key={filterId} value={filterId}>{display}</option>
 ));
 
