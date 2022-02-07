@@ -13,19 +13,19 @@ const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 // };
 
 const tryJsonParse = (data) => {
-  const newData = data;
-  if (typeof data === 'object') {
-    Object.entries(data).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        try {
-          newData[key] = JSON.parse(value);
-        } catch (e) {
-          newData[key] = value;
-        }
-      } else {
-        newData[key] = value;
+  let newData = data;
+  if (data) {
+    if (typeof data === 'object') {
+      Object.entries(data).forEach(([key, value]) => {
+        newData[key] = tryJsonParse(value);
+      });
+    } else if (typeof data === 'string') {
+      try {
+        newData = JSON.parse(data);
+      } catch (e) {
+        newData = data;
       }
-    });
+    }
   }
   return newData;
 };
