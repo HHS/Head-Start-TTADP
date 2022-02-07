@@ -52,8 +52,12 @@ const TOPIC_DICTIONARY = [
     new: 'Child Assessment, Development, Screening',
   },
   {
+    old: 'Coaching / Teaching / Instructional Support | ECS, FES',
+    new: ['Coaching', 'CLASS: Instructional Support'],
+  },
+  {
     old: 'Children with Disabilities | ECS',
-    new: 'School Readiness',
+    reason: 'School Readiness Goals',
     population: 'Children with Disabilities',
   },
   {
@@ -130,7 +134,7 @@ const TOPIC_DICTIONARY = [
   },
   {
     old: 'Quality Improvement / QIP | GS',
-    new: 'Quality Improvement / QIP',
+    new: 'Quality Improvement Plan / QIP',
   },
   {
     old: 'Safety Practices | HS',
@@ -169,7 +173,7 @@ const TOPIC_DICTIONARY = [
 export default async function updateTopicNames() {
   // we find any activity reports that have ANY of the old topics in their topics field
   const reports = await ActivityReport.findAll({
-    attributes: ['id', 'topics', 'targetPopulations'],
+    attributes: ['id', 'topics', 'targetPopulations', 'reason'],
     where: {
       topics: {
         [Op.overlap]: TOPIC_DICTIONARY.map((dict) => dict.old),
@@ -185,6 +189,7 @@ export default async function updateTopicNames() {
     // copy existing state
       let topics = [...report.topics];
       let targetPopulations = [...report.targetPopulations];
+      let reason = [...report.reason];
 
       // within each report, check our array of topics to rename
       TOPIC_DICTIONARY.forEach((topic) => {
@@ -213,6 +218,14 @@ export default async function updateTopicNames() {
             // we make it an array, spread it, and flatten it
             // in this way, we get consistent behavior
             targetPopulations = [...targetPopulations, ...[topic.population]].flat();
+          }
+        }
+
+        if (index !== -1 && topic.reason) {
+          const popIndex = reason.indexOf(topic.reason);
+          if (popIndex === -1) {
+            logger.info(`Renaming ${topic.old} to reason ${topic.reason} in ${report.id}`);
+            reason = [...reason, ...[topic.reason]].flat();
           }
         }
       });
