@@ -177,7 +177,7 @@ export default async function overview(scopes) {
     numRecipients: numRecipients.toString(),
     totalRecipients: totalRecipients.toString(),
     inPerson,
-    sumDuration: formatNumber(sumDuration),
+    sumDuration,
     numParticipants: formatNumber(numParticipants),
   };
 }
