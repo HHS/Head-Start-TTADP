@@ -86,7 +86,7 @@ export default function RegionalDashboard() {
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
-        <h1 className="ttahub--dashboard-title">
+        <h1 className="landing">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
           TTA Activity Dashboard
