@@ -423,19 +423,17 @@ describe('Goals by Recipient Test', () => {
 
       // Goal 3 Objectives.
       expect(goalRows[1].objectives.length).toBe(2);
-      expect(goalRows[1].objectives[0].title).toBe('objective 3');
-      expect(goalRows[1].objectives[0].ttaProvided).toBe('Objective for Goal 3');
+      expect(goalRows[1].objectives[0].title).toBe('objective 4');
+      expect(goalRows[1].objectives[0].ttaProvided).toBe('Objective for Goal 3 b');
       expect(goalRows[1].objectives[0].endDate).toBe('09/01/2020');
       expect(goalRows[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[1].objectives[0].status).toEqual('In Progress');
+      expect(goalRows[1].objectives[0].status).toEqual('Completed');
 
-      expect(goalRows[1].objectives.length).toBe(2);
-      expect(goalRows[1].objectives[1].title).toBe('objective 4');
-      expect(goalRows[1].objectives[1].ttaProvided).toBe('Objective for Goal 3 b');
+      expect(goalRows[1].objectives[1].title).toBe('objective 3');
+      expect(goalRows[1].objectives[1].ttaProvided).toBe('Objective for Goal 3');
       expect(goalRows[1].objectives[1].endDate).toBe('09/01/2020');
       expect(goalRows[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[1].objectives[1].status).toEqual('Completed');
-
+      expect(goalRows[1].objectives[1].status).toEqual('In Progress');
       // Goal 2.
       expect(moment(goalRows[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
       expect(goalRows[2].goalText).toBe('Goal 2');
