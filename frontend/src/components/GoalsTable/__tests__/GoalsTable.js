@@ -219,7 +219,7 @@ describe('Goals Table', () => {
 
       // Ceased/Suspended.
       expect(screen.getAllByRole('cell')[30].firstChild).toHaveClass('fa-times-circle');
-      expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Ceased/suspended');
+      expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Ceased/ suspended');
       expect(screen.getAllByRole('cell')[31]).toHaveTextContent('01/15/2021');
       expect(screen.getAllByRole('cell')[32]).toHaveTextContent(/this is goal text 6/i);
       expect(screen.getAllByRole('cell')[33]).toHaveTextContent(/recordkeeping and reporting/i);
