@@ -60,18 +60,28 @@
 
 .goals-table .usa-table td:first-child {
   border-left: 1px solid #c5c5c5;
+  min-width: 200px;
 }
 
 .goals-table .usa-table td:last-child {
   border-right: 1px solid #c5c5c5;
 }
 
+.goals-table .usa-table td:nth-child(2) {
+  min-width: 120px;
+}
+
 .goals-table .usa-table td:nth-child(3) {
   max-width: 500px;
+  min-width: 500px;
 }
 
 .goals-table .usa-table td:nth-child(4) {
   max-width: 323px;
+  min-width: 323px;
+}
+.goals-table .usa-table td:nth-child(5) {
+  min-width: 180px;
 }
 
 .goals-table .usa-table .usa-checkbox__label {
