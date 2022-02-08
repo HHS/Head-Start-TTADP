@@ -92,7 +92,6 @@ const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.SUBMITTED,
-  oldApprovingManagerId: 1,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
