@@ -267,18 +267,22 @@ export async function getGoalsByActivityRecipient(
               goalToAdd.reasons = a.ActivityReport.reason;
               // Objectives.
               if (a.ActivityReport.objectives) {
-                goalToAdd.objectiveCount += a.ActivityReport.objectives.length;
                 if (a.ActivityReport.objectives) {
                   a.ActivityReport.objectives.forEach((o) => {
-                    goalToAdd.objectives.push({
-                      id: o.id,
-                      title: o.title,
-                      arNumber: a.displayId,
-                      ttaProvided: o.ttaProvided,
-                      endDate: a.ActivityReport.endDate,
-                      reasons: a.ActivityReport.reason,
-                      status: o.status,
-                    });
+                    const existingObj = goalToAdd.objectives.find((obj) => obj.id === o.id);
+                    // We need to ensure we are only adding each objective once.
+                    // If required is false (left join) on Objectives we get duplicates.
+                    if (!existingObj) {
+                      goalToAdd.objectives.push({
+                        id: o.id,
+                        title: o.title,
+                        arNumber: a.displayId,
+                        ttaProvided: o.ttaProvided,
+                        endDate: a.ActivityReport.endDate,
+                        reasons: a.ActivityReport.reason,
+                        status: o.status,
+                      });
+                    }
                   });
                 }
               }
@@ -291,6 +295,7 @@ export async function getGoalsByActivityRecipient(
     goalToAdd.objectives.sort((a, b) => ((
       a.endDate === b.endDate ? a.id < b.id
         : a.endDate < b.endDate) ? 1 : -1));
+    goalToAdd.objectiveCount = goalToAdd.objectives.length;
     goalRows.push(goalToAdd);
     goalCount += 1;
   });
