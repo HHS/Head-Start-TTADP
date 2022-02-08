@@ -696,7 +696,7 @@ async function getDownloadableActivityReports(where) {
       where,
       attributes: {
         include: ['displayId', 'createdAt', 'approvedAt'],
-        exclude: ['imported', 'legacyId', 'oldManagerNotes', 'additionalNotes', 'approvers'],
+        exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
       },
       include: [
         {

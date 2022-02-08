@@ -92,10 +92,10 @@ export async function updateUser(req, res) {
         {
           include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
           where: { id: userId },
+          transaction,
         },
-        { transaction },
       );
-      await Permission.destroy({ where: { userId } }, { transaction });
+      await Permission.destroy({ where: { userId }, transaction });
       await Permission.bulkCreate(requestUser.permissions, { transaction });
     });
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
@@ -116,8 +116,10 @@ export async function deleteUser(req, res) {
   const { userId } = req.params;
   auditLogger.info(`User ${req.session.userId} deleting User: ${userId}`);
   try {
-    const result = await User.destroy({ where: { id: userId } });
-    res.json(result);
+    await sequelize.transaction(async (transaction) => {
+      const result = await User.destroy({ where: { id: userId }, transaction });
+      res.json(result);
+    });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
