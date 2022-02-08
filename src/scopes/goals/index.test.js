@@ -1,9 +1,13 @@
 import { Op } from 'sequelize';
-import { createReport, destroyReport } from '../../testUtils';
+import {
+  createReport, destroyReport, createGoal, createGrant,
+} from '../../testUtils';
 import filtersToScopes from '../index';
 import db, {
-  Goal, Objective, ActivityReportObjective,
+  Goal, Objective, ActivityReportObjective, Recipient, Grant,
 } from '../../models';
+
+const REGION_ID = 10;
 
 describe('goal filtersToScopes', () => {
   let reportIds;
@@ -12,6 +16,7 @@ describe('goal filtersToScopes', () => {
   let emptyReport;
   let reportWithReasons;
   let reportWithTopics;
+  let grant;
 
   beforeAll(async () => {
     emptyReport = await createReport({
@@ -138,6 +143,9 @@ describe('goal filtersToScopes', () => {
       ],
     );
 
+    grant = await createGrant({ regionId: REGION_ID });
+    goals.push(await createGoal({ status: 'Ceased/Suspended', name: 'Goal 6', grantId: grant.id }));
+
     reportIds = [emptyReport.id, reportWithReasons.id, reportWithTopics.id];
     objectiveIds = objectives.map((o) => o.id);
     possibleGoalIds = goals.map((g) => g.id);
@@ -166,6 +174,18 @@ describe('goal filtersToScopes', () => {
       [emptyReport, reportWithReasons, reportWithTopics]
         .map(async (report) => destroyReport(report)),
     );
+
+    await Grant.destroy({
+      where: {
+        id: grant.id,
+      },
+    });
+
+    await Recipient.destroy({
+      where: {
+        id: grant.recipientId,
+      },
+    });
 
     await db.sequelize.close();
   });
@@ -206,7 +226,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(1);
+      expect(found.length).toBe(2);
       expect(found.map((g) => g.name)).toContain('Goal 5');
     });
 
@@ -301,7 +321,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(4);
+      expect(found.length).toBe(5);
       expect(found.map((g) => g.name)).not.toContain('Goal 1');
     });
   });
@@ -338,8 +358,66 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(4);
+      expect(found.length).toBe(5);
       expect(found.map((g) => g.name)).not.toContain('Goal 2');
+    });
+  });
+
+  describe('recipientId', () => {
+    it('filters by recipientId', async () => {
+      const filters = { 'recipientId.ctn': [grant.recipientId] };
+      const scope = filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found[0].name).toContain('Goal 6');
+    });
+  });
+
+  describe('region', () => {
+    it('filters by region', async () => {
+      const filters = { 'region.in': [grant.regionId] };
+      const scope = filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found[0].name).toContain('Goal 6');
+    });
+
+    it('filters out by region', async () => {
+      const filters = { 'region.nin': [grant.regionId] };
+      const scope = filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(5);
+      expect(found[0].name).not.toContain('Goal 6');
     });
   });
 });
