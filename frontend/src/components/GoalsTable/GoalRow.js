@@ -207,7 +207,7 @@ function GoalRow({
     <tr className="tta-smarthub--goal-row" key={`goal_row_${id}`}>
       <td>
         {getGoalStatusIcon()}
-        {displayStatus}
+        {displayStatus === 'Ceased/suspended' ? ['Ceased/ ', <br />, 'suspended'] : displayStatus}
       </td>
       <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
       <td className="text-wrap maxw-mobile">
