@@ -167,13 +167,17 @@ export default async function overview(scopes) {
   const rawPercentage = (numRecipients / totalRecipients) * 100;
   const recipientPercentage = `${formatNumber(rawPercentage, 2)}%`;
 
+  const { numReports, numGrants, numOtherEntities } = res;
+
   return {
-    ...res,
+    numReports: formatNumber(numReports),
+    numGrants: formatNumber(numGrants),
+    numOtherEntities: formatNumber(numOtherEntities),
     recipientPercentage,
     numRecipients: numRecipients.toString(),
     totalRecipients: totalRecipients.toString(),
     inPerson,
-    sumDuration,
-    numParticipants,
+    sumDuration: formatNumber(sumDuration),
+    numParticipants: formatNumber(numParticipants),
   };
 }
