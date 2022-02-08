@@ -27,14 +27,31 @@ router.use(cookieSession);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.use((req, res, next) => {
-  const { userId } = req.session;
-  const transactionId = uuidv4();
-  const sessionSig = req.headers.cookie.split(' ')[1].replace('session.sig=', '');
+  try {
+    const { userId } = req.session;
+    const transactionId = uuidv4();
+    const { cookie } = req.headers;
+    const sessionSig = () => {
+      try {
+        if (cookie !== undefined && (typeof cookie === 'string' || cookie instanceof String)) {
+          const sessionSigs = cookie.split(' ').filter((s) => s.includes('session.sig='));
+          return sessionSigs.lenght > 0
+            ? sessionSigs[0].replace('session.sig=', '')
+            : '';
+        }
+      } catch (err) {
+        auditLogger.error(err);
+      }
+      return '';
+    };
 
-  httpContext.set('loggedUser', userId);
-  httpContext.set('transactionId', transactionId);
-  httpContext.set('sessionSig', sessionSig);
-  // auditLogger.info(`Audit Data loggedUser: ${userId}`);
+    httpContext.set('loggedUser', userId);
+    httpContext.set('transactionId', transactionId);
+    httpContext.set('sessionSig', sessionSig);
+    // auditLogger.info(`Audit Data loggedUser: ${userId}`);
+  } catch (err) {
+    auditLogger.error(err);
+  }
   next();
 });
 

@@ -38,6 +38,8 @@ A passed in transaction id will be recorded with any log generated, if no transa
   then the built in postgresql transaction id will be used. The same transaction id should be used
   for all db calls generated form a single UI generated event to aid in associating all
   corresponding changes.
+A passed in session sig will be recorded with any log generated, if no session sig is passed, null
+  will be used.
 An optional descriptor can be passed and will be recorded with any log generated if supplied.
 */
 
