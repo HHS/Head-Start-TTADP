@@ -210,7 +210,7 @@ export async function getGoalsByActivityRecipient(
                     attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],
                     model: Objective,
                     as: 'objectives',
-                    required: true,
+                    required: false, // Include goals without objectives.
                     where: { goalId: { [Op.eq]: sequelize.col('Goal.id') } },
                   },
                 ],
@@ -267,7 +267,7 @@ export async function getGoalsByActivityRecipient(
               goalToAdd.reasons = a.ActivityReport.reason;
               // Objectives.
               if (a.ActivityReport.objectives) {
-                goalToAdd.objectiveCount = a.ActivityReport.objectives.length;
+                goalToAdd.objectiveCount += a.ActivityReport.objectives.length;
                 if (a.ActivityReport.objectives) {
                   a.ActivityReport.objectives.forEach((o) => {
                     goalToAdd.objectives.push({
@@ -287,6 +287,10 @@ export async function getGoalsByActivityRecipient(
         }
       });
     }
+    // Sort Objectives by end date desc.
+    goalToAdd.objectives.sort((a, b) => ((
+      a.endDate === b.endDate ? a.id < b.id
+        : a.endDate < b.endDate) ? 1 : -1));
     goalRows.push(goalToAdd);
     goalCount += 1;
   });
