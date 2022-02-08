@@ -43,6 +43,7 @@
 .smart-hub--tooltip.show-tooltip .usa-tooltip__body{        
     animation: fadein;
     animation-duration: 500ms;
+    animation-fill-mode: forwards;
     animation-iteration-count: 1;
     bottom: 1.5rem;
     display: inline-block;

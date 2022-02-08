@@ -25,6 +25,6 @@ export const topicToQuery = {
   },
 };
 
-export function goalsReportFiltersToScopes(filters) {
+export function goalsFiltersToScopes(filters) {
   return createFiltersToScopes(filters, topicToQuery);
 }
