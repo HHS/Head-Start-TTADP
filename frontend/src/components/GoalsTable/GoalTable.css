@@ -34,6 +34,7 @@
   margin-left: 24px;
   margin-right: 24px;
   padding-bottom: 16px;
+  overflow-x: auto;
 }
 
 .goals-table .usa-table-container > table {
@@ -66,7 +67,11 @@
 }
 
 .goals-table .usa-table td:nth-child(3) {
-  min-width: 500px;
+  max-width: 500px;
+}
+
+.goals-table .usa-table td:nth-child(4) {
+  max-width: 323px;
 }
 
 .goals-table .usa-table .usa-checkbox__label {
@@ -97,3 +102,6 @@
   margin-right: 0px;
 }
 
+.goals-table .disabled {
+  display: none;
+}
