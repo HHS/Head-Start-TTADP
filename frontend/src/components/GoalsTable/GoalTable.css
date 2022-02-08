@@ -60,7 +60,7 @@
 
 .goals-table .usa-table td:first-child {
   border-left: 1px solid #c5c5c5;
-  min-width: 200px;
+  min-width: 160px;
 }
 
 .goals-table .usa-table td:last-child {
@@ -77,11 +77,11 @@
 }
 
 .goals-table .usa-table td:nth-child(4) {
-  max-width: 323px;
-  min-width: 323px;
+  max-width: 330px;
+  min-width: 330px;
 }
 .goals-table .usa-table td:nth-child(5) {
-  min-width: 180px;
+  min-width: 160px;
 }
 
 .goals-table .usa-table .usa-checkbox__label {
