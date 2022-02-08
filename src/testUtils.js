@@ -8,7 +8,19 @@ import {
   Recipient,
   Grant,
   Region,
+  Goal,
+  GrantGoal,
 } from './models';
+
+const GOAL_STATUS = [null, 'not_started', 'completed', 'in_progress', 'closed'];
+
+function defaultGoal() {
+  return {
+    name: faker.random.words(10),
+    status: GOAL_STATUS[Math.floor(Math.random() * GOAL_STATUS.length)],
+    isFromSmartsheetTtaPlan: false,
+  };
+}
 
 function defaultReport() {
   return {
@@ -69,7 +81,7 @@ function defaultGrant() {
   };
 }
 
-async function createRecipient(recipient) {
+export async function createRecipient(recipient) {
   return Recipient.create({
     id: faker.datatype.number({ min: 10000, max: 100000 }),
     name: faker.company.companyName(),
@@ -203,4 +215,26 @@ export async function destroyReport(report) {
       },
     });
   }
+}
+
+export async function createGoal(goal) {
+  let grant = await Grant.findByPk(goal.grantId);
+
+  if (!grant) {
+    grant = await createGrant({});
+  }
+
+  const dbGoal = await Goal.create({ ...defaultGoal(), ...goal });
+  await GrantGoal.create({ grantId: grant.id, goalId: dbGoal.id, recipientId: grant.recipientId });
+  return dbGoal;
+}
+
+export async function destroyGoal(goal) {
+  const { id: goalId } = goal;
+  await GrantGoal.destroy({ where: { goalId } });
+  return Goal.destroy({
+    where: {
+      id: goal.id,
+    },
+  });
 }
