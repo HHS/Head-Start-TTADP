@@ -88,8 +88,8 @@
     "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js",
     "updateTopicNames": "node ./build/server/tools/updateTopicNamesCLI.js",
     "updateTopicNames:local": "./node_modules/.bin/babel-node ./src/tools/updateTopicNamesCLI.js",
-    "updateLegacyCreatorAndCollaborator": "node ./build/server/tools/updateLegacyCreatorAndCollaboratorCLI.js",
-    "updateLegacyCreatorAndCollaborator:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyCreatorAndCollaboratorCLI.js"
+    "updateLegacyCreatorsAndCollaborators": "node ./build/server/tools/updateLegacyCreatorsAndCollaboratorsCLI.js",
+    "updateLegacyCreatorsAndCollaborators:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyCreatorsAndCollaboratorsCLI.js"
   },
   "repository": {
     "type": "git",
