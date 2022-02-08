@@ -144,7 +144,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
       }],
     }],
     subQuery: false,
-    // raw: true,
+    raw: true,
     group: [
       'grants.regionId',
       'Recipient.id',
