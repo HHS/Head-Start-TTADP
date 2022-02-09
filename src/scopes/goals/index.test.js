@@ -173,7 +173,7 @@ describe('goal filtersToScopes', () => {
   describe('createDate', () => {
     it('before', async () => {
       const filters = { 'createDate.bef': '2021/01/09' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -194,7 +194,7 @@ describe('goal filtersToScopes', () => {
 
     it('after', async () => {
       const filters = { 'createDate.aft': '2021/01/09' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -212,7 +212,7 @@ describe('goal filtersToScopes', () => {
 
     it('within', async () => {
       const filters = { 'createDate.win': '2021/01/09-2021/01/11' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -232,7 +232,7 @@ describe('goal filtersToScopes', () => {
   describe('status', () => {
     it('filters in by status', async () => {
       const filters = { 'status.in': ['Active', 'Needs Status'] };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -251,7 +251,7 @@ describe('goal filtersToScopes', () => {
     });
     it('filters out by status', async () => {
       const filters = { 'status.nin': 'Ceased/Suspended' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -274,7 +274,7 @@ describe('goal filtersToScopes', () => {
   describe('reasons', () => {
     it('filters by reason', async () => {
       const filters = { 'reason.in': 'Full Enrollment' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -291,7 +291,7 @@ describe('goal filtersToScopes', () => {
     });
     it('filters out by reason', async () => {
       const filters = { 'reason.nin': 'Full Enrollment' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -309,7 +309,7 @@ describe('goal filtersToScopes', () => {
   describe('topics', () => {
     it('filters in by topics', async () => {
       const filters = { 'topic.in': 'Behavioral / Mental Health / Trauma' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -326,7 +326,7 @@ describe('goal filtersToScopes', () => {
     });
     it('filters out by topics', async () => {
       const filters = { 'topic.nin': 'Behavioral / Mental Health / Trauma' };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
