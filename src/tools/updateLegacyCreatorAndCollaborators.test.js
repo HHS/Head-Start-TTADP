@@ -7,6 +7,7 @@ import {
 } from '../models';
 import updateLegacyCreatorsAndCollaborators from './updateLegacyCreatorsAndCollaborators';
 import { REPORT_STATUSES } from '../constants';
+import { destroyReport } from '../testUtils';
 import Users from '../policies/user';
 
 const emails = [
@@ -80,7 +81,6 @@ describe('updateLegacyCreatorAndCollaborators', () => {
         name: names[i],
       })
     )));
-
     reports = await Promise.all([
       ActivityReport.create({
         ...dumbReport,
@@ -124,11 +124,7 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     });
 
-    await ActivityReport.destroy({
-      where: {
-        id: reportIds,
-      },
-    });
+    await Promise.all(reports.map((r) => destroyReport(r)));
 
     await Users.destroy({
       where: {
@@ -151,27 +147,81 @@ describe('updateLegacyCreatorAndCollaborators', () => {
 
     await updateLegacyCreatorsAndCollaborators();
 
-    // const after = await ActivityReport.findAll({
-    //   attributes: ['userId', 'imported'],
-    //   include: [
-    //     {
-    //       model: User,
-    //       attributes: ['id', 'name', 'role', 'fullName'],
-    //       as: 'collaborators',
-    //       through: {
-    //         attributes: [],
-    //       },
-    //       required: false,
-    //     },
-    //   ],
-    //   where: {
-    //     id: reportIds,
-    //   },
-    // });
+    const after = await ActivityReport.findAll({
+      attributes: ['id', 'userId', 'imported'],
+      include: [
+        {
+          model: User,
+          attributes: ['email'],
+          as: 'collaborators',
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+      ],
+      where: {
+        id: reportIds,
+      },
+    });
 
-    // after.forEach((report) => {
-    //   const { userId, collaborators } = report;
-    //   expect(userId).not.toBe(null);
-    // });
+    expect(after.length).toBe(4);
+
+    const [reportOne, reportTwo, reportThree, reportFour] = after;
+    const {
+      userId: reportOneUserId,
+      collaborators: reportOneCollaborators,
+      imported: {
+        otherSpecialists: reportOneOtherSpecialists,
+        createdBy: reportOneCreatedBy,
+      },
+    } = reportOne;
+    let u = await User.findByPk(reportOneUserId);
+    expect(u.email).toBe(reportOneCreatedBy);
+    reportOneOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
+      expect(reportOneCollaborators.map((r) => r.email)).toContain(c);
+    });
+
+    const {
+      userId: reportTwoUserId,
+      collaborators: reportTwoCollaborators,
+      imported: {
+        otherSpecialists: reportTwoOtherSpecialists,
+        createdBy: reportTwoCreatedBy,
+      },
+    } = reportTwo;
+    u = await User.findByPk(reportTwoUserId);
+    expect(u.email).toBe(reportTwoCreatedBy);
+    reportTwoOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
+      expect(reportTwoCollaborators.map((r) => r.email)).toContain(c);
+    });
+
+    const {
+      userId: reportThreeUserId,
+      collaborators: reportThreeCollaborators,
+      imported: {
+        otherSpecialists: reportThreeOtherSpecialists,
+        createdBy: reportThreeCreatedBy,
+      },
+    } = reportThree;
+    u = await User.findByPk(reportThreeUserId);
+    expect(u.email).toBe(reportThreeCreatedBy);
+    reportThreeOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
+      expect(reportThreeCollaborators.map((r) => r.email)).toContain(c);
+    });
+
+    const {
+      userId: reportFourUserId,
+      collaborators: reportFourCollaborators,
+      imported: {
+        otherSpecialists: reportFourOtherSpecialists,
+        createdBy: reportFourCreatedBy,
+      },
+    } = reportFour;
+    u = await User.findByPk(reportFourUserId);
+    expect(u.email).toBe(reportFourCreatedBy);
+    reportFourOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
+      expect(reportFourCollaborators.map((r) => r.email)).toContain(c);
+    });
   });
 });
