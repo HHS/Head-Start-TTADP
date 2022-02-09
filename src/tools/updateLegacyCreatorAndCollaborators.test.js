@@ -8,7 +8,6 @@ import {
 import updateLegacyCreatorsAndCollaborators from './updateLegacyCreatorsAndCollaborators';
 import { REPORT_STATUSES } from '../constants';
 import { destroyReport } from '../testUtils';
-import Users from '../policies/user';
 
 const emails = [
   faker.internet.email(),
@@ -126,7 +125,7 @@ describe('updateLegacyCreatorAndCollaborators', () => {
 
     await Promise.all(reports.map((r) => destroyReport(r)));
 
-    await Users.destroy({
+    await User.destroy({
       where: {
         id: users.map((r) => r.id),
       },
@@ -177,7 +176,8 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     } = reportOne;
     let u = await User.findByPk(reportOneUserId);
-    expect(u.email).toBe(reportOneCreatedBy);
+    let expectCreator = reportOneCreatedBy ? u.email : undefined;
+    expect(expectCreator).toBe(reportOneCreatedBy);
     reportOneOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
       expect(reportOneCollaborators.map((r) => r.email)).toContain(c);
     });
@@ -191,7 +191,8 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     } = reportTwo;
     u = await User.findByPk(reportTwoUserId);
-    expect(u.email).toBe(reportTwoCreatedBy);
+    expectCreator = reportTwoCreatedBy ? u.email : undefined;
+    expect(expectCreator).toBe(reportTwoCreatedBy);
     reportTwoOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
       expect(reportTwoCollaborators.map((r) => r.email)).toContain(c);
     });
@@ -205,7 +206,8 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     } = reportThree;
     u = await User.findByPk(reportThreeUserId);
-    expect(u.email).toBe(reportThreeCreatedBy);
+    expectCreator = reportThreeCreatedBy ? u.email : undefined;
+    expect(expectCreator).toBe(reportThreeCreatedBy);
     reportThreeOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
       expect(reportThreeCollaborators.map((r) => r.email)).toContain(c);
     });
@@ -219,7 +221,8 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     } = reportFour;
     u = await User.findByPk(reportFourUserId);
-    expect(u.email).toBe(reportFourCreatedBy);
+    expectCreator = reportFourCreatedBy ? u.email : undefined;
+    expect(expectCreator).toBe(reportFourCreatedBy);
     reportFourOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
       expect(reportFourCollaborators.map((r) => r.email)).toContain(c);
     });
