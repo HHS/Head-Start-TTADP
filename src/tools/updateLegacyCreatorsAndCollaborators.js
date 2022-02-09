@@ -22,10 +22,9 @@ function parseCollaboratorEmails(rawCollaborators) {
  * and then attempts to do so, returning an array of all the promises that need to be resolved
  *
  * @param {Object} report
- * @param {*} transaction a sequelize transaction
  * @returns {Promise[]}
  */
-async function updateLegacyCreatorAndCollaboratorsData(report, transaction) {
+async function updateLegacyCreatorAndCollaboratorsData(report) {
   const {
     id, collaborators, userId, imported: { otherSpecialists, createdBy },
   } = report;
@@ -68,14 +67,15 @@ async function updateLegacyCreatorAndCollaboratorsData(report, transaction) {
     }
   }
 
-  // return an array of promises to be merged into the master array of promises
-  return [
-    ...updatedCollaborators.map((c) => ActivityReportCollaborator.create({
-      activityReportId: id,
-      userId: c.id,
-    }, { transaction })),
-    ...updatedCreator.map((u) => report.update({ userId: u.id }, { transaction })),
-  ];
+  return sequelize.transaction(async (transaction) => {
+    await Promise.all([
+      ...updatedCollaborators.map((c) => ActivityReportCollaborator.create({
+        activityReportId: id,
+        userId: c.id,
+      }, { transaction })),
+      ...updatedCreator.map((u) => report.update({ userId: u.id }, { transaction })),
+    ]);
+  });
 }
 
 export default async function updateLegacyCreatorsAndCollaborators() {
@@ -111,9 +111,6 @@ export default async function updateLegacyCreatorsAndCollaborators() {
   // so here is where the filtering happens
   const reports = rawReportData.filter((r) => r.collaborators.length === 0 || r.userId === null);
 
-  // wrap all the changes in a transaction
-  return sequelize.transaction(async (transaction) => {
-    // eslint-disable-next-line max-len
-    await Promise.all(reports.map((report) => updateLegacyCreatorAndCollaboratorsData(report, transaction)));
-  });
+  // eslint-disable-next-line max-len
+  return Promise.all(reports.map((report) => updateLegacyCreatorAndCollaboratorsData(report)));
 }
