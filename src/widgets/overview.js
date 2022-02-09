@@ -108,9 +108,7 @@ export default async function overview(scopes) {
   });
 
   // eslint-disable-next-line max-len
-  const sumDuration = duration.reduce((acc, report) => acc + (report.duration ? parseFloat(report.duration) : 0), 0)
-    .toFixed(1)
-    .toString();
+  const sumDuration = formatNumber(duration.reduce((acc, report) => acc + (report.duration ? parseFloat(report.duration) : 0), 0), 1);
 
   const inPerson = formatNumber(duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length, 1).toString();
 
