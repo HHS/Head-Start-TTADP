@@ -113,8 +113,7 @@ export default async function updateLegacyCreatorsAndCollaborators() {
 
   // wrap all the changes in a transaction
   return sequelize.transaction(async (transaction) => {
-    await Promise.all(reports.reduce((acc, report) => (
-      [...acc, updateLegacyCreatorAndCollaboratorsData(report, transaction)]
-    ), []));
+    // eslint-disable-next-line max-len
+    await Promise.all(reports.map((report) => updateLegacyCreatorAndCollaboratorsData(report, transaction)));
   });
 }
