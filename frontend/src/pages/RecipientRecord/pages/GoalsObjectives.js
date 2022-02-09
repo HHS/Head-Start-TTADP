@@ -1,9 +1,11 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { Grid } from '@trussworks/react-uswds';
 import useUrlFilters from '../../../hooks/useUrlFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { formatDateRange } from '../../../utils';
 import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
+import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
@@ -35,6 +37,11 @@ export default function GoalsObjectives() {
           filters={filters}
         />
       </div>
+      <Grid row>
+        <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
+          <GoalStatusGraph filters={filters} />
+        </Grid>
+      </Grid>
     </div>
   );
 }
