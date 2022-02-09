@@ -12,7 +12,9 @@ import {
   GrantGoal,
 } from './models';
 
-const GOAL_STATUS = [null, 'not_started', 'completed', 'in_progress', 'closed'];
+import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
+
+const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
 
 function defaultGoal() {
   return {
