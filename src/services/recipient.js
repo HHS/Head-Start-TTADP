@@ -281,7 +281,7 @@ export async function getGoalsByActivityRecipient(
                       goalToAdd.objectives.push({
                         id: o.id,
                         title: o.title,
-                        arNumber: a.displayId,
+                        arNumber: a.ActivityReport.displayId,
                         ttaProvided: o.ttaProvided,
                         endDate: a.ActivityReport.endDate,
                         reasons: a.ActivityReport.reason,

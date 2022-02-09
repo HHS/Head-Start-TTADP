@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-// import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -11,6 +10,7 @@ import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import { updateGoalStatus } from '../../fetchers/goals';
+import ObjectiveRow from './ObjectiveRow';
 import './GoalRow.css';
 
 function GoalRow({
@@ -27,17 +27,8 @@ function GoalRow({
     objectiveCount,
     goalNumber,
     reasons,
+    objectives,
   } = goal;
-
-  /* TODO: Setup Route for Edit Goal (TTAHUB-568).
-  /*
-  const history = useHistory();
-  // eslint-disable-next-line max-len
-  const viewOrEditLink =
-    calculatedStatus === 'approved'
-    ? `/activity-reports/view/${id}`
-    : `/activity-reports/${id}`;
-  */
 
   const contextMenuLabel = `Actions for goal ${id}`;
 
@@ -204,23 +195,23 @@ function GoalRow({
   const displayGoalTopics = truncateGoalTopics(goalTopics);
 
   return (
-    <tr className="tta-smarthub--goal-row" key={`goal_row_${id}`}>
-      <td>
-        {getGoalStatusIcon()}
-        {displayStatus === 'Ceased/suspended' ? ['Ceased/ ', <br />, 'suspended'] : displayStatus}
-      </td>
-      <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
-      <td className="text-wrap maxw-mobile">
-        {goalText}
-        {' '}
-        (
-        {goalNumber}
-        )
-        {determineFlagStatus()}
-      </td>
-      <td className="text-wrap maxw-mobile">
-        {
-          showToolTip
+    <>
+      <tr className="tta-smarthub--goal-row" key={`goal_row_${id}`}>
+        <td>
+          {getGoalStatusIcon()}
+          {displayStatus === 'Ceased/suspended' ? ['Ceased/ ', <br />, 'suspended'] : displayStatus}
+        </td>
+        <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
+        <td className="text-wrap maxw-mobile">
+          {goalText}
+          {' '}
+          (
+          {goalNumber}
+          )
+          {determineFlagStatus()}
+        </td>
+        <td className="text-wrap maxw-mobile">
+          {showToolTip
             ? (
               <Tooltip
                 displayText={displayGoalTopics}
@@ -231,17 +222,15 @@ function GoalRow({
                 svgLineTo={300}
               />
             )
-            : displayGoalTopics
-        }
-      </td>
-      <td>
-        <strong>{objectiveCount}</strong>
-        {' '}
-        Objective(s)
-      </td>
-      <td>
-        {
-          showContextMenu
+            : displayGoalTopics}
+        </td>
+        <td>
+          <strong>{objectiveCount}</strong>
+          {' '}
+          Objective(s)
+        </td>
+        <td>
+          {showContextMenu
             ? (
               <ContextMenu
                 label={contextMenuLabel}
@@ -249,12 +238,44 @@ function GoalRow({
                 up={openMenuUp}
               />
             )
-            : null
-        }
-      </td>
-    </tr>
+            : null}
+        </td>
+      </tr>
+      <tr className="tta-smarthub--objective-rows">
+        <td colSpan="6">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Objective</th>
+                <th scope="col">Activity report</th>
+                <th scope="col">End date</th>
+                <th scope="col">Reasons</th>
+                <th scope="col">Objectives status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {objectives.map((obj) => (
+                <ObjectiveRow
+                  objective={obj}
+                />
+              ))}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </>
   );
 }
+
+export const objectivePropTypes = PropTypes.shape({
+  id: PropTypes.number.isRequired,
+  title: PropTypes.string.isRequired,
+  arNumber: PropTypes.string.isRequired,
+  ttaProvided: PropTypes.string.isRequired,
+  endDate: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
+  status: PropTypes.number.isRequired,
+});
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
@@ -265,6 +286,7 @@ export const goalPropTypes = PropTypes.shape({
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
   objectiveCount: PropTypes.number.isRequired,
   goalNumber: PropTypes.string.isRequired,
+  objectives: PropTypes.arrayOf(objectivePropTypes).isRequired,
 });
 
 goalPropTypes.defaultProps = {
