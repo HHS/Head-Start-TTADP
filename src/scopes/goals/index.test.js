@@ -366,7 +366,7 @@ describe('goal filtersToScopes', () => {
   describe('recipientId', () => {
     it('filters by recipientId', async () => {
       const filters = { 'recipientId.ctn': [grant.recipientId] };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -386,7 +386,7 @@ describe('goal filtersToScopes', () => {
   describe('region', () => {
     it('filters by region', async () => {
       const filters = { 'region.in': [grant.regionId] };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
@@ -404,7 +404,7 @@ describe('goal filtersToScopes', () => {
 
     it('filters out by region', async () => {
       const filters = { 'region.nin': [grant.regionId] };
-      const scope = filtersToScopes(filters, 'goal');
+      const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
