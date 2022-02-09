@@ -8,7 +8,7 @@ describe('queryStringToFilters', () => {
     expect(filters.length).toBe(2);
     expect(filters.map((filter) => filter.topic)).toStrictEqual(['region', 'startDate']);
     expect(filters.map((filter) => filter.condition)).toStrictEqual(['Is', 'Is within']);
-    expect(filters.map((filter) => filter.query)).toStrictEqual(['14', '2021/11/13-2021/12/13']);
+    expect(filters.map((filter) => filter.query)).toStrictEqual([['14'], '2021/11/13-2021/12/13']);
   });
 });
 
