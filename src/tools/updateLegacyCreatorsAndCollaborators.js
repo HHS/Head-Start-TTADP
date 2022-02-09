@@ -30,6 +30,7 @@ async function updateLegacyCreatorAndCollaboratorsData(report, transaction) {
     id, collaborators, userId, imported: { otherSpecialists, createdBy },
   } = report;
 
+  // create some empty arrays
   let updatedCollaborators = [];
   let updatedCreator = [];
 
@@ -67,6 +68,7 @@ async function updateLegacyCreatorAndCollaboratorsData(report, transaction) {
     }
   }
 
+  // return an array of promises to be merged into the master array of promises
   return [
     ...updatedCollaborators.map((c) => ActivityReportCollaborator.create({
       activityReportId: id,
@@ -77,6 +79,11 @@ async function updateLegacyCreatorAndCollaboratorsData(report, transaction) {
 }
 
 export default async function updateLegacyCreatorsAndCollaborators() {
+  /**
+   * this is a big find all but I couldn't think of a way to do this without
+   * getting all legacy reports. We're looking for all reports that have imported data but
+   * dont have collaborators or don't have userIds
+   */
   const rawReportData = await ActivityReport.findAll({
     attributes: [
       'id',
@@ -101,9 +108,13 @@ export default async function updateLegacyCreatorsAndCollaborators() {
     ],
   });
 
+  // so here is where the filtering happens
   const reports = rawReportData.filter((r) => r.collaborators.length === 0 || r.userId === null);
+
+  // wrap all the changes in a transaction
   return sequelize.transaction(async (transaction) => {
-    await Promise.all(reports.map((report) => (
-      updateLegacyCreatorAndCollaboratorsData(report, transaction))));
+    await Promise.all(reports.reduce((acc, report) => (
+      [...acc, updateLegacyCreatorAndCollaboratorsData(report, transaction)]
+    ), []));
   });
 }
