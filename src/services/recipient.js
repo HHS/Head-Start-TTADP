@@ -263,8 +263,13 @@ export async function getGoalsByActivityRecipient(
             // Activity Report.
             if (a.ActivityReport) {
               goalToAdd.goalNumber = `R${a.ActivityReport.regionId}-G-${g.id}`;
-              goalToAdd.goalTopics = a.ActivityReport.topics;
-              goalToAdd.reasons = a.ActivityReport.reason;
+              // Get a distinct list of reasons and topics on the goal.
+              goalToAdd.goalTopics = Array.from(
+                new Set([...goalToAdd.goalTopics, ...a.ActivityReport.topics]),
+              );
+              goalToAdd.reasons = Array.from(
+                new Set([...goalToAdd.reasons, ...a.ActivityReport.reason]),
+              );
               // Objectives.
               if (a.ActivityReport.objectives) {
                 if (a.ActivityReport.objectives) {
