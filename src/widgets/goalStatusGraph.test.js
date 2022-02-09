@@ -97,22 +97,22 @@ describe('goalStatusGraph', () => {
   describe('it counts status of', () => {
     it('not started', () => {
       const notStarted = response[GOAL_STATUS.NOT_STARTED];
-      expect(notStarted.count).toBe(2);
+      expect(notStarted).toBe(2);
     });
 
     it('in progress', () => {
       const inProgress = response[GOAL_STATUS.IN_PROGRESS];
-      expect(inProgress.count).toBe(3);
+      expect(inProgress).toBe(3);
     });
 
     it('closed', () => {
       const closed = response[GOAL_STATUS.CLOSED];
-      expect(closed.count).toBe(2);
+      expect(closed).toBe(2);
     });
 
     it('ceased', () => {
       const ceased = response[GOAL_STATUS.CEASED];
-      expect(ceased.count).toBe(0);
+      expect(ceased).toBe(0);
     });
   });
 
