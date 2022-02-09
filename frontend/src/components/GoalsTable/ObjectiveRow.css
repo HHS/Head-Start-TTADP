@@ -1,0 +1,27 @@
+/*.goals-table .usa-table-container .tta-smarthub--objective-rows tr {
+  border-spacing: collapse;
+}*/
+
+.goals-table .usa-table .tta-smarthub--objective-rows td,
+.goals-table .usa-table .tta-smarthub--objective-rows thead th {
+  border: none;
+  padding-top: 0px;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows td {
+  padding-top: 0px;
+  border-right: 1px solid #c5c5c5;
+  border-left: 1px solid #c5c5c5;
+  border-bottom: 1px solid #c5c5c5;
+  /**/
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows table tbody {
+  background-color: #f8f8f8;
+
+}
+
+
+.goals-table .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
+    border: none;
+  }
