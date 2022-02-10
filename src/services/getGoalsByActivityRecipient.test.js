@@ -137,13 +137,6 @@ describe('Goals by Recipient Test', () => {
   let objectiveIds = [];
   let goalIds = [];
 
-  /*
-  function regionToScope(regionId) {
-    const query = { 'region.in': [regionId] };
-    return filtersToScopes(query, 'grant');
-  }
-  */
-
   beforeAll(async () => {
     // Create User.
     await User.create(mockGoalUser);
@@ -397,8 +390,8 @@ describe('Goals by Recipient Test', () => {
 
   describe('Retrieves All Goals', () => {
     it('Retrieves Goals by Recipient', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(300, {
-        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10, 'region.in': ['1'],
+      const { count, goalRows } = await getGoalsByActivityRecipient(300, 1, {
+        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
       });
 
       expect(count).toBe(4);
