@@ -42,7 +42,7 @@ function Bar({
       <div className="ttahub-goal-bar height-3 bg-base-lightest flex-6 margin-right-1 width-full" aria-hidden="true">
         <div className="ttahub-goal-bar-color height-full width-full" style={style} />
       </div>
-      <span aria-label={readableRatio} className="width-10 flex-align-self-center text-right padding-left-1">{ratio}</span>
+      <span aria-label={readableRatio} className="width-8 flex-align-self-center text-right padding-left-1">{ratio}</span>
     </div>
   );
 }
