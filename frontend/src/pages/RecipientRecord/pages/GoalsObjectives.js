@@ -1,15 +1,16 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
 import useUrlFilters from '../../../hooks/useUrlFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
-import { formatDateRange } from '../../../utils';
+import { expandFilters, formatDateRange } from '../../../utils';
 import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
 import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
-export default function GoalsObjectives() {
+export default function GoalsObjectives({ regionId, recipientId }) {
   const [filters, setFilters] = useUrlFilters([{
     id: uuidv4(),
     topic: 'createDate',
@@ -26,6 +27,20 @@ export default function GoalsObjectives() {
     }
   };
 
+  const filtersToApply = [
+    ...expandFilters(filters),
+    {
+      topic: 'region',
+      condition: 'Is',
+      query: regionId,
+    },
+    {
+      topic: 'recipientId',
+      condition: 'Contains',
+      query: recipientId,
+    },
+  ];
+
   return (
     <div className="margin-x-2 maxw-widescreen" id="goalsObjectives">
       <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
@@ -39,9 +54,14 @@ export default function GoalsObjectives() {
       </div>
       <Grid row>
         <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
-          <GoalStatusGraph filters={filters} />
+          <GoalStatusGraph filters={filtersToApply} />
         </Grid>
       </Grid>
     </div>
   );
 }
+
+GoalsObjectives.propTypes = {
+  recipientId: PropTypes.string.isRequired,
+  regionId: PropTypes.string.isRequired,
+};
