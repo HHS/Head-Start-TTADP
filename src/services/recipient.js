@@ -165,6 +165,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
 
 export async function getGoalsByActivityRecipient(
   recipientId,
+  regionId,
   {
     sortBy = 'goalStatus', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
   },
@@ -189,7 +190,10 @@ export async function getGoalsByActivityRecipient(
         model: Grant,
         as: 'grants',
         attributes: ['id', 'recipientId'],
-        where: { recipientId },
+        where: {
+          regionId,
+          recipientId,
+        },
       },
       {
         attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],

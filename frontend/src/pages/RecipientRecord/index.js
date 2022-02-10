@@ -118,6 +118,7 @@ export default function RecipientRecord({ match }) {
                   render={() => (
                     <GoalsObjectives
                       recipientId={recipientId}
+                      regionId={regionId}
                     />
                   )}
                 />
