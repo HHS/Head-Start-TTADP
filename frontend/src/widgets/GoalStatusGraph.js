@@ -36,7 +36,7 @@ function Bar({
 
   return (
     <div className="ttahub-goal-bar-container display-flex flex-justify margin-y-2">
-      <span className="flex-2 margin-right-1 flex-align-self-center" aria-label={readablePercentage}>
+      <span className="width-10 margin-right-4 flex-align-self-center" aria-label={readablePercentage}>
         {label}
       </span>
       <div className="ttahub-goal-bar height-3 bg-base-lightest flex-6 margin-right-1 width-full" aria-hidden="true">
