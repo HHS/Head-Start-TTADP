@@ -1,5 +1,5 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
-import { setReadRegions } from '../../services/accessValidation';
+import { setReadRegions, getUserReadRegions } from '../../services/accessValidation';
 import {
   getRecipient, searchRecipients, getGoalsByRecipient,
 } from './handlers';
@@ -137,15 +137,13 @@ describe('getGoalsByActivityRecipient', () => {
     const req = {
       params: {
         recipientId: 100000,
-      },
-      query: {
-        'region.in': 1,
-        modelType: 'grant',
+        regionId: 1,
       },
       session: {
         userId: 1000,
       },
     };
+    getUserReadRegions.mockResolvedValue([1]);
     getGoalsByActivityRecipient.mockResolvedValue(recipientWhere);
     setReadRegions.mockResolvedValue([1]);
     await getGoalsByRecipient(req, mockResponse);
@@ -156,6 +154,7 @@ describe('getGoalsByActivityRecipient', () => {
     const req = {
       params: {
         recipientId: 14565,
+        regionId: 1,
       },
       query: {
         'region.in': 1,
@@ -179,5 +178,20 @@ describe('getGoalsByActivityRecipient', () => {
     };
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('returns a 403 on region permissions', async () => {
+    const req = {
+      params: {
+        recipientId: 14565,
+        regionId: 1,
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+    getUserReadRegions.mockResolvedValue([2]);
+    await getGoalsByRecipient(req, mockResponse);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
   });
 });

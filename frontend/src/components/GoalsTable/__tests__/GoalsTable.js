@@ -15,13 +15,12 @@ const oldWindowLocation = window.location;
 
 const mockAnnounce = jest.fn();
 const recipientId = '1000';
-const withRegionOne = '&region.in[]=1';
-const base = `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=asc&offset=0&limit=5`;
-const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
+const regionId = '1';
+const baseWithRegionOne = `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5`;
 
 const defaultUser = {
   name: 'test@test.com',
-  homeRegionId: 14,
+  homeRegionId: 1,
   permissions: [
     {
       scopeId: 3,
@@ -98,13 +97,9 @@ const renderTable = (user) => {
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
           <GoalsTable
-            filters={[{
-              id: '1',
-              topic: 'region',
-              condition: 'Is',
-              query: '1',
-            }]}
+            filters={[]}
             recipientId={recipientId}
+            regionId={regionId}
             onUpdateFilters={() => { }}
           />
         </UserContext.Provider>
@@ -130,7 +125,7 @@ describe('Goals Table', () => {
     beforeEach(async () => {
       fetchMock.reset();
       fetchMock.get(
-        defaultBaseUrlWithRegionOne,
+        baseWithRegionOne,
         { count: 6, goalRows: goals },
       );
     });
@@ -238,7 +233,7 @@ describe('Goals Table', () => {
     beforeEach(async () => {
       fetchMock.reset();
       fetchMock.get(
-        defaultBaseUrlWithRegionOne,
+        baseWithRegionOne,
         { count: 6, goalRows: goals },
       );
       renderTable(defaultUser);
@@ -256,7 +251,7 @@ describe('Goals Table', () => {
       const columnHeaderAsc = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
       const sortedGoalsAsc = gaolsAsc.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/goals/${recipientId}?sortBy=createdOn&sortDir=asc&offset=0&limit=5&region.in[]=1`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=5`,
         { count: 6, goalRows: sortedGoalsAsc },
       );
       expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
@@ -272,7 +267,7 @@ describe('Goals Table', () => {
       const gaolsDesc = [...goals];
       const sortedGoalsDesc = gaolsDesc.sort((a, b) => ((a.createdOn < b.createdOn) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/goals/${recipientId}?sortBy=createdOn&sortDir=desc&offset=0&limit=5&region.in[]=1`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=5`,
         { count: 6, goalRows: sortedGoalsDesc },
       );
 
@@ -289,7 +284,7 @@ describe('Goals Table', () => {
       const goalsDesc = [...goals];
       const sortedGoalsDesc = goalsDesc.sort((a, b) => ((a.goalStatus < b.goalStatus) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=desc&offset=0&limit=5&region.in[]=1`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=desc&offset=0&limit=5`,
         { count: 6, goalRows: sortedGoalsDesc },
       );
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent('In progress');
@@ -304,7 +299,7 @@ describe('Goals Table', () => {
       const goalsAsc = [...goals];
       const sortedGoalsAsc = goalsAsc.sort((a, b) => ((a.goalStatus > b.goalStatus) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&region.in[]=1`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5`,
         { count: 6, goalRows: sortedGoalsAsc }, { overwriteRoutes: true },
       );
 
@@ -324,7 +319,7 @@ describe('Goals Table', () => {
     beforeEach(async () => {
       fetchMock.reset();
       fetchMock.get(
-        defaultBaseUrlWithRegionOne,
+        baseWithRegionOne,
         { count: 6, goalRows: goals },
       );
       renderTable(defaultUser);
@@ -358,7 +353,7 @@ describe('Goals Table', () => {
       });
       fetchMock.reset();
       fetchMock.get(
-        defaultBaseUrlWithRegionOne,
+        baseWithRegionOne,
         { count: 6, goalRows: [goals[0], goals[1], goals[2], goals[3], goals[4]] },
       );
       fireEvent.click(pageOne);
@@ -373,7 +368,7 @@ describe('Goals Table', () => {
 
       fetchMock.reset();
       fetchMock.get(
-        defaultBaseUrlWithRegionOne,
+        baseWithRegionOne,
         { count: 6, goalRows: [goals[0], goals[1], goals[2], goals[3], goals[4]] },
       );
 
@@ -384,7 +379,7 @@ describe('Goals Table', () => {
       });
 
       fetchMock.get(
-        `/api/recipient/goals/${recipientId}?sortBy=goalStatus&sortDir=asc&offset=5&limit=5&region.in[]=1`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=5&limit=5`,
         { count: 6, goalRows: [goals[5]] },
       );
 
@@ -397,7 +392,7 @@ describe('Goals Table', () => {
     beforeEach(async () => {
       fetchMock.reset();
       fetchMock.get(
-        defaultBaseUrlWithRegionOne,
+        baseWithRegionOne,
         { count: 1, goalRows: [goals[0], goals[1]] },
       );
       renderTable(defaultUser);

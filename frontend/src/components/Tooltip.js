@@ -14,7 +14,6 @@ export default function Tooltip({
     setShowTooltip(!showTooltip);
   };
 
-  const svgLineToValue = svgLineTo;
   return (
     <span className={cssClasses} data-testid="tooltip">
       <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltipText}</div>
@@ -27,7 +26,7 @@ export default function Tooltip({
                 : (
                   <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true">
                     <path
-                      d={`M 0 5 L ${svgLineToValue} 5`}
+                      d={`M 0 5 L ${svgLineTo} 5`}
                       stroke="black"
                       strokeLinecap="round"
                       strokeWidth="1"
