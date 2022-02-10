@@ -42,16 +42,16 @@ function Bar({
       <div className="ttahub-goal-bar height-3 bg-base-lightest flex-6 margin-right-1 width-full" aria-hidden="true">
         <div className="ttahub-goal-bar-color height-full width-full" style={style} />
       </div>
-      <span aria-label={readableRatio} className="flex-1 flex-align-self-center text-right padding-left-1">{ratio}</span>
+      <span aria-label={readableRatio} className="width-10 flex-align-self-center text-right padding-left-1">{ratio}</span>
     </div>
   );
 }
 
 Bar.propTypes = {
-  count: PropTypes.string.isRequired,
+  count: PropTypes.number.isRequired,
   label: PropTypes.string.isRequired,
   percentage: PropTypes.number.isRequired,
-  ratio: PropTypes.number.isRequired,
+  ratio: PropTypes.string.isRequired,
   total: PropTypes.number.isRequired,
   color: PropTypes.string.isRequired,
 };
@@ -77,7 +77,7 @@ export function GoalStatusChart({ data, loading }) {
     const newBars = GOAL_STATUSES.map((status, index) => ({
       ratio: `${data[status]}/${data.total}`,
       percentage: data[status] / data.total,
-      label: status,
+      label: status === 'Ceased/Suspended' ? 'Suspended' : status,
       color: STATUS_COLORS[index],
       count: data[status],
       total: data.total,
@@ -96,7 +96,7 @@ export function GoalStatusChart({ data, loading }) {
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="margin-0">
-            Total goals by status
+            Number of goals by status
           </h2>
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
