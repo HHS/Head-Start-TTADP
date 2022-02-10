@@ -1,5 +1,5 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
-import { setReadRegions, getUserReadRegions } from '../../services/accessValidation';
+import { getUserReadRegions } from '../../services/accessValidation';
 import {
   getRecipient, searchRecipients, getGoalsByRecipient,
 } from './handlers';
@@ -143,6 +143,7 @@ describe('getGoalsByActivityRecipient', () => {
         userId: 1000,
       },
     };
+    recipientById.mockResolvedValue(recipientWhere);
     getUserReadRegions.mockResolvedValue([1]);
     getGoalsByActivityRecipient.mockResolvedValue(recipientWhere);
     await getGoalsByRecipient(req, mockResponse);
@@ -163,8 +164,9 @@ describe('getGoalsByActivityRecipient', () => {
         userId: 1000,
       },
     };
+    recipientById.mockResolvedValue(null);
+    getUserReadRegions.mockResolvedValue([1]);
     getGoalsByActivityRecipient.mockResolvedValue(null);
-    setReadRegions.mockResolvedValue([1]);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
@@ -175,6 +177,7 @@ describe('getGoalsByActivityRecipient', () => {
         userId: 1000,
       },
     };
+    recipientById.mockResolvedValue(recipientWhere);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
