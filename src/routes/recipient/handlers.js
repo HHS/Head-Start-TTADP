@@ -55,12 +55,17 @@ export async function getGoalsByRecipient(req, res) {
       res.sendStatus(403);
       return;
     }
-    const recipient = await getGoalsByActivityRecipient(recipientId, regionId, req.query);
+
+    // Check recipient exists.
+    const recipient = await recipientById(recipientId);
     if (!recipient) {
       res.sendStatus(404);
       return;
     }
-    res.json(recipient);
+
+    // Get goals for recipient.
+    const recipientGoals = await getGoalsByActivityRecipient(recipientId, regionId, req.query);
+    res.json(recipientGoals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
