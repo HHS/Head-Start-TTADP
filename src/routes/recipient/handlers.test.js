@@ -145,7 +145,6 @@ describe('getGoalsByActivityRecipient', () => {
     };
     getUserReadRegions.mockResolvedValue([1]);
     getGoalsByActivityRecipient.mockResolvedValue(recipientWhere);
-    setReadRegions.mockResolvedValue([1]);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
