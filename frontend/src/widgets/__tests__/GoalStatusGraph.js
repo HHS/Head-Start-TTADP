@@ -24,7 +24,7 @@ describe('GoalStatusChart', () => {
 
     await screen.findByText('Not Started');
     await screen.findByText('In Progress');
-    await screen.findByText('Ceased/Suspended');
+    await screen.findByText('Suspended');
     await screen.findByText('Closed');
 
     const twentyFives = await screen.findAllByText(/25\/300/i);
