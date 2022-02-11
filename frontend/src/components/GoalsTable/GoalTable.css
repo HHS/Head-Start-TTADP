@@ -27,7 +27,8 @@
   border-bottom: none;
   padding-right: 0px;
   padding-top: 24px;
-  padding-bottom: 0px;
+  padding-left: 24px;
+  padding-bottom: 8px;
 }
 
 .goals-table .usa-table-container {

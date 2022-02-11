@@ -26,8 +26,6 @@ function ObjectiveRow({
     status,
   } = objective;
 
-  console.log("Objective:", objective);
-
   /* TODO: Setup Route for Edit Goal (TTAHUB-568).
     /*
     const history = useHistory();
