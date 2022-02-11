@@ -17,6 +17,7 @@ describe('goal filtersToScopes', () => {
   let reportWithReasons;
   let reportWithTopics;
   let grant;
+  let otherGrant;
 
   beforeAll(async () => {
     emptyReport = await createReport({
@@ -143,8 +144,10 @@ describe('goal filtersToScopes', () => {
       ],
     );
 
-    grant = await createGrant({ regionId: REGION_ID });
+    grant = await createGrant({ regionId: REGION_ID, number: 'BROC1234' });
+    otherGrant = await createGrant({ regionId: REGION_ID, number: 'CAUL4567' });
     goals.push(await createGoal({ status: 'Ceased/Suspended', name: 'Goal 6', grantId: grant.id }));
+    goals.push(await createGoal({ status: 'Completed', name: 'Goal 7', grantId: otherGrant.id }));
 
     reportIds = [emptyReport.id, reportWithReasons.id, reportWithTopics.id];
     objectiveIds = objectives.map((o) => o.id);
@@ -177,7 +180,7 @@ describe('goal filtersToScopes', () => {
 
     await Grant.destroy({
       where: {
-        id: grant.id,
+        id: [grant.id, otherGrant.id],
       },
     });
 
@@ -226,7 +229,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(3);
       expect(found.map((g) => g.name)).toContain('Goal 5');
     });
 
@@ -283,7 +286,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(4);
+      expect(found.length).toBe(5);
       expect(found.map((g) => g.name)).toContain('Goal 1');
       expect(found.map((g) => g.name)).toContain('Goal 2');
       expect(found.map((g) => g.name)).toContain('Goal 3');
@@ -321,7 +324,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(5);
+      expect(found.length).toBe(6);
       expect(found.map((g) => g.name)).not.toContain('Goal 1');
     });
   });
@@ -358,7 +361,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(5);
+      expect(found.length).toBe(6);
       expect(found.map((g) => g.name)).not.toContain('Goal 2');
     });
   });
@@ -398,7 +401,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(1);
+      expect(found.length).toBe(2);
       expect(found[0].name).toContain('Goal 6');
     });
 
@@ -418,6 +421,44 @@ describe('goal filtersToScopes', () => {
 
       expect(found.length).toBe(5);
       expect(found[0].name).not.toContain('Goal 6');
+    });
+  });
+
+  describe('grant number', () => {
+    it('withGrantNumber', async () => {
+      const filters = { 'grantNumber.ctn': otherGrant.number };
+      const { goal: scope } = filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found[0].name).toContain('Goal 7');
+    });
+
+    it('withoutGrantNumber', async () => {
+      const filters = { 'grantNumber.nctn': otherGrant.number };
+      const { goal: scope } = filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(6);
+      expect(found[0].name).not.toContain('Goal 7');
     });
   });
 });
