@@ -57,7 +57,7 @@ export async function getGoalsByRecipient(req, res) {
     }
 
     // Check recipient exists.
-    const recipient = await recipientById(recipientId);
+    const recipient = await recipientById(recipientId, []);
     if (!recipient) {
       res.sendStatus(404);
       return;
