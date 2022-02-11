@@ -212,7 +212,7 @@ function GoalRow({
 
   return (
     <>
-      <tr className="tta-smarthub--goal-row" key={`goal_row_${id}`}>
+      <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td>
           {getGoalStatusIcon()}
           {displayStatus === 'Ceased/suspended' ? ['Ceased/ ', <br />, 'suspended'] : displayStatus}
@@ -273,7 +273,7 @@ function GoalRow({
             : null}
         </td>
       </tr>
-      <tr className="tta-smarthub--objective-rows" aria-hidden>
+      <tr className="tta-smarthub--objective-rows">
         <td colSpan="6">
           <table>
             <thead>
@@ -295,6 +295,7 @@ function GoalRow({
           </table>
         </td>
       </tr>
+      <tr className="height-1" aria-hidden />
     </>
   );
 }
