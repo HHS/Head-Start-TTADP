@@ -51,6 +51,14 @@ module.exports = (sequelize, DataTypes) => {
         return url;
       },
     },
+    checksums: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
+    metadata: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'File',

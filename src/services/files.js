@@ -20,6 +20,34 @@ export const updateStatus = async (fileId, fileStatus) => {
   }
 };
 
+export const updateCheckSum = async (fileId, data) => {
+  if (data.error !== null) return data.error;
+  let file;
+  try {
+    await db.sequelize.transaction(async (transaction) => {
+      const { checksums } = File.findOne({ where: { fileId }, transaction });
+      checksums[data.type] = data.value;
+      file = await File.update({ checksums }, { where: { id: fileId }, transaction });
+    });
+    return file.dataValues;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const updateMetadata = async (fileId, data) => {
+  if (data.error !== null) return data.error;
+  let file;
+  try {
+    await db.sequelize.transaction(async (transaction) => {
+      file = await File.update({ metadata: data }, { where: { id: fileId }, transaction });
+    });
+    return file.dataValues;
+  } catch (error) {
+    return error;
+  }
+};
+
 export default async function createFileMetaData(
   originalFileName,
   s3FileName,

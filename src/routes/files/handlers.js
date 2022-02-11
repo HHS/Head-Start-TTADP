@@ -2,9 +2,15 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
+import {
+  generateMd5FromFile,
+  generateSha1FromFile,
+  generateSha256FromFile,
+  generateMetadataFromFile,
+} from '../../lib/fileProcessing';
 import addToScanQueue from '../../services/scanQueue';
 import createFileMetaData, {
-  updateStatus, getFileById, deleteFile,
+  updateStatus, updateCheckSum, updateMetadata, getFileById, deleteFile,
 } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
@@ -115,6 +121,10 @@ export default async function uploadHandler(req, res) {
         reportId,
         size,
       );
+      await updateCheckSum(path, await generateMd5FromFile(path));
+      await updateCheckSum(path, await generateSha1FromFile(path));
+      await updateCheckSum(path, await generateSha256FromFile(path));
+      await updateMetadata(path, await generateMetadataFromFile(path));
     } catch (err) {
       return handleErrors(req, res, err, logContext);
     }
