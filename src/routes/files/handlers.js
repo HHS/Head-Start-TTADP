@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import {
   generateMd5FromFile,
-  generateSha1FromFile,
+  // generateSha1FromFile,
   generateSha256FromFile,
   generateMetadataFromFile,
 } from '../../lib/fileProcessing';
@@ -122,7 +122,7 @@ export default async function uploadHandler(req, res) {
         size,
       );
       await updateCheckSum(path, await generateMd5FromFile(path));
-      await updateCheckSum(path, await generateSha1FromFile(path));
+      // await updateCheckSum(path, await generateSha1FromFile(path));
       await updateCheckSum(path, await generateSha256FromFile(path));
       await updateMetadata(path, await generateMetadataFromFile(path));
     } catch (err) {

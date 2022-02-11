@@ -1,7 +1,7 @@
 import exiftool from 'node-exiftool';
 import exiftoolBin from 'dist-exiftool';
 import md5File from 'md5-file';
-import sha1File from 'sha1-file';
+// import sha1File from 'sha1-file';
 import sha256File from 'sha256-file';
 
 const ep = new exiftool.ExiftoolProcess(exiftoolBin);
@@ -16,15 +16,15 @@ const generateMd5FromFile = async (path) => {
   return checksum;
 };
 
-const generateSha1FromFile = async (path) => {
-  const checksum = { type: 'sha1', value: null, error: null };
-  try {
-    checksum.value = await sha1File(path);
-  } catch (err) {
-    checksum.error = err;
-  }
-  return checksum;
-};
+// const generateSha1FromFile = async (path) => {
+//   const checksum = { type: 'sha1', value: null, error: null };
+//   try {
+//     checksum.value = await sha1File(path);
+//   } catch (err) {
+//     checksum.error = err;
+//   }
+//   return checksum;
+// };
 
 const generateSha256FromFile = async (path) => {
   const checksum = { type: 'sha256', value: null, error: null };
@@ -68,7 +68,7 @@ const generateMetadataFromFile = async (path) => {
 
 export {
   generateMd5FromFile,
-  generateSha1FromFile,
+  // generateSha1FromFile,
   generateSha256FromFile,
   generateMetadataFromFile,
 };
