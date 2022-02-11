@@ -1515,7 +1515,7 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([fourthReport.id]));
     });
@@ -1528,7 +1528,7 @@ describe('filtersToScopes', () => {
       });
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id, fourthReport.id]));
+        .toEqual(expect.arrayContaining([firstReport.id, secondReport.id, thirdReport.id]));
     });
   });
 
