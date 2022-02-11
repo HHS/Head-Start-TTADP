@@ -20,16 +20,23 @@ const STATUS_COLORS = [
 ];
 
 function Bar({
-  count, percentage, label, color, ratio, total,
+  count,
+  percentage,
+  label,
+  color,
+  ratio,
+  total,
 }) {
+  // 0/0 is NaN
+  const percent = Number.isNaN(percentage) ? 0 : percentage * 100;
+
   const style = {
-    // 0/0 is NaN
-    width: Number.isNaN(percentage) ? '0%' : `${percentage * 100}%`,
+    width: `${percent}%`,
     backgroundColor: color,
   };
 
-  const readablePercentage = `${(
-    percentage * 100).toLocaleString('en-us', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const readablePercentage = `${
+    (percent).toLocaleString('en-us', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   } percent of goals are ${label}`;
 
   const readableRatio = `That's ${count} of ${total} goals`;
