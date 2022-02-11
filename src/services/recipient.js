@@ -202,7 +202,7 @@ export async function getGoalsByActivityRecipient(
             required: true,
             include: [
               {
-                attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
+                attributes: ['id', 'reason', 'topics', 'regionId', 'endDate', 'calculatedStatus', 'legacyId'],
                 model: ActivityReport,
                 required: true,
                 include: [
@@ -281,7 +281,10 @@ export async function getGoalsByActivityRecipient(
                       goalToAdd.objectives.push({
                         id: o.id,
                         title: o.title,
+                        arId: a.ActivityReport.id,
                         arNumber: a.ActivityReport.displayId,
+                        arStatus: a.ActivityReport.calculatedStatus,
+                        arLegacyId: a.ActivityReport.legacyId,
                         ttaProvided: o.ttaProvided,
                         endDate: a.ActivityReport.endDate,
                         reasons: a.ActivityReport.reason,

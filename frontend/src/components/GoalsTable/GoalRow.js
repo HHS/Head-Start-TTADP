@@ -206,7 +206,6 @@ function GoalRow({
   const displayGoalTopics = truncateGoalTopics(goalTopics);
 
   const expandObjectives = () => {
-    console.log('Called Expand Objectives:', objectivesExpanded);
     setObjectivesExpanded(!objectivesExpanded);
   };
 

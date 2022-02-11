@@ -1,48 +1,120 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-// import { Link, useHistory } from 'react-router-dom';
-import moment from 'moment';
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faClock, faCheckCircle, faExclamationCircle, faPencilAlt, faMinusCircle, faTimesCircle, faFlag,
+  faClock, faCheckCircle, faExclamationCircle, faMinusCircle, faFlag,
 } from '@fortawesome/free-solid-svg-icons';
-import ContextMenu from '../ContextMenu';
-import Tooltip from '../Tooltip';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import { updateGoalStatus } from '../../fetchers/goals';
 import './ObjectiveRow.css';
 
 function ObjectiveRow({
   objective,
 }) {
   const {
-    id,
     title,
+    arId,
     arNumber,
-    ttaProvided,
+    arLegacyId,
+    arStatus,
     endDate,
     reasons,
     status,
   } = objective;
 
-  /* TODO: Setup Route for Edit Goal (TTAHUB-568).
-    /*
-    const history = useHistory();
-    // eslint-disable-next-line max-len
-    const viewOrEditLink =
-      calculatedStatus === 'approved'
-      ? `/activity-reports/view/${id}`
-      : `/activity-reports/${id}`;
-    */
+  const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
+  const linkToAr = arLegacyId ? `/activity-reports/legacy/${arLegacyId}` : viewOrEditLink;
+
+  const determineReasonMonitorStatus = (reason) => {
+    if (reasonsToMonitor.includes(reason)) {
+      return (
+        <>
+          <FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />
+        </>
+      );
+    }
+    return null;
+  };
+
+  const displayReasonsList = (sortedReasons) => (
+    <ul className="padding-left-0 margin-0 tta-smarthub--objective-reasons-list">
+      {
+        sortedReasons.map((r) => (
+          <li>
+            {r}
+            {determineReasonMonitorStatus(r)}
+          </li>
+        ))
+      }
+    </ul>
+  );
+
+  const mapStatusToDisplay = [
+    {
+      stored: 'In Progress',
+      display: 'In progress',
+    },
+    {
+      stored: 'Complete',
+      display: 'Closed',
+    },
+    {
+      stored: 'Not Started',
+      display: 'Not started',
+    },
+    {
+      stored: 'Needs Status',
+      display: 'Needs status',
+    },
+  ];
+
+  const getGoalDisplayStatusText = () => {
+    if (status) {
+      const displayStatus = mapStatusToDisplay.find((m) => m.stored === status);
+      return displayStatus ? displayStatus.display : 'Needs status';
+    }
+    return 'Needs status';
+  };
+
+  const displayObjStatus = getGoalDisplayStatusText();
+
+  const getObjectiveStatusIcon = () => {
+    if (displayObjStatus) {
+      if (displayObjStatus === 'In progress') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
+      } if (displayObjStatus === 'Closed') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
+      }
+      if (displayObjStatus === 'Not started') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
+      }
+      if (displayObjStatus === 'Needs status') {
+        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
+      }
+    }
+    return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
+  };
+
   return (
     <>
       <tr className="tta-smarthub--objective-row">
         <td>{title}</td>
-        <td>{arNumber}</td>
+        <td>
+          {' '}
+          <Link
+            to={linkToAr}
+          >
+            {arNumber}
+          </Link>
+        </td>
         <td>{endDate}</td>
-        <td>{reasons}</td>
-        <td>{status}</td>
+        <td>
+          {displayReasonsList(reasons.sort())}
+        </td>
+        <td>
+          {getObjectiveStatusIcon()}
+          {displayObjStatus}
+        </td>
       </tr>
     </>
   );
@@ -51,19 +123,22 @@ function ObjectiveRow({
 export const objectivePropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
+  arId: PropTypes.number.isRequired,
+  arLegacyId: PropTypes.string,
   arNumber: PropTypes.string.isRequired,
+  arStatus: PropTypes.string.isRequired,
   ttaProvided: PropTypes.string.isRequired,
   endDate: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.number.isRequired,
 });
 
-/*
 objectivePropTypes.defaultProps = {
-    goalStatus: null,
-  };
-*/
+  goalStatus: null,
+  arLegacyId: null,
+  reasons: [],
+};
 ObjectiveRow.propTypes = {
-  goal: objectivePropTypes.isRequired,
+  objective: objectivePropTypes.isRequired,
 };
 export default ObjectiveRow;

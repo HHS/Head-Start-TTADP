@@ -22,6 +22,10 @@
 
 }
 
+.goals-table .usa-table .tta-smarthub--objective-reasons-list {
+  list-style-type: none;
+}
+
 .goals-table .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
     border: none;
   }
