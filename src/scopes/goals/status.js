@@ -1,17 +1,14 @@
 import { Op } from 'sequelize';
-import { sequelize } from '../../models';
 
-export function withStatus(status) {
-  if (status.includes('Needs Status')) {
+export function withStatus(statuses) {
+  if (statuses.includes('Needs Status')) {
     return {
       [Op.or]: [
-        {
+        ...statuses.map((s) => ({
           status: {
-            [Op.or]: status.map((s) => ({
-              [Op.iLike]: `%${s}%`, // sequelize escapes this
-            })),
+            [Op.iLike]: `%${s}%`, // sequelize escapes this
           },
-        },
+        })),
         {
           status: {
             [Op.eq]: null,
@@ -21,32 +18,48 @@ export function withStatus(status) {
     };
   }
 
-  return sequelize.where(
-    sequelize.col('"Goal".status'),
-    {
+  return {
+    [Op.or]: statuses.map((s) => ({
       status: {
-        [Op.or]: status.map((s) => ({
-          [Op.iLike]: `%${s}%`, // sequelize escapes this
-        })),
+        [Op.iLike]: `%${s}%`, // sequelize escapes this
       },
-    },
-  );
+    })),
+  };
 }
 
-export function withoutStatus(status) {
+export function withoutStatus(statuses) {
+  if (statuses.includes('Needs Status')) {
+    return {
+      [Op.or]: [
+        {
+          [Op.and]: statuses.map((s) => ({
+            status: {
+              [Op.notILike]: `%${s}%`, // sequelize escapes this
+            },
+          })),
+        },
+        {
+          status: {
+            [Op.not]: null,
+          },
+        },
+      ],
+    };
+  }
+
   return {
     [Op.or]: [
       {
         status: {
-          [Op.or]: status.map((s) => ({
-            [Op.notILike]: `%${s}%`, // sequelize escapes this
-          })),
+          [Op.eq]: null,
         },
       },
       {
-        status: {
-          [Op.is]: null,
-        },
+        [Op.and]: statuses.map((s) => ({
+          status: {
+            [Op.notILike]: `%${s}%`, // sequelize escapes this
+          },
+        })),
       },
     ],
   };

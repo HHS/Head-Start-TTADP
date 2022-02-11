@@ -270,7 +270,7 @@ describe('goal filtersToScopes', () => {
       expect(found.map((g) => g.name)).toContain('Goal 4');
     });
     it('filters out by status', async () => {
-      const filters = { 'status.nin': 'Ceased/Suspended' };
+      const filters = { 'status.nin': ['Suspended'] };
       const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
