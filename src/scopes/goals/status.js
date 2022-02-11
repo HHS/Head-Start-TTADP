@@ -7,7 +7,9 @@ export function withStatus(status) {
       [Op.or]: [
         {
           status: {
-            [Op.in]: status,
+            [Op.or]: status.map((s) => ({
+              [Op.iLike]: `%${s}%`, // sequelize escapes this
+            })),
           },
         },
         {
@@ -22,7 +24,11 @@ export function withStatus(status) {
   return sequelize.where(
     sequelize.col('"Goal".status'),
     {
-      [Op.in]: status,
+      status: {
+        [Op.or]: status.map((s) => ({
+          [Op.iLike]: `%${s}%`, // sequelize escapes this
+        })),
+      },
     },
   );
 }
@@ -32,7 +38,9 @@ export function withoutStatus(status) {
     [Op.or]: [
       {
         status: {
-          [Op.not]: status,
+          [Op.or]: status.map((s) => ({
+            [Op.notILike]: `%${s}%`, // sequelize escapes this
+          })),
         },
       },
       {

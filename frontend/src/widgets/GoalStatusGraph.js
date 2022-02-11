@@ -6,10 +6,10 @@ import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 
 const GOAL_STATUSES = [
-  'Not Started',
-  'In Progress',
+  'Not started',
+  'In progress',
   'Closed',
-  'Ceased/Suspended',
+  'Suspended',
 ];
 
 const STATUS_COLORS = [
@@ -84,7 +84,7 @@ export function GoalStatusChart({ data, loading }) {
     const newBars = GOAL_STATUSES.map((status, index) => ({
       ratio: `${data[status]}/${data.total}`,
       percentage: data[status] / data.total,
-      label: status === 'Ceased/Suspended' ? 'Suspended' : status,
+      label: status,
       color: STATUS_COLORS[index],
       count: data[status],
       total: data.total,
@@ -167,10 +167,10 @@ GoalStatusChart.propTypes = {
 GoalStatusChart.defaultProps = {
   data: {
     total: 0,
-    'Not Started': 0,
-    'In Progress': 0,
+    'Not started': 0,
+    'In progress': 0,
     Closed: 0,
-    'Ceased/Suspended': 0,
+    Suspended: 0,
   },
 };
 

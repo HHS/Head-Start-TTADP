@@ -10,10 +10,10 @@ import { GoalStatusChart } from '../GoalStatusGraph';
 describe('GoalStatusChart', () => {
   const testData = {
     total: 300,
-    'Not Started': 150,
-    'In Progress': 25,
+    'Not started': 150,
+    'In progress': 25,
     Closed: 100,
-    'Ceased/Suspended': 25,
+    Suspended: 25,
   };
 
   const renderGoalStatusChart = (data) => render(<GoalStatusChart data={data} />);
@@ -22,8 +22,8 @@ describe('GoalStatusChart', () => {
     renderGoalStatusChart(testData);
     expect(await screen.findByText('300 goals')).toBeVisible();
 
-    await screen.findByText('Not Started');
-    await screen.findByText('In Progress');
+    await screen.findByText('Not started');
+    await screen.findByText('In progress');
     await screen.findByText('Suspended');
     await screen.findByText('Closed');
 
