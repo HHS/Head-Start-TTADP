@@ -179,7 +179,7 @@ export async function getGoalsByActivityRecipient(
 
   // Get Goals.
   const rows = await Goal.findAll({
-    attributes: ['id', 'name', 'status', 'createdAt',
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber',
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Completed\' THEN 4 WHEN "Goal"."status" = \'Ceased/Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
     ],
     where: {
@@ -189,7 +189,7 @@ export async function getGoalsByActivityRecipient(
       {
         model: Grant,
         as: 'grants',
-        attributes: ['id', 'recipientId'],
+        attributes: ['id', 'recipientId', 'regionId'],
         where: {
           regionId,
           recipientId,
@@ -201,7 +201,7 @@ export async function getGoalsByActivityRecipient(
         as: 'objectives',
         required: false,
         include: [{
-          attributes: ['id', 'reason', 'topics', 'regionId', 'endDate'],
+          attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId'],
           model: ActivityReport,
           as: 'activityReports',
         }],
@@ -230,7 +230,7 @@ export async function getGoalsByActivityRecipient(
       goalStatus: g.status,
       createdOn: g.createdAt,
       goalText: g.name,
-      goalNumber: '',
+      goalNumber: g.goalNumber,
       objectiveCount: 0,
       goalTopics: [],
       reasons: [],
@@ -245,7 +245,6 @@ export async function getGoalsByActivityRecipient(
         if (o.activityReports && o.activityReports.length > 0) {
           // eslint-disable-next-line prefer-destructuring
           activityReport = o.activityReports[0];
-          goalToAdd.goalNumber = `R${activityReport.regionId}-G-${g.id}`;
           goalToAdd.goalTopics = Array.from(
             new Set([...goalToAdd.goalTopics, ...activityReport.topics]),
           );
@@ -258,7 +257,10 @@ export async function getGoalsByActivityRecipient(
         goalToAdd.objectives.push({
           id: o.id,
           title: o.title,
+          arId: activityReport ? activityReport.id : null,
           arNumber: activityReport ? activityReport.displayId : null,
+          arStatus: activityReport ? activityReport.calculatedStatus : null,
+          arLegacyId: activityReport ? activityReport.legacyId : null,
           ttaProvided: o.ttaProvided,
           endDate: activityReport ? activityReport.endDate : null,
           reasons: activityReport ? activityReport.reason : null,

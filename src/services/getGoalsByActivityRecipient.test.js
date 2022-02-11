@@ -13,7 +13,6 @@ import {
 } from '../models';
 
 import { getGoalsByActivityRecipient } from './recipient';
-// import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 
 describe('Goals by Recipient Test', () => {

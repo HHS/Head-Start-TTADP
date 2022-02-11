@@ -54,7 +54,7 @@ function GoalsTable({
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
-        setError('Unable to fetch reports');
+        setError('Unable to fetch goals');
       }
       setLoading(false);
     }
