@@ -1,9 +1,18 @@
-import React from 'react';
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faClock, faCheckCircle, faExclamationCircle, faPencilAlt, faMinusCircle, faTimesCircle, faFlag,
+  faClock,
+  faCheckCircle,
+  faExclamationCircle,
+  faPencilAlt,
+  faMinusCircle,
+  faTimesCircle,
+  faFlag,
+  faAngleUp,
+  faAngleDown,
 } from '@fortawesome/free-solid-svg-icons';
 import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
@@ -29,6 +38,8 @@ function GoalRow({
     reasons,
     objectives,
   } = goal;
+
+  const [objectivesExpanded, setObjectivesExpanded] = useState(false);
 
   const contextMenuLabel = `Actions for goal ${id}`;
 
@@ -194,6 +205,11 @@ function GoalRow({
 
   const displayGoalTopics = truncateGoalTopics(goalTopics);
 
+  const expandObjectives = () => {
+    console.log('Called Expand Objectives:', objectivesExpanded);
+    setObjectivesExpanded(!objectivesExpanded);
+  };
+
   return (
     <>
       <tr className="tta-smarthub--goal-row" key={`goal_row_${id}`}>
@@ -225,9 +241,25 @@ function GoalRow({
             : displayGoalTopics}
         </td>
         <td>
-          <strong>{objectiveCount}</strong>
-          {' '}
-          Objective(s)
+          <a
+            className={`text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
+            role="button"
+            onClick={() => expandObjectives()}
+            aria-label="Expand objective's for this goal."
+            tabIndex={0}
+            onKeyPress={() => expandObjectives()}
+          >
+            <strong className="margin-left-1">{objectiveCount}</strong>
+            {' '}
+            Objective(s)
+            {
+              objectiveCount > 0
+                ? (
+                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color="#000000" icon={objectivesExpanded ? faAngleDown : faAngleUp} />
+                )
+                : null
+            }
+          </a>
         </td>
         <td>
           {showContextMenu
@@ -241,7 +273,7 @@ function GoalRow({
             : null}
         </td>
       </tr>
-      <tr className="tta-smarthub--objective-rows">
+      <tr className="tta-smarthub--objective-rows" aria-hidden>
         <td colSpan="6">
           <table>
             <thead>
