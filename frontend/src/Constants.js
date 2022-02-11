@@ -2,9 +2,9 @@ import moment from 'moment';
 
 export const CONTAINS = 'Contains';
 export const NOT_CONTAINS = 'Does not contain';
-export const BEFORE = 'Is before';
-export const AFTER = 'Is after';
-export const WITHIN = 'Is within';
+export const BEFORE = 'is on or before';
+export const AFTER = 'is on or after';
+export const WITHIN = 'is within';
 export const IS = 'Is';
 export const IS_NOT = 'Is not';
 

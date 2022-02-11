@@ -18,6 +18,7 @@ import { withoutReason, withReason } from './reason';
 import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 import withStateCode from './stateCode';
 import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
+import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 
 export const topicToQuery = {
   reportId: {
@@ -93,6 +94,11 @@ export const topicToQuery = {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
     win: (query) => withinCreateDate(query),
+  },
+  endDate: {
+    bef: (query) => beforeEndDate(query),
+    aft: (query) => afterEndDate(query),
+    win: (query) => withinEndDate(query),
   },
 };
 

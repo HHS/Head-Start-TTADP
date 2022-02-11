@@ -41,16 +41,18 @@ const handleArrayQuery = (q) => {
 
 const handleStringQuery = (q) => q;
 
+const defaultDateValues = {
+  'is within': '',
+  'is on or after': '',
+  'is on or before': '',
+  Is: '',
+};
+
 export const startDateFilter = {
   id: 'startDate',
-  display: 'Date range',
+  display: 'Start date',
   conditions: DATE_CONDITIONS,
-  defaultValues: {
-    'Is within': '',
-    'Is after': '',
-    'Is before': '',
-    In: '',
-  },
+  defaultValues: defaultDateValues,
   displayQuery: (query) => {
     if (query.includes('-')) {
       return formatDateRange({
@@ -69,6 +71,31 @@ export const startDateFilter = {
     />
   ),
 };
+
+export const endDateFilter = {
+  id: 'endDate',
+  display: 'End date',
+  conditions: DATE_CONDITIONS,
+  defaultValues: defaultDateValues,
+  displayQuery: (query) => {
+    if (query.includes('-')) {
+      return formatDateRange({
+        string: query,
+        withSpaces: false,
+      });
+    }
+    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+  },
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDateRange
+      condition={condition}
+      query={query}
+      updateSingleDate={onApplyQuery}
+      onApplyDateRange={onApplyQuery}
+    />
+  ),
+};
+
 export const grantNumberFilter = {
   id: 'grantNumber',
   display: 'Grant number',
