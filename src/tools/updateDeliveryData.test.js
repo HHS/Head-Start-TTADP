@@ -73,8 +73,6 @@ describe('updateDeliveryData', () => {
     ];
 
     const activityRecipients = [];
-    const userId = 1;
-    const regionId = 1;
 
     reports = await Promise.all(
       delivery.map(
@@ -83,10 +81,9 @@ describe('updateDeliveryData', () => {
           virtualDeliveryType,
         }) => createReport({
           activityRecipients,
-          userId,
-          regionId,
           deliveryMethod,
           virtualDeliveryType,
+          imported: JSON.stringify({ report: 'is imported' }),
         }),
       ),
     );
@@ -152,6 +149,9 @@ describe('updateDeliveryData', () => {
     await updateDeliveryData();
 
     const after = await ActivityReport.findAll({
+      attributes: [
+        'id', 'deliveryMethod', 'virtualDeliveryType',
+      ],
       where: {
         id: reportIds,
       },
