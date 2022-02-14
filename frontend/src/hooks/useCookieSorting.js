@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Cookies from 'js-cookie'; // theres a package for it, look i know you can do it by hand but I don't wanna
+import { compareFilters, filterCookieSchema } from './helpers';
 
 const COOKIE_OPTIONS = {
   sameSite: 'Lax',
@@ -18,28 +19,36 @@ const COOKIE_OPTIONS = {
  * @param {String} component
  * @returns {[ Object[], Function ]}
  */
-export default function useCookieSorting(defaultSortConfig, component) {
+export default function useCookieSorting(defaultSortConfig, component, filters) {
   // get sorting from cookie, otherwise fall back to default sorting
   // also memoize it so that we aren't constantly reading the cookie
   const url = useMemo(() => new URL(window.location), []);
   // example: localhost:3000-/activity-reports-activityReportsTable-sorting
   const cookieSchema = useMemo(() => `${url.hostname}-${url.pathname}-${component}-sorting`, [component, url.hostname, url.pathname]);
+  const filterCookie = useMemo(() => filterCookieSchema(url), [url]);
+
   const existingSort = useMemo(() => {
     const currentCookie = Cookies.get(cookieSchema);
-    if (currentCookie) {
-      const parsedCookie = JSON.parse(currentCookie);
-      // this is really just to make sure nothing weird gets in there
-      const {
-        sortBy, direction,
-      } = parsedCookie;
-      return {
-        sortBy,
-        direction,
-      };
+    const currentFilterCookie = Cookies.get(filterCookie);
+
+    if (currentFilterCookie) {
+      const theSame = compareFilters(filters, JSON.parse(currentFilterCookie));
+
+      if (currentCookie && theSame) {
+        const parsedCookie = JSON.parse(currentCookie);
+        // this is really just to make sure nothing weird gets in there
+        const {
+          sortBy, direction,
+        } = parsedCookie;
+        return {
+          sortBy,
+          direction,
+        };
+      }
     }
 
     return false;
-  }, [cookieSchema]); // none of this stuff should be changing
+  }, [cookieSchema, filterCookie, filters]);
 
   // put it in state
   const [sortConfig, setSortConfig] = useState(existingSort || defaultSortConfig);
@@ -47,9 +56,10 @@ export default function useCookieSorting(defaultSortConfig, component) {
   useEffect(() => {
     // when sort config changes, update the cookie value
     Cookies.set(cookieSchema, JSON.stringify(sortConfig), COOKIE_OPTIONS);
-  // note that with url stored in a no dependency useMemo, it will not trigger re-renders
-  // even if the url changes, like with a filter being applied
-  }, [cookieSchema, sortConfig]);
+
+    // we also need to push the filters to a cookie
+    Cookies.set(filterCookie, JSON.stringify(filters), COOKIE_OPTIONS);
+  }, [cookieSchema, filterCookie, filters, sortConfig]);
 
   return [sortConfig, setSortConfig];
 }
