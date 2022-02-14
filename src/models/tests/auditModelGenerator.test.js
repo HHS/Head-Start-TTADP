@@ -85,21 +85,24 @@ describe('Audit System', () => {
           },
         );
 
-        await Test.sync({ force: true, alter: true, transaction: t })
-          .catch((err) => auditLogger.error(err));
+        try {
+          await Test.sync({ force: true, alter: true, transaction: t });
+        } catch (err) { auditLogger.error(err); }
 
-        const data = await db.sequelize.queryInterface.sequelize.query(
-          `SELECT
-            table_catalog,
-            table_name
-          FROM information_schema.tables
-          WHERE table_name like '%Tests';`,
-          {
-            type: db.sequelize.QueryTypes.SELECT,
-            transaction: t,
-          },
-        )
-          .catch((err) => auditLogger.error(err));
+        let data;
+        try {
+          data = await db.sequelize.queryInterface.sequelize.query(
+            `SELECT
+              table_catalog,
+              table_name
+            FROM information_schema.tables
+            WHERE table_name like '%Tests';`,
+            {
+              type: db.sequelize.QueryTypes.SELECT,
+              transaction: t,
+            },
+          );
+        } catch (err) { auditLogger.error(err); }
 
         expect(data)
           .toEqual([{
@@ -112,30 +115,32 @@ describe('Audit System', () => {
 
         // Postgres information_schema.triggers table does not include any triggers on truncate so
         // to find them the following simulates the same data including all the triggers.
-        const triggers = await db.sequelize.queryInterface.sequelize.query(
-          `SELECT
-            triggers.trigger_name as name,
-            triggers.trigger_action as action
-          FROM
-            (
-            SELECT
-              t.tgname                           as trigger_name,
-              TRIM(
-                (CASE WHEN (tgtype::int::bit(7) & b'0000100')::int = 0 THEN '' ELSE ' INSERT' END) ||
-                (CASE WHEN (tgtype::int::bit(7) & b'0001000')::int = 0 THEN '' ELSE ' DELETE' END) ||
-                (CASE WHEN (tgtype::int::bit(7) & b'0010000')::int = 0 THEN '' ELSE ' UPDATE' END) ||
-                (CASE WHEN (tgtype::int::bit(7) & b'0100000')::int = 0 THEN '' ELSE ' TRUNCATE' END)
-              )                                  as trigger_action
-            FROM pg_trigger t
-            ) triggers
-          WHERE triggers.trigger_name like '%Tests'
-          ORDER BY name, action;`,
-          {
-            type: db.sequelize.QueryTypes.SELECT,
-            transaction: t,
-          },
-        )
-          .catch((err) => auditLogger.error(err));
+        let triggers;
+        try {
+          triggers = await db.sequelize.queryInterface.sequelize.query(
+            `SELECT
+              triggers.trigger_name as name,
+              triggers.trigger_action as action
+            FROM
+              (
+              SELECT
+                t.tgname                           as trigger_name,
+                TRIM(
+                  (CASE WHEN (tgtype::int::bit(7) & b'0000100')::int = 0 THEN '' ELSE ' INSERT' END) ||
+                  (CASE WHEN (tgtype::int::bit(7) & b'0001000')::int = 0 THEN '' ELSE ' DELETE' END) ||
+                  (CASE WHEN (tgtype::int::bit(7) & b'0010000')::int = 0 THEN '' ELSE ' UPDATE' END) ||
+                  (CASE WHEN (tgtype::int::bit(7) & b'0100000')::int = 0 THEN '' ELSE ' TRUNCATE' END)
+                )                                  as trigger_action
+              FROM pg_trigger t
+              ) triggers
+            WHERE triggers.trigger_name like '%Tests'
+            ORDER BY name, action;`,
+            {
+              type: db.sequelize.QueryTypes.SELECT,
+              transaction: t,
+            },
+          );
+        } catch (err) { auditLogger.error(err); }
 
         expect(triggers)
           .toEqual([{
@@ -155,18 +160,20 @@ describe('Audit System', () => {
             action: 'TRUNCATE',
           }]);
 
-        const routines = await db.sequelize.queryInterface.sequelize.query(
-          `SELECT
-            routine_name as name
-          FROM information_schema.routines
-          WHERE routine_name like 'ZAL%'
-          AND  routine_name like '%FTests';`,
-          {
-            type: db.sequelize.QueryTypes.SELECT,
-            transaction: t,
-          },
-        )
-          .catch((err) => auditLogger.error(err));
+        let routines;
+        try {
+          routines = await db.sequelize.queryInterface.sequelize.query(
+            `SELECT
+              routine_name as name
+            FROM information_schema.routines
+            WHERE routine_name like 'ZAL%'
+            AND  routine_name like '%FTests';`,
+            {
+              type: db.sequelize.QueryTypes.SELECT,
+              transaction: t,
+            },
+          );
+        } catch (err) { auditLogger.error(err); }
 
         expect(routines)
           .toEqual([
@@ -193,18 +200,21 @@ describe('Audit System', () => {
 
         const ZALTest = audit.generateAuditModel(db.sequelize, Test);
 
-        const addTest = await Test
-          .create(
+        let addTest;
+        try {
+          addTest = await Test.create(
             { value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') },
             { transaction: t },
-          )
-          .catch((err) => auditLogger.error(`${err.line}: ${err}`));
+          );
+        } catch (err) { auditLogger.error(err); }
 
-        const auditTest = await ZALTest.findAll({
-          where: { data_id: addTest.id },
-          transaction: t,
-        })
-          .catch((err) => auditLogger.error(err));
+        let auditTest;
+        try {
+          auditTest = await ZALTest.findAll({
+            where: { data_id: addTest.id },
+            transaction: t,
+          });
+        } catch (err) { auditLogger.error(err); }
 
         expect({
           id: auditTest[0].data_id,
@@ -218,20 +228,23 @@ describe('Audit System', () => {
           newValue: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
         };
 
-        await Test.update(
-          { value: updateTo.newValue },
-          {
-            where: { id: addTest.id },
-            transaction: t,
-          },
-        )
-          .catch((err) => auditLogger.error(err));
+        try {
+          await Test.update(
+            { value: updateTo.newValue },
+            {
+              where: { id: addTest.id },
+              transaction: t,
+            },
+          );
+        } catch (err) { auditLogger.error(err); }
 
-        const auditTestUpdate = await ZALTest.findAll({
-          where: { data_id: addTest.id, dml_type: 'UPDATE' },
-          transaction: t,
-        })
-          .catch((err) => auditLogger.error(err));
+        let auditTestUpdate;
+        try {
+          auditTestUpdate = await ZALTest.findAll({
+            where: { data_id: addTest.id, dml_type: 'UPDATE' },
+            transaction: t,
+          });
+        } catch (err) { auditLogger.error(err); }
 
         expect({
           id: auditTestUpdate[0].data_id,
@@ -240,13 +253,14 @@ describe('Audit System', () => {
         })
           .toEqual(updateTo);
 
-        await Test.destroy(
-          {
-            where: { id: addTest.id },
-            transaction: t,
-          },
-        )
-          .catch((err) => auditLogger.error(err));
+        try {
+          await Test.destroy(
+            {
+              where: { id: addTest.id },
+              transaction: t,
+            },
+          );
+        } catch (err) { auditLogger.error(err); }
 
         const auditTestDestroy = await ZALTest.findAll({
           where: { data_id: addTest.id, dml_type: 'DELETE' },
