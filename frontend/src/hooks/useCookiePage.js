@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Cookies from 'js-cookie'; // theres a package for it, look i know you can do it by hand but I don't wanna
+import { compareFilters, filterCookieSchema } from './helpers';
 
 const COOKIE_OPTIONS = {
   sameSite: 'Lax',
@@ -16,34 +17,39 @@ const COOKIE_OPTIONS = {
  *
  * @param {Object[]} defaultSortConfig
  * @param {String} component
+ * @param {Object[]} filters array of filters
  * @returns {[ Object[], Function ]}
  */
-export default function useCookiePage(defaultPage, component) {
+export default function useCookiePage(defaultPage, component, filters) {
   // get sorting from cookie, otherwise fall back to default sorting
   // also memoize it so that we aren't constantly reading the cookie
   const url = useMemo(() => new URL(window.location), []);
 
-  const cookieSchema = useMemo(() => `${url.hostname}-${url.pathname}-${url.search}-${component}-page`, [component, url]);
+  const cookieSchema = useMemo(() => `${url.hostname}-${url.pathname}-${component}-page`, [component, url]);
+  const filterCookie = useMemo(() => filterCookieSchema(url), [url]);
+
   const existingPage = useMemo(() => {
     const currentCookie = Cookies.get(cookieSchema);
-    if (currentCookie) {
-      const parsedCookie = parseInt(currentCookie, 10);
-      if (!Number.isNaN(parsedCookie)) {
-        return parsedCookie;
+    const currentFilterCookie = Cookies.get(filterCookie);
+    if (currentFilterCookie) {
+      const theSame = compareFilters(filters, JSON.parse(currentFilterCookie));
+      if (currentCookie && theSame) {
+        const parsedCookie = parseInt(currentCookie, 10);
+        if (!Number.isNaN(parsedCookie)) {
+          return parsedCookie;
+        }
       }
     }
 
     return false;
-  }, [cookieSchema]); // none of this stuff should be changing
+  }, [cookieSchema, filterCookie, filters]);
 
   // put it in state
   const [currentPage, setCurrentPage] = useState(existingPage || defaultPage);
 
   useEffect(() => {
-    // when sort config changes, update the cookie value
+    // when selected page changes, update the cookie value
     Cookies.set(cookieSchema, currentPage, COOKIE_OPTIONS);
-  // note that with url stored in a no dependency useMemo, it will not trigger re-renders
-  // even if the url changes, like with a filter being applied
   }, [cookieSchema, currentPage]);
 
   return [currentPage, setCurrentPage];
