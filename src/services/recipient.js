@@ -134,7 +134,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
               },
               {
                 endDate: {
-                  [Op.between]: ['2020-09-01', todaysDate],
+                  [Op.between]: ['2020-08-31', todaysDate],
                 },
               },
             ],
