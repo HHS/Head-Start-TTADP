@@ -44,9 +44,11 @@ describe('frequency graph widget', () => {
   });
 
   it('returns count of topics', async () => {
-    const res = await frequencyGraph([{
-      id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
-    }]);
+    const res = await frequencyGraph({
+      activityReport: {
+        id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
+      },
+    });
 
     const { topics } = res;
 
@@ -57,9 +59,11 @@ describe('frequency graph widget', () => {
   });
 
   it('returns count of reasons', async () => {
-    const res = await frequencyGraph([{
-      id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
-    }]);
+    const res = await frequencyGraph({
+      activityReport: {
+        id: [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
+      },
+    });
 
     const { reasons } = res;
 

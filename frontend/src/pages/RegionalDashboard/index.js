@@ -33,6 +33,7 @@ export default function RegionalDashboard() {
     user && user.homeRegionId && user.homeRegionId === 14
   ), [user]);
   const regions = useMemo(() => getUserRegions(user), [user]);
+  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
 
   const defaultFilters = useMemo(() => {
@@ -65,9 +66,6 @@ export default function RegionalDashboard() {
 
   const [filters, setFilters] = useUrlFilters(defaultFilters);
 
-  const regionFilter = filters.find((filter) => filter.topic === 'region');
-  const appliedRegion = regionFilter ? regionFilter.query : false;
-
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);
   };
@@ -88,8 +86,8 @@ export default function RegionalDashboard() {
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
-        <h1 className="ttahub--dashboard-title">
-          {appliedRegion ? `Region ${appliedRegion}` : 'Regional'}
+        <h1 className="landing">
+          {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
           TTA Activity Dashboard
         </h1>
@@ -105,6 +103,14 @@ export default function RegionalDashboard() {
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
             filters={filtersToApply}
+            fields={[
+              'Recipients served',
+              'Grants served',
+              'Activity reports',
+              'Participants',
+              'Hours of TTA',
+            ]}
+            showTooltips
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
