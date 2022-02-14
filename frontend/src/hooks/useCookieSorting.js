@@ -24,16 +24,14 @@ export default function useCookieSorting(defaultSortConfig, component, filters) 
   // also memoize it so that we aren't constantly reading the cookie
   const url = useMemo(() => new URL(window.location), []);
   // example: localhost:3000-/activity-reports-activityReportsTable-sorting
-  const cookieSchema = useMemo(() => `${url.hostname}-${url.pathname}-${component}-sorting`, [component, url.hostname, url.pathname]);
+  const cookieSchema = useMemo(() => `${url.hostname}-${url.pathname}-${component}-sorting`, [component, url]);
   const filterCookie = useMemo(() => filterCookieSchema(url), [url]);
 
   const existingSort = useMemo(() => {
-    const currentCookie = Cookies.get(cookieSchema);
     const currentFilterCookie = Cookies.get(filterCookie);
-
     if (currentFilterCookie) {
       const theSame = compareFilters(filters, JSON.parse(currentFilterCookie));
-
+      const currentCookie = Cookies.get(cookieSchema);
       if (currentCookie && theSame) {
         const parsedCookie = JSON.parse(currentCookie);
         // this is really just to make sure nothing weird gets in there
@@ -56,10 +54,7 @@ export default function useCookieSorting(defaultSortConfig, component, filters) 
   useEffect(() => {
     // when sort config changes, update the cookie value
     Cookies.set(cookieSchema, JSON.stringify(sortConfig), COOKIE_OPTIONS);
-
-    // we also need to push the filters to a cookie
-    Cookies.set(filterCookie, JSON.stringify(filters), COOKIE_OPTIONS);
-  }, [cookieSchema, filterCookie, filters, sortConfig]);
+  }, [cookieSchema, sortConfig]);
 
   return [sortConfig, setSortConfig];
 }

@@ -34,12 +34,12 @@ export function compareFilters(filters, filtersFromCookie) {
   filters.sort(sortFilters);
   filtersFromCookie.sort(sortFilters);
 
-  const [topics, queries, conditions] = filters.reduce(reduceFilters, []);
+  const [topics, queries, conditions] = filters.reduce(reduceFilters, [[], [], []]);
   const [
     cookieTopics,
     cookieQueries,
     cookieConditions,
-  ] = filtersFromCookie.reduce(reduceFilters, []);
+  ] = filtersFromCookie.reduce(reduceFilters, [[], [], []]);
 
   if (!topics.every((value, index) => value === cookieTopics[index])) {
     return false;

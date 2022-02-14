@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
+import Cookies from 'js-cookie';
 import { queryStringToFilters, filtersToQueryString } from '../utils';
+import { filterCookieSchema } from './helpers';
+
+const filterCookie = filterCookieSchema(new URL(window.location));
 
 // hoisting this fellow as to not get embroiled in useEffects
 const { history } = window;
+
+const COOKIE_OPTIONS = {
+  sameSite: 'Lax',
+};
 
 /**
  * useUrlFilters takes in an array of default filters
@@ -22,6 +30,9 @@ export default function useUrlFilters(defaultFilters) {
     // create our query string
     const search = filtersToQueryString(filters);
     history.pushState(null, null, `?${search}`);
+
+    // save the filters to a cookie
+    Cookies.set(filterCookie, JSON.stringify(filters), COOKIE_OPTIONS);
   }, [filters]);
 
   return [filters, setFilters];
