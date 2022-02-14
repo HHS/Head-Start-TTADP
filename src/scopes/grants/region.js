@@ -1,6 +1,14 @@
 import { Op } from 'sequelize';
 
-export default function withGrantsRegion(regions) {
+export function withRegion(regions) {
+  return {
+    regionId: {
+      [Op.in]: regions,
+    },
+  };
+}
+
+export function withoutRegion(regions) {
   return {
     regionId: {
       [Op.in]: regions,

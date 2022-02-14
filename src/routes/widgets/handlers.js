@@ -13,7 +13,7 @@ const logContext = {
 
 export async function getWidget(req, res) {
   try {
-    const { widgetId, modelType } = req.params;
+    const { widgetId } = req.params;
     const getWidgetData = widgets[widgetId];
 
     if (!getWidgetData) {
@@ -25,7 +25,7 @@ export async function getWidget(req, res) {
     const query = await setReadRegions(req.query, req.session.userId);
 
     // Determine what scopes we need.
-    const scopes = filtersToScopes(query, modelType);
+    const scopes = filtersToScopes(query);
 
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
