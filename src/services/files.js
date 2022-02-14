@@ -1,5 +1,6 @@
 import db, { File } from '../models';
 import { FILE_STATUSES } from '../constants';
+import { auditLogger } from '../logger';
 
 const { UPLOADING } = FILE_STATUSES;
 export const deleteFile = async (id) => {
@@ -21,6 +22,7 @@ export const updateStatus = async (fileId, fileStatus) => {
 };
 
 export const updateCheckSum = async (fileId, data) => {
+  auditLogger.info(JSON.stringify({ fileId, data }));
   if (data.error !== null) return data.error;
   let file;
   try {
@@ -36,6 +38,7 @@ export const updateCheckSum = async (fileId, data) => {
 };
 
 export const updateMetadata = async (fileId, data) => {
+  auditLogger.info(JSON.stringify({ fileId, data }));
   if (data.error !== null) return data.error;
   let file;
   try {
