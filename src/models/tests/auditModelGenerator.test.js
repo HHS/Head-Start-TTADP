@@ -87,7 +87,10 @@ describe('Audit System', () => {
 
         try {
           await Test.sync({ force: true, alter: true, transaction: t });
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         let data;
         try {
@@ -102,7 +105,10 @@ describe('Audit System', () => {
               transaction: t,
             },
           );
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         expect(data)
           .toEqual([{
@@ -140,7 +146,10 @@ describe('Audit System', () => {
               transaction: t,
             },
           );
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         expect(triggers)
           .toEqual([{
@@ -173,7 +182,10 @@ describe('Audit System', () => {
               transaction: t,
             },
           );
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         expect(routines)
           .toEqual([
@@ -206,7 +218,10 @@ describe('Audit System', () => {
             { value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') },
             { transaction: t },
           );
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         let auditTest;
         try {
@@ -214,7 +229,10 @@ describe('Audit System', () => {
             where: { data_id: addTest.id },
             transaction: t,
           });
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         expect({
           id: auditTest[0].data_id,
@@ -236,7 +254,10 @@ describe('Audit System', () => {
               transaction: t,
             },
           );
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         let auditTestUpdate;
         try {
@@ -244,7 +265,10 @@ describe('Audit System', () => {
             where: { data_id: addTest.id, dml_type: 'UPDATE' },
             transaction: t,
           });
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         expect({
           id: auditTestUpdate[0].data_id,
@@ -260,7 +284,10 @@ describe('Audit System', () => {
               transaction: t,
             },
           );
-        } catch (err) { auditLogger.error(err); }
+        } catch (err) {
+          auditLogger.error(err);
+          throw (err);
+        }
 
         const auditTestDestroy = await ZALTest.findAll({
           where: { data_id: addTest.id, dml_type: 'DELETE' },
