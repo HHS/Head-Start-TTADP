@@ -51,7 +51,7 @@ describe('Reason List Widget', () => {
       { name: 'reason seven', count: 4 },
       { name: 'reason 8', count: 3 },
       { name: 'reason 9', count: 2 },
-      { name: 'reason 10 is a very very very long reason and should not cut off the text', count: 999999 },
+      { name: 'reason 10 is a very very very long reason and should not cut off the text', count: '999,999' },
     ];
     renderReasonList({ data });
 
