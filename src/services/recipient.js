@@ -171,7 +171,7 @@ export async function getGoalsByActivityRecipient(
   },
 ) {
   // Scopes.
-  const scopes = filtersToScopes(filters, 'goal');
+  const { goal: scopes } = filtersToScopes(filters, 'goal');
 
   // Paging.
   const limitNum = parseInt(limit, 10);
