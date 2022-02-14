@@ -63,13 +63,12 @@ export default async function updateDeliveryData() {
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'deliveryMethod', 'virtualDeliveryType', 'imported'],
     where: {
-      [Op.and]: [
-        {
-          deliveryMethod: {
-            [Op.or]: deliveryMethods,
-          },
-        },
-      ],
+      deliveryMethod: {
+        [Op.or]: deliveryMethods,
+      },
+      imported: {
+        [Op.not]: null,
+      },
     },
   });
 
