@@ -30,6 +30,7 @@
 
 .goals-table .usa-table .tta-smarthub--goal-row-objectives-disabled {
   cursor: default;
+  pointer-events: none;
 }
 
 .goals-table .usa-table td {
