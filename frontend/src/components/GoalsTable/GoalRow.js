@@ -318,11 +318,12 @@ export const goalPropTypes = PropTypes.shape({
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
   objectiveCount: PropTypes.number.isRequired,
   goalNumber: PropTypes.string.isRequired,
-  objectives: PropTypes.arrayOf(objectivePropTypes).isRequired,
+  objectives: PropTypes.arrayOf(objectivePropTypes),
 });
 
 goalPropTypes.defaultProps = {
   goalStatus: null,
+  objectives: [],
 };
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
