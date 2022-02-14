@@ -9,24 +9,13 @@ export const filterSelectProps = {
 export const filterConfigProp = PropTypes.shape({
   id: PropTypes.string,
   display: PropTypes.string,
-  conditions: PropTypes.shape({
-    Is: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.arrayOf(PropTypes.string),
-    ]),
-    'Is not': PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.arrayOf(PropTypes.string),
-    ]),
-    Contains: PropTypes.string,
-    'Does not contain': PropTypes.string,
-  }),
-  defaultValues: {
+  conditions: PropTypes.arrayOf(PropTypes.string),
+  defaultValues: PropTypes.shape({
     'Is within': PropTypes.string,
     'Is after': PropTypes.string,
     'Is before': PropTypes.string,
     In: PropTypes.string,
-  },
+  }),
   displayQuery: PropTypes.func,
   renderInput: PropTypes.func,
 });

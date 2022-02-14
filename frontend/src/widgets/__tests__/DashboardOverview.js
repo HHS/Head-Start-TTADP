@@ -21,7 +21,7 @@ describe('Dashboard Overview Widget', () => {
       numGrants: '2',
       numTotalGrants: '2',
       numParticipants: '10',
-      sumDuration: '2623.0',
+      sumDuration: '2,623.0',
       inPerson: '1.0',
     };
 

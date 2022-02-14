@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 import {
+  sequelize,
   ActivityReport,
 } from '../models';
 import { auditLogger } from '../logger';
@@ -12,22 +13,21 @@ import { auditLogger } from '../logger';
 export default async function changeReportStatus(ids, status) {
   const idsArray = ids.split(',');
 
-  const promises = [];
+  await sequelize.transaction(async (transaction) => {
+    for await (const id of idsArray) {
+      const report = await ActivityReport.unscoped().findOne({ where: { id } });
 
-  for await (const id of idsArray) {
-    const report = await ActivityReport.unscoped().findOne({ where: { id } });
-
-    if (report) {
-      auditLogger.info(`Changing status of report: ${id} to ${status}`);
-      promises.push(
-        report.update({
-          submissionStatus: status,
-        }),
-      );
-    } else {
-      auditLogger.info(`Couldn't find any reports with the id: ${id}`);
+      if (report) {
+        auditLogger.info(`Changing status of report: ${id} to ${status}`);
+        await report.update(
+          {
+            submissionStatus: status,
+          },
+          transaction,
+        );
+      } else {
+        auditLogger.info(`Couldn't find any reports with the id: ${id}`);
+      }
     }
-  }
-
-  return Promise.all(promises);
+  });
 }
