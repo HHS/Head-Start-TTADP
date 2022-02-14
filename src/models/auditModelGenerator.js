@@ -5,13 +5,6 @@ import { auditLogger } from '../logger'; // eslint-disable-line import/no-import
 
 const dmlType = ['INSERT', 'UPDATE', 'DELETE'];
 
-// const exception = () => {
-//   throw new Error(
-//     'Audit log only allows reading and inserting data,'
-//     + ' all modification and removal is not allowed.'
-//   );
-// };
-
 const tryJsonParse = (data) => {
   let newData = data;
   if (data) {
@@ -45,7 +38,6 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, n
         set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
       { transaction: options.transaction },
     );
-    // console.log(JSON.stringify(result)); // eslint-disable-line no-console
     auditLogger.info(JSON.stringify(result));
   }
 };
