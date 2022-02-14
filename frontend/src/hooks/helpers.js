@@ -30,6 +30,8 @@ export function compareFilters(filters, filtersFromCookie) {
     return false;
   }
 
+  console.log(filters.length, filtersFromCookie.length);
+
   // sort filters by topic
   filters.sort(sortFilters);
   filtersFromCookie.sort(sortFilters);
@@ -40,6 +42,8 @@ export function compareFilters(filters, filtersFromCookie) {
     cookieQueries,
     cookieConditions,
   ] = filtersFromCookie.reduce(reduceFilters, [[], [], []]);
+
+  console.log(topics, cookieTopics);
 
   if (!topics.every((value, index) => value === cookieTopics[index])) {
     return false;
