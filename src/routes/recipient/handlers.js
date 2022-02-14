@@ -12,7 +12,7 @@ export async function getRecipient(req, res) {
   try {
     const { recipientId } = req.params;
 
-    const scopes = filtersToScopes(req.query, 'grant');
+    const { grant: scopes } = filtersToScopes(req.query);
     const recipient = await recipientById(recipientId, scopes);
 
     if (!recipient) {
@@ -31,7 +31,7 @@ export async function searchRecipients(req, res) {
     const {
       s, sortBy, direction, offset,
     } = req.query;
-    const scopes = filtersToScopes(req.query, 'grant');
+    const { grant: scopes } = filtersToScopes(req.query);
     const recipients = await recipientsByName(s, scopes, sortBy, direction, offset);
     if (!recipients) {
       res.sendStatus(404);

@@ -4,6 +4,8 @@ import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDat
 import { withoutStatus, withStatus } from './status';
 import { withTopics, withoutTopics } from './topics';
 import { withReasons, withoutReasons } from './reasons';
+import { withRecipientId } from './recipientId';
+import { withRegion, withoutRegion } from './region';
 
 export const topicToQuery = {
   createDate: {
@@ -23,8 +25,15 @@ export const topicToQuery = {
     in: (query) => withReasons(query),
     nin: (query) => withoutReasons(query),
   },
+  recipientId: {
+    ctn: (query) => withRecipientId(query),
+  },
+  region: {
+    in: (query) => withRegion(query),
+    nin: (query) => withoutRegion(query),
+  },
 };
 
-export function goalsReportFiltersToScopes(filters) {
+export function goalsFiltersToScopes(filters) {
   return createFiltersToScopes(filters, topicToQuery);
 }

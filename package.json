@@ -88,7 +88,6 @@
     "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js",
     "updateTopicNames": "node ./build/server/tools/updateTopicNamesCLI.js",
     "updateTopicNames:local": "./node_modules/.bin/babel-node ./src/tools/updateTopicNamesCLI.js"
- 
   },
   "repository": {
     "type": "git",
@@ -97,7 +96,7 @@
   "resolutions": {
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
-    "follow-redirects":"^1.14.7",
+    "follow-redirects": "^1.14.8",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7"
   },
