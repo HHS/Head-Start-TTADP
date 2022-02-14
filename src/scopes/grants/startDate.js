@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
-import { withinDateRange, compareDate } from '../utils';
+import { compareDate } from '../utils';
 
-export function beforeGrantStartDate(date) {
+export function beforeStartDate(date) {
   return {
     [Op.and]: {
       [Op.or]: compareDate(date, 'startDate', Op.lt),
@@ -9,7 +9,7 @@ export function beforeGrantStartDate(date) {
   };
 }
 
-export function afterGrantStartDate(date) {
+export function afterStartDate(date) {
   return {
     [Op.and]: {
       [Op.or]: compareDate(date, 'startDate', Op.gt),
@@ -17,10 +17,31 @@ export function afterGrantStartDate(date) {
   };
 }
 
-export function withinGrantStartDates(dates) {
+export function activeWithinDates(dates) {
+  const scopes = dates.reduce((acc, range) => {
+    if (!range.split) {
+      return acc;
+    }
+
+    const [sd, ed] = range.split('-');
+    if (!sd || !ed) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        startDate: {
+          [Op.lte]: new Date(ed),
+        },
+        endDate: {
+          [Op.gte]: new Date(sd),
+        },
+      },
+    ];
+  }, []);
+
   return {
-    [Op.and]: {
-      [Op.or]: withinDateRange(dates, 'startDate'),
-    },
+    [Op.or]: scopes,
   };
 }

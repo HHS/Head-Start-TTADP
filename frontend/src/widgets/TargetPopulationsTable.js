@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
-import formatNumber from './WidgetHelper';
 import TableWidget from './TableWidget';
 
 const renderTargetPopulationTable = (data) => {
@@ -12,7 +11,7 @@ const renderTargetPopulationTable = (data) => {
           {population.name}
         </td>
         <td>
-          {formatNumber(population.count)}
+          {population.count}
         </td>
       </tr>
     ));
