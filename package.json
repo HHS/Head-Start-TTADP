@@ -204,7 +204,6 @@
     "express-winston": "^4.0.5",
     "faker": "^5.5.3",
     "file-type": "^16.1.0",
-    "follow-redirects": "^1.14.7",
     "form-data": "^4.0.0",
     "helmet": "^5.0.1",
     "html-to-text": "^8.1.0",
