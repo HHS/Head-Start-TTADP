@@ -7,6 +7,22 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
+import {
+  grantNumberFilter,
+  programSpecialistFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  topicsFilter,
+} from '../activityReportFilters';
+import {
+  createDateFilter,
+  reasonsFilter as goalReasonsFilter,
+  statusFilter,
+  topicsFilter as goalTopicsFilter,
+} from '../goalFilters';
 import UserContext from '../../../UserContext';
 import { SCOPE_IDS } from '../../../Constants';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
@@ -18,7 +34,11 @@ describe('Filter Menu', () => {
     jest.restoreAllMocks();
   });
 
-  const renderFilterMenu = (filters = [], onApplyFilters = jest.fn()) => {
+  const renderFilterMenu = (
+    filters = [],
+    onApplyFilters = jest.fn(),
+    filterConfig = TTAHISTORY_FILTER_CONFIG,
+  ) => {
     const user = {
       permissions: [
         {
@@ -36,7 +56,7 @@ describe('Filter Menu', () => {
             filters={filters}
             onApplyFilters={onApplyFilters}
             applyButtonAria="apply test filters"
-            filterConfig={TTAHISTORY_FILTER_CONFIG}
+            filterConfig={filterConfig}
           />
         </div>
       </UserContext.Provider>,
@@ -306,5 +326,73 @@ describe('Filter Menu', () => {
     const apply = screen.getByRole('button', { name: /apply test filters/i });
     userEvent.click(apply);
     expect(screen.getByText(/please enter a condition/i)).toBeVisible();
+  });
+
+  it('renders activity report filters', async () => {
+    const config = [
+      grantNumberFilter,
+      programSpecialistFilter,
+      programTypeFilter,
+      reasonsFilter,
+      recipientFilter,
+      stateCodeFilter,
+      targetPopulationsFilter,
+      topicsFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+
+    // all the filters work
+    userEvent.selectOptions(topics, 'Grant number');
+    userEvent.selectOptions(topics, 'Program specialist');
+    userEvent.selectOptions(topics, 'Program types');
+    userEvent.selectOptions(topics, 'Reasons');
+    userEvent.selectOptions(topics, 'Recipient name');
+    userEvent.selectOptions(topics, 'State');
+    userEvent.selectOptions(topics, 'Target populations');
+    userEvent.selectOptions(topics, 'Topics');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
+  });
+
+  it('renders goal filters', async () => {
+    const config = [
+      createDateFilter,
+      goalReasonsFilter,
+      statusFilter,
+      goalTopicsFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+
+    // all the filters work
+    userEvent.selectOptions(topics, 'Status');
+    userEvent.selectOptions(topics, 'Create date');
+    userEvent.selectOptions(topics, 'Reasons');
+    userEvent.selectOptions(topics, 'Topics');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
   });
 });

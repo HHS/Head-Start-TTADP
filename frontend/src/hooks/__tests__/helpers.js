@@ -6,15 +6,15 @@ describe('compareFilters', () => {
     const arr1 = [
       {
         id: uuid(),
-        topic: 'startDate',
-        condition: 'Is within',
-        query: '2020/09/01-2020/10/01',
-      },
-      {
-        id: uuid(),
         topic: 'grantNumber',
         condition: 'Contains',
         query: 'toast',
+      },
+      {
+        id: uuid(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: '2020/09/01-2020/10/01',
       },
     ];
     const arr2 = [
@@ -52,15 +52,15 @@ describe('compareFilters', () => {
     const arr2 = [
       {
         id: uuid(),
-        topic: 'startDate',
-        condition: 'Is within',
-        query: '2020/09/01-2020/10/01',
-      },
-      {
-        id: uuid(),
         topic: 'recipientName',
         condition: 'Contains',
         query: 'toast',
+      },
+      {
+        id: uuid(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: '2020/09/01-2020/10/01',
       },
     ];
     const result = compareFilters(arr1, arr2);
