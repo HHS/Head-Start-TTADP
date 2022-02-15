@@ -80,7 +80,7 @@ describe('Filter Menu', () => {
     const condition = screen.getByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'is on or after');
 
-    const del = screen.getByRole('button', { name: /remove Date range is on or after/i });
+    const del = screen.getByRole('button', { name: /remove start date is on or after/i });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
