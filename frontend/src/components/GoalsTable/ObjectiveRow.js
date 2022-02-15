@@ -79,18 +79,13 @@ function ObjectiveRow({
   const displayObjStatus = getGoalDisplayStatusText();
 
   const getObjectiveStatusIcon = () => {
-    if (displayObjStatus) {
-      if (displayObjStatus === 'In progress') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
-      } if (displayObjStatus === 'Closed') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
-      }
-      if (displayObjStatus === 'Not started') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
-      }
-      if (displayObjStatus === 'Needs status') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
-      }
+    if (displayObjStatus === 'In progress') {
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
+    } if (displayObjStatus === 'Closed') {
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
+    }
+    if (displayObjStatus === 'Not started') {
+      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
     }
     return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
   };
