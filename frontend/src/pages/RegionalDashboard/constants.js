@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import {
   regionFilter,
+  endDateFilter,
   startDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
@@ -15,7 +16,7 @@ import {
 } from '../../components/filter/activityReportFilters';
 
 export const DASHBOARD_FILTER_CONFIG = [
-  startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
   programTypeFilter,
@@ -24,6 +25,7 @@ export const DASHBOARD_FILTER_CONFIG = [
   regionFilter,
   reportIdFilter,
   specialistRoleFilter,
+  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
