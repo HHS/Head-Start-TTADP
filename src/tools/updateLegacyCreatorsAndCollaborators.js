@@ -5,14 +5,14 @@ import {
 import { logger } from '../logger';
 
 /**
- * takes a messy comma sep'd string of specialist emails, returns a neatened
- * array of the same emails, hopefully with no dead or empty stuff in there
+ * takes a messy comma sep'd string of specialist info, returns a neatened
+ * array of the same info, hopefully with no dead or empty stuff in there
  *
  * @param {String} rawCollaborators
  * @returns {String[]}
  */
-function parseCollaboratorEmails(rawCollaborators) {
-  // this addresses a comma seperated list of emails, w/ inconsistent spacing
+function parseCollaboratorIdentifier(rawCollaborators) {
+  // this addresses a comma seperated list of emails and or/names, w/ inconsistent spacing
   // and turns it into a neat array
   return rawCollaborators.replace(/ /g, '').split(',').filter((c) => c);
 }
@@ -35,12 +35,22 @@ async function updateLegacyCreatorAndCollaboratorsData(report) {
 
   if (otherSpecialists && !collaborators.length) {
     logger.info(`Report ${id} should have these collaborators: ${otherSpecialists}`);
-    const parsedCollabs = parseCollaboratorEmails(otherSpecialists);
+    const parsedCollabs = parseCollaboratorIdentifier(otherSpecialists);
     if (parsedCollabs.length) {
       updatedCollaborators = await User.findAll({
+        logging: console.log,
         attributes: ['id', 'email'],
         where: {
-          email: parsedCollabs,
+          [Op.or]: [
+            // discovered that some of these entries are names and some email
+            // which makes our job a little harder
+            { email: parsedCollabs },
+            { name: parsedCollabs },
+          ],
+          id: {
+            // exclude that which has already been made a collaborator
+            [Op.not]: sequelize.literal(`(SELECT "userId" FROM "ActivityReportCollaborators" WHERE "activityReportId" = ${id})`),
+          },
         },
       });
 
@@ -109,8 +119,18 @@ export default async function updateLegacyCreatorsAndCollaborators() {
   });
 
   // so here is where the filtering happens
-  const reports = rawReportData.filter((r) => r.collaborators.length === 0 || r.userId === null);
+  const reports = rawReportData.filter((r) => {
+    const { imported: { otherSpecialists } } = r;
+
+    // we can only do so much if the data isn't comma seperated
+    const howManyImportedSpecialists = otherSpecialists.split(',').length;
+
+    // so if the list of collaborators is different or if there is no userId
+    // that's probably all the cases we can account for, I would think
+    return r.collaborators.length !== howManyImportedSpecialists || r.userId === null;
+  });
 
   // eslint-disable-next-line max-len
+  // * it doesn't look too long to me *
   return Promise.all(reports.map((report) => updateLegacyCreatorAndCollaboratorsData(report)));
 }
