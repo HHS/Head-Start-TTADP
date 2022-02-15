@@ -26,13 +26,13 @@ describe('Filter Pills', () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Contains',
+        condition: 'contains',
         query: [],
       },
       {
         id: '2',
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: '2021/10/01-2021/10/31',
       }];
 
@@ -53,7 +53,7 @@ describe('Filter Pills', () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Is',
+        condition: 'is',
         query: [],
         displayQuery: (q) => q.join(', '),
         display: 'Specialist role',
@@ -61,7 +61,7 @@ describe('Filter Pills', () => {
       {
         id: '2',
         topic: 'startDate',
-        condition: 'Is after',
+        condition: 'is on or after',
         query: '2021/01/01',
         displayQuery: (q) => q,
         display: 'Date range',
@@ -75,7 +75,7 @@ describe('Filter Pills', () => {
       expect(await screen.findByText(/date range/i)).toBeVisible();
 
       // Remove filter pill.
-      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date range is after /i });
+      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date range is on or after /i });
       userEvent.click(remoteButton);
       expect(onRemoveFilter).toHaveBeenCalledWith('2');
     });
@@ -84,7 +84,7 @@ describe('Filter Pills', () => {
       const filters = [{
         id: '1',
         topic: 'role',
-        condition: 'Is',
+        condition: 'is',
         query: ['Specialist 1', 'Specialist 2', 'Specialist 3', 'Specialist 4', 'Specialist 5', 'Specialist 6', 'Specialist 7'],
         displayQuery: (q) => q.join(', '),
         display: 'Specialist role',

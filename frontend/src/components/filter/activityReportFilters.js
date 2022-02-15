@@ -18,18 +18,18 @@ import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 
 const EMPTY_MULTI_SELECT = {
-  Is: [],
-  'Is not': [],
+  is: [],
+  'is not': [],
 };
 
 const EMPTY_SINGLE_SELECT = {
-  Is: '',
-  'Is not': '',
+  is: '',
+  'ss not': '',
 };
 
 const EMPTY_TEXT_INPUT = {
-  Contains: '',
-  'Does not contain': '',
+  contains: '',
+  'does not contain': '',
 };
 
 const handleArrayQuery = (q) => {
@@ -221,7 +221,7 @@ export const specialistRoleFilter = {
 export const stateCodeFilter = {
   id: 'stateCode',
   display: 'State',
-  conditions: ['Contains'],
+  conditions: ['contains'],
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (

@@ -36,7 +36,7 @@ const renderTable = (user, dateTime) => {
             filters={[{
               id: '1',
               topic: 'region',
-              condition: 'Is',
+              condition: 'is',
               query: '1',
             }]}
             showFilter

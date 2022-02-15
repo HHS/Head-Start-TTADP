@@ -17,8 +17,8 @@ const YEAR_TO_DATE = formatDateRange({
 });
 
 const EMPTY_MULTI_SELECT = {
-  Is: [],
-  'Is not': [],
+  is: [],
+  'is not': [],
 };
 
 const handleArrayQuery = (q) => {
@@ -33,9 +33,9 @@ export const createDateFilter = {
   display: 'Create date',
   conditions: DATE_CONDITIONS,
   defaultValues: {
-    'Is within': YEAR_TO_DATE,
-    'Is after': '',
-    'Is before': '',
+    'is within': YEAR_TO_DATE,
+    'is on or after': '',
+    'is on or before': '',
   },
   displayQuery: (query) => {
     if (query.includes('-')) {

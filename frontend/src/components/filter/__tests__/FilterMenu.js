@@ -64,7 +64,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: '2021/01/01-2021/11/05',
       },
     ];
@@ -78,9 +78,9 @@ describe('Filter Menu', () => {
     userEvent.click(button);
 
     const condition = screen.getByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is after');
+    userEvent.selectOptions(condition, 'is on or after');
 
-    const del = screen.getByRole('button', { name: /remove Date range Is after/i });
+    const del = screen.getByRole('button', { name: /remove Date range is on or after/i });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
@@ -114,7 +114,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is after',
+        condition: 'is on or after',
         query: '2021/10/31',
       },
     ];
@@ -139,7 +139,7 @@ describe('Filter Menu', () => {
     expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is before');
+    userEvent.selectOptions(condition, 'is on or before');
 
     date = await screen.findByRole('textbox', { name: /date/i });
     userEvent.type(date, '10/31/2020');
@@ -160,7 +160,7 @@ describe('Filter Menu', () => {
         query: [
           'Family Engagement Specialist',
         ],
-        condition: 'Is',
+        condition: 'is',
       },
     ];
 
@@ -188,7 +188,7 @@ describe('Filter Menu', () => {
         query: [
           'Family Engagement Specialist',
         ],
-        condition: 'Is',
+        condition: 'is',
       },
       {
         id: 'filter-3',
@@ -196,7 +196,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'programSpecialist',
         query: '',
-        condition: 'Contains',
+        condition: 'contains',
       },
       {
         id: 'filter-4',
@@ -204,7 +204,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'grantNumber',
         query: '',
-        condition: 'Contains',
+        condition: 'contains',
       },
       {
         id: 'filter-5',
@@ -212,7 +212,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'programType',
         query: ['EHS'],
-        condition: 'Is',
+        condition: 'is',
       },
       {
         id: 'filter-6',
@@ -220,7 +220,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'reason',
         query: ['COVID-19 response'],
-        condition: 'Is',
+        condition: 'is',
       },
       {
         id: 'filter-7',
@@ -228,7 +228,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'recipient',
         query: '',
-        condition: 'Contains',
+        condition: 'contains',
       },
       {
         id: 'filter-8',
@@ -236,7 +236,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'targetPopulations',
         query: [],
-        condition: 'Is',
+        condition: 'is',
       },
       {
         id: 'filter-9',
@@ -244,7 +244,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'topic',
         query: [],
-        condition: 'Is',
+        condition: 'is',
       },
       {
         id: 'filter-10',
@@ -252,7 +252,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'stateCode',
         query: [],
-        condition: 'Contains',
+        condition: 'contains',
       },
     ];
 
@@ -279,7 +279,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is after',
+        condition: 'is on or after',
         query: '2021/10/31',
       },
     ];
