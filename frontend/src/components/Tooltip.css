@@ -42,7 +42,10 @@
 .smart-hub--tooltip:hover .usa-tooltip__body,
 .smart-hub--tooltip.show-tooltip .usa-tooltip__body{        
     animation: fadein;
+    /* This ensures the tool tips stays while the user is hovering.  */
+    animation-fill-mode: forwards;
     animation-duration: 500ms;
+    animation-fill-mode: forwards;
     animation-iteration-count: 1;
     bottom: 1.5rem;
     display: inline-block;

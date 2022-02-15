@@ -1,0 +1,17 @@
+get:
+  tags:
+    - recipient
+  summary: Retrieve a recipient by keyword search
+  parameters:
+    - in: query
+      name: s
+      required: false
+      schema:
+        type: string
+  responses:
+    200:
+      description: The recipient with a name or grant number matching the "s" search string
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/recipient'
