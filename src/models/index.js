@@ -18,6 +18,8 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
+audit.attachHooksForAuditing(sequelize);
+
 fs
   .readdirSync(__dirname)
   .filter((file) => (file.indexOf('.') !== 0)
@@ -27,7 +29,6 @@ fs
   .forEach((file) => {
     const modelDef = require(path.join(__dirname, file));
     const model = modelDef(sequelize, Sequelize);
-    audit.attachHooksForAuditing(sequelize, model);
     const auditModel = audit.generateAuditModel(sequelize, model);
     db[model.name] = model;
     db[auditModel.name] = auditModel;

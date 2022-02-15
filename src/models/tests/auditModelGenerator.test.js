@@ -196,7 +196,6 @@ describe('Audit System', () => {
             { name: 'ZALTruncateFTests' },
           ]);
 
-        audit.attachHooksForAuditing(db.sequelize, Test);
         const hooks = [
           'beforeBulkCreate',
           'beforeBulkDestroy',
@@ -208,7 +207,7 @@ describe('Audit System', () => {
           'beforeSave',
           'beforeUpsert',
         ];
-        hooks.map((hook) => expect(Test.hasHook(hook)).toEqual(true));
+        hooks.map((hook) => expect(db.sequelize.hasHook(hook)).toEqual(true));
 
         const ZALTest = audit.generateAuditModel(db.sequelize, Test);
 
