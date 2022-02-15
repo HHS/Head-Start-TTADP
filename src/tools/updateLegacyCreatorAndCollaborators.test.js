@@ -14,9 +14,11 @@ const emails = [
   faker.internet.email(),
   faker.internet.email(),
   faker.internet.email(),
+  faker.internet.email(),
 ];
 
 const names = [
+  faker.name.findName(),
   faker.name.findName(),
   faker.name.findName(),
   faker.name.findName(),
@@ -111,7 +113,28 @@ describe('updateLegacyCreatorAndCollaborators', () => {
           otherSpecialists: `${emails[2]},${emails[3]},`,
         },
       }),
+      ActivityReport.create({
+        ...dumbReport,
+        userId: null,
+        imported: {
+          createdBy: emails[0],
+          otherSpecialists: `${names[2]},${names[3]},`,
+        },
+      }),
+      ActivityReport.create({
+        ...dumbReport,
+        userId: null,
+        imported: {
+          createdBy: emails[0],
+          otherSpecialists: `${emails[1]},${emails[2]}`,
+        },
+      }),
     ]);
+
+    await ActivityReportCollaborator.create({
+      activityReportId: reports[5].id,
+      userId: users[1].id,
+    });
   });
 
   afterAll(async () => {
@@ -142,7 +165,7 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     });
 
-    expect(before.length).toBe(4);
+    expect(before.length).toBe(6);
 
     await updateLegacyCreatorsAndCollaborators();
 
@@ -164,9 +187,9 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       },
     });
 
-    expect(after.length).toBe(4);
+    expect(after.length).toBe(6);
 
-    const [reportOne, reportTwo, reportThree, reportFour] = after;
+    const [reportOne, reportTwo, reportThree, reportFour, reportFive, reportSix] = after;
     const {
       userId: reportOneUserId,
       collaborators: reportOneCollaborators,
@@ -225,6 +248,36 @@ describe('updateLegacyCreatorAndCollaborators', () => {
     expect(expectCreator).toBe(reportFourCreatedBy);
     reportFourOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
       expect(reportFourCollaborators.map((r) => r.email)).toContain(c);
+    });
+
+    const {
+      userId: reportFiveUserId,
+      collaborators: reportFiveCollaborators,
+      imported: {
+        otherSpecialists: reportFiveOtherSpecialists,
+        createdBy: reportFiveCreatedBy,
+      },
+    } = reportFive;
+    u = await User.findByPk(reportFiveUserId);
+    expectCreator = reportFiveCreatedBy ? u.email : undefined;
+    expect(expectCreator).toBe(reportFiveCreatedBy);
+    reportFiveOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
+      expect(reportFiveCollaborators.map((r) => r.email)).toContain(c);
+    });
+
+    const {
+      userId: reportSixUserId,
+      collaborators: reportSixCollaborators,
+      imported: {
+        otherSpecialists: reportSixOtherSpecialists,
+        createdBy: reportSixCreatedBy,
+      },
+    } = reportSix;
+    u = await User.findByPk(reportSixUserId);
+    expectCreator = reportSixCreatedBy ? u.email : undefined;
+    expect(expectCreator).toBe(reportSixCreatedBy);
+    reportSixOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
+      expect(reportSixCollaborators.map((r) => r.email)).toContain(c);
     });
   });
 });
