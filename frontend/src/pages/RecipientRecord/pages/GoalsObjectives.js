@@ -7,13 +7,18 @@ import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
 
 const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
+const FILTER_KEY = 'goals-objectives-filters';
+
 export default function GoalsObjectives() {
-  const [filters, setFilters] = useUrlFilters([{
-    id: uuidv4(),
-    topic: 'createDate',
-    condition: 'Is within',
-    query: yearToDate,
-  }]);
+  const [filters, setFilters] = useUrlFilters(
+    FILTER_KEY,
+    [{
+      id: uuidv4(),
+      topic: 'createDate',
+      condition: 'Is within',
+      query: yearToDate,
+    }],
+  );
 
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];

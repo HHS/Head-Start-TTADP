@@ -1,5 +1,4 @@
-export const filterCookieSchema = (url) => `${url.hostname}-${url.pathname}-filters`;
-
+/* eslint-disable import/prefer-default-export */
 function sortFilters(a, b) {
   const topicA = a.topic;
   const topicB = b.topic;
@@ -20,7 +19,7 @@ function reduceFilters(filters, filter) {
 
   return [
     [...topics, topic], // topics
-    [...queries, query], // queries
+    [...queries, [query].flat()], // queries
     [...conditions, condition], // conditions
   ];
 }
@@ -30,26 +29,30 @@ export function compareFilters(filters, filtersFromCookie) {
     return false;
   }
 
-  // sort filters by topic
-  filters.sort(sortFilters);
-  filtersFromCookie.sort(sortFilters);
+  // we are sorting and comparing copies here since
+  // we don't want to change the order on the frontend
+  const [
+    topics, queries, conditions,
+  ] = [...filters].sort(sortFilters).reduce(reduceFilters, [[], [], []]);
 
-  const [topics, queries, conditions] = filters.reduce(reduceFilters, [[], [], []]);
   const [
     cookieTopics,
     cookieQueries,
     cookieConditions,
-  ] = filtersFromCookie.reduce(reduceFilters, [[], [], []]);
+  ] = [...filtersFromCookie].sort(sortFilters).reduce(reduceFilters, [[], [], []]);
 
   if (!topics.every((value, index) => value === cookieTopics[index])) {
     return false;
   }
 
-  if (!queries.every((value, index) => value === cookieQueries[index])) {
+  if (!conditions.every((value, index) => value === cookieConditions[index])) {
     return false;
   }
 
-  if (!conditions.every((value, index) => value === cookieConditions[index])) {
+  const q = queries.sort().flat();
+  const cq = cookieQueries.sort().flat();
+
+  if (!q.every((value, index) => value === cq[index])) {
     return false;
   }
 

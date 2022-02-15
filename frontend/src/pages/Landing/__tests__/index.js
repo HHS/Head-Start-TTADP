@@ -17,6 +17,7 @@ import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString, formatDateRange } from '../../../utils';
 
 jest.mock('../../../fetchers/helpers');
+jest.mock('js-cookie');
 
 const mockAnnounce = jest.fn();
 

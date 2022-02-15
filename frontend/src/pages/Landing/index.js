@@ -30,11 +30,14 @@ import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useUrlFilters from '../../hooks/useUrlFilters';
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
+import FilterContext from '../../FilterContext';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
 });
+
+const FILTER_KEY = 'landing-filters';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -57,6 +60,7 @@ function Landing() {
   const hasMultipleRegions = regions && regions.length > 1;
 
   const [filters, setFilters] = useUrlFilters(
+    FILTER_KEY,
     defaultRegion !== 14
       && defaultRegion !== 0
       && hasMultipleRegions
@@ -320,11 +324,13 @@ function Landing() {
           setDownloadAlertsError={setDownloadAlertsError}
           downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
-        <ActivityReportsTable
-          filters={filtersToApply}
-          showFilter={false}
-          tableCaption="Approved activity reports"
-        />
+        <FilterContext.Provider value={{ filters, filterKey: FILTER_KEY }}>
+          <ActivityReportsTable
+            filters={filtersToApply}
+            showFilter={false}
+            tableCaption="Approved activity reports"
+          />
+        </FilterContext.Provider>
       </>
     </>
   );

@@ -185,7 +185,7 @@ export default function FilterMenu({
       onOpen={onOpen}
     >
 
-      <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
+      <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2" data-testid="filters">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">
