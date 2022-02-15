@@ -8,7 +8,7 @@ import { formatDateRange } from '../../../utils';
 import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 
-export default function GoalsObjectives({ recipientId }) {
+export default function GoalsObjectives({ recipientId, regionId }) {
   // eslint-disable-next-line no-unused-vars
   const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
@@ -48,6 +48,7 @@ export default function GoalsObjectives({ recipientId }) {
         <div id="goalsObjectives">
           <GoalsTable
             recipientId={recipientId}
+            regionId={regionId}
             filters={filters}
           />
         </div>
@@ -58,4 +59,5 @@ export default function GoalsObjectives({ recipientId }) {
 
 GoalsObjectives.propTypes = {
   recipientId: PropTypes.string.isRequired,
+  regionId: PropTypes.string.isRequired,
 };

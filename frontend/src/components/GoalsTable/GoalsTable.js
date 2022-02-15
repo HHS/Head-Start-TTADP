@@ -14,6 +14,7 @@ import { getRecipientGoals } from '../../fetchers/recipient';
 
 function GoalsTable({
   recipientId,
+  regionId,
   filters,
   onUpdateFilters,
 }) {
@@ -41,6 +42,7 @@ function GoalsTable({
       try {
         const { count, goalRows } = await getRecipientGoals(
           recipientId,
+          regionId,
           sortConfig.sortBy,
           sortConfig.direction,
           offset,
@@ -52,12 +54,12 @@ function GoalsTable({
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
-        setError('Unable to fetch reports');
+        setError('Unable to fetch goals');
       }
       setLoading(false);
     }
     fetchGoals();
-  }, [sortConfig, offset, perPage, filters, recipientId]);
+  }, [sortConfig, offset, perPage, filters, recipientId, regionId]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -186,6 +188,7 @@ function GoalsTable({
 }
 GoalsTable.propTypes = {
   recipientId: PropTypes.string.isRequired,
+  regionId: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(
     PropTypes.shape({
       condition: PropTypes.string,

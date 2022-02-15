@@ -8,5 +8,5 @@ import {
 const router = express.Router();
 router.get('/search', searchRecipients);
 router.get('/:recipientId', getRecipient);
-router.get('/goals/:recipientId', getGoalsByRecipient);
+router.get('/:recipientId/region/:regionId/goals', getGoalsByRecipient);
 export default router;
