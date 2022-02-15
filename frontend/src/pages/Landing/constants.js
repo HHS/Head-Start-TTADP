@@ -30,7 +30,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
 ];
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
-  startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
   programTypeFilter,
@@ -39,6 +39,7 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   regionFilter,
   reportIdFilter,
   specialistRoleFilter,
+  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
