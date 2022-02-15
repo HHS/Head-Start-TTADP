@@ -363,6 +363,26 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[31].firstChild).toHaveClass('fa-exclamation-circle ');
       expect(await screen.findByRole('link', { name: /ar-number-5/i })).toHaveAttribute('href', '/activity-reports/5');
     });
+
+    it('Expands and collapses objectives', async () => {
+      renderTable(defaultUser);
+      await screen.findByText('TTA goals and objectives');
+
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+
+      // Expand Objectives via click.
+      const expandObjectives = await screen.findByRole('button', { name: /expand objective's for this goal\./i });
+      fireEvent.click(expandObjectives);
+
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
+
+      // Collapse Objectives via key press.
+      expandObjectives.focus();
+      expect(expandObjectives).toHaveFocus();
+      fireEvent.keyPress(expandObjectives, { key: 'Enter', code: 13, charCode: 13 });
+
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+    });
   });
 
   describe('Table sorting', () => {
