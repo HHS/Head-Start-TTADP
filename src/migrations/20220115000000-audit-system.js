@@ -46,10 +46,9 @@ An optional descriptor can be passed and will be recorded with any log generated
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      let syncronizer;
       // Define a type to use for identifying INSERT, UPDATE, and DELETE
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `DO $$
           BEGIN
               IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dml_type') THEN
@@ -67,7 +66,7 @@ module.exports = {
       //  the cause of date modification or data definition changes. Add a descriptor to use for
       //  archival of audit logs.
       try {
-        syncronizer = await queryInterface.createTable('ZADescriptor', {
+        await queryInterface.createTable('ZADescriptor', {
           id: {
             allowNull: false,
             autoIncrement: true,
@@ -85,7 +84,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFDescriptorToID"(_param_id text)
           RETURNS INTEGER
           LANGUAGE plpgsql AS
@@ -112,7 +111,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `DO $$
           BEGIN
             PERFORM "ZAFDescriptorToID"('ARCHIVE AUDIT LOG');
@@ -130,7 +129,7 @@ module.exports = {
       //  filter to not log a change if the only field that has changed is the 'updatedAt' column
       //  on any table.
       try {
-        syncronizer = await queryInterface.createTable('ZAFilter', {
+        await queryInterface.createTable('ZAFilter', {
           id: {
             allowNull: false,
             autoIncrement: true,
@@ -153,7 +152,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `INSERT INTO "ZAFilter" ("tableName", "columnName")
           VALUES ( NULL, 'updatedAt');`,
           { transaction },
@@ -167,7 +166,7 @@ module.exports = {
       //  removal of log data. Archival of log data is supported only when a descriptor is passed
       //  as part of the transaction session of type "ARCHIVE AUDIT LOG".
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateALNoUpdate"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -202,7 +201,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateALNoDelete"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -275,7 +274,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateALNoTruncate"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -312,7 +311,7 @@ module.exports = {
       // Define a table/function/triggers to log all data definition language commands, this covers
       //  all create/alter/drop commands for functions/tables/triggers/types.
       try {
-        syncronizer = await queryInterface.createTable('ZALDDL', {
+        await queryInterface.createTable('ZALDDL', {
           id: {
             allowNull: false,
             primaryKey: true,
@@ -375,7 +374,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFAuditDDLCommand"()
             RETURNS event_trigger
             LANGUAGE plpgsql AS
@@ -431,7 +430,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE EVENT TRIGGER "ZATAuditAlterCommands"
           ON ddl_command_end
           WHEN TAG IN ('ALTER FUNCTION', 'ALTER TABLE', 'ALTER TRIGGER', 'ALTER TYPE')
@@ -444,7 +443,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE EVENT TRIGGER "ZATAuditCreateCommands"
           ON ddl_command_end
           WHEN TAG IN ('CREATE FUNCTION', 'CREATE TABLE', 'CREATE TABLE AS', 'CREATE TRIGGER', 'CREATE TYPE', 'SELECT INTO')
@@ -457,7 +456,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE EVENT TRIGGER "ZATAuditDropCommands"
           ON ddl_command_end
           WHEN TAG IN ('DROP FUNCTION', 'DROP TABLE', 'DROP TRIGGER', 'DROP TYPE')
@@ -470,7 +469,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `SELECT
             "ZAFCreateALNoUpdate"('DDL'),
             "ZAFCreateALNoDelete"('DDL'),
@@ -486,7 +485,7 @@ module.exports = {
       //  Once table/functions/triggers are in place, all insert/update/delete of data from the
       //  monitored table are recorded.
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateALTable"(t_name varchar(63))
               RETURNS VOID
               LANGUAGE plpgsql AS
@@ -518,7 +517,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateALFunction"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -667,7 +666,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateALTrigger"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -690,7 +689,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFCreateAuditTruncateTable"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -772,7 +771,7 @@ module.exports = {
       // Define functions for adding/removing audit monitoring to a table. Removing auditing does
       //  not remove the data already logged.
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFAddAuditingOnTable"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -796,7 +795,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFAuditCreateTable"()
             RETURNS event_trigger
             LANGUAGE plpgsql AS
@@ -825,7 +824,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE EVENT TRIGGER "ZATAuditCreateTable"
             ON ddl_command_end
             WHEN TAG IN ('SELECT INTO', 'CREATE TABLE', 'CREATE TABLE AS')
@@ -838,7 +837,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `SELECT table_name, "ZAFAddAuditingOnTable"(table_name::varchar)
           FROM information_schema.tables
           WHERE table_schema='public'
@@ -855,7 +854,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFRemoveAuditingOnTable"(t_name varchar(63))
             RETURNS VOID
             LANGUAGE plpgsql AS
@@ -890,7 +889,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE OR REPLACE FUNCTION "ZAFAuditDropTable"()
             RETURNS event_trigger
             LANGUAGE plpgsql AS
@@ -916,7 +915,7 @@ module.exports = {
       }
 
       try {
-        syncronizer = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `CREATE EVENT TRIGGER "ZATAuditDropTable"
           ON sql_drop
           WHEN TAG IN ('DROP TABLE')
@@ -926,10 +925,6 @@ module.exports = {
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
-      }
-
-      if (syncronizer != null) {
-        syncronizer = null;
       }
     },
   ),
