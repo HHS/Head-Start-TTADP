@@ -11,8 +11,8 @@ import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
-import useSessionSorting from '../../hooks/useSessionSorting';
-import useSessionPage from '../../hooks/useSessionPage';
+import useCookieSorting from '../../hooks/useCookieSorting';
+import useCookiePage from '../../hooks/useCookiePage';
 import './index.css';
 
 function ActivityReportsTable({
@@ -27,12 +27,12 @@ function ActivityReportsTable({
   const [allReportsChecked, setAllReportsChecked] = useState(false);
   const [perPage] = useState(REPORTS_PER_PAGE);
   // const [activePage, setActivePage] = useState(1);
-  const [activePage, setActivePage] = useSessionPage(1, 'activityReportsTable', filters);
+  const [activePage, setActivePage] = useCookiePage(1, 'activityReportsTable', filters);
   const [offset, setOffset] = useState((activePage - 1) * perPage);
   const [reportsCount, setReportsCount] = useState(0);
   const [downloadError, setDownloadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [sortConfig, setSortConfig] = useSessionSorting({
+  const [sortConfig, setSortConfig] = useCookieSorting({
     sortBy: 'updatedAt',
     direction: 'desc',
   }, 'activityReportsTable', filters);
