@@ -52,12 +52,6 @@
   display: none;
 }
 
-/*
-.goals-table .usa-table .tta-smarthub--blank-row {
-  height: 8px;
-}
-*/
-
 .tta-smarthub--goal-row td:first-child {
   position: relative;
 }
