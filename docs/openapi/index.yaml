@@ -60,6 +60,19 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/grant"
+    goal:
+      type: object
+      description: >
+        A goal for a grant
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/grant"
     activityReport:
       type: object
       description: >
