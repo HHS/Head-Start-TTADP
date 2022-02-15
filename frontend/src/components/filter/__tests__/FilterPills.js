@@ -43,39 +43,40 @@ describe('Filter Pills', () => {
       expect(await screen.findByRole('button', { name: /this button removes the filter: specialist roles contains/i })).toBeVisible();
 
       // Date.
-      expect(await screen.findByText(/date range/i)).toBeVisible();
+      expect(await screen.findByText(/start date/i)).toBeVisible();
       expect(await screen.findByText(/is within/i)).toBeVisible();
       expect(await screen.findByText(/10\/01\/2021-10\/31\/2021/i)).toBeVisible();
-      expect(await screen.findByRole('button', { name: /this button removes the filter: date range is within/i })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /this button removes the filter: start date is within/i })).toBeVisible();
     });
 
     it('removes filters', async () => {
-      const filters = [{
-        id: '1',
-        topic: 'role',
-        condition: 'is',
-        query: [],
-        displayQuery: (q) => q.join(', '),
-        display: 'Specialist role',
-      },
-      {
-        id: '2',
-        topic: 'startDate',
-        condition: 'is on or after',
-        query: '2021/01/01',
-        displayQuery: (q) => q,
-        display: 'Date range',
-      },
+      const filters = [
+        {
+          id: '1',
+          topic: 'role',
+          condition: 'is',
+          query: [],
+          displayQuery: (q) => q.join(', '),
+          display: 'Specialist role',
+        },
+        {
+          id: '2',
+          topic: 'startDate',
+          condition: 'is on or after',
+          query: '2021/01/01',
+          displayQuery: (q) => q,
+          display: 'Date range',
+        },
       ];
 
       const onRemoveFilter = jest.fn();
       renderFilterMenu(filters, onRemoveFilter);
 
       // All filter pills exist.
-      expect(await screen.findByText(/date range/i)).toBeVisible();
+      expect(await screen.findByText(/start date/i)).toBeVisible();
 
       // Remove filter pill.
-      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date range is on or after /i });
+      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: start date is on or after /i });
       userEvent.click(remoteButton);
       expect(onRemoveFilter).toHaveBeenCalledWith('2');
     });
