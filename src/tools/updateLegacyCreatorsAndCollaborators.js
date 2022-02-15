@@ -14,7 +14,7 @@ import { logger } from '../logger';
 function parseCollaboratorIdentifier(rawCollaborators) {
   // this addresses a comma seperated list of emails and or/names, w/ inconsistent spacing
   // and turns it into a neat array
-  return rawCollaborators.replace(/ /g, '').split(',').filter((c) => c);
+  return rawCollaborators.split(',').filter((c) => c.trim());
 }
 
 /**
@@ -49,7 +49,7 @@ async function updateLegacyCreatorAndCollaboratorsData(report) {
           ],
           id: {
             // exclude that which has already been made a collaborator
-            [Op.not]: sequelize.literal(`(SELECT "userId" FROM "ActivityReportCollaborators" WHERE "activityReportId" = ${id})`),
+            [Op.notIn]: sequelize.literal(`(SELECT "userId" FROM "ActivityReportCollaborators" WHERE "activityReportId" = ${id})`),
           },
         },
       });
