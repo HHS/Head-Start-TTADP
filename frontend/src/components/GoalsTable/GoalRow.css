@@ -1,0 +1,30 @@
+.tta-smarthub--goal-row td:first-child {
+  position: relative;
+}
+
+.tta-smarthub--goal-row  .smart-hub--context-menu {
+  width: 180px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.tta-smarthub--goal-row .smart-hub--ellipsis {
+	max-width: none;
+}
+
+.tta-smarthub--goal-row .svg-inline--fa {
+  position: relative;
+
+}
+.tta-smarthub--goal-row td:nth-child(3) .svg-inline--fa {
+vertical-align: top;
+}
+
+.tta-smarthub--goal-row td:nth-child(3) .smart-hub--tooltip button {
+  line-height: 0;
+}
+
+.tta-smarthub--goal-row td:nth-child(4) .smart-hub--tooltip button {
+  line-height: 1.7;
+  vertical-align: baseline;
+}
+

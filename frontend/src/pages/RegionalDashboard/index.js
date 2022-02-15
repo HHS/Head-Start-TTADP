@@ -86,7 +86,7 @@ export default function RegionalDashboard() {
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
-        <h1 className="ttahub--dashboard-title">
+        <h1 className="landing">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
           TTA Activity Dashboard
@@ -103,6 +103,14 @@ export default function RegionalDashboard() {
         <GridContainer className="margin-0 padding-0">
           <DashboardOverview
             filters={filtersToApply}
+            fields={[
+              'Recipients served',
+              'Grants served',
+              'Activity reports',
+              'Participants',
+              'Hours of TTA',
+            ]}
+            showTooltips
           />
           <Grid row gap={2}>
             <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>

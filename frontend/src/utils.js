@@ -139,7 +139,8 @@ export function queryStringToFilters(queryString) {
         id: uuidv4(),
         topic,
         condition,
-        query: decodedQueryParam,
+        // we use is and is not for query parameters
+        query: condition === 'Is not' || condition === 'Is' ? [decodedQueryParam] : decodedQueryParam,
       };
     }
 
