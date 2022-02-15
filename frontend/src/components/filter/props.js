@@ -11,9 +11,9 @@ export const filterConfigProp = PropTypes.shape({
   display: PropTypes.string,
   conditions: PropTypes.arrayOf(PropTypes.string),
   defaultValues: PropTypes.shape({
-    'Is within': PropTypes.string,
-    'Is after': PropTypes.string,
-    'Is before': PropTypes.string,
+    'is within': PropTypes.string,
+    'is on or after': PropTypes.string,
+    'is on or before': PropTypes.string,
     In: PropTypes.string,
   }),
   displayQuery: PropTypes.func,

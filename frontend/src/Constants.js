@@ -1,12 +1,12 @@
 import moment from 'moment';
 
-export const CONTAINS = 'Contains';
-export const NOT_CONTAINS = 'Does not contain';
+export const CONTAINS = 'contains';
+export const NOT_CONTAINS = 'does not contain';
 export const BEFORE = 'is on or before';
 export const AFTER = 'is on or after';
 export const WITHIN = 'is within';
-export const IS = 'Is';
-export const IS_NOT = 'Is not';
+export const IS = 'is';
+export const IS_NOT = 'is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];

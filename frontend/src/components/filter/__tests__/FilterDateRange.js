@@ -9,7 +9,7 @@ import FilterDateRange from '../FilterDateRange';
 import FilterErrorContext from '../FilterErrorContext';
 
 describe('FilterDateRange', () => {
-  const renderFilterDateRange = (query, condition = 'Is after', onApplyDateRange = jest.fn(), setError = jest.fn()) => {
+  const renderFilterDateRange = (query, condition = 'is on or after', onApplyDateRange = jest.fn(), setError = jest.fn()) => {
     const updateSingleDate = jest.fn();
 
     render(
@@ -26,7 +26,7 @@ describe('FilterDateRange', () => {
 
   it('handles an empty query', async () => {
     const onApplyDateRange = jest.fn();
-    renderFilterDateRange('', 'Is after', onApplyDateRange);
+    renderFilterDateRange('', 'is on or after', onApplyDateRange);
     const date = screen.getByRole('textbox', { name: /date/i });
     userEvent.type(date, '10/31/2021');
     expect(onApplyDateRange).toHaveBeenCalled();
@@ -37,7 +37,7 @@ describe('FilterDateRange', () => {
   it('checks for valid dates', async () => {
     const onApplyDateRange = jest.fn();
     const setError = jest.fn();
-    renderFilterDateRange('', 'Is after', onApplyDateRange, setError);
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
     const date = screen.getByRole('textbox', { name: /date/i });
     userEvent.type(date, 'pppppp');
 
@@ -47,7 +47,7 @@ describe('FilterDateRange', () => {
 
   it('renders the is dropdown', async () => {
     const onApplyDateRange = jest.fn();
-    renderFilterDateRange('', 'Is', onApplyDateRange);
+    renderFilterDateRange('', 'is', onApplyDateRange);
     const date = screen.getByRole('combobox', { name: /date/i });
     userEvent.selectOptions(date, 'Last thirty days');
     expect(onApplyDateRange).toHaveBeenCalled();

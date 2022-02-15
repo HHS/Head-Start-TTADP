@@ -63,19 +63,19 @@ function Landing() {
       ? [{
         id: uuidv4(),
         topic: 'region',
-        condition: 'Is',
+        condition: 'is',
         query: defaultRegion,
       },
       {
         id: uuidv4(),
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: defaultDate,
       }]
       : [{
         id: uuidv4(),
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: defaultDate,
       }],
   );

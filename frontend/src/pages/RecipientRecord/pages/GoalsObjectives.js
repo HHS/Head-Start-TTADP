@@ -11,7 +11,7 @@ export default function GoalsObjectives() {
   const [filters, setFilters] = useUrlFilters([{
     id: uuidv4(),
     topic: 'createDate',
-    condition: 'Is within',
+    condition: 'is within',
     query: yearToDate,
   }]);
 
