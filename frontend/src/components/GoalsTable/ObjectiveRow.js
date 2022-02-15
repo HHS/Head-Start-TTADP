@@ -69,11 +69,14 @@ function ObjectiveRow({
   ];
 
   const getGoalDisplayStatusText = () => {
+    let displayStatus = 'Needs status';
     if (status) {
-      const displayStatus = mapStatusToDisplay.find((m) => m.stored === status);
-      return displayStatus ? displayStatus.display : 'Needs status';
+      const matchingStatus = mapStatusToDisplay.find((m) => m.stored === status);
+      if (matchingStatus) {
+        displayStatus = matchingStatus.display;
+      }
     }
-    return 'Needs status';
+    return displayStatus;
   };
 
   const displayObjStatus = getGoalDisplayStatusText();

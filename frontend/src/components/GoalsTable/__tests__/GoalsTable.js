@@ -128,7 +128,7 @@ const goalWithObjectives = [{
   },
   {
     title: 'Objective 3 Title',
-    arId: 2,
+    arId: 3,
     arNumber: 'ar-number-3',
     arLegacyId: null,
     arStatus: 'Complete',
@@ -138,9 +138,9 @@ const goalWithObjectives = [{
   },
   {
     title: 'Objective 4 Title',
-    arId: 2,
+    arId: 4,
     arNumber: 'ar-number-4',
-    arLegacyId: null,
+    arLegacyId: 'ar-legacy-4',
     arStatus: null,
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
@@ -315,6 +315,7 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/monitoring | deficiency/i);
       expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/in progress/i);
       expect(screen.getAllByRole('cell')[11].firstChild).toHaveClass('fa-clock');
+      expect(await screen.findByRole('link', { name: /ar-number-1/i })).toHaveAttribute('href', '/activity-reports/1');
 
       // Objective 2.
       expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/objective 2 title/i);
@@ -323,6 +324,7 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[15]).toHaveTextContent('Below Competitive Threshold (CLASS)');
       expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/not started/i);
       expect(screen.getAllByRole('cell')[16].firstChild).toHaveClass('fa-minus-circle');
+      expect(await screen.findByRole('link', { name: /ar-number-2/i })).toHaveAttribute('href', '/activity-reports/2');
 
       // Objective 3.
       expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/objective 3 title/i);
@@ -331,6 +333,7 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[20]).toHaveTextContent('COVID-19 response');
       expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/closed/i);
       expect(screen.getAllByRole('cell')[21].firstChild).toHaveClass('fa-check-circle');
+      expect(await screen.findByRole('link', { name: /ar-number-3/i })).toHaveAttribute('href', '/activity-reports/3');
 
       // Objective 4.
       expect(screen.getAllByRole('cell')[22]).toHaveTextContent(/objective 4 title/i);
@@ -339,6 +342,7 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[25]).toHaveTextContent('New Staff / Turnover');
       expect(screen.getAllByRole('cell')[26]).toHaveTextContent(/Needs status/i);
       expect(screen.getAllByRole('cell')[26].firstChild).toHaveClass('fa-exclamation-circle ');
+      expect(await screen.findByRole('link', { name: /ar-number-4/i })).toHaveAttribute('href', '/activity-reports/legacy/ar-legacy-4');
     });
   });
 
