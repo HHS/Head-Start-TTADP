@@ -131,7 +131,7 @@ const goalWithObjectives = [{
     arId: 3,
     arNumber: 'ar-number-3',
     arLegacyId: null,
-    arStatus: 'Complete',
+    arStatus: 'approved',
     endDate: '04/14/2021',
     reasons: ['COVID-19 response'],
     status: 'Complete',
@@ -145,6 +145,16 @@ const goalWithObjectives = [{
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
     status: null,
+  },
+  {
+    title: 'Objective 5 Title',
+    arId: 5,
+    arNumber: 'ar-number-5',
+    arLegacyId: null,
+    arStatus: null,
+    endDate: '02/14/2021',
+    reasons: ['Complaint'],
+    status: 'Unknown Status',
   },
   ],
 },
@@ -333,7 +343,7 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[20]).toHaveTextContent('COVID-19 response');
       expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/closed/i);
       expect(screen.getAllByRole('cell')[21].firstChild).toHaveClass('fa-check-circle');
-      expect(await screen.findByRole('link', { name: /ar-number-3/i })).toHaveAttribute('href', '/activity-reports/3');
+      expect(await screen.findByRole('link', { name: /ar-number-3/i })).toHaveAttribute('href', '/activity-reports/view/3');
 
       // Objective 4.
       expect(screen.getAllByRole('cell')[22]).toHaveTextContent(/objective 4 title/i);
@@ -343,6 +353,15 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[26]).toHaveTextContent(/Needs status/i);
       expect(screen.getAllByRole('cell')[26].firstChild).toHaveClass('fa-exclamation-circle ');
       expect(await screen.findByRole('link', { name: /ar-number-4/i })).toHaveAttribute('href', '/activity-reports/legacy/ar-legacy-4');
+
+      // Objective 5.
+      expect(screen.getAllByRole('cell')[27]).toHaveTextContent(/objective 5 title/i);
+      expect(screen.getAllByRole('cell')[28]).toHaveTextContent(/ar-number-5/i);
+      expect(screen.getAllByRole('cell')[29]).toHaveTextContent('02/14/2021');
+      expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Complaint');
+      expect(screen.getAllByRole('cell')[31]).toHaveTextContent(/Needs status/i);
+      expect(screen.getAllByRole('cell')[31].firstChild).toHaveClass('fa-exclamation-circle ');
+      expect(await screen.findByRole('link', { name: /ar-number-5/i })).toHaveAttribute('href', '/activity-reports/5');
     });
   });
 
