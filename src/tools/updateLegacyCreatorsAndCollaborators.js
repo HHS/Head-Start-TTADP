@@ -124,7 +124,5 @@ export default async function updateLegacyCreatorsAndCollaborators() {
     return otherSpecialists || r.userId === null;
   });
 
-  // eslint-disable-next-line max-len
-  // * it doesn't look too long to me *
   return Promise.all(reports.map((report) => updateLegacyCreatorAndCollaboratorsData(report)));
 }
