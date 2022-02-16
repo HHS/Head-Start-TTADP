@@ -118,7 +118,7 @@ describe('Goals and Objectives', () => {
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
 
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'status');
-    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
     await selectEvent.select(statusSelect, ['Not Started']);
