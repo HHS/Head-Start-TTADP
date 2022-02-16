@@ -5,16 +5,21 @@ import {
 import { logger } from '../logger';
 
 /**
- * takes a messy comma sep'd string of specialist info, returns a neatened
- * array of the same info, hopefully with no dead or empty stuff in there
+ * otherSpecialists can contain anything. all this script can really handle are emails
+ * this is a regex to get some emails out of a string
+ *
+ * we're exporting it to test it a little on its own
  *
  * @param {String} rawCollaborators
  * @returns {String[]}
  */
-function parseCollaboratorIdentifier(rawCollaborators) {
-  // this addresses a comma seperated list of emails and or/names, w/ inconsistent spacing
-  // and turns it into a neat array
-  return rawCollaborators.split(',').filter((c) => c.trim());
+export function extractCollaboratorEmails(rawCollaborators) {
+  if (rawCollaborators && rawCollaborators.match) {
+    return rawCollaborators.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
+  }
+
+  // return null in all other cases since that's what a non-finding match returns
+  return null;
 }
 
 /**
@@ -26,27 +31,21 @@ function parseCollaboratorIdentifier(rawCollaborators) {
  */
 async function updateLegacyCreatorAndCollaboratorsData(report) {
   const {
-    id, collaborators, userId, imported: { otherSpecialists, createdBy },
+    id, userId, imported: { otherSpecialists, createdBy },
   } = report;
 
   // create some empty arrays
   let updatedCollaborators = [];
   let updatedCreator = [];
 
-  if (otherSpecialists && !collaborators.length) {
+  if (otherSpecialists) {
     logger.info(`Report ${id} should have these collaborators: ${otherSpecialists}`);
-    const parsedCollabs = parseCollaboratorIdentifier(otherSpecialists);
-    if (parsedCollabs.length) {
+    const parsedCollabs = extractCollaboratorEmails(otherSpecialists);
+    if (parsedCollabs && parsedCollabs.length) {
       updatedCollaborators = await User.findAll({
-        logging: console.log,
         attributes: ['id', 'email'],
         where: {
-          [Op.or]: [
-            // discovered that some of these entries are names and some email
-            // which makes our job a little harder
-            { email: parsedCollabs },
-            { name: parsedCollabs },
-          ],
+          email: parsedCollabs,
           id: {
             // exclude that which has already been made a collaborator
             [Op.notIn]: sequelize.literal(`(SELECT "userId" FROM "ActivityReportCollaborators" WHERE "activityReportId" = ${id})`),
@@ -55,7 +54,7 @@ async function updateLegacyCreatorAndCollaboratorsData(report) {
       });
 
       if (updatedCollaborators.length) {
-        logger.info(`Matching users found: ${updatedCollaborators.map((u) => u.id).join(',')}`);
+        logger.info(`Matching users for AR: ${id} found: ${updatedCollaborators.map((u) => u.id).join(',')}`);
       } else {
         logger.info('No matching collaborators found');
       }

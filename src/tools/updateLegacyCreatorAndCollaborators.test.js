@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-conditional-expect */
 import faker from 'faker';
 import {
   ActivityReport,
@@ -5,16 +6,16 @@ import {
   ActivityReportCollaborator,
   sequelize,
 } from '../models';
-import updateLegacyCreatorsAndCollaborators from './updateLegacyCreatorsAndCollaborators';
+import updateLegacyCreatorsAndCollaborators, { extractCollaboratorEmails } from './updateLegacyCreatorsAndCollaborators';
 import { REPORT_STATUSES } from '../constants';
 import { destroyReport } from '../testUtils';
 
 const emails = [
-  faker.internet.email(),
-  faker.internet.email(),
-  faker.internet.email(),
-  faker.internet.email(),
-  faker.internet.email(),
+  'email1@email.com',
+  'email2@email.com',
+  'email3@email.com',
+  'email4@email.com',
+  'email5@email.com',
 ];
 
 const names = [
@@ -69,7 +70,13 @@ const mockUser = {
 };
 
 describe('updateLegacyCreatorAndCollaborators', () => {
-  let reports;
+  let reportOne;
+  let reportTwo;
+  let reportThree;
+  let reportFour;
+  let reportFive;
+  let reportSix;
+
   let users;
 
   beforeAll(async () => {
@@ -82,62 +89,65 @@ describe('updateLegacyCreatorAndCollaborators', () => {
         name: names[i],
       })
     )));
-    reports = await Promise.all([
-      ActivityReport.create({
-        ...dumbReport,
-        userId: users[0].id,
-        imported: {
-          otherSpecialists: ' , , ',
-        },
-      }),
-      ActivityReport.create({
-        ...dumbReport,
-        userId: null,
-        imported: {
-          createdBy: emails[1],
-          otherSpecialists: emails[0],
-        },
-      }),
-      ActivityReport.create({
-        ...dumbReport,
-        userId: users[1].id,
-        imported: {
-          otherSpecialists: '',
-        },
-      }),
-      ActivityReport.create({
-        ...dumbReport,
-        userId: null,
-        imported: {
-          createdBy: emails[0],
-          otherSpecialists: `${emails[2]},${emails[3]},`,
-        },
-      }),
-      ActivityReport.create({
-        ...dumbReport,
-        userId: null,
-        imported: {
-          createdBy: emails[0],
-          otherSpecialists: `${names[2]},${names[3]},`,
-        },
-      }),
-      ActivityReport.create({
-        ...dumbReport,
-        userId: null,
-        imported: {
-          createdBy: emails[0],
-          otherSpecialists: `${emails[1]},${emails[2]}`,
-        },
-      }),
-    ]);
+    reportOne = await ActivityReport.create({
+      ...dumbReport,
+      userId: users[0].id,
+      imported: {
+        otherSpecialists: ' , , ',
+      },
+    });
+    reportTwo = await ActivityReport.create({
+      ...dumbReport,
+      userId: null,
+      imported: {
+        createdBy: emails[1],
+        otherSpecialists: emails[0],
+      },
+    });
+    reportThree = await ActivityReport.create({
+      ...dumbReport,
+      userId: users[1].id,
+      imported: {
+        otherSpecialists: '',
+      },
+    });
+    reportFour = await ActivityReport.create({
+      ...dumbReport,
+      userId: null,
+      imported: {
+        createdBy: emails[0],
+        otherSpecialists: `${emails[2]},${emails[3]},`,
+      },
+    });
+    reportFive = await ActivityReport.create({
+      ...dumbReport,
+      userId: null,
+      imported: {
+        createdBy: emails[0],
+        otherSpecialists: `${names[2]},${names[3]},`,
+      },
+    });
+
+    reportSix = await ActivityReport.create({
+      ...dumbReport,
+      userId: null,
+      imported: {
+        createdBy: emails[0],
+        otherSpecialists: `${emails[1]},${emails[2]}`,
+      },
+    });
 
     await ActivityReportCollaborator.create({
-      activityReportId: reports[5].id,
+      activityReportId: reportFive.id,
       userId: users[1].id,
     });
   });
 
   afterAll(async () => {
+    const reports = [
+      reportOne, reportTwo, reportThree, reportFour, reportFive, reportSix,
+    ];
+
     const reportIds = reports.map((r) => r.id);
 
     await ActivityReportCollaborator.destroy({
@@ -158,23 +168,14 @@ describe('updateLegacyCreatorAndCollaborators', () => {
   });
 
   it('updates legacy creator and collaborator data', async () => {
-    const reportIds = reports.map((report) => report.id);
-    const before = await ActivityReport.findAll({
-      where: {
-        id: reportIds,
-      },
-    });
-
-    expect(before.length).toBe(6);
-
     await updateLegacyCreatorsAndCollaborators();
 
-    const after = await ActivityReport.findAll({
+    const arFindOpts = (id) => ({
       attributes: ['id', 'userId', 'imported'],
       include: [
         {
           model: User,
-          attributes: ['email'],
+          attributes: ['email', 'id'],
           as: 'collaborators',
           through: {
             attributes: [],
@@ -183,101 +184,64 @@ describe('updateLegacyCreatorAndCollaborators', () => {
         },
       ],
       where: {
-        id: reportIds,
+        id,
       },
     });
 
-    expect(after.length).toBe(6);
+    const r1 = await ActivityReport.findOne(arFindOpts(reportOne.id));
+    expect(r1.userId).toBe(users[0].id);
+    expect(r1.collaborators.length).toBe(0);
 
-    const [reportOne, reportTwo, reportThree, reportFour, reportFive, reportSix] = after;
-    const {
-      userId: reportOneUserId,
-      collaborators: reportOneCollaborators,
-      imported: {
-        otherSpecialists: reportOneOtherSpecialists,
-        createdBy: reportOneCreatedBy,
-      },
-    } = reportOne;
-    let u = await User.findByPk(reportOneUserId);
-    let expectCreator = reportOneCreatedBy ? u.email : undefined;
-    expect(expectCreator).toBe(reportOneCreatedBy);
-    reportOneOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
-      expect(reportOneCollaborators.map((r) => r.email)).toContain(c);
-    });
+    const r2 = await ActivityReport.findOne(arFindOpts(reportTwo.id));
+    expect(r2.userId).toBe(users[1].id);
+    const r2Emails = r2.collaborators.map((c) => c.email);
+    expect(r2Emails).toContain(emails[0]);
 
-    const {
-      userId: reportTwoUserId,
-      collaborators: reportTwoCollaborators,
-      imported: {
-        otherSpecialists: reportTwoOtherSpecialists,
-        createdBy: reportTwoCreatedBy,
-      },
-    } = reportTwo;
-    u = await User.findByPk(reportTwoUserId);
-    expectCreator = reportTwoCreatedBy ? u.email : undefined;
-    expect(expectCreator).toBe(reportTwoCreatedBy);
-    reportTwoOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
-      expect(reportTwoCollaborators.map((r) => r.email)).toContain(c);
-    });
+    const r3 = await ActivityReport.findOne(arFindOpts(reportThree.id));
+    expect(r3.collaborators.length).toBe(0);
+    expect(r3.userId).toBe(users[1].id);
 
-    const {
-      userId: reportThreeUserId,
-      collaborators: reportThreeCollaborators,
-      imported: {
-        otherSpecialists: reportThreeOtherSpecialists,
-        createdBy: reportThreeCreatedBy,
-      },
-    } = reportThree;
-    u = await User.findByPk(reportThreeUserId);
-    expectCreator = reportThreeCreatedBy ? u.email : undefined;
-    expect(expectCreator).toBe(reportThreeCreatedBy);
-    reportThreeOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
-      expect(reportThreeCollaborators.map((r) => r.email)).toContain(c);
-    });
+    const r4 = await ActivityReport.findOne(arFindOpts(reportFour.id));
+    expect(r4.userId).toBe(users[0].id);
+    const r4Emails = r4.collaborators.map((c) => c.email);
+    expect(r4Emails).toContain(emails[2]);
+    expect(r4Emails).toContain(emails[3]);
 
-    const {
-      userId: reportFourUserId,
-      collaborators: reportFourCollaborators,
-      imported: {
-        otherSpecialists: reportFourOtherSpecialists,
-        createdBy: reportFourCreatedBy,
-      },
-    } = reportFour;
-    u = await User.findByPk(reportFourUserId);
-    expectCreator = reportFourCreatedBy ? u.email : undefined;
-    expect(expectCreator).toBe(reportFourCreatedBy);
-    reportFourOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
-      expect(reportFourCollaborators.map((r) => r.email)).toContain(c);
-    });
+    const r5 = await ActivityReport.findOne(arFindOpts(reportFive.id));
+    expect(r5.userId).toBe(users[0].id);
+    expect(r5.collaborators.length).toBe(1);
+    const r5Collabs = r5.collaborators.map((c) => c.id);
+    expect(r5Collabs).toContain(users[1].id);
 
-    const {
-      userId: reportFiveUserId,
-      collaborators: reportFiveCollaborators,
-      imported: {
-        otherSpecialists: reportFiveOtherSpecialists,
-        createdBy: reportFiveCreatedBy,
-      },
-    } = reportFive;
-    u = await User.findByPk(reportFiveUserId);
-    expectCreator = reportFiveCreatedBy ? u.email : undefined;
-    expect(expectCreator).toBe(reportFiveCreatedBy);
-    reportFiveOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
-      expect(reportFiveCollaborators.map((r) => r.email)).toContain(c);
-    });
+    const r6 = await ActivityReport.findOne(arFindOpts(reportSix.id));
+    expect(r6.userId).toBe(users[0].id);
+    const r6Emails = r6.collaborators.map((c) => c.email);
+    expect(r6Emails).toContain(emails[1]);
+    expect(r6Emails).toContain(emails[2]);
+  });
 
-    const {
-      userId: reportSixUserId,
-      collaborators: reportSixCollaborators,
-      imported: {
-        otherSpecialists: reportSixOtherSpecialists,
-        createdBy: reportSixCreatedBy,
-      },
-    } = reportSix;
-    u = await User.findByPk(reportSixUserId);
-    expectCreator = reportSixCreatedBy ? u.email : undefined;
-    expect(expectCreator).toBe(reportSixCreatedBy);
-    reportSixOtherSpecialists.replace(/ /g, '').split(',').filter((c) => c).forEach((c) => {
-      expect(reportSixCollaborators.map((r) => r.email)).toContain(c);
+  describe('extractCollaboratorEmails', () => {
+    it('correctly handles all the wackiness', () => {
+      const youmightfindtheseemails = [faker.internet.email(), faker.internet.email()];
+      const possibles = [
+        'Anita Bertt (Early Childhood Specialist)\nAmber Sullington (Grantee Specialist Manager)\nClaude Muscles (Early Childhood Specialist)\nGinger Professorson (Early Childhood Specialist)\nVarg Horvall (Early Childhood Specialist)\nMegan DeSuazo (Early Childhood Specialist)\nMeriadoc(Merry) Elfboy (Early Childhood Specialist)\nMaury Lipsitz (Family Engagement Specialist)\nRune Balderson (Early Childhood Specialist)\nNancy Kerrigan (Administrative Assistant)\nMiracle Worker (Grantee Specialist)\nTaurus (Early Childhood Specialist)\nNed Fleming (Early Childhood Manager)',
+        `${youmightfindtheseemails.join(',')}`,
+        'Laura Specialist',
+        youmightfindtheseemails[1],
+        '0',
+        null,
+        `@${youmightfindtheseemails[0]}`,
+      ];
+
+      const results = possibles.map((p) => extractCollaboratorEmails(p));
+      expect(results[0]).toBe(null);
+      expect(results[1]).toContain(youmightfindtheseemails[0]);
+      expect(results[1]).toContain(youmightfindtheseemails[1]);
+      expect(results[2]).toBe(null);
+      expect(results[3]).toContain(youmightfindtheseemails[1]);
+      expect(results[4]).toBe(null);
+      expect(results[5]).toBe(null);
+      expect(results[6]).toContain(youmightfindtheseemails[0]);
     });
   });
 });
