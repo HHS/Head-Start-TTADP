@@ -68,7 +68,7 @@
     "ansi-regex": "^5.0.1",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
-    "follow-redirects":"^1.14.7"
+    "follow-redirects": "^1.14.8"
   },
   "eslintConfig": {
     "root": true,
