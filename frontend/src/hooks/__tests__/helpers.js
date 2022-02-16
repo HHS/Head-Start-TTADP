@@ -34,7 +34,7 @@ describe('compareFilters', () => {
     expect(compareFilters(arr1, arr2)).toBe(true);
   });
 
-  it('returns false if arrays are different', async () => {
+  it('returns false if topics are different', async () => {
     const arr1 = [
       {
         id: uuid(),
@@ -55,6 +55,72 @@ describe('compareFilters', () => {
         topic: 'recipientName',
         condition: 'Contains',
         query: 'toast',
+      },
+      {
+        id: uuid(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: '2020/09/01-2020/10/01',
+      },
+    ];
+    const result = compareFilters(arr1, arr2);
+    expect(result).toBe(false);
+  });
+
+  it('returns false if conditions are different', async () => {
+    const arr1 = [
+      {
+        id: uuid(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: '2020/09/01-2020/10/01',
+      },
+      {
+        id: uuid(),
+        topic: 'grantNumber',
+        condition: 'Contains',
+        query: 'toast',
+      },
+    ];
+    const arr2 = [
+      {
+        id: uuid(),
+        topic: 'grantNumber',
+        condition: 'Does not contain',
+        query: 'toast',
+      },
+      {
+        id: uuid(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: '2020/09/01-2020/10/01',
+      },
+    ];
+    const result = compareFilters(arr1, arr2);
+    expect(result).toBe(false);
+  });
+
+  it('returns false if queries are different', async () => {
+    const arr1 = [
+      {
+        id: uuid(),
+        topic: 'startDate',
+        condition: 'Is within',
+        query: '2020/09/01-2020/10/01',
+      },
+      {
+        id: uuid(),
+        topic: 'grantNumber',
+        condition: 'Contains',
+        query: 'toast',
+      },
+    ];
+    const arr2 = [
+      {
+        id: uuid(),
+        topic: 'recipientName',
+        condition: 'Contains',
+        query: 'butter',
       },
       {
         id: uuid(),
