@@ -7,7 +7,7 @@ import FilterSelect from './FilterSelect';
 
 const options = [
   {
-    label: 'Needs status',
+    label: 'Needs Status',
     value: 'Needs Status',
   },
   {
@@ -15,19 +15,19 @@ const options = [
     value: 'Draft',
   },
   {
-    label: 'Not started',
+    label: 'Not Started',
     value: 'Not Started',
   },
   {
-    label: 'In progress',
+    label: 'In Progress',
     value: 'In Progress',
   },
   {
-    label: 'Closed',
-    value: 'Closed',
+    label: 'Completed',
+    value: 'Completed',
   },
   {
-    label: 'Ceased/suspended',
+    label: 'Ceased/Suspended',
     value: 'Ceased/Suspended',
   },
 ];

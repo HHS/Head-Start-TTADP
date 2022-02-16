@@ -13,6 +13,7 @@ import { userById } from '../services/users';
 import { auditLogger } from '../logger';
 import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
+import goalsRouter from './goals';
 
 export const loginPath = '/login';
 
@@ -29,6 +30,7 @@ router.use('/users', usersRouter);
 router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
+router.use('/goals', goalsRouter);
 
 router.get('/user', async (req, res) => {
   const { userId } = req.session;
