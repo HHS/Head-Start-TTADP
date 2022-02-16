@@ -68,7 +68,7 @@ export default function GoalsObjectives({ recipientId, regionId }) {
         <GoalsTable
           recipientId={recipientId}
           regionId={regionId}
-          filters={filtersToApply}
+          filters={filters}
         />
       </div>
     </>
