@@ -49,8 +49,8 @@ export function compareFilters(filters, filtersFromCookie) {
     return false;
   }
 
-  const q = queries.sort().flat();
-  const cq = cookieQueries.sort().flat();
+  const q = queries.flat().sort();
+  const cq = cookieQueries.flat().sort();
 
   if (!q.every((value, index) => value === cq[index])) {
     return false;
