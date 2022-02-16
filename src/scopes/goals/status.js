@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 
 export function withStatus(statuses) {
-  if (statuses.includes('Needs Status')) {
+  if (statuses.includes('Needs status')) {
     return {
       [Op.or]: [
         ...statuses.map((s) => ({
@@ -28,7 +28,7 @@ export function withStatus(statuses) {
 }
 
 export function withoutStatus(statuses) {
-  if (statuses.includes('Needs Status')) {
+  if (statuses.includes('Needs status')) {
     return {
       [Op.or]: [
         {
