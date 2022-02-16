@@ -354,13 +354,36 @@ describe('Filter Menu', () => {
 
     // all the filters work
     userEvent.selectOptions(topics, 'Grant number');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Contains');
+
     userEvent.selectOptions(topics, 'Program specialist');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Contains');
+
     userEvent.selectOptions(topics, 'Program types');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
+
     userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
+
     userEvent.selectOptions(topics, 'Recipient name');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Contains');
+
     userEvent.selectOptions(topics, 'State');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Contains');
+
     userEvent.selectOptions(topics, 'Target populations');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
+
     userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
 
     // it renders an option for each config passed in (plus a dummy option)
     expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
@@ -388,9 +411,20 @@ describe('Filter Menu', () => {
 
     // all the filters work
     userEvent.selectOptions(topics, 'Status');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
+
     userEvent.selectOptions(topics, 'Create date');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is within');
+
     userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
+
     userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'Is');
 
     // it renders an option for each config passed in (plus a dummy option)
     expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
