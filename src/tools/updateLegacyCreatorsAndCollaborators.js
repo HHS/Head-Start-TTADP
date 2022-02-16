@@ -121,12 +121,7 @@ export default async function updateLegacyCreatorsAndCollaborators() {
   const reports = rawReportData.filter((r) => {
     const { imported: { otherSpecialists } } = r;
 
-    // we can only do so much if the data isn't comma seperated
-    const howManyImportedSpecialists = otherSpecialists.split(',').length;
-
-    // so if the list of collaborators is different or if there is no userId
-    // that's probably all the cases we can account for, I would think
-    return r.collaborators.length !== howManyImportedSpecialists || r.userId === null;
+    return otherSpecialists || r.userId === null;
   });
 
   // eslint-disable-next-line max-len
