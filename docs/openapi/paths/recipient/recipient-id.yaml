@@ -1,7 +1,7 @@
 get:
   tags:
     - recipient
-  summary: Retrieve a recipient
+  summary: Retrieve a recipient by id
   parameters:
     - in: path
       name: recipientId
