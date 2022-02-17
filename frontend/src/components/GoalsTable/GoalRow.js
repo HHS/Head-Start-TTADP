@@ -264,7 +264,6 @@ function GoalRow({
             onClick={() => closeOrOpenObjectives()}
             aria-label={`Expand objective's for goal ${goalNumber}`}
             tabIndex={0}
-            onKeyPress={() => closeOrOpenObjectives()}
           >
             <strong className="margin-left-1">{objectiveCount}</strong>
             {' '}

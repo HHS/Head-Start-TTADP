@@ -99,7 +99,7 @@ const goals = [{
 
 const goalWithObjectives = [{
   id: 4458,
-  goalStatus: 'In Progress',
+  goalStatus: null,
   createdOn: '06/15/2021',
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
@@ -316,7 +316,7 @@ describe('Goals Table', () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
 
       // Objective 1.
       expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/objective 1 title/i);
@@ -375,13 +375,6 @@ describe('Goals Table', () => {
       fireEvent.click(expandObjectives);
 
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
-
-      // Collapse Objectives via key press.
-      expandObjectives.focus();
-      expect(expandObjectives).toHaveFocus();
-      fireEvent.keyPress(expandObjectives, { key: 'Enter', code: 13, charCode: 13 });
-
-      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
     });
   });
 
