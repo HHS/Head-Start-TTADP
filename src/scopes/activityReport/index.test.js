@@ -1592,7 +1592,6 @@ describe('only other entities', () => {
         id: mockOtherEntityUser.id,
       },
     });
-    await db.sequelize.close();
   });
 
   it('includes other entities', async () => {
