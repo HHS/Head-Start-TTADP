@@ -43,6 +43,39 @@ function GoalRow({
 
   const contextMenuLabel = `Actions for goal ${id}`;
 
+  const mapToDisplay = [
+    {
+      stored: 'In Progress',
+      display: 'In progress',
+      color: '#0166ab',
+    },
+    {
+      stored: 'Completed',
+      display: 'Closed',
+      color: '#148439',
+    },
+    {
+      stored: 'Draft',
+      display: 'Draft',
+      color: '#475260',
+    },
+    {
+      stored: 'Not Started',
+      display: 'Not started',
+      color: '#e2a04d',
+    },
+    {
+      stored: 'Ceased/Suspended',
+      display: 'Suspended',
+      color: '#b50908',
+    },
+    {
+      stored: 'Needs Status',
+      display: 'Needs status',
+      color: '#c5c5c5',
+    },
+  ];
+
   const getGoalStatusIcon = () => {
     if (goalStatus) {
       if (goalStatus === 'In Progress') {
@@ -62,33 +95,6 @@ function GoalRow({
     }
     return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
   };
-
-  const mapToDisplay = [
-    {
-      stored: 'In Progress',
-      display: 'In progress',
-    },
-    {
-      stored: 'Completed',
-      display: 'Closed',
-    },
-    {
-      stored: 'Draft',
-      display: 'Draft',
-    },
-    {
-      stored: 'Not Started',
-      display: 'Not started',
-    },
-    {
-      stored: 'Ceased/Suspended',
-      display: 'Ceased/suspended',
-    },
-    {
-      stored: 'Needs Status',
-      display: 'Needs status',
-    },
-  ];
 
   const getGoalDisplayStatusText = () => {
     if (goalStatus) {
@@ -119,7 +125,7 @@ function GoalRow({
       values: ['Re-open goal'],
     },
     {
-      status: 'Ceased/suspended',
+      status: 'Suspended',
       values: ['Re-open goal'],
     },
   ];
@@ -209,12 +215,22 @@ function GoalRow({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
+  const getStatusColor = () => {
+    if (goalStatus) {
+      const goalStatusDisplay = mapToDisplay.find((m) => m.stored === goalStatus);
+      if (goalStatusDisplay) {
+        return goalStatusDisplay.color;
+      }
+    }
+    return '#c5c5c5';
+  };
+
   return (
     <>
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
-        <td>
+        <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
           {getGoalStatusIcon()}
-          {displayStatus === 'Ceased/suspended' ? ['Ceased/ ', <br />, 'suspended'] : displayStatus}
+          {displayStatus}
         </td>
         <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
         <td className="text-wrap maxw-mobile">
@@ -240,9 +256,9 @@ function GoalRow({
             : displayGoalTopics}
         </td>
         <td>
-          <a
-            className={`text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
-            role="button"
+          <button
+            type="button"
+            className={`usa-button--unstyled text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
             onClick={() => expandObjectives()}
             aria-label="Expand objective's for this goal."
             tabIndex={0}
@@ -254,11 +270,11 @@ function GoalRow({
             {
               objectiveCount > 0
                 ? (
-                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color="#000000" icon={objectivesExpanded ? faAngleDown : faAngleUp} />
+                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color="#000000" icon={objectivesExpanded ? faAngleUp : faAngleDown} />
                 )
                 : null
             }
-          </a>
+          </button>
         </td>
         <td>
           {showContextMenu
@@ -273,7 +289,7 @@ function GoalRow({
         </td>
       </tr>
       <tr className="tta-smarthub--objective-rows">
-        <td colSpan="6">
+        <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
           <table>
             <thead>
               <tr>
