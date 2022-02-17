@@ -38,8 +38,8 @@
 
   .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:first-child,
   .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row tr:first-child {
-    max-width: 500px;
-    min-width: 500px;
+    max-width: 490px;
+    min-width: 490px;
   }
 
   .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:nth-child(2) {

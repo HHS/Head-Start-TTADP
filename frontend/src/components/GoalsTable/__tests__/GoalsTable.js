@@ -283,7 +283,7 @@ describe('Goals Table', () => {
 
       // Ceased/Suspended.
       expect(screen.getAllByRole('cell')[35].firstChild).toHaveClass('fa-times-circle');
-      expect(screen.getAllByRole('cell')[35]).toHaveTextContent('Ceased/ suspended');
+      expect(screen.getAllByRole('cell')[35]).toHaveTextContent('Suspended');
       expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021');
       expect(screen.getAllByRole('cell')[37]).toHaveTextContent(/this is goal text 6/i);
       expect(screen.getAllByRole('cell')[38]).toHaveTextContent(/recordkeeping and reporting/i);
@@ -449,7 +449,7 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Not started'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[28]).toHaveTextContent('Ceased/ suspended'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[28]).toHaveTextContent('Suspended'));
 
       // Desc (via button press).
       const goalsAsc = [...goals];

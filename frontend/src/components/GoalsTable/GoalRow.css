@@ -82,3 +82,7 @@ vertical-align: top;
   vertical-align: baseline;
 }
 
+.tta-smarthub--goal-row .usa-button--unstyled {
+  color: #000;
+  text-decoration: none;
+}
