@@ -2,15 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
-import {
-  generateMd5FromFile,
-  // generateSha1FromFile,
-  generateSha256FromFile,
-  generateMetadataFromFile,
-} from '../../lib/fileProcessing';
+import { generateMetadataFromFile } from '../../lib/fileProcessing';
 import addToScanQueue from '../../services/scanQueue';
 import createFileMetaData, {
-  updateStatus, updateCheckSum, updateMetadata, getFileById, deleteFile,
+  updateStatus, updateMetadata, getFileById, deleteFile,
 } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
@@ -121,9 +116,6 @@ export default async function uploadHandler(req, res) {
         reportId,
         size,
       );
-      await updateCheckSum(metadata.id, await generateMd5FromFile(path));
-      // await updateCheckSum(path, await generateSha1FromFile(path));
-      await updateCheckSum(metadata.id, await generateSha256FromFile(path));
       await updateMetadata(metadata.id, await generateMetadataFromFile(path));
     } catch (err) {
       return handleErrors(req, res, err, logContext);
@@ -131,6 +123,7 @@ export default async function uploadHandler(req, res) {
     let uploadedFile;
     try {
       uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+      auditLogger.info(JSON.stringify(uploadedFile));
       const url = getPresignedURL(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       res.status(200).send({ id: metadata.id, url });
