@@ -211,7 +211,7 @@ function GoalRow({
 
   const displayGoalTopics = truncateGoalTopics(goalTopics);
 
-  const expandObjectives = () => {
+  const closeOrOpenObjectives = () => {
     setObjectivesExpanded(!objectivesExpanded);
   };
 
@@ -224,6 +224,8 @@ function GoalRow({
     }
     return '#c5c5c5';
   };
+
+  const totalObjectives = objectives.length;
 
   return (
     <>
@@ -259,10 +261,10 @@ function GoalRow({
           <button
             type="button"
             className={`usa-button--unstyled text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
-            onClick={() => expandObjectives()}
-            aria-label="Expand objective's for this goal."
+            onClick={() => closeOrOpenObjectives()}
+            aria-label={`Expand objective's for goal ${goalNumber}`}
             tabIndex={0}
-            onKeyPress={() => expandObjectives()}
+            onKeyPress={() => closeOrOpenObjectives()}
           >
             <strong className="margin-left-1">{objectiveCount}</strong>
             {' '}
@@ -304,6 +306,10 @@ function GoalRow({
               {objectives.map((obj) => (
                 <ObjectiveRow
                   objective={obj}
+                  goalNumber={goalNumber}
+                  onCollapseObjectives={closeOrOpenObjectives}
+                  objNumber={objectives.indexOf(obj) + 1}
+                  objCount={totalObjectives}
                 />
               ))}
             </tbody>

@@ -31,7 +31,6 @@
   }
 
   /* Objective Cells */
-
   .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
     padding: 24px;
   }
@@ -60,4 +59,20 @@
   .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:nth-child(5) {
     max-width: 160px;
     min-width: 160px;
+  }
+
+  /* Collapse Objectives Button */
+  .tta-smarthub--objective-rows-collapse-button {
+    position: absolute;
+    margin-left: 16px;
+    margin-top: 8px;
+  }
+
+  .tta-smarthub--objective-rows-collapse-button:focus {
+    opacity: 1;
+  }
+
+  .tta-smarthub--objective-rows-collapse-button:not(:focus) {
+    opacity: 0;
+    pointer-events: none;
   }
