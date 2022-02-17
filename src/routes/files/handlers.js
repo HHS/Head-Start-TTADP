@@ -120,15 +120,12 @@ export default async function uploadHandler(req, res) {
     } catch (err) {
       return handleErrors(req, res, err, logContext);
     }
-    let uploadedFile;
     try {
-      uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-      auditLogger.info(JSON.stringify(uploadedFile));
+      const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
       const url = getPresignedURL(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       res.status(200).send({ id: metadata.id, url });
     } catch (err) {
-      auditLogger.error(JSON.stringify(uploadedFile));
       if (metadata) {
         await updateStatus(metadata.id, UPLOAD_FAILED);
       }
