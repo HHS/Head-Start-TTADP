@@ -20,7 +20,7 @@ import FilterContext from '../FilterContext';
  */
 export default function useCookiePage(defaultPage, component) {
   const { filterKey, filters } = useContext(FilterContext);
-  const cookieSchema = `${filterKey}-${component}-sorting`;
+  const cookieSchema = `${filterKey}-${component}-page`;
 
   const existingPage = useMemo(() => {
     const currentFilterCookie = Cookies.get(filterKey);
