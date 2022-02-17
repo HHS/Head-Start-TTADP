@@ -166,7 +166,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-359/add-filters-to-dashboard"
+    default: "TTAHUB-635/checksum-metadata"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-249/update-node-to-v16"
@@ -238,9 +238,9 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
-             
-  test_frontend:    
-    executor: docker-executor    
+
+  test_frontend:
+    executor: docker-executor
     steps:
       - attach_workspace:
           at: .
@@ -256,7 +256,7 @@ jobs:
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
-          path: frontend/coverage/           
+          path: frontend/coverage/
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -307,7 +307,7 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - browser-tools/install-chrome:   
+      - browser-tools/install-chrome:
           chrome-version: 93.0.4577.63
           replace-existing: true
       - browser-tools/install-chromedriver
@@ -345,7 +345,7 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
-          - run: 
+          - run:
               name: Create production robot
               command: ./bin/robot-factory
       - run:
@@ -487,7 +487,7 @@ workflows:
       - accessibility_scan:
           requires:
             - build_and_lint
-      - deploy:          
+      - deploy:
           requires:
             - test_backend
             - test_frontend
@@ -501,7 +501,7 @@ workflows:
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
-  daily_scan:   
+  daily_scan:
     triggers:
       - schedule:
           cron: "0 12 * * 1-5"
@@ -512,11 +512,11 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - build_and_lint      
+      - build_and_lint
       - test_backend:
           requires:
             - build_and_lint
-      - test_frontend: 
+      - test_frontend:
           requires:
             - build_and_lint
       - dynamic_security_scan:
