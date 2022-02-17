@@ -251,7 +251,7 @@ describe('goal filtersToScopes', () => {
 
   describe('status', () => {
     it('filters in by status', async () => {
-      const filters = { 'status.in': ['Active', 'Needs Status'] };
+      const filters = { 'status.in': ['Active', 'Needs status'] };
       const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
