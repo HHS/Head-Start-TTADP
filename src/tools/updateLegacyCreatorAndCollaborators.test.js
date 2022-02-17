@@ -124,7 +124,7 @@ describe('updateLegacyCreatorAndCollaborators', () => {
       userId: null,
       imported: {
         createdBy: emails[0],
-        otherSpecialists: `${names[2]},${names[3]},`,
+        otherSpecialists: `${names[2]},${names[3]}(${emails[3]}),`,
       },
     });
 
@@ -209,9 +209,11 @@ describe('updateLegacyCreatorAndCollaborators', () => {
 
     const r5 = await ActivityReport.findOne(arFindOpts(reportFive.id));
     expect(r5.userId).toBe(users[0].id);
-    expect(r5.collaborators.length).toBe(1);
+    expect(r5.collaborators.length).toBe(2);
     const r5Collabs = r5.collaborators.map((c) => c.id);
     expect(r5Collabs).toContain(users[1].id);
+    const r5Emails = r5.collaborators.map((c) => c.email);
+    expect(r5Emails).toContain(emails[3]);
 
     const r6 = await ActivityReport.findOne(arFindOpts(reportSix.id));
     expect(r6.userId).toBe(users[0].id);
