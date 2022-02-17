@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -38,6 +38,8 @@ function GoalRow({
     reasons,
     objectives,
   } = goal;
+
+  const expandObjectivesRef = useRef();
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
 
@@ -212,6 +214,9 @@ function GoalRow({
   const displayGoalTopics = truncateGoalTopics(goalTopics);
 
   const closeOrOpenObjectives = () => {
+    if (objectivesExpanded) {
+      expandObjectivesRef.current.focus();
+    }
     setObjectivesExpanded(!objectivesExpanded);
   };
 
@@ -260,9 +265,10 @@ function GoalRow({
         <td>
           <button
             type="button"
+            ref={expandObjectivesRef}
             className={`usa-button--unstyled text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
             onClick={() => closeOrOpenObjectives()}
-            aria-label={`Expand objective's for goal ${goalNumber}`}
+            aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
             tabIndex={0}
           >
             <strong className="margin-left-1">{objectiveCount}</strong>
