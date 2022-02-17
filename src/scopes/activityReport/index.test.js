@@ -1508,7 +1508,7 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
     });
   });
-
+/*
   describe('only other entities', () => {
     let reportIncluded1;
     let reportExcluded;
@@ -1602,4 +1602,5 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
     });
   });
+  */
 });
