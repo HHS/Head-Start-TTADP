@@ -1509,3 +1509,111 @@ describe('filtersToScopes', () => {
     });
   });
 });
+
+describe('only other entities', () => {
+  let reportIncluded1;
+  let reportExcluded;
+  let reportIncluded2;
+
+  let otherEntityIncluded1;
+  let otherEntityIncluded2;
+  let otherEntityExcluded;
+
+  let activityRecipientIncluded1;
+  let activityRecipientIncluded2;
+  let activityRecipientExcluded;
+
+  let possibleIds;
+
+  const mockOtherEntityUser = {
+    id: 15706623,
+    homeRegionId: 1,
+    name: 'user15706623',
+    hsesUsername: 'user15706623',
+    hsesUserId: 'user15706623',
+  };
+
+  beforeAll(async () => {
+    await User.create(mockOtherEntityUser);
+
+    otherEntityIncluded1 = await OtherEntity.create({ id: 874, name: 'Head Start Collaboration Office' });
+    otherEntityExcluded = await OtherEntity.create({ id: 875, name: 'QRIS System' });
+    otherEntityIncluded2 = await OtherEntity.create({ id: 876, name: 'Head Start Collaboration Office' });
+
+    reportIncluded1 = await ActivityReport.create(
+      { userId: mockOtherEntityUser.id, ...draftReport },
+    );
+    reportIncluded2 = await ActivityReport.create(
+      { userId: mockOtherEntityUser.id, ...draftReport },
+    );
+    reportExcluded = await ActivityReport.create(
+      { userId: mockOtherEntityUser.id, ...draftReport },
+    );
+
+    activityRecipientIncluded1 = await ActivityRecipient.create({
+      activityReportId: reportIncluded1.id,
+      otherEntityId: otherEntityIncluded1.id,
+    });
+    activityRecipientExcluded = await ActivityRecipient.create({
+      activityReportId: reportExcluded.id,
+      otherEntityId: otherEntityExcluded.id,
+    });
+    activityRecipientIncluded2 = await ActivityRecipient.create({
+      activityReportId: reportIncluded2.id,
+      otherEntityId: otherEntityIncluded2.id,
+    });
+
+    possibleIds = [
+      reportIncluded1.id,
+      reportIncluded2.id,
+      reportExcluded.id,
+    ];
+  });
+
+  afterAll(async () => {
+    await ActivityRecipient.destroy({
+      where: {
+        id: [
+          activityRecipientIncluded1.id,
+          activityRecipientIncluded2.id,
+          activityRecipientExcluded.id,
+        ],
+      },
+    });
+    await ActivityReport.destroy({
+      where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+    });
+    await OtherEntity.destroy({
+      where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
+    });
+
+    await User.destroy({
+      where: {
+        id: mockOtherEntityUser.id,
+      },
+    });
+    await db.sequelize.close();
+  });
+
+  it('includes other entities', async () => {
+    const filters = { 'otherEntities.in': ['Head Start Collaboration Office'] };
+    const { activityReport: scope } = filtersToScopes(filters);
+    const found = await ActivityReport.findAll({
+      where: { [Op.and]: [scope, { id: possibleIds }] },
+    });
+    expect(found.length).toBe(2);
+    expect(found.map((f) => f.id))
+      .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+  });
+
+  it('excludes other entities', async () => {
+    const filters = { 'otherEntities.nin': ['Head Start Collaboration Office'] };
+    const { activityReport: scope } = filtersToScopes(filters);
+    const found = await ActivityReport.findAll({
+      where: { [Op.and]: [scope, { id: possibleIds }] },
+    });
+    expect(found.length).toBe(1);
+    expect(found.map((f) => f.id))
+      .toEqual(expect.arrayContaining([reportExcluded.id]));
+  });
+});
