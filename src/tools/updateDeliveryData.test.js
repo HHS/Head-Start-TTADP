@@ -1,9 +1,11 @@
-import { ActivityReport, sequelize } from '../models';
+import faker from 'faker';
+import { ActivityReport, User, sequelize } from '../models';
 import { createReport, destroyReport } from '../testUtils';
 import updateDeliveryData from './updateDeliveryData';
 
 describe('updateDeliveryData', () => {
   let reports;
+  let user;
 
   beforeAll(async () => {
     const delivery = [
@@ -72,7 +74,19 @@ describe('updateDeliveryData', () => {
       },
     ];
 
+    user = await User.create({
+      homeRegionId: 1,
+      hsesUsername: faker.internet.email(),
+      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+      email: faker.internet.email(),
+      phoneNumber: faker.phone.phoneNumber(),
+      name: faker.name.findName(),
+      role: ['Grants Specialist'],
+    });
+
     const activityRecipients = [];
+    const userId = user.id;
+    const regionId = 1;
 
     reports = await Promise.all(
       delivery.map(
@@ -81,6 +95,8 @@ describe('updateDeliveryData', () => {
           virtualDeliveryType,
         }) => createReport({
           activityRecipients,
+          userId,
+          regionId,
           deliveryMethod,
           virtualDeliveryType,
           imported: JSON.stringify({ report: 'is imported' }),
