@@ -371,7 +371,7 @@ describe('Goals Table', () => {
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
 
       // Expand Objectives via click.
-      const expandObjectives = await screen.findByRole('button', { name: /expand objective's for this goal\./i });
+      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal R14-G-4598" });
       fireEvent.click(expandObjectives);
 
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();

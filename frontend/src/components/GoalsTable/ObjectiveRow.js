@@ -9,7 +9,7 @@ import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import './ObjectiveRow.css';
 
 function ObjectiveRow({
-  objective,
+  objective, goalNumber, onCollapseObjectives, objNumber, objCount,
 }) {
   const {
     title,
@@ -96,7 +96,17 @@ function ObjectiveRow({
   return (
     <>
       <tr className="tta-smarthub--objective-row">
-        <td>{title}</td>
+        <td>
+          {title}
+          <button
+            type="button"
+            className="usa-button usa-button--outline tta-smarthub--objective-rows-collapse-button"
+            onClick={onCollapseObjectives}
+            aria-label={`Objectives ${objNumber} of ${objCount}, click to collapse objectives for goal ${goalNumber}`}
+          >
+            Collapse objective(s)
+          </button>
+        </td>
         <td>
           {' '}
           <Link
@@ -138,5 +148,9 @@ objectivePropTypes.defaultProps = {
 };
 ObjectiveRow.propTypes = {
   objective: objectivePropTypes.isRequired,
+  goalNumber: PropTypes.string.isRequired,
+  onCollapseObjectives: PropTypes.func.isRequired,
+  objNumber: PropTypes.number.isRequired,
+  objCount: PropTypes.number.isRequired,
 };
 export default ObjectiveRow;
