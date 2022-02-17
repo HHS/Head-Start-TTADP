@@ -1576,8 +1576,6 @@ describe('filtersToScopes', () => {
       await OtherEntity.destroy({
         where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
       });
-
-      await db.sequelize.close();
     });
 
     it('includes other entities', async () => {
