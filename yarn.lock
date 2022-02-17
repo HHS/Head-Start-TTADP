@@ -1425,26 +1425,6 @@
     titleize "2"
     tlds "^1.221.1"
 
-"@mcmics/dist-exiftool@^12.24.0":
-  version "12.24.0"
-  resolved "https://registry.yarnpkg.com/@mcmics/dist-exiftool/-/dist-exiftool-12.24.0.tgz#ef11c21d0b713c56d1061893910c9d23bcd282df"
-  integrity sha512-OEqlU6sr5yMpqEZiRebFpprQWXzf7JEOyIcNMGEK6l2XXeSa8t4hTNIUh5HYMfOvszgaF6IqN/osKdFU+1cIkg==
-  dependencies:
-    platform-dependent-modules "0.0.14"
-  optionalDependencies:
-    "@mcmics/exiftool.exe" "12.24"
-    "@mcmics/exiftool.pl" "^12.24.0"
-
-"@mcmics/exiftool.exe@12.24":
-  version "12.24.0"
-  resolved "https://registry.yarnpkg.com/@mcmics/exiftool.exe/-/exiftool.exe-12.24.0.tgz#4db0a535a309a39593471886f20a499c7eacb641"
-  integrity sha512-lC/pmtkt9Gf84XPZZOVpDuL+ynWpKTD0TrrHBRzNo7kRS5qFvou4jGV7tLVp4y0yLwGSYbDk2XLQDh9Bd0URXA==
-
-"@mcmics/exiftool.pl@^12.24.0":
-  version "12.24.0"
-  resolved "https://registry.yarnpkg.com/@mcmics/exiftool.pl/-/exiftool.pl-12.24.0.tgz#fb29cc418c50680129b10e6de34f61a8268f5883"
-  integrity sha512-y92wV9vpjuGGSbUoFm/0OCZ1Ap9/mBSXUfUTc504YUHCy3Xq1t7fwpHm3hoL/OkYM43fqomdvVeRWL1ZFvudHw==
-
 "@newrelic/aws-sdk@^4.0.1":
   version "4.0.1"
   resolved "https://registry.npmjs.org/@newrelic/aws-sdk/-/aws-sdk-4.0.1.tgz"
@@ -2732,11 +2712,6 @@ capture-exit@^2.0.0:
   dependencies:
     rsvp "^4.8.4"
 
-catchment@1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/catchment/-/catchment-1.0.0.tgz"
-  integrity sha1-MGH3G+AQJxC+hDKNL5Q2OhZfjEs=
-
 chalk@^2.0.0, chalk@^2.4.2:
   version "2.4.2"
   resolved "https://registry.npmjs.org/chalk/-/chalk-2.4.2.tgz"
@@ -3673,16 +3648,6 @@ discontinuous-range@1.0.0:
   resolved "https://registry.npmjs.org/discontinuous-range/-/discontinuous-range-1.0.0.tgz"
   integrity sha1-44Mx8IRLukm5qctxx3FYWqsbxlo=
 
-dist-exiftool@^10.53.0:
-  version "10.53.0"
-  resolved "https://registry.npmjs.org/dist-exiftool/-/dist-exiftool-10.53.0.tgz"
-  integrity sha1-i9F7rB5D3qzYHZrazQ8eJMaQEA8=
-  dependencies:
-    platform-dependent-modules "0.0.14"
-  optionalDependencies:
-    exiftool.exe "10.53"
-    exiftool.pl "10.53"
-
 doctrine@^2.1.0:
   version "2.1.0"
   resolved "https://registry.npmjs.org/doctrine/-/doctrine-2.1.0.tgz"
@@ -4344,16 +4309,6 @@ exiftool-vendored@^15.11.0:
     exiftool-vendored.exe "12.40.0"
     exiftool-vendored.pl "12.40.0"
 
-exiftool.exe@10.53:
-  version "10.53.0"
-  resolved "https://registry.npmjs.org/exiftool.exe/-/exiftool.exe-10.53.0.tgz"
-  integrity sha1-IrHOYPuNtYlGnRqlsKH+CaNbxFQ=
-
-exiftool.pl@10.53:
-  version "10.53.0"
-  resolved "https://registry.npmjs.org/exiftool.pl/-/exiftool.pl-10.53.0.tgz"
-  integrity sha1-Y8FkazrQrtHOExPXtdB9pNexPYQ=
-
 exit@^0.1.2:
   version "0.1.2"
   resolved "https://registry.npmjs.org/exit/-/exit-0.1.2.tgz"
@@ -5004,14 +4959,6 @@ hash.js@^1.0.0, hash.js@^1.0.3:
     inherits "^2.0.3"
     minimalistic-assert "^1.0.1"
 
-hasha@^5.2.2:
-  version "5.2.2"
-  resolved "https://registry.npmjs.org/hasha/-/hasha-5.2.2.tgz"
-  integrity sha512-Hrp5vIK/xr5SkeN2onO32H0MgNZ0f17HRNH39WfL0SYUNOTZ5Lz1TJ8Pajo/87dYGEFlLMm7mIc/k/s6Bvz9HQ==
-  dependencies:
-    is-stream "^2.0.0"
-    type-fest "^0.8.0"
-
 he@1.2.0, he@^1.2.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/he/-/he-1.2.0.tgz"
@@ -5628,7 +5575,7 @@ is-shared-array-buffer@^1.0.1:
   resolved "https://registry.npmjs.org/is-shared-array-buffer/-/is-shared-array-buffer-1.0.1.tgz"
   integrity sha512-IU0NmyknYZN0rChcKhRO1X8LYz5Isj/Fsqh8NJOSf+N/hCOTwy29F32Ik7a+QszE63IdvmwdTPDd6cZ5pg4cwA==
 
-is-stream@1.1.0, is-stream@^1.1.0:
+is-stream@^1.1.0:
   version "1.1.0"
   resolved "https://registry.npmjs.org/is-stream/-/is-stream-1.1.0.tgz"
   integrity sha1-EtSj3U5o4Lec6428hBc66A2RykQ=
@@ -6735,11 +6682,6 @@ makeerror@1.0.12:
   dependencies:
     tmpl "1.0.5"
 
-makepromise@1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/makepromise/-/makepromise-1.0.0.tgz"
-  integrity sha1-vGu2o+Bv1wbfUcKSO2k2+r1wqn8=
-
 map-cache@^0.2.2:
   version "0.2.2"
   resolved "https://registry.npmjs.org/map-cache/-/map-cache-0.2.2.tgz"
@@ -7150,15 +7092,6 @@ node-environment-flags@^1.0.5:
   dependencies:
     object.getownpropertydescriptors "^2.0.3"
     semver "^5.7.0"
-
-node-exiftool@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.npmjs.org/node-exiftool/-/node-exiftool-2.3.0.tgz"
-  integrity sha1-1RQtNN5vFoO0ZVGYtkjn4+5ugKw=
-  dependencies:
-    is-stream "1.1.0"
-    restream "1.2.0"
-    wrote "0.6.1"
 
 node-expat@^2.3.18:
   version "2.4.0"
@@ -7885,11 +7818,6 @@ pkg-dir@^3.0.0:
   integrity sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==
   dependencies:
     find-up "^3.0.0"
-
-platform-dependent-modules@0.0.14:
-  version "0.0.14"
-  resolved "https://registry.npmjs.org/platform-dependent-modules/-/platform-dependent-modules-0.0.14.tgz"
-  integrity sha1-PFPQQV2BziLc/eFWZdDP1UHUFhc=
 
 please-upgrade-node@^3.2.0:
   version "3.2.0"
@@ -8747,11 +8675,6 @@ responselike@^1.0.2:
   dependencies:
     lowercase-keys "^1.0.0"
 
-restream@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.npmjs.org/restream/-/restream-1.2.0.tgz"
-  integrity sha1-/ROwMaVOgMxl0YeMQxSfGzpA77s=
-
 ret@~0.1.10:
   version "0.1.15"
   resolved "https://registry.npmjs.org/ret/-/ret-0.1.15.tgz"
@@ -9070,13 +8993,6 @@ sha.js@^2.4.0, sha.js@^2.4.8:
   dependencies:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
-
-sha1-file@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.npmjs.org/sha1-file/-/sha1-file-3.0.0.tgz"
-  integrity sha512-RnEaJUybyMkBRBB1zExj2xEUUxqgu8u2fwVdzzSq7IdL9uBOtbdZY6/K1WtP1QYtOhzUlD7yRgDRdvB/H4Ie9Q==
-  dependencies:
-    hasha "^5.2.2"
 
 sha256-file@^1.0.0:
   version "1.0.0"
@@ -10039,7 +9955,7 @@ type-fest@^0.6.0:
   resolved "https://registry.npmjs.org/type-fest/-/type-fest-0.6.0.tgz"
   integrity sha512-q+MB8nYR1KDLrgr4G5yemftpMC7/QLqVndBmEEdqzmNj5dcFOO4Oo8qlwZE3ULT3+Zim1F8Kq4cBnikNhlCMlg==
 
-type-fest@^0.8.0, type-fest@^0.8.1:
+type-fest@^0.8.1:
   version "0.8.1"
   resolved "https://registry.npmjs.org/type-fest/-/type-fest-0.8.1.tgz"
   integrity sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==
@@ -10580,14 +10496,6 @@ write-file-atomic@^3.0.0:
     is-typedarray "^1.0.0"
     signal-exit "^3.0.2"
     typedarray-to-buffer "^3.1.5"
-
-wrote@0.6.1:
-  version "0.6.1"
-  resolved "https://registry.npmjs.org/wrote/-/wrote-0.6.1.tgz"
-  integrity sha1-7/Ee/dbxhCSnC66i30Mirzdbj74=
-  dependencies:
-    catchment "1.0.0"
-    makepromise "1.0.0"
 
 ws@8.2.3:
   version "8.2.3"
