@@ -1,5 +1,5 @@
 import temp from 'temp';
-import { generateMetadataFromFile } from '../lib/fileProcessing';
+import generateMetadataFromFile from '../lib/fileProcessing';
 import { downloadFile } from '../lib/s3';
 import { sequelize, File } from '../models';
 import { updateMetadata } from '../services/files';
