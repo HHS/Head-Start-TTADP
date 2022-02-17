@@ -75,7 +75,9 @@
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "updateLegacyCreatorsAndCollaborators": "node ./build/server/tools/updateLegacyCreatorsAndCollaboratorsCLI.js",
-    "updateLegacyCreatorsAndCollaborators:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyCreatorsAndCollaboratorsCLI.js"
+    "updateLegacyCreatorsAndCollaborators:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyCreatorsAndCollaboratorsCLI.js",
+    "updateDeliveryData": "node ./build/server/tools/updateDeliveryDataCLI.js",
+    "updateDeliveryData:local": "./node_modules/.bin/babel-node ./src/tools/updateDeliveryDataCLI.js"
   },
   "repository": {
     "type": "git",
