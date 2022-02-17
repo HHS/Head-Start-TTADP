@@ -6,9 +6,9 @@ import { auditLogger } from '../logger';
 const exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
 
 const generateMetadataFromFile = async (path) => {
-  let metadata = { value: null, error: null };
+  const metadata = { value: null, error: null };
   try {
-    metadata.value = await exiftool.read(path,['-g', '-P']);
+    metadata.value = await exiftool.read(path, ['-g', '-P']);
     metadata.value.checksums = {
       md5: await md5File(path),
       sha256: await sha256File(path),
@@ -17,7 +17,7 @@ const generateMetadataFromFile = async (path) => {
     if ('errors' in metadata.value) {
       metadata.error = metadata.value.errors;
       delete metadata.value.errors;
-      if (Array.isArray(metadata.error) && metadata.error.length == 0) {
+      if (Array.isArray(metadata.error) && metadata.error.length === 0) {
         metadata.error = null;
       }
     }
@@ -38,6 +38,4 @@ const generateMetadataFromFile = async (path) => {
   return metadata;
 };
 
-export {
-  generateMetadataFromFile,
-};
+export default generateMetadataFromFile;
