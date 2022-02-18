@@ -842,7 +842,6 @@ module.exports = {
           FROM information_schema.tables
           WHERE table_schema='public'
             AND table_type='BASE TABLE'
-            AND table_catalog='ttasmarthub'
             AND table_name != 'SequelizeMeta'
             AND table_name != 'RequestErrors'
             AND table_name NOT LIKE 'ZAL%';`,
