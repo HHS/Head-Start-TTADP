@@ -1,8 +1,9 @@
 import { useMemo, useContext } from 'react';
-import Cookies from 'js-cookie'; // theres a package for it, look i know you can do it by hand but I don't wanna
 import { compareFilters } from './helpers';
-import useCookieState from './useCookieState';
+import useSessionStorage from './useSessionStorage';
 import FilterContext from '../FilterContext';
+
+const { sessionStorage } = window;
 
 /**
  * useCookieSorting takes in an object containing a sort configuration
@@ -17,25 +18,26 @@ import FilterContext from '../FilterContext';
  * @param {String} component
  * @returns {[ Object[], Function ]}
  */
-export default function useCookieSorting(defaultSortConfig, component) {
+export default function useSessionSort(defaultSortConfig, component) {
   const { filterKey, filters } = useContext(FilterContext);
-  const cookieSchema = `${filterKey}-${component}-sorting`;
+  const sessionSchema = `${filterKey}-${component}-sorting`;
 
   const existingSort = useMemo(() => {
-    const currentFilterCookie = Cookies.get(filterKey);
-    if (currentFilterCookie) {
+    const currentFilterStorage = sessionStorage.getItem(filterKey);
+    if (currentFilterStorage) {
       try {
-        const theSame = compareFilters(filters, JSON.parse(currentFilterCookie));
-        const currentCookie = Cookies.get(cookieSchema);
-        if (currentCookie && theSame) {
-          const parsedCookie = JSON.parse(currentCookie);
+        const theSame = compareFilters(filters, JSON.parse(currentFilterStorage));
+        const currentStorage = sessionStorage.getItem(sessionSchema);
+        if (currentStorage && theSame) {
+          const parsedStorage = JSON.parse(currentStorage);
           // this is really just to make sure nothing weird gets in there
           const {
-            sortBy, direction,
-          } = parsedCookie;
+            sortBy, direction, activePage,
+          } = parsedStorage;
           return {
             sortBy,
             direction,
+            activePage: parseInt(activePage, 10),
           };
         }
       } catch (error) {
@@ -44,11 +46,11 @@ export default function useCookieSorting(defaultSortConfig, component) {
     }
 
     return false;
-  }, [cookieSchema, filterKey, filters]);
+  }, [filterKey, filters, sessionSchema]);
 
   // put it in state
-  const [sortConfig, setSortConfig] = useCookieState(
-    cookieSchema,
+  const [sortConfig, setSortConfig] = useSessionStorage(
+    sessionSchema,
     existingSort || defaultSortConfig,
   );
 

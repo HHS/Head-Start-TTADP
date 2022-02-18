@@ -11,8 +11,7 @@ import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
-import useCookieSorting from '../../hooks/useCookieSorting';
-import useCookiePage from '../../hooks/useCookiePage';
+import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
 
 function ActivityReportsTable({
@@ -26,16 +25,18 @@ function ActivityReportsTable({
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
   const [perPage] = useState(REPORTS_PER_PAGE);
-  // const [activePage, setActivePage] = useState(1);
-  const [activePage, setActivePage] = useCookiePage(1, 'activityReportsTable', filters);
-  const [offset, setOffset] = useState((activePage - 1) * perPage);
   const [reportsCount, setReportsCount] = useState(0);
   const [downloadError, setDownloadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [sortConfig, setSortConfig] = useCookieSorting({
+  const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: 'updatedAt',
     direction: 'desc',
+    activePage: 1,
   }, 'activityReportsTable', filters);
+
+  const { activePage } = sortConfig;
+
+  const [offset, setOffset] = useState((activePage - 1) * perPage);
 
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
@@ -108,7 +109,14 @@ function ActivityReportsTable({
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
-      setActivePage(pageNumber);
+      // copy state
+      const sort = { ...sortConfig };
+
+      // mutate
+      sort.activePage = pageNumber;
+
+      // store it
+      setSortConfig(sort);
       setOffset((pageNumber - 1) * perPage);
     }
   };
@@ -122,9 +130,9 @@ function ActivityReportsTable({
     ) {
       direction = 'desc';
     }
-    setActivePage(1);
+
     setOffset(0);
-    setSortConfig({ sortBy, direction });
+    setSortConfig({ sortBy, direction, activePage: 1 });
   };
 
   const handleDownloadAllReports = async () => {

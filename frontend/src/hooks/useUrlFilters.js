@@ -1,10 +1,9 @@
-import Cookies from 'js-cookie'; // theres a package for it, look i know you can do it by hand but I don't wanna
 import { useEffect, useMemo } from 'react';
 import { queryStringToFilters, filtersToQueryString } from '../utils';
-import useCookieState from './useCookieState';
+import useSessionStorage from './useSessionStorage';
 
 // hoisting this fellow as to not get embroiled in useEffects
-const { history } = window;
+const { history, sessionStorage } = window;
 
 /**
  * useUrlFilters takes in an array of default filters
@@ -23,7 +22,7 @@ export default function useUrlFilters(key, defaultFilters) {
     }
 
     try {
-      const cookieFromStorage = Cookies.get(key);
+      const cookieFromStorage = sessionStorage.getItem(key);
       if (cookieFromStorage) {
         return JSON.parse(cookieFromStorage);
       }
@@ -35,7 +34,7 @@ export default function useUrlFilters(key, defaultFilters) {
     return defaultFilters;
   }, [defaultFilters, key]);
 
-  const [filters, setFilters] = useCookieState(key, initialValue);
+  const [filters, setFilters] = useSessionStorage(key, initialValue);
 
   // use effect to watch the query and update if changed
   useEffect(() => {
