@@ -373,8 +373,15 @@ describe('Goals Table', () => {
       // Expand Objectives via click.
       const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal R14-G-4598" });
       fireEvent.click(expandObjectives);
-
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
+
+      const collapseButton = await screen.findByRole('button', { name: /objectives 1 of 5, click to collapse objectives for goal r14-g-4598/i });
+      fireEvent.click(collapseButton);
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+
+      // We should set focus back to the expand button.
+      const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
+      expect(expandWithFocus).toHaveFocus();
     });
   });
 

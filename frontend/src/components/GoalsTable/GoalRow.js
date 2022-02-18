@@ -213,8 +213,8 @@ function GoalRow({
 
   const displayGoalTopics = truncateGoalTopics(goalTopics);
 
-  const closeOrOpenObjectives = () => {
-    if (objectivesExpanded) {
+  const closeOrOpenObjectives = (collapseFromObjectives) => {
+    if (collapseFromObjectives && expandObjectivesRef.current) {
       expandObjectivesRef.current.focus();
     }
     setObjectivesExpanded(!objectivesExpanded);
@@ -267,7 +267,7 @@ function GoalRow({
             type="button"
             ref={expandObjectivesRef}
             className={`usa-button--unstyled text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
-            onClick={() => closeOrOpenObjectives()}
+            onClick={() => closeOrOpenObjectives(false)}
             aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
             tabIndex={0}
           >
