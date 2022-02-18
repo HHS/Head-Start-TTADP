@@ -40,7 +40,7 @@ function ObjectiveRow({
     <ul className="padding-left-0 margin-0 tta-smarthub--objective-reasons-list">
       {
         sortedReasons.map((r) => (
-          <li>
+          <li key={`reason_${r}`}>
             {r}
             {determineReasonMonitorStatus(r)}
           </li>
@@ -136,14 +136,15 @@ export const objectivePropTypes = PropTypes.shape({
   arNumber: PropTypes.string.isRequired,
   arStatus: PropTypes.string.isRequired,
   ttaProvided: PropTypes.string.isRequired,
-  endDate: PropTypes.arrayOf(PropTypes.string).isRequired,
+  endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
-  status: PropTypes.number.isRequired,
+  status: PropTypes.string.isRequired,
 });
 
 objectivePropTypes.defaultProps = {
   goalStatus: null,
   arLegacyId: null,
+  endDate: null,
   reasons: [],
 };
 ObjectiveRow.propTypes = {
