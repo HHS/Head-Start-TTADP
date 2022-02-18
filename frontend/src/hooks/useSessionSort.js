@@ -24,7 +24,6 @@ export default function useSessionSort(defaultSortConfig, key) {
 
   const existingSort = useMemo(() => {
     const currentFilterStorage = sessionStorage.getItem(filterKey);
-    console.log(currentFilterStorage);
     if (currentFilterStorage) {
       try {
         const currentStorage = sessionStorage.getItem(sessionSchema);
