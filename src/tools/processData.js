@@ -63,13 +63,13 @@ const hsesUsers = [
     name: 'Josh Salisbury', hsesUsername: 'test.tta.josh', hsesUserId: '50490', email: 'josh@adhocteam.us',
   },
   {
-    name: 'Sarah-Jaine Szekeresh', hsesUsername: 'test.tta.sarah-jaine', hsesUserId: '51155', email: 'sarah-jaine@adhocteam.us',
-  },
-  {
     name: 'Rachel Miner', hsesUsername: 'test.tta.rachel', hsesUserId: '51352', email: 'rachel@adhocteam.us',
   },
   {
     name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
+  },
+  {
+    name: 'Garrett Hill', hsesUsername: 'test.tta.garrett', hsesUserId: '51548', email: 'garrett.hill@adhocteam.us',
   },
 ];
 
