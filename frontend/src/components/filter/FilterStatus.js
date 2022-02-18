@@ -7,28 +7,28 @@ import FilterSelect from './FilterSelect';
 
 const options = [
   {
-    label: 'Needs Status',
-    value: 'Needs Status',
+    label: 'Needs status',
+    value: 'Needs status',
   },
   {
     label: 'Draft',
     value: 'Draft',
   },
   {
-    label: 'Not Started',
-    value: 'Not Started',
+    label: 'Not started',
+    value: 'Not started',
   },
   {
-    label: 'In Progress',
-    value: 'In Progress',
+    label: 'In progress',
+    value: 'In progress',
   },
   {
-    label: 'Completed',
-    value: 'Completed',
+    label: 'Closed',
+    value: 'Closed',
   },
   {
-    label: 'Ceased/Suspended',
-    value: 'Ceased/Suspended',
+    label: 'Ceased/suspended',
+    value: 'Ceased/suspended',
   },
 ];
 

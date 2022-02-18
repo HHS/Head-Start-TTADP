@@ -75,17 +75,31 @@ describe('Goals and Objectives', () => {
 
   beforeEach(async () => {
     fetchMock.reset();
+
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&status.in[]=Not%20Started';
+    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&status.in[]=Not%20started';
     fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
+
+    const statusRes = {
+      total: 0, 'Not started': 0, 'In progress': 0, Closed: 0, Suspended: 0,
+    };
+
+    const goalStatusGraph = `/api/widgets/goalStatusGraph?createDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    fetchMock.get(goalStatusGraph, statusRes);
+
+    const goalStatusGraphWStatus = '/api/widgets/goalStatusGraph?status.in[]=Not%20started&region.in[]=1&recipientId.ctn[]=401';
+    fetchMock.get(goalStatusGraphWStatus, statusRes);
+
+    const goalStatusGraphUnfiltered = '/api/widgets/goalStatusGraph?region.in[]=1&recipientId.ctn[]=401';
+    fetchMock.get(goalStatusGraphUnfiltered, statusRes);
   });
 
   afterEach(() => {
@@ -121,7 +135,7 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Not Started']);
+    await selectEvent.select(statusSelect, ['Not started']);
 
     const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
     userEvent.click(apply);
