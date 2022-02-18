@@ -5,7 +5,7 @@ import FilterContext from '../FilterContext';
 const { sessionStorage } = window;
 
 /**
- * useCookieSorting takes in an object containing a sort configuration
+ * useSessionSort takes in an object containing a sort configuration
  * ex: {
     sortBy: 'updatedAt',
     direction: 'desc',
@@ -24,6 +24,7 @@ export default function useSessionSort(defaultSortConfig, key) {
 
   const existingSort = useMemo(() => {
     const currentFilterStorage = sessionStorage.getItem(filterKey);
+    console.log(currentFilterStorage);
     if (currentFilterStorage) {
       try {
         const currentStorage = sessionStorage.getItem(sessionSchema);
