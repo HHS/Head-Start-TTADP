@@ -12,11 +12,13 @@ import {
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  otherEntitiesFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const LANDING_BASE_FILTER_CONFIG = [
   endDateFilter,
   grantNumberFilter,
+  otherEntitiesFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
@@ -32,6 +34,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   endDateFilter,
   grantNumberFilter,
+  otherEntitiesFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
