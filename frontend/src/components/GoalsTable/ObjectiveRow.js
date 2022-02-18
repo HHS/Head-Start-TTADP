@@ -101,7 +101,7 @@ function ObjectiveRow({
           <button
             type="button"
             className="usa-button usa-button--outline tta-smarthub--objective-rows-collapse-button"
-            onClick={onCollapseObjectives}
+            onClick={() => onCollapseObjectives(true)}
             aria-label={`Objectives ${objNumber} of ${objCount}, click to collapse objectives for goal ${goalNumber}`}
           >
             Collapse objective(s)
