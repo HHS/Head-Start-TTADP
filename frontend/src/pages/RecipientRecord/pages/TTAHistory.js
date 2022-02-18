@@ -13,7 +13,7 @@ import FilterContext from '../../../FilterContext';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
 import './TTAHistory.css';
-import useUrlFilters from '../../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
@@ -24,7 +24,7 @@ export default function TTAHistory({
 }) {
   const filterKey = `ttahistory-filters-${recipientId}`;
 
-  const [filters, setFilters] = useUrlFilters(
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     filterKey,
     [
       {

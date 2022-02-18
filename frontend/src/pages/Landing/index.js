@@ -28,7 +28,7 @@ import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
-import useUrlFilters from '../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
 import FilterContext from '../../FilterContext';
 
@@ -59,7 +59,7 @@ function Landing() {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
-  const [filters, setFilters] = useUrlFilters(
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
       && defaultRegion !== 0

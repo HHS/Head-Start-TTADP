@@ -11,7 +11,7 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
 import { expandFilters, formatDateRange } from '../../utils';
-import useUrlFilters from '../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
 import FilterContext from '../../FilterContext';
@@ -66,7 +66,7 @@ export default function RegionalDashboard() {
     ];
   }, [defaultRegion, hasCentralOffice]);
 
-  const [filters, setFilters] = useUrlFilters(FILTER_KEY, defaultFilters);
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
 
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);
