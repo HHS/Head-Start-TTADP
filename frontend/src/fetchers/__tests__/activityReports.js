@@ -55,7 +55,6 @@ describe('activityReports fetcher', () => {
         sortDir: 'asc',
         offset: 0,
         limit: 10,
-        filters: 'filters',
       };
 
       fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
