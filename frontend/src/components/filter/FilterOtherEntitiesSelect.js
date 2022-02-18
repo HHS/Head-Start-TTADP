@@ -10,12 +10,9 @@ export default function FilterOtherEntitiesSelect({
   inputId,
   query,
 }) {
-  const onApplyClick = (selected) => {
-    onApply(selected);
-  };
   return (
     <FilterSelect
-      onApply={onApplyClick}
+      onApply={onApply}
       inputId={inputId}
       labelText="Select other entities to filter by"
       options={OTHER_ENTITY_OPTIONS}
