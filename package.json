@@ -86,6 +86,8 @@
     "updateLegacyParticipants:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyParticipantsCLI.js",
     "importActivityReportDuration": "node ./build/server/tools/importActivityReportDuration.js",
     "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js",
+    "updateDeliveryData": "node ./build/server/tools/updateDeliveryDataCLI.js",
+    "updateDeliveryData:local": "./node_modules/.bin/babel-node ./src/tools/updateDeliveryDataCLI.js",
     "updateTopicNames": "node ./build/server/tools/updateTopicNamesCLI.js",
     "updateTopicNames:local": "./node_modules/.bin/babel-node ./src/tools/updateTopicNamesCLI.js"
   },
