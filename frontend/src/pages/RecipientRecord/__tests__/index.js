@@ -57,13 +57,13 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord(history = memoryHistory) {
+  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
     const match = {
       path: '',
       url: '',
       params: {
         recipientId: '1',
-        regionId: '45',
+        regionId,
       },
     };
 
