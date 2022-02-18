@@ -324,7 +324,7 @@ function Landing() {
           setDownloadAlertsError={setDownloadAlertsError}
           downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
-        <FilterContext.Provider value={{ filters, filterKey: FILTER_KEY }}>
+        <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
           <ActivityReportsTable
             filters={filtersToApply}
             showFilter={false}

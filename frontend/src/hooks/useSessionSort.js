@@ -18,9 +18,9 @@ const { sessionStorage } = window;
  * @param {String} component
  * @returns {[ Object[], Function ]}
  */
-export default function useSessionSort(defaultSortConfig, component) {
+export default function useSessionSort(defaultSortConfig, key) {
   const { filterKey } = useContext(FilterContext);
-  const sessionSchema = `${filterKey}-${component}-sorting`;
+  const sessionSchema = `${key}-sorting`;
 
   const existingSort = useMemo(() => {
     const currentFilterStorage = sessionStorage.getItem(filterKey);

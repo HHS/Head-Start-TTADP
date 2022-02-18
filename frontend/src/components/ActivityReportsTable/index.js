@@ -32,7 +32,7 @@ function ActivityReportsTable({
     sortBy: 'updatedAt',
     direction: 'desc',
     activePage: 1,
-  }, 'activityReportsTable', filters);
+  }, 'activityReportsTable');
 
   const { activePage } = sortConfig;
 
