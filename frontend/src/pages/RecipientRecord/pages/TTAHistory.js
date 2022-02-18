@@ -108,7 +108,7 @@ export default function TTAHistory({
             />
           </Grid>
         </Grid>
-        <FilterContext.Provider value={{ filters, filterKey }}>
+        <FilterContext.Provider value={{ filterKey }}>
           <ActivityReportsTable
             filters={filtersToApply}
             showFilter={false}
