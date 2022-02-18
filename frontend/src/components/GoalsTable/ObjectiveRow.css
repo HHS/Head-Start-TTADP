@@ -62,15 +62,16 @@
   }
 
   /* Collapse Objectives Button */
-  .tta-smarthub--objective-rows-collapse-button {
+ .tta-smarthub--objective-rows-collapse-button {
     position: absolute;
-    margin-left: 16px;
-    margin-top: 8px;
+    margin-left: -16px;
+    margin-top: -16px;
     background-color: #fff;
   }
 
   .tta-smarthub--objective-rows-collapse-button:focus {
     opacity: 1;
+    background-color: #fff;
   }
 
   .tta-smarthub--objective-rows-collapse-button:not(:focus) {

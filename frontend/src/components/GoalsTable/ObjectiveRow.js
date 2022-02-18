@@ -97,7 +97,6 @@ function ObjectiveRow({
     <>
       <tr className="tta-smarthub--objective-row">
         <td>
-          {title}
           <button
             type="button"
             className="usa-button usa-button--outline tta-smarthub--objective-rows-collapse-button"
@@ -106,6 +105,7 @@ function ObjectiveRow({
           >
             Collapse objective(s)
           </button>
+          {title}
         </td>
         <td>
           {' '}
