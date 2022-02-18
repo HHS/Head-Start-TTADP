@@ -16,6 +16,7 @@ import {
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  otherEntitiesFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -338,6 +339,7 @@ describe('Filter Menu', () => {
       stateCodeFilter,
       targetPopulationsFilter,
       topicsFilter,
+      otherEntitiesFilter,
     ];
 
     const filters = [];
@@ -382,6 +384,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(conditions, 'is');
 
     userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Other entities');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 

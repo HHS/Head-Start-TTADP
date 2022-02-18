@@ -10,6 +10,8 @@ import {
   getReports,
   getReportAlerts,
   deleteReport,
+  downloadReports,
+  unlockReport,
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
@@ -127,6 +129,24 @@ describe('activityReports fetcher', () => {
       const status = { status: 200 };
       fetchMock.delete(join('api', 'activity-reports', '1'), status);
       await deleteReport(1);
+      expect(fetchMock.called()).toBeTruthy();
+    });
+  });
+
+  describe('unlockReport', () => {
+    it('unlcoks the report', async () => {
+      const status = { status: 200 };
+      fetchMock.put(join('api', 'activity-reports', '1', 'unlock'), status);
+      await unlockReport(1);
+      expect(fetchMock.called()).toBeTruthy();
+    });
+  });
+
+  describe('downloadReports', () => {
+    it('returns a blob', async () => {
+      // const status = { status: 200 };
+      fetchMock.get('url', new Blob());
+      await downloadReports('url');
       expect(fetchMock.called()).toBeTruthy();
     });
   });
