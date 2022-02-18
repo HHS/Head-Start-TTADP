@@ -35,7 +35,7 @@ export default function GoalsObjectives({ recipientId, regionId }) {
           Goals and Objectives
         </title>
       </Helmet>
-      <div className="margin-x-2 maxw-widescreen" id="goalsObjectives">
+      <div className="margin-x-2 maxw-widescreen" id="recipientGoalsObjectives">
         <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             onRemoveFilter={onRemoveFilter}

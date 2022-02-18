@@ -314,6 +314,7 @@ function GoalRow({
             <tbody>
               {objectives.map((obj) => (
                 <ObjectiveRow
+                  key={`objective_${obj.id}`}
                   objective={obj}
                   onCollapseObjectives={closeOrOpenObjectives}
                 />
@@ -332,10 +333,14 @@ export const objectivePropTypes = PropTypes.shape({
   title: PropTypes.string.isRequired,
   arNumber: PropTypes.string.isRequired,
   ttaProvided: PropTypes.string.isRequired,
-  endDate: PropTypes.arrayOf(PropTypes.string).isRequired,
+  endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
-  status: PropTypes.number.isRequired,
+  status: PropTypes.string.isRequired,
 });
+
+objectivePropTypes.defaultProps = {
+  endDate: null,
+};
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
