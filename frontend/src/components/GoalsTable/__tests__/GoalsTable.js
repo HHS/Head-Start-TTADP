@@ -99,7 +99,7 @@ const goals = [{
 
 const goalWithObjectives = [{
   id: 4458,
-  goalStatus: null,
+  goalStatus: 'In Progress',
   createdOn: '06/15/2021',
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
@@ -159,6 +159,27 @@ const goalWithObjectives = [{
   ],
 },
 ];
+
+const noStatusGoalWithOneObjective = [{
+  id: 4459,
+  goalStatus: null,
+  createdOn: '06/15/2021',
+  goalText: 'This is a goal with a single objectives',
+  goalTopics: ['Human Resources'],
+  objectiveCount: 4,
+  goalNumber: 'R14-G-4459',
+  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+  objectives: [{
+    title: 'Objective 1 Title',
+    arId: 1,
+    arNumber: 'ar-number-1',
+    arLegacyId: null,
+    arStatus: 'In Progress',
+    endDate: '06/14/2021',
+    reasons: ['Monitoring | Deficiency'],
+    status: 'In Progress',
+  }],
+}];
 
 const renderTable = (user) => {
   render(
@@ -316,7 +337,7 @@ describe('Goals Table', () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
 
       // Objective 1.
       expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/objective 1 title/i);
@@ -382,6 +403,33 @@ describe('Goals Table', () => {
       // We should set focus back to the expand button.
       const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
       expect(expandWithFocus).toHaveFocus();
+    });
+  });
+
+  describe('Table displays correct colors', () => {
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get(
+        baseWithRegionOne,
+        { count: 1, goalRows: noStatusGoalWithOneObjective },
+      );
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      fetchMock.restore();
+    });
+
+    it('Selects the correct color for goals with null status', async () => {
+      renderTable(defaultUser);
+      await screen.findByText('TTA goals and objectives');
+
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
+
+      expect(document.querySelector('.fa-exclamation-circle')).toHaveAttribute(
+        'color',
+        '#c5c5c5',
+      );
     });
   });
 
