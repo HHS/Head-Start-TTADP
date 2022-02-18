@@ -4,11 +4,11 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useSessionStorage from '../useSessionStorage';
+import useSessionFilters from '../useSessionFilters';
 import { mockWindowProperty } from '../../testHelpers';
 
-const StorageTest = () => {
-  const [storage, setStorage] = useSessionStorage('test', 'this');
+const SessionFilters = () => {
+  const [storage, setStorage] = useSessionFilters('test', 'this');
 
   return (
     <>
@@ -18,20 +18,19 @@ const StorageTest = () => {
   );
 };
 
-const renderStorageTest = () => render(<StorageTest />);
+const renderSessionFilters = () => render(<SessionFilters />);
 
-describe('useSessionStorage', () => {
+describe('useSessionFilters', () => {
   const setItem = jest.fn();
-  const getItem = jest.fn();
 
   mockWindowProperty('sessionStorage', {
     setItem,
-    getItem,
+    getItem: jest.fn(),
     removeItem: jest.fn(),
   });
 
   it('saves state to local storage', async () => {
-    renderStorageTest();
+    renderSessionFilters();
 
     const textBox = await screen.findByRole('textbox');
 
