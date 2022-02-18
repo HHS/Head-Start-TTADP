@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import { queryStringToFilters } from '../utils';
 import useSessionStorage from './useSessionStorage';
 
-// hoisting this fellow as to not get embroiled in useEffects
 const { sessionStorage } = window;
 
 /**
@@ -13,16 +11,8 @@ const { sessionStorage } = window;
  * @param {Object[]} defaultFilters
  * @returns {[ Object[], Function ]}
  */
-export default function useSessionFilters(key, defaultFilters) {
-  // initial state should derive from whats in the url if possible
-  // we don't want to be doing this every time the component rerenders so we store it in a usememo
-  const initialValue = useMemo(() => {
-    const params = queryStringToFilters(new URL(window.location).search.substr(1));
-
-    if (params.length) {
-      return params;
-    }
-
+export default function useSessionFilters(key, initialValue) {
+  const initial = useMemo(() => {
     try {
       const filtersFromStorage = sessionStorage.getItem(key);
       if (filtersFromStorage) {
@@ -33,10 +23,10 @@ export default function useSessionFilters(key, defaultFilters) {
       console.log(error); // we're "catching" this by returning the default value
     }
 
-    return defaultFilters;
-  }, [defaultFilters, key]);
+    return initialValue;
+  }, [initialValue, key]);
 
-  const [filters, setFilters] = useSessionStorage(key, initialValue);
+  const [filters, setFilters] = useSessionStorage(key, initial);
 
   return [filters, setFilters];
 }

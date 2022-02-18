@@ -20,7 +20,7 @@ const { sessionStorage } = window;
  */
 export default function useSessionSort(defaultSortConfig, key) {
   const { filterKey } = useContext(FilterContext);
-  const sessionSchema = `${key}-sorting`;
+  const sessionSchema = `${filterKey}-${key}-sorting`;
 
   const existingSort = useMemo(() => {
     const currentFilterStorage = sessionStorage.getItem(filterKey);

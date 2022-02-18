@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import useSessionFilters from './useSessionFilters';
 import useUrlFilters from './useUrlFilters';
 
@@ -10,9 +11,12 @@ import useUrlFilters from './useUrlFilters';
  * @returns {[ Object[], Function ]}
  */
 export default function useSessionFiltersAndReflectInUrl(key, defaultFilters) {
-  const [filters, setFilters] = useSessionFilters(key, defaultFilters);
+  const [initialValue, updateUrl] = useUrlFilters(defaultFilters);
+  const [filters, setFilters] = useSessionFilters(key, initialValue);
 
-  useUrlFilters(filters);
+  useEffect(() => {
+    updateUrl(filters);
+  }, [filters, updateUrl]);
 
   return [filters, setFilters];
 }
