@@ -2,7 +2,7 @@ import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Helmet } from 'react-helmet';
 import PropTypes from 'prop-types';
-import useUrlFilters from '../../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { formatDateRange } from '../../../utils';
 import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
@@ -14,7 +14,7 @@ export default function GoalsObjectives({ recipientId, regionId }) {
 
   const FILTER_KEY = 'goals-objectives-filters';
 
-  const [filters, setFilters] = useUrlFilters(
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     [{
       id: uuidv4(),

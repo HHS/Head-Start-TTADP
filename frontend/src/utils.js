@@ -149,6 +149,7 @@ export function queryStringToFilters(queryString) {
 }
 
 export function filtersToQueryString(filters, region) {
+  // debugger;
   const filtersWithValues = filters.filter((f) => {
     if (f.condition === WITHIN) {
       const [startDate, endDate] = f.query.split('-');

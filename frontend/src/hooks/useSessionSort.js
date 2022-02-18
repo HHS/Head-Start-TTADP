@@ -1,5 +1,4 @@
 import { useMemo, useContext } from 'react';
-import { compareFilters } from './helpers';
 import useSessionStorage from './useSessionStorage';
 import FilterContext from '../FilterContext';
 
@@ -10,6 +9,7 @@ const { sessionStorage } = window;
  * ex: {
     sortBy: 'updatedAt',
     direction: 'desc',
+    activePage: 0
   }
  * and a component name
  * and returns a useState like array of a getter and a setter
@@ -19,16 +19,15 @@ const { sessionStorage } = window;
  * @returns {[ Object[], Function ]}
  */
 export default function useSessionSort(defaultSortConfig, component) {
-  const { filterKey, filters } = useContext(FilterContext);
+  const { filterKey } = useContext(FilterContext);
   const sessionSchema = `${filterKey}-${component}-sorting`;
 
   const existingSort = useMemo(() => {
     const currentFilterStorage = sessionStorage.getItem(filterKey);
     if (currentFilterStorage) {
       try {
-        const theSame = compareFilters(filters, JSON.parse(currentFilterStorage));
         const currentStorage = sessionStorage.getItem(sessionSchema);
-        if (currentStorage && theSame) {
+        if (currentStorage) {
           const parsedStorage = JSON.parse(currentStorage);
           // this is really just to make sure nothing weird gets in there
           const {
@@ -46,7 +45,7 @@ export default function useSessionSort(defaultSortConfig, component) {
     }
 
     return false;
-  }, [filterKey, filters, sessionSchema]);
+  }, [filterKey, sessionSchema]);
 
   // put it in state
   const [sortConfig, setSortConfig] = useSessionStorage(
