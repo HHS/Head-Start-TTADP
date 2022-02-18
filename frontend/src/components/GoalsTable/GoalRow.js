@@ -189,7 +189,7 @@ function GoalRow({
           <Tooltip
             displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />}
             screenReadDisplayText={false}
-            buttonLabel={`Click to reveal reason for flag ${goalNumber}`}
+            buttonLabel={`Reason for flag on goal ${goalNumber} is monitoring. Click button to visually reveal this information.`}
             tooltipText="Related to monitoring"
             hideUnderline
           />
@@ -253,7 +253,7 @@ function GoalRow({
               <Tooltip
                 displayText={displayGoalTopics}
                 screenReadDisplayText={false}
-                buttonLabel={`Click to reveal topics for goal ${goalNumber}`}
+                buttonLabel={`goal topics: ${goalTopics}. Click button to visually reveal this information.`}
                 tooltipText={goalTopics.join(', ')}
                 hideUnderline={false}
                 svgLineTo={300}
