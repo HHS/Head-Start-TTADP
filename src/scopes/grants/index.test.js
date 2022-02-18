@@ -249,8 +249,8 @@ describe('grant filtersToScopes', () => {
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id)).toContain(recipients[1].id);
       expect(found.map((f) => f.id)).toContain(recipients[2].id);
+      expect(found.map((f) => f.id)).toContain(recipients[1].id);
     });
   });
   describe('stateCode', () => {

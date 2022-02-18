@@ -125,6 +125,20 @@ export const ROLES = [
   'System Specialist',
 ];
 
+export const OTHER_ENTITY_TYPES = [
+  'CCDF / Child Care Administrator',
+  'Head Start Collaboration Office',
+  'QRIS System',
+  'Regional Head Start Association',
+  'Regional TTA / Other Specialists',
+  'State CCR&R',
+  'State Early Learning Standards',
+  'State Education System',
+  'State Head Start Association',
+  'State Health System',
+  'State Professional Development / Continuing Education',
+];
+
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const TOPICS = [
