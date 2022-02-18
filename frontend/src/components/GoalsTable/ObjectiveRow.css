@@ -66,6 +66,7 @@
     position: absolute;
     margin-left: 16px;
     margin-top: 8px;
+    background-color: #fff;
   }
 
   .tta-smarthub--objective-rows-collapse-button:focus {

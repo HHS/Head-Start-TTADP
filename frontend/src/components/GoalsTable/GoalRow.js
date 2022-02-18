@@ -217,6 +217,7 @@ function GoalRow({
     if (collapseFromObjectives && expandObjectivesRef.current) {
       expandObjectivesRef.current.focus();
     }
+
     setObjectivesExpanded(!objectivesExpanded);
   };
 
@@ -229,8 +230,6 @@ function GoalRow({
     }
     return '#c5c5c5';
   };
-
-  const totalObjectives = objectives.length;
 
   return (
     <>
@@ -298,6 +297,11 @@ function GoalRow({
       <tr className="tta-smarthub--objective-rows">
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
           <table>
+            <caption className="usa-sr-only">
+              Objectives for goal
+              {' '}
+              {goalNumber}
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Objective</th>
@@ -311,10 +315,7 @@ function GoalRow({
               {objectives.map((obj) => (
                 <ObjectiveRow
                   objective={obj}
-                  goalNumber={goalNumber}
                   onCollapseObjectives={closeOrOpenObjectives}
-                  objNumber={objectives.indexOf(obj) + 1}
-                  objCount={totalObjectives}
                 />
               ))}
             </tbody>
