@@ -48,12 +48,6 @@ const hsesUsers = [
     name: 'Lauren Rodriguez', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren@adhocteam.us',
   },
   {
-    name: 'Christine Nguyen', hsesUsername: 'test.tta.christine', hsesUserId: '50450', email: 'christine@adhocteam.us',
-  },
-  {
-    name: 'Ryan Ahearn', hsesUsername: 'test.tta.ryan', hsesUserId: '48831', email: 'ryan@adhocteam.us',
-  },
-  {
     name: 'Maria Puhl', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria@adhocteam.us',
   },
   {
