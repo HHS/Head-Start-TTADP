@@ -43,10 +43,9 @@ export default function RecipientRecord({ match }) {
         if (e instanceof HTTPError) {
           if (e.status === 404) {
             setError('Recipient record not found');
-          } else {
-            setError('There was an error fetching recipient data');
           }
         }
+        setError('There was an error fetching recipient data');
       }
     }
 
