@@ -40,12 +40,11 @@ export default function RecipientRecord({ match }) {
           });
         }
       } catch (e) {
-        if (e instanceof HTTPError) {
-          if (e.status === 404) {
-            setError('Recipient record not found');
-          }
+        if (e instanceof HTTPError && e.status === 404) {
+          setError('Recipient record not found');
+        } else {
+          setError('There was an error fetching recipient data');
         }
-        setError('There was an error fetching recipient data');
       }
     }
 
