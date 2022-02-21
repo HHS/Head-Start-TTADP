@@ -47,15 +47,20 @@ export default async function goalStatusGraph(scopes) {
     }],
   });
 
-  const goals = STATUSES_TO_INCLUDE.map((status) => {
+  let total = 0;
+
+  const goals = STATUSES_TO_INCLUDE.reduce((accumulator, status) => {
     const goal = goalsFromDb.find((g) => g.status === status);
     const count = goal ? goal.count : 0;
-    return { status, count };
-  });
+    total += count;
+    return { ...accumulator, [status]: count };
+  }, {});
 
-  const total = goals.reduce((sum, g) => sum + g.count, 0);
   return {
     total,
-    goals,
+    'Not started': goals[GOAL_STATUS.NOT_STARTED],
+    'In progress': goals[GOAL_STATUS.IN_PROGRESS],
+    Closed: goals[GOAL_STATUS.CLOSED],
+    Suspended: goals[GOAL_STATUS.CEASED],
   };
 }

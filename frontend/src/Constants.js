@@ -125,6 +125,20 @@ export const ROLES = [
   'System Specialist',
 ];
 
+export const OTHER_ENTITY_TYPES = [
+  'CCDF / Child Care Administrator',
+  'Head Start Collaboration Office',
+  'QRIS System',
+  'Regional Head Start Association',
+  'Regional TTA / Other Specialists',
+  'State CCR&R',
+  'State Early Learning Standards',
+  'State Education System',
+  'State Head Start Association',
+  'State Health System',
+  'State Professional Development / Continuing Education',
+];
+
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const TOPICS = [
@@ -207,6 +221,7 @@ export const ALERTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
+export const GOALS_PER_PAGE = 5;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
