@@ -175,8 +175,14 @@ describe('grant filtersToScopes', () => {
     it('filters by', async () => {
       const filters = { 'recipient.ctn': '13269' };
       const scope = filtersToScopes(filters);
-      const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      const found = await Recipient.findAll({
+        include: [
+          {
+            model: Grant,
+            as: 'grants',
+            where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+          },
+        ],
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id)).toContain(recipients[1].id);
@@ -184,8 +190,14 @@ describe('grant filtersToScopes', () => {
     it('filters out', async () => {
       const filters = { 'recipient.nctn': '13269' };
       const scope = filtersToScopes(filters);
-      const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+      const found = await Recipient.findAll({
+        include: [
+          {
+            model: Grant,
+            as: 'grants',
+            where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+          },
+        ],
       });
       expect(found.map((f) => f.id)).toStrictEqual([13259, 13279]);
     });
