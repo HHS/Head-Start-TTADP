@@ -62,12 +62,22 @@ describe('Goals and Objectives', () => {
     },
   ];
 
+  const recipient = {
+    goals: [
+      {
+        id: 1,
+        number: 'number',
+      },
+    ],
+  };
+
   const renderGoalsAndObjectives = () => {
     render(
       <Router history={memoryHistory}>
         <GoalsObjectives
           recipientId="401"
           regionId="1"
+          recipient={recipient}
         />
       </Router>,
     );

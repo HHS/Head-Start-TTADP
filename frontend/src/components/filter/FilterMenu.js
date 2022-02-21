@@ -197,6 +197,8 @@ export default function FilterMenu({
                 .filter((config) => (
                   topic === config.id || !selectedFilters.includes(config.id)
                 ))
+                // make sure options are always sorted
+                .sort((a, b) => a.display.localeCompare(b.display))
                 // return a new array of option elements
                 .map(({ id: filterId, display }) => (
                   <option key={filterId} value={filterId}>{display}</option>

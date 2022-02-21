@@ -6,11 +6,11 @@ import { Helmet } from 'react-helmet';
 import useUrlFilters from '../../../hooks/useUrlFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { expandFilters, formatDateRange } from '../../../utils';
-import { GOALS_AND_OBJECTIVES_FILTER_CONFIG } from './constants';
+import { getGoalsAndObjectivesFilterConfig } from './constants';
 import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 
-export default function GoalsObjectives({ recipientId, regionId }) {
+export default function GoalsObjectives({ recipientId, regionId, recipient }) {
   const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
   const [filters, setFilters] = useUrlFilters([{
@@ -19,6 +19,8 @@ export default function GoalsObjectives({ recipientId, regionId }) {
     condition: 'Is within',
     query: yearToDate,
   }]);
+
+  const possibleGrants = recipient.grants;
 
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
@@ -55,7 +57,7 @@ export default function GoalsObjectives({ recipientId, regionId }) {
           <FilterPanel
             onRemoveFilter={onRemoveFilter}
             onApplyFilters={setFilters}
-            filterConfig={GOALS_AND_OBJECTIVES_FILTER_CONFIG}
+            filterConfig={getGoalsAndObjectivesFilterConfig(possibleGrants)}
             applyButtonAria="Apply filters to goals"
             filters={filters}
           />
@@ -68,7 +70,7 @@ export default function GoalsObjectives({ recipientId, regionId }) {
         <GoalsTable
           recipientId={recipientId}
           regionId={regionId}
-          filters={filters}
+          filters={expandFilters(filters)}
         />
       </div>
     </>
@@ -78,4 +80,10 @@ export default function GoalsObjectives({ recipientId, regionId }) {
 GoalsObjectives.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
+  recipient: PropTypes.shape({
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      number: PropTypes.string.isRequired,
+    })).isRequired,
+  }).isRequired,
 };
