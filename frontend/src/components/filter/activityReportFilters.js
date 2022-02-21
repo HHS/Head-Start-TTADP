@@ -70,6 +70,7 @@ export const startDateFilter = {
     />
   ),
 };
+
 export const grantNumberFilter = {
   id: 'grantNumber',
   display: 'Grant number',
