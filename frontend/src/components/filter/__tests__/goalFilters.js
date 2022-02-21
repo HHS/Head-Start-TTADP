@@ -16,9 +16,9 @@ const renderFilter = (filter) => {
   render(
     <FilterErrorContext.Provider value={{ setError: () => {} }}>
       {filter()}
-    </FilterErrorContext.Provider>
-  )
-}
+    </FilterErrorContext.Provider>,
+  );
+};
 
 describe('goalFilters', () => {
   describe('createDateFilter', () => {
