@@ -44,6 +44,7 @@ const RichEditor = ({
       defaultEditorState={defaultEditorState}
       onChange={onInternalChange}
       ariaLabel={ariaLabel}
+      handlePastedText={() => false}
       tabIndex="0"
       editorStyle={{ border: '1px solid #565c65', height: '10rem' }}
       toolbar={{
