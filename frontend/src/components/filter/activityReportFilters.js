@@ -16,6 +16,7 @@ import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
+import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 
 const EMPTY_MULTI_SELECT = {
   Is: [],
@@ -81,6 +82,21 @@ export const grantNumberFilter = {
       inputId={`grantNumber-${condition}-${id}`}
       onApply={onApplyQuery}
       label="Enter a grant number"
+    />
+  ),
+};
+
+export const otherEntitiesFilter = {
+  id: 'otherEntities',
+  display: 'Other entities',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterOtherEntitiesSelect
+      inputId={`role-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
