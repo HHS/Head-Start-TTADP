@@ -189,6 +189,7 @@
   "dependencies": {
     "@babel/runtime": "^7.12.1",
     "adm-zip": "^0.5.1",
+    "async": "^3.2.3",
     "aws-sdk": "^2.826.0",
     "axios": "^0.24.0",
     "bull": "^4.2.0",
