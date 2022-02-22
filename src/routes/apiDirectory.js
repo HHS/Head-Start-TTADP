@@ -30,7 +30,7 @@ router.use((req, res, next) => {
   const getSessionSig = (cookie) => {
     try {
       if (cookie !== undefined && (typeof cookie === 'string' || cookie instanceof String)) {
-        const sessionSigs = cookie.split(' ').filter((s) => s.includes('session.sig='));
+        const sessionSigs = cookie.split('; ').filter((s) => s.includes('session.sig='));
         return sessionSigs.length > 0
           ? sessionSigs[0].replace('session.sig=', '')
           : '';
