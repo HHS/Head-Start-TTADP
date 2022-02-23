@@ -171,7 +171,7 @@ export default function FilterMenu({
 
   return (
     <DropdownMenu
-      buttonText="Filters"
+      buttonText={`Filters${filters && filters.length > 0 ? ` (${filters.length})` : ''}`}
       buttonAriaLabel="open filters for this page"
       onApply={onApply}
       applyButtonAria={applyButtonAria}
@@ -183,7 +183,6 @@ export default function FilterMenu({
       canBlur={canBlur}
       AlternateActionButton={ClearAllButton}
       onOpen={onOpen}
-      filterCount={filters.length}
     >
 
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
