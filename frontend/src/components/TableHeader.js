@@ -37,6 +37,7 @@ export default function TableHeader({
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
+  paginationName,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -84,7 +85,7 @@ export default function TableHeader({
       </div>
       {!hidePagination && (
         <span className="smart-hub--table-nav">
-          <span aria-label="Pagination for activity reports">
+          <span aria-label={`Pagination for ${paginationName}`}>
             <span
               className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
               aria-label={`Page ${activePage}, displaying rows ${renderTotal(
@@ -142,6 +143,7 @@ TableHeader.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
+  paginationName: PropTypes.string,
 };
 
 TableHeader.defaultProps = {
@@ -162,4 +164,5 @@ TableHeader.defaultProps = {
   isDownloading: false,
   downloadAllButtonRef: () => {},
   downloadSelectedButtonRef: () => {},
+  paginationName: 'activity reports',
 };
