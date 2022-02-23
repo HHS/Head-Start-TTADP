@@ -39,7 +39,6 @@ export default function DropdownMenu({
   forwardedRef,
   AlternateActionButton,
   onOpen,
-  filterCount,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
@@ -122,7 +121,6 @@ export default function DropdownMenu({
       >
         <span>
           {buttonText}
-          {filterCount > 0 ? ` (${filterCount})` : '' }
         </span>
         {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
@@ -180,7 +178,6 @@ DropdownMenu.propTypes = {
   ]),
   AlternateActionButton: PropTypes.func,
   onOpen: PropTypes.func,
-  filterCount: PropTypes.number,
 };
 
 function DefaultAlternateActionButton() {
@@ -200,5 +197,4 @@ DropdownMenu.defaultProps = {
   forwardedRef: () => {},
   AlternateActionButton: DefaultAlternateActionButton,
   onOpen: () => {},
-  filterCount: 0,
 };
