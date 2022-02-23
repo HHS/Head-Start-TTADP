@@ -166,10 +166,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "js-560-csv-limit-increase"
+    default: "js-644-fix-copy-paste-into-wysiwyg-component"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-249/update-node-to-v16"
+    default: "js-560-csv-limit-increase"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

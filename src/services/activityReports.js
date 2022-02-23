@@ -791,7 +791,6 @@ async function getDownloadableActivityReports(where) {
           attributes: ['userId'],
           as: 'approvers',
           required: false,
-          separate: true,
           include: [
             {
               model: User,
@@ -831,11 +830,13 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
     [Op.and]: scopes,
     [Op.or]: [
       { // User is approver, and report is submitted or needs_action
-        [Op.or]: [
-          { submissionStatus: REPORT_STATUSES.SUBMITTED },
-          { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-        ],
-        '$approvers.userId$': userId,
+        [Op.and]: [{
+          [Op.or]: [
+            { calculatedStatus: REPORT_STATUSES.SUBMITTED },
+            { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+          ],
+          '$approvers.userId$': userId,
+        }],
       },
       { // User is author or collaborator, and report is approved
         [Op.and]: [
