@@ -691,7 +691,7 @@ export async function possibleRecipients(regionId) {
 }
 
 async function getDownloadableActivityReports(where) {
-  return ActivityReport.findAndCountAll(
+  return ActivityReport.findAll(
     {
       where,
       attributes: {
@@ -713,6 +713,7 @@ async function getDownloadableActivityReports(where) {
           attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
           as: 'activityRecipients',
           required: false,
+          separate: true,
           include: [
             {
               model: Grant,
@@ -747,6 +748,7 @@ async function getDownloadableActivityReports(where) {
             },
           },
           as: 'attachments',
+          separate: true,
           required: false,
         },
         {
@@ -769,6 +771,7 @@ async function getDownloadableActivityReports(where) {
           },
           attributes: ['note', 'id'],
           as: 'specialistNextSteps',
+          separate: true,
           required: false,
         },
         {
@@ -780,6 +783,7 @@ async function getDownloadableActivityReports(where) {
           },
           attributes: ['note', 'id'],
           as: 'recipientNextSteps',
+          separate: true,
           required: false,
         },
         {
@@ -787,6 +791,7 @@ async function getDownloadableActivityReports(where) {
           attributes: ['userId'],
           as: 'approvers',
           required: false,
+          separate: true,
           include: [
             {
               model: User,
