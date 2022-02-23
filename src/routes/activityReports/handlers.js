@@ -668,9 +668,7 @@ export async function downloadAllAlerts(req, res) {
   try {
     const { userId } = req.session;
     const query = await setReadRegions(req.query, userId);
-    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, query);
-
-    const rows = alertsWithCount ? alertsWithCount.rows : [];
+    const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
     await sendActivityReportCSV(rows, res);
   } catch (error) {

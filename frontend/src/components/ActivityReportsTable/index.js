@@ -53,6 +53,7 @@ function ActivityReportsTable({
 
         setReports(rows);
         setReportsCount(count || 0);
+        setError('');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);

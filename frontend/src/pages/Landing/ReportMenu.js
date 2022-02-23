@@ -13,7 +13,6 @@ function ReportMenu({
   onExportSelected,
   hasSelectedReports,
   label,
-  count,
   downloadError,
   setDownloadError,
   isDownloading,
@@ -141,7 +140,6 @@ ReportMenu.propTypes = {
   onExportSelected: PropTypes.func,
   hasSelectedReports: PropTypes.bool.isRequired,
   label: PropTypes.string,
-  count: PropTypes.number,
   downloadError: PropTypes.bool,
   isDownloading: PropTypes.bool,
   downloadAllButtonRef: PropTypes.oneOfType([
@@ -156,7 +154,6 @@ ReportMenu.propTypes = {
 };
 
 ReportMenu.defaultProps = {
-  count: 0,
   downloadError: false,
   label: 'Reports menu',
   onExportSelected: null,

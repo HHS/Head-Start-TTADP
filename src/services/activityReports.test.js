@@ -750,8 +750,7 @@ describe('Activity Reports DB service', () => {
     });
 
     it('returns all approved reports', async () => {
-      const result = await getAllDownloadableActivityReports([14]);
-      const { rows } = result;
+      const rows = await getAllDownloadableActivityReports([14]);
       const ids = rows.map((row) => row.id);
       expect(ids.length).toEqual(3);
       expect(ids).toContain(approvedReport.id);
@@ -759,8 +758,7 @@ describe('Activity Reports DB service', () => {
     });
 
     it('will return legacy reports', async () => {
-      const result = await getAllDownloadableActivityReports([14], {}, true);
-      const { rows } = result;
+      const rows = await getAllDownloadableActivityReports([14], {}, true);
       const ids = rows.map((row) => row.id);
       expect(ids).toContain(legacyReport.id);
 
@@ -770,13 +768,12 @@ describe('Activity Reports DB service', () => {
         true,
       );
 
-      expect(secondResult.rows.length).toEqual(1);
-      expect(secondResult.rows[0].id).toEqual(legacyReport.id);
+      expect(secondResult.length).toEqual(1);
+      expect(secondResult[0].id).toEqual(legacyReport.id);
     });
 
     it('excludes non-approved reports', async () => {
-      const result = await getAllDownloadableActivityReports([14]);
-      const { rows } = result;
+      const rows = await getAllDownloadableActivityReports([14]);
       const ids = rows.map((row) => row.id);
       expect(ids).not.toContain(nonApprovedReport.id);
     });
@@ -802,13 +799,11 @@ describe('Activity Reports DB service', () => {
     });
 
     it('do not alert for submitted reports', async () => {
-      const result = await getAllDownloadableActivityReportAlerts(alertsMockUserOne.id);
-      const { rows } = result;
+      const rows = await getAllDownloadableActivityReportAlerts(alertsMockUserOne.id);
       expect(rows.length).toEqual(0); // fails, rcvd 13
     });
     it('returns all reports that need action', async () => {
-      const result = await getAllDownloadableActivityReportAlerts(alertsMockUserTwo.id);
-      const { rows } = result;
+      const rows = await getAllDownloadableActivityReportAlerts(alertsMockUserTwo.id);
       const ids = rows.map((row) => row.id);
 
       expect(ids.length).toEqual(1); // fails, rcvd 6
@@ -823,8 +818,7 @@ describe('Activity Reports DB service', () => {
         calculatedStatus: REPORT_STATUSES.APPROVED,
       };
       const report = await ActivityReport.create(mockReport);
-      const result = await getDownloadableActivityReportsByIds([1], { report: report.id });
-      const { rows } = result;
+      const rows = await getDownloadableActivityReportsByIds([1], { report: report.id });
 
       expect(rows.length).toEqual(1);
       expect(rows[0].id).toEqual(report.id);
@@ -844,12 +838,10 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReportsByIds(
+      const rows = await getDownloadableActivityReportsByIds(
         [1],
         { report: [report.id, legacyReport.id] },
       );
-
-      const { rows } = result;
 
       expect(rows.length).toEqual(2);
       expect(rows.map((row) => row.id)).toContain(legacyReport.id);
@@ -862,11 +854,10 @@ describe('Activity Reports DB service', () => {
       };
       const report = await ActivityReport.create(mockReport);
 
-      const result = await getDownloadableActivityReportsByIds(
+      const rows = await getDownloadableActivityReportsByIds(
         [1],
         { report: [report.id, 'invalidIdentifier'] },
       );
-      const { rows } = result;
 
       expect(rows.length).toEqual(1);
       expect(rows[0].id).toEqual(report.id);
