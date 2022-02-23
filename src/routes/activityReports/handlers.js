@@ -653,13 +653,12 @@ export async function downloadAllReports(req, res) {
   try {
     const readRegions = await setReadRegions(req.query, req.session.userId);
 
-    const reportsWithCount = await getAllDownloadableActivityReports(
+    const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
     );
 
-    const rows = reportsWithCount ? reportsWithCount.rows : [];
-    await sendActivityReportCSV(rows, res);
+    await sendActivityReportCSV(reports, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
