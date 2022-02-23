@@ -183,7 +183,7 @@ export default function FilterMenu({
       canBlur={canBlur}
       AlternateActionButton={ClearAllButton}
       onOpen={onOpen}
-      filterCount={items.length}
+      filterCount={filters.length}
     >
 
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
