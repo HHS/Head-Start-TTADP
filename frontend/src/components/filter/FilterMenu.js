@@ -169,10 +169,11 @@ export default function FilterMenu({
     }
   };
 
+  const hasMultipleFilters = filters && filters.length > 0;
   return (
     <DropdownMenu
-      buttonText={`Filters${filters && filters.length > 0 ? ` (${filters.length})` : ''}`}
-      buttonAriaLabel="open filters for this page"
+      buttonText={`Filters${hasMultipleFilters ? ` (${filters.length})` : ''}`}
+      buttonAriaLabel={`open filters for this page${hasMultipleFilters ? ` , ${filters.length} currently applied` : ''}`}
       onApply={onApply}
       applyButtonAria={applyButtonAria}
       showCancel
