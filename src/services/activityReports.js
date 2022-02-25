@@ -690,119 +690,141 @@ export async function possibleRecipients(regionId) {
   return { grants, otherEntities };
 }
 
+async function batchQuery(query, limit = 1000) {
+  let finished = false;
+  let page = 0;
+  const finalResult = [];
+
+  while (!finished) {
+    // eslint-disable-next-line no-await-in-loop
+    const rows = await ActivityReport.findAll({
+      ...query,
+      limit,
+      offset: page * limit,
+    });
+    const cleaned = JSON.parse(JSON.stringify(rows));
+    finalResult.push(...cleaned);
+    if (rows.length < limit) {
+      finished = true;
+    }
+    page += 1;
+  }
+
+  return finalResult;
+}
+
 async function getDownloadableActivityReports(where) {
-  return ActivityReport.findAll(
-    {
-      where,
-      attributes: {
-        include: ['displayId', 'createdAt', 'approvedAt'],
-        exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
-      },
-      include: [
-        {
-          model: Objective,
-          as: 'objectives',
-          include: [{
-            model: Goal,
-            as: 'goal',
-          }],
-          attributes: ['title', 'status', 'ttaProvided'],
-        },
-        {
-          model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
-          as: 'activityRecipients',
-          required: false,
-          separate: true,
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo'],
-              as: 'grant',
-              required: false,
-              include: [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['id', 'name'],
-                },
-                {
-                  model: Program,
-                  as: 'programs',
-                  attributes: ['programType'],
-                },
-              ],
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              required: false,
-            },
-          ],
-        },
-        {
-          model: File,
-          where: {
-            status: {
-              [Op.ne]: 'UPLOAD_FAILED',
-            },
-          },
-          as: 'attachments',
-          separate: true,
-          required: false,
-        },
-        {
-          model: User,
-          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
-          as: 'author',
-        },
-        {
-          model: User,
-          attributes: ['id', 'name', 'role', 'fullName'],
-          as: 'collaborators',
-          through: { attributes: [] },
-        },
-        {
-          model: NextStep,
-          where: {
-            noteType: {
-              [Op.eq]: 'SPECIALIST',
-            },
-          },
-          attributes: ['note', 'id'],
-          as: 'specialistNextSteps',
-          separate: true,
-          required: false,
-        },
-        {
-          model: NextStep,
-          where: {
-            noteType: {
-              [Op.eq]: 'RECIPIENT',
-            },
-          },
-          attributes: ['note', 'id'],
-          as: 'recipientNextSteps',
-          separate: true,
-          required: false,
-        },
-        {
-          model: ActivityReportApprover,
-          attributes: ['userId'],
-          as: 'approvers',
-          required: false,
-          include: [
-            {
-              model: User,
-              attributes: ['name'],
-            },
-          ],
-        },
-      ],
-      distinct: true,
-      order: [['id', 'DESC']],
+  const query = {
+    where,
+    attributes: {
+      include: ['displayId', 'createdAt', 'approvedAt'],
+      exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
     },
-  );
+    include: [
+      {
+        model: Objective,
+        as: 'objectives',
+        include: [{
+          model: Goal,
+          as: 'goal',
+        }],
+        attributes: ['title', 'status', 'ttaProvided'],
+      },
+      {
+        model: ActivityRecipient,
+        attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
+        as: 'activityRecipients',
+        required: false,
+        separate: true,
+        include: [
+          {
+            model: Grant,
+            attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo'],
+            as: 'grant',
+            include: [
+              {
+                model: Recipient,
+                as: 'recipient',
+                attributes: ['id', 'name'],
+              },
+              {
+                model: Program,
+                as: 'programs',
+                attributes: ['programType'],
+              },
+            ],
+          },
+          {
+            model: OtherEntity,
+            as: 'otherEntity',
+            required: false,
+          },
+        ],
+      },
+      {
+        model: File,
+        where: {
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
+        },
+        as: 'attachments',
+        separate: true,
+        required: false,
+      },
+      {
+        model: User,
+        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+        as: 'author',
+      },
+      {
+        model: User,
+        attributes: ['id', 'name', 'role', 'fullName'],
+        as: 'collaborators',
+        through: { attributes: [] },
+      },
+      {
+        model: NextStep,
+        where: {
+          noteType: {
+            [Op.eq]: 'SPECIALIST',
+          },
+        },
+        attributes: ['note', 'id'],
+        as: 'specialistNextSteps',
+        separate: true,
+        required: false,
+      },
+      {
+        model: NextStep,
+        where: {
+          noteType: {
+            [Op.eq]: 'RECIPIENT',
+          },
+        },
+        attributes: ['note', 'id'],
+        as: 'recipientNextSteps',
+        separate: true,
+        required: false,
+      },
+      {
+        model: ActivityReportApprover,
+        attributes: ['userId'],
+        as: 'approvers',
+        required: false,
+        separate: true,
+        include: [
+          {
+            model: User,
+            attributes: ['name'],
+          },
+        ],
+      },
+    ],
+    order: [['id', 'DESC']],
+  };
+
+  return batchQuery(query, 2000);
 }
 
 export async function getAllDownloadableActivityReports(

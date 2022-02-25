@@ -3,10 +3,11 @@ services:
   backend:
     build:
       context: .
-    command: yarn server
+    command: yarn server:debug
     user: ${CURRENT_USER:-root}
     ports:
       - "8080:8080"
+      - "9229:9229"
     depends_on:
       - db
       - redis
@@ -16,6 +17,10 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
   frontend:
     build:
       context: .
