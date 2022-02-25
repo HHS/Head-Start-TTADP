@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
-import generateMetadataFromFile from '../../lib/fileProcessing';
+import { generateMetadataFromFile } from '../../lib/fileProcessing';
 import addToScanQueue from '../../services/scanQueue';
 import createFileMetaData, {
   updateStatus, updateMetadata, getFileById, deleteFile,

@@ -3,23 +3,48 @@ import md5File from 'md5-file';
 import sha256File from 'sha256-file';
 import { auditLogger } from '../logger';
 
-const exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
+let exiftool = null;
+
+const spinUpTool = async () => {
+  exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
+  auditLogger.info(await exiftool.version());
+};
+
+const shutdownTool = async () => {
+  if (exiftool !== null) exiftool.end();
+  exiftool = null;
+};
 
 const generateMetadataFromFile = async (path) => {
-  const metadata = { value: null, error: null };
+  const metadata = { value: null, error: [] };
+  let needsCleanup = false;
   try {
-    metadata.value = await exiftool.read(path, ['-g', '-P']);
-    metadata.value.checksums = {
-      md5: await md5File(path),
-      sha256: await sha256File(path),
-    };
+    if (exiftool === null) {
+      await spinUpTool();
+      needsCleanup = true;
+    }
+    metadata.value = await exiftool.read(path, ['-json', '-g', '-P']);
+
+    auditLogger.info(JSON.stringify(metadata));
 
     if ('errors' in metadata.value) {
-      metadata.error = metadata.value.errors;
-      delete metadata.value.errors;
-      if (Array.isArray(metadata.error) && metadata.error.length === 0) {
-        metadata.error = null;
+      if (!Array.isArray(metadata.value.errors)
+      || metadata.value.errors.length !== 0) {
+        metadata.error.push(metadata.value.errors);
       }
+      delete metadata.value.errors;
+    }
+
+    if ('Error' in metadata.value.ExifTool) {
+      if (!Array.isArray(metadata.value.ExifTool.Error)
+      || metadata.value.ExifTool.Error.length !== 0) {
+        metadata.error.push(metadata.value.ExifTool.Error);
+      }
+      delete metadata.value.ExifTool.Error;
+    }
+
+    if (Array.isArray(metadata.error) && metadata.error.length === 0) {
+      metadata.error = null;
     }
 
     if ('File' in metadata.value) {
@@ -31,11 +56,20 @@ const generateMetadataFromFile = async (path) => {
     if ('ExifTool' in metadata.value) {
       delete metadata.value.ExifTool;
     }
+
+    if (metadata.error === null) {
+      metadata.value.checksums = {
+        md5: await md5File(path),
+        sha256: await sha256File(path),
+      };
+    }
   } catch (err) {
-    auditLogger.error('Something terrible happened: ', err);
+    auditLogger.error(JSON.stringify({ message: 'Failed to generate metadata from file', err }));
     metadata.error = err;
+  } finally {
+    if (needsCleanup) await shutdownTool();
   }
   return metadata;
 };
 
-export default generateMetadataFromFile;
+export { spinUpTool, shutdownTool, generateMetadataFromFile };

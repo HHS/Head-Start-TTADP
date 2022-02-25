@@ -10,6 +10,7 @@ services:
     depends_on:
       - db
       - redis
+      - aws-cli
     environment:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis

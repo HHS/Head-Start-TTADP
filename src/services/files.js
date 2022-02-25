@@ -21,17 +21,26 @@ export const updateStatus = async (fileId, fileStatus) => {
   }
 };
 
-export const updateMetadata = async (fileId, data) => {
-  if (data.error !== null) return data.error;
+export const updateMetadata = async (fileId, data, transaction) => {
   let file;
   try {
-    await db.sequelize.transaction(async (transaction) => File.update(
-      { metadata: data.value },
-      { where: { id: fileId }, transaction },
-    ));
+    if (data.error !== null) throw new Error(data.error);
+    if (transaction !== undefined) {
+      file = await File.update(
+        { metadata: data.value },
+        { where: { id: fileId }, transaction },
+      );
+    } else {
+      await db.sequelize.transaction(async (t) => {
+        file = await File.update(
+          { metadata: data.value },
+          { where: { id: fileId }, transaction: t },
+        );
+      });
+    }
     return file.dataValues;
   } catch (err) {
-    auditLogger.info(err);
+    auditLogger.error(JSON.stringify({ message: 'Failed to update metadata in db for file', err }));
     return err;
   }
 };

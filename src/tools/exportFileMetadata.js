@@ -1,45 +1,149 @@
-import async from 'async';
-import temp from 'temp';
-import generateMetadataFromFile from '../lib/fileProcessing';
+/* eslint-disable no-await-in-loop */
+import fs from 'fs';
+import { Op } from 'sequelize';
+import { spinUpTool, shutdownTool, generateMetadataFromFile } from '../lib/fileProcessing';
 import { downloadFile } from '../lib/s3';
 import { sequelize, File } from '../models';
 import { updateMetadata } from '../services/files';
 import { auditLogger } from '../logger';
 
-const processFile = async (file) => {
-  let stream;
-  let hasFile;
+const deleteIfExists = async (file, transaction) => {
   try {
-    auditLogger.info(JSON.stringify(file));
-    temp.track(); // Automatically track and cleanup files at exit
-    stream = temp.createWriteStream();
-    hasFile = stream.write(await downloadFile(file.key));
+    const stat = fs.statSync(`./${file.key}`);
+    if (stat) {
+      auditLogger.info(JSON.stringify(stat));
+      try {
+        fs.unlinkSync(`./${file.key}`);
+      } catch (err2) {
+        auditLogger.error(JSON.stringify({ message: 'Failed to delete file', err2 }));
+        await file.changed('updatedAt', true);
+        await file.update({ updatedAt: new Date(), transaction });
+      }
+    }
   } catch (err) {
-    auditLogger.error(JSON.stringify(err));
+    auditLogger.info(JSON.stringify({ message: 'File does not exist', err }));
   }
-  if (hasFile) {
+};
+
+const doesFileExist = async (file) => {
+  let exists = false;
+  try {
+    const stat = fs.statSync(`./${file.key}`);
+    if (stat) {
+      auditLogger.info(JSON.stringify(stat));
+      exists = true;
+    }
+  } catch (err) {
+    auditLogger.info(JSON.stringify({ message: 'File does not exist', err }));
+  }
+  return exists;
+};
+
+const processFile = async (file, transaction) => {
+  let fileDownload;
+  let hasFile;
+  let metadataLoaded = false;
+
+  auditLogger.info(JSON.stringify(file));
+  await deleteIfExists(file, transaction);
+
+  try {
+    fileDownload = await downloadFile(file.key);
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ message: 'Failed to download file', err }));
+    await file.changed('updatedAt', true);
+    await file.update({ updatedAt: new Date(), transaction });
+    throw (err);
+  }
+
+  try {
     try {
-      auditLogger.info(hasFile);
-      auditLogger.info(stream.path);
-      await updateMetadata(file.id, generateMetadataFromFile(stream.path));
-      stream.end();
+      fs.writeFileSync(`./${file.key}`, fileDownload.Body);
+      hasFile = await doesFileExist(file, transaction);
     } catch (err) {
-      auditLogger.error(JSON.stringify(err));
+      auditLogger.error(JSON.stringify({ message: 'Failed to crate stream for file', err }));
+      await deleteIfExists(file, transaction);
+      await file.changed('updatedAt', true);
+      await file.update({ updatedAt: new Date(), transaction });
       throw (err);
     }
+
+    if (hasFile) {
+      try {
+        const metadata = await generateMetadataFromFile(`./${file.key}`);
+        auditLogger.info(JSON.stringify(metadata));
+        if (Object.keys(metadata.value).length > 1) {
+          await updateMetadata(file.id, metadata, transaction);
+          metadataLoaded = true;
+        }
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ message: 'Failed to collect metadata from file', err }));
+        await deleteIfExists(file, transaction);
+        await file.changed('updatedAt', true);
+        await file.update({ updatedAt: new Date(), transaction });
+        throw (err);
+      }
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ message: 'Failed to use temp file', err }));
+    await deleteIfExists(file, transaction);
+    await file.changed('updatedAt', true);
+    await file.update({ updatedAt: new Date(), transaction });
+    throw (err);
   }
+
+  await deleteIfExists(file, transaction);
+  if (metadataLoaded) {
+    auditLogger.info(JSON.stringify({ transaction: transaction === undefined }));
+    await file.update({ updatedAt: new Date(), transaction });
+  }
+};
+
+const latestFile = async (transaction) => {
+  let mostRecent;
+  try {
+    const fileData = await File.findOne({
+      group: ['updatedAt'],
+      order: [['updatedAt', 'DESC']],
+      limit: 1,
+      attributes: [[sequelize.fn('to_char', sequelize.fn('max', sequelize.col('updatedAt')), 'YYYY-MM-DD HH24:MI:SS.MS'), 'mostRecent']],
+      where: { metadata: null },
+      transaction,
+    });
+    mostRecent = fileData.dataValues.mostRecent;
+  } catch (err) {
+    auditLogger.error(JSON.stringify(err));
+    throw (err);
+  }
+  return mostRecent;
 };
 
 const exportFileMetadata = async () => {
   await sequelize.transaction(async (transaction) => {
+    let mostRecent;
+    let files;
+    const processedKeys = [];
     try {
-      const files = await File.findAll({ where: { metadata: null }, transaction });
-      async.forEachLimit(
-        files,
-        5,
-        processFile,
-        (err) => { if (err) auditLogger.error(JSON.stringify(err)); },
-      );
+      mostRecent = await latestFile(transaction);
+      await spinUpTool();
+      do {
+        files = await File.findAll({
+          order: [['updatedAt', 'DESC']],
+          limit: 1,
+          where: {
+            metadata: null,
+            updatedAt: { [Op.lte]: sequelize.fn('TO_TIMESTAMP', mostRecent, 'YYYY-MM-DD HH24:MI:SS.MS') },
+            key: { [Op.notIn]: processedKeys },
+          },
+          transaction,
+        });
+        await Promise.all(files.map(async (file) => {
+          await processFile(file, transaction);
+          processedKeys.push(file.key);
+        }));
+      } while (files.length > 0);
+      await shutdownTool();
+      auditLogger.info(JSON.stringify({ Start: mostRecent, End: await latestFile(transaction) }));
     } catch (err) {
       auditLogger.error(JSON.stringify(err));
       throw (err);
