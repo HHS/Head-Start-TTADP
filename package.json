@@ -79,7 +79,9 @@
     "updateDeliveryData": "node ./build/server/tools/updateDeliveryDataCLI.js",
     "updateDeliveryData:local": "./node_modules/.bin/babel-node ./src/tools/updateDeliveryDataCLI.js",
     "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
-    "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js"
+    "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js",
+    "updateChildInvolvementLegacyTargetPopulationCLI": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
+    "updateChildInvolvementLegacyTargetPopulationCLI:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js"
   },
   "repository": {
     "type": "git",
