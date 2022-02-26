@@ -69,7 +69,7 @@ const generateMetadataFromFile = async (path) => {
     if (metadata.error === null) {
       metadata.value.checksums = {
         md5: await md5File(path),
-        sha256: await sha256File(path),
+        sha256: sha256File(path),
       };
     }
   } catch (err) {
