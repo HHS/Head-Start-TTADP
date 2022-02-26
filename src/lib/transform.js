@@ -252,6 +252,7 @@ const arTransformers = [
   transformDate('createdAt'),
   transformDate('approvedAt'),
   transformGrantModel('programSpecialistName'),
+  transformGrantModel('recipientInfo'),
 ];
 
 /**

@@ -184,6 +184,10 @@ async function sendActivityReportCSV(reports, res) {
           key: 'lastSaved',
           header: 'Last saved',
         },
+        {
+          key: 'recipientInfo',
+          header: 'Recipient name - Grant number - Recipient ID',
+        },
       ],
     };
 

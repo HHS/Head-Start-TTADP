@@ -72,24 +72,16 @@
     "import:hses": "node ./build/server/tools/importGrantRecipientsCLI.js",
     "reconcile:legacy": "node ./build/server/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
-    "populateLegacyOtherEntities": "node ./build/server/tools/populateLegacyOtherEntities.js",
-    "populateLegacyOtherEntities:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyOtherEntities.js",
-    "updateReasonNames": "node ./build/server/tools/updateReasonNamesCLI.js",
-    "updateReasonNames:local": "./node_modules/.bin/babel-node ./src/tools/updateReasonNamesCLI.js",
-    "addMissingGrantsToReports": "node ./build/server/tools/addMissingGrantsToReportsCLI.js",
-    "addMissingGrantsToReports:local": "./node_modules/.bin/babel-node ./src/tools/addMissingGrantsToReportsCLI.js",
     "exportFileMetadata:local": "./node_modules/.bin/babel-node ./src/tools/exportFileMetadataCLI.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
-    "updateLegacyPopulations": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
-    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/uupdateLegacyParticipantsCLI.js",
-    "updateLegacyParticipants": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
-    "updateLegacyParticipants:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyParticipantsCLI.js",
-    "importActivityReportDuration": "node ./build/server/tools/importActivityReportDuration.js",
-    "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js",
-    "updateTopicNames": "node ./build/server/tools/updateTopicNamesCLI.js",
-    "updateTopicNames:local": "./node_modules/.bin/babel-node ./src/tools/updateTopicNamesCLI.js"
+    "updateLegacyCreatorsAndCollaborators": "node ./build/server/tools/updateLegacyCreatorsAndCollaboratorsCLI.js",
+    "updateLegacyCreatorsAndCollaborators:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyCreatorsAndCollaboratorsCLI.js",
+    "updateDeliveryData": "node ./build/server/tools/updateDeliveryDataCLI.js",
+    "updateDeliveryData:local": "./node_modules/.bin/babel-node ./src/tools/updateDeliveryDataCLI.js",
+    "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
+    "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js"
   },
   "repository": {
     "type": "git",
@@ -100,7 +92,8 @@
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "marked": "^4.0.10"
   },
   "eslintConfig": {
     "extends": [

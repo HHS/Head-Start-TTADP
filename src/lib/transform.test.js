@@ -138,28 +138,28 @@ describe('activityReportToCsvRecord', () => {
       id: 4,
       grantId: 4,
       grant: {
-        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, recipient: { name: 'test4' },
+        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, number: 'grant number 4', recipient: { id: 4, name: 'test4' },
       },
     },
     {
       id: 1,
       grantId: 1,
       grant: {
-        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, recipient: { name: 'test1' },
+        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, number: 'grant number 1', recipient: { id: 1, name: 'test1' },
       },
     },
     {
       id: 2,
       grantId: 2,
       grant: {
-        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, recipient: { name: 'test2' },
+        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, number: 'grant number 2', recipient: { id: 2, name: 'test2' },
       },
     },
     {
       id: 3,
       grantId: 3,
       grant: {
-        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, recipient: { name: 'test3' },
+        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, number: 'grant number 3', recipient: { id: 3, name: 'test3' },
       },
     },
   ];
@@ -315,13 +315,14 @@ describe('activityReportToCsvRecord', () => {
     });
     const output = await activityReportToCsvRecord(report);
     const {
-      author, lastUpdatedBy, collaborators, programSpecialistName, approvers,
+      author, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
     } = output;
     expect(author).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
     expect(collaborators).toEqual('Collaborator 1, GS, HS\nCollaborator 2');
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
+    expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
   });
 
   it('transforms goals and objectives into many values', async () => {
