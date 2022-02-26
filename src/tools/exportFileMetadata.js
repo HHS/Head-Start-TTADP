@@ -1,7 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import fs from 'fs';
 import { Op } from 'sequelize';
-import { spinUpTool, shutdownTool, generateMetadataFromFile } from '../lib/fileProcessing';
+import {
+  spinUpTool,
+  isToolUp,
+  shutdownTool,
+  generateMetadataFromFile,
+} from '../lib/fileProcessing';
 import { downloadFile } from '../lib/s3';
 import { sequelize, File } from '../models';
 import { updateMetadata } from '../services/files';
@@ -11,7 +16,6 @@ const deleteIfExists = async (file, transaction) => {
   try {
     const stat = fs.statSync(`./${file.key}`);
     if (stat) {
-      auditLogger.info(JSON.stringify(stat));
       try {
         fs.unlinkSync(`./${file.key}`);
       } catch (err2) {
@@ -30,7 +34,6 @@ const doesFileExist = async (file) => {
   try {
     const stat = fs.statSync(`./${file.key}`);
     if (stat) {
-      auditLogger.info(JSON.stringify(stat));
       exists = true;
     }
   } catch (err) {
@@ -43,8 +46,18 @@ const processFile = async (file, transaction) => {
   let fileDownload;
   let hasFile;
   let metadataLoaded = false;
+  let fileExtension;
 
   auditLogger.info(JSON.stringify(file));
+  try {
+    const nameParts = file.key.split('.');
+    fileExtension = nameParts[nameParts.length - 1];
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ message: 'Failed to pull file extension', err }));
+    await file.changed('updatedAt', true);
+    await file.update({ updatedAt: new Date(), transaction });
+    throw (err);
+  }
   await deleteIfExists(file, transaction);
 
   try {
@@ -70,11 +83,12 @@ const processFile = async (file, transaction) => {
 
     if (hasFile) {
       try {
-        const metadata = await generateMetadataFromFile(`./${file.key}`);
-        auditLogger.info(JSON.stringify(metadata));
-        if (Object.keys(metadata.value).length > 1) {
-          await updateMetadata(file.id, metadata, transaction);
-          metadataLoaded = true;
+        if (isToolUp()) {
+          const metadata = await generateMetadataFromFile(`./${file.key}`);
+          if (['txt', 'csv'].includes(fileExtension) > -1 || Object.keys(metadata.value).length > 1) {
+            await updateMetadata(file.id, metadata, transaction);
+            metadataLoaded = true;
+          }
         }
       } catch (err) {
         auditLogger.error(JSON.stringify({ message: 'Failed to collect metadata from file', err }));
@@ -94,7 +108,6 @@ const processFile = async (file, transaction) => {
 
   await deleteIfExists(file, transaction);
   if (metadataLoaded) {
-    auditLogger.info(JSON.stringify({ transaction: transaction === undefined }));
     await file.update({ updatedAt: new Date(), transaction });
   }
 };
@@ -110,7 +123,7 @@ const latestFile = async (transaction) => {
       where: { metadata: null },
       transaction,
     });
-    mostRecent = fileData.dataValues.mostRecent;
+    if (fileData) mostRecent = fileData.dataValues.mostRecent;
   } catch (err) {
     auditLogger.error(JSON.stringify(err));
     throw (err);
@@ -126,22 +139,24 @@ const exportFileMetadata = async () => {
     try {
       mostRecent = await latestFile(transaction);
       await spinUpTool();
-      do {
-        files = await File.findAll({
-          order: [['updatedAt', 'DESC']],
-          limit: 1,
-          where: {
-            metadata: null,
-            updatedAt: { [Op.lte]: sequelize.fn('TO_TIMESTAMP', mostRecent, 'YYYY-MM-DD HH24:MI:SS.MS') },
-            key: { [Op.notIn]: processedKeys },
-          },
-          transaction,
-        });
-        await Promise.all(files.map(async (file) => {
-          await processFile(file, transaction);
-          processedKeys.push(file.key);
-        }));
-      } while (files.length > 0);
+      if (mostRecent) {
+        do {
+          files = await File.findAll({
+            order: [['updatedAt', 'DESC']],
+            limit: 1,
+            where: {
+              metadata: null,
+              updatedAt: { [Op.lte]: sequelize.fn('TO_TIMESTAMP', mostRecent, 'YYYY-MM-DD HH24:MI:SS.MS') },
+              key: { [Op.notIn]: processedKeys },
+            },
+            transaction,
+          });
+          await Promise.all(files.map(async (file) => {
+            await processFile(file, transaction);
+            processedKeys.push(file.key);
+          }));
+        } while (files.length > 0);
+      }
       await shutdownTool();
       auditLogger.info(JSON.stringify({ Start: mostRecent, End: await latestFile(transaction) }));
     } catch (err) {

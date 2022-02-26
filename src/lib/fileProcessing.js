@@ -6,12 +6,21 @@ import { auditLogger } from '../logger';
 let exiftool = null;
 
 const spinUpTool = async () => {
-  exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
-  auditLogger.info(await exiftool.version());
+  if (exiftool === null || exiftool === undefined) {
+    exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
+  }
+  auditLogger.info(JSON.stringify({ exiftool: await exiftool.version() }));
+};
+
+const isToolUp = () => {
+  if (exiftool !== null && exiftool !== undefined) {
+    return exiftool.ended === false;
+  }
+  return false;
 };
 
 const shutdownTool = async () => {
-  if (exiftool !== null) exiftool.end();
+  if (exiftool !== null && exiftool !== undefined) exiftool.end();
   exiftool = null;
 };
 
@@ -72,4 +81,9 @@ const generateMetadataFromFile = async (path) => {
   return metadata;
 };
 
-export { spinUpTool, shutdownTool, generateMetadataFromFile };
+export {
+  spinUpTool,
+  isToolUp,
+  shutdownTool,
+  generateMetadataFromFile,
+};

@@ -182,7 +182,6 @@
   "dependencies": {
     "@babel/runtime": "^7.12.1",
     "adm-zip": "^0.5.1",
-    "async": "^3.2.3",
     "aws-sdk": "^2.826.0",
     "axios": "^0.24.0",
     "bull": "^4.2.0",
@@ -216,7 +215,6 @@
     "sequelize": "^6.12.5",
     "sequelize-cli": "^6.2.0",
     "sha256-file": "^1.0.0",
-    "temp": "^0.9.4",
     "throng": "^5.0.0",
     "url-join": "^4.0.1",
     "uuid": "^8.3.2",
