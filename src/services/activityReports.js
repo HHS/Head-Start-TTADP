@@ -739,13 +739,12 @@ async function getDownloadableActivityReports(where) {
         include: [
           {
             model: Grant,
-            attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo'],
+            attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo', 'programTypes'],
             as: 'grant',
             include: [
               {
                 model: Recipient,
                 as: 'recipient',
-                attributes: ['id', 'name'],
               },
               {
                 model: Program,
@@ -757,7 +756,6 @@ async function getDownloadableActivityReports(where) {
           {
             model: OtherEntity,
             as: 'otherEntity',
-            required: false,
           },
         ],
       },
@@ -821,7 +819,7 @@ async function getDownloadableActivityReports(where) {
         ],
       },
     ],
-    order: [['id', 'DESC']],
+    order: [['id', 'DESC'], ['objectives', { model: Goal, as: 'goal' }, 'id', 'DESC'], ['objectives', 'id', 'DESC']],
   };
 
   return batchQuery(query, 2000);
