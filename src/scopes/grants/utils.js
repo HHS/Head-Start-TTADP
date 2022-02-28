@@ -3,7 +3,7 @@ import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function grantInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"Grant"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)})`));
+  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)})`));
 }
 
 export function expandArrayContains(key, array, exclude) {

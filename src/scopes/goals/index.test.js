@@ -254,7 +254,7 @@ describe('goal filtersToScopes', () => {
 
   describe('status', () => {
     it('filters in by status', async () => {
-      const filters = { 'status.in': ['Active', 'Needs Status'] };
+      const filters = { 'status.in': ['Active', 'Needs status'] };
       const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
@@ -273,7 +273,7 @@ describe('goal filtersToScopes', () => {
       expect(found.map((g) => g.name)).toContain('Goal 4');
     });
     it('filters out by status', async () => {
-      const filters = { 'status.nin': 'Ceased/Suspended' };
+      const filters = { 'status.nin': ['Suspended'] };
       const { goal: scope } = filtersToScopes(filters);
       const found = await Goal.findAll({
         where: {
@@ -426,7 +426,7 @@ describe('goal filtersToScopes', () => {
 
   describe('grant number', () => {
     it('withGrantNumber', async () => {
-      const filters = { 'grantNumber.ctn': otherGrant.number };
+      const filters = { 'grantNumber.in': otherGrant.number };
       const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
@@ -444,7 +444,7 @@ describe('goal filtersToScopes', () => {
     });
 
     it('withoutGrantNumber', async () => {
-      const filters = { 'grantNumber.nctn': otherGrant.number };
+      const filters = { 'grantNumber.nin': otherGrant.number };
       const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {

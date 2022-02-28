@@ -199,3 +199,17 @@ export async function copyGoalsToGrants(goals, grantIds, transaction) {
     transaction,
   });
 }
+
+// eslint-disable-next-line no-unused-vars
+export async function updateGoalStatusById(goalId, newStatus) {
+  /* TODO:
+    Disable for now until goals are unique grants.
+  */
+  /*
+  const updatedGoal = await Goal.update(
+    { status: newStatus },
+    { where: { id: goalId }, returning: true },
+  );
+  return updatedGoal[1][0];
+  */
+}

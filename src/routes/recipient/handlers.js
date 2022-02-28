@@ -1,6 +1,9 @@
-import { recipientById, recipientsByName } from '../../services/recipient';
+import {
+  getGoalsByActivityRecipient, recipientById, recipientsByName,
+} from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
+import { getUserReadRegions } from '../../services/accessValidation';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -38,6 +41,31 @@ export async function searchRecipients(req, res) {
       return;
     }
     res.json(recipients);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getGoalsByRecipient(req, res) {
+  try {
+    const { recipientId, regionId } = req.params;
+    // Check if user has access to this region.
+    const readRegions = await getUserReadRegions(req.session.userId);
+    if (!readRegions.includes(parseInt(regionId, 10))) {
+      res.sendStatus(403);
+      return;
+    }
+
+    // Check recipient exists.
+    const recipient = await recipientById(recipientId, []);
+    if (!recipient) {
+      res.sendStatus(404);
+      return;
+    }
+
+    // Get goals for recipient.
+    const recipientGoals = await getGoalsByActivityRecipient(recipientId, regionId, req.query);
+    res.json(recipientGoals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

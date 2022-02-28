@@ -22,6 +22,17 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     timeframe: DataTypes.STRING,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
+    goalNumber: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { id, grants } = this;
+        let regionId = 0;
+        if (grants && grants.length > 0) {
+          regionId = grants[0].regionId;
+        }
+        return `R${regionId}-G-${id}`;
+      },
+    },
   }, {
     sequelize,
     modelName: 'Goal',
