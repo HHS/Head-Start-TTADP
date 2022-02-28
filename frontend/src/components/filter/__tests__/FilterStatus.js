@@ -24,7 +24,7 @@ describe('FilterStatus', () => {
     renderStatusSelect(onApply);
 
     const select = await findByText(/select status to filter by/i);
-    await selectEvent.select(select, ['Needs Status']);
+    await selectEvent.select(select, [/needs status/i]);
     expect(onApply).toHaveBeenCalled();
   });
 });

@@ -100,7 +100,10 @@ export default function FilterSelect({
 
 const option = PropTypes.shape({
   label: PropTypes.string,
-  value: PropTypes.number,
+  value: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]),
 });
 
 FilterSelect.propTypes = {
