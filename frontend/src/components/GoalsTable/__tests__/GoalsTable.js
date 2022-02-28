@@ -38,6 +38,7 @@ const goals = [{
   objectiveCount: 5,
   goalNumber: 'R14-G-4598',
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+  objectives: [],
 },
 {
   id: 8547,
@@ -48,6 +49,7 @@ const goals = [{
   objectiveCount: 2,
   goalNumber: 'R14-G-8547',
   reasons: ['Below Competitive Threshold (CLASS)'],
+  objectives: [],
 },
 {
   id: 65478,
@@ -58,6 +60,7 @@ const goals = [{
   objectiveCount: 4,
   goalNumber: 'R14-G-65478',
   reasons: ['Monitoring | Area of Concern'],
+  objectives: [],
 },
 {
   id: 65479,
@@ -68,6 +71,7 @@ const goals = [{
   objectiveCount: 3,
   goalNumber: 'R14-G-65479',
   reasons: ['COVID-19 response'],
+  objectives: [],
 },
 {
   id: 65480,
@@ -78,6 +82,7 @@ const goals = [{
   objectiveCount: 1,
   goalNumber: 'R14-G-65480',
   reasons: ['New Recipient'],
+  objectives: [],
 },
 {
   id: 65481,
@@ -88,8 +93,93 @@ const goals = [{
   objectiveCount: 8,
   goalNumber: 'R14-G-65481',
   reasons: ['School Readiness Goals'],
+  objectives: [],
 },
 ];
+
+const goalWithObjectives = [{
+  id: 4458,
+  goalStatus: 'In Progress',
+  createdOn: '06/15/2021',
+  goalText: 'This is a goal with objectives',
+  goalTopics: ['Human Resources'],
+  objectiveCount: 4,
+  goalNumber: 'R14-G-4598',
+  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+  objectives: [{
+    title: 'Objective 1 Title',
+    arId: 1,
+    arNumber: 'ar-number-1',
+    arLegacyId: null,
+    arStatus: 'In Progress',
+    endDate: '06/14/2021',
+    reasons: ['Monitoring | Deficiency'],
+    status: 'In Progress',
+  },
+  {
+    title: 'Objective 2 Title',
+    arId: 2,
+    arNumber: 'ar-number-2',
+    arLegacyId: null,
+    arStatus: 'Not Started',
+    endDate: '05/14/2021',
+    reasons: ['Below Competitive Threshold (CLASS)'],
+    status: 'Not Started',
+  },
+  {
+    title: 'Objective 3 Title',
+    arId: 3,
+    arNumber: 'ar-number-3',
+    arLegacyId: null,
+    arStatus: 'approved',
+    endDate: '04/14/2021',
+    reasons: ['COVID-19 response'],
+    status: 'Complete',
+  },
+  {
+    title: 'Objective 4 Title',
+    arId: 4,
+    arNumber: 'ar-number-4',
+    arLegacyId: 'ar-legacy-4',
+    arStatus: null,
+    endDate: '03/14/2021',
+    reasons: ['New Staff / Turnover'],
+    status: null,
+  },
+  {
+    title: 'Objective 5 Title',
+    arId: 5,
+    arNumber: 'ar-number-5',
+    arLegacyId: null,
+    arStatus: null,
+    endDate: '02/14/2021',
+    reasons: ['Complaint'],
+    status: 'Unknown Status',
+  },
+  ],
+},
+];
+
+const noStatusGoalWithOneObjective = [{
+  id: 4459,
+  goalStatus: null,
+  createdOn: '06/15/2021',
+  goalText: 'This is a goal with a single objectives',
+  goalTopics: ['Human Resources'],
+  objectiveCount: 4,
+  goalNumber: 'R14-G-4459',
+  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+  objectives: [{
+    title: 'Objective 1 Title',
+    arId: 1,
+    arNumber: 'ar-number-1',
+    arLegacyId: null,
+    arStatus: 'In Progress',
+    endDate: '06/14/2021',
+    reasons: ['Monitoring | Deficiency'],
+    status: 'In Progress',
+  }],
+}];
 
 const renderTable = (user) => {
   render(
@@ -156,12 +246,12 @@ describe('Goals Table', () => {
       expect(contextMenus).toHaveTextContent(/cease\/suspend goal/i);
 
       // Not started.
-      expect(screen.getAllByRole('cell')[6].firstChild).toHaveClass('fa-minus-circle');
-      expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
-      expect(screen.getAllByRole('cell')[7]).toHaveTextContent('05/15/2021');
-      expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/this is goal text 2/i);
-      expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/nutrition, oral health/i);
-      expect(screen.getAllByRole('cell')[10]).toHaveTextContent('2 Objective(s)');
+      expect(screen.getAllByRole('cell')[7].firstChild).toHaveClass('fa-minus-circle');
+      expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
+      expect(screen.getAllByRole('cell')[8]).toHaveTextContent('05/15/2021');
+      expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/this is goal text 2/i);
+      expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/nutrition, oral health/i);
+      expect(screen.getAllByRole('cell')[11]).toHaveTextContent('2 Objective(s)');
 
       // Click Context Menu on 'Not started'.
       rowContextBtn = await screen.findByRole('button', { name: /actions for goal 8547/i });
@@ -172,12 +262,12 @@ describe('Goals Table', () => {
       expect(contextMenus[1]).toHaveTextContent(/cease\/suspend goal/i);
 
       // Closed.
-      expect(screen.getAllByRole('cell')[12].firstChild).toHaveClass('fa-check-circle');
-      expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/closed/i);
-      expect(screen.getAllByRole('cell')[13]).toHaveTextContent('04/15/2021');
-      expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/this is goal text 3/i);
-      expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/parent and family engagement/i);
-      expect(screen.getAllByRole('cell')[16]).toHaveTextContent('4 Objective(s)');
+      expect(screen.getAllByRole('cell')[14].firstChild).toHaveClass('fa-check-circle');
+      expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/closed/i);
+      expect(screen.getAllByRole('cell')[15]).toHaveTextContent('04/15/2021');
+      expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/this is goal text 3/i);
+      expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/parent and family engagement/i);
+      expect(screen.getAllByRole('cell')[18]).toHaveTextContent('4 Objective(s)');
 
       // Click Context Menu on 'Closed'.
       rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65478/i });
@@ -187,12 +277,12 @@ describe('Goals Table', () => {
       expect(contextMenus[2]).toHaveTextContent(/Re-open goal/i);
 
       // Needs status.
-      expect(screen.getAllByRole('cell')[18].firstChild).toHaveClass('fa-exclamation-circle ');
-      expect(screen.getAllByRole('cell')[18]).toHaveTextContent(/needs status/i);
-      expect(screen.getAllByRole('cell')[19]).toHaveTextContent('03/15/2021');
-      expect(screen.getAllByRole('cell')[20]).toHaveTextContent(/this is goal text 4/i);
-      expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/partnerships and community engagement/i);
-      expect(screen.getAllByRole('cell')[22]).toHaveTextContent('3 Objective(s)');
+      expect(screen.getAllByRole('cell')[21].firstChild).toHaveClass('fa-exclamation-circle ');
+      expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/needs status/i);
+      expect(screen.getAllByRole('cell')[22]).toHaveTextContent('03/15/2021');
+      expect(screen.getAllByRole('cell')[23]).toHaveTextContent(/this is goal text 4/i);
+      expect(screen.getAllByRole('cell')[24]).toHaveTextContent(/partnerships and community engagement/i);
+      expect(screen.getAllByRole('cell')[25]).toHaveTextContent('3 Objective(s)');
 
       // Click Context Menu on 'Needs status'.
       rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65479/i });
@@ -205,20 +295,20 @@ describe('Goals Table', () => {
       expect(contextMenus[3]).toHaveTextContent(/cease\/suspend goal/i);
 
       // Draft.
-      expect(screen.getAllByRole('cell')[24].firstChild).toHaveClass('fa-pencil-alt');
-      expect(screen.getAllByRole('cell')[24]).toHaveTextContent(/draft/i);
-      expect(screen.getAllByRole('cell')[25]).toHaveTextContent('02/15/2021');
-      expect(screen.getAllByRole('cell')[26]).toHaveTextContent(/this is goal text 5/i);
-      expect(screen.getAllByRole('cell')[27]).toHaveTextContent(/safety practices/i);
-      expect(screen.getAllByRole('cell')[28]).toHaveTextContent('1 Objective(s)');
+      expect(screen.getAllByRole('cell')[28].firstChild).toHaveClass('fa-pencil-alt');
+      expect(screen.getAllByRole('cell')[28]).toHaveTextContent(/draft/i);
+      expect(screen.getAllByRole('cell')[29]).toHaveTextContent('02/15/2021');
+      expect(screen.getAllByRole('cell')[30]).toHaveTextContent(/this is goal text 5/i);
+      expect(screen.getAllByRole('cell')[31]).toHaveTextContent(/safety practices/i);
+      expect(screen.getAllByRole('cell')[32]).toHaveTextContent('1 Objective(s)');
 
       // Ceased/Suspended.
-      expect(screen.getAllByRole('cell')[30].firstChild).toHaveClass('fa-times-circle');
-      expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Ceased/ suspended');
-      expect(screen.getAllByRole('cell')[31]).toHaveTextContent('01/15/2021');
-      expect(screen.getAllByRole('cell')[32]).toHaveTextContent(/this is goal text 6/i);
-      expect(screen.getAllByRole('cell')[33]).toHaveTextContent(/recordkeeping and reporting/i);
-      expect(screen.getAllByRole('cell')[34]).toHaveTextContent('8 Objective(s)');
+      expect(screen.getAllByRole('cell')[35].firstChild).toHaveClass('fa-times-circle');
+      expect(screen.getAllByRole('cell')[35]).toHaveTextContent('Suspended');
+      expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021');
+      expect(screen.getAllByRole('cell')[37]).toHaveTextContent(/this is goal text 6/i);
+      expect(screen.getAllByRole('cell')[38]).toHaveTextContent(/recordkeeping and reporting/i);
+      expect(screen.getAllByRole('cell')[39]).toHaveTextContent('8 Objective(s)');
 
       // Click Context Menu on 'Ceased/Suspended'.
       rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65481/i });
@@ -226,6 +316,120 @@ describe('Goals Table', () => {
       contextMenus = await screen.findAllByRole('menu');
       expect(contextMenus.length).toBe(5);
       expect(contextMenus[4]).toHaveTextContent(/Re-open goal/i);
+    });
+  });
+
+  describe('Table displays objective data', () => {
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get(
+        baseWithRegionOne,
+        { count: 1, goalRows: goalWithObjectives },
+      );
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      fetchMock.restore();
+    });
+
+    it('Shows the correct objective data', async () => {
+      renderTable(defaultUser);
+      await screen.findByText('TTA goals and objectives');
+      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+
+      // Objective 1.
+      expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/objective 1 title/i);
+      expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/ar-number-1/i);
+      expect(screen.getAllByRole('cell')[9]).toHaveTextContent('06/14/2021');
+      expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/monitoring | deficiency/i);
+      expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/in progress/i);
+      expect(screen.getAllByRole('cell')[11].firstChild).toHaveClass('fa-clock');
+      expect(await screen.findByRole('link', { name: /ar-number-1/i })).toHaveAttribute('href', '/activity-reports/1');
+
+      // Objective 2.
+      expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/objective 2 title/i);
+      expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/ar-number-2/i);
+      expect(screen.getAllByRole('cell')[14]).toHaveTextContent('05/14/2021');
+      expect(screen.getAllByRole('cell')[15]).toHaveTextContent('Below Competitive Threshold (CLASS)');
+      expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/not started/i);
+      expect(screen.getAllByRole('cell')[16].firstChild).toHaveClass('fa-minus-circle');
+      expect(await screen.findByRole('link', { name: /ar-number-2/i })).toHaveAttribute('href', '/activity-reports/2');
+
+      // Objective 3.
+      expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/objective 3 title/i);
+      expect(screen.getAllByRole('cell')[18]).toHaveTextContent(/ar-number-3/i);
+      expect(screen.getAllByRole('cell')[19]).toHaveTextContent('04/14/2021');
+      expect(screen.getAllByRole('cell')[20]).toHaveTextContent('COVID-19 response');
+      expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/closed/i);
+      expect(screen.getAllByRole('cell')[21].firstChild).toHaveClass('fa-check-circle');
+      expect(await screen.findByRole('link', { name: /ar-number-3/i })).toHaveAttribute('href', '/activity-reports/view/3');
+
+      // Objective 4.
+      expect(screen.getAllByRole('cell')[22]).toHaveTextContent(/objective 4 title/i);
+      expect(screen.getAllByRole('cell')[23]).toHaveTextContent(/ar-number-4/i);
+      expect(screen.getAllByRole('cell')[24]).toHaveTextContent('03/14/2021');
+      expect(screen.getAllByRole('cell')[25]).toHaveTextContent('New Staff / Turnover');
+      expect(screen.getAllByRole('cell')[26]).toHaveTextContent(/Needs status/i);
+      expect(screen.getAllByRole('cell')[26].firstChild).toHaveClass('fa-exclamation-circle ');
+      expect(await screen.findByRole('link', { name: /ar-number-4/i })).toHaveAttribute('href', '/activity-reports/legacy/ar-legacy-4');
+
+      // Objective 5.
+      expect(screen.getAllByRole('cell')[27]).toHaveTextContent(/objective 5 title/i);
+      expect(screen.getAllByRole('cell')[28]).toHaveTextContent(/ar-number-5/i);
+      expect(screen.getAllByRole('cell')[29]).toHaveTextContent('02/14/2021');
+      expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Complaint');
+      expect(screen.getAllByRole('cell')[31]).toHaveTextContent(/Needs status/i);
+      expect(screen.getAllByRole('cell')[31].firstChild).toHaveClass('fa-exclamation-circle ');
+      expect(await screen.findByRole('link', { name: /ar-number-5/i })).toHaveAttribute('href', '/activity-reports/5');
+    });
+
+    it('Expands and collapses objectives', async () => {
+      renderTable(defaultUser);
+      await screen.findByText('TTA goals and objectives');
+
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+
+      // Expand Objectives via click.
+      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal R14-G-4598" });
+      fireEvent.click(expandObjectives);
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
+
+      const collapseButton = await screen.findAllByRole('button', { name: /return to goals/i });
+      fireEvent.click(collapseButton[0]);
+      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+
+      // We should set focus back to the expand button.
+      const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
+      expect(expandWithFocus).toHaveFocus();
+    });
+  });
+
+  describe('Table displays correct colors', () => {
+    beforeEach(async () => {
+      fetchMock.reset();
+      fetchMock.get(
+        baseWithRegionOne,
+        { count: 1, goalRows: noStatusGoalWithOneObjective },
+      );
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+      fetchMock.restore();
+    });
+
+    it('Selects the correct color for goals with null status', async () => {
+      renderTable(defaultUser);
+      await screen.findByText('TTA goals and objectives');
+
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
+
+      expect(document.querySelector('.fa-exclamation-circle')).toHaveAttribute(
+        'color',
+        '#c5c5c5',
+      );
     });
   });
 
@@ -260,7 +464,7 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('06/15/2021'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[36]).toHaveTextContent('06/15/2021'));
 
       // Desc.
       const columnHeaderDesc = await screen.findByRole('button', { name: /created on\. activate to sort descending/i });
@@ -275,7 +479,7 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('01/15/2021'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021'));
     });
 
     it('clicking Goal status column header sorts', async () => {
@@ -293,7 +497,7 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Not started'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Needs status'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[28]).toHaveTextContent('Suspended'));
 
       // Desc (via button press).
       const goalsAsc = [...goals];
@@ -311,7 +515,7 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Needs status'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Not started'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[35]).toHaveTextContent('Not started'));
     });
   });
 
@@ -358,7 +562,7 @@ describe('Goals Table', () => {
       );
       fireEvent.click(pageOne);
       await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('01/15/2021'));
+      await waitFor(() => expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021'));
     });
 
     it('clicking on the second page updates page values', async () => {
