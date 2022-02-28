@@ -25,7 +25,7 @@ const EMPTY_MULTI_SELECT = {
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
-  'ss not': '',
+  'is not': '',
 };
 
 const EMPTY_TEXT_INPUT = {
@@ -43,10 +43,10 @@ const handleArrayQuery = (q) => {
 const handleStringQuery = (q) => q;
 
 const defaultDateValues = {
+  is: '',
   'is within': '',
   'is on or after': '',
   'is on or before': '',
-  Is: '',
 };
 
 export const startDateFilter = {
