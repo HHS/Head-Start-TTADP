@@ -10,7 +10,7 @@ import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
-import { withText } from '../../../testHelpers';
+import { mockWindowProperty, withText } from '../../../testHelpers';
 import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
@@ -68,12 +68,47 @@ const recipients = {
 };
 
 describe('ActivityReport', () => {
+  const setItem = jest.fn();
+  const getItem = jest.fn();
+
+  mockWindowProperty('localStorage', {
+    setItem,
+    getItem,
+  });
+
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
+  });
+
+  it('handles failure to download a report with local storage fallback', async () => {
+    const additionalData = {
+      recipients: {
+        grants: [],
+        otherEntities: [],
+      },
+      collaborators: [],
+      availableApprovers: [],
+    };
+
+    getItem
+      .mockReturnValueOnce(JSON.stringify(formData()))
+      .mockReturnValueOnce(JSON.stringify(additionalData))
+      .mockReturnValueOnce(JSON.stringify(true))
+      .mockReturnValueOnce(JSON.stringify(formData()))
+      .mockReturnValueOnce(JSON.stringify(additionalData))
+      .mockReturnValueOnce(JSON.stringify(true));
+
+    fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
+    renderActivityReport('1', 'activity-summary', true);
+    await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
+    expect(getItem).toHaveBeenCalled();
+    expect(setItem).toHaveBeenCalled();
+    const alert = await screen.findByTestId('alert');
+    expect(alert).toHaveTextContent('Unable to load activity report from our network. We found saved work on your computer, and we\'ve loaded that instead.');
   });
 
   it('handles failures to download a report', async () => {
