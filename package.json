@@ -72,6 +72,7 @@
     "import:hses": "node ./build/server/tools/importGrantRecipientsCLI.js",
     "reconcile:legacy": "node ./build/server/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
+    "exportFileMetadata": "node ./src/tools/exportFileMetadataCLI.js",
     "exportFileMetadata:local": "./node_modules/.bin/babel-node ./src/tools/exportFileMetadataCLI.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
