@@ -34,8 +34,8 @@ export const topicToQuery = {
     nin: (query) => withoutRegion(query),
   },
   grantNumber: {
-    ctn: (query) => withGrantNumber(query),
-    nctn: (query) => withoutGrantNumber(query),
+    in: (query) => withGrantNumber(query),
+    nin: (query) => withoutGrantNumber(query),
   },
 };
 

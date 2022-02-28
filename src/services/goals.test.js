@@ -2,7 +2,6 @@ import { Op } from 'sequelize';
 import {
   copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
 } from './goals';
-
 import {
   Goal,
   Grant,
