@@ -22,10 +22,10 @@ export const QUERY_CONDITIONS = {
 };
 
 export const DATE_CONDITIONS = [
+  IS,
   AFTER,
   BEFORE,
   WITHIN,
-  IS,
 ];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';
