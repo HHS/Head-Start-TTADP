@@ -104,7 +104,6 @@ function transformGrantModel(prop) {
   function transformer(instance) {
     const obj = {};
     const values = instance.activityRecipients;
-    console.log(values);
     if (values) {
       const distinctValues = [
         ...new Set(
