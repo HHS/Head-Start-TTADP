@@ -51,6 +51,7 @@ function GoalsTable({
         );
         setGoals(goalRows);
         setGoalsCount(count);
+        setError('');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);

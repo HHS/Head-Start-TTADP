@@ -16,6 +16,7 @@ import GoalsObjectives from './pages/GoalsObjectives';
 export default function RecipientRecord({ match }) {
   const { recipientId, regionId } = match.params;
 
+  const [loading, setLoading] = useState(true);
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -33,6 +34,7 @@ export default function RecipientRecord({ match }) {
   useEffect(() => {
     async function fetchRecipient() {
       try {
+        setLoading(true);
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({
@@ -47,6 +49,8 @@ export default function RecipientRecord({ match }) {
             setError('There was an error fetching recipient data');
           }
         }
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -66,6 +70,10 @@ export default function RecipientRecord({ match }) {
 
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
+
+  if (loading) {
+    return <div>loading...</div>;
+  }
 
   return (
     <>
@@ -119,6 +127,7 @@ export default function RecipientRecord({ match }) {
                     <GoalsObjectives
                       recipientId={recipientId}
                       regionId={regionId}
+                      recipient={recipientData}
                     />
                   )}
                 />

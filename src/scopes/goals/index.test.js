@@ -426,7 +426,7 @@ describe('goal filtersToScopes', () => {
 
   describe('grant number', () => {
     it('withGrantNumber', async () => {
-      const filters = { 'grantNumber.ctn': otherGrant.number };
+      const filters = { 'grantNumber.in': otherGrant.number };
       const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
@@ -444,7 +444,7 @@ describe('goal filtersToScopes', () => {
     });
 
     it('withoutGrantNumber', async () => {
-      const filters = { 'grantNumber.nctn': otherGrant.number };
+      const filters = { 'grantNumber.nin': otherGrant.number };
       const { goal: scope } = filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
         where: {
