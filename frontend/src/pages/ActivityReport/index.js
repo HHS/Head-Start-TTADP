@@ -21,6 +21,7 @@ import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
+import useARLocalStorage from '../../hooks/useARLocalStorage';
 import {
   submitReport,
   saveReport,
@@ -100,8 +101,9 @@ function ActivityReport({
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
-  const [formData, updateFormData] = useState();
-  const [initialAdditionalData, updateAdditionalData] = useState({});
+  const [formData, updateFormData] = useARLocalStorage(`ar-form-data-${activityReportId}`, null);
+  // const [formData, updateFormData] = useState();
+  const [initialAdditionalData, updateAdditionalData] = useARLocalStorage(`ar-additional-data-${activityReportId}`, {});
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
@@ -162,7 +164,10 @@ function ActivityReport({
             || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
         updateAdditionalData({ recipients, collaborators, availableApprovers });
-        updateFormData(report);
+
+        if (moment(report.updatedAt).isAfter(moment(formData.updatedAt))) {
+          updateFormData(report);
+        }
 
         // ***Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
@@ -186,7 +191,7 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        updateError('Unable to load activity report');
+        updateError('Unable to load activity report.');
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
