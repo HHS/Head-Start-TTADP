@@ -171,6 +171,6 @@ describe('recipient record page', () => {
     memoryHistory.push('/recipient-tta-records/1/region/45/goals-objectives');
     renderRecipientRecord();
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    expect(document.querySelector('#goalsObjectives')).toBeTruthy();
+    expect(document.querySelector('#recipientGoalsObjectives')).toBeTruthy();
   });
 });
