@@ -1,3 +1,57 @@
+.goals-table .usa-table .tta-smarthub--goal-row td:first-child {
+  border-left: 1px solid #c5c5c5;
+  min-width: 160px;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row td:last-child {
+  border-right: 1px solid #c5c5c5;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row td:nth-child(2) {
+  min-width: 120px;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row td:nth-child(3) {
+  max-width: 500px;
+  min-width: 500px;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row td:nth-child(4) {
+  max-width: 330px;
+  min-width: 330px;
+}
+.goals-table .usa-table .tta-smarthub--goal-row td:nth-child(5) {
+  min-width: 168px;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row-objectives-enabled {
+  cursor: pointer;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row-objectives-disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.goals-table .usa-table td {
+  background-color: transparent;
+  border-style: none;
+  font-size: 15px;
+  white-space: normal;
+  line-height: 1.5;
+  vertical-align: top;
+  padding: 24px;
+  border-top: 1px solid #c5c5c5;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row-collapsed  td {
+  border-bottom: 1px solid #c5c5c5;
+}
+
+.goals-table .usa-table .tta-smarthub--goal-row-collapsed  +  .tta-smarthub--objective-rows {
+  display: none;
+}
+
 .tta-smarthub--goal-row td:first-child {
   position: relative;
 }
@@ -28,3 +82,7 @@ vertical-align: top;
   vertical-align: baseline;
 }
 
+.tta-smarthub--goal-row .usa-button--unstyled {
+  color: #000;
+  text-decoration: none;
+}

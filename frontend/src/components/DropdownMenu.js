@@ -119,8 +119,10 @@ export default function DropdownMenu({
         aria-pressed={menuIsOpen}
         onBlur={onBlur}
       >
-        <span>{buttonText}</span>
-        {!styleAsSelect && <img src={triangleDown} alt="" aria-hidden="true" /> }
+        <span>
+          {buttonText}
+        </span>
+        {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
       <div className="smart-hub--dropdown-menu--contents no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
