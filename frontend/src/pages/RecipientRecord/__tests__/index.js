@@ -168,6 +168,6 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     memoryHistory.push('/recipient-tta-records/1/region/45/goals-objectives');
     act(() => renderRecipientRecord());
-    expect(document.querySelector('#goalsObjectives')).toBeTruthy();
+    expect(document.querySelector('#recipientGoalsObjectives')).toBeTruthy();
   });
 });

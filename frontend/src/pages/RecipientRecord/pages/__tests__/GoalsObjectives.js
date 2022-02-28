@@ -24,6 +24,7 @@ describe('Goals and Objectives', () => {
     objectiveCount: 5,
     goalNumber: 'R14-G-4598',
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+    objectives: [],
   },
   ];
 
@@ -36,6 +37,7 @@ describe('Goals and Objectives', () => {
     objectiveCount: 5,
     goalNumber: 'R14-G-4598',
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+    objectives: [],
   },
   {
     id: 4599,
@@ -46,6 +48,7 @@ describe('Goals and Objectives', () => {
     objectiveCount: 1,
     goalNumber: 'R14-G-4599',
     reasons: ['Monitoring | Deficiency'],
+    objectives: [],
   },
   ];
 
@@ -59,6 +62,7 @@ describe('Goals and Objectives', () => {
       objectiveCount: 1,
       goalNumber: 'R14-G-4599',
       reasons: ['Monitoring | Deficiency'],
+      objectives: [],
     },
   ];
 
@@ -75,17 +79,31 @@ describe('Goals and Objectives', () => {
 
   beforeEach(async () => {
     fetchMock.reset();
+
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&status.in[]=Not%20Started';
+    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&status.in[]=Not%20started';
     fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
+
+    const statusRes = {
+      total: 0, 'Not started': 0, 'In progress': 0, Closed: 0, Suspended: 0,
+    };
+
+    const goalStatusGraph = `/api/widgets/goalStatusGraph?createDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    fetchMock.get(goalStatusGraph, statusRes);
+
+    const goalStatusGraphWStatus = '/api/widgets/goalStatusGraph?status.in[]=Not%20started&region.in[]=1&recipientId.ctn[]=401';
+    fetchMock.get(goalStatusGraphWStatus, statusRes);
+
+    const goalStatusGraphUnfiltered = '/api/widgets/goalStatusGraph?region.in[]=1&recipientId.ctn[]=401';
+    fetchMock.get(goalStatusGraphUnfiltered, statusRes);
   });
 
   afterEach(() => {
@@ -112,7 +130,7 @@ describe('Goals and Objectives', () => {
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
     expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
+    expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
 
     // Change Filter and Apply.
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
@@ -121,7 +139,7 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Not Started']);
+    await selectEvent.select(statusSelect, ['Not started']);
 
     const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
     userEvent.click(apply);
@@ -144,10 +162,10 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
     expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
 
-    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
-    expect(screen.getAllByRole('cell')[7]).toHaveTextContent('07/15/2021');
-    expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/this is goal text 2/i);
-    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/program planning and services/i);
-    expect(screen.getAllByRole('cell')[10]).toHaveTextContent('1 Objective(s)');
+    expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
+    expect(screen.getAllByRole('cell')[8]).toHaveTextContent('07/15/2021');
+    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/this is goal text 2/i);
+    expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/program planning and services/i);
+    expect(screen.getAllByRole('cell')[11]).toHaveTextContent('1 Objective(s)');
   });
 });
