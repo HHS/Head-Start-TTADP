@@ -66,7 +66,7 @@ const processFile = async (file, transaction) => {
     auditLogger.error(JSON.stringify({ message: 'Failed to download file', err }));
     await file.changed('updatedAt', true);
     await file.update({ updatedAt: new Date(), transaction });
-    throw (err);
+    return;
   }
 
   try {
