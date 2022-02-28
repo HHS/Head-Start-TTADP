@@ -102,13 +102,14 @@ function ActivityReport({
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
   const [formData, updateFormData] = useARLocalStorage(`ar-form-data-${activityReportId}`, null);
-  // const [formData, updateFormData] = useState();
   const [initialAdditionalData, updateAdditionalData] = useARLocalStorage(`ar-additional-data-${activityReportId}`, {});
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
-  const [editable, updateEditable] = useState(false);
-  const [lastSaveTime, updateLastSaveTime] = useState();
+  const [editable, updateEditable] = useARLocalStorage(`ar-can-edit-${activityReportId}`, false);
+  const [lastSaveTime, updateLastSaveTime] = useState(
+    formData && formData.lastSaveTime ? formData.lastSaveTime : null,
+  );
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
   const reportId = useRef();
@@ -133,6 +134,8 @@ function ActivityReport({
 
       try {
         updateLoading(true);
+        reportId.current = activityReportId;
+
         if (activityReportId !== 'new') {
           const fetchedReport = await getReport(activityReportId);
           report = convertReportToFormData(fetchedReport);
@@ -152,7 +155,6 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
-        reportId.current = activityReportId;
 
         const isCollaborator = report.collaborators
           && report.collaborators.find((u) => u.id === user.id);
@@ -165,7 +167,20 @@ function ActivityReport({
 
         updateAdditionalData({ recipients, collaborators, availableApprovers });
 
-        if (moment(report.updatedAt).isAfter(moment(formData.updatedAt))) {
+        let shouldUpdateFromNetwork = true;
+
+        if (formData && formData.updatedAt) {
+          const updatedAtFromNetwork = moment(report.updatedAt);
+          const updatedAtFromLocalStorage = moment(formData.updatedAt);
+          if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
+            const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
+            if (storageIsNewer) {
+              shouldUpdateFromNetwork = false;
+            }
+          }
+        }
+
+        if (shouldUpdateFromNetwork) {
           updateFormData(report);
         }
 
@@ -191,7 +206,8 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        updateError('Unable to load activity report.');
+        const errorMsg = formData ? 'Unable to load activity report from our network. We found saved work on your computer, and we\'ve loaded that instead.' : 'Unable to load activity report';
+        updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
@@ -218,7 +234,7 @@ function ActivityReport({
     return <Redirect to="/" />;
   }
 
-  if (error) {
+  if (error && !formData) {
     return (
       <Alert type="error">
         {error}
@@ -310,6 +326,12 @@ function ActivityReport({
 
   return (
     <div className="smart-hub-activity-report">
+      { error
+      && (
+      <Alert type="error">
+        {error}
+      </Alert>
+      )}
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">

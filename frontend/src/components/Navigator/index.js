@@ -105,7 +105,7 @@ function Navigator({
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log(error);
-      updateErrorMessage('Unable to save activity report');
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
   };
 
