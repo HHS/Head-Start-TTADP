@@ -1,0 +1,80 @@
+.goals-table .usa-table-container .tta-smarthub--objective-rows td table {
+  border-collapse: separate;
+  border-spacing: 0px 16px;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows td,
+.goals-table .usa-table .tta-smarthub--objective-rows thead th {
+  border: none;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows td {
+  padding-top: 0px;
+  border-right: 1px solid #c5c5c5;
+  border-left: 1px solid #c5c5c5;
+  border-bottom: 1px solid #c5c5c5;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows table tbody {
+  background-color: #f8f8f8;
+
+}
+
+.goals-table .usa-table .tta-smarthub--objective-reasons-list {
+  list-style-type: none;
+}
+
+.goals-table .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
+    border: none;
+  }
+
+  /* Objective Cells */
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
+    padding: 24px;
+  }
+
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:first-child,
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row tr:first-child {
+    max-width: 490px;
+    min-width: 490px;
+  }
+
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:nth-child(2) {
+    max-width: 200px;
+    min-width: 200px;
+  }
+
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:nth-child(3) {
+    max-width: 140px;
+    min-width: 140px;
+  }
+
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:nth-child(4) {
+    max-width: 300px;
+    min-width: 300px;
+  }
+
+  .goals-table .usa-table-container .tta-smarthub--objective-rows .tta-smarthub--objective-row td:nth-child(5) {
+    max-width: 160px;
+    min-width: 160px;
+  }
+
+  /* Collapse Objectives Button */
+ .tta-smarthub--objective-rows-collapse-button {
+    position: absolute;
+    margin-left: -16px;
+    margin-top: -16px;
+    background-color: #fff;
+  }
+
+  .tta-smarthub--objective-rows-collapse-button:focus {
+    opacity: 1;
+    background-color: #fff;
+  }
+
+  .tta-smarthub--objective-rows-collapse-button:not(:focus) {
+    opacity: 0;
+    pointer-events: none;
+  }
