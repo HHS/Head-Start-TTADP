@@ -76,11 +76,11 @@ const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
     // we can't save "" as a date on our backend
-    if (current === 'startDate' || current === 'endDate') {
-      if (!object[current]) {
-        return accumulator;
-      }
-    }
+    // if (current === 'startDate' || current === 'endDate') {
+    //   if (!object[current] || object[current] === 'Invalid date') {
+    //     return accumulator;
+    //   }
+    // }
 
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
@@ -256,9 +256,26 @@ function ActivityReport({
   const onSave = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
     if (reportId.current === 'new') {
+      const { startDate, endDate, ...fields } = data;
+      let startDateToSave = startDate;
+      if (startDateToSave === 'Invalid date' || startDateToSave === '') {
+        startDateToSave = null;
+      }
+
+      let endDateToSave = endDate;
+      if (endDateToSave === 'Invalid date' || endDateToSave === '') {
+        endDateToSave = null;
+      }
       const savedReport = await createReport(
-        { ...data, regionId: formData.regionId, approverUserIds: approverIds }, {},
+        {
+          ...fields,
+          startDate: startDateToSave,
+          endDate: endDateToSave,
+          regionId: formData.regionId,
+          approverUserIds: approverIds,
+        },
       );
+
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
