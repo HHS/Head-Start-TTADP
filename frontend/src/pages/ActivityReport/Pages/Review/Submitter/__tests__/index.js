@@ -8,7 +8,12 @@ import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
 
 import Submitter from '../index';
-import { REPORT_STATUSES } from '../../../../../../Constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../../../../Constants';
+import UserContext from '../../../../../../UserContext';
+
+const user = {
+  id: 1, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+};
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
@@ -67,13 +72,15 @@ const renderReview = (
 
   render(
     <Router history={history}>
-      <RenderSubmitter
-        onFormSubmit={onFormSubmit}
-        formData={formData}
-        onResetToDraft={resetToDraft}
-        onSave={onSave}
-        pages={pages}
-      />
+      <UserContext.Provider value={{ user }}>
+        <RenderSubmitter
+          onFormSubmit={onFormSubmit}
+          formData={formData}
+          onResetToDraft={resetToDraft}
+          onSave={onSave}
+          pages={pages}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 

@@ -13,6 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { withText } from '../../../testHelpers';
 import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
+import UserContext from '../../../UserContext';
 
 const formData = () => ({
   regionId: 1,
@@ -43,21 +44,26 @@ const formData = () => ({
   topics: 'first',
   userId: 1,
   updatedAt: new Date().toISOString(),
+  creatorRole: 'Reporter',
 });
 const history = createMemoryHistory();
+
+const user = {
+  id: 1, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+};
 
 const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <ActivityReport
-        match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-        location={{
-          state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-        }}
-        user={{
-          id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-        }}
-      />
+      <UserContext.Provider value={{ user }}>
+        <ActivityReport
+          match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+          location={{
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+          }}
+          user={{ ...user, id: userId }}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 };

@@ -158,10 +158,10 @@ function ActivityReport({
         const isAuthor = report.userId === user.id;
 
         // The report can be edited if its in draft OR needs_action state.
+
         const canWriteReport = (isCollaborator || isAuthor)
           && (report.calculatedStatus === REPORT_STATUSES.DRAFT
             || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
-
         updateAdditionalData({ recipients, collaborators, availableApprovers });
         updateFormData(report);
 
