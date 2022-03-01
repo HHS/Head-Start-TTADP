@@ -97,7 +97,7 @@ describe('goalFilters', () => {
 
   describe('grantNumberFilter', () => {
     const grantFilter = grantNumberFilter([{
-      id: 1,
+      numberWithProgramTypes: 'number EHS',
       number: 'number',
     }]);
 
@@ -111,7 +111,7 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => grantFilter.renderInput('1', 'test', [], apply));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
-      await selectEvent.select(grantNumberInput, ['number']);
+      await selectEvent.select(grantNumberInput, ['number EHS']);
       expect(apply).toHaveBeenCalled();
     });
   });
