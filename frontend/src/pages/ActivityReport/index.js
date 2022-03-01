@@ -186,7 +186,6 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        console.log(e);
         updateError('Unable to load activity report');
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
