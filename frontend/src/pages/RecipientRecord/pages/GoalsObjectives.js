@@ -83,7 +83,7 @@ GoalsObjectives.propTypes = {
   recipient: PropTypes.shape({
     grants: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
-      number: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
     })).isRequired,
   }).isRequired,
 };
