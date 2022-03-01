@@ -62,6 +62,7 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
+  creatorRole: '',
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);

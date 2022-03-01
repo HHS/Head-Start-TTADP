@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
-  Form, Fieldset, Button, Alert,
+  Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
+import UserContext from '../../../../../UserContext';
 
 import IncompletePages from './IncompletePages';
 import FormItem from '../../../../../components/FormItem';
@@ -23,6 +24,7 @@ const Draft = ({
   displayId,
   approverStatusList,
   lastSaveTime,
+  creatorRole,
 }) => {
   const {
     watch, handleSubmit, control, register,
@@ -30,6 +32,21 @@ const Draft = ({
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
+
+  const { user } = useContext(UserContext);
+
+  const completeUserRoles = () => {
+    // If removed user role is selected should we add it?
+    // We need to consider this case for a report that gets Unlocked.
+    const completeRoleList = [...user.role];
+    if (creatorRole) {
+      const indexOfRole = completeRoleList.indexOf(creatorRole);
+      if (indexOfRole === -1) {
+        completeRoleList.push(creatorRole);
+      }
+    }
+    return completeRoleList.sort();
+  };
 
   const onSubmit = (e) => {
     if (!hasIncompletePages) {
@@ -58,6 +75,30 @@ const Draft = ({
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
+        {
+          user && user.role.length > 1
+            ? (
+              <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
+                <FormItem
+                  label="Creator role"
+                  name="creatorRole"
+                  required
+                >
+                  <Dropdown
+                    id="creatorRole"
+                    name="creatorRole"
+                    inputRef={register({ required: 'A creator role must be assigned to the report before submitting' })}
+                  >
+                    <option name="default" value="" disabled>- Select -</option>
+                    {completeUserRoles().map((role) => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </Dropdown>
+                </FormItem>
+              </Fieldset>
+            )
+            : null
+        }
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Additional Notes">
           <FormItem
             label="Creator notes"
@@ -139,6 +180,7 @@ Draft.propTypes = {
     status: PropTypes.string,
   })).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment).isRequired,
+  creatorRole: PropTypes.string.isRequired,
 };
 
 export default Draft;
