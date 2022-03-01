@@ -107,17 +107,23 @@ export const grantNumberFilter = (possibleGrants) => ({
   display: 'Grant number',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: (query) => {
+    const toDisplay = query.map(
+      (q) => possibleGrants.find((g) => g.number === q).numberWithProgramTypes,
+    );
+    return handleArrayQuery(toDisplay);
+  },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterSelect
       onApply={onApplyQuery}
       inputId={`grant-number-${condition}-${id}`}
       labelText="Select grant numbers to filter by"
       options={possibleGrants.map((g) => ({
-        value: g.id,
-        label: g.number,
+        value: g.number,
+        label: g.numberWithProgramTypes,
       }))}
       selectedValues={query}
+      mapByValue
     />
   ),
 });
