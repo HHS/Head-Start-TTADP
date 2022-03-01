@@ -108,7 +108,7 @@ function ActivityReport({
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useARLocalStorage(`ar-can-edit-${activityReportId}`, false);
   const [lastSaveTime, updateLastSaveTime] = useState(
-    formData && formData.lastSaveTime ? formData.lastSaveTime : null,
+    formData && formData.updatedAt ? moment(formData.updatedAt) : null,
   );
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
@@ -201,7 +201,9 @@ function ActivityReport({
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateLastSaveTime(moment(report.updatedAt));
+          updateLastSaveTime(
+            shouldUpdateFromNetwork ? moment(report.updatedAt) : moment(formData.updatedAt),
+          );
         }
 
         updateError();

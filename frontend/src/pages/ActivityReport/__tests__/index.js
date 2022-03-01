@@ -14,7 +14,7 @@ import { mockWindowProperty, withText } from '../../../testHelpers';
 import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 
-const formData = () => ({
+const formData = (d) => ({
   regionId: 1,
   deliveryMethod: 'in-person',
   ttaType: ['training'],
@@ -43,6 +43,7 @@ const formData = () => ({
   topics: 'first',
   userId: 1,
   updatedAt: new Date().toISOString(),
+  ...d,
 });
 const history = createMemoryHistory();
 
@@ -84,7 +85,14 @@ describe('ActivityReport', () => {
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
   });
 
-  it('handles failure to download a report with local storage fallback', async () => {
+  it('handles failures to download a report', async () => {
+    fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
+    renderActivityReport('1', 'activity-summary', true);
+    const alert = await screen.findByTestId('alert');
+    expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
+  describe('local storage fallbacks', () => {
     const additionalData = {
       recipients: {
         grants: [],
@@ -94,28 +102,52 @@ describe('ActivityReport', () => {
       availableApprovers: [],
     };
 
-    getItem
-      .mockReturnValueOnce(JSON.stringify(formData()))
-      .mockReturnValueOnce(JSON.stringify(additionalData))
-      .mockReturnValueOnce(JSON.stringify(true))
-      .mockReturnValueOnce(JSON.stringify(formData()))
-      .mockReturnValueOnce(JSON.stringify(additionalData))
-      .mockReturnValueOnce(JSON.stringify(true));
+    // beforeEach(async () => {
+    //   fetchMock.reset();
+    // });
 
-    fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
-    renderActivityReport('1', 'activity-summary', true);
-    await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
-    expect(getItem).toHaveBeenCalled();
-    expect(setItem).toHaveBeenCalled();
-    const alert = await screen.findByTestId('alert');
-    expect(alert).toHaveTextContent('Unable to load activity report from our network. We found saved work on your computer, and we\'ve loaded that instead.');
-  });
+    it('knows what to do when the local data is newer than the network data', async () => {
+      getItem
+        .mockReturnValueOnce(JSON.stringify(formData()))
+        .mockReturnValueOnce(JSON.stringify(additionalData))
+        .mockReturnValueOnce(JSON.stringify(true))
+        .mockReturnValueOnce(JSON.stringify(formData()))
+        .mockReturnValueOnce(JSON.stringify(additionalData))
+        .mockReturnValueOnce(JSON.stringify(true));
 
-  it('handles failures to download a report', async () => {
-    fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
-    renderActivityReport('1', 'activity-summary', true);
-    const alert = await screen.findByTestId('alert');
-    expect(alert).toHaveTextContent('Unable to load activity report');
+      const updatedAt = moment().subtract(1, 'day').toISOString();
+      const d = formData({ updatedAt });
+      fetchMock.get('/api/activity-reports/1', d);
+
+      renderActivityReport('1', 'activity-summary', true);
+      await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
+      screen.logTestingPlaygroundURL();
+      const [alert] = await screen.findAllByTestId('alert');
+      expect(alert).toBeVisible();
+
+      const today = moment().format('MM/DD/YYYY');
+      const reggie = new RegExp(`this report was last saved on ${today}`, 'i');
+
+      expect(alert.textContent.match(reggie).length).toBe(1);
+    });
+
+    it('handles failure to download a report from the network with local storage fallback', async () => {
+      getItem
+        .mockReturnValueOnce(JSON.stringify(formData()))
+        .mockReturnValueOnce(JSON.stringify(additionalData))
+        .mockReturnValueOnce(JSON.stringify(true))
+        .mockReturnValueOnce(JSON.stringify(formData()))
+        .mockReturnValueOnce(JSON.stringify(additionalData))
+        .mockReturnValueOnce(JSON.stringify(true));
+
+      fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
+      renderActivityReport('1', 'activity-summary', true);
+      await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
+      expect(getItem).toHaveBeenCalled();
+      expect(setItem).toHaveBeenCalled();
+      const alert = await screen.findByText(/ We found saved work on your computer, and we've loaded that instead/i);
+      expect(alert).toBeVisible();
+    });
   });
 
   describe('for read only users', () => {
