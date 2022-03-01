@@ -1,6 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
-export default function useLocalStorage(key, value, save = true) {
+/**
+ * Wraps around useState by saving to local storage as a side effect
+ * Accepts an optional "save" parameter that skips saving to local storage
+ * (useful when you want to save in some circumstances, and skip in other, since hooks can't
+ * be called conditionally)
+ *
+ * @param {string} key
+ * @param {string} defaultValue
+ * @param {boolean} save
+ * @returns [string, function] from useState
+ */
+export default function useLocalStorage(key, defaultValue, save = true) {
+  const value = useMemo(() => {
+    try {
+      const curr = window.localStorage.getItem(key);
+      return JSON.parse(curr);
+    } catch (error) {
+      return defaultValue;
+    }
+  }, [defaultValue, key]);
+
   const [storedValue, setStoredValue] = useState(value);
 
   useEffect(() => {
