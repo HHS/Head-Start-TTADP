@@ -75,6 +75,13 @@ const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
  */
 export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
+    if (current === 'startDate' || current === 'endDate') {
+      if (!object[current]) {
+        accumulator[current] = null;
+        return accumulator;
+      }
+    }
+
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
