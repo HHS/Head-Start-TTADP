@@ -67,6 +67,12 @@ module.exports = (sequelize, DataTypes) => {
         return `${this.recipient.name} - ${this.number}${programTypes}`;
       },
     },
+    recipientInfo: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.recipient.name} - ${this.number} - ${this.recipient.id}`;
+      },
+    },
   }, {
     sequelize,
     modelName: 'Grant',

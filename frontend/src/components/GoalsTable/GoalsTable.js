@@ -153,11 +153,12 @@ function GoalsTable({
           perPage={perPage}
           handlePageChange={handlePageChange}
           hideMenu
+          paginationName="goals"
         />
         <div className="usa-table-container">
           <Table className="goals-table-content" fullWidth>
             <caption className="usa-sr-only">
-              TTA goals and objectiveCount with sorting and pagination
+              TTA goals and objective count with sorting and pagination
             </caption>
             <thead>
               <tr>

@@ -307,4 +307,15 @@ describe('Filter Menu', () => {
     userEvent.click(apply);
     expect(screen.getByText(/please enter a condition/i)).toBeVisible();
   });
+
+  it('display correct filter count', () => {
+    const filters = [
+      { id: '1', topic: 'Filter 1' },
+      { id: '2', topic: 'Filter 2' },
+      { id: '3', topic: 'Filter 3' },
+      { id: '4', topic: 'Filter 4' },
+    ];
+    renderFilterMenu(filters);
+    expect(screen.getByText(/filters \(4\)/i)).toBeVisible();
+  });
 });

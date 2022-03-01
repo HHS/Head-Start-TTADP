@@ -201,7 +201,7 @@ export async function getGoalsByActivityRecipient(
         as: 'objectives',
         required: false,
         include: [{
-          attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId'],
+          attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
           model: ActivityReport,
           as: 'activityReports',
         }],
