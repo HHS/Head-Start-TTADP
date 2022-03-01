@@ -76,7 +76,7 @@ const Draft = ({
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         {
-          user && user.role.length > 1
+          user && user.role && user.role.length > 1
             ? (
               <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
                 <FormItem
