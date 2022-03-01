@@ -43,6 +43,7 @@ const formData = () => ({
   topics: 'first',
   userId: 1,
   updatedAt: new Date().toISOString(),
+  attachments: [],
 });
 const history = createMemoryHistory();
 
@@ -125,6 +126,28 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
+  describe('resetToDraft', () => {
+    it('navigates to the correct page', async () => {
+      const data = formData();
+      // load the report
+      fetchMock.get('/api/activity-reports/3', {
+        ...data,
+        goals: [],
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
+      // reset to draft
+      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
+
+      renderActivityReport(3, 'review');
+      const button = await screen.findByRole('button', { name: /reset to draft/i });
+      userEvent.click(button);
+      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
+      expect(notes).toBeVisible();
+      expect(notes.getAttribute('contenteditable')).toBe('true');
+    });
+  });
+
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
@@ -168,7 +191,7 @@ describe('ActivityReport', () => {
       renderActivityReport('new', 'review');
       fetchMock.post('/api/activity-reports', { id: 1 });
       const button = await screen.findByRole('button', { name: 'Save Draft' });
-      await userEvent.click(button);
+      userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
