@@ -98,15 +98,28 @@ function ActivityReport({
   match, user, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
+
+  const LOCAL_STORAGE_CACHE_NUMBER = '0.1';
+  const LOCAL_STORAGE_DATA_KEY = `ar-form-data-${activityReportId}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+  const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = `ar-additional-data-${activityReportId}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+  const LOCAL_STORAGE_EDITABLE_KEY = `ar-can-edit-${activityReportId}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
-  const [formData, updateFormData] = useARLocalStorage(`ar-form-data-${activityReportId}`, null);
-  const [initialAdditionalData, updateAdditionalData] = useARLocalStorage(`ar-additional-data-${activityReportId}`, {});
+
+  const [formData, updateFormData] = useARLocalStorage(
+    LOCAL_STORAGE_DATA_KEY, null, activityReportId,
+  );
+  const [initialAdditionalData, updateAdditionalData] = useARLocalStorage(
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY, {}, activityReportId,
+  );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
-  const [editable, updateEditable] = useARLocalStorage(`ar-can-edit-${activityReportId}`, false);
+  const [editable, updateEditable] = useARLocalStorage(
+    LOCAL_STORAGE_EDITABLE_KEY, false, activityReportId,
+  );
   const [lastSaveTime, updateLastSaveTime] = useState(
     formData && formData.updatedAt ? moment(formData.updatedAt) : null,
   );
@@ -127,6 +140,20 @@ function ActivityReport({
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
     return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
   };
+
+  // cleanup local storage if the report has been submitted or approved
+  useEffect(() => {
+    if (formData
+      && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
+      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+    ) {
+      window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY);
+      window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY);
+      window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY);
+    }
+  }, [
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY, LOCAL_STORAGE_DATA_KEY, LOCAL_STORAGE_EDITABLE_KEY, formData,
+  ]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
