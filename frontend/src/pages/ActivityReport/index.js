@@ -75,13 +75,6 @@ const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
  */
 export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
-    // we can't save "" as a date on our backend
-    // if (current === 'startDate' || current === 'endDate') {
-    //   if (!object[current] || object[current] === 'Invalid date') {
-    //     return accumulator;
-    //   }
-    // }
-
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
@@ -193,6 +186,7 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
+        console.log(e);
         updateError('Unable to load activity report');
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
