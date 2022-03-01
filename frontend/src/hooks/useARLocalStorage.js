@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { REPORT_STATUSES } from '../Constants';
 import useLocalStorage from './useLocalStorage';
 
 /**
@@ -7,9 +9,28 @@ import useLocalStorage from './useLocalStorage';
  * @param {string} defaultValue
  * @returns
  */
-export default function useARLocalStorage(key, defaultValue) {
-  const save = key !== 'new';
-  const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, save);
+export default function useARLocalStorage(key, defaultValue, activityReportId) {
+  const [saveReport, setSaveReport] = useState(false);
+  const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, saveReport);
+
+  useEffect(() => {
+    let toSave = false;
+
+    if (activityReportId !== 'new') {
+      toSave = true;
+    }
+
+    if (storedValue
+      && storedValue.calculatedStatus
+      && (storedValue.calculatedStatus === REPORT_STATUSES.APPROVED
+        || storedValue.calculatedStatus === REPORT_STATUSES.SUBMITTED
+      )
+    ) {
+      toSave = false;
+    }
+
+    setSaveReport(toSave);
+  }, [activityReportId, key, storedValue]);
 
   return [storedValue, setStoredValue];
 }
