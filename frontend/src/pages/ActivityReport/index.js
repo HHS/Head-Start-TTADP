@@ -76,7 +76,7 @@ const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
-      if (!object[current]) {
+      if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
         accumulator[current] = null;
         return accumulator;
       }
@@ -258,12 +258,12 @@ function ActivityReport({
     if (reportId.current === 'new') {
       const { startDate, endDate, ...fields } = data;
       let startDateToSave = startDate;
-      if (startDateToSave === 'Invalid date' || startDateToSave === '') {
+      if (startDateToSave === 'Invalid date' || startDateToSave === '' || !moment(startDateToSave, 'MM/DD/YYYY').isValid()) {
         startDateToSave = null;
       }
 
       let endDateToSave = endDate;
-      if (endDateToSave === 'Invalid date' || endDateToSave === '') {
+      if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
         endDateToSave = null;
       }
       const savedReport = await createReport(
