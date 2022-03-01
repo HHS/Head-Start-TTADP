@@ -36,8 +36,7 @@ const Draft = ({
   const { user } = useContext(UserContext);
 
   const completeUserRoles = () => {
-    // If removed user role is selected should we add it?
-    // We need to consider this case for a report that gets Unlocked.
+    // If removed user role is selected we need to add it.
     const completeRoleList = [...user.role];
     if (creatorRole) {
       const indexOfRole = completeRoleList.indexOf(creatorRole);
