@@ -62,7 +62,7 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
-  creatorRole: '',
+  // creatorRole: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -138,6 +138,7 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
+            creatorRole: user && user.role && user.role.length === 1 ? user.role[0] : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
