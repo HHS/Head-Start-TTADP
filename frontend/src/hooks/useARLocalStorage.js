@@ -1,18 +1,14 @@
-import { useMemo } from 'react';
 import useLocalStorage from './useLocalStorage';
 
-export default function useARLocalStorage(key, value) {
-  const defaultValue = useMemo(() => {
-    try {
-      const curr = window.localStorage.getItem(key);
-      return JSON.parse(curr);
-    } catch (error) {
-      return value;
-    }
-  }, [key, value]);
-
+/**
+ * we're wrapping useLocalStorage so we can conditionally save to local storage and other times
+ * use a basic "lose state"
+ * @param {string} key
+ * @param {string} defaultValue
+ * @returns
+ */
+export default function useARLocalStorage(key, defaultValue) {
   const save = key !== 'new';
-
   const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, save);
 
   return [storedValue, setStoredValue];
