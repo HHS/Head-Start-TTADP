@@ -106,3 +106,21 @@ export const TARGET_POPULATIONS = [
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
 ];
+
+export const USER_ROLES = [
+  'Regional Program Manager',
+  'COR',
+  'Supervisory Program Specialist',
+  'Program Specialist',
+  'Grants Specialist',
+  'Central Office',
+  'TTAC',
+  'Admin. Assistant',
+  'Early Childhood Manager',
+  'Early Childhood Specialist',
+  'Family Engagement Specialist',
+  'Grantee Specialist Manager',
+  'Grantee Specialist',
+  'Health Specialist',
+  'System Specialist',
+];

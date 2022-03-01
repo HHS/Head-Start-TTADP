@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
-const { REPORT_STATUSES } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 
 function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
@@ -180,6 +180,7 @@ module.exports = (sequelize, DataTypes) => {
             this.participants,
             this.topics,
             this.ttaType,
+            this.creatorRole,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
@@ -254,6 +255,10 @@ module.exports = (sequelize, DataTypes) => {
           return 0;
         });
       },
+    },
+    creatorRole: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
     },
   }, {
     sequelize,
