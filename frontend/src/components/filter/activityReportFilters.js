@@ -51,7 +51,7 @@ const defaultDateValues = {
 
 export const startDateFilter = {
   id: 'startDate',
-  display: 'Start date',
+  display: 'Date started',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
@@ -75,7 +75,7 @@ export const startDateFilter = {
 
 export const endDateFilter = {
   id: 'endDate',
-  display: 'End date',
+  display: 'Date ended',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {

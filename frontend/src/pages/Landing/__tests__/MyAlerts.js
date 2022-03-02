@@ -63,10 +63,10 @@ describe('My Alerts', () => {
     expect(recipientColumnHeader).toBeVisible();
   });
 
-  test('displays start date column', async () => {
+  test('displays date started column', async () => {
     renderMyAlerts();
     const startDateColumnHeader = await screen.findByRole('columnheader', {
-      name: /start date/i,
+      name: /date started/i,
     });
     expect(startDateColumnHeader).toBeVisible();
   });

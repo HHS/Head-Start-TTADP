@@ -160,9 +160,9 @@ describe('Landing Page', () => {
     expect(recipientColumnHeader).toBeVisible();
   });
 
-  test('displays start date column', async () => {
+  test('displays date started column', async () => {
     const startDateColumnHeader = await screen.findByRole('columnheader', {
-      name: /start date/i,
+      name: /date started/i,
     });
     expect(startDateColumnHeader).toBeVisible();
   });
@@ -434,7 +434,7 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Start date', async () => {
-    const columnHeaders = await screen.findAllByRole('button', { name: /start date\. activate to sort ascending/i });
+    const columnHeaders = await screen.findAllByRole('button', { name: /date started\. activate to sort ascending/i });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get(`/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&${dateFilter}`,
