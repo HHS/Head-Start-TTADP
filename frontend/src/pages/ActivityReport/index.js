@@ -117,6 +117,7 @@ function ActivityReport({
   const [lastSaveTime, updateLastSaveTime] = useState();
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
+  const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -171,6 +172,7 @@ function ActivityReport({
           && (report.calculatedStatus === REPORT_STATUSES.DRAFT
             || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
         updateAdditionalData({ recipients, collaborators, availableApprovers });
+        updateCreatorRoleWithName(report.creatorNameWithRole);
         updateFormData(report);
 
         // ***Determine if the current user matches any of the approvers for this activity report.
@@ -284,7 +286,11 @@ function ActivityReport({
       // if it isn't a new report, we compare it to the last response from the backend (formData)
       // and pass only the updated to save report
       const updatedFields = findWhatsChanged(data, formData);
-      await saveReport(reportId.current, { ...updatedFields, approverUserIds: approverIds }, {});
+      const updatedReport = await saveReport(
+        reportId.current, { ...updatedFields, approverUserIds: approverIds },
+        {},
+      );
+      updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
     }
   };
 
@@ -317,13 +323,13 @@ function ActivityReport({
   const reportCreator = { name: user.name, role: user.role };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
-  const author = formData.author ? (
+  const author = creatorNameWithRole ? (
     <>
       <hr />
       <p>
         <strong>Creator:</strong>
         {' '}
-        {formData.author.fullName}
+        {creatorNameWithRole}
       </p>
 
     </>
