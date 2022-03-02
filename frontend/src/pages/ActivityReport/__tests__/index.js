@@ -17,10 +17,12 @@ import {
 describe('ActivityReport', () => {
   const setItem = jest.fn();
   const getItem = jest.fn();
+  const removeItem = jest.fn();
 
   mockWindowProperty('localStorage', {
     setItem,
     getItem,
+    removeItem,
   });
 
   afterEach(() => fetchMock.restore());
@@ -93,6 +95,7 @@ describe('ActivityReport', () => {
       // reset to draft
       fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
 
+      console.log('test');
       renderActivityReport(3, 'review');
       const button = await screen.findByRole('button', { name: /reset to draft/i });
       userEvent.click(button);

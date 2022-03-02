@@ -13,6 +13,7 @@ import {
 describe('Local storage fallbacks', () => {
   const setItem = jest.fn();
   const getItem = jest.fn();
+  const removeItem = jest.fn();
 
   const additionalData = {
     recipients: {
@@ -26,6 +27,7 @@ describe('Local storage fallbacks', () => {
   mockWindowProperty('localStorage', {
     setItem,
     getItem,
+    removeItem,
   });
 
   afterEach(() => fetchMock.restore());
