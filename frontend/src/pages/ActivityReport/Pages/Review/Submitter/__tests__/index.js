@@ -9,6 +9,7 @@ import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
 
 import Submitter from '../index';
 import { REPORT_STATUSES } from '../../../../../../Constants';
+import NetworkContext from '../../../../../../NetworkContext';
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
@@ -67,13 +68,15 @@ const renderReview = (
 
   render(
     <Router history={history}>
-      <RenderSubmitter
-        onFormSubmit={onFormSubmit}
-        formData={formData}
-        onResetToDraft={resetToDraft}
-        onSave={onSave}
-        pages={pages}
-      />
+      <NetworkContext.Provider value={{ connectionActive: true }}>
+        <RenderSubmitter
+          onFormSubmit={onFormSubmit}
+          formData={formData}
+          onResetToDraft={resetToDraft}
+          onSave={onSave}
+          pages={pages}
+        />
+      </NetworkContext.Provider>
     </Router>,
   );
 
