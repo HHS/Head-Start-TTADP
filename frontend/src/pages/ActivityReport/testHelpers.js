@@ -56,6 +56,7 @@ export const renderActivityReport = (id, location = 'activity-summary', showLast
         user={{
           id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
         }}
+        region={1}
       />
     </Router>,
   );
