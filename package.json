@@ -80,8 +80,8 @@
     "updateDeliveryData:local": "./node_modules/.bin/babel-node ./src/tools/updateDeliveryDataCLI.js",
     "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
     "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js",
-    "updateChildInvolvementLegacyTargetPopulationCLI": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
-    "updateChildInvolvementLegacyTargetPopulationCLI:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js"
+    "updateChildInvolvementLegacyTargetPopulation": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
+    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js"
   },
   "repository": {
     "type": "git",
