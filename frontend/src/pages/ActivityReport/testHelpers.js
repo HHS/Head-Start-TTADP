@@ -13,6 +13,7 @@ export const history = createMemoryHistory();
 
 export const formData = () => ({
   regionId: 1,
+  displayId: 'yabba dabba doo',
   deliveryMethod: 'in-person',
   ttaType: ['training'],
   approvers: [],
