@@ -420,7 +420,7 @@ export async function unlockReport(req, res) {
 export async function submitReport(req, res) {
   try {
     const { activityReportId } = req.params;
-    const { approverUserIds, additionalNotes } = req.body;
+    const { approverUserIds, additionalNotes, creatorWithRole } = req.body;
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(activityReportId);
@@ -434,6 +434,7 @@ export async function submitReport(req, res) {
     // Update Activity Report notes and submissionStatus
     const savedReport = await createOrUpdate({
       additionalNotes,
+      creatorWithRole,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
     }, report);
 
