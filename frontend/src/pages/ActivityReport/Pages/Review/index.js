@@ -64,12 +64,13 @@ const ReviewSubmit = ({
 
   const editing = calculatedStatus === REPORT_STATUSES.DRAFT
     || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  const items = editing ? reviewItems : reviewItems.map((ri) => ({
+  const items = editing ? reviewItems.map((ri) => ({
+    ...ri,
+    expanded: false,
+  })) : reviewItems.map((ri) => ({
     ...ri,
     expanded: true,
   }));
-
-  console.log(items);
 
   return (
     <>
