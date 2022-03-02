@@ -17,6 +17,7 @@ import {
 
 export const DASHBOARD_FILTER_CONFIG = [
   endDateFilter,
+  startDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
   programTypeFilter,
@@ -25,7 +26,6 @@ export const DASHBOARD_FILTER_CONFIG = [
   regionFilter,
   reportIdFilter,
   specialistRoleFilter,
-  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,

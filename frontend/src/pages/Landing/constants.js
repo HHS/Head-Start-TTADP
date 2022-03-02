@@ -17,6 +17,7 @@ import {
 
 export const LANDING_BASE_FILTER_CONFIG = [
   endDateFilter,
+  startDateFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   programSpecialistFilter,
@@ -25,7 +26,6 @@ export const LANDING_BASE_FILTER_CONFIG = [
   recipientFilter,
   reportIdFilter,
   specialistRoleFilter,
-  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
@@ -33,6 +33,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   endDateFilter,
+  startDateFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   programSpecialistFilter,
@@ -42,7 +43,6 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   regionFilter,
   reportIdFilter,
   specialistRoleFilter,
-  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,

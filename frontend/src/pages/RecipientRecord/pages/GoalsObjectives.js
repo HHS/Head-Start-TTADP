@@ -33,12 +33,12 @@ export default function GoalsObjectives({ recipientId, regionId }) {
     ...expandFilters(filters),
     {
       topic: 'region',
-      condition: 'Is',
+      condition: 'is',
       query: regionId,
     },
     {
       topic: 'recipientId',
-      condition: 'Contains',
+      condition: 'contains',
       query: recipientId,
     },
   ];

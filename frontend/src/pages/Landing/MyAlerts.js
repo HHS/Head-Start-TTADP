@@ -287,7 +287,7 @@ function MyAlerts(props) {
                 <tr>
                   {renderColumnHeader('Report ID', 'regionId')}
                   {renderColumnHeader('Recipient', 'activityRecipients')}
-                  {renderColumnHeader('Start date', 'startDate')}
+                  {renderColumnHeader('Date started', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
                   {renderColumnHeader('Collaborator(s)', 'collaborators')}
