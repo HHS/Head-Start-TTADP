@@ -46,6 +46,7 @@ const formData = () => ({
   updatedAt: new Date().toISOString(),
   creatorRole: 'Reporter',
   attachments: [],
+  creatorNameWithRole: 'test',
 });
 const history = createMemoryHistory();
 
