@@ -32,5 +32,12 @@ export default function useARLocalStorage(key, defaultValue, activityReportId) {
     setSaveReport(toSave);
   }, [activityReportId, key, storedValue]);
 
-  return [storedValue, setStoredValue];
+  return [storedValue, (v) => {
+    if (saveReport) {
+      const value = { ...v, savedToStorage: new Date().toISOString() };
+      setStoredValue(value);
+    } else {
+      setStoredValue(v);
+    }
+  }];
 }
