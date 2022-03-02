@@ -2,7 +2,9 @@
   Activity report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, useRef, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   keyBy, mapValues, startCase, isEqual,
@@ -33,6 +35,8 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import NetworkContext from '../../NetworkContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -108,23 +112,30 @@ function ActivityReport({
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
 
+  // whether to save the report's editable and additional data to local storage
+  const saveMeta = useMemo(() => activityReportId !== 'new', [activityReportId]);
+
   const [formData, updateFormData] = useARLocalStorage(
     LOCAL_STORAGE_DATA_KEY, null, activityReportId,
   );
-  const [initialAdditionalData, updateAdditionalData] = useARLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY, {}, activityReportId,
+  const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY, {}, saveMeta,
   );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
-  const [editable, updateEditable] = useARLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY, false, activityReportId,
+  const [editable, updateEditable] = useLocalStorage(
+    LOCAL_STORAGE_EDITABLE_KEY, false, saveMeta,
   );
   const [lastSaveTime, updateLastSaveTime] = useState(
     formData && formData.updatedAt ? moment(formData.updatedAt) : null,
   );
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
+  // this attempts to track whether or not we're online
+  // (or at least, if the backend is responding)
+  const [connectionActive, setConnectionActive] = useState(true);
+
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -196,9 +207,9 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        if (formData && formData.updatedAt) {
+        if (formData && formData.savedToStorage) {
           const updatedAtFromNetwork = moment(report.updatedAt);
-          const updatedAtFromLocalStorage = moment(formData.updatedAt);
+          const updatedAtFromLocalStorage = moment(formData.savedToStorage);
           if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
             const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
             if (storageIsNewer) {
@@ -208,7 +219,7 @@ function ActivityReport({
         }
 
         if (shouldUpdateFromNetwork) {
-          updateFormData(report);
+          updateFormData({ ...formData, ...report });
         }
 
         // ***Determine if the current user matches any of the approvers for this activity report.
@@ -235,6 +246,7 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
+        setConnectionActive(false);
         const errorMsg = formData ? 'Unable to load activity report from our network. We found saved work on your computer, and we\'ve loaded that instead.' : 'Unable to load activity report';
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
@@ -298,23 +310,30 @@ function ActivityReport({
 
   const onSave = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
-    if (reportId.current === 'new') {
-      const savedReport = await createReport(
-        { ...data, regionId: formData.regionId, approverUserIds: approverIds }, {},
-      );
-      reportId.current = savedReport.id;
-      window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
-    } else {
-      // if it isn't a new report, we compare it to the last response from the backend (formData)
-      // and pass only the updated to save report
-      const updatedFields = findWhatsChanged(data, formData);
-      await saveReport(reportId.current, { ...updatedFields, approverUserIds: approverIds }, {});
+    try {
+      if (reportId.current === 'new') {
+        const savedReport = await createReport(
+          { ...data, regionId: formData.regionId, approverUserIds: approverIds }, {},
+        );
+        reportId.current = savedReport.id;
+        window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+        setConnectionActive(true);
+      } else {
+        // if it isn't a new report, we compare it to the last response from the backend (formData)
+        // and pass only the updated to save report
+        const updatedFields = findWhatsChanged(data, formData);
+        await saveReport(reportId.current, { ...updatedFields, approverUserIds: approverIds }, {});
+        setConnectionActive(true);
+      }
+    } catch (e) {
+      setConnectionActive(false);
     }
   };
 
   const onFormSubmit = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
     const reportToSubmit = { additionalNotes: data.additionalNotes, approverUserIds: approverIds };
+
     const response = await submitReport(reportId.current, reportToSubmit);
 
     updateFormData(
@@ -379,30 +398,32 @@ function ActivityReport({
           )}
         </Grid>
       </Grid>
-      <Navigator
-        key={currentPage}
-        editable={editable}
-        updatePage={updatePage}
-        reportCreator={reportCreator}
-        showValidationErrors={showValidationErrors}
-        updateShowValidationErrors={updateShowValidationErrors}
-        lastSaveTime={lastSaveTime}
-        updateLastSaveTime={updateLastSaveTime}
-        reportId={reportId.current}
-        currentPage={currentPage}
-        additionalData={initialAdditionalData}
-        formData={formData}
-        updateFormData={updateFormData}
-        pages={pages}
-        onFormSubmit={onFormSubmit}
-        onSave={onSave}
-        onResetToDraft={onResetToDraft}
-        isApprover={isApprover}
-        isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
-        onReview={onReview}
-        errorMessage={errorMessage}
-        updateErrorMessage={updateErrorMessage}
-      />
+      <NetworkContext.Provider value={{ connectionActive }}>
+        <Navigator
+          key={currentPage}
+          editable={editable}
+          updatePage={updatePage}
+          reportCreator={reportCreator}
+          showValidationErrors={showValidationErrors}
+          updateShowValidationErrors={updateShowValidationErrors}
+          lastSaveTime={lastSaveTime}
+          updateLastSaveTime={updateLastSaveTime}
+          reportId={reportId.current}
+          currentPage={currentPage}
+          additionalData={initialAdditionalData}
+          formData={formData}
+          updateFormData={updateFormData}
+          pages={pages}
+          onFormSubmit={onFormSubmit}
+          onSave={onSave}
+          onResetToDraft={onResetToDraft}
+          isApprover={isApprover}
+          isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
+          onReview={onReview}
+          errorMessage={errorMessage}
+          updateErrorMessage={updateErrorMessage}
+        />
+      </NetworkContext.Provider>
     </div>
   );
 }
