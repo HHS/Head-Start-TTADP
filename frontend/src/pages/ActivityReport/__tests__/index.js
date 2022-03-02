@@ -121,7 +121,6 @@ describe('ActivityReport', () => {
 
       renderActivityReport('1', 'activity-summary', true);
       await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
-      screen.logTestingPlaygroundURL();
       const [alert] = await screen.findAllByTestId('alert');
       expect(alert).toBeVisible();
 

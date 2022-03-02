@@ -102,12 +102,13 @@ Review.propTypes = {
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
-  })).isRequired,
+  })),
 };
 
 Review.defaultProps = {
   pendingOtherApprovals: false,
   additionalNotes: '',
+  approverStatusList: [],
 };
 
 export default Review;
