@@ -16,8 +16,8 @@ import {
 } from '../../components/filter/activityReportFilters';
 
 export const LANDING_BASE_FILTER_CONFIG = [
-  endDateFilter,
   startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   programSpecialistFilter,
@@ -32,8 +32,8 @@ export const LANDING_BASE_FILTER_CONFIG = [
 ];
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
-  endDateFilter,
   startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   programSpecialistFilter,
