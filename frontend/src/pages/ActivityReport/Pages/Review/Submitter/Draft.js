@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
@@ -13,6 +13,7 @@ import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import MultiSelect from '../../../../../components/MultiSelect';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
+import NetworkContext from '../../../../../NetworkContext';
 
 const Draft = ({
   availableApprovers,
@@ -30,6 +31,7 @@ const Draft = ({
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
+  const { connectionActive } = useContext(NetworkContext);
 
   const onSubmit = (e) => {
     if (!hasIncompletePages) {
@@ -106,7 +108,7 @@ const Draft = ({
         >
           Save Draft
         </Button>
-        <Button type="submit">Submit for approval</Button>
+        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
       </Form>
       <DismissingComponentWrapper
         shown={showSavedDraft}
