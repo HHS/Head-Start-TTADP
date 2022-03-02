@@ -11,18 +11,11 @@ export default async function updateChildInvolvementLegacyTargetPopulation() {
       'imported',
     ],
     where: {
-      [Op.and]: [
-        {
-          imported: { [Op.not]: null },
+      imported: {
+        targetPopulations: {
+          [Op.like]: '%Affected by Child Welfare involvement%',
         },
-        {
-          imported: {
-            targetPopulations: {
-              [Op.like]: '%Affected by Child Welfare involvement%',
-            },
-          },
-        },
-      ],
+      },
     },
   });
 
