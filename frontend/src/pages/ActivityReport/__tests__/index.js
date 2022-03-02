@@ -1,72 +1,17 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import reactSelectEvent from 'react-select-event';
 import {
-  render, screen, fireEvent, waitFor, within,
+  screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
-import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { mockWindowProperty, withText } from '../../../testHelpers';
-import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
-import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
+import { unflattenResourcesUsed, findWhatsChanged } from '../index';
 
-const formData = (d) => ({
-  regionId: 1,
-  deliveryMethod: 'in-person',
-  ttaType: ['training'],
-  approvers: [],
-  duration: '1',
-  pageState: {
-    1: 'in-progress',
-    2: 'in-progress',
-    3: 'in-progress',
-    4: 'in-progress',
-  },
-  endDate: moment().format('MM/DD/YYYY'),
-  activityRecipients: ['Recipient Name 1'],
-  numberOfParticipants: '1',
-  reason: ['reason 1'],
-  activityRecipientType: 'recipient',
-  collaborators: [],
-  participants: ['CEO / CFO / Executive'],
-  requester: 'recipient',
-  calculatedStatus: REPORT_STATUSES.DRAFT,
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  resourcesUsed: 'eclkcurl',
-  startDate: moment().format('MM/DD/YYYY'),
-  targetPopulations: ['target 1'],
-  author: { name: 'test' },
-  topics: 'first',
-  userId: 1,
-  updatedAt: new Date().toISOString(),
-  ...d,
-});
-const history = createMemoryHistory();
-
-const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
-  render(
-    <Router history={history}>
-      <ActivityReport
-        match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-        location={{
-          state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-        }}
-        user={{
-          id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-        }}
-      />
-    </Router>,
-  );
-};
-
-const recipients = {
-  grants: [{ name: 'recipient', grants: [{ activityRecipientId: 1, name: 'Recipient Name' }] }],
-  otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
-};
+import {
+  history, formData, renderActivityReport, recipients,
+} from '../testHelpers';
 
 describe('ActivityReport', () => {
   const setItem = jest.fn();
@@ -90,63 +35,6 @@ describe('ActivityReport', () => {
     renderActivityReport('1', 'activity-summary', true);
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveTextContent('Unable to load activity report');
-  });
-
-  describe('local storage fallbacks', () => {
-    const additionalData = {
-      recipients: {
-        grants: [],
-        otherEntities: [],
-      },
-      collaborators: [],
-      availableApprovers: [],
-    };
-
-    // beforeEach(async () => {
-    //   fetchMock.reset();
-    // });
-
-    it('knows what to do when the local data is newer than the network data', async () => {
-      getItem
-        .mockReturnValueOnce(JSON.stringify(formData()))
-        .mockReturnValueOnce(JSON.stringify(additionalData))
-        .mockReturnValueOnce(JSON.stringify(true))
-        .mockReturnValueOnce(JSON.stringify(formData()))
-        .mockReturnValueOnce(JSON.stringify(additionalData))
-        .mockReturnValueOnce(JSON.stringify(true));
-
-      const updatedAt = moment().subtract(1, 'day').toISOString();
-      const d = formData({ updatedAt });
-      fetchMock.get('/api/activity-reports/1', d);
-
-      renderActivityReport('1', 'activity-summary', true);
-      await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
-      const [alert] = await screen.findAllByTestId('alert');
-      expect(alert).toBeVisible();
-
-      const today = moment().format('MM/DD/YYYY');
-      const reggie = new RegExp(`this report was last saved on ${today}`, 'i');
-
-      expect(alert.textContent.match(reggie).length).toBe(1);
-    });
-
-    it('handles failure to download a report from the network with local storage fallback', async () => {
-      getItem
-        .mockReturnValueOnce(JSON.stringify(formData()))
-        .mockReturnValueOnce(JSON.stringify(additionalData))
-        .mockReturnValueOnce(JSON.stringify(true))
-        .mockReturnValueOnce(JSON.stringify(formData()))
-        .mockReturnValueOnce(JSON.stringify(additionalData))
-        .mockReturnValueOnce(JSON.stringify(true));
-
-      fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
-      renderActivityReport('1', 'activity-summary', true);
-      await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
-      expect(getItem).toHaveBeenCalled();
-      expect(setItem).toHaveBeenCalled();
-      const alert = await screen.findByText(/ We found saved work on your computer, and we've loaded that instead/i);
-      expect(alert).toBeVisible();
-    });
   });
 
   describe('for read only users', () => {
@@ -234,7 +122,7 @@ describe('ActivityReport', () => {
       renderActivityReport('new', 'review');
       fetchMock.post('/api/activity-reports', { id: 1 });
       const button = await screen.findByRole('button', { name: 'Save Draft' });
-      await userEvent.click(button);
+      userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
@@ -280,7 +168,7 @@ describe('ActivityReport', () => {
         reactSelectEvent.openMenu(recipientSelectbox);
 
         const recipientNames = await screen.findByText(/recipient name\(s\)/i);
-        expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+        expect(within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
