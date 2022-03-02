@@ -7,6 +7,7 @@ import {
   ActivityReportApprover,
   Grant,
   Recipient,
+  ActivityReportCollaborator,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -21,18 +22,22 @@ describe('activityReportToCsvRecord', () => {
 
   const mockCollaborators = [
     {
-      id: 2100,
-      name: 'Collaborator 1',
-      hsesUserId: '2100',
-      hsesUsername: 'collaborator.one',
-      role: ['Grantee Specialist', 'Health Specialist'],
+      user: {
+        id: 2100,
+        name: 'Collaborator 1',
+        hsesUserId: '2100',
+        hsesUsername: 'collaborator.one',
+        role: ['Grantee Specialist', 'Health Specialist'],
+      },
     },
     {
-      id: 2101,
-      name: 'Collaborator 2',
-      hsesUserId: '2101',
-      hsesUsername: 'collaborator.two',
-      role: [],
+      user: {
+        id: 2101,
+        name: 'Collaborator 2',
+        hsesUserId: '2101',
+        hsesUsername: 'collaborator.two',
+        role: [],
+      },
     },
   ];
 
@@ -178,7 +183,7 @@ describe('activityReportToCsvRecord', () => {
     nonECLKCResourcesUsed: ['one', 'two'],
     author: mockAuthor,
     lastUpdatedBy: mockAuthor,
-    collaborators: mockCollaborators,
+    activityReportCollaborators: mockCollaborators,
     approvedAt: new Date(),
     activityRecipients: mockActivityRecipients,
     approvers: mockApprovers,
@@ -301,7 +306,15 @@ describe('activityReportToCsvRecord', () => {
     const report = await ActivityReport.build(mockReport, {
       include: [{ model: User, as: 'author' },
         { model: User, as: 'lastUpdatedBy' },
-        { model: User, as: 'collaborators' },
+        {
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [{
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'role', 'fullName'],
+          }],
+        },
         {
           model: ActivityRecipient,
           as: 'activityRecipients',
