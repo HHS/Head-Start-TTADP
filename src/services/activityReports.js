@@ -747,8 +747,9 @@ async function getDownloadableActivityReports(where, separate = true) {
             model: Goal,
             as: 'goal',
           }],
-          attributes: ['title', 'status', 'ttaProvided'],
+          attributes: ['id', 'title', 'status', 'ttaProvided'],
         }],
+        order: [['objective', 'goal', 'id'], ['objective', 'id']],
       },
       {
         model: ActivityRecipient,
