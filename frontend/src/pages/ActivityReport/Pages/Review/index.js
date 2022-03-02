@@ -69,6 +69,8 @@ const ReviewSubmit = ({
     expanded: true,
   }));
 
+  console.log(items);
+
   return (
     <>
       <Helmet>
