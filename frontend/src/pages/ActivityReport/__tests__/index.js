@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 
 import { mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../index';
+import { REPORT_STATUSES } from '../../../Constants';
 
 import {
   history, formData, renderActivityReport, recipients,
@@ -77,6 +78,28 @@ describe('ActivityReport', () => {
   it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport('new', null);
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
+  });
+
+  describe('resetToDraft', () => {
+    it('navigates to the correct page', async () => {
+      const data = formData();
+      // load the report
+      fetchMock.get('/api/activity-reports/3', {
+        ...data,
+        goals: [],
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
+      // reset to draft
+      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
+
+      renderActivityReport(3, 'review');
+      const button = await screen.findByRole('button', { name: /reset to draft/i });
+      userEvent.click(button);
+      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
+      expect(notes).toBeVisible();
+      expect(notes.getAttribute('contenteditable')).toBe('true');
+    });
   });
 
   describe('updatePage', () => {
