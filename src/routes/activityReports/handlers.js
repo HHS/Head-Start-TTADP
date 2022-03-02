@@ -630,19 +630,19 @@ export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
 
-    const reportsWithCount = await getDownloadableActivityReportsByIds(
+    const reports = await getDownloadableActivityReportsByIds(
       readRegions,
       req.query,
     );
 
     const { format = 'json' } = req.query || {};
 
-    if (!reportsWithCount) {
+    if (!reports) {
       res.sendStatus(404);
     } else if (format === 'csv') {
-      await sendActivityReportCSV(reportsWithCount.rows, res);
+      await sendActivityReportCSV(reports, res);
     } else {
-      res.json(reportsWithCount);
+      res.json(reports);
     }
   } catch (error) {
     await handleErrors(req, res, error, logContext);

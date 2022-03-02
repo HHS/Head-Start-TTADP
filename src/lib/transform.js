@@ -63,6 +63,25 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
+function transformCollaborators(joinTable, table, field, fieldName) {
+  function transformer(instance) {
+    const obj = {};
+    let records = instance[joinTable];
+    if (records) {
+      if (!Array.isArray(records)) {
+        records = [records];
+      }
+      const value = records.map((r) => r[table][field]).sort().join('\n');
+      Object.defineProperty(obj, fieldName, {
+        value,
+        enumerable: true,
+      });
+    }
+    return obj;
+  }
+  return transformer;
+}
+
 function transformHTML(field) {
   function transformer(instance) {
     const html = instance[field] || '';
@@ -210,9 +229,12 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 */
 function transformGoalsAndObjectives(report) {
   let obj = {};
-  const objectiveRecords = report.objectives;
-  if (objectiveRecords) {
-    obj = makeGoalsAndObjectivesObject(objectiveRecords);
+  const { activityReportObjectives } = report;
+  if (activityReportObjectives) {
+    const objectiveRecords = activityReportObjectives.map((aro) => aro.objective);
+    if (objectiveRecords) {
+      obj = makeGoalsAndObjectivesObject(objectiveRecords);
+    }
   }
 
   return obj;
@@ -223,7 +245,7 @@ const arTransformers = [
   transformRelatedModel('author', 'fullName'),
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
-  transformRelatedModel('collaborators', 'fullName'),
+  transformCollaborators('activityReportCollaborators', 'user', 'fullName', 'collaborators'),
   transformApproversModel('name'),
   'targetPopulations',
   'virtualDeliveryType',

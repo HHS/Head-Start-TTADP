@@ -6,13 +6,14 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 import './ReportMenu.css';
 
-export const MAXIMUM_EXPORTED_REPORTS = 2000;
+export const MAXIMUM_EXPORTED_REPORTS = 20000;
 
 function ReportMenu({
   onExportAll,
   onExportSelected,
   hasSelectedReports,
   label,
+  count,
   downloadError,
   setDownloadError,
   isDownloading,
@@ -106,16 +107,46 @@ function ReportMenu({
                 .
               </Alert>
             )}
-            <button
-              ref={downloadAllButtonRef}
-              role="menuitem"
-              onClick={onExportAll}
-              type="button"
-              disabled={downloadError || isDownloading}
-              className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
-            >
-              Export table data
-            </button>
+            {count > MAXIMUM_EXPORTED_REPORTS ? (
+              <>
+                <div className="usa-hint" id="no-exports-please">
+                  <p>
+                    This export has
+                    {' '}
+                    {count.toLocaleString('en-US')}
+                    {' '}
+                    reports. You can only export
+                    {' '}
+                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                    {' '}
+                    reports at a time.
+                  </p>
+                  <p>
+                    To export more than
+                    {' '}
+                    {MAXIMUM_EXPORTED_REPORTS.toLocaleString('en-us')}
+                    {' '}
+                    reports, please
+                    {' '}
+                    <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact support</a>
+                    {' '}
+                    and specify the filters you need.
+                  </p>
+                </div>
+              </>
+            )
+              : (
+                <button
+                  ref={downloadAllButtonRef}
+                  role="menuitem"
+                  onClick={onExportAll}
+                  type="button"
+                  disabled={downloadError || isDownloading}
+                  className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
+                >
+                  Export table data
+                </button>
+              ) }
             {hasSelectedReports && onExportSelected && (
               <button
                 ref={downloadSelectedButtonRef}
@@ -140,6 +171,7 @@ ReportMenu.propTypes = {
   onExportSelected: PropTypes.func,
   hasSelectedReports: PropTypes.bool.isRequired,
   label: PropTypes.string,
+  count: PropTypes.number,
   downloadError: PropTypes.bool,
   isDownloading: PropTypes.bool,
   downloadAllButtonRef: PropTypes.oneOfType([
@@ -154,6 +186,7 @@ ReportMenu.propTypes = {
 };
 
 ReportMenu.defaultProps = {
+  count: 0,
   downloadError: false,
   label: 'Reports menu',
   onExportSelected: null,

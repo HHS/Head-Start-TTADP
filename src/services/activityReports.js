@@ -21,11 +21,49 @@ import {
   NextStep,
   Objective,
   Program,
+  ActivityReportObjective,
 } from '../models';
 
 import { saveGoalsForReport } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
+
+export async function batchQuery(query, limit) {
+  let finished = false;
+  let page = 0;
+  const finalResult = [];
+
+  while (!finished) {
+    // eslint-disable-next-line no-await-in-loop
+    const rows = await ActivityReport.findAll({
+      ...query,
+      limit,
+      offset: page * limit,
+    });
+    /*
+      Sequelize adds a bunch of data/functions to items it retrieves from
+      the database. We _should_ be able to give sequelize `raw: true` to
+      get results without the extra sequelize "stuff", but the link to an
+      issue below shows sequelize can't handle `raw: true` with `hasMany`
+      associations.
+
+      When DB objects have the extra sequelize "stuff" we run into memory
+      issues. When we get only data from the DB we don't run into memory
+      issues because all the sequelize "stuff" we don't need is garbage
+      collected at some point.
+
+      See https://github.com/sequelize/sequelize/issues/3897
+    */
+    const raw = JSON.parse(JSON.stringify(rows));
+    finalResult.push(...raw);
+    if (rows.length < limit) {
+      finished = true;
+    }
+    page += 1;
+  }
+
+  return finalResult;
+}
 
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
   const newCollaborators = collaborators.map((collaborator) => ({
@@ -690,30 +728,7 @@ export async function possibleRecipients(regionId) {
   return { grants, otherEntities };
 }
 
-async function batchQuery(query, limit = 1000) {
-  let finished = false;
-  let page = 0;
-  const finalResult = [];
-
-  while (!finished) {
-    // eslint-disable-next-line no-await-in-loop
-    const rows = await ActivityReport.findAll({
-      ...query,
-      limit,
-      offset: page * limit,
-    });
-    const cleaned = JSON.parse(JSON.stringify(rows));
-    finalResult.push(...cleaned);
-    if (rows.length < limit) {
-      finished = true;
-    }
-    page += 1;
-  }
-
-  return finalResult;
-}
-
-async function getDownloadableActivityReports(where) {
+async function getDownloadableActivityReports(where, separate = true) {
   const query = {
     where,
     attributes: {
@@ -722,20 +737,25 @@ async function getDownloadableActivityReports(where) {
     },
     include: [
       {
-        model: Objective,
-        as: 'objectives',
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        separate,
         include: [{
-          model: Goal,
-          as: 'goal',
+          model: Objective,
+          as: 'objective',
+          include: [{
+            model: Goal,
+            as: 'goal',
+          }],
+          attributes: ['title', 'status', 'ttaProvided'],
         }],
-        attributes: ['title', 'status', 'ttaProvided'],
       },
       {
         model: ActivityRecipient,
         attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
         as: 'activityRecipients',
         required: false,
-        separate: true,
+        separate,
         include: [
           {
             model: Grant,
@@ -767,7 +787,7 @@ async function getDownloadableActivityReports(where) {
           },
         },
         as: 'attachments',
-        separate: true,
+        separate,
         required: false,
       },
       {
@@ -776,10 +796,14 @@ async function getDownloadableActivityReports(where) {
         as: 'author',
       },
       {
-        model: User,
-        attributes: ['id', 'name', 'role', 'fullName'],
-        as: 'collaborators',
-        through: { attributes: [] },
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        separate,
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'role', 'fullName'],
+        }],
       },
       {
         model: NextStep,
@@ -790,7 +814,7 @@ async function getDownloadableActivityReports(where) {
         },
         attributes: ['note', 'id'],
         as: 'specialistNextSteps',
-        separate: true,
+        separate,
         required: false,
       },
       {
@@ -802,7 +826,7 @@ async function getDownloadableActivityReports(where) {
         },
         attributes: ['note', 'id'],
         as: 'recipientNextSteps',
-        separate: true,
+        separate,
         required: false,
       },
       {
@@ -810,7 +834,7 @@ async function getDownloadableActivityReports(where) {
         attributes: ['userId'],
         as: 'approvers',
         required: false,
-        separate: true,
+        separate,
         include: [
           {
             model: User,
@@ -819,7 +843,8 @@ async function getDownloadableActivityReports(where) {
         ],
       },
     ],
-    order: [['id', 'DESC'], ['objectives', { model: Goal, as: 'goal' }, 'id', 'DESC'], ['objectives', 'id', 'DESC']],
+    subQuery: separate,
+    order: [['id', 'DESC']],
   };
 
   return batchQuery(query, 2000);
@@ -868,7 +893,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
             ],
           },
           {
-            [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+            [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
           },
         ],
       },
@@ -876,7 +901,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
     legacyId: null,
   };
 
-  return getDownloadableActivityReports(where);
+  return getDownloadableActivityReports(where, false);
 }
 
 /**

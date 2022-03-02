@@ -686,19 +686,19 @@ describe('Activity Report handlers', () => {
           role: ['Grantee Specialist'],
           fullName: 'Arty, GS',
         },
-        collaborators: [
+        activityReportCollaborators: [
           {
-            name: 'Jarty',
-            role: ['System Specialist', 'Grantee Specialist'],
-            fullName: 'Jarty, SS, GS',
+            user: {
+              name: 'Jarty',
+              role: ['System Specialist', 'Grantee Specialist'],
+              fullName: 'Jarty, SS, GS',
+            },
           },
         ],
       };
 
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
-      getDownloadableActivityReportsByIds.mockResolvedValue({
-        count: 1, rows: [downloadableReport],
-      });
+      getDownloadableActivityReportsByIds.mockResolvedValue([downloadableReport]);
 
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalled();
@@ -764,7 +764,7 @@ describe('Activity Report handlers', () => {
         query: { report: [], format: 'csv' },
       };
 
-      getDownloadableActivityReportsByIds.mockResolvedValue({ count: 0, rows: [] });
+      getDownloadableActivityReportsByIds.mockResolvedValue([]);
 
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalled();
