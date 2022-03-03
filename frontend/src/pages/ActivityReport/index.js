@@ -62,7 +62,7 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
-  // creatorRole: null,
+  creatorRole: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -81,6 +81,11 @@ export const findWhatsChanged = (object, base) => {
         accumulator[current] = null;
         return accumulator;
       }
+    }
+
+    if (current === 'creatorRole' && !object[current]) {
+      accumulator[current] = null;
+      return accumulator;
     }
 
     if (!isEqual(base[current], object[current])) {
