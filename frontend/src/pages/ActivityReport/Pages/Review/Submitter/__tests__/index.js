@@ -72,7 +72,6 @@ const renderReview = (
 
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
-  // console.log('\n\n\nPassed User: ', passedUser.role);
   render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
