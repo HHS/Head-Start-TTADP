@@ -19,9 +19,6 @@ export function afterStartDate(dates) {
   const scopes = dates.reduce((acc, date) => [
     ...acc,
     {
-      startDate: {
-        [Op.lte]: new Date(date),
-      },
       endDate: {
         [Op.gte]: new Date(date),
       },
