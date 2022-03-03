@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 
-export function beforeStartDate(dates) {
+export function activeBefore(dates) {
   const scopes = dates.reduce((acc, date) => [
     ...acc,
     {
@@ -15,7 +15,7 @@ export function beforeStartDate(dates) {
   };
 }
 
-export function afterStartDate(dates) {
+export function activeAfter(dates) {
   const scopes = dates.reduce((acc, date) => [
     ...acc,
     {
