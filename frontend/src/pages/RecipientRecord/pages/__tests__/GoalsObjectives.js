@@ -66,12 +66,22 @@ describe('Goals and Objectives', () => {
     },
   ];
 
+  const recipient = {
+    goals: [
+      {
+        id: 1,
+        number: 'number',
+      },
+    ],
+  };
+
   const renderGoalsAndObjectives = () => {
     render(
       <Router history={memoryHistory}>
         <GoalsObjectives
           recipientId="401"
           regionId="1"
+          recipient={recipient}
         />
       </Router>,
     );
@@ -136,7 +146,7 @@ describe('Goals and Objectives', () => {
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
 
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'status');
-    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
     await selectEvent.select(statusSelect, ['Not started']);

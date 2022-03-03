@@ -45,7 +45,7 @@ describe('Filter menu item', () => {
 
   it('updates topic & condition', async () => {
     const filter = {
-      id: 'gibberish', topic: 'startDate', condition: 'Is after', query: '2021/01/01',
+      id: 'gibberish', topic: 'startDate', condition: 'is on or after', query: '2021/01/01',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -56,13 +56,13 @@ describe('Filter menu item', () => {
     expect(onUpdate).toHaveBeenCalledWith('gibberish', 'topic', 'role');
 
     const condition = screen.getByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is within');
-    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'condition', 'Is within');
+    userEvent.selectOptions(condition, 'is within');
+    expect(onUpdate).toHaveBeenCalledWith('gibberish', 'condition', 'is within');
   });
 
   it('displays a date filter correctly', () => {
     const filter = {
-      id: 'gibberish', topic: 'startDate', condition: 'Is after', query: '2021/01/01',
+      id: 'gibberish', topic: 'startDate', condition: 'is on or after', query: '2021/01/01',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -75,7 +75,7 @@ describe('Filter menu item', () => {
 
   it('applies the proper date range', async () => {
     const filter = {
-      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'Is within', query: '2021/01/01-2021/10/28',
+      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'is within', query: '2021/01/01-2021/10/28',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -143,7 +143,7 @@ describe('Filter menu item', () => {
       id: 'blah-de-dah',
       display: '',
       topic: 'grantNumber',
-      condition: 'Contains',
+      condition: 'contains',
       query: '',
     };
     const onRemove = jest.fn();
