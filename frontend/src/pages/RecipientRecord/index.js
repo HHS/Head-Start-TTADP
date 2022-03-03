@@ -42,12 +42,10 @@ export default function RecipientRecord({ match }) {
           });
         }
       } catch (e) {
-        if (e instanceof HTTPError) {
-          if (e.status === 404) {
-            setError('Recipient record not found');
-          } else {
-            setError('There was an error fetching recipient data');
-          }
+        if (e instanceof HTTPError && e.status === 404) {
+          setError('Recipient record not found');
+        } else {
+          setError('There was an error fetching recipient data');
         }
       } finally {
         setLoading(false);
@@ -59,13 +57,9 @@ export default function RecipientRecord({ match }) {
       return;
     }
 
-    try {
-      const id = parseInt(recipientId, DECIMAL_BASE);
-      const region = parseInt(regionId, DECIMAL_BASE);
-      fetchRecipient(id, region);
-    } catch (err) {
-      setError('There was an error fetching recipient data');
-    }
+    const id = parseInt(recipientId, DECIMAL_BASE);
+    const region = parseInt(regionId, DECIMAL_BASE);
+    fetchRecipient(id, region);
   }, [recipientData.recipientName, recipientId, match.params, regionId]);
 
   const { recipientName } = recipientData;

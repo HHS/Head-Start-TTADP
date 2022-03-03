@@ -16,7 +16,7 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
   const [filters, setFilters] = useUrlFilters([{
     id: uuidv4(),
     topic: 'createDate',
-    condition: 'Is within',
+    condition: 'is within',
     query: yearToDate,
   }]);
 
@@ -35,12 +35,12 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
     ...expandFilters(filters),
     {
       topic: 'region',
-      condition: 'Is',
+      condition: 'is',
       query: regionId,
     },
     {
       topic: 'recipientId',
-      condition: 'Contains',
+      condition: 'contains',
       query: recipientId,
     },
   ];
@@ -83,7 +83,7 @@ GoalsObjectives.propTypes = {
   recipient: PropTypes.shape({
     grants: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
+      numberWithProgramTypes: PropTypes.string.isRequired,
     })).isRequired,
   }).isRequired,
 };
