@@ -2363,10 +2363,10 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-batch-cluster@^10.0.0:
-  version "10.0.1"
-  resolved "https://registry.yarnpkg.com/batch-cluster/-/batch-cluster-10.0.1.tgz#887884a9d73599d3630d92e722d6a73284d06ad9"
-  integrity sha512-rbBvDysp3WrG7fA4y0VFoadW8l/22Qpe+66e/4cbAFB7+89k4DUKKsDLd4W/qKjgia0sCT1j7TZg+Wyr9TmzjQ==
+batch-cluster@^10.3.0:
+  version "10.3.2"
+  resolved "https://registry.yarnpkg.com/batch-cluster/-/batch-cluster-10.3.2.tgz#5603663f4019253823b9520f57fb8b18d2c9b506"
+  integrity sha512-aRecx9w6ZVAzKIbWoyHWkXgP3Aboe/YmUuaRDXMKtJM8SesO40AvpHt9ZFLl7GMcVkiqxvG863q3MALicfsuUg==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
@@ -4295,15 +4295,15 @@ exiftool-vendored.pl@12.40.0:
   resolved "https://registry.yarnpkg.com/exiftool-vendored.pl/-/exiftool-vendored.pl-12.40.0.tgz#484b45114193167d67178f9c59af104fe8d9f177"
   integrity sha512-yNoDhG6g8ifzgm0PPqgWTiI5vdbuTGyTgIlpy+hxeuf7M2b0x6tGtYNakjIO9Q08VDNxXIr1lEZJR2EMZ5JDTQ==
 
-exiftool-vendored@^15.11.0:
-  version "15.11.0"
-  resolved "https://registry.yarnpkg.com/exiftool-vendored/-/exiftool-vendored-15.11.0.tgz#e42c15408e53f1af8adc71702365c68389206a32"
-  integrity sha512-LN4MKogNnsDTsvCUxCCMF1wAhQgzTmGytUOekngxfdF3zDHAb0t2EdINHTZ5MO0dDtA5CvRn8/jjpA+OVifoaw==
+exiftool-vendored@^15.12.1:
+  version "15.12.1"
+  resolved "https://registry.yarnpkg.com/exiftool-vendored/-/exiftool-vendored-15.12.1.tgz#33d0b77f4a3b51455311cb41cde2ea29283caa95"
+  integrity sha512-Ms10x+ms0dfG7uflVN4ph5V+DBCxG2SG7X5HwQ5Zreb96VMwzJ123w218hQcUYh82S2NewEEg7wjLI9Mlh6BEw==
   dependencies:
     "@types/luxon" "^2.0.9"
-    batch-cluster "^10.0.0"
+    batch-cluster "^10.3.0"
     he "^1.2.0"
-    luxon "^2.3.0"
+    luxon "^2.3.1"
     tz-lookup "^6.1.25"
   optionalDependencies:
     exiftool-vendored.exe "12.40.0"
@@ -4311,7 +4311,7 @@ exiftool-vendored@^15.11.0:
 
 exit@^0.1.2:
   version "0.1.2"
-  resolved "https://registry.npmjs.org/exit/-/exit-0.1.2.tgz"
+  resolved "https://registry.yarnpkg.com/exit/-/exit-0.1.2.tgz#0632638f8d877cc82107d30a0fff1a17cba1cd0c"
   integrity sha1-BjJjj42HfMghB9MKD/8aF8uhzQw=
 
 expand-brackets@^2.1.4:
@@ -6600,10 +6600,10 @@ lunr@^2.3.9:
   resolved "https://registry.npmjs.org/lunr/-/lunr-2.3.9.tgz"
   integrity sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==
 
-luxon@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/luxon/-/luxon-2.3.0.tgz#bf16a7e642513c2a20a6230a6a41b0ab446d0045"
-  integrity sha512-gv6jZCV+gGIrVKhO90yrsn8qXPKD8HYZJtrUDSfEbow8Tkw84T9OnCyJhWvnJIaIF/tBuiAjZuQHUt1LddX2mg==
+luxon@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/luxon/-/luxon-2.3.1.tgz#f276b1b53fd9a740a60e666a541a7f6dbed4155a"
+  integrity sha512-I8vnjOmhXsMSlNMZlMkSOvgrxKJl0uOsEzdGgGNZuZPaS9KlefpE9KV95QFftlJSC+1UyCC9/I69R02cz/zcCA==
 
 magic-string@^0.25.7:
   version "0.25.7"

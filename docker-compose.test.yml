@@ -3,6 +3,7 @@ services:
   test-backend:
     build:
       context: .
+      dockerfile: Dockerfile.backend
     container_name: test-backend
     stdin_open: true
     command: bash

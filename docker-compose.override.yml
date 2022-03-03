@@ -3,6 +3,7 @@ services:
   backend:
     build:
       context: .
+      dockerfile: Dockerfile.backend
     command: yarn server
     user: ${CURRENT_USER:-root}
     ports:

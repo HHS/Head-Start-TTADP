@@ -3,38 +3,41 @@ import md5File from 'md5-file';
 import sha256File from 'sha256-file';
 import { auditLogger } from '../logger';
 
-let exiftool = null;
-
-const spinUpTool = async () => {
-  if (exiftool === null || exiftool === undefined) {
-    exiftool = new ExifTool({ taskTimeoutMillis: 5000 });
-  }
-  auditLogger.info(JSON.stringify({ exiftool: await exiftool.version() }));
-};
+let et = null;
 
 const isToolUp = () => {
-  if (exiftool !== null && exiftool !== undefined) {
-    return exiftool.ended === false;
+  if (et !== null && et !== undefined) {
+    return et.ended === false;
   }
   return false;
 };
 
+const spinUpTool = async () => {
+  if (!isToolUp()) {
+    et = new ExifTool({ taskTimeoutMillis: 5000 });
+  }
+  auditLogger.info(JSON.stringify({ exiftool: await et.version() }));
+};
+
 const shutdownTool = async () => {
-  if (exiftool !== null && exiftool !== undefined) exiftool.end();
-  exiftool = null;
+  if (isToolUp()) {
+    et.end();
+  }
+  et = null;
 };
 
 const generateMetadataFromFile = async (path) => {
   const metadata = { value: null, error: [] };
   let needsCleanup = false;
   try {
-    if (exiftool === null) {
+    if (!isToolUp()) {
       await spinUpTool();
       needsCleanup = true;
     }
-    metadata.value = await exiftool.read(path, ['-json', '-g', '-P']);
+    metadata.value = await et.read(path, ['-json', '-g', '-P']);
+    // metadata.value = await et.readRaw(path, ['-json', '-g', '-P']);
 
-    auditLogger.info(JSON.stringify(metadata));
+    auditLogger.info(JSON.stringify({ metadata }));
 
     if ('errors' in metadata.value) {
       if (!Array.isArray(metadata.value.errors)
