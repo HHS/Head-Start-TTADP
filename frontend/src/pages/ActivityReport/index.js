@@ -296,7 +296,11 @@ function ActivityReport({
 
   const onFormSubmit = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
-    const reportToSubmit = { additionalNotes: data.additionalNotes, approverUserIds: approverIds };
+    const reportToSubmit = {
+      additionalNotes: data.additionalNotes,
+      approverUserIds: approverIds,
+      creatorRole: data.creatorRole,
+    };
     const response = await submitReport(reportId.current, reportToSubmit);
 
     updateFormData(
