@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
-const { REPORT_STATUSES } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 
 function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
@@ -28,6 +28,15 @@ function copyStatus(report) {
     report.calculatedStatus = submissionStatus;
   }
 }
+
+const generateCreatorNameWithRole = (ar) => {
+  const creatorName = ar.author ? ar.author.name : '';
+  let roles = '';
+  if (ar.creatorRole) {
+    roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR' ? `, ${ar.creatorRole}` : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
+  }
+  return `${creatorName}${roles}`;
+};
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReport extends Model {
@@ -180,6 +189,7 @@ module.exports = (sequelize, DataTypes) => {
             this.participants,
             this.topics,
             this.ttaType,
+            this.creatorRole,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
@@ -230,6 +240,12 @@ module.exports = (sequelize, DataTypes) => {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
     },
+    creatorNameWithRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return generateCreatorNameWithRole(this);
+      },
+    },
     approvedAt: {
       allowNull: true,
       type: DataTypes.DATE,
@@ -254,6 +270,10 @@ module.exports = (sequelize, DataTypes) => {
           return 0;
         });
       },
+    },
+    creatorRole: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
     },
   }, {
     sequelize,
