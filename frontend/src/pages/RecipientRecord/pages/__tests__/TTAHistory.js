@@ -69,7 +69,7 @@ describe('Recipient Record - TTA History', () => {
     await act(async () => {
       userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
       userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'role');
-      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'Is');
+      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
       const specialistSelect = await screen.findByLabelText('Select specialist role to filter by');
       await selectEvent.select(specialistSelect, ['Family Engagement Specialist (FES)', 'Grantee Specialist (GS)']);
       const apply = await screen.findByRole('button', { name: /apply filters to recipient record data/i });
