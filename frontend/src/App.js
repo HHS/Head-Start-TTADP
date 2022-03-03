@@ -30,8 +30,6 @@ import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
-import FeatureFlag from './components/FeatureFlag';
-import CreateGoal from './pages/CreateGoal';
 
 function App() {
   const [user, updateUser] = useState();
@@ -142,7 +140,6 @@ function App() {
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
           )}
         />
-
         {admin && (
         <Route
           path="/admin"
@@ -151,16 +148,6 @@ function App() {
           )}
         />
         )}
-        <Route
-          path="/goals/recipient/:recipientId([0-9]*)/region/:regionId([0-9]*)/goal/:goalId(new|[0-9]*)"
-          render={() => (
-            <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-                <CreateGoal />
-              </FeatureFlag>
-            </AppWrapper>
-          )}
-        />
         <Route
           exact
           path="/recipient-tta-records"

@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import Select from 'react-select';
 import {
   Button,
   DatePicker, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
-import Container from '../../components/Container';
+import Container from '../Container';
 
 const selectStyles = {
   container: (provided, state) => {
@@ -56,8 +57,15 @@ const selectStyles = {
   }),
 };
 
-export default function CreateGoal() {
+export default function CreateGoal({ recipient }) {
+  const possibleGrants = recipient.grants.map((g) => ({
+    value: g.number,
+    label: g.numberWithProgramTypes,
+  }));
   const [readOnly, setReadOnly] = useState(false);
+  const [selectedGrants, setSelectedGrants] = useState(
+    possibleGrants.length === 1 ? [possibleGrants[0]] : [],
+  );
 
   // save goal to backend
   const saveGoal = async () => {};
@@ -82,7 +90,6 @@ export default function CreateGoal() {
         TTA Goals Recipient Name - Region #
       </h1>
       <Container className="margin-bottom-2">
-
         <form className={readOnly ? 'review' : ''} onSubmit={onSubmit}>
           <h2>Recipient TTA goal</h2>
           <h3>Goal summary</h3>
@@ -91,24 +98,32 @@ export default function CreateGoal() {
               Recipient grant numbers
               <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
             </Label>
-            <span className="usa-hint">Select all grant numbers that apply to the grant</span>
-            <Select
-              placeholder=""
-              inputId="recipientGrantNumbers"
-              onChange={() => {}}
-              options={[{
-                label: 'no',
-                value: 0,
-              }]}
-              styles={selectStyles}
-              components={{
-                DropdownIndicator: null,
-              }}
-              className="usa-select"
-              closeMenuOnSelect={false}
-              value={null}
-              isMulti
-            />
+            {
+                possibleGrants.length === 1 ? (
+                  <p>{selectedGrants[0].label}</p>
+                ) : (
+                  <>
+                    <span className="usa-hint">Select all grant numbers that apply to the grant</span>
+                    <Select
+                      placeholder=""
+                      inputId="recipientGrantNumbers"
+                      onChange={setSelectedGrants}
+                      options={possibleGrants.map((g) => ({
+                        value: g.number,
+                        label: g.numberWithProgramTypes,
+                      }))}
+                      styles={selectStyles}
+                      components={{
+                        DropdownIndicator: null,
+                      }}
+                      className="usa-select"
+                      closeMenuOnSelect={false}
+                      value={selectedGrants}
+                      isMulti
+                    />
+                  </>
+                )
+            }
           </FormGroup>
           <FormGroup>
             <Label htmlFor="goalText">Goal</Label>
@@ -116,7 +131,7 @@ export default function CreateGoal() {
               What the recipient wants to achieve
               <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
             </span>
-            <Textarea id="goalText" name="goalText" />
+            <Textarea id="goalText" name="goalText" required />
           </FormGroup>
           <FormGroup>
             <Label htmlFor="goalEnddate">Goal end date</Label>
@@ -136,3 +151,14 @@ export default function CreateGoal() {
     </>
   );
 }
+
+CreateGoal.propTypes = {
+  recipient: PropTypes.shape({
+    grants: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        numberWithProgramTypes: PropTypes.string.isRequired,
+      }),
+    ),
+  }).isRequired,
+};
