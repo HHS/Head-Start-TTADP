@@ -57,13 +57,13 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord(history = memoryHistory) {
+  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
     const match = {
       path: '',
       url: '',
       params: {
         recipientId: '1',
-        regionId: '45',
+        regionId,
       },
     };
 
@@ -158,8 +158,8 @@ describe('recipient record page', () => {
       expect(ar).toBeInTheDocument();
     });
 
-    const remove = await screen.findByRole('button', {
-      name: /this button removes the filter: date range is within/i,
+    const remove = screen.getByRole('button', {
+      name: /this button removes the filter: date started is within/i,
     });
 
     userEvent.click(remove);

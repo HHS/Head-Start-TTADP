@@ -26,7 +26,7 @@ export default function TTAHistory({
     {
       id: uuidv4(),
       topic: 'startDate',
-      condition: 'Is within',
+      condition: 'is within',
       query: defaultDate,
     },
   ]);
@@ -39,12 +39,12 @@ export default function TTAHistory({
     ...expandFilters(filters),
     {
       topic: 'region',
-      condition: 'Is',
+      condition: 'is',
       query: regionId,
     },
     {
       topic: 'recipientId',
-      condition: 'Contains',
+      condition: 'contains',
       query: recipientId,
     },
   ];
