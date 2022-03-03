@@ -2,6 +2,7 @@
 import {
   regionFilter,
   startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
   programTypeFilter,
@@ -16,6 +17,7 @@ import {
 
 export const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
   programTypeFilter,

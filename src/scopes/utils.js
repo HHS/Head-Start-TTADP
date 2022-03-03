@@ -44,7 +44,8 @@ export function withinDateRange(dates, property) {
       ...acc,
       {
         [property]: {
-          [Op.between]: [new Date(startDate), new Date(endDate)],
+          [Op.gte]: new Date(startDate),
+          [Op.lte]: new Date(endDate),
         },
       },
     ];
@@ -53,8 +54,11 @@ export function withinDateRange(dates, property) {
 
 export function createFiltersToScopes(filters, topicToQuery) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
-    const [topic] = topicAndCondition.split('.');
-    return topic in topicToQuery;
+    const [topic, condition] = topicAndCondition.split('.');
+    if (!(topic in topicToQuery)) {
+      return false;
+    }
+    return condition in topicToQuery[topic];
   });
 
   return map(validFilters, (query, topicAndCondition) => {
