@@ -34,6 +34,12 @@ export const topicToQuery = {
     win: (query) => activeWithinDates(query),
     in: (query) => activeWithinDates(query),
   },
+  endDate: {
+    bef: (query) => activeBefore(query),
+    aft: (query) => activeAfter(query),
+    win: (query) => activeWithinDates(query),
+    in: (query) => activeWithinDates(query),
+  },
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
