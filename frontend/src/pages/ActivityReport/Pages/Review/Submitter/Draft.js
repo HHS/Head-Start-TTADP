@@ -33,7 +33,7 @@ const Draft = ({
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
-  const { connectionActive } = useContext(NetworkContext);
+  const { connectionActive, localStorageAvailable } = useContext(NetworkContext);
 
   const { user } = useContext(UserContext);
 
@@ -117,6 +117,12 @@ const Draft = ({
             mode. Please review all information in each section before submitting to your
             manager(s) for approval.
           </p>
+          { !connectionActive && (
+            <Alert>
+              An issue with your network connection has
+              prevented us from retrieving available approvers for you.
+            </Alert>
+          )}
           <FormItem
             label="Approving manager"
             name="approvers"
@@ -148,6 +154,14 @@ const Draft = ({
         >
           Save Draft
         </Button>
+        { !connectionActive && (
+        <Alert>
+          There&#39;s an issue with your network connection,
+          and you can&#39;t submit your report right now.
+          { localStorageAvailable ? 'Your work is safe.' : ' ' }
+          Please try back later!
+        </Alert>
+        )}
         <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
       </Form>
       <DismissingComponentWrapper

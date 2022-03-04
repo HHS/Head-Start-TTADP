@@ -38,7 +38,7 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage, lastSaveTime, errorMessage,
+  pages, skipTo, skipToMessage, lastSaveTime, errorMessage, savedToStorage,
 }) {
   const [fade, updateFade] = useState(true);
 
@@ -68,6 +68,9 @@ function SideNav({
     </li>
   ));
 
+  const onAnimationEnd = () => updateFade(false);
+  const DATE_DISPLAY_SAVED_FORMAT = 'MM/DD/YYYY [at] h:mm a';
+
   return (
     <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
       <Container padding={0}>
@@ -78,16 +81,35 @@ function SideNav({
       </Container>
       {errorMessage
         && (
-          <Alert type="error" onAnimationEnd={() => { updateFade(false); }} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
+          <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
             {errorMessage}
           </Alert>
         )}
-      {lastSaveTime && !errorMessage
+      {(lastSaveTime || savedToStorage) && !errorMessage
         && (
-          <Alert onAnimationEnd={() => { updateFade(false); }} aria-atomic aria-live="polite" type="success" slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
-            This report was last saved on
-            {' '}
-            {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
+          <Alert
+            onAnimationEnd={onAnimationEnd}
+            aria-atomic
+            aria-live="polite"
+            type="success"
+            slim
+            noIcon
+            className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}
+          >
+            { lastSaveTime && (
+            <p>
+              This report was last saved to our network on
+              {' '}
+              {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+            </p>
+            )}
+            { savedToStorage && (
+            <p>
+              This report was last saved to your local backup on
+              {' '}
+              {moment(savedToStorage).format(DATE_DISPLAY_SAVED_FORMAT)}
+            </p>
+            )}
           </Alert>
         )}
     </Sticky>
@@ -107,11 +129,13 @@ SideNav.propTypes = {
   skipToMessage: PropTypes.string.isRequired,
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
+  savedToStorage: PropTypes.string,
 };
 
 SideNav.defaultProps = {
   lastSaveTime: undefined,
   errorMessage: undefined,
+  savedToStorage: undefined,
 };
 
 export default SideNav;

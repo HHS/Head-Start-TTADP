@@ -109,7 +109,7 @@ ControlledDatePicker.propTypes = {
   minDate: PropTypes.string,
   maxDate: PropTypes.string,
   name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
+  value: PropTypes.string,
   control: PropTypes.shape({
     name: PropTypes.string,
     value: PropTypes.string,
@@ -124,4 +124,5 @@ ControlledDatePicker.defaultProps = {
   maxDate: moment().format(DATE_DISPLAY_FORMAT),
   isStartDate: false,
   setEndDate: () => {},
+  value: '',
 };
