@@ -33,14 +33,14 @@ describe('goalFilters', () => {
     });
 
     it('renders correctly', async () => {
-      renderFilter(() => createDateFilter.renderInput(null, 'Is', '2000/12/30', () => {}));
+      renderFilter(() => createDateFilter.renderInput(null, 'is', '2000/12/30', () => {}));
       const dateInput = await screen.findByLabelText('date');
       expect(dateInput).toBeInTheDocument();
     });
 
     it('calls onApply', async () => {
       const apply = jest.fn();
-      renderFilter(() => createDateFilter.renderInput(null, 'Is after', '', apply));
+      renderFilter(() => createDateFilter.renderInput(null, 'is on or after', '', apply));
       const dateInput = await screen.findByLabelText('date');
       userEvent.type(dateInput, '01/02/2022');
       await waitFor(() => expect(apply).toHaveBeenCalled());

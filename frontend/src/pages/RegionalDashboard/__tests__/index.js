@@ -100,7 +100,7 @@ describe('Regional Dashboard page', () => {
     act(() => userEvent.selectOptions(lastTopic, 'region'));
 
     const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
-    act(() => userEvent.selectOptions(lastCondition, 'Is'));
+    act(() => userEvent.selectOptions(lastCondition, 'is'));
 
     const select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
     act(() => userEvent.selectOptions(select, 'Region 1'));

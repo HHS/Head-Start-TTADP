@@ -7,6 +7,23 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FilterMenu from '../FilterMenu';
+import {
+  grantNumberFilter,
+  programSpecialistFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  topicsFilter,
+  otherEntitiesFilter,
+} from '../activityReportFilters';
+import {
+  createDateFilter,
+  reasonsFilter as goalReasonsFilter,
+  statusFilter,
+  topicsFilter as goalTopicsFilter,
+} from '../goalFilters';
 import UserContext from '../../../UserContext';
 import { SCOPE_IDS } from '../../../Constants';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
@@ -18,7 +35,11 @@ describe('Filter Menu', () => {
     jest.restoreAllMocks();
   });
 
-  const renderFilterMenu = (filters = [], onApplyFilters = jest.fn()) => {
+  const renderFilterMenu = (
+    filters = [],
+    onApplyFilters = jest.fn(),
+    filterConfig = TTAHISTORY_FILTER_CONFIG,
+  ) => {
     const user = {
       permissions: [
         {
@@ -36,7 +57,7 @@ describe('Filter Menu', () => {
             filters={filters}
             onApplyFilters={onApplyFilters}
             applyButtonAria="apply test filters"
-            filterConfig={TTAHISTORY_FILTER_CONFIG}
+            filterConfig={filterConfig}
           />
         </div>
       </UserContext.Provider>,
@@ -64,7 +85,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: '2021/01/01-2021/11/05',
       },
     ];
@@ -78,9 +99,9 @@ describe('Filter Menu', () => {
     userEvent.click(button);
 
     const condition = screen.getByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is after');
+    userEvent.selectOptions(condition, 'is on or after');
 
-    const del = screen.getByRole('button', { name: /remove Date range Is after/i });
+    const del = screen.getByRole('button', { name: /remove date started is on or after/i });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
@@ -114,7 +135,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is after',
+        condition: 'is on or after',
         query: '2021/10/31',
       },
     ];
@@ -139,7 +160,7 @@ describe('Filter Menu', () => {
     expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is before');
+    userEvent.selectOptions(condition, 'is on or before');
 
     date = await screen.findByRole('textbox', { name: /date/i });
     userEvent.type(date, '10/31/2020');
@@ -196,7 +217,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'programSpecialist',
         query: '',
-        condition: 'Contains',
+        condition: 'is',
       },
       {
         id: 'filter-4',
@@ -204,7 +225,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'grantNumber',
         query: '',
-        condition: 'Contains',
+        condition: 'is',
       },
       {
         id: 'filter-5',
@@ -228,7 +249,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'recipient',
         query: '',
-        condition: 'Contains',
+        condition: 'is',
       },
       {
         id: 'filter-8',
@@ -252,7 +273,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'stateCode',
         query: [],
-        condition: 'Contains',
+        condition: 'is',
       },
     ];
 
@@ -306,6 +327,113 @@ describe('Filter Menu', () => {
     const apply = screen.getByRole('button', { name: /apply test filters/i });
     userEvent.click(apply);
     expect(screen.getByText(/please enter a condition/i)).toBeVisible();
+  });
+
+  it('renders activity report filters', async () => {
+    const config = [
+      grantNumberFilter,
+      programSpecialistFilter,
+      programTypeFilter,
+      reasonsFilter,
+      recipientFilter,
+      stateCodeFilter,
+      targetPopulationsFilter,
+      topicsFilter,
+      otherEntitiesFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+
+    // all the filters work
+    userEvent.selectOptions(topics, 'Grant number');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Program specialist');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Program types');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Recipient name');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'State');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Target populations');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Other entities');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
+  });
+
+  it('renders goal filters', async () => {
+    const config = [
+      createDateFilter,
+      goalReasonsFilter,
+      statusFilter,
+      goalTopicsFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+
+    // all the filters work
+    userEvent.selectOptions(topics, 'Status');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Create date');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is within');
+
+    userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
   });
 
   it('display correct filter count', () => {

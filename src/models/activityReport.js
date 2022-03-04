@@ -29,6 +29,15 @@ function copyStatus(report) {
   }
 }
 
+const generateCreatorNameWithRole = (ar) => {
+  const creatorName = ar.author ? ar.author.name : '';
+  let roles = '';
+  if (ar.creatorRole) {
+    roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR' ? `, ${ar.creatorRole}` : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
+  }
+  return `${creatorName}${roles}`;
+};
+
 module.exports = (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
@@ -229,6 +238,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         return moment(this.updatedAt).format('MM/DD/YYYY');
+      },
+    },
+    creatorNameWithRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return generateCreatorNameWithRole(this);
       },
     },
     approvedAt: {
