@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { storageAvailable } from './helpers';
 
 /**
  * Wraps around useState by saving to local storage as a side effect
@@ -12,6 +13,7 @@ import { useMemo, useState, useEffect } from 'react';
  * @returns [string, function] from useState
  */
 export default function useLocalStorage(key, defaultValue, save = true) {
+  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
   const value = useMemo(() => {
     try {
       const curr = window.localStorage.getItem(key);
@@ -24,10 +26,10 @@ export default function useLocalStorage(key, defaultValue, save = true) {
   const [storedValue, setStoredValue] = useState(value);
 
   useEffect(() => {
-    if (save) {
+    if (save && localStorageAvailable) {
       window.localStorage.setItem(key, JSON.stringify(storedValue));
     }
-  }, [key, save, storedValue]);
+  }, [key, localStorageAvailable, save, storedValue]);
 
   return [storedValue, setStoredValue];
 }

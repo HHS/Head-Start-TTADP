@@ -41,7 +41,9 @@ export const formData = () => ({
   topics: 'first',
   userId: 1,
   updatedAt: new Date().toISOString(),
+  creatorRole: 'Reporter',
   attachments: [],
+  creatorNameWithRole: 'test',
   goals: [],
 });
 
