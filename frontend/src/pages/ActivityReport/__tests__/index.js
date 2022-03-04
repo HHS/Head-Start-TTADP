@@ -43,6 +43,7 @@ const formData = () => ({
   author: { name: 'test' },
   topics: 'first',
   userId: 1,
+  goals: [],
   updatedAt: new Date().toISOString(),
   creatorRole: 'Reporter',
   attachments: [],
@@ -196,7 +197,7 @@ describe('ActivityReport', () => {
 
     it('displays review submit save alert', async () => {
       renderActivityReport('new', 'review');
-      fetchMock.post('/api/activity-reports', { id: 1 });
+      fetchMock.post('/api/activity-reports', formData);
       const button = await screen.findByRole('button', { name: 'Save Draft' });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
