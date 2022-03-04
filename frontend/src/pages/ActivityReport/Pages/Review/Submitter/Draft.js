@@ -36,8 +36,7 @@ const Draft = ({
   const { user } = useContext(UserContext);
 
   const completeUserRoles = () => {
-    // If removed user role is selected should we add it?
-    // We need to consider this case for a report that gets Unlocked.
+    // If removed user role is selected we need to add it.
     const completeRoleList = [...user.role];
     if (creatorRole) {
       const indexOfRole = completeRoleList.indexOf(creatorRole);
@@ -76,7 +75,7 @@ const Draft = ({
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         {
-          user && user.role.length > 1
+          user && user.role && user.role.length > 1
             ? (
               <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
                 <FormItem
@@ -89,7 +88,7 @@ const Draft = ({
                     name="creatorRole"
                     inputRef={register({ required: 'A creator role must be assigned to the report before submitting' })}
                   >
-                    <option name="default" value="" disabled>- Select -</option>
+                    <option name="default" value="" disabled hidden>- Select -</option>
                     {completeUserRoles().map((role) => (
                       <option key={role} value={role}>{role}</option>
                     ))}
