@@ -5,7 +5,7 @@ import {
   Table, Grid, Alert,
 } from '@trussworks/react-uswds';
 import { filtersToQueryString } from '../../utils';
-import TableHeader from '../TableHeader';
+import GoalsTableHeader from './GoalsTableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';
 import { GOALS_PER_PAGE } from '../../Constants';
@@ -16,7 +16,6 @@ function GoalsTable({
   recipientId,
   regionId,
   filters,
-  onUpdateFilters,
 }) {
   // Goal Data.
   const [goals, setGoals] = useState([]);
@@ -145,16 +144,15 @@ function GoalsTable({
       </Grid>
 
       <Container className="goals-table inline-size maxw-full" padding={0} loading={loading} loadingLabel="Goals table loading">
-        <TableHeader
+        <GoalsTableHeader
           title="TTA goals and objectives"
-          onUpdateFilters={onUpdateFilters}
           count={goalsCount || 0}
           activePage={activePage}
           offset={offset}
           perPage={perPage}
           handlePageChange={handlePageChange}
-          hideMenu
-          paginationName="goals"
+          recipientId={recipientId}
+          regionId={regionId}
         />
         <div className="usa-table-container">
           <Table className="goals-table-content" fullWidth>
@@ -199,11 +197,6 @@ GoalsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
-  onUpdateFilters: PropTypes.func,
-};
-
-GoalsTable.defaultProps = {
-  onUpdateFilters: () => { },
 };
 
 export default GoalsTable;
