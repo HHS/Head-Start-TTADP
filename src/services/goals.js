@@ -5,7 +5,68 @@ import {
   Objective,
   ActivityReportObjective,
   GrantGoal,
+  sequelize,
 } from '../models';
+
+/**
+ * Goal data is an object with the following keys
+    id,
+    grants,
+    name,
+    status,
+    endDate,
+    regionId,
+    recipientId,
+
+  The goal model has the following columns
+    id,
+    name,
+    status,
+    timeframe,
+    isFromSmartsheetTtaPlan
+    endDate,
+
+ * @param {Object} goalData
+ * @returns created or updated goal with grant goals
+ */
+export async function createOrUpdateGoal(goalData) {
+  const {
+    goalId, grants, recipientId, regionId,
+    ...fields
+  } = goalData;
+
+  return sequelize.transaction(async (transaction) => {
+    let options = {
+      ...fields,
+      isFromSmartsheetTtaPlan: false,
+      id: goalId,
+    };
+
+    if (goalId === 'new') {
+      options = {
+        ...fields,
+        isFromSmartsheetTtaPlan: false,
+      };
+    }
+
+    const [g] = await Goal.upsert(options, { transaction });
+
+    const grantGoals = await Promise.all(
+      grants.map((grant) => GrantGoal.findOrCreate({
+        where: {
+          goalId: g.id,
+          recipientId,
+          grantId: grant,
+        },
+        transaction,
+      })),
+    );
+
+    const goal = JSON.parse(JSON.stringify(g));
+
+    return { ...goal, grants: grantGoals };
+  });
+}
 
 export async function goalsForGrants(grantIds) {
   /**

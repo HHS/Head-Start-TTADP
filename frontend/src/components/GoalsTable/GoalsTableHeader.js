@@ -90,7 +90,7 @@ GoalsTableHeader.propTypes = {
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func,
   regionId: PropTypes.number.isRequired,
-  recipientId: PropTypes.number.isRequired,
+  recipientId: PropTypes.string.isRequired,
 };
 
 GoalsTableHeader.defaultProps = {
