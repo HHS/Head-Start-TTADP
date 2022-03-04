@@ -285,6 +285,7 @@ function ActivityReport({
         },
       );
 
+      updateFormData((oldFormData) => ({ ...oldFormData, goals: savedReport.goals }));
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
@@ -295,6 +296,7 @@ function ActivityReport({
         reportId.current, { ...updatedFields, approverUserIds: approverIds },
         {},
       );
+      updateFormData((oldFormData) => ({ ...oldFormData, goals: updatedReport.goals }));
       updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
     }
   };
