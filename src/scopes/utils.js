@@ -44,7 +44,8 @@ export function withinDateRange(dates, property) {
       ...acc,
       {
         [property]: {
-          [Op.between]: [new Date(startDate), new Date(endDate)],
+          [Op.gte]: new Date(startDate),
+          [Op.lte]: new Date(endDate),
         },
       },
     ];

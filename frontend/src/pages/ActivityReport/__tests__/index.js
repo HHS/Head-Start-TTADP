@@ -165,6 +165,17 @@ describe('ActivityReport', () => {
       });
     });
 
+    it('finds whats changed branch cases', () => {
+      const orig = {
+        startDate: 'blah', creatorRole: '',
+      };
+      const changed = {
+        startDate: 'blah', creatorRole: '',
+      };
+      const result = findWhatsChanged(orig, changed);
+      expect(result).toEqual({ startDate: null, creatorRole: null });
+    });
+
     it('displays the creator name', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       renderActivityReport(1);
