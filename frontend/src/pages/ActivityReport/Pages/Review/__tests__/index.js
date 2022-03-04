@@ -101,7 +101,7 @@ const renderReview = (
   render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
-        <NetworkContext.Provider value={{ connectionActive: true }}>
+        <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
           <RenderReview
             allComplete={allComplete}
             onSubmit={onSubmit}

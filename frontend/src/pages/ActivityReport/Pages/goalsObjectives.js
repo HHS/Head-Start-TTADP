@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Fieldset, Label } from '@trussworks/react-uswds';
+import { Fieldset, Label, Alert } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
@@ -16,9 +16,11 @@ import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
+import NetworkContext from '../../../NetworkContext';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
+  const { connectionActive } = useContext(NetworkContext);
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const isRecipientReport = activityRecipientType === 'recipient';
@@ -57,12 +59,19 @@ const GoalsObjectives = () => {
       )}
       {showGoals
         && (
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
-          <div id="goals-and-objectives" />
-          <GoalPicker
-            availableGoals={availableGoals}
-          />
-        </Fieldset>
+        <>
+          <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
+            <div id="goals-and-objectives" />
+            <GoalPicker
+              availableGoals={availableGoals}
+            />
+            { !connectionActive && (
+            <Alert>
+              An issue with your network connection has prevented us from retrieving goals for you.
+            </Alert>
+            )}
+          </Fieldset>
+        </>
         )}
     </>
   );

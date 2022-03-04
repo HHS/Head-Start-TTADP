@@ -21,7 +21,13 @@ import Navigator from '../../components/Navigator';
 
 import './index.css';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
+import {
+  REPORT_STATUSES,
+  DECIMAL_BASE,
+  LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_EDITABLE_KEY,
+} from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
 import {
@@ -37,6 +43,7 @@ import {
 } from '../../fetchers/activityReports';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext from '../../NetworkContext';
+import { storageAvailable } from '../../hooks/helpers';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -72,6 +79,17 @@ const defaultValues = {
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
+
+function cleanupLocalStorage() {
+  try {
+    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY('new'));
+    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY('new'));
+    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY('new'));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('Local storage may not be available: ', e);
+  }
+}
 
 /**
  * compares two objects using lodash "isEqual" and returns the difference
@@ -115,34 +133,28 @@ function ActivityReport({
   match, user, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
-
-  const LOCAL_STORAGE_CACHE_NUMBER = '0.1';
-  const LOCAL_STORAGE_DATA_KEY = `ar-form-data-${activityReportId}-${LOCAL_STORAGE_CACHE_NUMBER}`;
-  const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = `ar-additional-data-${activityReportId}-${LOCAL_STORAGE_CACHE_NUMBER}`;
-  const LOCAL_STORAGE_EDITABLE_KEY = `ar-can-edit-${activityReportId}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
 
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
 
-  // whether to save the report's editable and additional data to local storage
-  const saveMeta = useMemo(() => activityReportId !== 'new', [activityReportId]);
+  const [lastSaveTime, updateLastSaveTime] = useState(null);
+  const [savedToStorage, updateSavedToStorage] = useState(null);
 
   const [formData, updateFormData] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY, null, activityReportId,
+    LOCAL_STORAGE_DATA_KEY(activityReportId), null, updateSavedToStorage,
   );
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY, {}, saveMeta,
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {},
   );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY, false, saveMeta,
+    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), false,
   );
-  const [lastSaveTime, updateLastSaveTime] = useState(
-    formData && formData.updatedAt ? moment(formData.updatedAt) : null,
-  );
+
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
@@ -172,13 +184,16 @@ function ActivityReport({
       && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
       || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
     ) {
-      window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY);
-      window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY);
-      window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY);
+      try {
+        window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(activityReportId));
+        window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId));
+        window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(activityReportId));
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('Local storage may not be available: ', e);
+      }
     }
-  }, [
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY, LOCAL_STORAGE_DATA_KEY, LOCAL_STORAGE_EDITABLE_KEY, formData,
-  ]);
+  }, [activityReportId, formData]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -222,9 +237,9 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        if (formData && formData.savedToStorage) {
+        if (formData && savedToStorage) {
           const updatedAtFromNetwork = moment(report.updatedAt);
-          const updatedAtFromLocalStorage = moment(formData.savedToStorage);
+          const updatedAtFromLocalStorage = moment(savedToStorage);
           if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
             const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
             if (storageIsNewer) {
@@ -349,6 +364,9 @@ function ActivityReport({
           },
         );
         reportId.current = savedReport.id;
+
+        cleanupLocalStorage();
+
         window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
@@ -438,7 +456,7 @@ function ActivityReport({
           )}
         </Grid>
       </Grid>
-      <NetworkContext.Provider value={{ connectionActive }}>
+      <NetworkContext.Provider value={{ connectionActive, localStorageAvailable }}>
         <Navigator
           key={currentPage}
           editable={editable}
@@ -462,6 +480,7 @@ function ActivityReport({
           onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
+          savedToStorage={savedToStorage}
         />
       </NetworkContext.Provider>
     </div>
