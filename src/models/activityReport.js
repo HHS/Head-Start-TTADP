@@ -275,6 +275,20 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
     },
+    creatorName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        // If a creator role is not set but the report is in ALERTS.
+        // We want to show the name with no roles.
+        if (this.creatorRole || this.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+          return this.creatorNameWithRole;
+        }
+        if (this.author) {
+          return this.author.fullName;
+        }
+        return null;
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReport',

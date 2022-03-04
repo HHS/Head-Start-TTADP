@@ -23,7 +23,6 @@ function ReportRow({
     displayId,
     activityRecipients,
     startDate,
-    author,
     topics,
     collaborators,
     lastSaved,
@@ -31,12 +30,12 @@ function ReportRow({
     approvedAt,
     createdAt,
     legacyId,
+    creatorName,
   } = report;
 
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
-  const authorName = author ? author.fullName : '';
   const recipients = activityRecipients && activityRecipients.map((ar) => (
     ar.grant ? ar.grant.recipient.name : ar.name
   ));
@@ -123,10 +122,10 @@ function ReportRow({
       </td>
       <td>{startDate}</td>
       <td>
-        {authorName ? (
+        {creatorName ? (
           <Tooltip
-            displayText={authorName}
-            tooltipText={authorName}
+            displayText={creatorName}
+            tooltipText={creatorName}
             buttonLabel="click to reveal author name"
           />
         ) : '' }
@@ -161,11 +160,6 @@ export const reportPropTypes = PropTypes.shape({
   approvedAt: PropTypes.string,
   createdAt: PropTypes.string,
   startDate: PropTypes.string.isRequired,
-  author: PropTypes.shape({
-    fullName: PropTypes.string,
-    homeRegionId: PropTypes.number,
-    name: PropTypes.string,
-  }),
   topics: PropTypes.arrayOf(PropTypes.string).isRequired,
   collaborators: PropTypes.arrayOf(
     PropTypes.shape({
@@ -175,6 +169,7 @@ export const reportPropTypes = PropTypes.shape({
   lastSaved: PropTypes.string,
   calculatedStatus: PropTypes.string,
   legacyId: PropTypes.string,
+  creatorName: PropTypes.string,
 });
 
 ReportRow.propTypes = {

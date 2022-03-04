@@ -123,6 +123,7 @@ export const activityReportsSorted = [
     regionId: 14,
     topics: [],
     calculatedStatus: 'needs_action',
+    creatorName: 'Kiwi, GS',
     activityRecipients: [
       {
         activityRecipientId: 3,
@@ -164,6 +165,7 @@ export const activityReportsSorted = [
     regionId: 14,
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
+    creatorName: 'Kiwi, TTAC',
     activityRecipients: [
       {
         activityRecipientId: 5,
