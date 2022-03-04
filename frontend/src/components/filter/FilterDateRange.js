@@ -18,12 +18,12 @@ const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
 
 const DATE_OPTIONS = [
   {
-    label: 'Year to date',
-    value: formatDateRange({ yearToDate: true, forDateTime: true }),
-  },
-  {
     label: 'Last thirty days',
     value: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
+  },
+  {
+    label: 'Year to date',
+    value: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
 ];
 
@@ -68,7 +68,7 @@ export default function FilterDateRange({
   }
 
   switch (condition) {
-    case 'Is':
+    case 'is':
       return (
         <>
           <label htmlFor="filter-date-range" className="sr-only">
@@ -93,14 +93,14 @@ export default function FilterDateRange({
         </>
       );
 
-    case 'Is within':
+    case 'is within':
       return (
         <DateRangePicker
           query={query}
           onApply={onApplyDateRange}
         />
       );
-    case 'Is before':
+    case 'is on or before':
       return (
         <span ref={container}>
           <label htmlFor="filter-date-range" className="sr-only">
@@ -117,7 +117,7 @@ export default function FilterDateRange({
           />
         </span>
       );
-    case 'Is after':
+    case 'is on or after':
       return (
         <span ref={container}>
           <label htmlFor="filter-date-range" className="sr-only">

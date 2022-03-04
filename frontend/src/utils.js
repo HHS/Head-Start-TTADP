@@ -140,7 +140,7 @@ export function queryStringToFilters(queryString) {
         topic,
         condition,
         // we use is and is not for query parameters
-        query: condition === 'Is not' || condition === 'Is' ? [decodedQueryParam] : decodedQueryParam,
+        query: condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
       };
     }
 
