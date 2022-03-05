@@ -1,8 +1,9 @@
-version: "3.2"
+version: "3.7"
 services:
   server:
     build:
       context: .
+      dockerfile: Dockerfile.backend
     command: yarn start:web
     user: ${CURRENT_USER:-root}
     networks:

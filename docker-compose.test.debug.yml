@@ -1,0 +1,52 @@
+version: "3.7"
+services:
+  test-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    command: yarn server:debug
+    user: ${CURRENT_USER:-root}
+    ports:
+      - "8080:8080"
+      - "9229:9229"
+    depends_on:
+      - test-db
+      # - redis
+      # - aws-cli
+    environment:
+      - POSTGRES_HOST=test-db
+      # - REDIS_HOST=redis
+      # - SMTP_HOST=mailcatcher
+    volumes:
+      - ".:/app:rw"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+  test-frontend:
+    build:
+      context: .
+    command: yarn start
+    user: ${CURRENT_USER:-root}
+    stdin_open: true
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./frontend:/app:rw"
+      - "./scripts:/app/scripts"
+    environment:
+      - BACKEND_PROXY=http://backend:8080
+  # worker:
+  #   build:
+  #     context: .
+  #   command: yarn worker
+  #   env_file: .env
+  #   depends_on:
+  #     - test-db
+  #     - redis
+  #   environment:
+  #     - POSTGRES_HOST=postgres_docker
+  #     - REDIS_HOST=redis
+  #     - SMTP_HOST=mailcatcher
+  #   volumes:
+  #     - ".:/app:rw"

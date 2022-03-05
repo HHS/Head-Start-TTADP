@@ -18,6 +18,7 @@ main() {
     local opt=""
     local docker="true"
     local verbose="false"
+    local debug="false"
 
     while [[ $# -gt 0 ]]
     do
@@ -29,6 +30,10 @@ main() {
           ;;
         -v | --verbose)
           verbose="true"
+          shift
+          ;;
+        -d | --debug)
+          debug="true"
           shift
           ;;
         *)
@@ -45,10 +50,18 @@ main() {
     log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
     if [[ $docker == "true" ]]; then
-      docker-compose -f 'docker-compose.test.yml' up -d
+      if [[ $debug == "true" ]]; then
+        docker-compose --compatibility -f 'docker-compose.test.yml' -f 'docker-compose.test.debug.yml' up -d
+      else
+        docker-compose -f 'docker-compose.test.yml' up -d
+      fi
       check_exit "$?"
     else
-      docker-compose -f 'docker-compose.test.yml' up -d test-db
+      if [[ $debug == "true" ]]; then
+        docker-compose --compatibility -f 'docker-compose.test.yml' -f 'docker-compose.test.debug.yml' up -d test-db
+      else
+        docker-compose -f 'docker-compose.test.yml' up -d test-db
+      fi
       check_exit "$?"
       IFS=: read host port <<< "$(docker-compose -f 'docker-compose.test.yml' port test-db 5432)"
       echo "Postgres is running on port $port"
