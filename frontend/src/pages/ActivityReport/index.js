@@ -237,6 +237,7 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
+        console.log(formData, savedToStorage);
         if (formData && savedToStorage) {
           const updatedAtFromNetwork = moment(report.updatedAt);
           const updatedAtFromLocalStorage = moment(savedToStorage);
@@ -271,9 +272,7 @@ function ActivityReport({
         updateEditable(canWriteReport);
 
         if (showLastUpdatedTime) {
-          updateLastSaveTime(
-            shouldUpdateFromNetwork ? moment(report.updatedAt) : moment(formData.updatedAt),
-          );
+          updateLastSaveTime(moment(report.updatedAt));
         }
 
         updateError();
