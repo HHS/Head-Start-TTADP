@@ -35,7 +35,7 @@ export default function GoalsTableHeader({
         <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
           <Link
             aria-label="deselect all reports"
-            to={`/recipient-tta-records/${recipientId}/region/${regionId}/goal/new`}
+            to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
             className="display-flex flex-justify usa-button"
           >
             <FontAwesomeIcon

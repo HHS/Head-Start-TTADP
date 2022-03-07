@@ -1,11 +1,8 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React from 'react';
-import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import Select from 'react-select';
 import {
-  Button,
   DatePicker, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
 
@@ -58,36 +55,14 @@ const selectStyles = {
 };
 
 export default function Form({
-  saveGoal,
-  onSaveDraft,
-  setId,
-  setReadOnly,
   possibleGrants,
   selectedGrants,
   setSelectedGrants,
   goalName,
   setGoalName,
-  recipient,
-  regionId,
   endDate,
   setEndDate,
-  history,
 }) {
-  /**
-   * button click handlers
-   */
-  const onSaveAndContinue = async () => {
-    try {
-      const goal = await saveGoal();
-      setId(goal.id);
-      setReadOnly(true);
-      history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/goal/${goal.id}`);
-    } catch (error) {
-      //
-      console.log(error);
-    }
-  };
-
   const onUpdateText = (e) => setGoalName(e.target.value);
 
   return (
@@ -139,26 +114,11 @@ export default function Form({
           defaultValue={endDate}
         />
       </FormGroup>
-      <div className="margin-top-4">
-        <Link
-          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-          className=" usa-button usa-button--outline"
-        >
-          Cancel
-        </Link>
-        <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-        <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button>
-      </div>
-
     </>
   );
 }
 
 Form.propTypes = {
-  saveGoal: PropTypes.func.isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
-  setId: PropTypes.func.isRequired,
-  setReadOnly: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
@@ -174,9 +134,16 @@ Form.propTypes = {
   setSelectedGrants: PropTypes.func.isRequired,
   goalName: PropTypes.string.isRequired,
   setGoalName: PropTypes.func.isRequired,
-  recipient: PropTypes.string.isRequired,
-  regionId: PropTypes.string.isRequired,
+  recipient: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    grants: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        numberWithProgramTypes: PropTypes.string,
+      }),
+    ),
+  }).isRequired,
   endDate: PropTypes.string.isRequired,
   setEndDate: PropTypes.func.isRequired,
-  history: ReactRouterPropTypes.history.isRequired,
 };

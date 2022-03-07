@@ -179,7 +179,7 @@ export default function RecipientRecord({ match }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goal/:goalId"
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
           render={({ match: goalMatch }) => (
             <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
               <CreateGoal match={goalMatch} regionId={regionId} recipient={recipientData} />
