@@ -706,8 +706,6 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.send).toHaveBeenCalled();
       const [[value]] = mockResponse.send.mock.calls;
       /* eslint-disable no-useless-escape */
-      expect(value).toContain('\"Creator\"');
-      expect(value).toContain('\"Arty, GS\"');
       expect(value).toContain('\"Collaborators\"');
       expect(value).toContain('\"Jarty, SS, GS\"');
       expect(value).toContain(LEGACY_WARNING);
