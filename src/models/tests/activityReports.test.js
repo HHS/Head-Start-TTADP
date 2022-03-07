@@ -97,14 +97,17 @@ describe('Activity Reports model', () => {
       // Has both creator and role.
       let foundReport = await activityReportById(60);
       expect(foundReport.creatorNameWithRole).toEqual('Joe Green, TTAC');
+      expect(foundReport.creatorName).toEqual('Joe Green, TTAC');
 
       // Has only creator.
       foundReport = await activityReportById(61);
       expect(foundReport.creatorNameWithRole).toEqual('Joe Green');
+      expect(foundReport.creatorName).toEqual('Joe Green');
 
       // Properly converts role to acronym.
       foundReport = await activityReportById(62);
       expect(foundReport.creatorNameWithRole).toEqual('Joe Green, ECM');
+      expect(foundReport.creatorName).toEqual('Joe Green, ECM');
     });
   });
 });
