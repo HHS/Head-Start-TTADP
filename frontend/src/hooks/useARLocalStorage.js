@@ -13,7 +13,7 @@ import { storageAvailable } from './helpers';
  */
 export default function useARLocalStorage(key, defaultValue, updateSavedToStorage = () => {}) {
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
-  const [saveReport, setSaveReport] = useState(false);
+  const [saveReport, setSaveReport] = useState(true);
   const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, saveReport);
 
   useEffect(() => {
@@ -28,12 +28,10 @@ export default function useARLocalStorage(key, defaultValue, updateSavedToStorag
       toSave = false;
     }
 
-    console.log(toSave && localStorageAvailable);
     setSaveReport(toSave && localStorageAvailable);
   }, [key, localStorageAvailable, setStoredValue, storedValue, updateSavedToStorage]);
 
   return [storedValue, (v) => {
-    console.log(saveReport);
     if (saveReport) {
       const value = { ...v };
       updateSavedToStorage(new Date().toISOString());

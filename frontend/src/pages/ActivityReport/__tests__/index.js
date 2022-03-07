@@ -77,7 +77,9 @@ describe('ActivityReport', () => {
       // we're just checking to see if the "local backup" message is shown, the
       // updatedAt from network won't be shown
       const alert = screen.queryByTestId('alert');
-      expect(alert).toBeNull();
+
+      const reggie = new RegExp('this report was last saved to your local backup', 'i');
+      expect(alert.textContent.match(reggie).length).toBe(1);
     });
   });
 
