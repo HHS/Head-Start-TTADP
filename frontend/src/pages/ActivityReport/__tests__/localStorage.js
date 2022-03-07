@@ -3,12 +3,16 @@ import { screen } from '@testing-library/react';
 import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-
-import { mockWindowProperty } from '../../../testHelpers';
-
 import {
   formData, renderActivityReport, recipients,
 } from '../testHelpers';
+
+import { mockWindowProperty } from '../../../testHelpers';
+
+import { storageAvailable } from '../../../hooks/helpers';
+
+jest.mock('../../../hooks/helpers');
+storageAvailable.mockReturnValue(true);
 
 describe('Local storage fallbacks', () => {
   const setItem = jest.fn();
