@@ -11,7 +11,7 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
-import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
+import ActivityReport, { unflattenResourcesUsed, findWhatsChanged, updateGoals } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 import UserContext from '../../../UserContext';
 
@@ -90,6 +90,37 @@ describe('ActivityReport', () => {
     renderActivityReport('1', 'activity-summary', true);
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
+  describe('updateGoals', () => {
+    it('sets new goals as such', () => {
+      const report = {
+        goals: [{
+          id: 123,
+          name: 'name',
+        }],
+      };
+      const updateFn = updateGoals(report);
+      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name', new: true }] });
+
+      expect(goals.length).toBe(1);
+      expect(goals[0].id).toBe(123);
+      expect(goals[0].new).toBeTruthy();
+    });
+
+    it('sets old goals as such', () => {
+      const report = {
+        goals: [{
+          id: 123,
+          name: 'name',
+        }],
+      };
+      const updateFn = updateGoals(report);
+      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name' }] });
+      expect(goals.length).toBe(1);
+      expect(goals[0].id).toBe(123);
+      expect(goals[0].new).toBeFalsy();
+    });
   });
 
   describe('for read only users', () => {
