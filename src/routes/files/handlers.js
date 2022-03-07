@@ -116,12 +116,16 @@ export default async function uploadHandler(req, res) {
         reportId,
         size,
       );
-      await updateMetadata(metadata.id, await generateMetadataFromFile(path));
+      if (metadata !== null && metadata !== undefined) {
+        const data = await generateMetadataFromFile(path);
+        await updateMetadata(metadata.id, data);
+      }
     } catch (err) {
       return handleErrors(req, res, err, logContext);
     }
     try {
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+      if (uploadedFile === null || uploadedFile === undefined) throw new Error('File upload failed');
       const url = getPresignedURL(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
       res.status(200).send({ id: metadata.id, url });

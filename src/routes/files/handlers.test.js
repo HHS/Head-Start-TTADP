@@ -11,6 +11,7 @@ import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
+import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 jest.mock('../../services/accessValidation', () => ({
@@ -81,6 +82,7 @@ describe('File Upload', () => {
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(200);
+      auditLogger.info(JSON.stringify({ response }));
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();

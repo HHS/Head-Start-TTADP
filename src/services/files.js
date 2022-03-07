@@ -15,30 +15,35 @@ export const updateStatus = async (fileId, fileStatus) => {
     await db.sequelize.transaction(async (transaction) => {
       file = await File.update({ status: fileStatus }, { where: { id: fileId }, transaction });
     });
-    return file.dataValues;
+    return (file !== null && file !== undefined) ? file.dataValues : null;
   } catch (error) {
     return error;
   }
 };
 
-export const updateMetadata = async (fileId, data, transaction) => {
-  let file;
+export const updateMetadata = async (id, data, transaction) => {
+  let file = null;
+  auditLogger.info(JSON.stringify({ id, data, transaction }));
   try {
     if (data.error !== null) throw new Error(data.error);
     if (transaction !== undefined) {
       file = await File.update(
         { metadata: data.value },
-        { where: { id: fileId }, transaction },
+        { where: { id }, transaction },
       );
     } else {
       await db.sequelize.transaction(async (t) => {
         file = await File.update(
           { metadata: data.value },
-          { where: { id: fileId }, transaction: t },
+          { where: { id }, transaction: t },
         );
       });
     }
-    return file.dataValues;
+    auditLogger.info(JSON.stringify({
+      file,
+      dataValues: (file !== null && file !== undefined) ? file.dataValues : null,
+    }));
+    return (file !== null && file !== undefined) ? file.dataValues : null;
   } catch (err) {
     auditLogger.error(JSON.stringify({ message: 'Failed to update metadata in db for file', err }));
     return err;
@@ -63,7 +68,7 @@ export default async function createFileMetaData(
     await db.sequelize.transaction(async (transaction) => {
       file = await File.create(newFile, transaction);
     });
-    return file.dataValues;
+    return (file !== null && file !== undefined) ? file.dataValues : null;
   } catch (error) {
     return error;
   }

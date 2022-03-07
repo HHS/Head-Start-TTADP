@@ -13,50 +13,60 @@ const isToolUp = () => {
 };
 
 const spinUpTool = async () => {
-  if (!isToolUp()) {
-    et = new ExifTool({ taskTimeoutMillis: 5000 });
+  try {
+    if (!isToolUp()) {
+      et = new ExifTool();
+    }
+    auditLogger.info(JSON.stringify({ exiftool: await et.version() }));
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ message: 'Failed to spin-up exiftool', err }));
+    throw err;
   }
-  auditLogger.info(JSON.stringify({ exiftool: await et.version() }));
+  auditLogger.info('spin up exiftool');
 };
 
 const shutdownTool = async () => {
-  if (isToolUp()) {
-    et.end();
+  try {
+    if (isToolUp()) {
+      await et.end();
+    }
+    et = null;
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ message: 'Failed to shutdown exiftool', err }));
+    throw err;
   }
-  et = null;
+  auditLogger.info('shutdown exiftool');
 };
 
 const generateMetadataFromFile = async (path) => {
   const metadata = { value: null, error: [] };
   let needsCleanup = false;
   try {
+    if (path === null
+      || path === undefined
+      || !(typeof path === 'string' || path instanceof String)) {
+      throw new Error('invalid path');
+    }
     if (!isToolUp()) {
       await spinUpTool();
       needsCleanup = true;
     }
     metadata.value = await et.read(path, ['-json', '-g', '-P']);
-    // metadata.value = await et.readRaw(path, ['-json', '-g', '-P']);
-
-    auditLogger.info(JSON.stringify({ metadata }));
 
     if ('errors' in metadata.value) {
-      if (!Array.isArray(metadata.value.errors)
-      || metadata.value.errors.length !== 0) {
-        metadata.error.push(metadata.value.errors);
+      if (Array.isArray(metadata.value.errors)
+      && metadata.value.errors.length !== 0) {
+        metadata.error.concat(metadata.value.errors);
       }
       delete metadata.value.errors;
     }
 
     if ('Error' in metadata.value.ExifTool) {
-      if (!Array.isArray(metadata.value.ExifTool.Error)
-      || metadata.value.ExifTool.Error.length !== 0) {
+      if (metadata.value.ExifTool.Error !== null
+        && metadata.value.ExifTool.Error !== undefined) {
         metadata.error.push(metadata.value.ExifTool.Error);
       }
       delete metadata.value.ExifTool.Error;
-    }
-
-    if (Array.isArray(metadata.error) && metadata.error.length === 0) {
-      metadata.error = null;
     }
 
     if ('File' in metadata.value) {
@@ -75,6 +85,12 @@ const generateMetadataFromFile = async (path) => {
         sha256: sha256File(path),
       };
     }
+
+    if (Array.isArray(metadata.error) && metadata.error.length === 0) {
+      metadata.error = null;
+    }
+
+    auditLogger.info(JSON.stringify({ metadata }));
   } catch (err) {
     auditLogger.error(JSON.stringify({ message: 'Failed to generate metadata from file', err }));
     metadata.error = err;
