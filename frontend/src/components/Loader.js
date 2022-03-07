@@ -26,7 +26,7 @@ Loader.propTypes = {
 };
 
 Loader.defaultProps = {
-  text: 'Loading data',
+  text: 'Loading Data',
 };
 
 export default Loader;
