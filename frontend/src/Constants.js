@@ -1,12 +1,12 @@
 import moment from 'moment';
 
-export const CONTAINS = 'Contains';
-export const NOT_CONTAINS = 'Does not contain';
-export const BEFORE = 'Is before';
-export const AFTER = 'Is after';
-export const WITHIN = 'Is within';
-export const IS = 'Is';
-export const IS_NOT = 'Is not';
+export const CONTAINS = 'contains';
+export const NOT_CONTAINS = 'does not contain';
+export const BEFORE = 'is on or before';
+export const AFTER = 'is on or after';
+export const WITHIN = 'is within';
+export const IS = 'is';
+export const IS_NOT = 'is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
@@ -22,10 +22,10 @@ export const QUERY_CONDITIONS = {
 };
 
 export const DATE_CONDITIONS = [
+  IS,
   AFTER,
   BEFORE,
   WITHIN,
-  IS,
 ];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';

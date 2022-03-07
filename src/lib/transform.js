@@ -242,7 +242,7 @@ function transformGoalsAndObjectives(report) {
 
 const arTransformers = [
   'displayId',
-  transformRelatedModel('author', 'fullName'),
+  'creatorName',
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
   transformCollaborators('activityReportCollaborators', 'user', 'fullName', 'collaborators'),

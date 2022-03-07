@@ -1,5 +1,6 @@
 import {
   regionFilter,
+  endDateFilter,
   startDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
@@ -16,6 +17,7 @@ import {
 
 export const LANDING_BASE_FILTER_CONFIG = [
   startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   programSpecialistFilter,
@@ -31,6 +33,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   startDateFilter,
+  endDateFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   programSpecialistFilter,

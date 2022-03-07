@@ -36,7 +36,7 @@ const renderTable = (user, dateTime) => {
             filters={[{
               id: '1',
               topic: 'region',
-              condition: 'Is',
+              condition: 'is',
               query: '1',
             }]}
             showFilter
@@ -390,8 +390,8 @@ describe('Table sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[13]).toHaveTextContent('Kiwi, TTAC'));
   });
 
-  it('clicking Start date column header will sort by start date', async () => {
-    const columnHeader = await screen.findByText(/start date/i);
+  it('clicking date started column header will sort by start date', async () => {
+    const columnHeader = await screen.findByText(/date started/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',

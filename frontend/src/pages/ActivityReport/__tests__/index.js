@@ -13,6 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { withText } from '../../../testHelpers';
 import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
+import UserContext from '../../../UserContext';
 
 const formData = () => ({
   regionId: 1,
@@ -43,21 +44,28 @@ const formData = () => ({
   topics: 'first',
   userId: 1,
   updatedAt: new Date().toISOString(),
+  creatorRole: 'Reporter',
+  attachments: [],
+  creatorNameWithRole: 'test',
 });
 const history = createMemoryHistory();
+
+const user = {
+  id: 1, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+};
 
 const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <ActivityReport
-        match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-        location={{
-          state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-        }}
-        user={{
-          id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-        }}
-      />
+      <UserContext.Provider value={{ user }}>
+        <ActivityReport
+          match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+          location={{
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+          }}
+          user={{ ...user, id: userId }}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 };
@@ -125,6 +133,28 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
+  describe('resetToDraft', () => {
+    it('navigates to the correct page', async () => {
+      const data = formData();
+      // load the report
+      fetchMock.get('/api/activity-reports/3', {
+        ...data,
+        goals: [],
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
+      // reset to draft
+      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
+
+      renderActivityReport(3, 'review');
+      const button = await screen.findByRole('button', { name: /reset to draft/i });
+      userEvent.click(button);
+      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
+      expect(notes).toBeVisible();
+      expect(notes.getAttribute('contenteditable')).toBe('true');
+    });
+  });
+
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
@@ -168,7 +198,7 @@ describe('ActivityReport', () => {
       renderActivityReport('new', 'review');
       fetchMock.post('/api/activity-reports', { id: 1 });
       const button = await screen.findByRole('button', { name: 'Save Draft' });
-      await userEvent.click(button);
+      userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
@@ -185,6 +215,17 @@ describe('ActivityReport', () => {
       expect(changed).toEqual({
         beans: 'black', beetle: ['what'], time: 1, boat: { length: 1, color: 'red' },
       });
+    });
+
+    it('finds whats changed branch cases', () => {
+      const orig = {
+        startDate: 'blah', creatorRole: '',
+      };
+      const changed = {
+        startDate: 'blah', creatorRole: '',
+      };
+      const result = findWhatsChanged(orig, changed);
+      expect(result).toEqual({ startDate: null, creatorRole: null });
     });
 
     it('displays the creator name', async () => {
