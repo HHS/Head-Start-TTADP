@@ -1,8 +1,9 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory } from 'react-router-dom';
+import { Link /* useHistory */ } from 'react-router-dom';
+import { Button } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
@@ -13,43 +14,87 @@ import ReadOnly from './ReadOnly';
 
 export default function CreateGoal({ recipient, regionId, match }) {
   const { goalId } = match.params;
-  const history = useHistory();
+  // const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
     value: g.id,
     label: g.numberWithProgramTypes,
   }));
 
-  const [selectedGrants, setSelectedGrants] = useState(
-    possibleGrants.length === 1 ? [possibleGrants[0]] : [],
-  );
+  const goalDefaults = useMemo(() => ({
+    goalName: '',
+    endDate: '',
+    status: 'Draft',
+    grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
+    id: goalId,
+  }), [goalId, possibleGrants]);
 
-  const [goalName, setGoalName] = useState('');
-  const [endDate, setEndDate] = useState();
-  const [status] = useState('Draft');
-  const [id, setId] = useState(goalId);
+  const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
-  const [readOnly, setReadOnly] = useState(false);
+  const [showForm] = useState(true);
+
+  // this will store our created goals
+  const [createdGoals, setCreatedGoals] = useState([]);
+
+  const [goalName, setGoalName] = useState(goalDefaults.goalName);
+  const [endDate, setEndDate] = useState(goalDefaults.endDate);
+  const [status, setStatus] = useState(goalDefaults.status);
+  const [id, setId] = useState(goalDefaults.id);
 
   // save goal to backend
-  const saveGoal = async () => createOrUpdateGoal({
-    id,
-    grants: selectedGrants.map((g) => g.value),
-    name: goalName,
-    status,
-    endDate,
-    regionId: parseInt(regionId, DECIMAL_BASE),
-    recipientId: recipient.id,
-  });
+  const saveGoal = async (isSaveDraft) => {
+    const goal = await createOrUpdateGoal({
+      id,
+      grants: selectedGrants.map((g) => g.value),
+      name: goalName,
+      status,
+      endDate,
+      regionId: parseInt(regionId, DECIMAL_BASE),
+      recipientId: recipient.id,
+    });
+
+    setId(isSaveDraft ? goal.id : 'new');
+
+    if (!isSaveDraft) {
+      const goalsToDisplay = [...createdGoals, {
+        goalName,
+        grants: selectedGrants,
+        endDate,
+        id: goal.id,
+      }];
+
+      setCreatedGoals(goalsToDisplay);
+
+      // clear our form fields
+      setGoalName(goalDefaults.goalName);
+      setEndDate(goalDefaults.endDate);
+      setStatus(goalDefaults.status);
+      setId(goalDefaults.id);
+      setSelectedGrants(goalDefaults.grants);
+    }
+  };
+
+  /**
+   * button click handlers
+   */
 
   // on form submit
   const onSubmit = (e) => e.preventDefault();
 
   const onSaveDraft = async () => {
     try {
-      const goal = await saveGoal();
-      setId(goal.id);
-      history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/goal/${goal.id}`);
+      const isSaveDraft = true;
+      await saveGoal(isSaveDraft);
+    } catch (error) {
+      //
+      console.log(error);
+    }
+  };
+
+  const onSaveAndContinue = async () => {
+    try {
+      const isSaveDraft = false;
+      await saveGoal(isSaveDraft);
     } catch (error) {
       //
       console.log(error);
@@ -74,33 +119,41 @@ export default function CreateGoal({ recipient, regionId, match }) {
         {regionId}
       </h1>
       <Container className="margin-y-2 margin-left-2 width-tablet padding-top-1" skipTopPadding>
+        { createdGoals.length ? (
+          <ReadOnly
+            createdGoals={createdGoals}
+          />
+        ) : null }
+
         <form onSubmit={onSubmit}>
-          { readOnly
-            ? (
-              <ReadOnly
-                goalName={goalName}
-                grants={selectedGrants}
-                endDate={endDate}
-              />
-            )
-            : (
-              <Form
-                saveGoal={saveGoal}
-                onSaveDraft={onSaveDraft}
-                setId={setId}
-                setReadOnly={setReadOnly}
-                possibleGrants={possibleGrants}
-                selectedGrants={selectedGrants}
-                setSelectedGrants={setSelectedGrants}
-                goalName={goalName}
-                setGoalName={setGoalName}
-                recipient={recipient}
-                regionId={regionId}
-                endDate={endDate}
-                setEndDate={setEndDate}
-                history={history}
-              />
-            ) }
+          <Form
+            saveGoal={saveGoal}
+            onSaveDraft={onSaveDraft}
+            setId={setId}
+            possibleGrants={possibleGrants}
+            selectedGrants={selectedGrants}
+            setSelectedGrants={setSelectedGrants}
+            goalName={goalName}
+            setGoalName={setGoalName}
+            recipient={recipient}
+            regionId={regionId}
+            endDate={endDate}
+            setEndDate={setEndDate}
+          />
+
+          <div className="margin-top-4">
+            { showForm ? (
+              <Link
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                className=" usa-button usa-button--outline"
+              >
+                Cancel
+              </Link>
+            ) : null }
+            <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
+            { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+            { !showForm ? <Button type="submit">Submit goal</Button> : null }
+          </div>
         </form>
       </Container>
     </>
