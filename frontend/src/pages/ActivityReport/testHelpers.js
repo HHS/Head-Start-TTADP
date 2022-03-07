@@ -8,8 +8,20 @@ import {
 import moment from 'moment';
 import ActivityReport from './index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
+import UserContext from '../../UserContext';
 
 export const history = createMemoryHistory();
+
+const user = {
+  id: 1,
+  name: 'test@test.com',
+  permissions: [
+    {
+      scopeId: 3,
+      regionId: 1,
+    },
+  ],
+};
 
 export const formData = () => ({
   regionId: 1,
@@ -50,16 +62,18 @@ export const formData = () => ({
 export const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <ActivityReport
-        match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-        location={{
-          state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-        }}
-        user={{
-          id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-        }}
-        region={1}
-      />
+      <UserContext.Provider value={{ user }}>
+        <ActivityReport
+          match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+          location={{
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+          }}
+          user={{
+            id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          }}
+          region={1}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 };
