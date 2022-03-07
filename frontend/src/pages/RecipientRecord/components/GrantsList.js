@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
 import './GrantsList.css';
-import { getDistinctSortedArray } from '../../../utils';
 
 export default function GrantsList({ summary }) {
   const renderGrantsList = () => {
@@ -12,14 +11,11 @@ export default function GrantsList({ summary }) {
         <tr key={grant.id}>
           <td>
             <a style={{ display: 'table-cell' }} title="Links to HSES" aria-label={`Links to Grant ${grant.number} on HSES`} className="padding-y-3" href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
-              {grant.number}
+              {grant.numberWithProgramTypes}
             </a>
           </td>
           <td>
             {grant.status}
-          </td>
-          <td>
-            {grant.programs ? getDistinctSortedArray(grant.programs.map((program) => program.programType)).join(', ') : ''}
           </td>
           <td>{grant.programSpecialistName}</td>
           <td>{grant.grantSpecialistName}</td>
@@ -50,7 +46,6 @@ export default function GrantsList({ summary }) {
             <tr>
               <th scope="col">Grant number</th>
               <th scope="col">Status</th>
-              <th scope="col">Programs</th>
               <th scope="col">Program specialist</th>
               <th scope="col">Grant specialist</th>
               <th scope="col">Project start date</th>

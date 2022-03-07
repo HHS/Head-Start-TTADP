@@ -16,6 +16,7 @@ describe('Recipient Record - Profile', () => {
           number: 'asdfsjkfd',
           status: 'Froglike',
           endDate: '2021-09-28',
+          numberWithProgramTypes: 'asdfsjkfd - HS',
         },
       ],
     };
@@ -23,7 +24,7 @@ describe('Recipient Record - Profile', () => {
 
     expect(screen.getByText(summary.grants[0].status)).toBeInTheDocument();
     expect(screen.getByText('09/28/2021')).toBeInTheDocument();
-    expect(screen.getByText(summary.grants[0].number)).toBeInTheDocument();
+    expect(screen.getByText(summary.grants[0].numberWithProgramTypes)).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: /recipient summary/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /grants/i })).toBeInTheDocument();

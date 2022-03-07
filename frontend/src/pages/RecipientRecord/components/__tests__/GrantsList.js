@@ -13,7 +13,6 @@ describe('Grants List Widget', () => {
     renderGrantsList({ summaryData });
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project start date/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /program specialist/i })).toBeInTheDocument();
@@ -28,6 +27,7 @@ describe('Grants List Widget', () => {
           name: 'Grant Name 1',
           number: 'Grant Number 1',
           status: 'Active',
+          numberWithProgramTypes: 'Grant Number 1 - EHS, HS',
           programs: [
             {
               programType: 'EHS',
@@ -45,6 +45,7 @@ describe('Grants List Widget', () => {
           name: 'Grant Name 2',
           number: 'Grant Number 2',
           status: 'Inactive',
+          numberWithProgramTypes: 'Grant Number 2 - EHS-CCP',
           programs: [
             {
               programType: 'EHS-CCP',
@@ -61,21 +62,18 @@ describe('Grants List Widget', () => {
     renderGrantsList(summary);
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
 
     // Grant 1.
-    expect(await screen.findByText(/grant number 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/grant number 1 - ehs, hs/i)).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: 'Active' })).toBeInTheDocument();
-    expect(await screen.findByRole('cell', { name: /ehs, hs/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /tim/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /sam/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /january/i })).toBeInTheDocument();
 
     // Grant 2.
-    expect(await screen.findByText(/grant number 2/i)).toBeInTheDocument();
+    expect(await screen.findByText(/grant number 2 - ehs-ccp/i)).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: 'Inactive' })).toBeInTheDocument();
-    expect(await screen.findByRole('cell', { name: /ehs-ccp/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /10\/02\/2020/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /10\/01\/2021/i })).toBeInTheDocument();
     expect(await screen.findByRole('cell', { name: /jim/i })).toBeInTheDocument();
