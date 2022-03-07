@@ -73,7 +73,12 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', 'activity-summary');
       await screen.findByRole('group', { name: 'Who was the activity for?' });
-      expect(screen.queryByTestId('alert')).toBeNull();
+
+      // we're just checking to see if the "local backup" message is shown, the
+      // updatedAt from network won't be shown
+      const alert = screen.queryByTestId('alert');
+      const reggie = new RegExp('this report was last saved to your local backup', 'i');
+      expect(alert.textContent.match(reggie).length).toBe(1);
     });
   });
 
