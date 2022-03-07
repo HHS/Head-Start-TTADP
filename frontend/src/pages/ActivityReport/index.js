@@ -237,7 +237,6 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        console.log(formData, savedToStorage);
         if (formData && savedToStorage) {
           const updatedAtFromNetwork = moment(report.updatedAt);
           const updatedAtFromLocalStorage = moment(savedToStorage);
@@ -428,6 +427,8 @@ function ActivityReport({
 
     </>
   ) : null;
+
+  console.log(savedToStorage);
 
   return (
     <div className="smart-hub-activity-report">
