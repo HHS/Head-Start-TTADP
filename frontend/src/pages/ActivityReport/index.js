@@ -428,8 +428,6 @@ function ActivityReport({
     </>
   ) : null;
 
-  console.log(savedToStorage);
-
   return (
     <div className="smart-hub-activity-report">
       { error
