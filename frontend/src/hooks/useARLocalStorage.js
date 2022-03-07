@@ -28,7 +28,7 @@ export default function useARLocalStorage(key, defaultValue, updateSavedToStorag
       toSave = false;
     }
 
-    console.log({ toSave, localStorageAvailable });
+    console.log(toSave && localStorageAvailable);
     setSaveReport(toSave && localStorageAvailable);
   }, [key, localStorageAvailable, setStoredValue, storedValue, updateSavedToStorage]);
 
