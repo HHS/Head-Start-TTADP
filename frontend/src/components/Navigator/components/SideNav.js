@@ -97,18 +97,18 @@ function SideNav({
             className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}
           >
             { lastSaveTime && (
-            <p>
+            <span className="margin-bottom-2">
               This report was last saved to our network on
               {' '}
               {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-            </p>
+            </span>
             )}
             { savedToStorage && (
-            <p>
+            <span className="margin-bottom-2">
               This report was last saved to your local backup on
               {' '}
               {moment(savedToStorage).format(DATE_DISPLAY_SAVED_FORMAT)}
-            </p>
+            </span>
             )}
           </Alert>
         )}
