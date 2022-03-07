@@ -13,7 +13,7 @@ import { storageAvailable } from './helpers';
  */
 export default function useARLocalStorage(key, defaultValue, updateSavedToStorage = () => {}) {
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
-  const [saveReport, setSaveReport] = useState(false);
+  const [saveReport, setSaveReport] = useState(true);
   const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, saveReport);
 
   useEffect(() => {
