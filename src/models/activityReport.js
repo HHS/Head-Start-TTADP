@@ -278,8 +278,7 @@ module.exports = (sequelize, DataTypes) => {
     creatorName: {
       type: DataTypes.VIRTUAL,
       get() {
-        // If a creator role is not set but the report is in ALERTS.
-        // We want to show the name with no roles.
+        // Any report in the alerts table should show the set creator role.
         if (this.creatorRole || this.calculatedStatus !== REPORT_STATUSES.APPROVED) {
           return this.creatorNameWithRole;
         }
