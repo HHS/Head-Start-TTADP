@@ -42,6 +42,7 @@ describe('Local storage fallbacks', () => {
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
 
     const savedToStorage = moment().toISOString();
+    storageAvailable.mockReturnValue(true);
 
     getItem
       .mockReturnValueOnce(JSON.stringify({ ...formData(), savedToStorage, id: 1 }))
@@ -54,6 +55,7 @@ describe('Local storage fallbacks', () => {
 
   it('knows what to do when the local data is newer than the network data', async () => {
     const updatedAt = moment().subtract(1, 'day').toISOString();
+
     const d = {
       ...formData(), id: 1, updatedAt,
     };
@@ -61,11 +63,17 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'activity-summary', true);
     await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
+
+    fetchMock.put('/api/activity-reports/1', d);
+
+    const button = await screen.findByRole('button', { name: /save draft/i });
+    userEvent.click(button);
+
     const [alert] = await screen.findAllByTestId('alert');
     expect(alert).toBeVisible();
 
     const today = moment().format('MM/DD/YYYY');
-    const reggie = new RegExp(`this report was last saved on ${today}`, 'i');
+    const reggie = new RegExp(`this report was last saved to your local backup on ${today}`, 'i');
 
     expect(alert.textContent.match(reggie).length).toBe(1);
   });
@@ -74,8 +82,8 @@ describe('Local storage fallbacks', () => {
     fetchMock.get('/api/activity-reports/1', () => { throw new Error('unable to download report'); });
     renderActivityReport('1', 'activity-summary', true);
     await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
+
     expect(getItem).toHaveBeenCalled();
-    expect(setItem).toHaveBeenCalled();
     const alert = await screen.findByText(/ We found saved work on your computer, and we've loaded that instead/i);
     expect(alert).toBeVisible();
   });
