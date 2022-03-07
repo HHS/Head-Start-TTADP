@@ -62,6 +62,7 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
+  creatorRole: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -75,6 +76,18 @@ const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
  */
 export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
+    if (current === 'startDate' || current === 'endDate') {
+      if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
+        accumulator[current] = null;
+        return accumulator;
+      }
+    }
+
+    if (current === 'creatorRole' && !object[current]) {
+      accumulator[current] = null;
+      return accumulator;
+    }
+
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
@@ -109,6 +122,7 @@ function ActivityReport({
   const [lastSaveTime, updateLastSaveTime] = useState();
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
+  const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -137,6 +151,7 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
+            creatorRole: user && user.role && user.role.length === 1 ? user.role[0] : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
@@ -157,11 +172,12 @@ function ActivityReport({
         const isAuthor = report.userId === user.id;
 
         // The report can be edited if its in draft OR needs_action state.
+
         const canWriteReport = (isCollaborator || isAuthor)
           && (report.calculatedStatus === REPORT_STATUSES.DRAFT
             || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
-
         updateAdditionalData({ recipients, collaborators, availableApprovers });
+        updateCreatorRoleWithName(report.creatorNameWithRole);
         updateFormData(report);
 
         // ***Determine if the current user matches any of the approvers for this activity report.
@@ -249,22 +265,47 @@ function ActivityReport({
   const onSave = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
     if (reportId.current === 'new') {
+      const { startDate, endDate, ...fields } = data;
+      let startDateToSave = startDate;
+      if (startDateToSave === 'Invalid date' || startDateToSave === '' || !moment(startDateToSave, 'MM/DD/YYYY').isValid()) {
+        startDateToSave = null;
+      }
+
+      let endDateToSave = endDate;
+      if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
+        endDateToSave = null;
+      }
       const savedReport = await createReport(
-        { ...data, regionId: formData.regionId, approverUserIds: approverIds }, {},
+        {
+          ...fields,
+          startDate: startDateToSave,
+          endDate: endDateToSave,
+          regionId: formData.regionId,
+          approverUserIds: approverIds,
+        },
       );
+
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
       // if it isn't a new report, we compare it to the last response from the backend (formData)
       // and pass only the updated to save report
       const updatedFields = findWhatsChanged(data, formData);
-      await saveReport(reportId.current, { ...updatedFields, approverUserIds: approverIds }, {});
+      const updatedReport = await saveReport(
+        reportId.current, { ...updatedFields, approverUserIds: approverIds },
+        {},
+      );
+      updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
     }
   };
 
   const onFormSubmit = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
-    const reportToSubmit = { additionalNotes: data.additionalNotes, approverUserIds: approverIds };
+    const reportToSubmit = {
+      additionalNotes: data.additionalNotes,
+      approverUserIds: approverIds,
+      creatorRole: data.creatorRole,
+    };
     const response = await submitReport(reportId.current, reportToSubmit);
 
     updateFormData(
@@ -291,13 +332,13 @@ function ActivityReport({
   const reportCreator = { name: user.name, role: user.role };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
-  const author = formData.author ? (
+  const author = creatorNameWithRole ? (
     <>
       <hr />
       <p>
         <strong>Creator:</strong>
         {' '}
-        {formData.author.fullName}
+        {creatorNameWithRole}
       </p>
 
     </>

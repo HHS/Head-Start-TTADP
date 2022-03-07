@@ -10,6 +10,7 @@ import FilterDateRange from './FilterDateRange';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
+import FilterSelect from './FilterSelect';
 
 const YEAR_TO_DATE = formatDateRange({
   yearToDate: true,
@@ -17,8 +18,8 @@ const YEAR_TO_DATE = formatDateRange({
 });
 
 const EMPTY_MULTI_SELECT = {
-  Is: [],
-  'Is not': [],
+  is: [],
+  'is not': [],
 };
 
 const handleArrayQuery = (q) => {
@@ -33,9 +34,9 @@ export const createDateFilter = {
   display: 'Create date',
   conditions: DATE_CONDITIONS,
   defaultValues: {
-    'Is within': YEAR_TO_DATE,
-    'Is after': '',
-    'Is before': '',
+    'is within': YEAR_TO_DATE,
+    'is on or after': '',
+    'is on or before': '',
   },
   displayQuery: (query) => {
     if (query.includes('-')) {
@@ -100,3 +101,29 @@ export const topicsFilter = {
     />
   ),
 };
+
+export const grantNumberFilter = (possibleGrants) => ({
+  id: 'grantNumber',
+  display: 'Grant number',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: (query) => {
+    const toDisplay = query.map(
+      (q) => possibleGrants.find((g) => g.number === q).numberWithProgramTypes,
+    );
+    return handleArrayQuery(toDisplay);
+  },
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSelect
+      onApply={onApplyQuery}
+      inputId={`grant-number-${condition}-${id}`}
+      labelText="Select grant numbers to filter by"
+      options={possibleGrants.map((g) => ({
+        value: g.number,
+        label: g.numberWithProgramTypes,
+      }))}
+      selectedValues={query}
+      mapByValue
+    />
+  ),
+});

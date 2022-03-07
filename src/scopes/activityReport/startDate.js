@@ -4,7 +4,7 @@ import { withinDateRange, compareDate } from '../utils';
 export function beforeStartDate(date) {
   return {
     [Op.and]: {
-      [Op.or]: compareDate(date, 'startDate', Op.lt),
+      [Op.or]: compareDate(date, 'startDate', Op.lte),
     },
   };
 }
@@ -12,7 +12,7 @@ export function beforeStartDate(date) {
 export function afterStartDate(date) {
   return {
     [Op.and]: {
-      [Op.or]: compareDate(date, 'startDate', Op.gt),
+      [Op.or]: compareDate(date, 'startDate', Op.gte),
     },
   };
 }
