@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import {
   spinUpTool,
   isToolUp,

@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { validate } from 'uuid';
 import db, {
   File,
