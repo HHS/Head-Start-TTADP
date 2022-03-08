@@ -2,19 +2,19 @@
 import React, { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link /* useHistory */ } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { Button } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
-import { createOrUpdateGoal } from '../../fetchers/goals';
+import { createOrUpdateGoals } from '../../fetchers/goals';
 import Form from './Form';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 
 export default function CreateGoal({ recipient, regionId, match }) {
   const { goalId } = match.params;
-  // const history = useHistory();
+  const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
     value: g.id,
@@ -39,52 +39,46 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
-  const [id, setId] = useState(goalDefaults.id);
 
   // save goal to backend
-  const saveGoal = async (isSaveDraft) => {
-    const goal = await createOrUpdateGoal({
-      id,
-      grants: selectedGrants.map((g) => g.value),
-      name: goalName,
-      status,
-      endDate,
-      regionId: parseInt(regionId, DECIMAL_BASE),
-      recipientId: recipient.id,
-    });
-
-    setId(isSaveDraft ? goal.id : 'new');
-
-    if (!isSaveDraft) {
-      const goalsToDisplay = [...createdGoals, {
-        goalName,
-        grants: selectedGrants,
-        endDate,
-        id: goal.id,
-      }];
-
-      setCreatedGoals(goalsToDisplay);
-
-      // clear our form fields
-      setGoalName(goalDefaults.goalName);
-      setEndDate(goalDefaults.endDate);
-      setStatus(goalDefaults.status);
-      setId(goalDefaults.id);
-      setSelectedGrants(goalDefaults.grants);
-    }
-  };
+  const saveGoals = async () => createOrUpdateGoals([{
+    grants: selectedGrants.map((g) => g.value),
+    name: goalName,
+    status,
+    endDate,
+    regionId: parseInt(regionId, DECIMAL_BASE),
+    recipientId: recipient.id,
+  }, ...createdGoals]);
 
   /**
    * button click handlers
    */
 
   // on form submit
-  const onSubmit = (e) => e.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const newCreatedGoals = createdGoals.map((g) => ({
+        ...g,
+        status: 'Not started',
+      }));
+
+      setCreatedGoals(newCreatedGoals);
+
+      const goals = await saveGoals();
+      history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+        ids: goals.map((g) => g.id),
+      });
+    } catch (err) {
+    //
+      console.log(err);
+    }
+  };
 
   const onSaveDraft = async () => {
     try {
-      const isSaveDraft = true;
-      await saveGoal(isSaveDraft);
+      await saveGoals();
     } catch (error) {
       //
       console.log(error);
@@ -93,8 +87,14 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const onSaveAndContinue = async () => {
     try {
-      const isSaveDraft = false;
-      await saveGoal(isSaveDraft);
+      const goals = await saveGoals();
+      setCreatedGoals(goals);
+
+      // clear our form fields
+      setGoalName(goalDefaults.goalName);
+      setEndDate(goalDefaults.endDate);
+      setStatus(goalDefaults.status);
+      setSelectedGrants(goalDefaults.grants);
     } catch (error) {
       //
       console.log(error);
@@ -127,9 +127,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
         <form onSubmit={onSubmit}>
           <Form
-            saveGoal={saveGoal}
             onSaveDraft={onSaveDraft}
-            setId={setId}
             possibleGrants={possibleGrants}
             selectedGrants={selectedGrants}
             setSelectedGrants={setSelectedGrants}
