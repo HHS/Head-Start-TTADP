@@ -1,4 +1,4 @@
-import { updateGoalStatusById, createOrUpdateGoal } from '../../services/goals';
+import { updateGoalStatusById, createOrUpdateGoals } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
@@ -9,39 +9,30 @@ const logContext = {
   namespace,
 };
 
-export async function createGoal(req, res) {
+export async function createGoals(req, res) {
   try {
-    const {
-      id,
-      grants,
-      name,
-      status,
-      endDate,
-      regionId,
-      recipientId,
-    } = req.body;
-
-    const goalData = {
-      id,
-      grants,
-      name,
-      status,
-      endDate,
-      regionId,
-      recipientId,
-    };
+    const { goals } = req.body;
 
     // check permissions
     const user = await userById(req.session.userId);
-    const policy = new Goal(user, goalData);
 
-    if (!policy.canCreate()) {
+    let canCreate = true;
+
+    goals.forEach((goal) => {
+      if (canCreate && !new Goal(user, goal).canCreate()) {
+        canCreate = false;
+      }
+    });
+
+    console.log('we can create');
+
+    if (!canCreate) {
       res.sendStatus(401);
     }
 
-    const newGoal = await createOrUpdateGoal(goalData);
+    const newGoals = await createOrUpdateGoals(goals);
 
-    res.json(newGoal);
+    res.json(newGoals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

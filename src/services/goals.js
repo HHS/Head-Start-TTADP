@@ -9,7 +9,7 @@ import {
 } from '../models';
 
 /**
- * Goal data is an object with the following keys
+ * Goals is an array of an object with the following keys
     id,
     grants,
     name,
@@ -26,16 +26,16 @@ import {
     isFromSmartsheetTtaPlan
     endDate,
 
- * @param {Object} goalData
+ * @param {Object} goals
  * @returns created or updated goal with grant goals
  */
-export async function createOrUpdateGoal(goalData) {
-  const {
-    goalId, grants, recipientId, regionId,
-    ...fields
-  } = goalData;
+export async function createOrUpdateGoals(goals) {
+  return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
+    const {
+      goalId, grants, recipientId, regionId,
+      ...fields
+    } = goalData;
 
-  return sequelize.transaction(async (transaction) => {
     let options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
@@ -49,23 +49,20 @@ export async function createOrUpdateGoal(goalData) {
       };
     }
 
-    const [g] = await Goal.upsert(options, { transaction });
+    const [goal] = await Goal.upsert(options, { transaction });
 
     const grantGoals = await Promise.all(
       grants.map((grant) => GrantGoal.findOrCreate({
         where: {
-          goalId: g.id,
+          goalId: goal.id,
           recipientId,
           grantId: grant,
         },
         transaction,
       })),
     );
-
-    const goal = JSON.parse(JSON.stringify(g));
-
-    return { ...goal, grants: grantGoals };
-  });
+    return { ...goal.dataValues, grants: grantGoals };
+  })));
 }
 
 export async function goalsForGrants(grantIds) {

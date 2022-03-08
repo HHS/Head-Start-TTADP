@@ -41,14 +41,16 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [status, setStatus] = useState(goalDefaults.status);
 
   // save goal to backend
-  const saveGoals = async () => createOrUpdateGoals([{
-    grants: selectedGrants.map((g) => g.value),
-    name: goalName,
-    status,
-    endDate,
-    regionId: parseInt(regionId, DECIMAL_BASE),
-    recipientId: recipient.id,
-  }, ...createdGoals]);
+  const saveGoals = async () => createOrUpdateGoals({
+    goals: [{
+      grants: selectedGrants.map((g) => g.value),
+      name: goalName,
+      status,
+      endDate,
+      regionId: parseInt(regionId, DECIMAL_BASE),
+      recipientId: recipient.id,
+    }, ...createdGoals],
+  });
 
   /**
    * button click handlers
