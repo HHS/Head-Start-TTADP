@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { screen } from '@testing-library/react';
+import { screen, act } from '@testing-library/react';
 import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -40,7 +40,6 @@ describe('Local storage fallbacks', () => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
-
     const savedToStorage = moment().toISOString();
     storageAvailable.mockReturnValue(true);
 
@@ -98,35 +97,29 @@ describe('Local storage fallbacks', () => {
     // first get works
     fetchMock.get('/api/activity-reports/1', d);
 
-    // first save fails
-    fetchMock.put('/api/activity-reports/1', () => { throw new Error('unable to save report'); });
-
     renderActivityReport('1', 'activity-summary', true);
 
     // change some data
     const other = await screen.findByRole('radio', { name: /other entity/i });
-    userEvent.click(other);
+    act(() => userEvent.click(other));
 
     let virt = await screen.findByRole('radio', { name: /virtual/i });
     expect(virt.checked).toBe(false);
 
-    userEvent.click(virt);
+    act(() => userEvent.click(virt));
 
     expect(virt.checked).toBe(true);
+
+    // first save fails
+    fetchMock.putOnce('/api/activity-reports/1', () => { throw new Error('unable to save report'); }, { repeat: 1 });
 
     const button = await screen.findByRole('button', { name: 'Save draft' });
     userEvent.click(button);
 
-    fetchMock.reset();
-
-    expect(fetchMock.called()).toBe(false);
-
     // second save works
-    fetchMock.putOnce('/api/activity-reports/1', d, { repeat: 1 });
+    fetchMock.putOnce('/api/activity-reports/1', d, { repeat: 1, overwriteRoutes: true });
 
-    userEvent.click(button);
-
-    expect(fetchMock.called()).toBe(true);
+    act(() => userEvent.click(button));
 
     virt = await screen.findByRole('radio', { name: /virtual/i });
     expect(virt.checked).toBe(true);
