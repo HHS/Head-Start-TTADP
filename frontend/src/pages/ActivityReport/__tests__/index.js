@@ -78,8 +78,15 @@ describe('ActivityReport', () => {
       // updatedAt from network won't be shown
       const alert = screen.queryByTestId('alert');
 
-      const reggie = new RegExp('this report was last saved to your local backup', 'i');
-      expect(alert.textContent.match(reggie).length).toBe(1);
+      const reggies = [
+        new RegExp('this report was last saved to your local backup', 'i'),
+        new RegExp('this report was last saved to our network', 'i'),
+      ];
+
+      const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+      expect(reggiesMeasured.length).toBe(2);
+      expect(reggiesMeasured[0].length).toBe(1);
+      expect(reggiesMeasured[1]).toBe(null);
     });
   });
 

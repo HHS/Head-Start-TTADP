@@ -10,9 +10,9 @@ import {
 import { mockWindowProperty } from '../../../testHelpers';
 
 import { storageAvailable } from '../../../hooks/helpers';
+import { REPORT_STATUSES } from '../../../Constants';
 
 jest.mock('../../../hooks/helpers');
-storageAvailable.mockReturnValue(true);
 
 describe('Local storage fallbacks', () => {
   const setItem = jest.fn();
@@ -64,18 +64,21 @@ describe('Local storage fallbacks', () => {
     renderActivityReport('1', 'activity-summary', true);
     await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
 
-    fetchMock.put('/api/activity-reports/1', d);
-
-    const button = await screen.findByRole('button', { name: /save draft/i });
-    userEvent.click(button);
-
     const [alert] = await screen.findAllByTestId('alert');
     expect(alert).toBeVisible();
 
     const today = moment().format('MM/DD/YYYY');
-    const reggie = new RegExp(`this report was last saved to your local backup on ${today}`, 'i');
+    const yesterday = moment(updatedAt).format('MM/DD/YYYY');
 
-    expect(alert.textContent.match(reggie).length).toBe(1);
+    const reggies = [
+      new RegExp(`this report was last saved to your local backup on ${today}`, 'i'),
+      new RegExp(`this report was last saved to our network on ${yesterday}`, 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r).length);
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0]).toBe(1);
+    expect(reggiesMeasured[1]).toBe(1);
   });
 
   it('handles failure to download a report from the network with local storage fallback', async () => {
@@ -150,5 +153,25 @@ describe('Local storage fallbacks', () => {
 
     submit = await screen.findByRole('button', { name: /submit for approval/i });
     expect(submit).not.toBeDisabled();
+  });
+
+  it('throws an error if a report can\'t be removed', async () => {
+    const e = new Error('No please');
+    removeItem.mockImplementationOnce(() => {
+      throw e;
+    });
+
+    const mockWarn = jest.spyOn(global.console, 'warn');
+
+    const d = {
+      ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+    };
+
+    fetchMock.get('/api/activity-reports/1', d);
+    renderActivityReport('1', 'review', true);
+
+    await screen.findByRole('heading', { name: /Activity report for Region 1/i, timeout: 4000 });
+    expect(mockWarn).toHaveBeenCalledWith('Local storage may not be available: ', e);
+    mockWarn.mockRestore();
   });
 });

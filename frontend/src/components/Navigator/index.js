@@ -104,8 +104,6 @@ function Navigator({
       await onSave(data);
       updateLastSaveTime(moment());
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log(error);
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
   };
