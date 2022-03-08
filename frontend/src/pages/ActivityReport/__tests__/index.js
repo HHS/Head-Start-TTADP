@@ -8,7 +8,9 @@ import userEvent from '@testing-library/user-event';
 
 import { mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../index';
-import { REPORT_STATUSES } from '../../../Constants';
+import {
+  REPORT_STATUSES,
+} from '../../../Constants';
 
 import {
   history, formData, renderActivityReport, recipients,
