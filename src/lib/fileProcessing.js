@@ -5,7 +5,7 @@ import { auditLogger } from '../logger';
 
 let et = null;
 
-const isToolUp = () => {
+const isToolUp = async () => {
   if (et !== null && et !== undefined) {
     return et.ended === false;
   }
@@ -14,7 +14,7 @@ const isToolUp = () => {
 
 const spinUpTool = async () => {
   try {
-    if (!isToolUp()) {
+    if (!(await isToolUp())) {
       et = new ExifTool();
     }
     auditLogger.info(JSON.stringify({ exiftool: await et.version() }));
@@ -27,7 +27,7 @@ const spinUpTool = async () => {
 
 const shutdownTool = async () => {
   try {
-    if (isToolUp()) {
+    if (await isToolUp()) {
       await et.end();
     }
     et = null;
@@ -44,10 +44,12 @@ const generateMetadataFromFile = async (path) => {
   try {
     if (path === null
       || path === undefined
-      || !(typeof path === 'string' || path instanceof String)) {
-      throw new Error('invalid path');
+      || !(typeof path === 'string' || path instanceof String)
+      || path === '') {
+      metadata.error = 'invalid path';
+      return metadata;
     }
-    if (!isToolUp()) {
+    if (!(await isToolUp())) {
       await spinUpTool();
       needsCleanup = true;
     }
