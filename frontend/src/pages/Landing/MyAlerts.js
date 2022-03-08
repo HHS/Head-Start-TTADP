@@ -34,12 +34,12 @@ export function ReportsRow({ reports, removeAlert, message }) {
       displayId,
       activityRecipients,
       startDate,
-      author,
       collaborators,
       calculatedStatus,
       pendingApprovals,
       approvers,
       createdAt,
+      creatorName,
     } = report;
 
     const justSubmitted = message && message.reportId === id;
@@ -88,11 +88,11 @@ export function ReportsRow({ reports, removeAlert, message }) {
         </td>
         <td>{startDate}</td>
         <td>
-          { author && (
+          { creatorName && (
           <Tooltip
-            displayText={author.fullName}
-            tooltipText={author.fullName}
-            buttonLabel={`click to reveal: ${author.fullName} `}
+            displayText={creatorName}
+            tooltipText={creatorName}
+            buttonLabel={`click to reveal: ${creatorName} `}
             screenReadDisplayText={false}
           />
           )}
@@ -287,7 +287,7 @@ function MyAlerts(props) {
                 <tr>
                   {renderColumnHeader('Report ID', 'regionId')}
                   {renderColumnHeader('Recipient', 'activityRecipients')}
-                  {renderColumnHeader('Start date', 'startDate')}
+                  {renderColumnHeader('Date started', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
                   {renderColumnHeader('Collaborator(s)', 'collaborators')}

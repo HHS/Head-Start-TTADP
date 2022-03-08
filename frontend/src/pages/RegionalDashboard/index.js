@@ -44,7 +44,7 @@ export default function RegionalDashboard() {
         {
           id: uuidv4(),
           topic: 'startDate',
-          condition: 'Is within',
+          condition: 'is within',
           query: defaultDate,
         },
       ];
@@ -54,13 +54,13 @@ export default function RegionalDashboard() {
       {
         id: uuidv4(),
         topic: 'region',
-        condition: 'Is',
+        condition: 'is',
         query: defaultRegion,
       },
       {
         id: uuidv4(),
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: defaultDate,
       },
     ];
