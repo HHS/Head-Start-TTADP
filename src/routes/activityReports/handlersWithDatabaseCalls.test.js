@@ -22,6 +22,7 @@ const draftObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  creatorRole: 'TTAC',
 };
 
 const mockUser = {
