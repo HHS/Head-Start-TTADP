@@ -158,6 +158,7 @@ const Draft = ({
         <Alert>
           There&#39;s an issue with your network connection,
           and you can&#39;t submit your report right now.
+          {' '}
           { localStorageAvailable ? 'Your work is safe.' : ' ' }
           Please try back later!
         </Alert>
