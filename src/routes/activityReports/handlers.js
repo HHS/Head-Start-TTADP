@@ -67,7 +67,7 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Report ID',
         },
         {
-          key: 'author',
+          key: 'creatorName',
           header: 'Creator',
         },
         {
