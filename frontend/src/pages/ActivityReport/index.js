@@ -80,11 +80,11 @@ const defaultValues = {
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
-function cleanupLocalStorage() {
+function cleanupLocalStorage(id) {
   try {
-    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY('new'));
-    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY('new'));
-    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY('new'));
+    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(id));
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('Local storage may not be available: ', e);
@@ -140,11 +140,13 @@ function ActivityReport({
   const [loading, updateLoading] = useState(true);
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
-  const [savedToStorage, updateSavedToStorage] = useState(null);
 
   const [formData, updateFormData] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(activityReportId), null, updateSavedToStorage,
+    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
   );
+
+  const savedToStorage = formData ? formData.savedToStorage : null;
+
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
     LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {},
   );
@@ -184,14 +186,7 @@ function ActivityReport({
       && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
       || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
     ) {
-      try {
-        window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(activityReportId));
-        window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId));
-        window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(activityReportId));
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('Local storage may not be available: ', e);
-      }
+      cleanupLocalStorage(activityReportId);
     }
   }, [activityReportId, formData]);
 
@@ -250,6 +245,8 @@ function ActivityReport({
 
         if (shouldUpdateFromNetwork) {
           updateFormData({ ...formData, ...report });
+        } else {
+          updateFormData({ ...report, ...formData });
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -363,7 +360,7 @@ function ActivityReport({
         );
         reportId.current = savedReport.id;
 
-        cleanupLocalStorage();
+        cleanupLocalStorage('new');
 
         window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
         setConnectionActive(true);

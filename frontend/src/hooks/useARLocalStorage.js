@@ -11,7 +11,7 @@ import { storageAvailable } from './helpers';
  * @param {func} updateSavedToStorage stores the saved to storage time as a side effect
  * @returns
  */
-export default function useARLocalStorage(key, defaultValue, updateSavedToStorage = () => {}) {
+export default function useARLocalStorage(key, defaultValue) {
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
   const [saveReport, setSaveReport] = useState(true);
   const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, saveReport);
@@ -29,13 +29,11 @@ export default function useARLocalStorage(key, defaultValue, updateSavedToStorag
     }
 
     setSaveReport(toSave && localStorageAvailable);
-  }, [key, localStorageAvailable, setStoredValue, storedValue, updateSavedToStorage]);
+  }, [key, localStorageAvailable, setStoredValue, storedValue]);
 
   return [storedValue, (v) => {
     if (saveReport) {
-      const value = { ...v };
-      updateSavedToStorage(new Date().toISOString());
-      setStoredValue(value);
+      setStoredValue({ ...v, savedToStorage: new Date().toISOString() });
     } else {
       setStoredValue(v);
     }
