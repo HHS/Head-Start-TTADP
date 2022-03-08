@@ -339,7 +339,6 @@ function ActivityReport({
 
   const onSave = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
-    setConnectionActive(false);
     try {
       if (reportId.current === 'new') {
         const { startDate, endDate, ...fields } = data;
