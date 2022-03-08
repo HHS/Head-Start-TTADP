@@ -25,7 +25,7 @@ describe('useUrlFilters', () => {
     const filters = JSON.parse(document.querySelector('#filters').textContent);
     expect(filters.length).toBe(1);
     expect(filters[0].topic).toBe('topic');
-    expect(filters[0].condition).toBe('Is');
+    expect(filters[0].condition).toBe('is');
     expect(JSON.stringify(filters[0].query)).toBe(JSON.stringify(['Behavioral / Mental Health / Trauma']));
   });
 });
