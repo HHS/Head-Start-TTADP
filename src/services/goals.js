@@ -61,7 +61,9 @@ export async function createOrUpdateGoals(goals) {
         transaction,
       })),
     );
-    return { ...goal.dataValues, grants: grantGoals };
+
+    // we want to return the data in roughly the form it was provided
+    return { ...goal.dataValues, grants: grantGoals.map(([gg]) => gg), recipientId };
   })));
 }
 

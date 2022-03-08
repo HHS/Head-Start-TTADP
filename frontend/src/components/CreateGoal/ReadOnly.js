@@ -10,7 +10,7 @@ const GoalSummary = ({ goal }) => (
     <h4 className="margin-bottom-1">Recipient grant numbers</h4>
     { goal.grants.map((g) => g.label) }
     <h4 className="margin-bottom-1"> Goal</h4>
-    <p className="margin-top-0">{goal.goalName}</p>
+    <p className="margin-top-0">{goal.name}</p>
     <h4 className="margin-bottom-1">End date</h4>
     <p className="margin-top-0">{goal.endDate}</p>
   </>
@@ -24,7 +24,7 @@ GoalSummary.propTypes = {
         value: PropTypes.number,
       }),
     ),
-    goalName: PropTypes.string,
+    name: PropTypes.string,
     endDate: PropTypes.string,
   }).isRequired,
 };
