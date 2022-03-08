@@ -90,6 +90,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const onSaveAndContinue = async () => {
     try {
       const goals = await saveGoals();
+      console.log(goals);
       setCreatedGoals(goals);
 
       // clear our form fields
