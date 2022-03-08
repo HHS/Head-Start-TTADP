@@ -10,7 +10,7 @@ import { storageAvailable } from './helpers';
  * @param {string} key
  * @param {string} defaultValue
  * @param {boolean} save
- * @returns [string, function] from useState
+ * @returns [getter, setter, boolean: isLocalStorageAvailable]
  */
 export default function useLocalStorage(key, defaultValue, save = true) {
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
@@ -31,5 +31,5 @@ export default function useLocalStorage(key, defaultValue, save = true) {
     }
   }, [key, localStorageAvailable, save, storedValue]);
 
-  return [storedValue, setStoredValue];
+  return [storedValue, setStoredValue, localStorageAvailable];
 }
