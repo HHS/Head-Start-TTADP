@@ -34,6 +34,7 @@ const ReviewSubmit = ({
   const [error, updateError] = useState();
 
   const onFormSubmit = async (data) => {
+    console.log(data);
     try {
       await onSubmit(data);
       updateError();
