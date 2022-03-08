@@ -1,19 +1,19 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { REPORT_STATUSES } from '../Constants';
 import useLocalStorage from './useLocalStorage';
-import { storageAvailable } from './helpers';
 
 /**
  * we're wrapping useLocalStorage so we can conditionally save to local storage and other times
  * use a basic "lose state"
  * @param {string} key
  * @param {string} defaultValue
- * @returns getter and setter a la useState
+ * @returns [getter, setter, boolean: isLocalStorageAvailable]
  */
 export default function useARLocalStorage(key, defaultValue) {
-  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
   const [saveReport, setSaveReport] = useState(true);
-  const [storedValue, setStoredValue] = useLocalStorage(key, defaultValue, saveReport);
+  const [
+    storedValue, setStoredValue, localStorageAvailable,
+  ] = useLocalStorage(key, defaultValue, saveReport);
 
   useEffect(() => {
     let toSave = true;
@@ -42,5 +42,5 @@ export default function useARLocalStorage(key, defaultValue) {
     } else {
       setStoredValue(v);
     }
-  }];
+  }, localStorageAvailable];
 }

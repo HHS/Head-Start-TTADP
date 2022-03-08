@@ -3,7 +3,7 @@
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, {
-  useState, useEffect, useRef, useMemo,
+  useState, useEffect, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -43,7 +43,6 @@ import {
 } from '../../fetchers/activityReports';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext from '../../NetworkContext';
-import { storageAvailable } from '../../hooks/helpers';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -133,7 +132,6 @@ function ActivityReport({
   match, user, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
-  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
 
   const history = useHistory();
   const [error, updateError] = useState();
@@ -141,7 +139,7 @@ function ActivityReport({
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
-  const [formData, updateFormData] = useARLocalStorage(
+  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
     LOCAL_STORAGE_DATA_KEY(activityReportId), null,
   );
 
