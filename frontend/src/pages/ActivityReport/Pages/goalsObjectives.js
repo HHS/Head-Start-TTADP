@@ -59,7 +59,6 @@ const GoalsObjectives = () => {
       )}
       {showGoals
         && (
-        <>
           <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
             <div id="goals-and-objectives" />
             <GoalPicker
@@ -71,7 +70,6 @@ const GoalsObjectives = () => {
             </Alert>
             )}
           </Fieldset>
-        </>
         )}
     </>
   );
