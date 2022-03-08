@@ -132,38 +132,39 @@ const latestFile = async (transaction) => {
 };
 
 const exportFileMetadata = async () => {
-  await sequelize.transaction(async (transaction) => {
-    let mostRecent;
-    let files;
-    const processedKeys = [];
-    try {
-      mostRecent = await latestFile(transaction);
-      await spinUpTool();
-      if (mostRecent) {
-        do {
-          files = await File.findAll({
-            order: [['updatedAt', 'DESC']],
-            limit: 1,
-            where: {
-              metadata: null,
-              updatedAt: { [Op.lte]: sequelize.fn('TO_TIMESTAMP', mostRecent, 'YYYY-MM-DD HH24:MI:SS.MS') },
-              key: { [Op.notIn]: processedKeys },
-            },
-            transaction,
-          });
-          await Promise.all(files.map(async (file) => {
-            await processFile(file, transaction);
-            processedKeys.push(file.key);
-          }));
-        } while (files.length > 0);
-      }
-      await shutdownTool();
-      auditLogger.info(JSON.stringify({ Start: mostRecent, End: await latestFile(transaction) }));
-    } catch (err) {
-      auditLogger.error(JSON.stringify(err));
-      throw (err);
+  const transaction = null;
+  // await sequelize.transaction(async (transaction) => {
+  let mostRecent;
+  let files;
+  const processedKeys = [];
+  try {
+    mostRecent = await latestFile(transaction);
+    await spinUpTool();
+    if (mostRecent) {
+      do {
+        files = await File.findAll({
+          order: [['updatedAt', 'DESC']],
+          limit: 1,
+          where: {
+            metadata: null,
+            updatedAt: { [Op.lte]: sequelize.fn('TO_TIMESTAMP', mostRecent, 'YYYY-MM-DD HH24:MI:SS.MS') },
+            key: { [Op.notIn]: processedKeys },
+          },
+          transaction,
+        });
+        await Promise.all(files.map(async (file) => {
+          await processFile(file, transaction);
+          // processedKeys.push(file.key);
+        }));
+      } while (files.length > 0);
     }
-  });
+    await shutdownTool();
+    auditLogger.info(JSON.stringify({ Start: mostRecent, End: await latestFile(transaction) }));
+  } catch (err) {
+    auditLogger.error(JSON.stringify(err));
+    throw (err);
+  }
+  // });
 };
 
 export default exportFileMetadata;

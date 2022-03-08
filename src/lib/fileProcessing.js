@@ -39,7 +39,7 @@ const shutdownTool = async () => {
 };
 
 const generateMetadataFromFile = async (path) => {
-  const metadata = { value: null, error: [] };
+  const metadata = { path, value: null, error: [] };
   let needsCleanup = false;
   try {
     if (path === null
@@ -89,14 +89,14 @@ const generateMetadataFromFile = async (path) => {
     if (Array.isArray(metadata.error) && metadata.error.length === 0) {
       metadata.error = null;
     }
-
-    auditLogger.info(JSON.stringify({ metadata }));
   } catch (err) {
     auditLogger.error(JSON.stringify({ message: 'Failed to generate metadata from file', err }));
     metadata.error = err;
   } finally {
     if (needsCleanup) await shutdownTool();
   }
+
+  auditLogger.info(JSON.stringify({ metadata }));
   return metadata;
 };
 

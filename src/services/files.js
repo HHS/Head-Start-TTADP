@@ -22,9 +22,9 @@ export const updateStatus = async (fileId, fileStatus) => {
 };
 
 export const updateMetadata = async (id, data, transaction) => {
-  let file = null;
-  auditLogger.info(JSON.stringify({ id, data, transaction }));
   try {
+    let file = null;
+    auditLogger.info(JSON.stringify({ id, data, transaction }));
     if (data.error !== null) throw new Error(data.error);
     if (transaction !== undefined) {
       file = await File.update(
