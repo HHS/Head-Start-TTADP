@@ -8,6 +8,7 @@ import {
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
+import NetworkContext from '../../../NetworkContext';
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -70,27 +71,34 @@ describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}, onUpdateError = () => {}) => {
     render(
-      <Navigator
-        editable
-        reportId={1}
-        submitted={false}
-        formData={initialData}
-        updateFormData={updateForm}
-        onReview={() => {}}
-        isApprover={false}
-        defaultValues={{ first: '', second: '' }}
-        pages={pages}
-        currentPage={currentPage}
-        onFormSubmit={onSubmit}
-        updatePage={updatePage}
-        onSave={onSave}
-        updateErrorMessage={onUpdateError}
-        onResetToDraft={() => {}}
-        updateLastSaveTime={() => {}}
-        showValidationErrors={false}
-        updateShowValidationErrors={() => {}}
-        isPendingApprover={false}
-      />,
+      <NetworkContext.Provider value={{
+        connectionActive: true,
+        localStorageAvailable: true,
+      }}
+      >
+        <Navigator
+          editable
+          reportId={1}
+          submitted={false}
+          formData={initialData}
+          updateFormData={updateForm}
+          onReview={() => {}}
+          isApprover={false}
+          defaultValues={{ first: '', second: '' }}
+          pages={pages}
+          currentPage={currentPage}
+          onFormSubmit={onSubmit}
+          updatePage={updatePage}
+          onSave={onSave}
+          updateErrorMessage={onUpdateError}
+          onResetToDraft={() => {}}
+          updateLastSaveTime={() => {}}
+          showValidationErrors={false}
+          updateShowValidationErrors={() => {}}
+          isPendingApprover={false}
+        />
+
+      </NetworkContext.Provider>,
     );
   };
 

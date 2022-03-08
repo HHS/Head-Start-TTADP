@@ -11,9 +11,12 @@ import {
 } from '../../constants';
 
 import { REPORT_STATUSES } from '../../../../Constants';
+import NetworkContext from '../../../../NetworkContext';
 
 describe('SideNav', () => {
-  const renderNav = (state, onNavigation = () => {}, current = false, errorMessage = null) => {
+  const renderNav = (
+    state, onNavigation = () => {}, current = false, errorMessage = null, connectionActive = true,
+  ) => {
     const pages = [
       {
         label: 'test',
@@ -30,12 +33,14 @@ describe('SideNav', () => {
     ];
 
     render(
-      <SideNav
-        pages={pages}
-        skipTo="skip"
-        skipToMessage="message"
-        errorMessage={errorMessage}
-      />,
+      <NetworkContext.Provider value={{ connectionActive }}>
+        <SideNav
+          pages={pages}
+          skipTo="skip"
+          skipToMessage="message"
+          errorMessage={errorMessage}
+        />
+      </NetworkContext.Provider>,
     );
   };
 
