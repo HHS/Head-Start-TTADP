@@ -397,6 +397,8 @@ function ActivityReport({
       },
     );
     updateEditable(false);
+
+    cleanupLocalStorage(activityReportId);
   };
 
   const onReview = async (data) => {
