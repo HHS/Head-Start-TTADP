@@ -166,7 +166,9 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
 
-  const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
+  const showLastUpdatedTime = (
+    location.state && location.state.showLastUpdatedTime && connectionActive
+  ) || false;
 
   useEffect(() => {
     // Clear history state once mounted and activityReportId changes. This prevents someone from
@@ -337,6 +339,7 @@ function ActivityReport({
 
   const onSave = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
+    setConnectionActive(false);
     try {
       if (reportId.current === 'new') {
         const { startDate, endDate, ...fields } = data;
@@ -358,11 +361,17 @@ function ActivityReport({
             approverUserIds: approverIds,
           },
         );
+
+        if (!savedReport) {
+          throw new Error('Report not found');
+        }
+
         reportId.current = savedReport.id;
 
         cleanupLocalStorage('new');
 
         window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
       } else {

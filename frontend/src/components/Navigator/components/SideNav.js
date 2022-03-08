@@ -3,7 +3,7 @@
   the nav items passed in as props. This component has lots of custom styles
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
@@ -17,6 +17,7 @@ import { REPORT_STATUSES } from '../../../Constants';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../constants';
+import NetworkContext from '../../../NetworkContext';
 
 const tagClass = (state) => {
   switch (state) {
@@ -71,6 +72,8 @@ function SideNav({
   const onAnimationEnd = () => updateFade(false);
   const DATE_DISPLAY_SAVED_FORMAT = 'MM/DD/YYYY [at] h:mm a';
 
+  const { connectionActive } = useContext(NetworkContext);
+
   return (
     <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
       <Container padding={0}>
@@ -96,13 +99,14 @@ function SideNav({
             noIcon
             className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}
           >
-            { lastSaveTime && (
-            <span className="margin-bottom-2 display-block">
-              This report was last saved to our network on
-              {' '}
-              {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-            </span>
-            )}
+            {(lastSaveTime && connectionActive)
+              ? (
+                <span className="margin-bottom-2 display-block">
+                  This report was last saved to our network on
+                  {' '}
+                  {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                </span>
+              ) : null}
             { savedToStorage && (
             <span className="margin-bottom-2 display-block">
               This report was last saved to your local backup on

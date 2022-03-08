@@ -8,8 +8,7 @@ import { storageAvailable } from './helpers';
  * use a basic "lose state"
  * @param {string} key
  * @param {string} defaultValue
- * @param {func} updateSavedToStorage stores the saved to storage time as a side effect
- * @returns
+ * @returns getter and setter a la useState
  */
 export default function useARLocalStorage(key, defaultValue) {
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
@@ -32,8 +31,14 @@ export default function useARLocalStorage(key, defaultValue) {
   }, [key, localStorageAvailable, setStoredValue, storedValue]);
 
   return [storedValue, (v) => {
+    const savedToStorage = new Date().toISOString();
+    const createdInLocalStorage = v.createdInLocalStorage || savedToStorage;
     if (saveReport) {
-      setStoredValue({ ...v, savedToStorage: new Date().toISOString() });
+      setStoredValue({
+        ...v,
+        savedToStorage,
+        createdInLocalStorage,
+      });
     } else {
       setStoredValue(v);
     }
