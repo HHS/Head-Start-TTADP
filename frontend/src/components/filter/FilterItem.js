@@ -151,11 +151,11 @@ export default function FilterItem({
         id={`topic-${id}`}
         name="topic"
         aria-label="topic"
-        value={topic}
+        value={topic || ''}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" disabled selected hidden>- Select -</option>
+        <option value="" disabled hidden>- Select -</option>
         {topicOptions}
       </select>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -166,13 +166,13 @@ export default function FilterItem({
         id={`condition-${id}`}
         name="condition"
         aria-label="condition"
-        value={condition}
+        value={condition || ''}
         disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
 
       >
-        <option value="" disabled selected hidden>- Select -</option>
+        <option value="" disabled hidden>- Select -</option>
         {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
       { selectedTopic && condition

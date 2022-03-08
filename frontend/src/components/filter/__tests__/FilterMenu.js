@@ -16,6 +16,7 @@ import {
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  otherEntitiesFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -84,7 +85,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: '2021/01/01-2021/11/05',
       },
     ];
@@ -98,9 +99,9 @@ describe('Filter Menu', () => {
     userEvent.click(button);
 
     const condition = screen.getByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is after');
+    userEvent.selectOptions(condition, 'is on or after');
 
-    const del = screen.getByRole('button', { name: /remove Date range Is after/i });
+    const del = screen.getByRole('button', { name: /remove date started is on or after/i });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
@@ -134,7 +135,7 @@ describe('Filter Menu', () => {
       {
         id: 'filter1234',
         topic: 'startDate',
-        condition: 'Is after',
+        condition: 'is on or after',
         query: '2021/10/31',
       },
     ];
@@ -159,7 +160,7 @@ describe('Filter Menu', () => {
     expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Is before');
+    userEvent.selectOptions(condition, 'is on or before');
 
     date = await screen.findByRole('textbox', { name: /date/i });
     userEvent.type(date, '10/31/2020');
@@ -216,7 +217,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'programSpecialist',
         query: '',
-        condition: 'Contains',
+        condition: 'is',
       },
       {
         id: 'filter-4',
@@ -224,7 +225,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'grantNumber',
         query: '',
-        condition: 'Contains',
+        condition: 'is',
       },
       {
         id: 'filter-5',
@@ -248,7 +249,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'recipient',
         query: '',
-        condition: 'Contains',
+        condition: 'is',
       },
       {
         id: 'filter-8',
@@ -272,7 +273,7 @@ describe('Filter Menu', () => {
         conditions: [],
         topic: 'stateCode',
         query: [],
-        condition: 'Contains',
+        condition: 'is',
       },
     ];
 
@@ -338,6 +339,7 @@ describe('Filter Menu', () => {
       stateCodeFilter,
       targetPopulationsFilter,
       topicsFilter,
+      otherEntitiesFilter,
     ];
 
     const filters = [];
@@ -384,6 +386,39 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'Is');
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Program specialist');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Program types');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Recipient name');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'State');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Target populations');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Other entities');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
 
     // it renders an option for each config passed in (plus a dummy option)
     expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
@@ -425,6 +460,19 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'Is');
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Create date');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is within');
+
+    userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
 
     // it renders an option for each config passed in (plus a dummy option)
     expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);

@@ -47,6 +47,7 @@ export async function recipientById(recipientId, grantScopes) {
           'grantSpecialistName',
           'recipientId',
           'annualFundingMonth',
+          'numberWithProgramTypes',
         ],
         model: Grant,
         as: 'grants',

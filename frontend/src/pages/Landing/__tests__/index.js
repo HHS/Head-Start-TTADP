@@ -29,7 +29,7 @@ const defaultDate = formatDateRange({
 const filters = [{
   id: uuidv4(),
   topic: 'startDate',
-  condition: 'Is within',
+  condition: 'is within',
   query: defaultDate,
 }];
 
@@ -165,9 +165,9 @@ describe('Landing Page', () => {
     expect(recipientColumnHeader).toBeVisible();
   });
 
-  test('displays start date column', async () => {
+  test('displays date started column', async () => {
     const startDateColumnHeader = await screen.findByRole('columnheader', {
-      name: /start date/i,
+      name: /date started/i,
     });
     expect(startDateColumnHeader).toBeVisible();
   });
@@ -439,7 +439,7 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Start date', async () => {
-    const columnHeaders = await screen.findAllByRole('button', { name: /start date\. activate to sort ascending/i });
+    const columnHeaders = await screen.findAllByRole('button', { name: /date started\. activate to sort ascending/i });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get(`/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&${dateFilter}`,
@@ -529,7 +529,7 @@ describe('handleApplyFilters', () => {
     userEvent.selectOptions(topic, 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Contains');
+    userEvent.selectOptions(condition, 'contains');
 
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test', { count: 0, rows: [] });
     const query = await screen.findByRole('textbox');
@@ -593,7 +593,7 @@ describe('handleApplyAlertFilters', () => {
     userEvent.selectOptions(topic, 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Contains');
+    userEvent.selectOptions(condition, 'contains');
 
     const query = await screen.findByRole('textbox');
     userEvent.type(query, 'test');
