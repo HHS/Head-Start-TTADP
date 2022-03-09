@@ -269,6 +269,8 @@ function GoalRow({
   return (
     <>
       <CloseSuspendReasonModal
+        id={`close-suspend-reason-modal-${id}`}
+        key={`close-suspend-reason-modal-${id}`}
         goalId={closeSuspendGoalId}
         newStatus={closeSuspendStatus}
         modalRef={closeSuspendModalRef}
