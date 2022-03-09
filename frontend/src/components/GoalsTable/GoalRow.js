@@ -20,6 +20,7 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import { updateGoalStatus } from '../../fetchers/goals';
 import ObjectiveRow from './ObjectiveRow';
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import './GoalRow.css';
 
 function GoalRow({
@@ -38,6 +39,17 @@ function GoalRow({
     reasons,
     objectives,
   } = goal;
+
+  // Close/Suspend Reason Modal.
+  const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
+  const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
+  const closeSuspendModalRef = useRef();
+
+  const showCloseSuspendGoalModal = (status, goalId) => {
+    setCloseSuspendGoalId(goalId);
+    setCloseSuspendStatus(status);
+    closeSuspendModalRef.current.toggleModal(true);
+  };
 
   const expandObjectivesRef = useRef();
 
@@ -155,11 +167,19 @@ function GoalRow({
     },
   ];
 
+  const performGoalStatusUpdate = async (goalId, status) => {
+    const updatedGoal = await updateGoalStatus(goalId, status);
+    updateGoal(updatedGoal);
+  };
+
   const onUpdateGoalStatus = async (status) => {
-    const goalToSave = mapToStoredStatus.find((m) => m.status === status);
-    if (goalToSave) {
-      const updatedGoal = await updateGoalStatus(id, goalToSave.stored);
-      updateGoal(updatedGoal);
+    const changeGoalType = mapToStoredStatus.find((m) => m.status === status);
+    if (changeGoalType) {
+      if (changeGoalType.stored === 'Completed' || changeGoalType.stored === 'Ceased/Suspended') {
+        // Must provide reason for Close or Suspend.
+        showCloseSuspendGoalModal(changeGoalType.stored, id);
+      }
+      performGoalStatusUpdate(id, changeGoalType.stored);
     }
   };
 
@@ -233,6 +253,11 @@ function GoalRow({
 
   return (
     <>
+      <CloseSuspendReasonModal
+        goalId={closeSuspendGoalId}
+        newStatus={closeSuspendStatus}
+        modalRef={closeSuspendModalRef}
+      />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
           {getGoalStatusIcon()}

@@ -17,6 +17,9 @@ const Modal = ({
   showCloseX,
   isLarge,
   children,
+  okEnabled,
+  okButtonCss,
+  cancelButtonCss,
 }) => (
   <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
     <TrussWorksModal
@@ -33,13 +36,13 @@ const Modal = ({
       </div>
       <ModalFooter>
         <ButtonGroup>
-          <ModalToggleButton data-focus="true" type="button" modalRef={modalRef} closer>
+          <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
             {cancelButtonText}
           </ModalToggleButton>
           {
             showOkButton
               ? (
-                <Button type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} secondary onClick={onOk} closer>
+                <Button className={okButtonCss} disabled={!okEnabled} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} secondary onClick={onOk} closer>
                   {okButtonText}
                 </Button>
               )
@@ -66,6 +69,9 @@ Modal.propTypes = {
   showCloseX: PropTypes.bool,
   isLarge: PropTypes.bool,
   children: PropTypes.node.isRequired,
+  okEnabled: PropTypes.bool,
+  okButtonCss: PropTypes.string,
+  cancelButtonCss: PropTypes.string,
 };
 
 Modal.defaultProps = {
@@ -76,7 +82,9 @@ Modal.defaultProps = {
   showOkButton: true,
   isLarge: false,
   cancelButtonText: 'Cancel',
-
+  okEnabled: true,
+  okButtonCss: null,
+  cancelButtonCss: null,
 };
 
 export default Modal;
