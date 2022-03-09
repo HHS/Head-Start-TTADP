@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
@@ -9,10 +9,16 @@ import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 import './CloseSuspendReasonModal.css';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalId, newStatus, onSubmit,
+  modalRef, goalId, newStatus, onSubmit, resetValues,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState(null);
   const [closeSuspendContext, setCloseSuspendContext] = useState(null);
+
+  useEffect(() => {
+    // Every time we show the modal reset the form.
+    setCloseSuspendReason(null);
+    setCloseSuspendContext('');
+  }, [resetValues]);
 
   const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
   const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
@@ -25,6 +31,7 @@ const CloseSuspendReasonModal = ({
       label={r}
       value={r}
       className="smart-hub--report-checkbox"
+      checked={closeSuspendReason === r}
     />
   ));
 
@@ -70,7 +77,12 @@ const CloseSuspendReasonModal = ({
               <Label htmlFor="input-type-text" error>
                 Additional context
               </Label>
-              <Textarea id="close-suspend-reason-context" name="close-suspend-reason-context" type="text" />
+              <Textarea
+                id="close-suspend-reason-context"
+                name="close-suspend-reason-context"
+                type="text"
+                value={closeSuspendContext}
+              />
             </Fieldset>
           </FormGroup>
         </div>
@@ -87,6 +99,7 @@ CloseSuspendReasonModal.propTypes = {
   goalId: PropTypes.number.isRequired,
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  resetValues: PropTypes.bool.isRequired,
 };
 
 export default CloseSuspendReasonModal;
