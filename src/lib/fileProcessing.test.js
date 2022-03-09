@@ -7,7 +7,7 @@ import {
   shutdownTool,
   generateMetadataFromFile,
 } from './fileProcessing';
-import { auditLogger } from '../logger';
+// import { auditLogger } from '../logger';
 
 describe('fileProcessing', () => {
   it('ToolStatus', async () => {
@@ -24,10 +24,7 @@ describe('fileProcessing', () => {
     // expect(await generateMetadataFromFile(
     //   `${__dirname}/../routes/files/testfiles/testfile.pdf`,
     // )).toEqual();
-    auditLogger.info('before shutdown exiftool');
     await shutdownTool();
-    auditLogger.info('after shutdown exiftool');
     expect(await isToolUp()).toBe(false);
-    auditLogger.info('after shutdown exiftool check');
   });
 });
