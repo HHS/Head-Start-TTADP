@@ -19,7 +19,8 @@ const CloseSuspendReasonModal = ({
 
   const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
     <Radio
-      id={`${r}-radio-reason`}
+      id={`${goalId}-${r}-radio-reason`}
+      key={`${goalId}-${r}-radio-reason`}
       name="closeSuspendReason"
       label={r}
       value={r}
@@ -48,7 +49,7 @@ const CloseSuspendReasonModal = ({
         title={`Select a reason for ${reasonDisplayStatus} the goal.`}
         okButtonText="Submit"
         okButtonAriaLabel={`This button will submit your reason for ${reasonDisplayStatus} the goal.`}
-        okEnabled={closeSuspendReason}
+        okEnabled={!!closeSuspendReason}
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
       >

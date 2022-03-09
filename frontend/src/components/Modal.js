@@ -42,7 +42,7 @@ const Modal = ({
           {
             showOkButton
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} disabled={!okEnabled} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk} closer>
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} disabled={!okEnabled} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
                   {okButtonText}
                 </Button>
               )
