@@ -1,3 +1,10 @@
 .smart-hub--goal-close-suspend-reason .usa-form-group fieldset textarea {
     resize: none;
 }
+
+.usa-modal__footer .usa-button-group__item .usa-button--unstyled {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-right: 8px;
+    margin-left: 8px;
+}

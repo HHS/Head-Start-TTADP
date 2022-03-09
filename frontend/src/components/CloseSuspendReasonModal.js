@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
@@ -8,16 +8,9 @@ import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 import './CloseSuspendReasonModal.css';
 
-const CloseSuspendReasonModal = ({ modalRef, goalId, newStatus }) => {
+const CloseSuspendReasonModal = ({ modalRef, goalId, newStatus, onSubmit }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState(null);
   const [closeSuspendContext, setCloseSuspendContext] = useState(null);
-
-  //const isModalOpen = modalRef && modalRef.current ? modalRef.current.isModalOpen : false;
-
-  const submitReason = () => {
-    console.log('In Submit!!!!!!!!!!');
-    // Save Reason...
-  };
 
   const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
   const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
@@ -48,12 +41,14 @@ const CloseSuspendReasonModal = ({ modalRef, goalId, newStatus }) => {
     <>
       <Modal
         modalRef={modalRef}
-        onOk={submitReason}
+        onOk={() => onSubmit(goalId, newStatus, closeSuspendReason, closeSuspendContext)}
         modalId="CloseSuspendReasonModal"
         title={`Select a reason for ${reasonDisplayStatus} the goal.`}
         okButtonText="Submit"
         okButtonAriaLabel={`This button will submit your reason for ${reasonDisplayStatus} the goal.`}
         okEnabled={closeSuspendReason}
+        okButtonCss="usa-button--primary"
+        cancelButtonCss="usa-button--unstyled"
       >
         <div className="smart-hub--goal-close-suspend-reason">
           <FormGroup error={!closeSuspendReason}>
@@ -88,6 +83,7 @@ CloseSuspendReasonModal.propTypes = {
   ]).isRequired,
   goalId: PropTypes.number.isRequired,
   newStatus: PropTypes.string.isRequired,
+  onSubmit: PropTypes.func.isRequired,
 };
 
 export default CloseSuspendReasonModal;
