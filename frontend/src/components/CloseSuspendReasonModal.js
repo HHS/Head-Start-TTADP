@@ -8,7 +8,9 @@ import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 import './CloseSuspendReasonModal.css';
 
-const CloseSuspendReasonModal = ({ modalRef, goalId, newStatus, onSubmit }) => {
+const CloseSuspendReasonModal = ({
+  modalRef, goalId, newStatus, onSubmit,
+}) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState(null);
   const [closeSuspendContext, setCloseSuspendContext] = useState(null);
 
