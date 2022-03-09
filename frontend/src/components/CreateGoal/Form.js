@@ -5,6 +5,7 @@ import Select from 'react-select';
 import {
   DatePicker, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
+import './Form.css';
 
 const selectStyles = {
   container: (provided, state) => {
@@ -54,6 +55,12 @@ const selectStyles = {
   }),
 };
 
+export const FORM_FIELD_INDEXES = {
+  GRANTS: 0,
+  NAME: 1,
+  END_DATE: 2,
+};
+
 export default function Form({
   possibleGrants,
   selectedGrants,
@@ -62,11 +69,15 @@ export default function Form({
   setGoalName,
   endDate,
   setEndDate,
+  errors,
+  validateGoalName,
+  validateEndDate,
+  validateGrantNumbers,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
   return (
-    <>
+    <div className="ttahub-create-goals-form">
       <h2>Recipient TTA goal</h2>
       <h3>Goal summary</h3>
       <FormGroup>
@@ -79,6 +90,7 @@ export default function Form({
         ) : (
           <>
             <span className="usa-hint">Select all grant numbers that apply to the grant</span>
+            {errors[FORM_FIELD_INDEXES.GRANTS]}
             <Select
               placeholder=""
               inputId="recipientGrantNumbers"
@@ -92,6 +104,7 @@ export default function Form({
               closeMenuOnSelect={false}
               value={selectedGrants}
               isMulti
+              onBlur={validateGrantNumbers}
             />
           </>
         )}
@@ -102,23 +115,31 @@ export default function Form({
           What the recipient wants to achieve
           <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
         </span>
-        <Textarea id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
+        {errors[FORM_FIELD_INDEXES.NAME]}
+        <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor="goalEnddate">Goal end date</Label>
+        <Label htmlFor="goalEndDate">Goal end date</Label>
         <span className="usa-hint">When does the recipient expect to meet this goal? (mm/dd/yyyy)</span>
+        {errors[FORM_FIELD_INDEXES.END_DATE]}
         <DatePicker
           id="goalEndDate"
           name="goalEndDate"
           onChange={setEndDate}
           defaultValue={endDate}
+          required
+          onBlur={validateEndDate}
         />
       </FormGroup>
-    </>
+    </div>
   );
 }
 
 Form.propTypes = {
+  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
+  validateGoalName: PropTypes.func.isRequired,
+  validateEndDate: PropTypes.func.isRequired,
+  validateGrantNumbers: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,

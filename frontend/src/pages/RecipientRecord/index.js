@@ -186,6 +186,22 @@ export default function RecipientRecord({ match }) {
             </FeatureFlag>
           )}
         />
+        <Route
+          render={() => (
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              error={error}
+              recipientNameWithRegion={recipientNameWithRegion}
+            >
+              <Profile
+                recipientName={recipientName}
+                regionId={regionId}
+                recipientSummary={recipientData}
+              />
+            </PageWithHeading>
+          )}
+        />
       </Switch>
     </>
   );
@@ -193,9 +209,4 @@ export default function RecipientRecord({ match }) {
 
 RecipientRecord.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
-  user: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
-  }).isRequired,
 };
