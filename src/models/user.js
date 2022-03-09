@@ -1,23 +1,6 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
-
-const roles = [
-  'Regional Program Manager',
-  'COR',
-  'Supervisory Program Specialist',
-  'Program Specialist',
-  'Grants Specialist',
-  'Central Office',
-  'TTAC',
-  'Admin. Assistant',
-  'Early Childhood Manager',
-  'Early Childhood Specialist',
-  'Family Engagement Specialist',
-  'Grantee Specialist Manager',
-  'Grantee Specialist',
-  'Health Specialist',
-  'System Specialist',
-];
+const { USER_ROLES } = require('../constants');
 
 const featureFlags = [
   'recipient_goals_objectives',
@@ -84,7 +67,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
     },
-    role: DataTypes.ARRAY(DataTypes.ENUM(roles)),
+    role: DataTypes.ARRAY(DataTypes.ENUM(USER_ROLES)),
     flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
     fullName: {
       type: DataTypes.VIRTUAL,

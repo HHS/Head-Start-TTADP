@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '../constants';
 import {
   ActivityReport,
   Goal,
@@ -169,6 +170,7 @@ describe('activityReportToCsvRecord', () => {
     regionId: 14,
     reason: 'Test CSV Export',
     submissionStatus: 'approved',
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     numberOfParticipants: 12,
     deliveryMethod: 'virtual',
     duration: 4.5,
@@ -315,9 +317,9 @@ describe('activityReportToCsvRecord', () => {
     });
     const output = await activityReportToCsvRecord(report);
     const {
-      author, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
+      creatorName, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
     } = output;
-    expect(author).toEqual('Arthur, GS');
+    expect(creatorName).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
     expect(collaborators).toEqual('Collaborator 1, GS, HS\nCollaborator 2');
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');

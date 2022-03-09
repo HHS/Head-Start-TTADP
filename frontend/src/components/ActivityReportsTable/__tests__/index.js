@@ -12,6 +12,7 @@ import AriaLiveContext from '../../../AriaLiveContext';
 import ActivityReportsTable from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../../fetchers/helpers';
+import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -51,14 +52,23 @@ const renderTable = (user, dateTime) => {
 };
 
 describe('Table menus & selections', () => {
+  mockWindowProperty('sessionStorage', {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  });
+
   describe('Table row context menu', () => {
+    const oldGlobalUrl = global.URL;
+
     beforeAll(() => {
       delete global.window.location;
-
       global.window.location = {
         ...oldWindowLocation,
+        toString: jest.fn(() => 'http://window.location.com'),
         assign: jest.fn(),
       };
+      global.URL = jest.fn();
     });
 
     beforeEach(async () => {
@@ -94,6 +104,7 @@ describe('Table menus & selections', () => {
 
     afterAll(() => {
       window.location = oldWindowLocation;
+      global.URL = oldGlobalUrl;
     });
 
     it('can trigger an activity report download', async () => {
@@ -360,7 +371,7 @@ describe('Table sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    await act(async () => fireEvent.click(columnHeader));
+    act(() => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
   });
@@ -373,7 +384,7 @@ describe('Table sorting', () => {
       { count: 2, rows: activityReportsSorted },
     );
 
-    await act(async () => fireEvent.click(columnHeader));
+    act(() => fireEvent.click(columnHeader));
     await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/Behavioral \/ Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1$/i));
   });
 
@@ -461,8 +472,9 @@ describe('Table sorting', () => {
     );
 
     fireEvent.click(pageOne);
-    await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/02\/05\/2021/i));
-    await waitFor(() => expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/02\/04\/2021/i));
+    const cells = await screen.findAllByRole('cell');
+    expect(cells[7]).toHaveTextContent(/02\/05\/2021/i);
+    expect(cells[17]).toHaveTextContent(/02\/04\/2021/i);
   });
 
   it('clicking on the second page updates to, from and total', async () => {
