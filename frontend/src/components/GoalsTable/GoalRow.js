@@ -179,6 +179,10 @@ function GoalRow({
       closeSuspendReason,
       closeSuspendContext,
     );
+    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
+      // Close from a submit.
+      closeSuspendModalRef.current.toggleModal(false);
+    }
     updateGoal(updatedGoal);
   };
 
@@ -188,8 +192,9 @@ function GoalRow({
       if (changeGoalType.stored === 'Completed' || changeGoalType.stored === 'Ceased/Suspended') {
         // Must provide reason for Close or Suspend.
         showCloseSuspendGoalModal(changeGoalType.stored, id);
+      } else {
+        performGoalStatusUpdate(id, changeGoalType.stored);
       }
-      performGoalStatusUpdate(id, changeGoalType.stored);
     }
   };
 
