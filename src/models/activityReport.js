@@ -189,7 +189,6 @@ module.exports = (sequelize, DataTypes) => {
             this.participants,
             this.topics,
             this.ttaType,
-            this.creatorRole,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
