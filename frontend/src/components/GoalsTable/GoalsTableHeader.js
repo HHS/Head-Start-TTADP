@@ -89,7 +89,7 @@ GoalsTableHeader.propTypes = {
   offset: PropTypes.number,
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func,
-  regionId: PropTypes.number.isRequired,
+  regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
 };
 

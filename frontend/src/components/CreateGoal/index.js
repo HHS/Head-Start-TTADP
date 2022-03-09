@@ -1,14 +1,15 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useMemo } from 'react';
+import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
-import { Button } from '@trussworks/react-uswds';
+import { Alert, Button } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals } from '../../fetchers/goals';
-import Form from './Form';
+import Form, { FORM_FIELD_INDEXES } from './Form';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 
@@ -31,7 +32,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
-  const [showForm] = useState(true);
+  const [showForm, setShowForm] = useState(true);
 
   // this will store our created goals
   const [createdGoals, setCreatedGoals] = useState([]);
@@ -39,18 +40,52 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
+  const [alert, setAlert] = useState({ message: '', type: 'success' });
 
-  // save goal to backend
-  const saveGoals = async () => createOrUpdateGoals({
-    goals: [{
-      grants: selectedGrants.map((g) => g.value),
-      name: goalName,
-      status,
-      endDate,
-      regionId: parseInt(regionId, DECIMAL_BASE),
-      recipientId: recipient.id,
-    }, ...createdGoals],
-  });
+  const [errors, setErrors] = useState([<></>, <></>, <></>]);
+
+  const validateGoalName = () => {
+    let error = <></>;
+
+    if (!goalName) {
+      error = <span className="usa-error-message">Please enter a goal name</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.NAME, 1, error);
+    setErrors(newErrors);
+
+    return !error.props.children;
+  };
+
+  const validateEndDate = () => {
+    let error = <></>;
+
+    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
+      error = <span className="usa-error-message">Please valid date in the format mm/dd/yyyy</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.END_DATE, 1, error);
+    setErrors(newErrors);
+    return !error.props.children;
+  };
+
+  const validateGrantNumbers = () => {
+    let error = <></>;
+
+    if (!selectedGrants.length) {
+      error = <span className="usa-error-message">Please select at least one recipient grant</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
+    setErrors(newErrors);
+
+    return !error.props.children;
+  };
+
+  const isValid = () => validateGrantNumbers() && validateGoalName() && validateEndDate();
 
   /**
    * button click handlers
@@ -59,48 +94,99 @@ export default function CreateGoal({ recipient, regionId, match }) {
   // on form submit
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (showForm && !isValid()) {
+      return;
+    }
 
     try {
       const newCreatedGoals = createdGoals.map((g) => ({
         ...g,
-        status: 'Not started',
+        status: 'Not Started',
       }));
 
-      setCreatedGoals(newCreatedGoals);
+      const goals = await createOrUpdateGoals(newCreatedGoals);
 
-      const goals = await saveGoals();
+      // on success, redirect back to RTR Goals & Objectives page
+      // once integrated into the AR, this will probably have to be turned into a prop function
+      // that gets called on success
       history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
         ids: goals.map((g) => g.id),
       });
     } catch (err) {
-    //
-      console.log(err);
+      setAlert({
+        message: 'There was an error saving your goal',
+        type: 'error',
+      });
     }
   };
 
   const onSaveDraft = async () => {
+    if (!isValid()) {
+      return;
+    }
+
     try {
-      await saveGoals();
+      const goals = [{
+        grants: selectedGrants,
+        name: goalName,
+        status,
+        endDate,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+      }, ...createdGoals];
+
+      await createOrUpdateGoals(goals);
+      setAlert({
+        message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
+        type: 'success',
+      });
     } catch (error) {
-      //
-      console.log(error);
+      setAlert({
+        message: 'There was an error saving your goal',
+        type: 'error',
+      });
     }
   };
 
-  const onSaveAndContinue = async () => {
-    try {
-      const goals = await saveGoals();
-      console.log(goals);
-      setCreatedGoals(goals);
+  const clearForm = () => {
+    // clear our form fields
+    setGoalName(goalDefaults.goalName);
+    setEndDate(goalDefaults.endDate);
+    setStatus(goalDefaults.status);
+    setSelectedGrants(goalDefaults.grants);
+    setShowForm(false);
+  };
 
-      // clear our form fields
-      setGoalName(goalDefaults.goalName);
-      setEndDate(goalDefaults.endDate);
-      setStatus(goalDefaults.status);
-      setSelectedGrants(goalDefaults.grants);
+  const onSaveAndContinue = async () => {
+    if (!isValid()) {
+      return;
+    }
+
+    try {
+      const goals = [{
+        grants: selectedGrants,
+        name: goalName,
+        status,
+        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+      }, ...createdGoals];
+
+      const newCreatedGoals = await createOrUpdateGoals(goals);
+
+      setCreatedGoals(newCreatedGoals);
+
+      clearForm();
+
+      setAlert({
+        message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
+        type: 'success',
+      });
     } catch (error) {
-      //
-      console.log(error);
+      setAlert({
+        message: 'There was an error saving your goal',
+        type: 'error',
+      });
     }
   };
 
@@ -123,12 +209,21 @@ export default function CreateGoal({ recipient, regionId, match }) {
       </h1>
       <Container className="margin-y-2 margin-left-2 width-tablet padding-top-1" skipTopPadding>
         { createdGoals.length ? (
-          <ReadOnly
-            createdGoals={createdGoals}
-          />
+          <>
+            <ReadOnly
+              createdGoals={createdGoals}
+            />
+            <div className="margin-bottom-4">
+              <Button unstyled onClick={() => setShowForm(true)}>
+                <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
+                Add another goal
+              </Button>
+            </div>
+          </>
         ) : null }
 
         <form onSubmit={onSubmit}>
+          { showForm && (
           <Form
             onSaveDraft={onSaveDraft}
             possibleGrants={possibleGrants}
@@ -140,16 +235,25 @@ export default function CreateGoal({ recipient, regionId, match }) {
             regionId={regionId}
             endDate={endDate}
             setEndDate={setEndDate}
+            errors={errors}
+            validateGoalName={validateGoalName}
+            validateEndDate={validateEndDate}
+            validateGrantNumbers={validateGrantNumbers}
           />
+          )}
 
           <div className="margin-top-4">
-            { showForm ? (
+            { alert.message ? <Alert className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
+            { showForm && !createdGoals.length ? (
               <Link
                 to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
                 className=" usa-button usa-button--outline"
               >
                 Cancel
               </Link>
+            ) : null }
+            { showForm && createdGoals.length ? (
+              <Button type="button" outline onClick={clearForm}>Cancel</Button>
             ) : null }
             <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
             { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }

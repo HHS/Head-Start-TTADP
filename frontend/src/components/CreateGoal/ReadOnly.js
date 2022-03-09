@@ -1,19 +1,28 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import moment from 'moment';
+import './ReadOnly.css';
 
 const GoalSummary = ({ goal }) => (
-  <>
+  <div className="ttahub-goal-form-goal-summary padding-4 margin-y-4">
+    <h2 className="margin-top-0">Recipient TTA goal</h2>
     <h3>Goal summary</h3>
     <h4 className="margin-bottom-1">Recipient grant numbers</h4>
-    { goal.grants.map((g) => g.label) }
-    <h4 className="margin-bottom-1"> Goal</h4>
+    { goal.grants.map((g) => (
+      <>
+        <span key={g.value}>{g.label}</span>
+        <br />
+      </>
+    )) }
+    <h4 className="margin-bottom-1">Goal</h4>
     <p className="margin-top-0">{goal.name}</p>
-    <h4 className="margin-bottom-1">End date</h4>
-    <p className="margin-top-0">{goal.endDate}</p>
-  </>
+    {goal.endDate ? (
+      <>
+        <h4 className="margin-bottom-1">Goal end date</h4>
+        <p className="margin-top-0">{moment(goal.endDate, 'yyyy-mm-dd').format('mm/DD/yyyy')}</p>
+      </>
+    ) : null }
+  </div>
 );
 
 GoalSummary.propTypes = {
@@ -30,20 +39,7 @@ GoalSummary.propTypes = {
 };
 
 export default function ReadOnly({ createdGoals }) {
-  return (
-    <>
-      <div className="bg-base-lightest padding-4 margin-y-4">
-        <h2 className="margin-top-0">Recipient TTA goal</h2>
-        {createdGoals.map((goal) => <GoalSummary goal={goal} />)}
-      </div>
-      <div className="margin-bottom-4">
-        <Button unstyled>
-          <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
-          Add another goal
-        </Button>
-      </div>
-    </>
-  );
+  return createdGoals.map((goal) => <GoalSummary key={goal.id} goal={goal} />);
 }
 
 ReadOnly.propTypes = {

@@ -3,8 +3,12 @@ import { put, post } from './index';
 
 const goalsUrl = join('/', 'api', 'goals');
 
-export async function createOrUpdateGoals(goalData) {
-  const goal = await post(goalsUrl, goalData);
+export async function createOrUpdateGoals(goals) {
+  const data = {
+    goals,
+  };
+
+  const goal = await post(goalsUrl, data);
   return goal.json();
 }
 
