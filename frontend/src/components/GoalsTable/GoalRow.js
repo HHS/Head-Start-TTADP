@@ -43,11 +43,13 @@ function GoalRow({
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
+  const [resetModalValues, setResetModalValues] = useState(false);
   const closeSuspendModalRef = useRef();
 
   const showCloseSuspendGoalModal = (status, goalId) => {
     setCloseSuspendGoalId(goalId);
     setCloseSuspendStatus(status);
+    setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
     closeSuspendModalRef.current.toggleModal(true);
   };
 
@@ -275,6 +277,7 @@ function GoalRow({
         newStatus={closeSuspendStatus}
         modalRef={closeSuspendModalRef}
         onSubmit={performGoalStatusUpdate}
+        resetValues={resetModalValues}
       />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
