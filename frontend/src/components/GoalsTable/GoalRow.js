@@ -167,12 +167,22 @@ function GoalRow({
     },
   ];
 
-  const performGoalStatusUpdate = async (goalId, status) => {
-    const updatedGoal = await updateGoalStatus(goalId, status);
+  const performGoalStatusUpdate = async (
+    goalId,
+    status,
+    closeSuspendReason = null,
+    closeSuspendContext = null,
+  ) => {
+    const updatedGoal = await updateGoalStatus(
+      goalId,
+      status,
+      closeSuspendReason,
+      closeSuspendContext,
+    );
     updateGoal(updatedGoal);
   };
 
-  const onUpdateGoalStatus = async (status) => {
+  const onUpdateGoalStatus = (status) => {
     const changeGoalType = mapToStoredStatus.find((m) => m.status === status);
     if (changeGoalType) {
       if (changeGoalType.stored === 'Completed' || changeGoalType.stored === 'Ceased/Suspended') {
@@ -257,6 +267,7 @@ function GoalRow({
         goalId={closeSuspendGoalId}
         newStatus={closeSuspendStatus}
         modalRef={closeSuspendModalRef}
+        onSubmit={performGoalStatusUpdate}
       />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
