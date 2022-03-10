@@ -27,24 +27,26 @@ export default function GoalsTableHeader({
   hidePagination,
   recipientId,
   regionId,
+  hasActiveGrants,
 }) {
   return (
     <div className="desktop:display-flex">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
-          <Link
-            aria-label="deselect all reports"
-            to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
-            className="display-flex flex-justify usa-button"
-          >
-            <FontAwesomeIcon
-              color="white"
-              icon={faPlus}
-            />
-            <span className="margin-x-1">Add new goal</span>
-          </Link>
-        </span>
+        { hasActiveGrants ? (
+          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
+            <Link
+              to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
+              className="display-flex flex-justify usa-button"
+            >
+              <FontAwesomeIcon
+                color="white"
+                icon={faPlus}
+              />
+              <span className="margin-x-1">Add new goal</span>
+            </Link>
+          </span>
+        ) : null }
       </div>
       {!hidePagination && (
         <span className="smart-hub--table-nav">
@@ -91,6 +93,7 @@ GoalsTableHeader.propTypes = {
   handlePageChange: PropTypes.func,
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
+  hasActiveGrants: PropTypes.bool.isRequired,
 };
 
 GoalsTableHeader.defaultProps = {

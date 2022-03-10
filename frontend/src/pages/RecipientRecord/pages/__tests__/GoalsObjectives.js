@@ -73,6 +73,7 @@ describe('Goals and Objectives', () => {
         number: 'number',
       },
     ],
+    grants: [],
   };
 
   const renderGoalsAndObjectives = () => {

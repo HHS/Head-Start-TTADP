@@ -181,7 +181,7 @@ const noStatusGoalWithOneObjective = [{
   }],
 }];
 
-const renderTable = (user) => {
+const renderTable = (user, hasActiveGrants = true) => {
   render(
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -191,6 +191,7 @@ const renderTable = (user) => {
             recipientId={recipientId}
             regionId={regionId}
             onUpdateFilters={() => { }}
+            hasActiveGrants={hasActiveGrants}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -229,6 +230,8 @@ describe('Goals Table', () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-5 of 6/i)).toBeVisible();
+
+      await screen.findByRole('link', { name: /Add new goal/i });
 
       // In progress.
       expect(screen.getAllByRole('cell')[0].firstChild).toHaveClass('fa-clock');
@@ -403,6 +406,14 @@ describe('Goals Table', () => {
       // We should set focus back to the expand button.
       const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
       expect(expandWithFocus).toHaveFocus();
+    });
+
+    it('hides the add new goal button if recipient has no active grants', async () => {
+      renderTable(defaultUser, false);
+      await screen.findByText('TTA goals and objectives');
+
+      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      expect(link).toBe(null);
     });
   });
 

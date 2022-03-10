@@ -16,6 +16,7 @@ function GoalsTable({
   recipientId,
   regionId,
   filters,
+  hasActiveGrants,
 }) {
   // Goal Data.
   const [goals, setGoals] = useState([]);
@@ -153,6 +154,7 @@ function GoalsTable({
           handlePageChange={handlePageChange}
           recipientId={recipientId}
           regionId={regionId}
+          hasActiveGrants={hasActiveGrants}
         />
         <div className="usa-table-container">
           <Table className="goals-table-content" fullWidth>
@@ -197,6 +199,7 @@ GoalsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
+  hasActiveGrants: PropTypes.bool.isRequired,
 };
 
 export default GoalsTable;
