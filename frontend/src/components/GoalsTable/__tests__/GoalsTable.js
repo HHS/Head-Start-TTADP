@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -597,7 +597,7 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.get(
         baseWithRegionOne,
-        { count: 1, goalRows: [goals[0], goals[1]] },
+        { count: 1, goalRows: [goals[0]] },
       );
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
@@ -628,6 +628,16 @@ describe('Goals Table', () => {
       // Change goal status to 'Closed'.
       const closeGoalButton = await screen.findByText(/close goal/i);
       fireEvent.click(closeGoalButton);
+
+      // Select a reason.
+      const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
+      fireEvent.click(reasonRadio);
+
+      // Submit reason why.
+      const submitButton = await screen.findByText(/submit/i);
+      fireEvent.click(submitButton);
+
+      // Verify new status.
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Closed'));
     });
   });
