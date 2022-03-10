@@ -13,11 +13,13 @@ const CloseSuspendReasonModal = ({
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
+  const [showValidationError, setShowValidationError] = useState(false);
 
   useEffect(() => {
     // Every time we show the modal reset the form.
     setCloseSuspendReason('');
     setCloseSuspendContext('');
+    setShowValidationError(false);
   }, [resetValues]);
 
   const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
@@ -25,6 +27,7 @@ const CloseSuspendReasonModal = ({
   const ReasonChanged = (e) => {
     if (e.target && e.target.value) {
       setCloseSuspendReason(e.target.value);
+      setShowValidationError(false);
     }
   };
   const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
@@ -45,30 +48,35 @@ const CloseSuspendReasonModal = ({
     }
   };
 
+  const validateSubmit = () => {
+    if (!closeSuspendReason) {
+      setShowValidationError(true);
+    } else {
+      onSubmit(goalId, newStatus, closeSuspendReason, closeSuspendContext);
+    }
+  };
+
   return (
     <>
       <Modal
         modalRef={modalRef}
-        onOk={() => onSubmit(goalId, newStatus, closeSuspendReason, closeSuspendContext)}
+        onOk={validateSubmit}
         modalId="CloseSuspendReasonModal"
-        title={`Select a reason for ${reasonDisplayStatus} the goal.`}
+        title={`Why are you ${reasonDisplayStatus} this goal?`}
         okButtonText="Submit"
         okButtonAriaLabel={`This button will submit your reason for ${reasonDisplayStatus} the goal.`}
-        okEnabled={!!closeSuspendReason}
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
+        showTitleRequired
       >
         <div className="smart-hub--goal-close-suspend-reason">
           <Form
             name={`close-suspend-reason-form-goal-${goalId}`}
             key={`close-suspend-reason-form-goal-${goalId}`}
           >
-            <FormGroup error={!closeSuspendReason}>
+            <FormGroup error={showValidationError}>
               <Fieldset>
-                <Label error>
-                  Reason
-                </Label>
-                {!closeSuspendReason ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
+                {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
                 {
                 generateReasonRadioButtons()
               }
@@ -76,7 +84,7 @@ const CloseSuspendReasonModal = ({
             </FormGroup>
             <FormGroup>
               <Fieldset>
-                <Label htmlFor="input-type-text" error>
+                <Label className="font-weight-normal" htmlFor="input-type-text" error>
                   Additional context
                 </Label>
                 <Textarea
