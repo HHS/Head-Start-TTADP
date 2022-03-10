@@ -10,6 +10,8 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
+import UserContext from '../../../../UserContext';
+import { SCOPE_IDS } from '../../../../Constants';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -76,14 +78,27 @@ describe('Goals and Objectives', () => {
     grants: [],
   };
 
+  const user = {
+    name: 'test@test.com',
+    homeRegionId: 1,
+    permissions: [
+      {
+        scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+        regionId: 1,
+      },
+    ],
+  };
+
   const renderGoalsAndObjectives = () => {
     render(
       <Router history={memoryHistory}>
-        <GoalsObjectives
-          recipientId="401"
-          regionId="1"
-          recipient={recipient}
-        />
+        <UserContext.Provider value={{ user }}>
+          <GoalsObjectives
+            recipientId="401"
+            regionId="1"
+            recipient={recipient}
+          />
+        </UserContext.Provider>
       </Router>,
     );
   };

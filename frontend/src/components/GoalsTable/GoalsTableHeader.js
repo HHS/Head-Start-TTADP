@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import { Link } from 'react-router-dom';
+import UserContext from '../../UserContext';
+import { canEditOrCreateGoals } from '../../permissions';
+import { DECIMAL_BASE } from '../../Constants';
 
 export function renderTotal(offset, perPage, activePage, count) {
   const from = offset >= count ? 0 : offset + 1;
@@ -29,11 +32,14 @@ export default function GoalsTableHeader({
   regionId,
   hasActiveGrants,
 }) {
+  const { user } = useContext(UserContext);
+  const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+
   return (
     <div className="desktop:display-flex">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        { hasActiveGrants ? (
+        { hasActiveGrants && hasButtonPermissions ? (
           <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
             <Link
               to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
