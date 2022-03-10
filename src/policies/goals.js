@@ -23,7 +23,10 @@ export default class Goal {
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
-        permission.scopeId === SCOPES.READ_WRITE_REPORTS
+        (
+          permission.scopeId === SCOPES.READ_WRITE_REPORTS
+          || permission.scopeId === SCOPES.APPROVE_REPORTS
+        )
         && permission.regionId === this.goal.regionId),
     );
     return !_.isUndefined(permissions);
