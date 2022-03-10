@@ -212,10 +212,13 @@ export default function CreateGoal({ recipient, regionId, match }) {
               createdGoals={createdGoals}
             />
             <div className="margin-bottom-4">
-              <Button unstyled onClick={() => setShowForm(true)}>
-                <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
-                Add another goal
-              </Button>
+              {!showForm
+                ? (
+                  <Button unstyled onClick={() => setShowForm(true)}>
+                    <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
+                    Add another goal
+                  </Button>
+                ) : null }
             </div>
           </>
         ) : null }
@@ -241,7 +244,6 @@ export default function CreateGoal({ recipient, regionId, match }) {
           )}
 
           <div className="margin-top-4">
-            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
             { showForm && !createdGoals.length ? (
               <Link
                 to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
@@ -256,6 +258,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
             { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
             { !showForm ? <Button type="submit">Submit goal</Button> : null }
+            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
           </div>
         </form>
       </Container>
