@@ -1,7 +1,3 @@
-// Disable eslint rule making this a default export. This file will,
-// I'm sure, accumulate more helper functions
-
-/* eslint-disable import/prefer-default-export */
 export const withText = (text) => (content, node) => {
   const hasText = (n) => n.textContent === text;
   const nodeHasText = hasText(node);
@@ -11,3 +7,18 @@ export const withText = (text) => (content, node) => {
 
   return nodeHasText && childrenDontHaveText;
 };
+
+export function mockWindowProperty(property, value) {
+  const { [property]: originalProperty } = window;
+  delete window[property];
+  beforeAll(() => {
+    Object.defineProperty(window, property, {
+      configurable: true,
+      writable: true,
+      value,
+    });
+  });
+  afterAll(() => {
+    window[property] = originalProperty;
+  });
+}

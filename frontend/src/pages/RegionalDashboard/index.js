@@ -11,9 +11,10 @@ import ReasonList from '../../widgets/ReasonList';
 import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
 import './index.css';
 import { expandFilters, formatDateRange } from '../../utils';
-import useUrlFilters from '../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
+import FilterContext from '../../FilterContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 
 const defaultDate = formatDateRange({
@@ -21,6 +22,7 @@ const defaultDate = formatDateRange({
   forDateTime: true,
 });
 
+const FILTER_KEY = 'regional-dashboard-filters';
 export default function RegionalDashboard() {
   const { user } = useContext(UserContext);
 
@@ -64,7 +66,7 @@ export default function RegionalDashboard() {
     ];
   }, [defaultRegion, hasCentralOffice]);
 
-  const [filters, setFilters] = useUrlFilters(defaultFilters);
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
 
   const onApplyFilters = (newFilters) => {
     setFilters(newFilters);
@@ -130,11 +132,13 @@ export default function RegionalDashboard() {
             />
           </Grid>
           <Grid row>
-            <ActivityReportsTable
-              filters={filtersToApply}
-              showFilter={false}
-              tableCaption="Activity reports"
-            />
+            <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+              <ActivityReportsTable
+                filters={filtersToApply}
+                showFilter={false}
+                tableCaption="Activity reports"
+              />
+            </FilterContext.Provider>
           </Grid>
         </GridContainer>
       </>

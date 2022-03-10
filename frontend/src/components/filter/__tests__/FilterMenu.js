@@ -387,6 +387,34 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Program specialist');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Program types');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Recipient name');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'State');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Target populations');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Other entities');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
@@ -418,6 +446,19 @@ describe('Filter Menu', () => {
     // all the filters work
     userEvent.selectOptions(topics, 'Status');
     let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Create date');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is within');
+
+    userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
     userEvent.selectOptions(conditions, 'is');
 
     userEvent.selectOptions(topics, 'Create date');
