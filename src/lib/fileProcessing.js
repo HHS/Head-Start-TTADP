@@ -5,7 +5,7 @@ import { auditLogger } from '../logger';
 
 let et = null;
 
-const isToolUp = async () => {
+const isToolUp = () => {
   if (et !== null && et !== undefined) {
     return et.ended === false;
   }
@@ -27,7 +27,7 @@ const spinUpTool = async () => {
 
 const shutdownTool = async () => {
   try {
-    if (await isToolUp()) {
+    if (isToolUp()) {
       await et.end();
     }
     et = null;
@@ -40,7 +40,6 @@ const shutdownTool = async () => {
 
 const generateMetadataFromFile = async (path) => {
   const metadata = { path, value: null, error: [] };
-  let needsCleanup = false;
   try {
     if (path === null
       || path === undefined
@@ -49,9 +48,8 @@ const generateMetadataFromFile = async (path) => {
       metadata.error = 'invalid path';
       return metadata;
     }
-    if (!(await isToolUp())) {
+    if (!(isToolUp())) {
       await spinUpTool();
-      needsCleanup = true;
     }
     metadata.value = await et.read(path, ['-json', '-g', '-P']);
 
@@ -95,7 +93,7 @@ const generateMetadataFromFile = async (path) => {
     auditLogger.error(JSON.stringify({ message: 'Failed to generate metadata from file', err }));
     metadata.error = err;
   } finally {
-    if (needsCleanup) await shutdownTool();
+    await shutdownTool();
   }
 
   auditLogger.info(JSON.stringify({ metadata }));
