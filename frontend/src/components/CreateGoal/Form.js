@@ -86,7 +86,7 @@ export default function Form({
           <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
         </Label>
         {possibleGrants.length === 1 ? (
-          <p>{selectedGrants[0].label}</p>
+          <span className="margin-bottom-1">{selectedGrants[0].label}</span>
         ) : (
           <>
             <span className="usa-hint">Select all grant numbers that apply to the grant</span>
@@ -110,10 +110,12 @@ export default function Form({
         )}
       </FormGroup>
       <FormGroup>
-        <Label htmlFor="goalText">Goal</Label>
+        <Label htmlFor="goalText">
+          Goal
+          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
+        </Label>
         <span className="usa-hint">
           What the recipient wants to achieve
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
         </span>
         {errors[FORM_FIELD_INDEXES.NAME]}
         <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
