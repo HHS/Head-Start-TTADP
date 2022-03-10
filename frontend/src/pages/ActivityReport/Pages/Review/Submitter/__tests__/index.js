@@ -8,7 +8,12 @@ import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
 
 import Submitter from '../index';
-import { REPORT_STATUSES } from '../../../../../../Constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../../../../Constants';
+import UserContext from '../../../../../../UserContext';
+
+const defaultUser = {
+  id: 1, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+};
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
@@ -54,26 +59,30 @@ const renderReview = (
   onSave = () => { },
   resetToDraft = () => { },
   approvers = [{ status: calculatedStatus, note: '', User: { fullName: 'name' } }],
+  user = defaultUser,
+  creatorRole = null,
 ) => {
   const formData = {
     approvers,
     calculatedStatus,
     displayId: '1',
     id: 1,
+    creatorRole,
   };
 
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
-
   render(
     <Router history={history}>
-      <RenderSubmitter
-        onFormSubmit={onFormSubmit}
-        formData={formData}
-        onResetToDraft={resetToDraft}
-        onSave={onSave}
-        pages={pages}
-      />
+      <UserContext.Provider value={{ user }}>
+        <RenderSubmitter
+          onFormSubmit={onFormSubmit}
+          formData={formData}
+          onResetToDraft={resetToDraft}
+          onSave={onSave}
+          pages={pages}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 
@@ -211,6 +220,31 @@ describe('Submitter review page', () => {
       const button = await screen.findByRole('button');
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+  });
+  describe('creator role', () => {
+    it('hides with single role', async () => {
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist'] });
+      expect(screen.queryByRole('combobox', { name: /creator role \(required\)/i })).toBeNull();
+    });
+
+    it('displays with multiple roles', async () => {
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR', 'Health Specialist', 'TTAC'] });
+      const roleSelector = await screen.findByRole('combobox', { name: /creator role \(required\)/i });
+      expect(roleSelector.length).toBe(4);
+      userEvent.selectOptions(roleSelector, 'COR');
+      userEvent.selectOptions(roleSelector, 'Health Specialist');
+      userEvent.selectOptions(roleSelector, 'TTAC');
+    });
+
+    it('adds now missing role', async () => {
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist', 'TTAC'] }, 'COR');
+      const roleSelector = await screen.findByRole('combobox', { name: /creator role \(required\)/i });
+      expect(roleSelector.length).toBe(4);
+      expect(await screen.findByText(/cor/i)).toBeVisible();
+      userEvent.selectOptions(roleSelector, 'COR');
+      userEvent.selectOptions(roleSelector, 'Health Specialist');
+      userEvent.selectOptions(roleSelector, 'TTAC');
     });
   });
 });
