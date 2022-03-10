@@ -24,8 +24,6 @@ export async function createGoals(req, res) {
       }
     });
 
-    console.log('we can create');
-
     if (!canCreate) {
       res.sendStatus(401);
     }
