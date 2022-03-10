@@ -5,61 +5,10 @@ import Select from 'react-select';
 import {
   DatePicker, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
+import ObjectiveForm from './ObjectiveForm';
 import './Form.css';
-
-const selectStyles = {
-  container: (provided, state) => {
-    // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-    return {
-      ...provided,
-      outline,
-      padding: 0,
-    };
-  },
-  control: (provided, state) => {
-    const selected = state.getValue();
-    return {
-      ...provided,
-      background: state.isFocused || selected.length ? 'white' : 'transparent',
-      border: 'none',
-      borderRadius: 0,
-      boxShadow: '0',
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
-
-      overflow: state.isFocused ? 'visible' : 'hidden',
-      position: !state.isFocused ? 'absolute' : 'relative',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: state.isFocused && selected.length ? 'auto' : 0,
-    };
-  },
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    display: 'inline',
-    // The arrow dropdown icon is too far to the right, this pushes it back to the left
-    marginRight: '4px',
-  }),
-  indicatorSeparator: () => ({ display: 'none' }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 2,
-  }),
-  multiValue: (provided) => ({ ...provided }),
-  multiValueLabel: (provided) => ({ ...provided }),
-  valueContainer: (provided) => ({
-    ...provided,
-    maxHeight: '100%',
-  }),
-};
-
-export const FORM_FIELD_INDEXES = {
-  GRANTS: 0,
-  NAME: 1,
-  END_DATE: 2,
-};
+import PlusButton from './PlusButton';
+import { OBJECTIVE_DEFAULTS, FORM_FIELD_INDEXES, SELECT_STYLES } from './constants';
 
 export default function Form({
   possibleGrants,
@@ -73,8 +22,17 @@ export default function Form({
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
+  objectives,
+  setObjectives,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
+  const onAddNewObjectiveClick = () => {
+    // copy existing state, add a blank
+    const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
+
+    // save
+    setObjectives(obj);
+  };
 
   return (
     <div className="ttahub-create-goals-form">
@@ -96,7 +54,7 @@ export default function Form({
               inputId="recipientGrantNumbers"
               onChange={setSelectedGrants}
               options={possibleGrants}
-              styles={selectStyles}
+              styles={SELECT_STYLES}
               components={{
                 DropdownIndicator: null,
               }}
@@ -133,6 +91,10 @@ export default function Form({
           onBlur={validateEndDate}
         />
       </FormGroup>
+      { objectives.map((objective) => <ObjectiveForm key={objective.id} />)}
+      <div className="margin-top-2">
+        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+      </div>
     </div>
   );
 }
@@ -169,6 +131,13 @@ Form.propTypes = {
   }).isRequired,
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
+  setObjectives: PropTypes.func.isRequired,
+  objectives: PropTypes.arrayOf(PropTypes.shape({
+    objective: PropTypes.string,
+    topics: PropTypes.arrayOf(PropTypes.string),
+    resources: PropTypes.arrayOf(PropTypes.string),
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  })).isRequired,
 };
 
 Form.defaultProps = {
