@@ -78,7 +78,7 @@ describe('create goal', () => {
 
     expect(fetchMock.called()).toBe(false);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal' });
+    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /goal end date/i });
@@ -146,7 +146,7 @@ describe('create goal', () => {
 
     await screen.findByText('Please enter a goal name');
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal' });
+    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /goal end date/i });
@@ -189,7 +189,7 @@ describe('create goal', () => {
     fetchMock.post('/api/goals', 500);
     expect(fetchMock.called()).toBe(false);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal' });
+    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
     userEvent.type(goalText, 'This is goal text');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -235,7 +235,7 @@ describe('create goal', () => {
     await screen.findByRole('heading', { name: 'Goal summary' });
     expect(fetchMock.called()).toBe(false);
 
-    let goalText = await screen.findByRole('textbox', { name: 'Goal' });
+    let goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
     userEvent.type(goalText, 'This is goal text');
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
@@ -257,7 +257,7 @@ describe('create goal', () => {
 
     await screen.findByRole('button', { name: /cancel/i });
 
-    goalText = await screen.findByRole('textbox', { name: 'Goal' });
+    goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
     userEvent.type(goalText, 'This is more goal text');
 
     save = await screen.findByRole('button', { name: /save and continue/i });
