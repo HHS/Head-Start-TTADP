@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
+import { SCOPE_IDS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -23,7 +24,7 @@ const defaultUser = {
   homeRegionId: 1,
   permissions: [
     {
-      scopeId: 3,
+      scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
       regionId: 1,
     },
   ],
@@ -410,6 +411,24 @@ describe('Goals Table', () => {
 
     it('hides the add new goal button if recipient has no active grants', async () => {
       renderTable(defaultUser, false);
+      await screen.findByText('TTA goals and objectives');
+
+      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      expect(link).toBe(null);
+    });
+
+    it('hides the add new goal button if user doesn\'t have permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable(user);
       await screen.findByText('TTA goals and objectives');
 
       const link = screen.queryByRole('link', { name: /Add new goal/i });
