@@ -83,7 +83,7 @@ export default function Form({
       <FormGroup>
         <Label htmlFor="recipientGrantNumbers">
           Recipient grant numbers
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
+          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
         </Label>
         {possibleGrants.length === 1 ? (
           <span className="margin-bottom-1">{selectedGrants[0].label}</span>
@@ -112,7 +112,7 @@ export default function Form({
       <FormGroup>
         <Label htmlFor="goalText">
           Goal
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>
+          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
         </Label>
         <span className="usa-hint">
           What the recipient wants to achieve
