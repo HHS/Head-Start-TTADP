@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
+  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
@@ -11,22 +11,27 @@ import './CloseSuspendReasonModal.css';
 const CloseSuspendReasonModal = ({
   modalRef, goalId, newStatus, onSubmit, resetValues,
 }) => {
-  const [closeSuspendReason, setCloseSuspendReason] = useState(null);
-  const [closeSuspendContext, setCloseSuspendContext] = useState(null);
+  const [closeSuspendReason, setCloseSuspendReason] = useState('');
+  const [closeSuspendContext, setCloseSuspendContext] = useState('');
 
   useEffect(() => {
     // Every time we show the modal reset the form.
-    setCloseSuspendReason(null);
+    setCloseSuspendReason('');
     setCloseSuspendContext('');
   }, [resetValues]);
 
   const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
   const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
-
+  const ReasonChanged = (e) => {
+    if (e.target && e.target.value) {
+      setCloseSuspendReason(e.target.value);
+    }
+  };
   const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
     <Radio
       id={`${goalId}-${r}-radio-reason`}
       key={`${goalId}-${r}-radio-reason`}
+      onChange={ReasonChanged}
       name="closeSuspendReason"
       label={r}
       value={r}
@@ -34,13 +39,6 @@ const CloseSuspendReasonModal = ({
       checked={closeSuspendReason === r}
     />
   ));
-
-  const ReasonChanged = (e) => {
-    if (e.target && e.target.value) {
-      setCloseSuspendReason(e.target.value);
-    }
-  };
-
   const contextChanged = (e) => {
     if (e.target && e.target.value) {
       setCloseSuspendContext(e.target.value);
@@ -61,30 +59,36 @@ const CloseSuspendReasonModal = ({
         cancelButtonCss="usa-button--unstyled"
       >
         <div className="smart-hub--goal-close-suspend-reason">
-          <FormGroup error={!closeSuspendReason}>
-            <Fieldset onChange={ReasonChanged}>
-              <Label error>
-                Reason
-              </Label>
-              {!closeSuspendReason ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
-              {
+          <Form
+            name={`close-suspend-reason-form-goal-${goalId}`}
+            key={`close-suspend-reason-form-goal-${goalId}`}
+          >
+            <FormGroup error={!closeSuspendReason}>
+              <Fieldset>
+                <Label error>
+                  Reason
+                </Label>
+                {!closeSuspendReason ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
+                {
                 generateReasonRadioButtons()
               }
-            </Fieldset>
-          </FormGroup>
-          <FormGroup>
-            <Fieldset onChange={contextChanged}>
-              <Label htmlFor="input-type-text" error>
-                Additional context
-              </Label>
-              <Textarea
-                id="close-suspend-reason-context"
-                name="close-suspend-reason-context"
-                type="text"
-                value={closeSuspendContext}
-              />
-            </Fieldset>
-          </FormGroup>
+              </Fieldset>
+            </FormGroup>
+            <FormGroup>
+              <Fieldset>
+                <Label htmlFor="input-type-text" error>
+                  Additional context
+                </Label>
+                <Textarea
+                  id="close-suspend-reason-context"
+                  name="close-suspend-reason-context"
+                  type="text"
+                  value={closeSuspendContext}
+                  onChange={contextChanged}
+                />
+              </Fieldset>
+            </FormGroup>
+          </Form>
         </div>
       </Modal>
     </>

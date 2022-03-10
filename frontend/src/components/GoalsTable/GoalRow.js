@@ -182,7 +182,7 @@ function GoalRow({
       closeSuspendContext,
     );
     if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
-      // Close from a submit.
+      // Close from a close suspend reason submit.
       closeSuspendModalRef.current.toggleModal(false);
     }
     updateGoal(updatedGoal);
