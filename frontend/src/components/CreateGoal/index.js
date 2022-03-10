@@ -2,16 +2,18 @@
 import React, { useState, useMemo } from 'react';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals } from '../../fetchers/goals';
-import Form, { FORM_FIELD_INDEXES } from './Form';
+import Form from './Form';
+import { FORM_FIELD_INDEXES } from './constants';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
+import PlusButton from './PlusButton';
 
 export default function CreateGoal({ recipient, regionId, match }) {
   const { goalId } = match.params;
@@ -40,6 +42,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
+  const [objectives, setObjectives] = useState([]);
+
   const [alert, setAlert] = useState({ message: '', type: 'success' });
 
   const [errors, setErrors] = useState([<></>, <></>, <></>]);
@@ -214,10 +218,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             <div className="margin-bottom-4">
               {!showForm
                 ? (
-                  <Button unstyled onClick={() => setShowForm(true)}>
-                    <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
-                    Add another goal
-                  </Button>
+                  <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                 ) : null }
             </div>
           </>
@@ -240,6 +241,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
             validateGoalName={validateGoalName}
             validateEndDate={validateEndDate}
             validateGrantNumbers={validateGrantNumbers}
+            objectives={objectives}
+            setObjectives={setObjectives}
           />
           )}
 
