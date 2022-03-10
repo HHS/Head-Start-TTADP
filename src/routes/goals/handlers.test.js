@@ -51,8 +51,6 @@ describe('createGoals', () => {
       ],
     });
 
-    // createOrUpdateGoals.mockResolvedValueOnce();
-
     await createGoals(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
