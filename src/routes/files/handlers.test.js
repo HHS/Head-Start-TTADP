@@ -16,6 +16,14 @@ import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 
+// tests hang for me if I don't mock the queue
+jest.mock('../../lib/queue', () => () => jest.fn());
+// Tests don't hang for me if I leave this unmocked. Keeping
+// because _sometimes_ tests still seem to hang, so who knows.
+// jest.mock('../../lib/fileProcessing', () => ({
+//   generateMetadataFromFile: jest.fn(),
+// }));
+
 jest.mock('../../policies/activityReport');
 jest.mock('../../services/accessValidation', () => ({
   validateUserAuthForAdmin: jest.fn().mockResolvedValue(false),

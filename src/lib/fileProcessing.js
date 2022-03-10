@@ -14,7 +14,7 @@ const isToolUp = () => {
 
 const spinUpTool = async () => {
   try {
-    if (!(await isToolUp())) {
+    if (!(isToolUp())) {
       et = new ExifTool();
     }
     auditLogger.info(JSON.stringify({ exiftool: await et.version() }));
