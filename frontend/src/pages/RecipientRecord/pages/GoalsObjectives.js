@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import useUrlFilters from '../../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { expandFilters, formatDateRange } from '../../../utils';
 import { getGoalsAndObjectivesFilterConfig } from './constants';
@@ -13,12 +13,17 @@ import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 export default function GoalsObjectives({ recipientId, regionId, recipient }) {
   const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
-  const [filters, setFilters] = useUrlFilters([{
-    id: uuidv4(),
-    topic: 'createDate',
-    condition: 'is within',
-    query: yearToDate,
-  }]);
+  const FILTER_KEY = 'goals-objectives-filters';
+
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
+    [{
+      id: uuidv4(),
+      topic: 'createDate',
+      condition: 'is within',
+      query: yearToDate,
+    }],
+  );
 
   const possibleGrants = recipient.grants;
 
