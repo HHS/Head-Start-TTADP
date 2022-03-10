@@ -63,12 +63,12 @@ describe('Update HSES data', () => {
 
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
-    await Program.destroy({ where: { id: [1, 2, 3] } });
+    await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
-    await Program.destroy({ where: { id: [1, 2, 3] } });
+    await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
@@ -85,6 +85,12 @@ describe('Update grants and recipients', () => {
     const recipient = await Recipient.findOne({ where: { id: 1335 } });
     expect(recipient).toBeDefined();
     expect(recipient.name).toBe('Agency 1, Inc.');
+
+    const recipient7782 = await Recipient.findOne({ where: { id: 7782 } });
+    expect(recipient7782).toBeDefined();
+
+    const recipient5 = await Recipient.findOne({ where: { id: 5 } });
+    expect(recipient5).toBeNull();
 
     const grant1 = await Grant.findOne({ where: { id: 8110 } });
     expect(grant1.oldGrantId).toBe(7842);
@@ -139,7 +145,7 @@ describe('Update grants and recipients', () => {
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
     const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    expect(totalGrants.length).toBe(11);
+    expect(totalGrants.length).toBe(13);
   });
 
   it('includes the grant specialists name and email', async () => {
