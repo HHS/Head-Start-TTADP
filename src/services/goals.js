@@ -32,38 +32,36 @@ import {
 export async function createOrUpdateGoals(goals) {
   return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
     const {
-      goalId, grants, recipientId, regionId,
+      id, grants, recipientId, regionId,
       ...fields
     } = goalData;
 
-    let options = {
+    const options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
-      id: goalId,
+      id,
     };
-
-    if (goalId === 'new') {
-      options = {
-        ...fields,
-        isFromSmartsheetTtaPlan: false,
-      };
-    }
 
     const [goal] = await Goal.upsert(options, { transaction });
 
-    const grantGoals = await Promise.all(
+    await Promise.all(
       grants.map((grant) => GrantGoal.findOrCreate({
         where: {
           goalId: goal.id,
           recipientId,
-          grantId: grant,
+          grantId: grant.value,
         },
         transaction,
       })),
     );
 
     // we want to return the data in roughly the form it was provided
-    return { ...goal.dataValues, grants: grantGoals.map(([gg]) => gg), recipientId };
+    return {
+      ...goal.dataValues,
+      grants,
+      recipientId,
+      regionId,
+    };
   })));
 }
 
