@@ -1,0 +1,148 @@
+/* eslint-disable react/prop-types */
+import '@testing-library/jest-dom';
+import React, { useRef } from 'react';
+import {
+  render, screen,
+} from '@testing-library/react';
+import { ModalToggleButton } from '@trussworks/react-uswds';
+import userEvent from '@testing-library/user-event';
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../../Constants';
+
+describe('Close Suspend Goal Reason', () => {
+  const ModalComponent = (
+    {
+      goalId = 1,
+      newStatus = 'Completed',
+      onSubmit = () => { },
+      resetValues = false,
+    },
+  ) => {
+    const modalRef = useRef();
+
+    return (
+      <div>
+        <div>Test Close Suspend Modal</div>
+        <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
+        <CloseSuspendReasonModal
+          goalId={goalId}
+          newStatus={newStatus}
+          modalRef={modalRef}
+          onSubmit={onSubmit}
+          resetValues={resetValues}
+        />
+      </div>
+    );
+  };
+
+  it('correctly hides and shows', async () => {
+    render(<ModalComponent />);
+
+    // Defaults modal to hidden.
+    let modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-hidden');
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Check modal is visible.
+    modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-visible');
+  });
+
+  it('exits when escape key is pressed', async () => {
+    render(<ModalComponent />);
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Modal is visible.
+    let modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-visible');
+
+    // Press ESC.
+    userEvent.type(modalElement, '{esc}', { skipClick: true });
+
+    // Check Modal is hidden.
+    modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-hidden');
+  });
+
+  it('does not escape when any other key is pressed', async () => {
+    render(<ModalComponent />);
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Modal is visible.
+    let modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-visible');
+
+    // Press ENTER.
+    userEvent.type(modalElement, '{enter}', { skipClick: true });
+
+    // Modal is still open.
+    modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-visible');
+  });
+
+  it('correctly shows validation error', async () => {
+    render(<ModalComponent />);
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Click submit.
+    const submit = await screen.findByText('Submit');
+    userEvent.click(submit);
+
+    // Verify validation error.
+    expect(await screen.findByText('Please select a reason for closing goal.')).toBeVisible();
+  });
+
+  it('correctly shows close radio options', async () => {
+    render(<ModalComponent />);
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Verify title.
+    expect(await screen.findByText('Why are you closing this goal?')).toBeVisible();
+
+    // Verify correct close radio options.
+    expect(await screen.findByText(GOAL_CLOSE_REASONS[0])).toBeVisible();
+    expect(await screen.findByText(GOAL_CLOSE_REASONS[1])).toBeVisible();
+    expect(await screen.findByText(GOAL_CLOSE_REASONS[2])).toBeVisible();
+
+    // Verify Context.
+    expect(await screen.findByText('Additional context')).toBeVisible();
+    expect(await screen.findByRole('textbox', { hidden: true })).toBeVisible();
+  });
+
+  it('correctly shows suspend radio options', async () => {
+    render(<ModalComponent newStatus="Ceased/Suspended" />);
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Verify title.
+    expect(await screen.findByText('Why are you suspending this goal?')).toBeVisible();
+
+    // Verify correct close radio options.
+    expect(await screen.findByText(GOAL_SUSPEND_REASONS[0])).toBeVisible();
+    expect(await screen.findByText(GOAL_SUSPEND_REASONS[1])).toBeVisible();
+    expect(await screen.findByText(GOAL_SUSPEND_REASONS[2])).toBeVisible();
+    expect(await screen.findByText(GOAL_SUSPEND_REASONS[3])).toBeVisible();
+
+    // Verify Context.
+    expect(await screen.findByText('Additional context')).toBeVisible();
+    expect(await screen.findByRole('textbox', { hidden: true })).toBeVisible();
+  });
+});
