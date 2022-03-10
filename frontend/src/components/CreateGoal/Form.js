@@ -165,6 +165,10 @@ Form.propTypes = {
       }),
     ),
   }).isRequired,
-  endDate: PropTypes.string.isRequired,
+  endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
+};
+
+Form.defaultProps = {
+  endDate: null,
 };

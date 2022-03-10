@@ -24,7 +24,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const goalDefaults = useMemo(() => ({
     goalName: '',
-    endDate: '',
+    endDate: null,
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     id: goalId,
@@ -85,7 +85,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
     return !error.props.children;
   };
 
-  const isValid = () => validateGrantNumbers() && validateGoalName() && validateEndDate();
+  const isValidNotStarted = () => validateGrantNumbers() && validateGoalName() && validateEndDate();
+  const isValidDraft = () => validateEndDate() && (validateGrantNumbers() || validateGoalName());
 
   /**
    * button click handlers
@@ -94,9 +95,6 @@ export default function CreateGoal({ recipient, regionId, match }) {
   // on form submit
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (showForm && !isValid()) {
-      return;
-    }
 
     try {
       const newCreatedGoals = createdGoals.map((g) => ({
@@ -121,7 +119,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   };
 
   const onSaveDraft = async () => {
-    if (!isValid()) {
+    if (!isValidDraft()) {
       return;
     }
 
@@ -130,7 +128,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         grants: selectedGrants,
         name: goalName,
         status,
-        endDate,
+        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
       }, ...createdGoals];
@@ -158,7 +156,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   };
 
   const onSaveAndContinue = async () => {
-    if (!isValid()) {
+    if (!isValidNotStarted()) {
       return;
     }
 
@@ -243,7 +241,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
           )}
 
           <div className="margin-top-4">
-            { alert.message ? <Alert className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
+            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
             { showForm && !createdGoals.length ? (
               <Link
                 to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
