@@ -17,9 +17,9 @@ const Modal = ({
   showCloseX,
   isLarge,
   children,
-  okEnabled,
   okButtonCss,
   cancelButtonCss,
+  showTitleRequired,
 }) => (
   <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
     <TrussWorksModal
@@ -30,6 +30,7 @@ const Modal = ({
     >
       <ModalHeading className="font-sans" id={`${modalId}-heading`}>
         {title}
+        {showTitleRequired ? <span className="smart-hub--form-required"> (required)</span> : null }
       </ModalHeading>
       <div>
         {children}
@@ -42,7 +43,7 @@ const Modal = ({
           {
             showOkButton
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} disabled={!okEnabled} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
                   {okButtonText}
                 </Button>
               )
@@ -69,9 +70,9 @@ Modal.propTypes = {
   showCloseX: PropTypes.bool,
   isLarge: PropTypes.bool,
   children: PropTypes.node.isRequired,
-  okEnabled: PropTypes.bool,
   okButtonCss: PropTypes.string,
   cancelButtonCss: PropTypes.string,
+  showTitleRequired: PropTypes.bool,
 };
 
 Modal.defaultProps = {
@@ -82,9 +83,9 @@ Modal.defaultProps = {
   showOkButton: true,
   isLarge: false,
   cancelButtonText: 'Cancel',
-  okEnabled: true,
   okButtonCss: null,
   cancelButtonCss: null,
+  showTitleRequired: false,
 };
 
 export default Modal;
