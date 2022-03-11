@@ -3,8 +3,8 @@ const {
 } = require('sequelize');
 
 /**
-   * GrantGoal table. Junction table between Grants and Goals to support many to many relationship.
-   *
+   * ObjectiveTopic table. Junction table
+   * between Objectives and topics
    * @param {} sequelize
    * @param {*} DataTypes
    */
