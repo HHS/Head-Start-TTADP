@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { Op } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
@@ -65,8 +64,8 @@ describe('Update HSES data', () => {
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
-    await Grant.destroy({ where: { id: { [Op.or]: [{ [Op.gt]: SMALLEST_GRANT_ID }, { [Op.in]: [6, 14] }] } } });
-    await Recipient.destroy({ where: { id: { [Op.or]: [{ [Op.gt]: SMALLEST_GRANT_ID }, { [Op.eq]: 5 }] } } });
+    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
@@ -90,9 +89,6 @@ describe('Update grants and recipients', () => {
     const recipient7782 = await Recipient.findOne({ where: { id: 7782 } });
     expect(recipient7782).toBeDefined();
 
-    const recipient5 = await Recipient.findOne({ where: { id: 5 } });
-    expect(recipient5).toBeNull();
-
     const grant1 = await Grant.findOne({ where: { id: 8110 } });
     expect(grant1.oldGrantId).toBe(7842);
 
@@ -102,6 +98,9 @@ describe('Update grants and recipients', () => {
 
     const grant3 = await Grant.findOne({ where: { id: 10448 } });
     expect(grant3.oldGrantId).toBe(null);
+
+    const grantForRecipients = await Grant.findAll({ where: { recipientId: 7782 } });
+    expect(grantForRecipients.length).toEqual(2);
   });
 
   it('includes the grants state', async () => {
