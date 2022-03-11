@@ -9,27 +9,32 @@ import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters, formatDateRange } from '../../../utils';
+import FilterContext from '../../../FilterContext';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
 import './TTAHistory.css';
-import useUrlFilters from '../../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
 });
-
 export default function TTAHistory({
   recipientName, recipientId, regionId,
 }) {
-  const [filters, setFilters] = useUrlFilters([
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    },
-  ]);
+  const filterKey = `ttahistory-filters-${recipientId}`;
+
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+    filterKey,
+    [
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+    ],
+  );
 
   if (!recipientName) {
     return null;
@@ -103,11 +108,13 @@ export default function TTAHistory({
             />
           </Grid>
         </Grid>
-        <ActivityReportsTable
-          filters={filtersToApply}
-          showFilter={false}
-          tableCaption="Activity Reports"
-        />
+        <FilterContext.Provider value={{ filterKey }}>
+          <ActivityReportsTable
+            filters={filtersToApply}
+            showFilter={false}
+            tableCaption="Activity Reports"
+          />
+        </FilterContext.Provider>
       </div>
     </>
   );
