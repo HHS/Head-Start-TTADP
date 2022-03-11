@@ -124,9 +124,10 @@ export const updateGoals = (report) => (oldFormData) => {
   const oldGoals = oldFormData.goals || [];
   const newGoals = report.goals || [];
 
-  const editableGoals = oldGoals.filter((goal) => goal.new).map((goal) => goal.name);
+  const goalsThatUsedToBeNew = oldGoals.filter((goal) => goal.new);
+  const goalsFreshlySavedInDB = goalsThatUsedToBeNew.map((goal) => goal.name);
   const goals = newGoals.map((goal) => {
-    const goalEditable = editableGoals.includes(goal.name);
+    const goalEditable = goalsFreshlySavedInDB.includes(goal.name);
     return {
       ...goal,
       new: goalEditable,
