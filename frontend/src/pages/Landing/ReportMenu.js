@@ -5,8 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 import './ReportMenu.css';
+import Loader from '../../components/Loader';
 
-export const MAXIMUM_EXPORTED_REPORTS = 2000;
+export const MAXIMUM_EXPORTED_REPORTS = 20000;
 
 function ReportMenu({
   onExportAll,
@@ -136,16 +137,20 @@ function ReportMenu({
               </>
             )
               : (
-                <button
-                  ref={downloadAllButtonRef}
-                  role="menuitem"
-                  onClick={onExportAll}
-                  type="button"
-                  disabled={downloadError || isDownloading}
-                  className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
-                >
-                  Export table data
-                </button>
+                <>
+                  <Loader loading={isDownloading} loadingLabel="Downloading reports" text="Downloading reports" />
+                  <button
+                    ref={downloadAllButtonRef}
+                    role="menuitem"
+                    onClick={onExportAll}
+                    type="button"
+                    disabled={downloadError || isDownloading}
+                    className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
+                  >
+                    Export table data
+                  </button>
+
+                </>
               ) }
             {hasSelectedReports && onExportSelected && (
               <button
