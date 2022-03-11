@@ -64,8 +64,8 @@ describe('Update HSES data', () => {
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
-    await Grant.destroy({ where: { id: { [Op.or]: { [Op.gt]: SMALLEST_GRANT_ID }, [Op.eq]: 5 } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.destroy({ where: { id: { [Op.or]: [{ [Op.gt]: SMALLEST_GRANT_ID }, { [Op.in]: [6, 14] }] } } });
+    await Recipient.destroy({ where: { id: { [Op.or]: [{ [Op.gt]: SMALLEST_GRANT_ID }, { [Op.eq]: 5 }] } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
@@ -76,6 +76,7 @@ describe('Update grants and recipients', () => {
     await db.sequelize.close();
   });
   it('should import or update recipients', async () => {
+    await Recipient.destroy({ where: { id: { [Op.or]: [{ [Op.gt]: SMALLEST_GRANT_ID }, { [Op.eq]: 5 }] } } });
     const recipientsBefore = await Recipient.findAll(
       { where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } },
     );
