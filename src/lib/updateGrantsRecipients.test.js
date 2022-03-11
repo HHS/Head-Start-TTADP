@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Op } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
@@ -76,7 +77,6 @@ describe('Update grants and recipients', () => {
     await db.sequelize.close();
   });
   it('should import or update recipients', async () => {
-    await Recipient.destroy({ where: { id: { [Op.or]: [{ [Op.gt]: SMALLEST_GRANT_ID }, { [Op.eq]: 5 }] } } });
     const recipientsBefore = await Recipient.findAll(
       { where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } },
     );
