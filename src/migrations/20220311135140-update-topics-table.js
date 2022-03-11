@@ -39,7 +39,7 @@ const TOPICS = [
 ];
 
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
+  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
       // delete all existing active topics
       await queryInterface.bulkDelete('Topics', {}, { transaction });
@@ -51,13 +51,18 @@ module.exports = {
       }));
 
       // add topics back, and they are now selectable
-      return queryInterface.bulkInsert('Topics', topicsToInsert, {
+      await queryInterface.bulkInsert('Topics', topicsToInsert, {
         transaction,
       });
+
+      return queryInterface.addColumn('Topics', 'deletedAt', {
+        allowNull: true,
+        type: Sequelize.DATE,
+      }, { transaction });
     },
   ),
 
-  down: async () => {
-  // out of luck here I think
-  },
+  down: async (queryInterface) => queryInterface.sequelize.transaction(
+    async (transaction) => queryInterface.removeColumn('Topics', 'deletedAt', { transaction }),
+  ),
 };
