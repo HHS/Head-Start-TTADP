@@ -64,7 +64,7 @@ describe('Update HSES data', () => {
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.destroy({ where: { id: { [Op.or]: { [Op.gt]: SMALLEST_GRANT_ID }, [Op.eq]: 5 } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
