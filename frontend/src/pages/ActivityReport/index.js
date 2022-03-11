@@ -315,6 +315,10 @@ function ActivityReport({
         },
       );
 
+      /*
+        Since the new state of formData depends on the previous state we need to update
+        inside a function. See https://reactjs.org/docs/hooks-reference.html#functional-updates
+      */
       updateFormData(updateGoals(savedReport));
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
