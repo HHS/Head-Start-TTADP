@@ -39,40 +39,13 @@ const TOPICS = [
 ];
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
+  up: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-    // create an "isSelectable" column, denoting that this topic
-    // is in active use
-      await queryInterface.addColumn(
-        'Topics',
-        'isSelectable',
-        {
-          type: Sequelize.DataTypes.BOOLEAN,
-        },
-        { transaction },
-      );
-
-      // set all inactive topics to not selectable
-      await queryInterface.bulkUpdate('Topics', {
-        isSelectable: false,
-      }, {
-        name: {
-          [Sequelize.Op.notIn]: TOPICS,
-        },
-      }, { transaction });
-
       // delete all existing active topics
-      // (couldn't figure out how to do a targeted bulk update with
-      // the sequelize query interface object)
-      await queryInterface.bulkDelete('Topics', {
-        name: {
-          [Sequelize.Op.in]: TOPICS,
-        },
-      }, { transaction });
+      await queryInterface.bulkDelete('Topics', {}, { transaction });
 
       const topicsToInsert = TOPICS.map((topic) => ({
         name: topic,
-        isSelectable: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
@@ -84,7 +57,7 @@ module.exports = {
     },
   ),
 
-  down: async (queryInterface) => {
-    await queryInterface.removeColumn('Topics', 'isSelectable');
+  down: async () => {
+  // out of luck here I think
   },
 };
