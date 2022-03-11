@@ -25,10 +25,8 @@ const CloseSuspendReasonModal = ({
   const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
   const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
   const ReasonChanged = (e) => {
-    if (e.target && e.target.value) {
-      setCloseSuspendReason(e.target.value);
-      setShowValidationError(false);
-    }
+    setCloseSuspendReason(e.target.value);
+    setShowValidationError(false);
   };
   const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
     <Radio
@@ -43,9 +41,7 @@ const CloseSuspendReasonModal = ({
     />
   ));
   const contextChanged = (e) => {
-    if (e.target && e.target.value) {
-      setCloseSuspendContext(e.target.value);
-    }
+    setCloseSuspendContext(e.target.value);
   };
 
   const validateSubmit = () => {
