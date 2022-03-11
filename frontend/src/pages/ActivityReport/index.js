@@ -181,11 +181,15 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
-            creatorRole: user && user.role && user.role.length === 1 ? user.role[0] : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
           };
+        }
+
+        // If creator role is null and user has single role set it.
+        if (!report.creatorRole) {
+          report.creatorRole = user && user.role && user.role.length === 1 ? user.role[0] : null;
         }
 
         const apiCalls = [
@@ -337,6 +341,7 @@ function ActivityReport({
 
   const onFormSubmit = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
+    console.log('On Submit Parent value: ', data.creatorRole);
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       approverUserIds: approverIds,
