@@ -42,8 +42,10 @@ const handleArrayQuery = (q) => {
 
 const handleStringQuery = (q) => q;
 
+const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
+
 const defaultDateValues = {
-  is: '',
+  is: LAST_THIRTY_DAYS,
   'is within': '',
   'is on or after': '',
   'is on or before': '',
