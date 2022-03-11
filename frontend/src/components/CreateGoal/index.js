@@ -30,6 +30,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     id: goalId,
+    objectives: [],
   }), [goalId, possibleGrants]);
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
@@ -42,11 +43,11 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
-  const [objectives, setObjectives] = useState([]);
+  const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
 
-  const [errors, setErrors] = useState([<></>, <></>, <></>]);
+  const [errors, setErrors] = useState([<></>, <></>, <></>, <></>]);
 
   const validateGoalName = () => {
     let error = <></>;
@@ -80,6 +81,23 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
     if (!selectedGrants.length) {
       error = <span className="usa-error-message">Please select at least one recipient grant</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
+    setErrors(newErrors);
+
+    return !error.props.children;
+  };
+
+  const validateObjectives = () => {
+    let error = <></>;
+
+    if (!objectives.length) {
+      error = <span className="usa-error-message">Please select at least one objective</span>;
+
+      // todo - we actually don't need to check that there are objectives, I don't think
+      // instead, we need to validate each objective here
     }
 
     const newErrors = [...errors];
@@ -243,6 +261,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             validateGrantNumbers={validateGrantNumbers}
             objectives={objectives}
             setObjectives={setObjectives}
+            validateObjectives={validateObjectives}
           />
           )}
 
