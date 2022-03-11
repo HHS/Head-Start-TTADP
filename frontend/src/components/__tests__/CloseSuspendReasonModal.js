@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import React, { useRef } from 'react';
 import {
-  render, screen,
+  render, screen, fireEvent,
 } from '@testing-library/react';
 import { ModalToggleButton } from '@trussworks/react-uswds';
 import userEvent from '@testing-library/user-event';
@@ -144,5 +144,20 @@ describe('Close Suspend Goal Reason', () => {
     // Verify Context.
     expect(await screen.findByText('Additional context')).toBeVisible();
     expect(await screen.findByRole('textbox', { hidden: true })).toBeVisible();
+  });
+
+  it('correctly updates context text', async () => {
+    render(<ModalComponent newStatus="Ceased/Suspended" />);
+
+    // Open modal.
+    const button = await screen.findByText('Open');
+    userEvent.click(button);
+
+    // Set sample context.
+    const context = await screen.findByRole('textbox', { hidden: true });
+    fireEvent.change(context, { target: { value: 'This is my sample context.' } });
+
+    // Verify context.
+    expect(context.value).toBe('This is my sample context.');
   });
 });
