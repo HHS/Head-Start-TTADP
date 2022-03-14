@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
+import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   FormGroup, Label, TextInput, Button,
@@ -7,8 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 
-export default function ResourceRepeater() {
-  const [resources, setResources] = useState([{ key: uuidv4(), value: '' }]);
+export default function ResourceRepeater({ resources, setResources }) {
   const resourcesWrapper = useRef();
 
   const addResource = () => {
@@ -61,3 +61,8 @@ export default function ResourceRepeater() {
     </FormGroup>
   );
 }
+
+ResourceRepeater.propTypes = {
+  resources: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setResources: PropTypes.func.isRequired,
+};
