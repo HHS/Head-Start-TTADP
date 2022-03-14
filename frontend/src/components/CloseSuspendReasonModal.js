@@ -53,7 +53,7 @@ const CloseSuspendReasonModal = ({
   };
 
   return (
-    <>
+    <div className="smart-hub--goal-close-suspend-reason">
       <Modal
         modalRef={modalRef}
         onOk={validateSubmit}
@@ -65,37 +65,35 @@ const CloseSuspendReasonModal = ({
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
       >
-        <div className="smart-hub--goal-close-suspend-reason">
-          <Form
-            name={`close-suspend-reason-form-goal-${goalId}`}
-            key={`close-suspend-reason-form-goal-${goalId}`}
-          >
-            <FormGroup error={showValidationError}>
-              <Fieldset>
-                {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
-                {
+        <Form
+          name={`close-suspend-reason-form-goal-${goalId}`}
+          key={`close-suspend-reason-form-goal-${goalId}`}
+        >
+          <FormGroup error={showValidationError}>
+            <Fieldset>
+              {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
+              {
                 generateReasonRadioButtons()
               }
-              </Fieldset>
-            </FormGroup>
-            <FormGroup>
-              <Fieldset>
-                <Label className="font-weight-normal" htmlFor="input-type-text" error>
-                  Additional context
-                </Label>
-                <Textarea
-                  id="close-suspend-reason-context"
-                  name="close-suspend-reason-context"
-                  type="text"
-                  value={closeSuspendContext}
-                  onChange={contextChanged}
-                />
-              </Fieldset>
-            </FormGroup>
-          </Form>
-        </div>
+            </Fieldset>
+          </FormGroup>
+          <FormGroup>
+            <Fieldset>
+              <Label className="font-weight-normal" htmlFor="input-type-text" error>
+                Additional context
+              </Label>
+              <Textarea
+                id="close-suspend-reason-context"
+                name="close-suspend-reason-context"
+                type="text"
+                value={closeSuspendContext}
+                onChange={contextChanged}
+              />
+            </Fieldset>
+          </FormGroup>
+        </Form>
       </Modal>
-    </>
+    </div>
   );
 };
 
