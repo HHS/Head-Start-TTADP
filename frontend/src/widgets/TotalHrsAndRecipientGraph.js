@@ -134,7 +134,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
-            color: '##1b1b1b',
+            color: '#1b1b1b',
           },
         },
       },
@@ -153,7 +153,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
-            color: '##1b1b1b',
+            color: '#1b1b1b',
           },
         },
       },
