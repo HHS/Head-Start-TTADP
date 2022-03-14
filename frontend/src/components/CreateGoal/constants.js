@@ -50,6 +50,7 @@ export const FORM_FIELD_INDEXES = {
   GRANTS: 0,
   NAME: 1,
   END_DATE: 2,
+  OBJECTIVES: 3,
 };
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
@@ -58,3 +59,9 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   resources: [],
   id: `new${l}`,
 });
+
+export const OBJECTIVE_FORM_FIELD_INDEXES = {
+  TEXT: 0,
+  TOPICS: 1,
+  RESOURCES: 2,
+};

@@ -47,8 +47,24 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
 
-  const [errors, setErrors] = useState([<></>, <></>, <></>, <></>]);
+  const [errors, setErrors] = useState([
+    <></>, <></>, <></>, [],
+  ]);
 
+  const setObjectiveError = (objectiveIndex, errorText) => {
+    const newErrors = [...errors];
+    const objectiveErrors = [...newErrors[FORM_FIELD_INDEXES.OBJECTIVES]];
+    objectiveErrors.splice(objectiveIndex, 1, errorText);
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+    setErrors(newErrors);
+  };
+
+  // form field validation functions
+
+  /**
+   *
+   * @returns bool
+   */
   const validateGoalName = () => {
     let error = <></>;
 
@@ -63,6 +79,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
     return !error.props.children;
   };
 
+  /**
+   *
+   * @returns bool
+   */
   const validateEndDate = () => {
     let error = <></>;
 
@@ -90,8 +110,12 @@ export default function CreateGoal({ recipient, regionId, match }) {
     return !error.props.children;
   };
 
+  /**
+   *
+   * @returns bool
+   */
   const validateObjectives = () => {
-    let error = <></>;
+    let error = [];
 
     if (!objectives.length) {
       error = <span className="usa-error-message">Please select at least one objective</span>;
@@ -101,12 +125,14 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, error);
     setErrors(newErrors);
 
     return !error.props.children;
   };
 
+  // quick shorthands to check to see if our fields are good to save to the different states
+  // (different validations for not started and draft)
   const isValidNotStarted = () => validateGrantNumbers() && validateGoalName() && validateEndDate();
   const isValidDraft = () => validateEndDate() && (validateGrantNumbers() || validateGoalName());
 
@@ -262,6 +288,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             objectives={objectives}
             setObjectives={setObjectives}
             validateObjectives={validateObjectives}
+            setObjectiveError={setObjectiveError}
           />
           )}
 

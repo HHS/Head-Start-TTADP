@@ -24,6 +24,7 @@ export default function Form({
   validateGrantNumbers,
   objectives,
   setObjectives,
+  setObjectiveError,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
   const onAddNewObjectiveClick = () => {
@@ -32,7 +33,19 @@ export default function Form({
 
     // save
     setObjectives(obj);
+    setObjectiveError(obj.length - 1, <></>);
   };
+
+  const removeObjective = (index) => {
+    // copy existing state, add a blank
+    const obj = objectives.map((o) => ({ ...o }));
+    obj.splice(index, 1);
+
+    // save
+    setObjectives(obj);
+  };
+
+  const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
   return (
     <div className="ttahub-create-goals-form">
@@ -91,7 +104,15 @@ export default function Form({
           onBlur={validateEndDate}
         />
       </FormGroup>
-      { objectives.map((objective) => <ObjectiveForm key={objective.id} />)}
+      { objectives.map((objective, i) => (
+        <ObjectiveForm
+          index={i}
+          removeObjective={removeObjective}
+          setObjectiveError={setObjectiveError}
+          key={objective.id}
+          error={objectiveErrors[i]}
+        />
+      ))}
       <div className="margin-top-2">
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>
@@ -104,6 +125,7 @@ Form.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
+  setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
