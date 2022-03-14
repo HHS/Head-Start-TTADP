@@ -110,6 +110,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           color: '#fff',
         },
       },
+      font: {
+        color: '#1b1b1b',
+      },
       margin: {
         l: 50,
         t: 0,
@@ -131,7 +134,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
-            color: '#7f7f7f',
+            color: '##1b1b1b',
           },
         },
       },
@@ -150,7 +153,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
-            color: '#7f7f7f',
+            color: '##1b1b1b',
           },
         },
       },
