@@ -11,8 +11,7 @@ import {
    We can update the function and enable the test.
 */
 // eslint-disable-next-line jest/no-disabled-tests
-// describe.skip('Change Goal Status', () => {
-describe('Change Goal Status', () => {
+describe.skip('Change Goal Status', () => {
   let goal;
   beforeAll(async () => {
     // Create Goal.

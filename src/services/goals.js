@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
 import {
   Goal,
@@ -200,7 +201,6 @@ export async function copyGoalsToGrants(goals, grantIds, transaction) {
   });
 }
 
-// eslint-disable-next-line no-unused-vars
 export async function updateGoalStatusById(
   goalId,
   newStatus,
@@ -210,6 +210,7 @@ export async function updateGoalStatusById(
   /* TODO:
     Disable for now until goals are unique grants.
   */
+  /*
   const updatedGoal = await Goal.update(
     {
       status: newStatus,
@@ -219,4 +220,5 @@ export async function updateGoalStatusById(
     { where: { id: goalId }, returning: true },
   );
   return updatedGoal[1][0];
+  */
 }
