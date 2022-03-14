@@ -26,14 +26,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-    },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-    },
   }, {
     sequelize,
     modelName: 'Resource',
