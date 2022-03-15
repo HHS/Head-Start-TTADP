@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Fieldset, FormItem, Dropdown,
+  FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../../utils';
@@ -21,15 +21,24 @@ const NeedsAction = ({
   const { user } = useContext(UserContext);
   const userHasOneRole = user && user.role && user.role.length === 1;
   const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole
-    ? user.role[0] : creatorRole);;
+    ? user.role[0] : '');
+  const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
+
   const submit = async () => {
-    if (!hasIncompletePages) {
+    if (!submitCR) {
+      setShowCreatorRoleError(true);
+    } else if (!hasIncompletePages) {
       await onSubmit({
         approvers: approverStatusList,
         additionalNotes,
         creatorRole: submitCR,
       });
     }
+  };
+
+  const creatorRoleChange = (e) => {
+    setSubmitCR(e.target.value);
+    setShowCreatorRoleError(false);
   };
 
   const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
@@ -42,16 +51,24 @@ const NeedsAction = ({
             ? (
               <>
                 <span className="text-bold">Creator role</span>
-                <Dropdown
-                  id="creatorRole"
-                  name="creatorRole"
-                  onChange={(e) => setSubmitCR(e.target.value)}
-                >
-                  <option name="default" value="" disabled hidden>- Select -</option>
-                  {user.role.map((role) => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </Dropdown>
+                <span className="smart-hub--form-required"> (Required)</span>
+                <FormGroup error={showCreatorRoleError}>
+                  <Fieldset>
+                    {showCreatorRoleError
+                      ? <ErrorMessage>Please select a creator role.</ErrorMessage> : null}
+                    <Dropdown
+                      id="creatorRole"
+                      name="creatorRole"
+                      value={submitCR}
+                      onChange={creatorRoleChange}
+                    >
+                      <option name="default" value="" disabled hidden>- Select -</option>
+                      {user.role.map((role) => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
+                    </Dropdown>
+                  </Fieldset>
+                </FormGroup>
               </>
             )
             : null
