@@ -1,4 +1,17 @@
+import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
+
+export const isValidUrl = (attempted) => {
+  try {
+    const u = new URL(attempted);
+    if (u) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+};
 
 export const SELECT_STYLES = {
   container: (provided, state) => {
@@ -55,6 +68,8 @@ export const FORM_FIELD_INDEXES = {
   OBJECTIVES: 3,
 };
 
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, []];
+
 export const OBJECTIVE_DEFAULTS = (l) => ({
   text: '',
   topics: [],
@@ -66,4 +81,21 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
   TEXT: 0,
   TOPICS: 1,
   RESOURCES: 2,
+};
+
+export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>];
+
+export const validateListOfResources = (resources) => {
+  if (resources.length > 1 || (resources.length === 1 && resources[0])) {
+    const allValidResources = resources.reduce((a, c) => {
+      if (a) {
+        return isValidUrl(c.value);
+      }
+      return a;
+    }, true);
+
+    return allValidResources;
+  }
+
+  return true;
 };
