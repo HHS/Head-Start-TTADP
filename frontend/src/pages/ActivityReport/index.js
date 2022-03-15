@@ -341,7 +341,6 @@ function ActivityReport({
 
   const onFormSubmit = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
-    console.log('On Submit Parent value: ', data.creatorRole);
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       approverUserIds: approverIds,
