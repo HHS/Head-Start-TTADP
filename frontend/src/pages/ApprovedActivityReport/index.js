@@ -204,7 +204,7 @@ export default function ApprovedActivityReport({ match, user }) {
         ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
         const attendees = formatSimpleArray(data.participants);
-        const participantCount = data.numberOfParticipants ? data.numberOfParticipants.toString() : '0';
+        const participantCount = data.numberOfParticipants ? data.numberOfParticipants.toString() : '';
         const reasons = formatSimpleArray(data.reason);
         const startDate = moment(data.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
         const endDate = moment(data.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
