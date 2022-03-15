@@ -182,7 +182,10 @@ Form.propTypes = {
   setObjectives: PropTypes.func.isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
-    topics: PropTypes.arrayOf(PropTypes.string),
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })),
     resources: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string,
       value: PropTypes.string,

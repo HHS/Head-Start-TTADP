@@ -32,7 +32,7 @@ import {
 export async function createOrUpdateGoals(goals) {
   return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
     const {
-      id, grants, recipientId, regionId,
+      id, grants, recipientId, regionId, objectives,
       ...fields
     } = goalData;
 
@@ -61,6 +61,7 @@ export async function createOrUpdateGoals(goals) {
       grants,
       recipientId,
       regionId,
+      objectives,
     };
   })));
 }

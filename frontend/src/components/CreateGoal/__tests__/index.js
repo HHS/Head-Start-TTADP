@@ -46,6 +46,9 @@ describe('create goal', () => {
     grants: [{ value: 1, label: 'Turtle 1' }],
     recipientId: 1,
     regionId: 1,
+    objectives: [{
+      text: 'test', topics: [{ value: 4, label: 'CLASS: Instructional Support' }], resources: [{ key: '1d697eba-7c6a-44e9-b2cf-20841be8065e', value: 'https://search.marginalia.nu/' }], id: 'new0',
+    }],
   }];
 
   function renderForm(recipient = defaultRecipient) {
@@ -266,5 +269,129 @@ describe('create goal', () => {
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
     expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('can add and validate objectives', async () => {
+    fetchMock.post('/api/goals', postResponse);
+
+    const recipient = {
+      id: 2,
+      grants: [
+        {
+          id: 2,
+          numberWithProgramTypes: 'Turtle 2',
+        },
+      ],
+    };
+
+    renderForm(recipient);
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+    expect(fetchMock.called()).toBe(false);
+
+    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    userEvent.type(goalText, 'This is goal text');
+
+    const ed = await screen.findByRole('textbox', { name: /goal end date/i });
+    userEvent.type(ed, '08/15/2023');
+
+    const cancel = await screen.findByRole('link', { name: 'Cancel' });
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const save = await screen.findByRole('button', { name: /save and continue/i });
+    userEvent.click(save);
+
+    await screen.findByText('Please enter objective text');
+
+    const objectiveText = await screen.findByRole('textbox', { name: /objective \(required\)/i });
+    userEvent.type(objectiveText, 'This is objective text');
+
+    userEvent.click(save);
+
+    await screen.findByText('Please select at least one topic');
+
+    const topics = await screen.findByLabelText(/topics \(required\)/i);
+    await selectEvent.select(topics, ['Coaching']);
+
+    userEvent.click(save);
+
+    await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
+
+    expect(cancel).not.toBeVisible();
+
+    const submit = await screen.findByRole('button', { name: /submit goal/i });
+    userEvent.click(submit);
+    expect(fetchMock.called()).toBe(true);
+  });
+
+  it('can add and validate objective resources', async () => {
+    fetchMock.post('/api/goals', postResponse);
+
+    const recipient = {
+      id: 2,
+      grants: [
+        {
+          id: 2,
+          numberWithProgramTypes: 'Turtle 2',
+        },
+      ],
+    };
+
+    renderForm(recipient);
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+    expect(fetchMock.called()).toBe(false);
+
+    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    userEvent.type(goalText, 'This is goal text');
+
+    const ed = await screen.findByRole('textbox', { name: /goal end date/i });
+    userEvent.type(ed, '08/15/2023');
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const objectiveText = await screen.findByRole('textbox', { name: /objective \(required\)/i });
+    userEvent.type(objectiveText, 'This is objective text');
+
+    const topics = await screen.findByLabelText(/topics \(required\)/i);
+    await selectEvent.select(topics, ['Coaching']);
+
+    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'garrgeler');
+
+    const save = await screen.findByRole('button', { name: /save and continue/i });
+    userEvent.click(save);
+
+    await screen.findByText('Please enter only valid URLs');
+
+    userEvent.clear(resourceOne);
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
+
+    let addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
+    userEvent.click(addNewResource);
+
+    const resourceTwo = await screen.findByRole('textbox', { name: 'Resource 2' });
+    userEvent.type(resourceTwo, 'https://search.marginalia.nu/');
+
+    addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
+    userEvent.click(addNewResource);
+
+    userEvent.click(save);
+
+    await screen.findByText('Please enter only valid URLs');
+
+    const removeResource = await screen.findByRole('button', { name: /remove resource 3/i });
+    userEvent.click(removeResource);
+
+    userEvent.click(save);
+
+    await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
+
+    const submit = await screen.findByRole('button', { name: /submit goal/i });
+    userEvent.click(submit);
+    expect(fetchMock.called()).toBe(true);
   });
 });
