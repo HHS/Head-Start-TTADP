@@ -28,10 +28,11 @@ const CloseSuspendReasonModal = ({
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
   };
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
+
+  const generateReasonRadioButtons = () => reasonRadioOptions.map((r, i) => (
     <Radio
-      id={`${goalId}-${r}-radio-reason`}
-      key={`${goalId}-${r}-radio-reason`}
+      id={`radio-reason-${goalId}-${i + 1}`}
+      key={`radio-reason-${goalId}-${i + 1}`}
       onChange={ReasonChanged}
       name="closeSuspendReason"
       label={r}
@@ -71,6 +72,11 @@ const CloseSuspendReasonModal = ({
         >
           <FormGroup error={showValidationError}>
             <Fieldset>
+              <legend className="sr-only">
+                Why are you
+                {reasonDisplayStatus}
+                this goal?
+              </legend>
               {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
               {
                 generateReasonRadioButtons()
