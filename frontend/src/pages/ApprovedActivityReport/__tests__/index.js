@@ -35,7 +35,7 @@ describe('Activity report print and share view', () => {
     specialistNextSteps: [],
     recipientNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],
-    numberOfParticipants: 3,
+    numberOfParticipants: null,
     reason: ['Needed it'],
     startDate: '08/01/1968',
     endDate: '08/02/1969',
