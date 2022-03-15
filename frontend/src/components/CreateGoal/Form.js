@@ -8,7 +8,13 @@ import {
 import ObjectiveForm from './ObjectiveForm';
 import './Form.css';
 import PlusButton from './PlusButton';
-import { OBJECTIVE_DEFAULTS, FORM_FIELD_INDEXES, SELECT_STYLES } from './constants';
+import {
+  OBJECTIVE_DEFAULTS,
+  OBJECTIVE_DEFAULT_ERRORS,
+  FORM_FIELD_INDEXES,
+  SELECT_STYLES,
+  validateListOfResources,
+} from './constants';
 
 export default function Form({
   possibleGrants,
@@ -34,7 +40,7 @@ export default function Form({
 
     // save
     setObjectives(obj);
-    setObjectiveError(obj.length - 1, <></>);
+    setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
   };
 
   const removeObjective = (index) => {
@@ -54,25 +60,11 @@ export default function Form({
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
+  // Validate the objective fields and the correctness of the resources
   const canAddNewObjective = objectives.reduce((acc, curr) => {
     if (acc) {
-      return curr.objective && curr.topics.length && curr.resources.reduce((a, c) => {
-        if (curr.resources.length === 1 && !curr.resources[0]) {
-          return true;
-        }
-
-        if (a) {
-          try {
-            return new URL(c);
-          } catch (e) {
-            return false;
-          }
-        }
-
-        return a;
-      }, true);
+      return curr.text && curr.topics.length && validateListOfResources(curr.resources);
     }
-
     return acc;
   }, true);
 
@@ -140,7 +132,7 @@ export default function Form({
           removeObjective={removeObjective}
           setObjectiveError={setObjectiveError}
           key={objective.id}
-          error={objectiveErrors[i]}
+          errors={objectiveErrors[i]}
           setObjective={(data) => setObjective(data, i)}
         />
       ))}
@@ -190,7 +182,10 @@ Form.propTypes = {
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.string),
-    resources: PropTypes.arrayOf(PropTypes.string),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.string,
+      value: PropTypes.string,
+    })),
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   })).isRequired,
 };

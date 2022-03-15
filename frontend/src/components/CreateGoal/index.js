@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals } from '../../fetchers/goals';
 import Form from './Form';
-import { FORM_FIELD_INDEXES } from './constants';
+import { FORM_FIELD_INDEXES, FORM_FIELD_DEFAULT_ERRORS, validateListOfResources } from './constants';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
@@ -47,9 +47,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
 
-  const [errors, setErrors] = useState([
-    <></>, <></>, <></>, [],
-  ]);
+  const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -115,25 +113,42 @@ export default function CreateGoal({ recipient, regionId, match }) {
    * @returns bool
    */
   const validateObjectives = () => {
-    let error = [];
-
     if (!objectives.length) {
-      error = <span className="usa-error-message">Please select at least one objective</span>;
-
-      // todo - we actually don't need to check that there are objectives, I don't think
-      // instead, we need to validate each objective here
+      return false;
     }
 
     const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, error);
+    let hasErrors = false;
+
+    const newObjectiveErrors = objectives.map((objective) => {
+      if (!objective.text) {
+        hasErrors = true;
+        return <span className="usa-error-message">Please enter objective text</span>;
+      }
+
+      if (!objective.topics.length) {
+        hasErrors = true;
+        return <span className="usa-error-message">Please select at least one topic</span>;
+      }
+
+      if (!validateListOfResources(objective.resources)) {
+        return <span className="usa-error-message">Please enter only valid URLs</span>;
+      }
+
+      return <></>;
+    });
+
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, newObjectiveErrors);
     setErrors(newErrors);
 
-    return !error.props.children;
+    return hasErrors;
   };
 
   // quick shorthands to check to see if our fields are good to save to the different states
   // (different validations for not started and draft)
-  const isValidNotStarted = () => validateGrantNumbers() && validateGoalName() && validateEndDate();
+  const isValidNotStarted = () => (
+    validateGrantNumbers() && validateGoalName() && validateEndDate() && validateObjectives()
+  );
   const isValidDraft = () => validateEndDate() && (validateGrantNumbers() || validateGoalName());
 
   /**

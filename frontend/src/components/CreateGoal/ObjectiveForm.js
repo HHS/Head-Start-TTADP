@@ -6,16 +6,16 @@ import {
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import ResourceRepeater from './ResourceRepeater';
-import { SELECT_STYLES } from './constants';
+import { OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources } from './constants';
 import { TOPICS } from '../../Constants';
 
 export default function ObjectiveForm({
   index,
   removeObjective,
   setObjectiveError,
-  error,
   objective,
   setObjective,
+  errors,
 }) {
   // the parent objective data from props
   const { text, topics, resources } = objective;
@@ -28,17 +28,39 @@ export default function ObjectiveForm({
   // validate different fields
   const validateObjectiveText = () => {
     if (!text) {
-      setObjectiveError(index, <>Please enter objective text</>);
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TEXT, 1, <span className="usa-error-message">Please enter objective text</span>);
+      setObjectiveError(index, newErrors);
+    } else {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TEXT, 1, <></>);
+      setObjectiveError(index, newErrors);
     }
   };
 
   const validateObjectiveTopics = () => {
     if (!topics.length) {
-      setObjectiveError(index, <>Please enter objective text</>);
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <span className="usa-error-message">Please select at least one topic</span>);
+      setObjectiveError(index, newErrors);
+    } else {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <></>);
+      setObjectiveError(index, newErrors);
     }
   };
   const validateResources = () => {
+    let error = <></>;
 
+    const validated = validateListOfResources(resources);
+
+    if (!validated) {
+      error = <span className="usa-error-message">Please enter only valid URLs</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES, 1, error);
+    setObjectiveError(index, newErrors);
   };
 
   return (
@@ -47,7 +69,6 @@ export default function ObjectiveForm({
         <h3>Objective summary</h3>
         <Button type="button" unstyled onClick={() => removeObjective(index)}>Remove this objective</Button>
       </div>
-      {error}
       <FormGroup className="margin-top-1">
         <Label htmlFor="objectiveText">
           Objective
@@ -56,6 +77,7 @@ export default function ObjectiveForm({
         <span className="usa-hint">
           How TTA will support recipient goal
         </span>
+        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TEXT]}
         <Textarea id="objectiveText" name="objectiveText" required value={text} onChange={onChangeText} onBlur={validateObjectiveText} />
       </FormGroup>
       <FormGroup>
@@ -66,6 +88,7 @@ export default function ObjectiveForm({
         <span className="usa-hint">
           Align with statement of work
         </span>
+        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
         <Select
           styles={SELECT_STYLES}
           components={{
@@ -83,6 +106,7 @@ export default function ObjectiveForm({
         resources={resources}
         setResources={setResources}
         validateResources={validateResources}
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
       />
     </div>
   );
@@ -91,7 +115,7 @@ export default function ObjectiveForm({
 ObjectiveForm.propTypes = {
   index: PropTypes.number.isRequired,
   removeObjective: PropTypes.func.isRequired,
-  error: PropTypes.node,
+  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
@@ -102,11 +126,7 @@ ObjectiveForm.propTypes = {
     })),
     resources: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string,
-      value: PropTypes.number,
+      value: PropTypes.string,
     })),
   }).isRequired,
-};
-
-ObjectiveForm.defaultProps = {
-  error: undefined,
 };

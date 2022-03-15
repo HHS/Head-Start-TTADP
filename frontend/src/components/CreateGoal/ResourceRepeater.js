@@ -8,7 +8,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 
-export default function ResourceRepeater({ resources, setResources }) {
+export default function ResourceRepeater({
+  resources, setResources, error, validateResources,
+}) {
   const resourcesWrapper = useRef();
 
   const addResource = () => {
@@ -38,11 +40,12 @@ export default function ResourceRepeater({ resources, setResources }) {
           Resource link
         </Label>
         <span className="usa-hint">
-          Enter a valid link used for this objective
+          Enter valid links used for this objective
         </span>
+        {error}
         { resources.map((r, i) => (
           <div key={r.key} className="display-flex">
-            <TextInput type="url" placeholder="https://" onChange={({ target: { value } }) => updateResource(value, i)} value={r.value} />
+            <TextInput onBlur={validateResources} type="url" placeholder="https://" onChange={({ target: { value } }) => updateResource(value, i)} value={r.value} />
             { i > 0 ? (
               <Button unstyled type="button" onClick={() => removeResource(i)}>
                 <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
@@ -62,6 +65,11 @@ export default function ResourceRepeater({ resources, setResources }) {
 }
 
 ResourceRepeater.propTypes = {
-  resources: PropTypes.arrayOf(PropTypes.string).isRequired,
+  resources: PropTypes.arrayOf(PropTypes.shape({
+    key: PropTypes.string,
+    value: PropTypes.string,
+  })).isRequired,
   setResources: PropTypes.func.isRequired,
+  error: PropTypes.node.isRequired,
+  validateResources: PropTypes.func.isRequired,
 };
