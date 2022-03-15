@@ -4,10 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const isValidUrl = (attempted) => {
   try {
     const u = new URL(attempted);
-    if (u) {
-      return true;
-    }
-    return false;
+    return u !== '';
   } catch (e) {
     return false;
   }

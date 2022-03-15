@@ -73,7 +73,7 @@ export default function ObjectiveForm({
     <div className="margin-top-2">
       <div className="display-flex flex-justify maxw-mobile-lg">
         <h3>Objective summary</h3>
-        <Button type="button" unstyled onClick={() => removeObjective(index)}>Remove this objective</Button>
+        <Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>
       </div>
       <FormGroup className="margin-top-1">
         <Label htmlFor="objectiveText">
