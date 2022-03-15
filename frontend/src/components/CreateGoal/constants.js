@@ -84,6 +84,11 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
 };
 
 export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>];
+export const OBJECTIVE_ERROR_MESSAGES = [
+  'Please enter objective text',
+  'Please select at least one topic',
+  'Please enter only valid URLs',
+];
 
 export const validateListOfResources = (resources) => {
   if (resources.length > 1 || (resources.length === 1 && resources[0])) {

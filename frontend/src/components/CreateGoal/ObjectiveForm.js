@@ -6,8 +6,14 @@ import {
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import ResourceRepeater from './ResourceRepeater';
-import { OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources } from './constants';
+import {
+  OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
+} from './constants';
 import { TOPICS } from '../../Constants';
+
+const [
+  objectiveTextError, objectiveTopicsError, objectiveResourcesError,
+] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
   index,
@@ -29,7 +35,7 @@ export default function ObjectiveForm({
   const validateObjectiveText = () => {
     if (!text) {
       const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TEXT, 1, <span className="usa-error-message">Please enter objective text</span>);
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TEXT, 1, <span className="usa-error-message">{objectiveTextError}</span>);
       setObjectiveError(index, newErrors);
     } else {
       const newErrors = [...errors];
@@ -41,7 +47,7 @@ export default function ObjectiveForm({
   const validateObjectiveTopics = () => {
     if (!topics.length) {
       const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <span className="usa-error-message">Please select at least one topic</span>);
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <span className="usa-error-message">{objectiveTopicsError}</span>);
       setObjectiveError(index, newErrors);
     } else {
       const newErrors = [...errors];
@@ -55,7 +61,7 @@ export default function ObjectiveForm({
     const validated = validateListOfResources(resources);
 
     if (!validated) {
-      error = <span className="usa-error-message">Please enter only valid URLs</span>;
+      error = <span className="usa-error-message">{objectiveResourcesError}</span>;
     }
 
     const newErrors = [...errors];
