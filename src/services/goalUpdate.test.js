@@ -36,5 +36,17 @@ describe.skip('Change Goal Status', () => {
     const newStatus = 'In Progress';
     const updatedGoal = await updateGoalStatusById(goal.id.toString(), newStatus);
     expect(updatedGoal.status).toEqual(newStatus);
+    expect(updatedGoal.closeSuspendReason).toEqual(null);
+    expect(updatedGoal.closeSuspendContext).toEqual(null);
+  });
+
+  it('Updates goal status with reason', async () => {
+    const newStatus = 'Complete';
+    const reason = 'TTA complete';
+    const context = 'This goal has been completed.';
+    const updatedGoal = await updateGoalStatusById(goal.id.toString(), newStatus, reason, context);
+    expect(updatedGoal.status).toEqual(newStatus);
+    expect(updatedGoal.closeSuspendReason).toEqual(reason);
+    expect(updatedGoal.closeSuspendContext).toEqual(context);
   });
 });

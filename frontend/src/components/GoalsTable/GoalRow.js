@@ -20,6 +20,7 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import { updateGoalStatus } from '../../fetchers/goals';
 import ObjectiveRow from './ObjectiveRow';
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import './GoalRow.css';
 
 function GoalRow({
@@ -38,6 +39,19 @@ function GoalRow({
     reasons,
     objectives,
   } = goal;
+
+  // Close/Suspend Reason Modal.
+  const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
+  const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
+  const [resetModalValues, setResetModalValues] = useState(false);
+  const closeSuspendModalRef = useRef();
+
+  const showCloseSuspendGoalModal = (status, goalId) => {
+    setCloseSuspendGoalId(goalId);
+    setCloseSuspendStatus(status);
+    setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
+    closeSuspendModalRef.current.toggleModal(true);
+  };
 
   const expandObjectivesRef = useRef();
 
@@ -155,11 +169,34 @@ function GoalRow({
     },
   ];
 
-  const onUpdateGoalStatus = async (status) => {
-    const goalToSave = mapToStoredStatus.find((m) => m.status === status);
-    if (goalToSave) {
-      const updatedGoal = await updateGoalStatus(id, goalToSave.stored);
-      updateGoal(updatedGoal);
+  const performGoalStatusUpdate = async (
+    goalId,
+    status,
+    closeSuspendReason = null,
+    closeSuspendContext = null,
+  ) => {
+    const updatedGoal = await updateGoalStatus(
+      goalId,
+      status,
+      closeSuspendReason,
+      closeSuspendContext,
+    );
+    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
+      // Close from a close suspend reason submit.
+      closeSuspendModalRef.current.toggleModal(false);
+    }
+    updateGoal(updatedGoal);
+  };
+
+  const onUpdateGoalStatus = (status) => {
+    const changeGoalType = mapToStoredStatus.find((m) => m.status === status);
+    if (changeGoalType) {
+      if (changeGoalType.stored === 'Completed' || changeGoalType.stored === 'Ceased/Suspended') {
+        // Must provide reason for Close or Suspend.
+        showCloseSuspendGoalModal(changeGoalType.stored, id);
+      } else {
+        performGoalStatusUpdate(id, changeGoalType.stored);
+      }
     }
   };
 
@@ -233,6 +270,15 @@ function GoalRow({
 
   return (
     <>
+      <CloseSuspendReasonModal
+        id={`close-suspend-reason-modal-${id}`}
+        key={`close-suspend-reason-modal-${id}`}
+        goalId={closeSuspendGoalId}
+        newStatus={closeSuspendStatus}
+        modalRef={closeSuspendModalRef}
+        onSubmit={performGoalStatusUpdate}
+        resetValues={resetModalValues}
+      />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
           {getGoalStatusIcon()}
