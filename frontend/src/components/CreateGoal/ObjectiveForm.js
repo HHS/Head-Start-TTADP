@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
+
 import {
   Button, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
@@ -14,12 +14,16 @@ export default function ObjectiveForm({
   removeObjective,
   setObjectiveError,
   error,
+  objective,
+  setObjective,
 }) {
-  const [text, setText] = useState('');
-  const [resources, setResources] = useState([{ key: uuidv4(), value: '' }]);
+  // the parent objective data from props
+  const { text, topics, resources } = objective;
 
   // onchange handlers
-  const onChangeText = (e) => setText(e.target.value);
+  const onChangeText = (e) => setObjective({ ...objective, text: e.target.value });
+  const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
+  const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
 
   // validate different fields
   const validateObjectiveText = () => {
@@ -27,7 +31,12 @@ export default function ObjectiveForm({
       setObjectiveError(index, <>Please enter objective text</>);
     }
   };
-  const validateObjectiveTopics = () => {};
+
+  const validateObjectiveTopics = () => {
+    if (!topics.length) {
+      setObjectiveError(index, <>Please enter objective text</>);
+    }
+  };
   const validateResources = () => {
 
   };
@@ -66,6 +75,8 @@ export default function ObjectiveForm({
           isMulti
           options={TOPICS.map((label, value) => ({ value, label }))}
           onBlur={validateObjectiveTopics}
+          value={topics}
+          onChange={onChangeTopics}
         />
       </FormGroup>
       <ResourceRepeater
@@ -82,6 +93,18 @@ ObjectiveForm.propTypes = {
   removeObjective: PropTypes.func.isRequired,
   error: PropTypes.node,
   setObjectiveError: PropTypes.func.isRequired,
+  setObjective: PropTypes.func.isRequired,
+  objective: PropTypes.shape({
+    text: PropTypes.string,
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.string,
+      value: PropTypes.number,
+    })),
+  }).isRequired,
 };
 
 ObjectiveForm.defaultProps = {

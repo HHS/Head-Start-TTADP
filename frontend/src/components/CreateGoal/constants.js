@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export const SELECT_STYLES = {
   container: (provided, state) => {
     // To match the focus indicator provided by uswds
@@ -54,9 +56,9 @@ export const FORM_FIELD_INDEXES = {
 };
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
-  objective: '',
+  text: '',
   topics: [],
-  resources: [],
+  resources: [{ key: uuidv4(), value: '' }],
   id: `new${l}`,
 });
 

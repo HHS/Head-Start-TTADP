@@ -27,6 +27,7 @@ export default function Form({
   setObjectiveError,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
+
   const onAddNewObjectiveClick = () => {
     // copy existing state, add a blank
     const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
@@ -37,7 +38,7 @@ export default function Form({
   };
 
   const removeObjective = (index) => {
-    // copy existing state, add a blank
+    // copy existing state
     const obj = objectives.map((o) => ({ ...o }));
     obj.splice(index, 1);
 
@@ -45,7 +46,35 @@ export default function Form({
     setObjectives(obj);
   };
 
+  const setObjective = (data, index) => {
+    const obj = objectives.map((o) => ({ ...o }));
+    obj.splice(index, 1, data);
+    setObjectives(obj);
+  };
+
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
+
+  const canAddNewObjective = objectives.reduce((acc, curr) => {
+    if (acc) {
+      return curr.objective && curr.topics.length && curr.resources.reduce((a, c) => {
+        if (curr.resources.length === 1 && !curr.resources[0]) {
+          return true;
+        }
+
+        if (a) {
+          try {
+            return new URL(c);
+          } catch (e) {
+            return false;
+          }
+        }
+
+        return a;
+      }, true);
+    }
+
+    return acc;
+  }, true);
 
   return (
     <div className="ttahub-create-goals-form">
@@ -107,15 +136,19 @@ export default function Form({
       { objectives.map((objective, i) => (
         <ObjectiveForm
           index={i}
+          objective={objective}
           removeObjective={removeObjective}
           setObjectiveError={setObjectiveError}
           key={objective.id}
           error={objectiveErrors[i]}
+          setObjective={(data) => setObjective(data, i)}
         />
       ))}
-      <div className="margin-top-2">
-        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
-      </div>
+      { canAddNewObjective ? (
+        <div className="margin-top-4">
+          <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+        </div>
+      ) : null }
     </div>
   );
 }
