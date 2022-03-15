@@ -350,7 +350,7 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /goal end date/i });
     userEvent.type(ed, '08/15/2023');
 
-    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
     const objectiveText = await screen.findByRole('textbox', { name: /objective \(required\)/i });
@@ -361,6 +361,8 @@ describe('create goal', () => {
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'garrgeler');
+
+    expect(newObjective).not.toBeVisible();
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -385,6 +387,12 @@ describe('create goal', () => {
 
     const removeResource = await screen.findByRole('button', { name: /remove resource 3/i });
     userEvent.click(removeResource);
+
+    newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const removeObjective = await screen.findByRole('button', { name: 'Remove objective 2' });
+    userEvent.click(removeObjective);
 
     userEvent.click(save);
 
