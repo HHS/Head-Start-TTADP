@@ -36,7 +36,7 @@ export default function ResourceRepeater({
   return (
     <FormGroup>
       <div ref={resourcesWrapper}>
-        <Label htmlFor="objectiveText">
+        <Label htmlFor="resources">
           Resource link
         </Label>
         <span className="usa-hint">
@@ -44,11 +44,21 @@ export default function ResourceRepeater({
         </span>
         {error}
         { resources.map((r, i) => (
-          <div key={r.key} className="display-flex">
-            <TextInput onBlur={validateResources} type="url" placeholder="https://" onChange={({ target: { value } }) => updateResource(value, i)} value={r.value} />
+          <div key={r.key} className="display-flex" id="resources">
+            <Label htmlFor={`resource-${i + 1}`} className="sr-only">
+              Resource
+              {' '}
+              { i + 1 }
+            </Label>
+            <TextInput id={`resource-${i + 1}`} onBlur={validateResources} type="url" placeholder="https://" onChange={({ target: { value } }) => updateResource(value, i)} value={r.value} />
             { i > 0 ? (
               <Button unstyled type="button" onClick={() => removeResource(i)}>
                 <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
+                <span className="sr-only">
+                  remove resource
+                  {' '}
+                  { i + 1 }
+                </span>
               </Button>
             ) : null}
           </div>

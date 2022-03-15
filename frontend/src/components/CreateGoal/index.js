@@ -220,6 +220,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
+        objectives,
       }, ...createdGoals];
 
       await createOrUpdateGoals(goals);
@@ -257,6 +258,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
+        objectives,
       }, ...createdGoals];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);

@@ -87,7 +87,7 @@ export default function ObjectiveForm({
         <Textarea id="objectiveText" name="objectiveText" required value={text} onChange={onChangeText} onBlur={validateObjectiveText} />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor="objectiveText">
+        <Label htmlFor="topics">
           Topics
           <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
         </Label>
@@ -96,6 +96,7 @@ export default function ObjectiveForm({
         </span>
         {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
         <Select
+          inputId="topics"
           styles={SELECT_STYLES}
           components={{
             DropdownIndicator: null,
