@@ -36,7 +36,6 @@ export default function ResourceRepeater({ resources, setResources }) {
       <div ref={resourcesWrapper}>
         <Label htmlFor="objectiveText">
           Resource link
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
         </Label>
         <span className="usa-hint">
           Enter a valid link used for this objective
