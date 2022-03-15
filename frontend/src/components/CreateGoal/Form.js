@@ -11,6 +11,7 @@ import PlusButton from './PlusButton';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
+
   FORM_FIELD_INDEXES,
   SELECT_STYLES,
   validateListOfResources,

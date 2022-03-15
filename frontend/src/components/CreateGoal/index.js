@@ -10,10 +10,19 @@ import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals } from '../../fetchers/goals';
 import Form from './Form';
-import { FORM_FIELD_INDEXES, FORM_FIELD_DEFAULT_ERRORS, validateListOfResources } from './constants';
+import {
+  FORM_FIELD_INDEXES,
+  FORM_FIELD_DEFAULT_ERRORS,
+  validateListOfResources,
+  OBJECTIVE_ERROR_MESSAGES,
+} from './constants';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
+
+const [
+  objectiveTextError, objectiveTopicsError, objectiveResourcesError,
+] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function CreateGoal({ recipient, regionId, match }) {
   const { goalId } = match.params;
@@ -114,34 +123,51 @@ export default function CreateGoal({ recipient, regionId, match }) {
    */
   const validateObjectives = () => {
     if (!objectives.length) {
-      return false;
+      return true;
     }
 
     const newErrors = [...errors];
-    let hasErrors = false;
+    let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
       if (!objective.text) {
-        hasErrors = true;
-        return <span className="usa-error-message">Please enter objective text</span>;
+        isValid = false;
+        return [
+          <span className="usa-error-message">{objectiveTextError}</span>,
+          <></>,
+          <></>,
+        ];
       }
 
       if (!objective.topics.length) {
-        hasErrors = true;
-        return <span className="usa-error-message">Please select at least one topic</span>;
+        isValid = false;
+        return [
+          <></>,
+          <span className="usa-error-message">{objectiveTopicsError}</span>,
+          <></>,
+        ];
       }
 
       if (!validateListOfResources(objective.resources)) {
-        return <span className="usa-error-message">Please enter only valid URLs</span>;
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveResourcesError}</span>,
+        ];
       }
 
-      return <></>;
+      return [
+        <></>,
+        <></>,
+        <></>,
+      ];
     });
 
     newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, newObjectiveErrors);
     setErrors(newErrors);
 
-    return hasErrors;
+    return isValid;
   };
 
   // quick shorthands to check to see if our fields are good to save to the different states
