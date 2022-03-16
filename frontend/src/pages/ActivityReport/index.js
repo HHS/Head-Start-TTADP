@@ -2,7 +2,9 @@
   Activity report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, useRef, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   keyBy, mapValues, startCase, isEqual,
@@ -32,6 +34,7 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
+import { SocketContext } from '../../components/SocketProvider';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -153,9 +156,18 @@ function ActivityReport({
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
+  const [otherEditingUser, updateOtherEditingUser] = useState(null);
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
+
+  const { socket, store } = useContext(SocketContext);
+
+  useEffect(() => {
+    if (store) {
+      updateOtherEditingUser(store);
+    }
+  }, [store]);
 
   useEffect(() => {
     // Clear history state once mounted and activityReportId changes. This prevents someone from
@@ -290,6 +302,10 @@ function ActivityReport({
 
     const page = pages.find((p) => p.position === position);
     history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
+
+    socket.send(JSON.stringify({
+      page, user: user.id, lastSaveTime, activityReportId,
+    }));
   };
 
   const onSave = async (data) => {
@@ -382,6 +398,26 @@ function ActivityReport({
 
   return (
     <div className="smart-hub-activity-report">
+      { otherEditingUser ? (
+        <Alert type="info">
+          <span>
+            User
+            {' '}
+            {otherEditingUser.user}
+            {' '}
+            is editing
+            {' '}
+            {otherEditingUser.page.label}
+            {' '}
+            on report
+            {' '}
+            {otherEditingUser.activityReportId}
+            . They last saved at this time
+            {' '}
+            {otherEditingUser.lastSaveTime}
+          </span>
+        </Alert>
+      ) : null}
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
