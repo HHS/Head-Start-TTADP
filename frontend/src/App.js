@@ -30,6 +30,7 @@ import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
+import SocketProvider from './components/SocketProvider';
 
 function App() {
   const [user, updateUser] = useState();
@@ -121,7 +122,9 @@ function App() {
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout}>
-              <ActivityReport location={location} match={match} user={user} />
+              <SocketProvider userId={user.id}>
+                <ActivityReport location={location} match={match} user={user} />
+              </SocketProvider>
             </AppWrapper>
           )}
         />
