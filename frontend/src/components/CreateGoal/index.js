@@ -8,7 +8,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
-import { createOrUpdateGoals } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
 import Form, { FORM_FIELD_INDEXES } from './Form';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -188,6 +188,23 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
   };
 
+  const onEdit = (goal) => {
+    console.log(goal);
+  };
+
+  /**
+   * takes a goal id and attempts to delete it via
+   * HTTP
+   * @param {Number} g
+   */
+  const onDelete = async (g) => {
+    try {
+      await deleteGoal({ id: g, regionId });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <>
       <Link
@@ -210,6 +227,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
           <>
             <ReadOnly
               createdGoals={createdGoals}
+              onDelete={onDelete}
+              onEdit={onEdit}
             />
             <div className="margin-bottom-4">
               {!showForm
