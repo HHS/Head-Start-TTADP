@@ -1,24 +1,24 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Resource extends Model {
+  class ObjectiveResource extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Resource.belongsTo(models.Objective, { foreignKey: 'objectiveId' });
+      ObjectiveResource.belongsTo(models.Objective, { foreignKey: 'objectiveId' });
     }
   }
-  Resource.init({
+  ObjectiveResource.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
-    url: {
+    userProvidedUrl: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'Resource',
+    modelName: 'ObjectiveResource',
   });
-  return Resource;
+  return ObjectiveResource;
 };

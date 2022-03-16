@@ -1,13 +1,13 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => queryInterface.createTable('Resources', {
+    async (transaction) => queryInterface.createTable('ObjectiveResources', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      url: {
+      userProvidedUrl: {
         type: Sequelize.STRING,
         allowNull: false,
         onUpdate: 'CASCADE',
@@ -36,6 +36,6 @@ module.exports = {
     }, { transaction }),
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => queryInterface.dropTable('Resources', { transaction }),
+    async (transaction) => queryInterface.dropTable('ObjectiveResources', { transaction }),
   ),
 };
