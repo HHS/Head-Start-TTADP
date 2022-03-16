@@ -125,7 +125,7 @@ async function removeActivityReportObjectivesFromReport(reportId, transaction) {
   });
 }
 
-async function removeGoals(goalsToRemove, transaction) {
+export async function removeGoals(goalsToRemove, transaction) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
     where: {
@@ -270,4 +270,26 @@ export async function updateGoalStatusById(goalId, newStatus) {
   );
   return updatedGoal[1][0];
   */
+}
+
+export async function destroyGoal(goalId) {
+  return sequelize.transaction(async (transaction) => {
+    /**
+     * we don't want to destroy associated objectives as
+     * going forward, objectives will be applied to multiple goals
+     */
+    await GrantGoal.destroy({
+      where: {
+        goalId,
+      },
+      transaction,
+    });
+
+    return Goal.destroy({
+      where: {
+        id: goalId,
+      },
+      transaction,
+    });
+  });
 }
