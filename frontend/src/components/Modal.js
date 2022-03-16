@@ -20,6 +20,10 @@ const Modal = ({
   okButtonCss,
   cancelButtonCss,
   showTitleRequired,
+  secondaryOkButtonText,
+  onSecondaryOk,
+  hideCancelButton,
+
 }) => (
   <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
     <TrussWorksModal
@@ -37,14 +41,29 @@ const Modal = ({
       </div>
       <ModalFooter>
         <ButtonGroup>
-          <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
-            {cancelButtonText}
-          </ModalToggleButton>
+          {
+            !hideCancelButton
+              ? (
+                <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
+                  {cancelButtonText}
+                </ModalToggleButton>
+              )
+              : null
+          }
           {
             showOkButton
               ? (
                 <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
                   {okButtonText}
+                </Button>
+              )
+              : null
+          }
+          {
+            secondaryOkButtonText
+              ? (
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onSecondaryOk}>
+                  {secondaryOkButtonText}
                 </Button>
               )
               : null
@@ -73,6 +92,9 @@ Modal.propTypes = {
   okButtonCss: PropTypes.string,
   cancelButtonCss: PropTypes.string,
   showTitleRequired: PropTypes.bool,
+  secondaryOkButtonText: PropTypes.string,
+  onSecondaryOk: PropTypes.string,
+  hideCancelButton: PropTypes.bool,
 };
 
 Modal.defaultProps = {
@@ -86,6 +108,9 @@ Modal.defaultProps = {
   okButtonCss: null,
   cancelButtonCss: null,
   showTitleRequired: false,
+  secondaryOkButtonText: null,
+  onSecondaryOk: () => { },
+  hideCancelButton: false,
 };
 
 export default Modal;

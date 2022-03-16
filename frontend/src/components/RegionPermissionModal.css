@@ -1,0 +1,22 @@
+.smart-hub--region-permission-modal .usa-modal--lg .usa-modal__main {
+    max-width: none;
+    text-align: center;
+}
+.smart-hub--region-permission-modal .usa-modal--lg .usa-modal__main div span {
+    width:600px;
+    /*display: block;*/
+    display: inline-block;
+    text-align: left;
+    /*margin-left: 100px;*/
+}
+
+/*
+.smart-hub--region-permission-modal .usa-modal--lg .usa-button-group {
+    justify-content: center;
+    align-items: center;
+}
+*/
+
+.smart-hub--region-permission-modal .usa-modal--lg .usa-button-group {
+    margin-left: 88px;
+}
