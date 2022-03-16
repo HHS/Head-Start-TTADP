@@ -9,11 +9,14 @@ export default function SocketProvider({ children }) {
   // Create WebSocket connection.
   const socket = useMemo(() => {
     const s = new WebSocket('ws://localhost:8080');
+
+    // we don't want to send bufferdata, but json
     s.binaryType = 'arraybuffer';
+
     // Connection opened
-    // s.addEventListener('open', () => {
-    //   s.send(JSON.stringify({ message: 'Hello Server!', sender: 1 }));
-    // });
+    s.addEventListener('open', () => {
+      // you could add an alert here, or use this to debug connection
+    });
 
     // Listen for messages
     s.addEventListener('message', (event) => {
