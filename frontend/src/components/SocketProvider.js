@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 
 export const SocketContext = createContext();
 
-export default function SocketProvider({ children, userId }) {
+export default function SocketProvider({ children }) {
   const [store, setStore] = useState(null);
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
-    const s = new WebSocket(`ws://localhost:8080?id=${userId}`);
+    const s = new WebSocket('ws://localhost:8080');
     s.binaryType = 'arraybuffer';
     // Connection opened
     // s.addEventListener('open', () => {
@@ -21,7 +21,7 @@ export default function SocketProvider({ children, userId }) {
     });
 
     return s;
-  }, [userId]);
+  }, []);
 
   return (
     <SocketContext.Provider value={{ socket, store }}>{children}</SocketContext.Provider>
@@ -29,6 +29,5 @@ export default function SocketProvider({ children, userId }) {
 }
 
 SocketProvider.propTypes = {
-  userId: PropTypes.number.isRequired,
   children: PropTypes.node.isRequired,
 };
