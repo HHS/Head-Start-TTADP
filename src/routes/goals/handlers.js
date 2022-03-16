@@ -58,10 +58,14 @@ export async function changeGoalStatus(req, res) {
 export async function deleteGoal(req, res) {
   try {
     const { goalId } = req.params;
+    const { regionId } = req.body;
 
     const user = await userById(req.session.userId);
 
-    const policy = new Goal(user, parseInt(goalId, 10));
+    const policy = new Goal(user, {
+      id: goalId,
+      regionId,
+    });
 
     if (!policy.canDelete()) {
       res.sendStatus(401);
