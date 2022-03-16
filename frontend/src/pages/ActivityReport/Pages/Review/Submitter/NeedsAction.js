@@ -20,8 +20,7 @@ const NeedsAction = ({
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
   const userHasOneRole = user && user.role && user.role.length === 1;
-  const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole
-    ? user.role[0] : '');
+  const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.role[0] : creatorRole || '');
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
 
   const submit = async () => {

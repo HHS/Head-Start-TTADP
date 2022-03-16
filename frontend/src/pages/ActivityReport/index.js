@@ -62,7 +62,6 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
-  creatorRole: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -169,6 +168,8 @@ function ActivityReport({
     return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
   };
 
+  const userHasOneRole = user && user.role && user.role.length === 1;
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -181,17 +182,12 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
+            creatorRole: userHasOneRole ? user.role[0] : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
           };
         }
-
-        // If creator role is null and user has single role set it.
-        if (!report.creatorRole) {
-          report.creatorRole = user && user.role && user.role.length === 1 ? user.role[0] : null;
-        }
-
         const apiCalls = [
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
@@ -327,6 +323,13 @@ function ActivityReport({
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
+      // If user has one role set creator role.
+      if (!data.creatorRole && userHasOneRole) {
+        const [onlyUserRole] = user.role;
+        // eslint-disable-next-line no-param-reassign
+        data.creatorRole = onlyUserRole;
+      }
+
       // if it isn't a new report, we compare it to the last response from the backend (formData)
       // and pass only the updated to save report
       const updatedFields = findWhatsChanged(data, formData);
