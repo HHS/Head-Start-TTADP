@@ -31,6 +31,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
 import FilterContext from '../../FilterContext';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -247,6 +248,7 @@ function Landing() {
         <title>Landing</title>
       </Helmet>
       <>
+        <RegionPermissionModal filters={filters} user={user} />
         {showAlert && message && (
           <Alert
             type="success"
