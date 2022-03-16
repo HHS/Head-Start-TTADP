@@ -199,7 +199,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
    */
   const onDelete = async (g) => {
     try {
-      await deleteGoal({ id: g, regionId });
+      await deleteGoal(g, regionId);
     } catch (err) {
       console.log(err);
     }

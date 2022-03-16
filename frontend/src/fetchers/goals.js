@@ -18,8 +18,8 @@ export async function updateGoalStatus(goalId, newStatus) {
   return updatedGoal.json();
 }
 
-export async function deleteGoal(goalId) {
-  const url = join(goalsUrl, goalId.toString());
-  const deleted = await destroy(url);
+export async function deleteGoal(id, regionId) {
+  const url = join(goalsUrl, id.toString());
+  const deleted = await destroy(url, { regionId });
   return deleted.json();
 }

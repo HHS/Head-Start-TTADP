@@ -54,13 +54,14 @@ export const post = async (url, data) => {
 /*
  * Note: Due to `delete` being a keyword, we'll settle with `destroy`
  */
-export const destroy = async (url) => {
+export const destroy = async (url, data) => {
   const res = await fetch(url, {
     method: 'DELETE',
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
     },
+    body: data ? JSON.stringify(data) : '',
   });
 
   if (!res.ok) {
