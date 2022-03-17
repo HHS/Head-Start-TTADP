@@ -125,7 +125,8 @@ describe('changeGoalStatus', () => {
       },
       body: {
         newStatus: 'New Status',
-
+        closeSuspendReason: 'TTA complete',
+        closeSuspendContext: 'Sample context.',
       },
     };
     updateGoalStatusById.mockResolvedValue(goalWhere);
@@ -140,7 +141,8 @@ describe('changeGoalStatus', () => {
       },
       body: {
         newStatus: 'New Status',
-
+        closeSuspendReason: 'TTA complete',
+        closeSuspendContext: 'Sample context.',
       },
     };
     updateGoalStatusById.mockResolvedValue(null);

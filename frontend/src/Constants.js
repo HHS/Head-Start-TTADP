@@ -230,3 +230,16 @@ export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 export const DATE_FMT = 'YYYY/MM/DD';
 export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
+
+export const GOAL_CLOSE_REASONS = [
+  'Duplicate goal',
+  'Recipient request',
+  'TTA complete',
+];
+
+export const GOAL_SUSPEND_REASONS = [
+  'Key staff turnover',
+  'Recipient request',
+  'Recipient is not responding',
+  'Other',
+];
