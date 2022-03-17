@@ -1,19 +1,32 @@
 import { Op } from 'sequelize';
-import { compareDate } from '../utils';
 
-export function beforeStartDate(date) {
-  return {
-    [Op.and]: {
-      [Op.or]: compareDate(date, 'startDate', Op.lt),
+export function activeBefore(dates) {
+  const scopes = dates.reduce((acc, date) => [
+    ...acc,
+    {
+      endDate: {
+        [Op.lte]: new Date(date),
+      },
     },
+  ], []);
+
+  return {
+    [Op.or]: scopes,
   };
 }
 
-export function afterStartDate(date) {
-  return {
-    [Op.and]: {
-      [Op.or]: compareDate(date, 'startDate', Op.gt),
+export function activeAfter(dates) {
+  const scopes = dates.reduce((acc, date) => [
+    ...acc,
+    {
+      endDate: {
+        [Op.gte]: new Date(date),
+      },
     },
+  ], []);
+
+  return {
+    [Op.or]: scopes,
   };
 }
 
