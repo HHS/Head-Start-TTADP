@@ -11,11 +11,11 @@ export default function ReadOnly({
 }) {
   return (
     <>
-      { createdGoals.map((goal) => {
+      { createdGoals.map((goal, index) => {
         const menuItems = [
           {
             label: 'Edit',
-            onClick: () => onEdit(goal),
+            onClick: () => onEdit(goal, index),
           },
           {
             label: 'Delete',

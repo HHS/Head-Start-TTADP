@@ -63,8 +63,7 @@ export async function deleteGoal(req, res) {
     const user = await userById(req.session.userId);
 
     const policy = new Goal(user, {
-      id: goalId,
-      regionId,
+      regionId: parseInt(regionId, 10),
     });
 
     if (!policy.canDelete()) {
@@ -72,7 +71,7 @@ export async function deleteGoal(req, res) {
       return;
     }
 
-    const deletedGoal = await destroyGoal(goalId);
+    const deletedGoal = await destroyGoal(parseInt(goalId, 10));
 
     // destroy goal returns a promise with the number of deleted goals
     // it should be 1 or 0
