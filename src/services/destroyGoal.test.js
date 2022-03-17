@@ -7,7 +7,15 @@ import db, {
   Recipient,
   Objective,
   ObjectiveResource,
+  ActivityReport,
 } from '../models';
+import { auditLogger } from '../logger';
+
+jest.mock('../logger', () => ({
+  auditLogger: ({
+    error: jest.fn(),
+  }),
+}));
 
 describe('destroyGoal handler', () => {
   afterEach(async () => {
@@ -19,8 +27,8 @@ describe('destroyGoal handler', () => {
   let objective;
 
   let grant = {
-    id: faker.datatype.number(),
-    number: faker.random.alphaNumeric(5),
+    id: faker.datatype.number({ min: 67000, max: 68000 }),
+    number: faker.random.alphaNumeric(10),
     cdi: false,
     regionId: 1,
   };
@@ -159,5 +167,14 @@ describe('destroyGoal handler', () => {
   it('handles invalid ids', async () => {
     const result = await destroyGoal(182349);
     expect(result).toBe(0);
+  });
+
+  it('won\'t delete a goal if its on an AR', async () => {
+    ActivityReport.findAll = jest.fn().mockResolvedValue([1]);
+    const result = await destroyGoal(1000);
+    expect(result).toBe(0);
+    expect(auditLogger.error).toBeCalledWith(
+      'SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted',
+    );
   });
 });

@@ -294,7 +294,7 @@ export async function updateGoalStatusById(
 export async function destroyGoal(goalId) {
   return sequelize.transaction(async (transaction) => {
     try {
-      const isOnReport = await ActivityReport.findAll({
+      const reportsWithGoal = await ActivityReport.findAll({
         attributes: ['id'],
         include: [
           {
@@ -316,8 +316,9 @@ export async function destroyGoal(goalId) {
           },
         ],
         raw: true,
-      }).length;
+      });
 
+      const isOnReport = reportsWithGoal.length;
       if (isOnReport) {
         throw new Error('Goal is on an activity report and can\'t be deleted');
       }
