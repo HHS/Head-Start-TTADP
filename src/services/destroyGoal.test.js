@@ -5,6 +5,8 @@ import db, {
   Grant,
   GrantGoal,
   Recipient,
+  Objective,
+  ObjectiveResource,
 } from '../models';
 
 describe('destroyGoal handler', () => {
@@ -14,6 +16,8 @@ describe('destroyGoal handler', () => {
 
   let goal;
   let recipient;
+  let objective;
+
   let grant = {
     id: faker.datatype.number(),
     number: faker.random.alphaNumeric(5),
@@ -22,7 +26,7 @@ describe('destroyGoal handler', () => {
   };
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number(6) });
+    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }) });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     goal = await Goal.create({
       name: 'This is some serious goal text',
@@ -34,9 +38,33 @@ describe('destroyGoal handler', () => {
       grantId: grant.id,
       goalId: goal.id,
     });
+
+    objective = await Objective.create({
+      goalId: goal.id,
+      status: 'Not started',
+      title: 'Make everything ok',
+      ttaProvided: 'Well, that\'s a big ask',
+    });
+
+    await ObjectiveResource.create({
+      userProvidedUrl: 'http://website',
+      objectiveId: objective.id,
+    });
   });
 
   afterAll(async () => {
+    await ObjectiveResource.destroy({
+      where: {
+        objectiveId: objective.id,
+      },
+    });
+
+    await Objective.destroy({
+      where: {
+        goalId: goal.id,
+      },
+    });
+
     await GrantGoal.destroy({
       where: {
         goalId: goal.id,
@@ -76,8 +104,23 @@ describe('destroyGoal handler', () => {
       },
     });
 
+    let foundObjective = await Objective.findAll({
+      where: {
+        goalId: goal.id,
+      },
+    });
+
+    let foundObjectiveResource = await ObjectiveResource.findAll({
+      where: {
+        userProvidedUrl: 'http://website',
+        objectiveId: objective.id,
+      },
+    });
+
     expect(foundGoal.length).toBe(1);
     expect(foundGrantGoal.length).toBe(1);
+    expect(foundObjective.length).toBe(1);
+    expect(foundObjectiveResource.length).toBe(1);
 
     const result = await destroyGoal(goal.id);
     expect(result).toBe(1);
@@ -94,8 +137,23 @@ describe('destroyGoal handler', () => {
       },
     });
 
+    foundObjective = await Objective.findAll({
+      where: {
+        goalId: goal.id,
+      },
+    });
+
+    foundObjectiveResource = await ObjectiveResource.findAll({
+      where: {
+        userProvidedUrl: 'http://website',
+        objectiveId: objective.id,
+      },
+    });
+
     expect(foundGoal.length).toBe(0);
     expect(foundGrantGoal.length).toBe(0);
+    expect(foundObjective.length).toBe(0);
+    expect(foundObjectiveResource.length).toBe(0);
   });
 
   it('handles invalid ids', async () => {
