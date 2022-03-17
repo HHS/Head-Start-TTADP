@@ -76,7 +76,6 @@ Modal.defaultProps = {
   showOkButton: true,
   isLarge: false,
   cancelButtonText: 'Cancel',
-
 };
 
 export default Modal;

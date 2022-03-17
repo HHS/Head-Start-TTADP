@@ -220,6 +220,11 @@ export default function CreateGoal({ recipient, regionId }) {
         if (!newGoals.length) {
           setShowForm(true);
         }
+
+        setAlert({
+          message: '',
+          type: 'success',
+        });
       }
     } catch (err) {
       setAlert({
