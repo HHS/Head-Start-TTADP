@@ -39,7 +39,7 @@ export async function createOrUpdateGoals(goals) {
     const options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
-      id,
+      id: id === 'new' ? null : id,
     };
 
     const [goal] = await Goal.upsert(options, { transaction });

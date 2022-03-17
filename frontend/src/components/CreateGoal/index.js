@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
@@ -13,8 +12,7 @@ import Form, { FORM_FIELD_INDEXES } from './Form';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 
-export default function CreateGoal({ recipient, regionId, match }) {
-  const { goalId } = match.params;
+export default function CreateGoal({ recipient, regionId }) {
   const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
@@ -27,8 +25,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
     endDate: null,
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
-    id: goalId,
-  }), [goalId, possibleGrants]);
+    id: 'new',
+  }), [possibleGrants]);
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
@@ -41,6 +39,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
   const [alert, setAlert] = useState({ message: '', type: 'success' });
+  const [goalId, setGoalId] = useState(goalDefaults.id);
 
   const [errors, setErrors] = useState([<></>, <></>, <></>]);
 
@@ -131,6 +130,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
+        id: goalId,
       }, ...createdGoals];
 
       await createOrUpdateGoals(goals);
@@ -168,6 +168,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
+        id: goalId,
       }, ...createdGoals];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);
@@ -188,8 +189,20 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
   };
 
-  const onEdit = (goal) => {
-    console.log(goal);
+  const onEdit = (goal, index) => {
+    // move from "created goals" to the form
+
+    // first remove from the createdGoals array
+    const newCreatedGoals = createdGoals.map((g) => ({ ...g }));
+    newCreatedGoals.splice(index, 1);
+    setCreatedGoals(newCreatedGoals);
+
+    // then repopulate the form
+    setGoalName(goal.name);
+    setEndDate(goal.endDate);
+    setStatus(goal.status);
+    setGoalId(goal.id);
+    setShowForm(true);
   };
 
   /**
@@ -199,9 +212,20 @@ export default function CreateGoal({ recipient, regionId, match }) {
    */
   const onDelete = async (g) => {
     try {
-      await deleteGoal(g, regionId);
+      const success = await deleteGoal(g, regionId);
+
+      if (success) {
+        const newGoals = createdGoals.filter((goal) => goal.id !== g);
+        setCreatedGoals(newGoals);
+        if (!newGoals.length) {
+          setShowForm(true);
+        }
+      }
     } catch (err) {
-      console.log(err);
+      setAlert({
+        message: 'There was an error deleting your goal',
+        type: 'error',
+      });
     }
   };
 
@@ -297,5 +321,4 @@ CreateGoal.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
-  match: ReactRouterPropTypes.match.isRequired,
 };
