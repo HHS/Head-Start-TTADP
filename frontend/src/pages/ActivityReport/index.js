@@ -323,16 +323,10 @@ function ActivityReport({
       reportId.current = savedReport.id;
       window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
     } else {
-      // If user has one role set creator role.
-      if (!data.creatorRole && userHasOneRole) {
-        const [onlyUserRole] = user.role;
-        // eslint-disable-next-line no-param-reassign
-        data.creatorRole = onlyUserRole;
-      }
-
       // if it isn't a new report, we compare it to the last response from the backend (formData)
       // and pass only the updated to save report
-      const updatedFields = findWhatsChanged(data, formData);
+      const creatorRole = !data.creatorRole && userHasOneRole ? user.role[0] : data.creatorRole;
+      const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
       const updatedReport = await saveReport(
         reportId.current, { ...updatedFields, approverUserIds: approverIds },
         {},
