@@ -1,6 +1,6 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
-import { changeGoalStatus, createGoals } from './handlers';
-import { updateGoalStatusById, createOrUpdateGoals } from '../../services/goals';
+import { changeGoalStatus, createGoals, deleteGoal } from './handlers';
+import { updateGoalStatusById, createOrUpdateGoals, destroyGoal } from '../../services/goals';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 
@@ -11,6 +11,7 @@ jest.mock('../../services/users', () => ({
 jest.mock('../../services/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
+  destroyGoal: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -151,6 +152,98 @@ describe('changeGoalStatus', () => {
     const req = {
     };
     await changeGoalStatus(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('deleteGoal', () => {
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
+
+  it('checks permissions', async () => {
+    const req = {
+      params: {
+        goalId: 1,
+      },
+      body: {
+        regionId: 2,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_REPORTS,
+        },
+      ],
+    });
+
+    await deleteGoal(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        goalId: 1,
+      },
+      body: {
+        regionId: 2,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    destroyGoal.mockResolvedValueOnce(1);
+    await deleteGoal(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(1);
+  });
+
+  it('handles failures', async () => {
+    const req = {
+      params: {
+        goalId: 1,
+      },
+      body: {
+        regionId: 2,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    destroyGoal.mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    await deleteGoal(req, mockResponse);
+
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
