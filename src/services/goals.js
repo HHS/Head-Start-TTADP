@@ -4,8 +4,11 @@ import {
   Grant,
   Objective,
   ActivityReportObjective,
+  // ObjectiveTopics,
+  // ObjectiveResources,
   GrantGoal,
   sequelize,
+  ActivityReport,
 } from '../models';
 
 /**
@@ -274,10 +277,62 @@ export async function updateGoalStatusById(goalId, newStatus) {
 
 export async function destroyGoal(goalId) {
   return sequelize.transaction(async (transaction) => {
-    /**
-     * we don't want to destroy associated objectives as
-     * going forward, objectives will be applied to multiple goals
-     */
+    const isOnReport = await ActivityReport.findAll({
+      attributes: ['id'],
+      include: [
+        {
+          attributes: ['id'],
+          model: Objective,
+          required: true,
+          as: 'objectivesWithGoals',
+          include: [
+            {
+              attributes: ['id'],
+              model: Goal,
+              required: true,
+              where: {
+                id: goalId,
+              },
+              as: 'goal',
+            },
+          ],
+        },
+      ],
+      raw: true,
+    }).length;
+
+    if (isOnReport) {
+      throw new Error('Goal is on an activity report and can\'t be deleted');
+    }
+
+    // commented out for now
+
+    // await ObjectiveTopics.destroy({
+    //   where: {
+    //     objectiveId: {
+    //       [Op.in]: sequelize.literal(
+    //         `SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)}`,
+    //       ),
+    //     },
+    //   },
+    // });
+
+    // await ObjectiveResources.destroy({
+    //   where: {
+    //     objectiveId: {
+    //       [Op.in]: sequelize.literal(
+    //         `SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)}`,
+    //       ),
+    //     },
+    //   },
+    // });
+
+    await Objective.destroy({
+      where: {
+        goalId,
+      },
+    });
+
     await GrantGoal.destroy({
       where: {
         goalId,
