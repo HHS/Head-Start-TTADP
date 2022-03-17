@@ -47,10 +47,10 @@ function RegionPermissionModal({
         hideCancelButton
         isLarge
       >
-        <span>
+        <p>
           Most TTA Hub users have access to only one region. You may have received a link from
           someone with more access.
-        </span>
+        </p>
       </Modal>
     </div>
   );

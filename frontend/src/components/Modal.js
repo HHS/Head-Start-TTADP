@@ -53,7 +53,7 @@ const Modal = ({
           {
             showOkButton
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} data-focus={!!hideCancelButton} type="button" aria-label={okButtonAriaLabel} onClick={onOk}>
                   {okButtonText}
                 </Button>
               )
@@ -62,7 +62,7 @@ const Modal = ({
           {
             secondaryOkButtonText
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onSecondaryOk}>
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} onClick={onSecondaryOk}>
                   {secondaryOkButtonText}
                 </Button>
               )
