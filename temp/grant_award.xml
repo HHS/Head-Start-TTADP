@@ -149,4 +149,30 @@
   <grantee_name>Multi ID Agency</grantee_name>
   <grant_status>Active</grant_status>
 </grant_award>
+<grant_award>
+  <grant_award_id>9957</grant_award_id>
+  <agency_id>5</agency_id>
+  <region_id>6</region_id>
+  <grant_number>06HP000089</grant_number>
+  <grantee_state>AR</grantee_state>
+  <grant_start_date>2017-03-01</grant_start_date>
+  <grant_end_date>2021-08-31</grant_end_date>
+  <annual_funding_month>September</annual_funding_month>
+  <program_acronym>HP</program_acronym>
+  <grantee_name>Department of Human Services</grantee_name>
+  <grant_status>Inactive</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>14495</grant_award_id>
+  <agency_id>7782</agency_id>
+  <region_id>6</region_id>
+  <grant_number>06HP000499</grant_number>
+  <grantee_state>AR</grantee_state>
+  <grant_start_date>2021-09-01</grant_start_date>
+  <grant_end_date>2026-08-31</grant_end_date>
+  <annual_funding_month>September</annual_funding_month>
+  <program_acronym>HP</program_acronym>
+  <grantee_name>Department of Human  Services</grantee_name>
+  <grant_status>Active</grant_status>
+</grant_award>
 </grant_awards>
