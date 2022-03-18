@@ -31,7 +31,6 @@ describe('destroyGoal handler', () => {
   };
 
   beforeAll(async () => {
-    ActivityReport.findAll = jest.fn().mockResolvedValue([1]);
     recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }) });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     goal = await Goal.create({
@@ -170,6 +169,7 @@ describe('destroyGoal handler', () => {
   });
 
   it('wont delete a goal if its on an AR', async () => {
+    ActivityReport.findAll = jest.fn().mockResolvedValue([1]);
     const spy = jest.spyOn(auditLogger, 'error');
     const result = await destroyGoal(goalTwo.id);
 
