@@ -46,6 +46,24 @@ An optional descriptor can be passed and will be recorded with any log generated
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
+      try {
+        const loggedUser = '0';
+        // const transactionId = '';
+        const sessionSig = __filename;
+        const auditDescriptor = 'RUN MIGRATIONS';
+        await queryInterface.sequelize.query(
+          `SELECT
+            set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
+            set_config('audit.transactionId', NULL, TRUE) as "transactionId",
+            set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
+            set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
       // Define a type to use for identifying INSERT, UPDATE, and DELETE
       try {
         await queryInterface.sequelize.query(
@@ -215,16 +233,19 @@ module.exports = {
                 DECLARE
                   CREATED_BY bigint;
                   TRANSACTION_ID uuid;
+                  SESSION_SIG TEXT;
                   DESCRIPTOR_ID int;
                 BEGIN
-                  CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
+                  CREATED_BY := COALESCE(NULLIF(current_setting('audit.loggedUser', true), '')::BIGINT, -1);
 
                   TRANSACTION_ID := COALESCE(
-                      current_setting('var.transactionId', true)::uuid,
+                      NULLIF(current_setting('audit.transactionId', true), '')::uuid,
                       lpad(txid_current()::text,32, '0')::uuid);
 
+                  SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::TEXT;
+
                   DESCRIPTOR_ID := "ZAFDescriptorToID"(
-                      NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
+                      NULLIF(current_setting('audit.auditDescriptor', true)::TEXT, ''));
 
                   IF ( DESCRIPTOR_ID = "ZAFDescriptorToID"('ARCHIVE AUDIT LOG') ) THEN
                     RAISE NOTICE 'Archive Data: %% by %%', %L, CREATED_BY;
@@ -237,6 +258,7 @@ module.exports = {
                       ddl_timestamp,
                       ddl_by,
                       ddl_txid,
+                      session_sig,
                       descriptor_id)
                   VALUES (
                       'ARCHIVE DATA'
@@ -246,6 +268,7 @@ module.exports = {
                       CURRENT_TIMESTAMP,
                       CREATED_BY,
                       TRANSACTION_ID,
+                      SESSION_SIG,
                       DESCRIPTOR_ID);
                   ELSE
                     RAISE EXCEPTION 'Delete from %s is not supported to maintain audit log integrity.';
@@ -354,7 +377,7 @@ module.exports = {
             validate: { isUUID: 'all' },
           },
           session_sig: {
-            type: Sequelize.STRING,
+            type: Sequelize.TEXT,
             allowNull: true,
             defaultValue: null,
           },
@@ -382,6 +405,7 @@ module.exports = {
           DECLARE
               CREATED_BY BIGINT;
               TRANSACTION_ID UUID;
+              SESSION_SIG TEXT;
               DESCRIPTOR_ID INT;
               --is_superuser bool = false;
               r RECORD;
@@ -391,14 +415,16 @@ module.exports = {
               --    return;
               --end if;
 
-              CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
+              CREATED_BY := COALESCE(NULLIF(current_setting('audit.loggedUser', true), '')::BIGINT, -1);
 
               TRANSACTION_ID := COALESCE(
-                  current_setting('var.transactionId', true)::uuid,
+                  NULLIF(current_setting('audit.transactionId', true), '')::uuid,
                   lpad(txid_current()::text,32,'0')::uuid);
 
+              SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::TEXT;
+
               DESCRIPTOR_ID := "ZAFDescriptorToID"(
-                  NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
+                  NULLIF(current_setting('audit.auditDescriptor', true)::TEXT, ''));
 
               FOR r IN SELECT * FROM pg_event_trigger_ddl_commands() LOOP
                 INSERT INTO "ZALDDL" (
@@ -409,6 +435,7 @@ module.exports = {
                   ddl_timestamp,
                   ddl_by,
                   ddl_txid,
+                  session_sig,
                   descriptor_id)
               VALUES (
                   r.command_tag,
@@ -418,6 +445,7 @@ module.exports = {
                   CURRENT_TIMESTAMP,
                   CREATED_BY,
                   TRANSACTION_ID,
+                  SESSION_SIG,
                   DESCRIPTOR_ID);
               END LOOP;
           END
@@ -502,7 +530,7 @@ module.exports = {
                     dml_timestamp timestamp NOT NULL,
                     dml_by int NOT NULL,
                     dml_txid uuid NOT NULL,
-                    session_sig varchar NULL,
+                    session_sig TEXT NULL,
                     descriptor_id INT,
                     PRIMARY KEY (id)
                     );$sql$,
@@ -531,7 +559,7 @@ module.exports = {
                   DECLARE
                       CREATED_BY bigint;
                       TRANSACTION_ID uuid;
-                      SESSION_SIG varchar;
+                      SESSION_SIG TEXT;
                       DESCRIPTOR_ID int;
                       UNIQUE_OLD jsonb;
                       UNIQUE_NEW jsonb;
@@ -543,7 +571,7 @@ module.exports = {
                           NULLIF(current_setting('audit.transactionId', true),'')::uuid,
                           lpad(txid_current()::text,32,'0')::uuid);
 
-                      SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::VARCHAR;
+                      SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::TEXT;
 
                       DESCRIPTOR_ID := "ZAFDescriptorToID"(
                           NULLIF(current_setting('audit.auditDescriptor', true), '')::TEXT);
@@ -703,7 +731,7 @@ module.exports = {
                 DECLARE
                   CREATED_BY bigint;
                   TRANSACTION_ID uuid;
-                  SESSION_SIG varchar;
+                  SESSION_SIG TEXT;
                   DESCRIPTOR_ID int;
                 BEGIN
                   CREATED_BY := COALESCE(current_setting('var.loggedUser', true)::BIGINT, -1);
@@ -712,7 +740,7 @@ module.exports = {
                       current_setting('var.transactionId', true)::uuid,
                       lpad(txid_current()::text,32,'0')::uuid);
 
-                  SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::VARCHAR;
+                  SESSION_SIG := NULLIF(current_setting('audit.sessionSig', true), '')::TEXT;
 
                   DESCRIPTOR_ID := "ZAFDescriptorToID"(
                       NULLIF(current_setting('var.auditDescriptor', true)::TEXT, ''));
@@ -925,42 +953,202 @@ module.exports = {
         console.error(err); // eslint-disable-line no-console
         throw (err);
       }
+
+      // enabled states withing the db are:
+      // O: origin & local
+      // D: disabled
+      // R: replica
+      // A: always
+      // TABLENAME:
+      //  null will match any table
+      //  text value supporting wildcards
+      // TRIGGERTYPE:
+      //  null will match any trigger type
+      //  text value supporting wildcards
+      // CURRENTSTATE:
+      //  null will match any state
+      //  disable or enable
+      // NEWSTATE:
+      //  null will toggle value from current state
+      //  disable or enable
+      try {
+        await queryInterface.sequelize.query(
+          `CREATE OR REPLACE FUNCTION "ZAFSetTriggerState"(
+                TABLENAME varchar,
+                TRIGGERTYPE varchar,
+                CURRENTSTATE varchar,
+                NEWSTATE varchar)
+            RETURNS void
+            LANGUAGE plpgsql AS
+          $func$
+          DECLARE
+              CREATED_BY bigint;
+              DESCRIPTOR TEXT;
+              DESCRIPTOR_ID int;
+              obj record;
+          BEGIN
+            CREATED_BY := COALESCE(NULLIF(current_setting('audit.loggedUser', true), '')::BIGINT, -1);
+
+            DESCRIPTOR := NULLIF(current_setting('audit.auditDescriptor', true)::TEXT, '');
+
+            DESCRIPTOR_ID := "ZAFDescriptorToID"(DESCRIPTOR);
+
+            IF ( DESCRIPTOR_ID is not null ) THEN
+              RAISE NOTICE 'Audit Trigger State: % changed from % to % by % for %',
+                COALESCE(TABLENAME, 'any table'),
+                COALESCE(CURRENTSTATE, 'any state'),
+                COALESCE(NEWSTATE, 'oppisite state'),
+                CREATED_BY,
+                DESCRIPTOR;
+              FOR obj IN
+              select
+                c.relname "tableName",
+                t.tgname "triggerName",
+                (m.mapping ->> 'current')::varchar "currentState",
+                (m.mapping ->> 'new')::varchar "newState",
+                (c.relname like 'ZAL%') "isAuditTable",
+                substring(t.tgname,length('ZAL')+1,length(t.tgname)-length(c.relname)-(length('ZAL')*(c.relname not like 'ZAL%')::int)) "triggerType"
+              from pg_trigger t
+              join pg_class c
+              on c.oid = t.tgrelid
+              join jsonb_array_elements(
+                '[
+                  {"from":"O","current":"ENABLE","new":"DISABLE"},
+                  {"from":"D","current":"DISABLE","new":"ENABLE"},
+                  {"from":"R","current":"ENABLE","new":"DISABLE"},
+                  {"from":"A","current":"ENABLE","new":"DISABLE"}
+                ]') m(mapping)
+              on t.tgenabled::char(1) = (m.mapping ->> 'from')::char(1)
+              where t.tgname like 'ZAL%'
+              and (COALESCE(c.relname like TABLENAME, false) or TABLENAME is null)
+              and (COALESCE((m.mapping ->> 'current')::varchar = upper(CURRENTSTATE), false) or CURRENTSTATE is null)
+              and (COALESCE((m.mapping ->> 'new')::varchar = upper(NEWSTATE), false) or NEWSTATE is null)
+              and (COALESCE(upper(CURRENTSTATE), 'NULL') != COALESCE(upper(NEWSTATE), 'NULL') or (CURRENTSTATE is null and NEWSTATE is null))
+              and (COALESCE(substring(t.tgname,length('ZAL')+1,length(t.tgname)-length(c.relname)-(length('ZAL')*(c.relname not like 'ZAL%')::int)) like TRIGGERTYPE, false) or TRIGGERTYPE is null)
+              order by  c.relname, t.tgname
+              LOOP
+                  RAISE NOTICE 'Audit Trigger State: % % on %', obj."triggerName", obj."newState", obj."tableName";
+                  execute format('ALTER TABLE %I %s TRIGGER %I', obj."tableName", obj."newState", obj."triggerName");
+              END LOOP;
+            ELSE
+              RAISE EXCEPTION 'Archive Trigger states can not be modified without providing a valid descriptor value.';
+            END IF;
+          END
+          $func$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
     },
   ),
-  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
+  down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      await queryInterface.sequelize.query(
-        `SELECT json_agg(table_name) as "tables"
-        FROM information_schema.tables
-        WHERE table_schema='public'
-          AND table_type='BASE TABLE'
-          AND table_catalog='ttasmarthub'
-          AND table_name != 'SequelizeMeta'
-          AND table_name NOT LIKE 'ZAL%';`,
-        {
-          type: Sequelize.QueryTypes.SELECT,
-          transaction,
-        },
-      )
-        .then(async (result) => {
-          const [{ tables }] = result;
-          console.log(`Find all tables: ${JSON.stringify(tables)}`); // eslint-disable-line no-console
-          tables.forEach(async (table) => {
-            await queryInterface.sequelize.query(
-              `SELECT
-                  "ZAFRemoveAuditingOnTable"('${table}');`,
-              { transaction },
-            )
-              .catch((err) => {
-                console.error(err); // eslint-disable-line no-console
-                throw (err);
-              });
-          });
-        })
-        .catch((err) => {
-          console.error(err); // eslint-disable-line no-console
-          throw (err);
-        });
+      try {
+        const loggedUser = '0';
+        const sessionSig = __filename;
+        const auditDescriptor = 'REMOVE MIGRATIONS';
+        await queryInterface.sequelize.query(
+          `SELECT
+            set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
+            set_config('audit.transactionId', NULL, TRUE) as "transactionId",
+            set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
+            set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      try {
+        await queryInterface.sequelize.query(
+          `SELECT
+          "ZAFSetTriggerState"(null, null, null, 'DISABLE');`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      try {
+        await queryInterface.sequelize.query(
+          `DO $$
+          DECLARE
+            obj record;
+          BEGIN
+            FOR obj IN
+              SELECT table_name as "tableName"
+              FROM information_schema.tables
+              WHERE table_schema='public'
+                AND table_type='BASE TABLE'
+                AND table_name != 'SequelizeMeta'
+                AND table_name NOT LIKE 'ZAL%'
+            LOOP
+              RAISE NOTICE 'Audit Tables: drop %', obj."tableName";
+              SELECT "ZAFRemoveAuditingOnTable"(obj."tableName");
+            END LOOP;
+          END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      try {
+        await queryInterface.sequelize.query(
+          `DO $$
+          DECLARE
+            obj record;
+          BEGIN
+            FOR obj IN
+              SELECT
+                evtname "triggerName"
+              from pg_event_trigger
+              where evtname like 'ZAT%'
+            LOOP
+              RAISE NOTICE 'Audit Event Trigger: drop %', obj."triggerName";
+              execute format('DROP EVENT TRIGGER IF EXISTS %I CASCADE;', obj."triggerName");
+            END LOOP;
+          END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      try {
+        await queryInterface.sequelize.query(
+          `DO $$
+          DECLARE
+            obj record;
+          BEGIN
+            FOR obj IN
+              SELECT
+                  p.proname "fuctionName"
+              FROM
+                  pg_catalog.pg_namespace n
+              JOIN
+                  pg_catalog.pg_proc p ON
+                  p.pronamespace = n.oid
+              WHERE p.prokind = 'f'
+              AND n.nspname = 'public'
+              AND  p.proname like 'ZA%'
+            LOOP
+              RAISE NOTICE 'Audit Function: drop %', obj."fuctionName";
+              execute format('DROP FUNCTION IF EXISTS %I;', obj."fuctionName");
+            END LOOP;
+          END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
     },
   ),
 };
