@@ -301,7 +301,7 @@ export default function CreateGoal({ recipient, regionId }) {
               </Link>
             ) : null }
             { showForm && createdGoals.length ? (
-              <Button type="button" outline onClick={clearForm}>Cancel</Button>
+              <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
             ) : null }
             <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
             { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }

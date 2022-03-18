@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import moment from 'moment';
 import {
-  render, screen,
+  render, screen, within,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
@@ -218,7 +218,51 @@ describe('create goal', () => {
     expect(alert.textContent).toBe('There was an error saving your goal');
   });
 
-  it('you can create more than one goal', async () => {
+  it('deletes goals', async () => {
+    fetchMock.post('/api/goals', postResponse);
+
+    const recipient = {
+      id: 2,
+      grants: [
+        {
+          id: 2,
+          numberWithProgramTypes: 'Turtle 2',
+        },
+      ],
+    };
+    renderForm(recipient);
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+
+    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    userEvent.type(goalText, 'This is goal text');
+
+    const save = await screen.findByRole('button', { name: /save and continue/i });
+    userEvent.click(save);
+
+    await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
+
+    const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
+    userEvent.click(goalActions);
+
+    fetchMock.restore();
+    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    expect(fetchMock.called()).toBe(false);
+
+    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /delete/i });
+    userEvent.click(deleteButton);
+    userEvent.tab();
+    userEvent.tab();
+
+    const modalDeleteButton = document.querySelector(':focus');
+    expect(modalDeleteButton.textContent).toBe('Delete');
+
+    userEvent.click(modalDeleteButton);
+    await screen.findByRole('textbox', { name: 'Goal (required)' });
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('create more than one goal', async () => {
     fetchMock.post('/api/goals', postResponse);
 
     const recipient = {
@@ -255,7 +299,7 @@ describe('create goal', () => {
     const another = await screen.findByRole('button', { name: 'Add another goal' });
     userEvent.click(another);
 
-    await screen.findByRole('button', { name: /cancel/i });
+    await screen.findByTestId('create-goal-form-cancel');
 
     goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
     userEvent.type(goalText, 'This is more goal text');
@@ -263,8 +307,59 @@ describe('create goal', () => {
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    const submit = await screen.findByRole('button', { name: /submit goal/i });
-    userEvent.click(submit);
-    expect(fetchMock.called()).toBeTruthy();
+    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+
+    const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
+    userEvent.click(goalActions);
+
+    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /delete/i });
+    userEvent.click(deleteButton);
+    userEvent.tab();
+    userEvent.tab();
+
+    const modalDeleteButton = document.querySelector(':focus');
+    expect(modalDeleteButton.textContent).toBe('Delete');
+
+    userEvent.click(modalDeleteButton);
+    await screen.findByRole('textbox', { name: 'Goal (required)' });
+  });
+
+  it('allows editing of goals', async () => {
+    fetchMock.post('/api/goals', postResponse);
+
+    const recipient = {
+      id: 2,
+      grants: [
+        {
+          id: 2,
+          numberWithProgramTypes: 'Turtle 2',
+        },
+      ],
+    };
+    renderForm(recipient);
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+    expect(fetchMock.called()).toBe(false);
+
+    let goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    userEvent.type(goalText, 'This is goal text');
+
+    const save = await screen.findByRole('button', { name: /save and continue/i });
+    userEvent.click(save);
+
+    const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
+    userEvent.click(goalActions);
+
+    expect(goalText).not.toBeVisible();
+    expect(goalText.value).toBe('');
+
+    const editButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /edit/i });
+    userEvent.click(editButton);
+
+    goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+
+    expect(goalText.value).toBe('This is goal text');
+    userEvent.type(goalText, 'and I want to meet my goals');
+    userEvent.click(save);
   });
 });
