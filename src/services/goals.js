@@ -295,6 +295,7 @@ export async function destroyGoal(goalId) {
   return sequelize.transaction(async (transaction) => {
     try {
       const reportsWithGoal = await ActivityReport.findAll({
+        logging: console.log,
         attributes: ['id'],
         include: [
           {
@@ -324,6 +325,7 @@ export async function destroyGoal(goalId) {
       }
 
       await ObjectiveTopic.destroy({
+        logging: console.log,
         where: {
           objectiveId: {
             [Op.in]: sequelize.literal(
@@ -334,6 +336,7 @@ export async function destroyGoal(goalId) {
       });
 
       await ObjectiveResource.destroy({
+        logging: console.log,
         where: {
           objectiveId: {
             [Op.in]: sequelize.literal(
@@ -344,12 +347,14 @@ export async function destroyGoal(goalId) {
       });
 
       await Objective.destroy({
+        logging: console.log,
         where: {
           goalId,
         },
       });
 
       await GrantGoal.destroy({
+        logging: console.log,
         where: {
           goalId,
         },
@@ -357,6 +362,7 @@ export async function destroyGoal(goalId) {
       });
 
       return Goal.destroy({
+        logging: console.log,
         where: {
           id: goalId,
         },
