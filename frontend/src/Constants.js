@@ -1,12 +1,12 @@
 import moment from 'moment';
 
-export const CONTAINS = 'Contains';
-export const NOT_CONTAINS = 'Does not contain';
-export const BEFORE = 'Is before';
-export const AFTER = 'Is after';
-export const WITHIN = 'Is within';
-export const IS = 'Is';
-export const IS_NOT = 'Is not';
+export const CONTAINS = 'contains';
+export const NOT_CONTAINS = 'does not contain';
+export const BEFORE = 'is on or before';
+export const AFTER = 'is on or after';
+export const WITHIN = 'is within';
+export const IS = 'is';
+export const IS_NOT = 'is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
@@ -22,10 +22,10 @@ export const QUERY_CONDITIONS = {
 };
 
 export const DATE_CONDITIONS = [
+  IS,
   AFTER,
   BEFORE,
   WITHIN,
-  IS,
 ];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';
@@ -125,6 +125,20 @@ export const ROLES = [
   'System Specialist',
 ];
 
+export const OTHER_ENTITY_TYPES = [
+  'CCDF / Child Care Administrator',
+  'Head Start Collaboration Office',
+  'QRIS System',
+  'Regional Head Start Association',
+  'Regional TTA / Other Specialists',
+  'State CCR&R',
+  'State Early Learning Standards',
+  'State Education System',
+  'State Head Start Association',
+  'State Health System',
+  'State Professional Development / Continuing Education',
+];
+
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const TOPICS = [
@@ -207,6 +221,7 @@ export const ALERTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
+export const GOALS_PER_PAGE = 5;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
@@ -215,3 +230,16 @@ export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 export const DATE_FMT = 'YYYY/MM/DD';
 export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
+
+export const GOAL_CLOSE_REASONS = [
+  'Duplicate goal',
+  'Recipient request',
+  'TTA complete',
+];
+
+export const GOAL_SUSPEND_REASONS = [
+  'Key staff turnover',
+  'Recipient request',
+  'Recipient is not responding',
+  'Other',
+];

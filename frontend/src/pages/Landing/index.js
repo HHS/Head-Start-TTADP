@@ -28,13 +28,16 @@ import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
-import useUrlFilters from '../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
+import FilterContext from '../../FilterContext';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
 });
+
+const FILTER_KEY = 'landing-filters';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -56,26 +59,27 @@ function Landing() {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
-  const [filters, setFilters] = useUrlFilters(
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
     defaultRegion !== 14
       && defaultRegion !== 0
       && hasMultipleRegions
       ? [{
         id: uuidv4(),
         topic: 'region',
-        condition: 'Is',
+        condition: 'is',
         query: defaultRegion,
       },
       {
         id: uuidv4(),
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: defaultDate,
       }]
       : [{
         id: uuidv4(),
         topic: 'startDate',
-        condition: 'Is within',
+        condition: 'is within',
         query: defaultDate,
       }],
   );
@@ -160,6 +164,7 @@ function Landing() {
         if (alertsCount) {
           setAlertReportsCount(alertsCount);
         }
+        updateError('');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -320,11 +325,13 @@ function Landing() {
           setDownloadAlertsError={setDownloadAlertsError}
           downloadAllAlertsButtonRef={downloadAllAlertsButtonRef}
         />
-        <ActivityReportsTable
-          filters={filtersToApply}
-          showFilter={false}
-          tableCaption="Approved activity reports"
-        />
+        <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+          <ActivityReportsTable
+            filters={filtersToApply}
+            showFilter={false}
+            tableCaption="Approved activity reports"
+          />
+        </FilterContext.Provider>
       </>
     </>
   );

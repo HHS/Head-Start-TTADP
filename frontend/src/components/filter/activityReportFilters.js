@@ -16,20 +16,21 @@ import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
+import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 
 const EMPTY_MULTI_SELECT = {
-  Is: [],
-  'Is not': [],
+  is: [],
+  'is not': [],
 };
 
 const EMPTY_SINGLE_SELECT = {
-  Is: '',
-  'Is not': '',
+  is: '',
+  'is not': '',
 };
 
 const EMPTY_TEXT_INPUT = {
-  Contains: '',
-  'Does not contain': '',
+  contains: '',
+  'does not contain': '',
 };
 
 const handleArrayQuery = (q) => {
@@ -41,16 +42,20 @@ const handleArrayQuery = (q) => {
 
 const handleStringQuery = (q) => q;
 
+const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
+
+const defaultDateValues = {
+  is: LAST_THIRTY_DAYS,
+  'is within': '',
+  'is on or after': '',
+  'is on or before': '',
+};
+
 export const startDateFilter = {
   id: 'startDate',
-  display: 'Date range',
+  display: 'Date started',
   conditions: DATE_CONDITIONS,
-  defaultValues: {
-    'Is within': '',
-    'Is after': '',
-    'Is before': '',
-    In: '',
-  },
+  defaultValues: defaultDateValues,
   displayQuery: (query) => {
     if (query.includes('-')) {
       return formatDateRange({
@@ -69,6 +74,31 @@ export const startDateFilter = {
     />
   ),
 };
+
+export const endDateFilter = {
+  id: 'endDate',
+  display: 'Date ended',
+  conditions: DATE_CONDITIONS,
+  defaultValues: defaultDateValues,
+  displayQuery: (query) => {
+    if (query.includes('-')) {
+      return formatDateRange({
+        string: query,
+        withSpaces: false,
+      });
+    }
+    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+  },
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDateRange
+      condition={condition}
+      query={query}
+      updateSingleDate={onApplyQuery}
+      onApplyDateRange={onApplyQuery}
+    />
+  ),
+};
+
 export const grantNumberFilter = {
   id: 'grantNumber',
   display: 'Grant number',
@@ -81,6 +111,21 @@ export const grantNumberFilter = {
       inputId={`grantNumber-${condition}-${id}`}
       onApply={onApplyQuery}
       label="Enter a grant number"
+    />
+  ),
+};
+
+export const otherEntitiesFilter = {
+  id: 'otherEntities',
+  display: 'Other entities',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterOtherEntitiesSelect
+      inputId={`role-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
@@ -194,7 +239,7 @@ export const specialistRoleFilter = {
 export const stateCodeFilter = {
   id: 'stateCode',
   display: 'State',
-  conditions: ['Contains'],
+  conditions: ['contains'],
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (

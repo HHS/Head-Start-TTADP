@@ -27,6 +27,7 @@ const Submitter = ({
     displayId,
     calculatedStatus,
     approvers,
+    creatorRole,
   } = formData;
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
@@ -115,6 +116,7 @@ const Submitter = ({
               displayId={displayId}
               approverStatusList={approverStatusList}
               lastSaveTime={lastSaveTime}
+              creatorRole={creatorRole}
             />
           )}
         {submitted
@@ -134,6 +136,7 @@ const Submitter = ({
               onSubmit={onFormSubmit}
               incompletePages={incompletePages}
               approverStatusList={approverStatusList}
+              creatorRole={creatorRole}
             />
           )}
         {approved
@@ -166,6 +169,7 @@ Submitter.propTypes = {
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
+    creatorRole: PropTypes.string,
     id: PropTypes.number,
     displayId: PropTypes.string,
     approvers: PropTypes.arrayOf(
@@ -175,6 +179,7 @@ Submitter.propTypes = {
     ),
   }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment).isRequired,
+
 };
 
 Submitter.defaultProps = {

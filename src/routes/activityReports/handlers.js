@@ -67,7 +67,7 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Report ID',
         },
         {
-          key: 'author',
+          key: 'creatorName',
           header: 'Creator',
         },
         {
@@ -183,6 +183,10 @@ async function sendActivityReportCSV(reports, res) {
         {
           key: 'lastSaved',
           header: 'Last saved',
+        },
+        {
+          key: 'recipientInfo',
+          header: 'Recipient name - Grant number - Recipient ID',
         },
       ],
     };
@@ -416,7 +420,7 @@ export async function unlockReport(req, res) {
 export async function submitReport(req, res) {
   try {
     const { activityReportId } = req.params;
-    const { approverUserIds, additionalNotes } = req.body;
+    const { approverUserIds, additionalNotes, creatorRole } = req.body;
 
     const user = await userById(req.session.userId);
     const report = await activityReportById(activityReportId);
@@ -430,6 +434,7 @@ export async function submitReport(req, res) {
     // Update Activity Report notes and submissionStatus
     const savedReport = await createOrUpdate({
       additionalNotes,
+      creatorRole,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
     }, report);
 
@@ -626,19 +631,19 @@ export async function downloadReports(req, res) {
   try {
     const readRegions = await getUserReadRegions(req.session.userId);
 
-    const reportsWithCount = await getDownloadableActivityReportsByIds(
+    const reports = await getDownloadableActivityReportsByIds(
       readRegions,
       req.query,
     );
 
     const { format = 'json' } = req.query || {};
 
-    if (!reportsWithCount) {
+    if (!reports) {
       res.sendStatus(404);
     } else if (format === 'csv') {
-      await sendActivityReportCSV(reportsWithCount.rows, res);
+      await sendActivityReportCSV(reports, res);
     } else {
-      res.json(reportsWithCount);
+      res.json(reports);
     }
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -649,13 +654,12 @@ export async function downloadAllReports(req, res) {
   try {
     const readRegions = await setReadRegions(req.query, req.session.userId);
 
-    const reportsWithCount = await getAllDownloadableActivityReports(
+    const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
     );
 
-    const rows = reportsWithCount ? reportsWithCount.rows : [];
-    await sendActivityReportCSV(rows, res);
+    await sendActivityReportCSV(reports, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -665,9 +669,7 @@ export async function downloadAllAlerts(req, res) {
   try {
     const { userId } = req.session;
     const query = await setReadRegions(req.query, userId);
-    const alertsWithCount = await getAllDownloadableActivityReportAlerts(userId, query);
-
-    const rows = alertsWithCount ? alertsWithCount.rows : [];
+    const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
     await sendActivityReportCSV(rows, res);
   } catch (error) {

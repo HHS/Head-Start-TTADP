@@ -17,7 +17,7 @@
     "start:worker": "node ./build/server/worker.js",
     "server": "nodemon src/index.js --exec babel-node",
     "worker": "nodemon src/worker.js --exec babel-node",
-    "server:debug": "nodemon src/index.js --exec babel-node --inspect",
+    "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
     "test": "jest src --runInBand",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit --runInBand",
@@ -50,6 +50,7 @@
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:reset": "./bin/reset-all",
     "docker:start": "docker-compose up",
+    "docker:start:debug": "docker-compose --compatibility -f docker-compose.yml -f docker-compose.debug.yml up",
     "docker:stop": "docker-compose down",
     "docker:dbs:start": "docker-compose -f 'docker-compose.yml' up",
     "docker:dbs:stop": "docker-compose -f 'docker-compose.yml' down",
@@ -71,23 +72,13 @@
     "import:hses": "node ./build/server/tools/importGrantRecipientsCLI.js",
     "reconcile:legacy": "node ./build/server/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
-    "populateLegacyOtherEntities": "node ./build/server/tools/populateLegacyOtherEntities.js",
-    "populateLegacyOtherEntities:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyOtherEntities.js",
-    "updateReasonNames": "node ./build/server/tools/updateReasonNamesCLI.js",
-    "updateReasonNames:local": "./node_modules/.bin/babel-node ./src/tools/updateReasonNamesCLI.js",
-    "addMissingGrantsToReports": "node ./build/server/tools/addMissingGrantsToReportsCLI.js",
-    "addMissingGrantsToReports:local": "./node_modules/.bin/babel-node ./src/tools/addMissingGrantsToReportsCLI.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
-    "updateLegacyPopulations": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
-    "updateLegacyPopulations:local": "./node_modules/.bin/babel-node ./src/tools/uupdateLegacyParticipantsCLI.js",
-    "updateLegacyParticipants": "node ./build/server/tools/updateLegacyPopulationsCLI.js",
-    "updateLegacyParticipants:local": "./node_modules/.bin/babel-node ./src/tools/updateLegacyParticipantsCLI.js",
-    "importActivityReportDuration": "node ./build/server/tools/importActivityReportDuration.js",
-    "importActivityReportDuration:local": "./node_modules/.bin/babel-node ./src/tools/importActivityReportDuration.js",
-    "updateTopicNames": "node ./build/server/tools/updateTopicNamesCLI.js",
-    "updateTopicNames:local": "./node_modules/.bin/babel-node ./src/tools/updateTopicNamesCLI.js"
+    "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
+    "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js",
+    "updateChildInvolvementLegacyTargetPopulation": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
+    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js"
   },
   "repository": {
     "type": "git",
@@ -98,7 +89,8 @@
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "marked": "^4.0.10"
   },
   "eslintConfig": {
     "extends": [

@@ -48,12 +48,6 @@ const hsesUsers = [
     name: 'Lauren Rodriguez', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren@adhocteam.us',
   },
   {
-    name: 'Christine Nguyen', hsesUsername: 'test.tta.christine', hsesUserId: '50450', email: 'christine@adhocteam.us',
-  },
-  {
-    name: 'Ryan Ahearn', hsesUsername: 'test.tta.ryan', hsesUserId: '48831', email: 'ryan@adhocteam.us',
-  },
-  {
     name: 'Maria Puhl', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria@adhocteam.us',
   },
   {
@@ -63,13 +57,13 @@ const hsesUsers = [
     name: 'Josh Salisbury', hsesUsername: 'test.tta.josh', hsesUserId: '50490', email: 'josh@adhocteam.us',
   },
   {
-    name: 'Sarah-Jaine Szekeresh', hsesUsername: 'test.tta.sarah-jaine', hsesUserId: '51155', email: 'sarah-jaine@adhocteam.us',
-  },
-  {
     name: 'Rachel Miner', hsesUsername: 'test.tta.rachel', hsesUserId: '51352', email: 'rachel@adhocteam.us',
   },
   {
     name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
+  },
+  {
+    name: 'Garrett Hill', hsesUsername: 'test.tta.garrett', hsesUserId: '51548', email: 'garrett.hill@adhocteam.us',
   },
 ];
 

@@ -14,13 +14,17 @@ const SORT_ORDER = {
   ALPHA: 2,
 };
 
-function sortData(data, order) {
+function sortData(data) {
   const sortedData = [...data];
-  if (order === SORT_ORDER.ALPHA) {
-    sortedData.sort((a, b) => a.topic.localeCompare(b.topic));
-  } else {
-    sortedData.sort((a, b) => b.count - a.count);
-  }
+  /**
+   * commenting this out for not since it would need to be tested and for that
+   * would need some UI to change sort order
+   */
+  // if (order === SORT_ORDER.ALPHA) {
+  //   sortedData.sort((a, b) => a.topic.localeCompare(b.topic));
+  // } else {
+  sortedData.sort((a, b) => b.count - a.count);
+  // }
   return sortedData;
 }
 

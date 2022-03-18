@@ -629,7 +629,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns a csv', async () => {
-      getAllDownloadableActivityReports.mockResolvedValue({ count: 1, rows: [report] });
+      getAllDownloadableActivityReports.mockResolvedValue([report]);
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
       setReadRegions.mockResolvedValue([1]);
       await downloadAllReports(request, mockResponse);
@@ -637,7 +637,7 @@ describe('Activity Report handlers', () => {
     });
 
     it('handles a list of reports that are not found', async () => {
-      getAllDownloadableActivityReports.mockResolvedValue(null);
+      getAllDownloadableActivityReports.mockResolvedValue([]);
       getUserReadRegions.mockResolvedValue([1]);
       await downloadAllReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
@@ -651,7 +651,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns a csv', async () => {
-      getAllDownloadableActivityReportAlerts.mockResolvedValue({ count: 1, rows: [report] });
+      getAllDownloadableActivityReportAlerts.mockResolvedValue([report]);
       getUserReadRegions.mockResolvedValue([1]);
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
 
@@ -660,7 +660,7 @@ describe('Activity Report handlers', () => {
     });
 
     it('handles a list of reports that are not found', async () => {
-      getAllDownloadableActivityReportAlerts.mockResolvedValue(null);
+      getAllDownloadableActivityReportAlerts.mockResolvedValue([]);
       getUserReadRegions.mockResolvedValue([1]);
 
       await downloadAllAlerts(request, mockResponse);
@@ -686,19 +686,19 @@ describe('Activity Report handlers', () => {
           role: ['Grantee Specialist'],
           fullName: 'Arty, GS',
         },
-        collaborators: [
+        activityReportCollaborators: [
           {
-            name: 'Jarty',
-            role: ['System Specialist', 'Grantee Specialist'],
-            fullName: 'Jarty, SS, GS',
+            user: {
+              name: 'Jarty',
+              role: ['System Specialist', 'Grantee Specialist'],
+              fullName: 'Jarty, SS, GS',
+            },
           },
         ],
       };
 
       userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
-      getDownloadableActivityReportsByIds.mockResolvedValue({
-        count: 1, rows: [downloadableReport],
-      });
+      getDownloadableActivityReportsByIds.mockResolvedValue([downloadableReport]);
 
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalled();
@@ -706,8 +706,6 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.send).toHaveBeenCalled();
       const [[value]] = mockResponse.send.mock.calls;
       /* eslint-disable no-useless-escape */
-      expect(value).toContain('\"Creator\"');
-      expect(value).toContain('\"Arty, GS\"');
       expect(value).toContain('\"Collaborators\"');
       expect(value).toContain('\"Jarty, SS, GS\"');
       expect(value).toContain(LEGACY_WARNING);
@@ -764,7 +762,7 @@ describe('Activity Report handlers', () => {
         query: { report: [], format: 'csv' },
       };
 
-      getDownloadableActivityReportsByIds.mockResolvedValue({ count: 0, rows: [] });
+      getDownloadableActivityReportsByIds.mockResolvedValue([]);
 
       await downloadReports(request, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalled();

@@ -169,10 +169,11 @@ export default function FilterMenu({
     }
   };
 
+  const hasMultipleFilters = filters && filters.length > 0;
   return (
     <DropdownMenu
-      buttonText="Filters"
-      buttonAriaLabel="open filters for this page"
+      buttonText={`Filters${hasMultipleFilters ? ` (${filters.length})` : ''}`}
+      buttonAriaLabel={`open filters for this page${hasMultipleFilters ? ` , ${filters.length} currently applied` : ''}`}
       onApply={onApply}
       applyButtonAria={applyButtonAria}
       showCancel
@@ -185,7 +186,7 @@ export default function FilterMenu({
       onOpen={onOpen}
     >
 
-      <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2">
+      <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2" data-testid="filters">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
           <div className="margin-bottom-1">

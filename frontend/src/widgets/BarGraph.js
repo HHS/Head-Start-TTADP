@@ -74,6 +74,9 @@ function BarGraph({ data, yAxisLabel, xAxisLabel }) {
           size: 16,
         },
       },
+      font: {
+        color: '#1b1b1b',
+      },
       width,
       margin: {
         l: 80,

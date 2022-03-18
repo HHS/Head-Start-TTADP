@@ -115,6 +115,9 @@ export function TopicFrequencyGraphWidget({
           size: 16,
         },
       },
+      font: {
+        color: '#1b1b1b',
+      },
       width,
       margin: {
         l: 80,
@@ -124,12 +127,20 @@ export function TopicFrequencyGraphWidget({
       xaxis: {
         automargin: true,
         tickangle: 0,
+        title: {
+          font: {
+            color: '#1b1b1b',
+          },
+        },
       },
       yaxis: {
         tickformat: ',.0d',
         title: {
           standoff: 60,
           text: 'Number of Activity Reports',
+          font: {
+            color: '#1b1b1b',
+          },
         },
       },
       hovermode: 'none',
