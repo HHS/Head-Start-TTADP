@@ -51,9 +51,10 @@ export async function processFiles() {
     const agencyData = await fs.readFile('./temp/agency.xml');
     const agency = JSON.parse(toJson(agencyData));
 
-    // filter out delegates by matching to the non-delegates
+    // filter out delegates by matching to the non-delegates;
+    // filter out recipient 5 (TTAHUB-705)
     // eslint-disable-next-line max-len
-    const recipientsNonDelegates = agency.agencies.agency.filter((a) => grantRecipients.some((gg) => gg.agency_id === a.agency_id));
+    const recipientsNonDelegates = agency.agencies.agency.filter((a) => grantRecipients.some((gg) => gg.agency_id === a.agency_id && a.agency_id !== '5'));
     const recipientsForDb = recipientsNonDelegates.map((g) => ({
       id: parseInt(g.agency_id, 10),
       name: g.agency_name,
@@ -91,10 +92,11 @@ export async function processFiles() {
 
       const regionId = parseInt(g.region_id, 10);
       const cdi = regionId === 13;
+      // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
       return {
         id: parseInt(g.grant_award_id, 10),
         number: g.grant_number,
-        recipientId: parseInt(g.agency_id, 10),
+        recipientId: g.agency_id === '5' ? 7782 : parseInt(g.agency_id, 10),
         status: g.grant_status,
         stateCode: valueFromXML(g.grantee_state),
         startDate,

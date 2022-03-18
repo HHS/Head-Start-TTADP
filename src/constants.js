@@ -124,3 +124,12 @@ export const USER_ROLES = [
   'Health Specialist',
   'System Specialist',
 ];
+
+export const CLOSE_SUSPEND_REASONS = [
+  'Duplicate goal',
+  'Recipient request',
+  'TTA complete',
+  'Key staff turnover',
+  'Recipient is not responding',
+  'Other',
+];
