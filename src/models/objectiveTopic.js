@@ -10,7 +10,8 @@ const {
    */
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveTopic extends Model {
-    static associate() {
+    static associate(models) {
+      ObjectiveTopic.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade' });
     }
   }
   ObjectiveTopic.init({
