@@ -11,7 +11,9 @@ import db, {
 } from '../models';
 import { auditLogger } from '../logger';
 
-describe.skip('destroyGoal handler', () => {
+describe('destroyGoal handler', () => {
+  const oldFindAll = ActivityReport.findAll;
+
   afterEach(async () => {
     jest.clearAllMocks();
   });
@@ -29,6 +31,7 @@ describe.skip('destroyGoal handler', () => {
   };
 
   beforeAll(async () => {
+    ActivityReport.findAll = jest.fn().mockResolvedValue([1]);
     recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }) });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     goal = await Goal.create({
@@ -61,6 +64,8 @@ describe.skip('destroyGoal handler', () => {
   });
 
   afterAll(async () => {
+    ActivityReport.findAll = oldFindAll;
+
     await ObjectiveResource.destroy({
       where: {
         objectiveId: objective.id,
@@ -99,7 +104,7 @@ describe.skip('destroyGoal handler', () => {
     await db.sequelize.close();
   });
 
-  it('destroys goals and associated grantgoals', async () => {
+  it('destroys goals and associated data', async () => {
     let foundGoal = await Goal.findAll({
       where: {
         id: goal.id,
@@ -164,15 +169,7 @@ describe.skip('destroyGoal handler', () => {
     expect(foundObjectiveResource.length).toBe(0);
   });
 
-  it('handles invalid ids', async () => {
-    const result = await destroyGoal('fish');
-    expect(result).toBe(0);
-  });
-
-  it('won\'t delete a goal if its on an AR', async () => {
-    const oldFindAll = ActivityReport.findAll;
-    ActivityReport.findAll = jest.fn().mockResolvedValue([1]);
-
+  it('wont delete a goal if its on an AR', async () => {
     const spy = jest.spyOn(auditLogger, 'error');
     const result = await destroyGoal(goalTwo.id);
 
@@ -180,9 +177,11 @@ describe.skip('destroyGoal handler', () => {
     expect(foundGoal).toBeTruthy();
 
     expect(result).toBe(0);
-    expect(spy).toBeCalledWith(
-      'SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted',
-    );
-    ActivityReport.findAll = oldFindAll;
+    expect(spy).toBeCalledWith('SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted');
+  });
+
+  it('handles invalid ids', async () => {
+    const result = await destroyGoal('fish');
+    expect(result).toBe(0);
   });
 });
