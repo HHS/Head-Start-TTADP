@@ -11,8 +11,9 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { withText } from '../../../testHelpers';
-import ActivityReport, { unflattenResourcesUsed, findWhatsChanged } from '../index';
+import ActivityReport, { unflattenResourcesUsed, findWhatsChanged, updateGoals } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
+import UserContext from '../../../UserContext';
 
 const formData = () => ({
   regionId: 1,
@@ -42,22 +43,30 @@ const formData = () => ({
   author: { name: 'test' },
   topics: 'first',
   userId: 1,
+  goals: [],
   updatedAt: new Date().toISOString(),
+  creatorRole: 'Reporter',
+  attachments: [],
+  creatorNameWithRole: 'test',
 });
 const history = createMemoryHistory();
+
+const user = {
+  id: 1, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+};
 
 const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <ActivityReport
-        match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-        location={{
-          state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-        }}
-        user={{
-          id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-        }}
-      />
+      <UserContext.Provider value={{ user }}>
+        <ActivityReport
+          match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+          location={{
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+          }}
+          user={{ ...user, id: userId }}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 };
@@ -81,6 +90,37 @@ describe('ActivityReport', () => {
     renderActivityReport('1', 'activity-summary', true);
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
+  describe('updateGoals', () => {
+    it('sets new goals as such', () => {
+      const report = {
+        goals: [{
+          id: 123,
+          name: 'name',
+        }],
+      };
+      const updateFn = updateGoals(report);
+      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name', new: true }] });
+
+      expect(goals.length).toBe(1);
+      expect(goals[0].id).toBe(123);
+      expect(goals[0].new).toBeTruthy();
+    });
+
+    it('sets old goals as such', () => {
+      const report = {
+        goals: [{
+          id: 123,
+          name: 'name',
+        }],
+      };
+      const updateFn = updateGoals(report);
+      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name' }] });
+      expect(goals.length).toBe(1);
+      expect(goals[0].id).toBe(123);
+      expect(goals[0].new).toBeFalsy();
+    });
   });
 
   describe('for read only users', () => {
@@ -125,6 +165,28 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
+  describe('resetToDraft', () => {
+    it('navigates to the correct page', async () => {
+      const data = formData();
+      // load the report
+      fetchMock.get('/api/activity-reports/3', {
+        ...data,
+        goals: [],
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
+      // reset to draft
+      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
+
+      renderActivityReport(3, 'review');
+      const button = await screen.findByRole('button', { name: /reset to draft/i });
+      userEvent.click(button);
+      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
+      expect(notes).toBeVisible();
+      expect(notes.getAttribute('contenteditable')).toBe('true');
+    });
+  });
+
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
@@ -166,9 +228,9 @@ describe('ActivityReport', () => {
 
     it('displays review submit save alert', async () => {
       renderActivityReport('new', 'review');
-      fetchMock.post('/api/activity-reports', { id: 1 });
+      fetchMock.post('/api/activity-reports', formData);
       const button = await screen.findByRole('button', { name: 'Save Draft' });
-      await userEvent.click(button);
+      userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
@@ -187,6 +249,17 @@ describe('ActivityReport', () => {
       });
     });
 
+    it('finds whats changed branch cases', () => {
+      const orig = {
+        startDate: 'blah', creatorRole: '',
+      };
+      const changed = {
+        startDate: 'blah', creatorRole: '',
+      };
+      const result = findWhatsChanged(orig, changed);
+      expect(result).toEqual({ startDate: null, creatorRole: null });
+    });
+
     it('displays the creator name', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       renderActivityReport(1);
@@ -200,6 +273,21 @@ describe('ActivityReport', () => {
       const button = await screen.findByRole('button', { name: 'Topics and resources In Progress' });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
+    });
+
+    it('automatically sets creator role on existing report', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
+      fetchMock.put('/api/activity-reports/1', {});
+      renderActivityReport(1);
+
+      const button = await screen.findByRole('button', { name: 'Save draft' });
+      userEvent.click(button);
+
+      const lastOptions = fetchMock.lastOptions();
+      const bodyObj = JSON.parse(lastOptions.body);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
+      expect(bodyObj.creatorRole).toEqual('Reporter');
     });
   });
 

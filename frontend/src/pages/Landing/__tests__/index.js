@@ -1,8 +1,7 @@
-/* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor, within,
+  render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -15,6 +14,7 @@ import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString, formatDateRange } from '../../../utils';
+import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -29,7 +29,7 @@ const defaultDate = formatDateRange({
 const filters = [{
   id: uuidv4(),
   topic: 'startDate',
-  condition: 'Is within',
+  condition: 'is within',
   query: defaultDate,
 }];
 
@@ -69,6 +69,11 @@ const renderLanding = (user) => {
 };
 
 describe('Landing Page', () => {
+  mockWindowProperty('localStorage', {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  });
   beforeEach(async () => {
     fetchMock.get(base, { count: 2, rows: activityReports });
     fetchMock.get(baseWithRegionOne, { count: 2, rows: activityReports });
@@ -160,9 +165,9 @@ describe('Landing Page', () => {
     expect(recipientColumnHeader).toBeVisible();
   });
 
-  test('displays start date column', async () => {
+  test('displays date started column', async () => {
     const startDateColumnHeader = await screen.findByRole('columnheader', {
-      name: /start date/i,
+      name: /date started/i,
     });
     expect(startDateColumnHeader).toBeVisible();
   });
@@ -434,7 +439,7 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Start date', async () => {
-    const columnHeaders = await screen.findAllByRole('button', { name: /start date\. activate to sort ascending/i });
+    const columnHeaders = await screen.findAllByRole('button', { name: /date started\. activate to sort ascending/i });
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get(`/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&${dateFilter}`,
@@ -524,7 +529,7 @@ describe('handleApplyFilters', () => {
     userEvent.selectOptions(topic, 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Contains');
+    userEvent.selectOptions(condition, 'contains');
 
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test', { count: 0, rows: [] });
     const query = await screen.findByRole('textbox');
@@ -588,7 +593,7 @@ describe('handleApplyAlertFilters', () => {
     userEvent.selectOptions(topic, 'reportId');
 
     const condition = await screen.findByRole('combobox', { name: 'condition' });
-    userEvent.selectOptions(condition, 'Contains');
+    userEvent.selectOptions(condition, 'contains');
 
     const query = await screen.findByRole('textbox');
     userEvent.type(query, 'test');
@@ -608,76 +613,5 @@ describe('handleApplyAlertFilters', () => {
     expect(mockAnnounce).toHaveBeenCalled();
     // wait for everything to finish loading
     await waitFor(() => expect(screen.queryByText(/Loading data/i)).toBeNull());
-  });
-});
-
-describe('handles region filter', () => {
-  beforeEach(() => {
-    delete window.location;
-    window.location = new URL('https://www.test.gov');
-  });
-
-  afterEach(() => fetchMock.restore());
-
-  it('adds region filter', async () => {
-    fetchMock.get(baseAlertsWithRegionOne, {
-      count: 10,
-      alerts: generateXFakeReports(10),
-    });
-
-    fetchMock.get(baseWithRegionOne,
-      { count: 1, rows: generateXFakeReports(1) });
-
-    fetchMock.get(defaultOverviewUrlWithRegionOne, overviewRegionOne);
-
-    const user = {
-      name: 'test@test.com',
-      homeRegionId: 1,
-      permissions: [
-        {
-          scopeId: 3,
-          regionId: 1,
-        },
-        {
-          scopeId: 3,
-          regionId: 2,
-        },
-      ],
-    };
-    renderLanding(user);
-
-    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
-    fireEvent.click(filterMenuButton);
-
-    const regionFilter = await screen.findByRole('combobox', { name: /select region to filter by/i });
-    expect(await within(regionFilter).findByText(/region 1/i)).toBeVisible();
-  });
-  it('hides region filter', async () => {
-    fetchMock.get(baseAlerts, {
-      count: 10,
-      alerts: generateXFakeReports(10),
-    });
-
-    fetchMock.get(base,
-      { count: 1, rows: generateXFakeReports(1) });
-
-    fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-
-    const user = {
-      name: 'test@test.com',
-      homeRegionId: 1,
-      permissions: [
-        {
-          scopeId: 3,
-          regionId: 1,
-        },
-      ],
-    };
-    renderLanding(user);
-
-    const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
-    fireEvent.click(filterMenuButton);
-    const regionFilter = screen.queryByRole('combobox', { name: /select region to filter by/i });
-    expect(regionFilter).not.toBeInTheDocument();
   });
 });

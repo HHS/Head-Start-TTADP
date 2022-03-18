@@ -1442,7 +1442,7 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([firstReport.id, secondReport.id]));
     });
 
-    it('after returns reports with create dates before the given date', async () => {
+    it('after returns reports with create dates after the given date', async () => {
       const filters = { 'createDate.aft': '2021/06/06' };
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
@@ -1464,6 +1464,76 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
     });
   });
+
+  describe('endDate', () => {
+    let firstReport;
+    let secondReport;
+    let thirdReport;
+    let fourthReport;
+    let possibleIds;
+
+    beforeAll(async () => {
+      firstReport = await ActivityReport.create(
+        { ...draftReport, id: 95842, endDate: new Date(2020, 8, 1) },
+      );
+      secondReport = await ActivityReport.create(
+        { ...draftReport, id: 95843, endDate: new Date(2020, 8, 2) },
+      );
+      thirdReport = await ActivityReport.create(
+        { ...draftReport, id: 95844, endDate: new Date(2020, 8, 3) },
+      );
+      fourthReport = await ActivityReport.create(
+        { ...draftReport, id: 95845, endDate: new Date(2020, 8, 4) },
+      );
+      possibleIds = [
+        firstReport.id,
+        secondReport.id,
+        thirdReport.id,
+        fourthReport.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+      });
+    });
+
+    it('before returns reports with end dates before the given date', async () => {
+      const filters = { 'endDate.bef': '2020/09/02' };
+      const { activityReport: scope } = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([firstReport.id, secondReport.id]));
+    });
+
+    it('after returns reports with end dates after the given date', async () => {
+      const filters = { 'endDate.aft': '2020/09/04' };
+      const { activityReport: scope } = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([fourthReport.id]));
+    });
+
+    it('within returns reports with create dates between the two dates', async () => {
+      const filters = { 'endDate.win': '2020/09/01-2020/09/03' };
+      const { activityReport: scope } = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([firstReport.id, secondReport.id, thirdReport.id]));
+    });
+  });
+
   describe('region id', () => {
     let includedReport1;
     let includedReport2;
@@ -1508,6 +1578,98 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('only other entities', () => {
+    let reportIncluded1;
+    let reportExcluded;
+    let reportIncluded2;
+
+    let otherEntityIncluded1;
+    let otherEntityIncluded2;
+    let otherEntityExcluded;
+
+    let activityRecipientIncluded1;
+    let activityRecipientIncluded2;
+    let activityRecipientExcluded;
+
+    let possibleIds;
+
+    beforeAll(async () => {
+      otherEntityIncluded1 = await OtherEntity.create({ id: 25458, name: 'Head Start Collaboration Office' });
+      otherEntityExcluded = await OtherEntity.create({ id: 25459, name: 'QRIS System' });
+      otherEntityIncluded2 = await OtherEntity.create({ id: 25460, name: 'State CCR&R' });
+
+      reportIncluded1 = await ActivityReport.create(
+        { userId: mockUser.id, ...draftReport },
+      );
+      reportIncluded2 = await ActivityReport.create(
+        { userId: mockUser.id, ...draftReport },
+      );
+      reportExcluded = await ActivityReport.create(
+        { userId: mockUser.id, ...draftReport },
+      );
+
+      activityRecipientIncluded1 = await ActivityRecipient.create({
+        activityReportId: reportIncluded1.id,
+        otherEntityId: otherEntityIncluded1.id,
+      });
+      activityRecipientExcluded = await ActivityRecipient.create({
+        activityReportId: reportExcluded.id,
+        otherEntityId: otherEntityExcluded.id,
+      });
+      activityRecipientIncluded2 = await ActivityRecipient.create({
+        activityReportId: reportIncluded2.id,
+        otherEntityId: otherEntityIncluded2.id,
+      });
+
+      possibleIds = [
+        reportIncluded1.id,
+        reportIncluded2.id,
+        reportExcluded.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityRecipient.destroy({
+        where: {
+          id: [
+            activityRecipientIncluded1.id,
+            activityRecipientIncluded2.id,
+            activityRecipientExcluded.id,
+          ],
+        },
+      });
+      await ActivityReport.destroy({
+        where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+      });
+      await OtherEntity.destroy({
+        where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
+      });
+    });
+
+    it('includes other entities', async () => {
+      const filters = { 'otherEntities.in': ['Head Start Collaboration Office', 'State CCR&R'] };
+      const { activityReport: scope } = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+    });
+
+    it('excludes other entities', async () => {
+      const filters = { 'otherEntities.nin': ['Head Start Collaboration Office', 'State CCR&R'] };
+      const { activityReport: scope } = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
     });
   });
 });

@@ -63,8 +63,20 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
+        return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+      },
+    },
+    numberWithProgramTypes: {
+      type: DataTypes.VIRTUAL,
+      get() {
         const programTypes = this.programTypes.length > 0 ? ` - ${this.programTypes.join(', ')}` : '';
-        return `${this.recipient.name} - ${this.number}${programTypes}`;
+        return `${this.number} ${programTypes}`;
+      },
+    },
+    recipientInfo: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.recipient.name} - ${this.number} - ${this.recipient.id}`;
       },
     },
   }, {

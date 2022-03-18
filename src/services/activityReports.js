@@ -21,11 +21,49 @@ import {
   NextStep,
   Objective,
   Program,
+  ActivityReportObjective,
 } from '../models';
 
 import { saveGoalsForReport } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
+
+export async function batchQuery(query, limit) {
+  let finished = false;
+  let page = 0;
+  const finalResult = [];
+
+  while (!finished) {
+    // eslint-disable-next-line no-await-in-loop
+    const rows = await ActivityReport.findAll({
+      ...query,
+      limit,
+      offset: page * limit,
+    });
+    /*
+      Sequelize adds a bunch of data/functions to items it retrieves from
+      the database. We _should_ be able to give sequelize `raw: true` to
+      get results without the extra sequelize "stuff", but the link to an
+      issue below shows sequelize can't handle `raw: true` with `hasMany`
+      associations.
+
+      When DB objects have the extra sequelize "stuff" we run into memory
+      issues. When we get only data from the DB we don't run into memory
+      issues because all the sequelize "stuff" we don't need is garbage
+      collected at some point.
+
+      See https://github.com/sequelize/sequelize/issues/3897
+    */
+    const raw = JSON.parse(JSON.stringify(rows));
+    finalResult.push(...raw);
+    if (rows.length < limit) {
+      finished = true;
+    }
+    page += 1;
+  }
+
+  return finalResult;
+}
 
 async function saveReportCollaborators(activityReportId, collaborators, transaction) {
   const newCollaborators = collaborators.map((collaborator) => ({
@@ -348,6 +386,8 @@ export function activityReports(
         'legacyId',
         'createdAt',
         'approvedAt',
+        'creatorRole',
+        'creatorName',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),
@@ -474,6 +514,8 @@ export async function activityReportAlerts(userId, {
         'regionId',
         'userId',
         'createdAt',
+        'creatorRole',
+        'creatorName',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
         ),
@@ -690,115 +732,127 @@ export async function possibleRecipients(regionId) {
   return { grants, otherEntities };
 }
 
-async function getDownloadableActivityReports(where) {
-  return ActivityReport.findAndCountAll(
-    {
-      where,
-      attributes: {
-        include: ['displayId', 'createdAt', 'approvedAt'],
-        exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
-      },
-      include: [
-        {
+async function getDownloadableActivityReports(where, separate = true) {
+  const query = {
+    where,
+    attributes: {
+      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'creatorName'],
+      exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
+    },
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        separate,
+        include: [{
           model: Objective,
-          as: 'objectives',
+          as: 'objective',
           include: [{
             model: Goal,
             as: 'goal',
           }],
-          attributes: ['title', 'status', 'ttaProvided'],
-        },
-        {
-          model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'number', 'programSpecialistName'],
-              as: 'grant',
-              required: false,
-              include: [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['name'],
-                },
-                {
-                  model: Program,
-                  as: 'programs',
-                  attributes: ['programType'],
-                },
-              ],
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              required: false,
-            },
-          ],
-        },
-        {
-          model: File,
-          where: {
-            status: {
-              [Op.ne]: 'UPLOAD_FAILED',
-            },
+          attributes: ['id', 'title', 'status', 'ttaProvided'],
+        }],
+        order: [['objective', 'goal', 'id'], ['objective', 'id']],
+      },
+      {
+        model: ActivityRecipient,
+        attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
+        as: 'activityRecipients',
+        required: false,
+        separate,
+        include: [
+          {
+            model: Grant,
+            attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo', 'programTypes'],
+            as: 'grant',
+            include: [
+              {
+                model: Recipient,
+                as: 'recipient',
+              },
+              {
+                model: Program,
+                as: 'programs',
+                attributes: ['programType'],
+              },
+            ],
           },
-          as: 'attachments',
-          required: false,
+          {
+            model: OtherEntity,
+            as: 'otherEntity',
+          },
+        ],
+      },
+      {
+        model: File,
+        where: {
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
+          },
         },
-        {
+        as: 'attachments',
+        separate,
+        required: false,
+      },
+      {
+        model: User,
+        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+        as: 'author',
+      },
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        separate,
+        include: [{
           model: User,
-          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
-          as: 'author',
-        },
-        {
-          model: User,
+          as: 'user',
           attributes: ['id', 'name', 'role', 'fullName'],
-          as: 'collaborators',
-          through: { attributes: [] },
-        },
-        {
-          model: NextStep,
-          where: {
-            noteType: {
-              [Op.eq]: 'SPECIALIST',
-            },
+        }],
+      },
+      {
+        model: NextStep,
+        where: {
+          noteType: {
+            [Op.eq]: 'SPECIALIST',
           },
-          attributes: ['note', 'id'],
-          as: 'specialistNextSteps',
-          required: false,
         },
-        {
-          model: NextStep,
-          where: {
-            noteType: {
-              [Op.eq]: 'RECIPIENT',
-            },
+        attributes: ['note', 'id'],
+        as: 'specialistNextSteps',
+        separate,
+        required: false,
+      },
+      {
+        model: NextStep,
+        where: {
+          noteType: {
+            [Op.eq]: 'RECIPIENT',
           },
-          attributes: ['note', 'id'],
-          as: 'recipientNextSteps',
-          required: false,
         },
-        {
-          model: ActivityReportApprover,
-          attributes: ['userId'],
-          as: 'approvers',
-          required: false,
-          include: [
-            {
-              model: User,
-              attributes: ['name'],
-            },
-          ],
-        },
-      ],
-      distinct: true,
-      order: [['id', 'DESC']],
-    },
-  );
+        attributes: ['note', 'id'],
+        as: 'recipientNextSteps',
+        separate,
+        required: false,
+      },
+      {
+        model: ActivityReportApprover,
+        attributes: ['userId'],
+        as: 'approvers',
+        required: false,
+        separate,
+        include: [
+          {
+            model: User,
+            attributes: ['name'],
+          },
+        ],
+      },
+    ],
+    subQuery: separate,
+    order: [['id', 'DESC']],
+  };
+
+  return batchQuery(query, 2000);
 }
 
 export async function getAllDownloadableActivityReports(
@@ -826,11 +880,13 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
     [Op.and]: scopes,
     [Op.or]: [
       { // User is approver, and report is submitted or needs_action
-        [Op.or]: [
-          { submissionStatus: REPORT_STATUSES.SUBMITTED },
-          { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-        ],
-        '$approvers.userId$': userId,
+        [Op.and]: [{
+          [Op.or]: [
+            { calculatedStatus: REPORT_STATUSES.SUBMITTED },
+            { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+          ],
+          '$approvers.userId$': userId,
+        }],
       },
       { // User is author or collaborator, and report is approved
         [Op.and]: [
@@ -842,7 +898,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
             ],
           },
           {
-            [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+            [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
           },
         ],
       },
@@ -850,7 +906,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
     legacyId: null,
   };
 
-  return getDownloadableActivityReports(where);
+  return getDownloadableActivityReports(where, false);
 }
 
 /**

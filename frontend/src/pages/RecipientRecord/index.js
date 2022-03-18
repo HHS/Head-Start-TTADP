@@ -16,6 +16,7 @@ import GoalsObjectives from './pages/GoalsObjectives';
 export default function RecipientRecord({ match }) {
   const { recipientId, regionId } = match.params;
 
+  const [loading, setLoading] = useState(true);
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -33,6 +34,7 @@ export default function RecipientRecord({ match }) {
   useEffect(() => {
     async function fetchRecipient() {
       try {
+        setLoading(true);
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({
@@ -40,13 +42,13 @@ export default function RecipientRecord({ match }) {
           });
         }
       } catch (e) {
-        if (e instanceof HTTPError) {
-          if (e.status === 404) {
-            setError('Recipient record not found');
-          } else {
-            setError('There was an error fetching recipient data');
-          }
+        if (e instanceof HTTPError && e.status === 404) {
+          setError('Recipient record not found');
+        } else {
+          setError('There was an error fetching recipient data');
         }
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -55,17 +57,17 @@ export default function RecipientRecord({ match }) {
       return;
     }
 
-    try {
-      const id = parseInt(recipientId, DECIMAL_BASE);
-      const region = parseInt(regionId, DECIMAL_BASE);
-      fetchRecipient(id, region);
-    } catch (err) {
-      setError('There was an error fetching recipient data');
-    }
+    const id = parseInt(recipientId, DECIMAL_BASE);
+    const region = parseInt(regionId, DECIMAL_BASE);
+    fetchRecipient(id, region);
   }, [recipientData.recipientName, recipientId, match.params, regionId]);
 
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
+
+  if (loading) {
+    return <div>loading...</div>;
+  }
 
   return (
     <>
@@ -116,7 +118,11 @@ export default function RecipientRecord({ match }) {
                 <Route
                   path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives"
                   render={() => (
-                    <GoalsObjectives />
+                    <GoalsObjectives
+                      recipientId={recipientId}
+                      regionId={regionId}
+                      recipient={recipientData}
+                    />
                   )}
                 />
               </FeatureFlag>

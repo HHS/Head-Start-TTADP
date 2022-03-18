@@ -24,6 +24,7 @@ export const DECIMAL_BASE = 10;
 
 export const REPORTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
+export const GOALS_PER_PAGE = 5;
 
 export const APPROVER_STATUSES = {
   APPROVED: 'approved',
@@ -104,4 +105,31 @@ export const TARGET_POPULATIONS = [
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
+];
+
+export const USER_ROLES = [
+  'Regional Program Manager',
+  'COR',
+  'Supervisory Program Specialist',
+  'Program Specialist',
+  'Grants Specialist',
+  'Central Office',
+  'TTAC',
+  'Admin. Assistant',
+  'Early Childhood Manager',
+  'Early Childhood Specialist',
+  'Family Engagement Specialist',
+  'Grantee Specialist Manager',
+  'Grantee Specialist',
+  'Health Specialist',
+  'System Specialist',
+];
+
+export const CLOSE_SUSPEND_REASONS = [
+  'Duplicate goal',
+  'Recipient request',
+  'TTA complete',
+  'Key staff turnover',
+  'Recipient is not responding',
+  'Other',
 ];

@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { CLOSE_SUSPEND_REASONS } = require('../constants');
 
 /**
  * Goals table. Stores goals for tta.
@@ -22,6 +23,24 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     timeframe: DataTypes.STRING,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
+    goalNumber: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { id, grants } = this;
+        let regionId = 0;
+        if (grants && grants.length > 0) {
+          regionId = grants[0].regionId;
+        }
+        return `R${regionId}-G-${id}`;
+      },
+    },
+    closeSuspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
+    },
+    closeSuspendContext: {
+      type: DataTypes.TEXT,
+    },
   }, {
     sequelize,
     modelName: 'Goal',

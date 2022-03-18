@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
-const { REPORT_STATUSES } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 
 function formatDate(fieldName) {
   const raw = this.getDataValue(fieldName);
@@ -29,12 +29,22 @@ function copyStatus(report) {
   }
 }
 
+const generateCreatorNameWithRole = (ar) => {
+  const creatorName = ar.author ? ar.author.name : '';
+  let roles = '';
+  if (ar.creatorRole) {
+    roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR' ? `, ${ar.creatorRole}` : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
+  }
+  return `${creatorName}${roles}`;
+};
+
 module.exports = (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsToMany(models.User, {
         through: models.ActivityReportCollaborator,
         // The key in the join table that points to the model defined in this file
@@ -49,6 +59,7 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
+      ActivityReport.hasMany(models.ActivityReportObjective, { foreignKey: 'activityReportId', as: 'activityReportObjectives' });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
           goalId: { [Op.is]: null },
@@ -180,6 +191,7 @@ module.exports = (sequelize, DataTypes) => {
             this.participants,
             this.topics,
             this.ttaType,
+            this.creatorRole,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
@@ -230,6 +242,12 @@ module.exports = (sequelize, DataTypes) => {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
     },
+    creatorNameWithRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return generateCreatorNameWithRole(this);
+      },
+    },
     approvedAt: {
       allowNull: true,
       type: DataTypes.DATE,
@@ -253,6 +271,23 @@ module.exports = (sequelize, DataTypes) => {
           }
           return 0;
         });
+      },
+    },
+    creatorRole: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
+    },
+    creatorName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        // Any report in the alerts table should show the set creator role.
+        if (this.creatorRole || this.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+          return this.creatorNameWithRole;
+        }
+        if (this.author) {
+          return this.author.fullName;
+        }
+        return null;
       },
     },
   }, {

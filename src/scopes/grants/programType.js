@@ -5,7 +5,7 @@ import { filterAssociation } from '../utils';
 const programTypeFilter = 'SELECT "grantId" FROM "Programs" WHERE "programType"';
 
 function subQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"Grant"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`${term}`)})`));
+  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`${term}`)})`));
 }
 
 export function withProgramTypes(types) {

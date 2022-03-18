@@ -2,7 +2,9 @@ import moment from 'moment';
 import {
   Recipient, Grant, Program, sequelize,
 } from '../models';
-import { allRecipients, recipientById, recipientsByName } from './recipient';
+import {
+  allRecipients, recipientById, recipientsByName,
+} from './recipient';
 import filtersToScopes from '../scopes';
 
 describe('Recipient DB service', () => {
