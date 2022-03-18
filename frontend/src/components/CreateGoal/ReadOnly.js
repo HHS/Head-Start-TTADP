@@ -27,7 +27,7 @@ export default function ReadOnly({
         ];
 
         return (
-          <>
+          <div key={`goal${goal.id}`}>
             <Modal
               modalRef={modalRef}
               title="Delete this goal"
@@ -41,11 +41,11 @@ export default function ReadOnly({
                 <span>This action cannot be undone.</span>
               </>
             </Modal>
-            <div key={`goal${goal.id}`} className="ttahub-goal-form-goal-summary padding-4 margin-y-4 position-relative">
+            <div className="ttahub-goal-form-goal-summary padding-4 margin-y-4 position-relative">
               <h2 className="margin-top-0">Recipient TTA goal</h2>
               <div className="position-absolute pin-top pin-right padding-4">
                 <ContextMenu
-                  label="Goal actions"
+                  label={`Actions for Goal ${goal.id}`}
                   menuItems={menuItems}
                 />
               </div>
@@ -61,7 +61,7 @@ export default function ReadOnly({
                 </>
               ) : null }
             </div>
-          </>
+          </div>
         );
       })}
     </>
