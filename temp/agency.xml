@@ -19,4 +19,14 @@
   <agency_name>Multi ID Agency</agency_name>
   <agency_type xsi:nil="true"/>
 </agency>
+<agency>
+  <agency_id>5</agency_id>
+  <agency_name>Department of Human Services</agency_name>
+  <agency_type>Government Agency (Non-CAA)</agency_type>
+</agency>
+<agency>
+  <agency_id>7782</agency_id>
+  <agency_name>Department of Human Services</agency_name>
+  <agency_type>Government Agency (Non-CAA)</agency_type>
+</agency>
 </agencies>
