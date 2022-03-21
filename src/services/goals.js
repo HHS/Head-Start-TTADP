@@ -324,7 +324,7 @@ export async function destroyGoal(goalId) {
         throw new Error('Goal is on an activity report and can\'t be deleted');
       }
 
-      await ObjectiveTopic.destroy({
+      const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
         where: {
           objectiveId: {
             [Op.in]: sequelize.literal(
@@ -335,7 +335,7 @@ export async function destroyGoal(goalId) {
         transaction,
       });
 
-      await ObjectiveResource.destroy({
+      const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
         where: {
           objectiveId: {
             [Op.in]: sequelize.literal(
@@ -346,26 +346,34 @@ export async function destroyGoal(goalId) {
         transaction,
       });
 
-      await Objective.destroy({
+      const objectivesDestroyed = await Objective.destroy({
         where: {
           goalId,
         },
         transaction,
       });
 
-      await GrantGoal.destroy({
+      const grantGoalsDestroyed = await GrantGoal.destroy({
         where: {
           goalId,
         },
         transaction,
       });
 
-      return Goal.destroy({
+      const goalsDestroyed = await Goal.destroy({
         where: {
           id: goalId,
         },
         transaction,
       });
+
+      return {
+        goalsDestroyed,
+        grantGoalsDestroyed,
+        objectiveResourcesDestroyed,
+        objectiveTopicsDestroyed,
+        objectivesDestroyed,
+      };
     } catch (error) {
       auditLogger.error(`${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`);
       return 0;

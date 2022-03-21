@@ -14,10 +14,6 @@ import { auditLogger } from '../logger';
 describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
 
-  afterEach(async () => {
-    jest.clearAllMocks();
-  });
-
   let goal;
   let goalTwo;
   let recipient;
@@ -51,9 +47,9 @@ describe('destroyGoal handler', () => {
 
     objective = await Objective.create({
       goalId: goal.id,
-      status: 'Not started',
+      status: 'Not Started',
       title: 'Make everything ok',
-      ttaProvided: 'Well, that\'s a big ask',
+      ttaProvided: 'No',
     });
 
     await ObjectiveResource.create({
@@ -63,8 +59,6 @@ describe('destroyGoal handler', () => {
   });
 
   afterAll(async () => {
-    ActivityReport.findAll = oldFindAll;
-
     await ObjectiveResource.destroy({
       where: {
         objectiveId: objective.id,
@@ -100,6 +94,9 @@ describe('destroyGoal handler', () => {
         id: recipient.id,
       },
     });
+
+    jest.clearAllMocks();
+
     await db.sequelize.close();
   });
 
@@ -135,7 +132,9 @@ describe('destroyGoal handler', () => {
     expect(foundObjectiveResource.length).toBe(1);
 
     const result = await destroyGoal(goal.id);
-    expect(result).toBe(1);
+    expect(result.objectivesDestroyed).toBe(1);
+    expect(result.objectiveResourcesDestroyed).toBe(1);
+    expect(result.goalsDestroyed).toBe(1);
 
     foundGoal = await Goal.findAll({
       where: {
@@ -177,7 +176,10 @@ describe('destroyGoal handler', () => {
     expect(foundGoal).toBeTruthy();
 
     expect(result).toBe(0);
-    expect(spy).toBeCalledWith('SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted');
+    expect(spy).toBeCalledWith(
+      'SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted',
+    );
+    ActivityReport.findAll = oldFindAll;
   });
 
   it('handles invalid ids', async () => {

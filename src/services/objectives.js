@@ -5,10 +5,31 @@ import {
 } from '../models';
 
 export async function saveObjectivesForReport(objectives, report, transaction) {
+  // const objectivesToCreate = objectives.filter((obj) => !obj.new);
+
+  // const existingObjectives = await Promise.all(
+  //   objectives.map((objective) => Objective.findOrCreate({
+  //     where: {
+  //       objective,
+  //     },
+  //   })),
+  // );
+
+  // const activityReportObjectives = await Promise.all(
+  //   existingObjectives.map((objective) => ActivityReportObjective.findOrCreate({
+  //     where: {
+  //       activityReportId: report.id,
+  //       objectiveId: objective.id,
+  //     },
+  //     transaction,
+  //   })),
+  // );
+
   const reportObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: report.id,
     },
+    transaction,
   });
 
   const objectiveIds = reportObjectives.map((reportObjective) => reportObjective.objectiveId);
@@ -18,7 +39,7 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
         activityReportId: report.id,
       },
     },
-    { transaction },
+    transaction,
   );
 
   await Objective.destroy(
@@ -27,7 +48,7 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
         id: objectiveIds,
       },
     },
-    { transaction },
+    transaction,
   );
 
   return Promise.all(objectives.map(async (objective) => {
