@@ -36,7 +36,7 @@ describe('destroyGoal handler', () => {
 
     goalTwo = await Goal.create({
       name: 'This is another goal',
-      status: 'Draft',
+      status: 'Not Started',
     });
 
     await GrantGoal.create({
