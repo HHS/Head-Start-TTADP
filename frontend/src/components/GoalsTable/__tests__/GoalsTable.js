@@ -624,7 +624,7 @@ describe('Goals Table', () => {
 
   describe('Context Menu', () => {
     beforeEach(async () => {
-      fetchMock.reset();
+      fetchMock.restore();
       fetchMock.get(
         baseWithRegionOne,
         { count: 1, goalRows: [goals[0], goals[3]] },
@@ -639,8 +639,7 @@ describe('Goals Table', () => {
     });
 
     it('Sets goal status with reason', async () => {
-      fetchMock.reset();
-      fetchMock.put('/api/goals/4598/changeStatus', {
+      fetchMock.put('/api/recipient/4598/changeStatus', {
         id: 4598,
         status: 'Completed',
         createdOn: '06/15/2021',
@@ -672,8 +671,7 @@ describe('Goals Table', () => {
     });
 
     it('Sets goal status without reason', async () => {
-      fetchMock.reset();
-      fetchMock.put('/api/goals/65479/changeStatus', {
+      fetchMock.put('/api/recipient/65479/changeStatus', {
         id: 65479,
         status: 'In Progress',
         createdOn: '06/15/2021',
@@ -693,7 +691,8 @@ describe('Goals Table', () => {
       fireEvent.click(closeGoalButton);
 
       // Verify goal status change.
-      await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent('In progress'));
+      const cells = await screen.findAllByRole('cell');
+      expect(cells[7]).toHaveTextContent('In progress');
     });
   });
 });
