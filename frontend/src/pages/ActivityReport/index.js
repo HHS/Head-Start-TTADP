@@ -412,9 +412,8 @@ function ActivityReport({
             on report
             {' '}
             {otherEditingUser.activityReportId}
-            . They last saved at this time
-            {' '}
-            {otherEditingUser.lastSaveTime}
+            .
+            { otherEditingUser.lastSaveTime ? `They last saved at this time ${otherEditingUser.lastSaveTime}` : ''}
           </span>
         </Alert>
       ) : null}
