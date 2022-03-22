@@ -60,12 +60,12 @@ export async function createOrUpdateGoals(goals) {
 
     await Promise.all(
       objectives.map(async (o) => {
-        const objective = await Objective.findOrCreate({
+        const [objective] = await Objective.findOrCreate({
           where: {
             goalId: goal.id,
-            title: o.title,
-            ttaProvided: o.ttaProvided,
-            status: o.status,
+            title: o.text,
+            ttaProvided: '',
+            status: 'Not started',
           },
           transaction,
         });
@@ -80,9 +80,10 @@ export async function createOrUpdateGoals(goals) {
         }))));
 
         // resources
-        return Promise.all((o.topics.map(() => ObjectiveResource.findOrCreate({
+        return Promise.all((o.topics.map((or) => ObjectiveResource.findOrCreate({
           where: {
-            //
+            userProvidedUrl: or.value,
+            objectiveId: objective.id,
           },
           transaction,
         }))));

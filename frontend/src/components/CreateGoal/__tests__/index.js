@@ -66,25 +66,37 @@ describe('create goal', () => {
 
   beforeEach(async () => {
     fetchMock.restore();
+    fetchMock.get('/api/topic', [
+      'Behavioral / Mental Health / Trauma',
+      'Child Assessment, Development, Screening',
+      'CLASS: Classroom Organization',
+      'CLASS: Emotional Support',
+      'CLASS: Instructional Support',
+      'Coaching',
+      'Communication',
+      'Community and Self-Assessment',
+      'Culture & Language',
+      'Curriculum (Instructional or Parenting)',
+      'Data and Evaluation',
+    ].map((name, id) => ({ name, id })));
   });
 
   it('you can create a goal', async () => {
-    fetchMock.post('/api/goals', postResponse);
-
     renderForm();
 
     await screen.findByRole('heading', { name: 'Goal summary' });
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
 
     expect(fetchMock.called()).toBe(false);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /goal end date/i });
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -117,8 +129,6 @@ describe('create goal', () => {
   });
 
   it('goals are validated', async () => {
-    fetchMock.post('/api/goals', postResponse);
-
     const recipient = {
       id: 2,
       grants: [
@@ -131,7 +141,8 @@ describe('create goal', () => {
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
 
     // saving drafts works
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
@@ -149,10 +160,10 @@ describe('create goal', () => {
 
     await screen.findByText('Please enter a goal name');
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /goal end date/i });
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, 'apple season');
 
     userEvent.click(save);
@@ -189,10 +200,10 @@ describe('create goal', () => {
     };
     renderForm(recipient);
 
+    fetchMock.restore();
     fetchMock.post('/api/goals', 500);
-    expect(fetchMock.called()).toBe(false);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -222,8 +233,6 @@ describe('create goal', () => {
   });
 
   it('you can create more than one goal', async () => {
-    fetchMock.post('/api/goals', postResponse);
-
     const recipient = {
       id: 2,
       grants: [
@@ -236,9 +245,10 @@ describe('create goal', () => {
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
 
-    let goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
@@ -260,7 +270,7 @@ describe('create goal', () => {
 
     await screen.findByRole('button', { name: /cancel/i });
 
-    goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is more goal text');
 
     save = await screen.findByRole('button', { name: /save and continue/i });
@@ -272,8 +282,6 @@ describe('create goal', () => {
   });
 
   it('can add and validate objectives', async () => {
-    fetchMock.post('/api/goals', postResponse);
-
     const recipient = {
       id: 2,
       grants: [
@@ -287,12 +295,13 @@ describe('create goal', () => {
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /goal end date/i });
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
@@ -305,14 +314,14 @@ describe('create goal', () => {
 
     await screen.findByText('Please enter objective text');
 
-    const objectiveText = await screen.findByRole('textbox', { name: /objective \(required\)/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
     userEvent.click(save);
 
     await screen.findByText('Please select at least one topic');
 
-    const topics = await screen.findByLabelText(/topics \(required\)/i);
+    const topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['Coaching']);
 
     userEvent.click(save);
@@ -327,8 +336,6 @@ describe('create goal', () => {
   });
 
   it('can add and validate objective resources', async () => {
-    fetchMock.post('/api/goals', postResponse);
-
     const recipient = {
       id: 2,
       grants: [
@@ -342,21 +349,22 @@ describe('create goal', () => {
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });
-    expect(fetchMock.called()).toBe(false);
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /goal end date/i });
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /objective \(required\)/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
-    const topics = await screen.findByLabelText(/topics \(required\)/i);
+    const topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['Coaching']);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
