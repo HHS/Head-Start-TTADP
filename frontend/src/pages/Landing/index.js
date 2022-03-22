@@ -60,11 +60,36 @@ function Landing() {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
+  const buildDefaultRegionFilters = () => {
+    const allRegionFilters = [];
+    for (let i = 0; i < regions.length; i += 1) {
+      allRegionFilters.push({
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: regions[i],
+      });
+    }
+
+    return allRegionFilters;
+  };
+  const allRegionsFilters = buildDefaultRegionFilters();
+
+  const getFiltersWithAllRegions = () => {
+    const filtersWithAllRegions = [...allRegionsFilters];
+    filtersWithAllRegions.push({
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'is within',
+      query: defaultDate,
+    });
+    return filtersWithAllRegions;
+  };
+
+  const showRegionFilter = defaultRegion !== 14 && defaultRegion !== 0 && hasMultipleRegions;
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
-    defaultRegion !== 14
-      && defaultRegion !== 0
-      && hasMultipleRegions
+    showRegionFilter
       ? [{
         id: uuidv4(),
         topic: 'region',
@@ -77,12 +102,7 @@ function Landing() {
         condition: 'is within',
         query: defaultDate,
       }]
-      : [{
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      }],
+      : getFiltersWithAllRegions(),
   );
 
   const history = useHistory();
@@ -209,20 +229,34 @@ function Landing() {
   };
 
   // Apply filters.
-  const onApply = (newFilters) => {
-    setFilters([
-      ...newFilters,
-    ]);
+  const onApply = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters([
+        ...newFilters,
+      ]);
+    }
+
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
   };
 
   // Remove Filters.
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      setFilters(newFilters);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
     }
   };
 
@@ -289,6 +323,7 @@ function Landing() {
               dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
+              hideRegionFiltersByDefault={!showRegionFilter}
             />
           </Grid>
         </Grid>
