@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       Topic.belongsToMany(models.Goal, {
         through: models.TopicGoal, foreignKey: 'topicId', as: 'goals',
       });
+      Topic.belongsToMany(models.Objective, { through: models.ObjectiveTopic, foreignKey: 'objectiveId', as: 'objectives' });
     }
   }
   Topic.init({
@@ -28,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Topic',
+    paranoid: true,
   });
   return Topic;
 };
