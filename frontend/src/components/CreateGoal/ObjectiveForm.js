@@ -11,7 +11,7 @@ import {
 } from './constants';
 
 const [
-  objectiveTextError, objectiveTopicsError, objectiveResourcesError,
+  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -24,22 +24,22 @@ export default function ObjectiveForm({
   topicOptions,
 }) {
   // the parent objective data from props
-  const { text, topics, resources } = objective;
+  const { title, topics, resources } = objective;
 
   // onchange handlers
-  const onChangeText = (e) => setObjective({ ...objective, text: e.target.value });
+  const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
   const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
 
   // validate different fields
-  const validateObjectiveText = () => {
-    if (!text) {
+  const validateObjectiveTitle = () => {
+    if (!title) {
       const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TEXT, 1, <span className="usa-error-message">{objectiveTextError}</span>);
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TITLE, 1, <span className="usa-error-message">{objectiveTitleError}</span>);
       setObjectiveError(index, newErrors);
     } else {
       const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TEXT, 1, <></>);
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TITLE, 1, <></>);
       setObjectiveError(index, newErrors);
     }
   };
@@ -76,13 +76,13 @@ export default function ObjectiveForm({
         <Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>
       </div>
       <FormGroup className="margin-top-1">
-        <Label htmlFor="objectiveText">
+        <Label htmlFor="objectiveTitle">
           TTA objective
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TEXT]}
-        <Textarea id="objectiveText" name="objectiveText" required value={text} onChange={onChangeText} onBlur={validateObjectiveText} />
+        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
+        <Textarea id="objectiveTitle" name="objectiveTitle" required value={title} onChange={onChangeTitle} onBlur={validateObjectiveTitle} />
       </FormGroup>
       <FormGroup>
         <Label htmlFor="topics">
@@ -122,7 +122,7 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
-    text: PropTypes.string,
+    title: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
       value: PropTypes.number,

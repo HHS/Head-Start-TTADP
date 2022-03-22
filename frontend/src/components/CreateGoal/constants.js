@@ -68,14 +68,14 @@ export const FORM_FIELD_INDEXES = {
 export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, []];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
-  text: '',
+  title: '',
   topics: [],
   resources: [{ key: uuidv4(), value: '' }],
   id: `new${l}`,
 });
 
 export const OBJECTIVE_FORM_FIELD_INDEXES = {
-  TEXT: 0,
+  TITLE: 0,
   TOPICS: 1,
   RESOURCES: 2,
 };
