@@ -32,6 +32,7 @@ export default function Form({
   objectives,
   setObjectives,
   setObjectiveError,
+  topicOptions,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -135,6 +136,7 @@ export default function Form({
           key={objective.id}
           errors={objectiveErrors[i]}
           setObjective={(data) => setObjective(data, i)}
+          topicOptions={topicOptions}
         />
       ))}
       { canAddNewObjective ? (
@@ -180,6 +182,10 @@ Form.propTypes = {
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+  })).isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({

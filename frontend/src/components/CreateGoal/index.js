@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +9,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals } from '../../fetchers/goals';
+import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
   FORM_FIELD_INDEXES,
@@ -49,6 +50,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
   // this will store our created goals
   const [createdGoals, setCreatedGoals] = useState([]);
 
+  const [topicOptions, setTopicOptions] = useState([]);
+
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
@@ -57,6 +60,21 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [alert, setAlert] = useState({ message: '', type: 'success' });
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
+
+  // for fetching topic options from API
+  useEffect(() => {
+    async function fetchTopics() {
+      const topicsFromApi = await getTopics();
+
+      const topicsAsOptions = topicsFromApi.map((topic) => ({
+        label: topic.name,
+        value: topic.id,
+      }));
+      setTopicOptions(topicsAsOptions);
+    }
+
+    fetchTopics();
+  }, []);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -335,6 +353,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             setObjectives={setObjectives}
             validateObjectives={validateObjectives}
             setObjectiveError={setObjectiveError}
+            topicOptions={topicOptions}
           />
           )}
 
