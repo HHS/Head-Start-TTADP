@@ -1,17 +1,29 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals } from '../../fetchers/goals';
-import Form, { FORM_FIELD_INDEXES } from './Form';
+import { getTopics } from '../../fetchers/topics';
+import Form from './Form';
+import {
+  FORM_FIELD_INDEXES,
+  FORM_FIELD_DEFAULT_ERRORS,
+  validateListOfResources,
+  OBJECTIVE_ERROR_MESSAGES,
+} from './constants';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
+import PlusButton from './PlusButton';
+
+const [
+  objectiveTextError, objectiveTopicsError, objectiveResourcesError,
+] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function CreateGoal({ recipient, regionId, match }) {
   const { goalId } = match.params;
@@ -28,6 +40,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     id: goalId,
+    objectives: [],
   }), [goalId, possibleGrants]);
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
@@ -37,13 +50,46 @@ export default function CreateGoal({ recipient, regionId, match }) {
   // this will store our created goals
   const [createdGoals, setCreatedGoals] = useState([]);
 
+  const [topicOptions, setTopicOptions] = useState([]);
+
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [status, setStatus] = useState(goalDefaults.status);
+  const [objectives, setObjectives] = useState(goalDefaults.objectives);
+
   const [alert, setAlert] = useState({ message: '', type: 'success' });
 
-  const [errors, setErrors] = useState([<></>, <></>, <></>]);
+  const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
+  // for fetching topic options from API
+  useEffect(() => {
+    async function fetchTopics() {
+      const topicsFromApi = await getTopics();
+
+      const topicsAsOptions = topicsFromApi.map((topic) => ({
+        label: topic.name,
+        value: topic.id,
+      }));
+      setTopicOptions(topicsAsOptions);
+    }
+
+    fetchTopics();
+  }, []);
+
+  const setObjectiveError = (objectiveIndex, errorText) => {
+    const newErrors = [...errors];
+    const objectiveErrors = [...newErrors[FORM_FIELD_INDEXES.OBJECTIVES]];
+    objectiveErrors.splice(objectiveIndex, 1, errorText);
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+    setErrors(newErrors);
+  };
+
+  // form field validation functions
+
+  /**
+   *
+   * @returns bool
+   */
   const validateGoalName = () => {
     let error = <></>;
 
@@ -58,10 +104,14 @@ export default function CreateGoal({ recipient, regionId, match }) {
     return !error.props.children;
   };
 
+  /**
+   *
+   * @returns bool
+   */
   const validateEndDate = () => {
     let error = <></>;
 
-    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
+    if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
       error = <span className="usa-error-message">Please valid date in the format mm/dd/yyyy</span>;
     }
 
@@ -85,8 +135,65 @@ export default function CreateGoal({ recipient, regionId, match }) {
     return !error.props.children;
   };
 
-  const isValidNotStarted = () => validateGrantNumbers() && validateGoalName() && validateEndDate();
-  const isValidDraft = () => validateEndDate() && (validateGrantNumbers() || validateGoalName());
+  /**
+   *
+   * @returns bool
+   */
+  const validateObjectives = () => {
+    if (!objectives.length) {
+      return true;
+    }
+
+    const newErrors = [...errors];
+    let isValid = true;
+
+    const newObjectiveErrors = objectives.map((objective) => {
+      if (!objective.title) {
+        isValid = false;
+        return [
+          <span className="usa-error-message">{objectiveTextError}</span>,
+          <></>,
+          <></>,
+        ];
+      }
+
+      if (!objective.topics.length) {
+        isValid = false;
+        return [
+          <></>,
+          <span className="usa-error-message">{objectiveTopicsError}</span>,
+          <></>,
+        ];
+      }
+
+      if (!validateListOfResources(objective.resources)) {
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveResourcesError}</span>,
+        ];
+      }
+
+      return [
+        <></>,
+        <></>,
+        <></>,
+      ];
+    });
+
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, newObjectiveErrors);
+    setErrors(newErrors);
+
+    return isValid;
+  };
+
+  // quick shorthands to check to see if our fields are good to save to the different states
+  // (different validations for not started and draft)
+  const isValidNotStarted = () => (
+    validateGrantNumbers() && validateGoalName() && validateEndDate() && validateObjectives()
+  );
+  const isValidDraft = () => validateEndDate() || validateGrantNumbers() || validateGoalName();
 
   /**
    * button click handlers
@@ -131,12 +238,16 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
+        objectives,
       }, ...createdGoals];
 
       await createOrUpdateGoals(goals);
-      setAlert({
-        message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
-        type: 'success',
+
+      // on success, redirect back to RTR Goals & Objectives page
+      // once integrated into the AR, this will probably have to be turned into a prop function
+      // that gets called on success
+      history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+        ids: goals.map((g) => g.id),
       });
     } catch (error) {
       setAlert({
@@ -153,6 +264,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
     setShowForm(false);
+    setObjectives([]);
   };
 
   const onSaveAndContinue = async () => {
@@ -168,6 +280,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
+        objectives,
       }, ...createdGoals];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);
@@ -214,10 +327,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             <div className="margin-bottom-4">
               {!showForm
                 ? (
-                  <Button unstyled onClick={() => setShowForm(true)}>
-                    <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
-                    Add another goal
-                  </Button>
+                  <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                 ) : null }
             </div>
           </>
@@ -240,6 +350,11 @@ export default function CreateGoal({ recipient, regionId, match }) {
             validateGoalName={validateGoalName}
             validateEndDate={validateEndDate}
             validateGrantNumbers={validateGrantNumbers}
+            objectives={objectives}
+            setObjectives={setObjectives}
+            validateObjectives={validateObjectives}
+            setObjectiveError={setObjectiveError}
+            topicOptions={topicOptions}
           />
           )}
 

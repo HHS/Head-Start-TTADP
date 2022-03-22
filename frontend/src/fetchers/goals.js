@@ -13,16 +13,16 @@ export async function createOrUpdateGoals(goals) {
   return goal.json();
 }
 
-export const updateGoalStatus = async (
+export async function updateGoalStatus(
   goalId,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
-) => {
+) {
   const recipientGoalsUrl = join(recipientUrl, goalId.toString(), 'changeStatus');
   const updatedGoal = await put(
     recipientGoalsUrl,
     { newStatus, closeSuspendReason, closeSuspendContext },
   );
   return updatedGoal.json();
-};
+}

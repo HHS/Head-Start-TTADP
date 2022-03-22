@@ -20,6 +20,21 @@ export default function ReadOnly({ createdGoals }) {
               <p className="margin-top-0">{moment(goal.endDate, 'yyyy-mm-dd').format('mm/DD/yyyy')}</p>
             </>
           ) : null }
+          { goal.objectives.map((objective) => (
+            <div key={`objective${objective.id}`}>
+              <h3>Objective summary</h3>
+              <h4 className="margin-bottom-1">Objective</h4>
+              <p className="margin-top-0">{objective.text}</p>
+              <h4 className="margin-bottom-1">Topics</h4>
+              <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
+              <h4 className="margin-bottom-1">Resource link</h4>
+              <ul className="usa-list usa-list--unstyled">
+                { objective.resources.map((resource) => (
+                  <li key={resource.key}>{resource.value}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       ))}
     </>
