@@ -88,9 +88,10 @@
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
+    "json-pointer": "0.6.2",
+    "marked": "^4.0.10",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7",
-    "marked": "^4.0.10"
+    "node-fetch": "^2.6.7"
   },
   "eslintConfig": {
     "extends": [
@@ -192,6 +193,7 @@
     "dotenv": "^10.0.0",
     "email-templates": "^8.0.4",
     "express": "^4.17.1",
+    "express-http-context": "^1.2.4",
     "express-unless": "^1.0.0",
     "express-winston": "^4.0.5",
     "faker": "^5.5.3",
