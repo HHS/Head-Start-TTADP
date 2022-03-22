@@ -80,7 +80,7 @@ export async function createOrUpdateGoals(goals) {
         }))));
 
         // resources
-        return Promise.all((o.topics.map((or) => ObjectiveResource.findOrCreate({
+        return Promise.all((o.resources.map((or) => ObjectiveResource.findOrCreate({
           where: {
             userProvidedUrl: or.value,
             objectiveId: objective.id,
