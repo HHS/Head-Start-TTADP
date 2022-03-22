@@ -88,9 +88,10 @@
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
+    "json-pointer": "0.6.2",
+    "marked": "^4.0.10",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7",
-    "marked": "^4.0.10"
+    "node-fetch": "^2.6.7"
   },
   "eslintConfig": {
     "extends": [
