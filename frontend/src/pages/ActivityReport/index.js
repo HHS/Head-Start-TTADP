@@ -62,7 +62,6 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
-  creatorRole: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -169,6 +168,8 @@ function ActivityReport({
     return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
   };
 
+  const userHasOneRole = user && user.role && user.role.length === 1;
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -181,13 +182,12 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
-            creatorRole: user && user.role && user.role.length === 1 ? user.role[0] : null,
+            creatorRole: userHasOneRole ? user.role[0] : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
           };
         }
-
         const apiCalls = [
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
@@ -325,7 +325,8 @@ function ActivityReport({
     } else {
       // if it isn't a new report, we compare it to the last response from the backend (formData)
       // and pass only the updated to save report
-      const updatedFields = findWhatsChanged(data, formData);
+      const creatorRole = !data.creatorRole && userHasOneRole ? user.role[0] : data.creatorRole;
+      const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
       const updatedReport = await saveReport(
         reportId.current, { ...updatedFields, approverUserIds: approverIds },
         {},
