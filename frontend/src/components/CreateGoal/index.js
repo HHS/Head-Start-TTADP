@@ -5,10 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import PropTypes from 'prop-types';
 import Container from '../Container';
-import { createOrUpdateGoals } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -25,8 +24,7 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-export default function CreateGoal({ recipient, regionId, match }) {
-  const { goalId } = match.params;
+export default function CreateGoal({ recipient, regionId }) {
   const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
@@ -39,9 +37,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
     endDate: null,
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
-    id: goalId,
     objectives: [],
-  }), [goalId, possibleGrants]);
+  }), [possibleGrants]);
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
@@ -58,6 +55,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
+  const [goalId, setGoalId] = useState(goalDefaults.id);
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
@@ -239,6 +237,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
+        id: goalId,
       }, ...createdGoals];
 
       await createOrUpdateGoals(goals);
@@ -281,6 +280,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
+        id: goalId,
       }, ...createdGoals];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);
@@ -296,6 +296,51 @@ export default function CreateGoal({ recipient, regionId, match }) {
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
+        type: 'error',
+      });
+    }
+  };
+
+  const onEdit = (goal, index) => {
+    // move from "created goals" to the form
+
+    // first remove from the createdGoals array
+    const newCreatedGoals = createdGoals.map((g) => ({ ...g }));
+    newCreatedGoals.splice(index, 1);
+    setCreatedGoals(newCreatedGoals);
+
+    // then repopulate the form
+    setGoalName(goal.name);
+    setEndDate(goal.endDate);
+    setStatus(goal.status);
+    setGoalId(goal.id);
+    setShowForm(true);
+  };
+
+  /**
+   * takes a goal id and attempts to delete it via
+   * HTTP
+   * @param {Number} g
+   */
+  const onDelete = async (g) => {
+    try {
+      const success = await deleteGoal(g, regionId);
+
+      if (success) {
+        const newGoals = createdGoals.filter((goal) => goal.id !== g);
+        setCreatedGoals(newGoals);
+        if (!newGoals.length) {
+          setShowForm(true);
+        }
+
+        setAlert({
+          message: '',
+          type: 'success',
+        });
+      }
+    } catch (err) {
+      setAlert({
+        message: 'There was an error deleting your goal',
         type: 'error',
       });
     }
@@ -323,6 +368,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
           <>
             <ReadOnly
               createdGoals={createdGoals}
+              onDelete={onDelete}
+              onEdit={onEdit}
             />
             <div className="margin-bottom-4">
               {!showForm
@@ -368,7 +415,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
               </Link>
             ) : null }
             { showForm && createdGoals.length ? (
-              <Button type="button" outline onClick={clearForm}>Cancel</Button>
+              <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
             ) : null }
             <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
             { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
@@ -393,5 +440,4 @@ CreateGoal.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
-  match: ReactRouterPropTypes.match.isRequired,
 };

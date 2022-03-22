@@ -1,5 +1,5 @@
 import join from 'url-join';
-import { put, post } from './index';
+import { put, post, destroy } from './index';
 
 const goalsUrl = join('/', 'api', 'goals');
 const recipientUrl = join('/', 'api', 'recipient');
@@ -25,4 +25,10 @@ export async function updateGoalStatus(
     { newStatus, closeSuspendReason, closeSuspendContext },
   );
   return updatedGoal.json();
+}
+
+export async function deleteGoal(id, regionId) {
+  const url = join(goalsUrl, id.toString());
+  const deleted = await destroy(url, { regionId });
+  return deleted.json();
 }

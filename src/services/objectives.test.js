@@ -23,18 +23,21 @@ const reportObject = {
 describe('Objectives DB service', () => {
   let report;
   let objective;
+  let secondObjective;
   const objectives = [
     {
       id: 'uuid',
       title: 'first objective',
       ttaProvided: 'tta first',
       status: 'In Progress',
+      new: true,
     },
     {
       id: 'uuid2',
       title: 'second objective',
       ttaProvided: 'tta second',
       status: 'In Progress',
+      new: true,
     },
   ];
 
@@ -47,13 +50,24 @@ describe('Objectives DB service', () => {
       status: 'status',
     });
 
+    secondObjective = await Objective.create({
+      title: 'second title',
+      ttaProvided: 'tta provided',
+      status: 'status',
+    });
+
     await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: report.id,
     });
 
+    await ActivityReportObjective.create({
+      objectiveId: secondObjective.id,
+      activityReportId: report.id,
+    });
+
     await sequelize.transaction(async (transaction) => {
-      await saveObjectivesForReport(objectives, report, transaction);
+      await saveObjectivesForReport([...objectives, objective], report, transaction);
     });
   });
 
@@ -69,12 +83,19 @@ describe('Objectives DB service', () => {
 
   describe('saveObjectivesForReport', () => {
     it('deletes old objectives', async () => {
-      const found = await Objective.findOne({ where: { id: objective.id } });
+      const found = await Objective.findOne({
+        where: { id: secondObjective.id, title: secondObjective.title },
+      });
       expect(found).toBeNull();
     });
 
     it('deletes old activity report objectives', async () => {
-      const found = await ActivityReportObjective.findOne({ where: { id: objective.id } });
+      const found = await ActivityReportObjective.findOne({
+        where: {
+          objectiveId: secondObjective.id,
+          activityReportId: report.id,
+        },
+      });
       expect(found).toBeNull();
     });
 
@@ -89,8 +110,8 @@ describe('Objectives DB service', () => {
         }],
       });
       const objs = foundReport.objectivesWithoutGoals;
-      expect(objs.length).toBe(2);
-      expect(objs.map((o) => o.title)).toEqual(objectives.map((o) => o.title));
+      expect(objs.length).toBe(3);
+      expect(objs.map((o) => o.title)).toEqual([objective, ...objectives].map((o) => o.title));
     });
   });
 });
