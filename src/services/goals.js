@@ -58,20 +58,33 @@ export async function createOrUpdateGoals(goals) {
       })),
     );
 
-    await Promise.all(
+    const newObjectives = await Promise.all(
       objectives.map(async (o) => {
-        const [objective] = await Objective.findOrCreate({
-          where: {
-            goalId: goal.id,
-            title: o.text,
-            ttaProvided: '',
-            status: 'Not started',
-          },
-          transaction,
-        });
+        const {
+          id: objectiveId,
+          resources,
+          topics,
+          ...objectiveFields
+        } = o;
+
+        const where = id ? {
+          id: objectiveId,
+          goalId: goal.id,
+          ...objectiveFields,
+        } : {
+          goalId: goal.id,
+          title: o.title,
+          ttaProvided: '',
+          status: 'Not started',
+        };
+
+        const [objective] = await Objective.upsert(
+          where,
+          { transaction },
+        );
 
         // topics
-        await Promise.all((o.topics.map((ot) => ObjectiveTopic.findOrCreate({
+        await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
           where: {
             objectiveId: objective.id,
             topicId: ot.value,
@@ -80,13 +93,19 @@ export async function createOrUpdateGoals(goals) {
         }))));
 
         // resources
-        return Promise.all((o.resources.map((or) => ObjectiveResource.findOrCreate({
+        await Promise.all((resources.map((or) => ObjectiveResource.findOrCreate({
           where: {
             userProvidedUrl: or.value,
             objectiveId: objective.id,
           },
           transaction,
         }))));
+
+        return {
+          ...objective.dataValues,
+          topics,
+          resources,
+        };
       }),
     );
 
@@ -96,7 +115,7 @@ export async function createOrUpdateGoals(goals) {
       grants,
       recipientId,
       regionId,
-      objectives,
+      objectives: newObjectives,
     };
   })));
 }
