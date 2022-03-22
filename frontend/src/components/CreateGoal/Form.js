@@ -73,17 +73,23 @@ export default function Form({
   return (
     <div className="ttahub-create-goals-form">
       <h2>Recipient TTA goal</h2>
+      <div>
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        {' '}
+        indicates required field
+      </div>
+
       <h3>Goal summary</h3>
       <FormGroup>
         <Label htmlFor="recipientGrantNumbers">
           Recipient grant numbers
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
         {possibleGrants.length === 1 ? (
           <span className="margin-bottom-1">{selectedGrants[0].label}</span>
         ) : (
           <>
-            <span className="usa-hint">Select all grant numbers that apply to the grant</span>
             {errors[FORM_FIELD_INDEXES.GRANTS]}
             <Select
               placeholder=""
@@ -105,18 +111,19 @@ export default function Form({
       </FormGroup>
       <FormGroup>
         <Label htmlFor="goalText">
-          Goal
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
+          Recipient&apos;s goal
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        <span className="usa-hint">
-          What the recipient wants to achieve
-        </span>
         {errors[FORM_FIELD_INDEXES.NAME]}
         <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor="goalEndDate">Goal end date</Label>
-        <span className="usa-hint">When does the recipient expect to meet this goal? (mm/dd/yyyy)</span>
+        <Label htmlFor="goalEndDate">
+          Estimated close date (mm/dd/yyyy)
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        </Label>
         {errors[FORM_FIELD_INDEXES.END_DATE]}
         <DatePicker
           id="goalEndDate"

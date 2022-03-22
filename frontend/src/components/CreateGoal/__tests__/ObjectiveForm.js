@@ -6,6 +6,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import ObjectiveForm from '../ObjectiveForm';
+
 import {
   OBJECTIVE_ERROR_MESSAGES,
 } from '../constants';
@@ -44,6 +45,19 @@ describe('ObjectiveForm', () => {
         objective={objective}
         setObjective={setObjective}
         errors={[<></>, <></>, <></>]}
+        topicOptions={[
+          'Behavioral / Mental Health / Trauma',
+          'Child Assessment, Development, Screening',
+          'CLASS: Classroom Organization',
+          'CLASS: Emotional Support',
+          'CLASS: Instructional Support',
+          'Coaching',
+          'Communication',
+          'Community and Self-Assessment',
+          'Culture & Language',
+          'Curriculum (Instructional or Parenting)',
+          'Data and Evaluation',
+        ].map((label, value) => ({ label, value }))}
       />
     ));
   };
@@ -63,7 +77,7 @@ describe('ObjectiveForm', () => {
 
     renderObjectiveForm(objective, removeObjective, setObjectiveError, setObjective);
 
-    const topics = await screen.findByLabelText(/topics \(required\)/i);
+    const topics = await screen.findByLabelText(/topics \*/i);
     userEvent.click(topics);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -77,7 +91,7 @@ describe('ObjectiveForm', () => {
     userEvent.click(resourceOne);
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>]);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /objective \(required\)/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.click(objectiveText);
     userEvent.click(resourceOne);
 

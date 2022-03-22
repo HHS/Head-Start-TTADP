@@ -37,11 +37,8 @@ export default function ResourceRepeater({
     <FormGroup>
       <div ref={resourcesWrapper}>
         <Label htmlFor="resources">
-          Resource link
+          Resource links
         </Label>
-        <span className="usa-hint">
-          Enter valid links used for this objective
-        </span>
         {error}
         { resources.map((r, i) => (
           <div key={r.key} className="display-flex" id="resources">

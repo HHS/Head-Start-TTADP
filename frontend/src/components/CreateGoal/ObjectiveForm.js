@@ -77,23 +77,19 @@ export default function ObjectiveForm({
       </div>
       <FormGroup className="margin-top-1">
         <Label htmlFor="objectiveText">
-          Objective
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
+          TTA objective
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        <span className="usa-hint">
-          How TTA will support recipient goal
-        </span>
         {errors[OBJECTIVE_FORM_FIELD_INDEXES.TEXT]}
         <Textarea id="objectiveText" name="objectiveText" required value={text} onChange={onChangeText} onBlur={validateObjectiveText} />
       </FormGroup>
       <FormGroup>
         <Label htmlFor="topics">
           Topics
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        <span className="usa-hint">
-          Align with statement of work
-        </span>
         {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
         <Select
           inputId="topics"
