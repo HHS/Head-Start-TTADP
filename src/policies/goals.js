@@ -15,6 +15,10 @@ export default class Goal {
     this.goal = goal;
   }
 
+  canDelete() {
+    return this.canWriteInRegion();
+  }
+
   canCreate() {
     return this.canWriteInRegion();
   }

@@ -624,7 +624,7 @@ describe('Goals Table', () => {
 
   describe('Context Menu', () => {
     beforeEach(async () => {
-      fetchMock.reset();
+      fetchMock.restore();
       fetchMock.get(
         baseWithRegionOne,
         { count: 1, goalRows: [goals[0], goals[3]] },

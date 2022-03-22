@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
+import { auditLogger } from '../logger';
 import {
   Goal,
   Grant,
@@ -9,7 +10,14 @@ import {
   ActivityReportObjective,
   GrantGoal,
   sequelize,
+  ActivityReport,
 } from '../models';
+
+const namespace = 'SERVICE:GOALS';
+
+const logContext = {
+  namespace,
+};
 
 /**
  * Goals is an array of an object with the following keys
@@ -42,7 +50,7 @@ export async function createOrUpdateGoals(goals) {
     const options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
-      id,
+      id: id === 'new' ? null : id,
     };
 
     const [goal] = await Goal.upsert(options, { transaction });
@@ -180,7 +188,7 @@ async function removeActivityReportObjectivesFromReport(reportId, transaction) {
   });
 }
 
-async function removeGoals(goalsToRemove, transaction) {
+export async function removeGoals(goalsToRemove, transaction) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
     where: {
@@ -333,4 +341,94 @@ export async function updateGoalStatusById(
   );
   return updatedGoal[1][0];
   */
+}
+
+export async function destroyGoal(goalId) {
+  return sequelize.transaction(async (transaction) => {
+    try {
+      const reportsWithGoal = await ActivityReport.findAll({
+        attributes: ['id'],
+        include: [
+          {
+            attributes: ['id'],
+            model: Objective,
+            required: true,
+            as: 'objectivesWithGoals',
+            include: [
+              {
+                attributes: ['id'],
+                model: Goal,
+                required: true,
+                where: {
+                  id: goalId,
+                },
+                as: 'goal',
+              },
+            ],
+          },
+        ],
+        transaction,
+        raw: true,
+      });
+
+      const isOnReport = reportsWithGoal.length;
+      if (isOnReport) {
+        throw new Error('Goal is on an activity report and can\'t be deleted');
+      }
+
+      const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
+        where: {
+          objectiveId: {
+            [Op.in]: sequelize.literal(
+              `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
+            ),
+          },
+        },
+        transaction,
+      });
+
+      const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
+        where: {
+          objectiveId: {
+            [Op.in]: sequelize.literal(
+              `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
+            ),
+          },
+        },
+        transaction,
+      });
+
+      const objectivesDestroyed = await Objective.destroy({
+        where: {
+          goalId,
+        },
+        transaction,
+      });
+
+      const grantGoalsDestroyed = await GrantGoal.destroy({
+        where: {
+          goalId,
+        },
+        transaction,
+      });
+
+      const goalsDestroyed = await Goal.destroy({
+        where: {
+          id: goalId,
+        },
+        transaction,
+      });
+
+      return {
+        goalsDestroyed,
+        grantGoalsDestroyed,
+        objectiveResourcesDestroyed,
+        objectiveTopicsDestroyed,
+        objectivesDestroyed,
+      };
+    } catch (error) {
+      auditLogger.error(`${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`);
+      return 0;
+    }
+  });
 }
