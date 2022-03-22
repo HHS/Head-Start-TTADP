@@ -47,7 +47,7 @@ describe('create goal', () => {
     recipientId: 1,
     regionId: 1,
     objectives: [{
-      text: 'test', topics: [{ value: 4, label: 'CLASS: Instructional Support' }], resources: [{ key: '1d697eba-7c6a-44e9-b2cf-20841be8065e', value: 'https://search.marginalia.nu/' }], id: 'new0',
+      title: 'test', topics: [{ value: 4, label: 'CLASS: Instructional Support' }], resources: [{ key: '1d697eba-7c6a-44e9-b2cf-20841be8065e', value: 'https://search.marginalia.nu/' }], id: 'new0',
     }],
   }];
 
@@ -163,6 +163,9 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
+    userEvent.click(save);
+    await screen.findByText('Please valid date in the format mm/dd/yyyy');
+
     const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, 'apple season');
 
@@ -205,6 +208,9 @@ describe('create goal', () => {
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
+
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -251,6 +257,9 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
+    let ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    userEvent.type(ed, '08/15/2023');
+
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -272,6 +281,9 @@ describe('create goal', () => {
 
     goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is more goal text');
+
+    ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    userEvent.type(ed, '08/15/2023');
 
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);

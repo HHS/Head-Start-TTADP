@@ -65,7 +65,7 @@ export default function Form({
   // Validate the objective fields and the correctness of the resources
   const canAddNewObjective = objectives.reduce((acc, curr) => {
     if (acc) {
-      return curr.text && curr.topics.length && validateListOfResources(curr.resources);
+      return curr.title && curr.topics.length && validateListOfResources(curr.resources);
     }
     return acc;
   }, true);

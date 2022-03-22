@@ -111,7 +111,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const validateEndDate = () => {
     let error = <></>;
 
-    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
+    if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
       error = <span className="usa-error-message">Please valid date in the format mm/dd/yyyy</span>;
     }
 
@@ -148,7 +148,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
-      if (!objective.text) {
+      if (!objective.title) {
         isValid = false;
         return [
           <span className="usa-error-message">{objectiveTextError}</span>,
@@ -193,7 +193,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const isValidNotStarted = () => (
     validateGrantNumbers() && validateGoalName() && validateEndDate() && validateObjectives()
   );
-  const isValidDraft = () => validateEndDate() && (validateGrantNumbers() || validateGoalName());
+  const isValidDraft = () => validateEndDate() || validateGrantNumbers() || validateGoalName();
 
   /**
    * button click handlers
@@ -264,6 +264,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
     setShowForm(false);
+    setObjectives([]);
   };
 
   const onSaveAndContinue = async () => {
