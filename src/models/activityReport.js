@@ -44,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsToMany(models.User, {
         through: models.ActivityReportCollaborator,
         // The key in the join table that points to the model defined in this file
@@ -58,6 +59,7 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
+      ActivityReport.hasMany(models.ActivityReportObjective, { foreignKey: 'activityReportId', as: 'activityReportObjectives' });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
           goalId: { [Op.is]: null },
@@ -189,6 +191,7 @@ module.exports = (sequelize, DataTypes) => {
             this.participants,
             this.topics,
             this.ttaType,
+            this.creatorRole,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {

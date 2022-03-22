@@ -17,6 +17,8 @@ const YEAR_TO_DATE = formatDateRange({
   forDateTime: true,
 });
 
+const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
+
 const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
@@ -37,6 +39,7 @@ export const createDateFilter = {
     'is within': YEAR_TO_DATE,
     'is on or after': '',
     'is on or before': '',
+    is: LAST_THIRTY_DAYS,
   },
   displayQuery: (query) => {
     if (query.includes('-')) {

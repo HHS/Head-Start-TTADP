@@ -2,6 +2,7 @@
 import { Op } from 'sequelize';
 import faker from 'faker';
 import filtersToScopes from '../index';
+import { auditLogger } from '../../logger';
 
 import db, {
   ActivityReport,
@@ -1254,7 +1255,7 @@ describe('filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'EHS',
-          });
+          }).catch((err) => auditLogger.error(err));
         }),
         ...reportTwoRecipients.map(async (recipient) => {
           await Program.create({
@@ -1263,7 +1264,7 @@ describe('filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'EHS',
-          });
+          }).catch((err) => auditLogger.error(err));
         }),
         ...reportThreeRecipients.map(async (recipient) => {
           await Program.create({
@@ -1272,7 +1273,7 @@ describe('filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'HS',
-          });
+          }).catch((err) => auditLogger.error(err));
         }),
       ]);
     });
@@ -1294,7 +1295,8 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
+      }).catch((err) => auditLogger.error(err));
+      auditLogger.info(JSON.stringify(found));
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));

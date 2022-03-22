@@ -17,7 +17,7 @@
     "start:worker": "node ./build/server/worker.js",
     "server": "nodemon src/index.js --exec babel-node",
     "worker": "nodemon src/worker.js --exec babel-node",
-    "server:debug": "nodemon src/index.js --exec babel-node --inspect",
+    "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
     "test": "jest src --runInBand",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit --runInBand",
@@ -50,6 +50,7 @@
     "docker:deps": "docker-compose run --rm backend yarn install && docker-compose run --rm frontend yarn install",
     "docker:reset": "./bin/reset-all",
     "docker:start": "docker-compose up",
+    "docker:start:debug": "docker-compose --compatibility -f docker-compose.yml -f docker-compose.debug.yml up",
     "docker:stop": "docker-compose down",
     "docker:dbs:start": "docker-compose -f 'docker-compose.yml' up",
     "docker:dbs:stop": "docker-compose -f 'docker-compose.yml' down",
@@ -87,9 +88,10 @@
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
+    "json-pointer": "0.6.2",
+    "marked": "^4.0.10",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7",
-    "marked": "^4.0.10"
+    "node-fetch": "^2.6.7"
   },
   "eslintConfig": {
     "extends": [
@@ -191,6 +193,7 @@
     "dotenv": "^10.0.0",
     "email-templates": "^8.0.4",
     "express": "^4.17.1",
+    "express-http-context": "^1.2.4",
     "express-unless": "^1.0.0",
     "express-winston": "^4.0.5",
     "faker": "^5.5.3",
