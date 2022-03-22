@@ -13,12 +13,18 @@ function RegionPermissionModal({
 
   useEffect(() => {
     // Check if user has permission to region.
-    const regionFilter = filters.find((f) => f.topic === 'region');
-    if (regionFilter) {
-      const filterRegion = regionFilter.query;
-      const filterRegionNum = parseInt(filterRegion, DECIMAL_BASE);
-      if (!userRegions.includes(filterRegionNum) && !modalRef.current.modalIsOpen) {
-        console.log('Modal Toggle!!!!!!', !userRegions.includes(filterRegionNum), typeof filterRegion, userRegions);
+    const regionFilters = filters.filter((f) => f.topic === 'region');
+    if (regionFilters.length > 0) {
+      let showRegionPermissionsModal = false;
+      regionFilters.forEach((f) => {
+        const filterRegion = f.query;
+        const filterRegionNum = parseInt(filterRegion, DECIMAL_BASE);
+        if (!userRegions.includes(filterRegionNum)) {
+          showRegionPermissionsModal = true;
+        }
+      });
+
+      if (showRegionPermissionsModal && !modalRef.current.modalIsOpen) {
         // Show region permission modal.
         modalRef.current.toggleModal(true);
       }
