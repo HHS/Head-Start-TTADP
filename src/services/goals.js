@@ -55,6 +55,24 @@ export async function createOrUpdateGoals(goals) {
       })),
     );
 
+    await Promise.all(
+      objectives.map(async (objective) => {
+        await Objective.findOrCreate({
+          where: {
+            goalId: goal.id,
+            title: objective.title,
+            ttaProvided: objective.ttaProvided,
+            status: objective.status,
+          },
+        });
+
+        // topics
+        //  await
+
+        // resources
+      }),
+    );
+
     // we want to return the data in roughly the form it was provided
     return {
       ...goal.dataValues,
