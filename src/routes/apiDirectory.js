@@ -16,6 +16,7 @@ import { auditLogger } from '../logger';
 import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
 import goalsRouter from './goals';
+import topicsRouter from './topics';
 
 export const loginPath = '/login';
 
@@ -64,6 +65,7 @@ router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
+router.use('/topic', topicsRouter);
 
 router.get('/user', async (req, res) => {
   const { userId } = req.session;

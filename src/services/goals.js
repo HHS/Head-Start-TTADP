@@ -4,6 +4,8 @@ import {
   Goal,
   Grant,
   Objective,
+  ObjectiveResource,
+  ObjectiveTopic,
   ActivityReportObjective,
   GrantGoal,
   sequelize,
@@ -33,7 +35,7 @@ import {
 export async function createOrUpdateGoals(goals) {
   return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
     const {
-      id, grants, recipientId, regionId,
+      id, grants, recipientId, regionId, objectives,
       ...fields
     } = goalData;
 
@@ -56,12 +58,64 @@ export async function createOrUpdateGoals(goals) {
       })),
     );
 
+    const newObjectives = await Promise.all(
+      objectives.map(async (o) => {
+        const {
+          id: objectiveId,
+          resources,
+          topics,
+          ...objectiveFields
+        } = o;
+
+        const where = id ? {
+          id: objectiveId,
+          goalId: goal.id,
+          ...objectiveFields,
+        } : {
+          goalId: goal.id,
+          title: o.title,
+          ttaProvided: '',
+          status: 'Not started',
+        };
+
+        const [objective] = await Objective.upsert(
+          where,
+          { transaction },
+        );
+
+        // topics
+        await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
+          where: {
+            objectiveId: objective.id,
+            topicId: ot.value,
+          },
+          transaction,
+        }))));
+
+        // resources
+        await Promise.all((resources.map((or) => ObjectiveResource.findOrCreate({
+          where: {
+            userProvidedUrl: or.value,
+            objectiveId: objective.id,
+          },
+          transaction,
+        }))));
+
+        return {
+          ...objective.dataValues,
+          topics,
+          resources,
+        };
+      }),
+    );
+
     // we want to return the data in roughly the form it was provided
     return {
       ...goal.dataValues,
       grants,
       recipientId,
       regionId,
+      objectives: newObjectives,
     };
   })));
 }

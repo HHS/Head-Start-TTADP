@@ -1,4 +1,8 @@
+/** text inputs **/
 .ttahub-create-goals-form .usa-error-message + :invalid, 
-.ttahub-create-goals-form .usa-error-message + .usa-select  {
+/** the <Select /> component **/
+.ttahub-create-goals-form .usa-error-message + .usa-select, 
+/** URL fields are wrapped in a div **/
+.ttahub-create-goals-form .usa-error-message + .display-flex :invalid  {
     border: 2px solid #b50909;
 }

@@ -5,61 +5,17 @@ import Select from 'react-select';
 import {
   DatePicker, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
+import ObjectiveForm from './ObjectiveForm';
 import './Form.css';
+import PlusButton from './PlusButton';
+import {
+  OBJECTIVE_DEFAULTS,
+  OBJECTIVE_DEFAULT_ERRORS,
 
-const selectStyles = {
-  container: (provided, state) => {
-    // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-    return {
-      ...provided,
-      outline,
-      padding: 0,
-    };
-  },
-  control: (provided, state) => {
-    const selected = state.getValue();
-    return {
-      ...provided,
-      background: state.isFocused || selected.length ? 'white' : 'transparent',
-      border: 'none',
-      borderRadius: 0,
-      boxShadow: '0',
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
-
-      overflow: state.isFocused ? 'visible' : 'hidden',
-      position: !state.isFocused ? 'absolute' : 'relative',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: state.isFocused && selected.length ? 'auto' : 0,
-    };
-  },
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    display: 'inline',
-    // The arrow dropdown icon is too far to the right, this pushes it back to the left
-    marginRight: '4px',
-  }),
-  indicatorSeparator: () => ({ display: 'none' }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 2,
-  }),
-  multiValue: (provided) => ({ ...provided }),
-  multiValueLabel: (provided) => ({ ...provided }),
-  valueContainer: (provided) => ({
-    ...provided,
-    maxHeight: '100%',
-  }),
-};
-
-export const FORM_FIELD_INDEXES = {
-  GRANTS: 0,
-  NAME: 1,
-  END_DATE: 2,
-};
+  FORM_FIELD_INDEXES,
+  SELECT_STYLES,
+  validateListOfResources,
+} from './constants';
 
 export default function Form({
   possibleGrants,
@@ -73,30 +29,74 @@ export default function Form({
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
+  objectives,
+  setObjectives,
+  setObjectiveError,
+  topicOptions,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
+
+  const onAddNewObjectiveClick = () => {
+    // copy existing state, add a blank
+    const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
+
+    // save
+    setObjectives(obj);
+    setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
+  };
+
+  const removeObjective = (index) => {
+    // copy existing state
+    const obj = objectives.map((o) => ({ ...o }));
+    obj.splice(index, 1);
+
+    // save
+    setObjectives(obj);
+  };
+
+  const setObjective = (data, index) => {
+    const obj = objectives.map((o) => ({ ...o }));
+    obj.splice(index, 1, data);
+    setObjectives(obj);
+  };
+
+  const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
+
+  // Validate the objective fields and the correctness of the resources
+  const canAddNewObjective = objectives.reduce((acc, curr) => {
+    if (acc) {
+      return curr.title && curr.topics.length && validateListOfResources(curr.resources);
+    }
+    return acc;
+  }, true);
 
   return (
     <div className="ttahub-create-goals-form">
       <h2>Recipient TTA goal</h2>
+      <div>
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        {' '}
+        indicates required field
+      </div>
+
       <h3>Goal summary</h3>
       <FormGroup>
         <Label htmlFor="recipientGrantNumbers">
           Recipient grant numbers
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
         {possibleGrants.length === 1 ? (
           <span className="margin-bottom-1">{selectedGrants[0].label}</span>
         ) : (
           <>
-            <span className="usa-hint">Select all grant numbers that apply to the grant</span>
             {errors[FORM_FIELD_INDEXES.GRANTS]}
             <Select
               placeholder=""
               inputId="recipientGrantNumbers"
               onChange={setSelectedGrants}
               options={possibleGrants}
-              styles={selectStyles}
+              styles={SELECT_STYLES}
               components={{
                 DropdownIndicator: null,
               }}
@@ -111,18 +111,19 @@ export default function Form({
       </FormGroup>
       <FormGroup>
         <Label htmlFor="goalText">
-          Goal
-          <span className="smart-hub--form-required font-family-sans font-ui-xs"> (required)</span>
+          Recipient&apos;s goal
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        <span className="usa-hint">
-          What the recipient wants to achieve
-        </span>
         {errors[FORM_FIELD_INDEXES.NAME]}
         <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
       </FormGroup>
       <FormGroup>
-        <Label htmlFor="goalEndDate">Goal end date</Label>
-        <span className="usa-hint">When does the recipient expect to meet this goal? (mm/dd/yyyy)</span>
+        <Label htmlFor="goalEndDate">
+          Estimated close date (mm/dd/yyyy)
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        </Label>
         {errors[FORM_FIELD_INDEXES.END_DATE]}
         <DatePicker
           id="goalEndDate"
@@ -133,6 +134,23 @@ export default function Form({
           onBlur={validateEndDate}
         />
       </FormGroup>
+      { objectives.map((objective, i) => (
+        <ObjectiveForm
+          index={i}
+          objective={objective}
+          removeObjective={removeObjective}
+          setObjectiveError={setObjectiveError}
+          key={objective.id}
+          errors={objectiveErrors[i]}
+          setObjective={(data) => setObjective(data, i)}
+          topicOptions={topicOptions}
+        />
+      ))}
+      { canAddNewObjective ? (
+        <div className="margin-top-4">
+          <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+        </div>
+      ) : null }
     </div>
   );
 }
@@ -142,6 +160,7 @@ Form.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
+  setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
@@ -169,6 +188,23 @@ Form.propTypes = {
   }).isRequired,
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
+  setObjectives: PropTypes.func.isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+  })).isRequired,
+  objectives: PropTypes.arrayOf(PropTypes.shape({
+    objective: PropTypes.string,
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.string,
+      value: PropTypes.string,
+    })),
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  })).isRequired,
 };
 
 Form.defaultProps = {
