@@ -314,6 +314,15 @@ export default function CreateGoal({ recipient, regionId }) {
     setEndDate(goal.endDate);
     setStatus(goal.status);
     setGoalId(goal.id);
+
+    // objectives need some special help
+    const { objectives: goalObjectives } = goal;
+
+    setObjectives(goalObjectives.map((objective) => ({
+      ...objective,
+      resources: objective.resources.map((value) => value),
+    })));
+
     setShowForm(true);
   };
 
