@@ -274,6 +274,21 @@ describe('ActivityReport', () => {
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
+
+    it('automatically sets creator role on existing report', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
+      fetchMock.put('/api/activity-reports/1', {});
+      renderActivityReport(1);
+
+      const button = await screen.findByRole('button', { name: 'Save draft' });
+      userEvent.click(button);
+
+      const lastOptions = fetchMock.lastOptions();
+      const bodyObj = JSON.parse(lastOptions.body);
+      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
+      expect(bodyObj.creatorRole).toEqual('Reporter');
+    });
   });
 
   describe('recipient select', () => {

@@ -221,8 +221,68 @@ describe('Submitter review page', () => {
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
+
+    it('creator role auto populates on needs_action', async () => {
+      const mockSubmit = jest.fn();
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR'] });
+
+      // Resubmit.
+      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      userEvent.click(reSubmit);
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+
+    it('requires creator role on needs_action multiple roles', async () => {
+      const mockSubmit = jest.fn();
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR', 'Health Specialist', 'TTAC'] });
+
+      // Shows creator role.
+      expect(await screen.findByText(/creator role/i)).toBeVisible();
+      const roleSelector = await screen.findByRole('combobox');
+
+      // Resubmit without selecting creator roles shows validation error.
+      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      userEvent.click(reSubmit);
+
+      // Verify validation message.
+      const validationError = await screen.findByText('Please select a creator role.');
+      expect(validationError).toBeVisible();
+
+      // Select creator role.
+      expect(roleSelector.length).toBe(4);
+      userEvent.selectOptions(roleSelector, 'COR');
+      userEvent.selectOptions(roleSelector, 'Health Specialist');
+      userEvent.selectOptions(roleSelector, 'TTAC');
+
+      // Resubmit after setting creator role.
+      expect(validationError).not.toBeVisible();
+      userEvent.click(reSubmit);
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+
+    it('hides creator role on needs_action single role', async () => {
+      const mockSubmit = jest.fn();
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        true,
+        () => { },
+        () => { },
+        [],
+        { ...defaultUser },
+      );
+
+      // Hides creator role.
+      expect(screen.queryByRole('combobox')).toBeNull();
+
+      // Resubmit without validation error.
+      const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
+      userEvent.click(reSubmit);
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
   });
-  describe('creator role', () => {
+
+  describe('creator role when report is draft', () => {
     it('hides with single role', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist'] });
       expect(screen.queryByRole('combobox', { name: /creator role \(required\)/i })).toBeNull();
