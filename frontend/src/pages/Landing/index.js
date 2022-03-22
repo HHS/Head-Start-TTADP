@@ -164,6 +164,7 @@ function Landing() {
         if (alertsCount) {
           setAlertReportsCount(alertsCount);
         }
+        updateError('');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
