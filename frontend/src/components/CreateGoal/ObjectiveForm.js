@@ -9,7 +9,6 @@ import ResourceRepeater from './ResourceRepeater';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
-import { TOPICS } from '../../Constants';
 
 const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError,
@@ -22,6 +21,7 @@ export default function ObjectiveForm({
   objective,
   setObjective,
   errors,
+  topicOptions,
 }) {
   // the parent objective data from props
   const { text, topics, resources } = objective;
@@ -103,7 +103,7 @@ export default function ObjectiveForm({
           }}
           className="usa-select"
           isMulti
-          options={TOPICS.map((label, value) => ({ value, label }))}
+          options={topicOptions}
           onBlur={validateObjectiveTopics}
           value={topics}
           onChange={onChangeTopics}
@@ -136,4 +136,8 @@ ObjectiveForm.propTypes = {
       value: PropTypes.string,
     })),
   }).isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+  })).isRequired,
 };

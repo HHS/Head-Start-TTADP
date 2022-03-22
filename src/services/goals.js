@@ -3,6 +3,8 @@ import {
   Goal,
   Grant,
   Objective,
+  ObjectiveResource,
+  ObjectiveTopic,
   ActivityReportObjective,
   GrantGoal,
   sequelize,
@@ -56,20 +58,33 @@ export async function createOrUpdateGoals(goals) {
     );
 
     await Promise.all(
-      objectives.map(async (objective) => {
-        await Objective.findOrCreate({
+      objectives.map(async (o) => {
+        const objective = await Objective.findOrCreate({
           where: {
             goalId: goal.id,
-            title: objective.title,
-            ttaProvided: objective.ttaProvided,
-            status: objective.status,
+            title: o.title,
+            ttaProvided: o.ttaProvided,
+            status: o.status,
           },
+          transaction,
         });
 
         // topics
-        //  await
+        await Promise.all((o.topics.map((ot) => ObjectiveTopic.findOrCreate({
+          where: {
+            objectiveId: objective.id,
+            topicId: ot.value,
+          },
+          transaction,
+        }))));
 
         // resources
+        return Promise.all((o.topics.map(() => ObjectiveResource.findOrCreate({
+          where: {
+            //
+          },
+          transaction,
+        }))));
       }),
     );
 
