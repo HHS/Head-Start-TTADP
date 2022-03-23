@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -597,7 +597,7 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.get(
         baseWithRegionOne,
-        { count: 1, goalRows: [goals[0], goals[1]] },
+        { count: 1, goalRows: [goals[0], goals[3]] },
       );
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
@@ -608,7 +608,7 @@ describe('Goals Table', () => {
       fetchMock.restore();
     });
 
-    it('Sets goal status', async () => {
+    it('Sets goal status with reason', async () => {
       fetchMock.reset();
       fetchMock.put('/api/goals/4598/changeStatus', {
         id: 4598,
@@ -628,7 +628,42 @@ describe('Goals Table', () => {
       // Change goal status to 'Closed'.
       const closeGoalButton = await screen.findByText(/close goal/i);
       fireEvent.click(closeGoalButton);
+
+      // Select a reason.
+      const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
+      fireEvent.click(reasonRadio);
+
+      // Submit reason why.
+      const submitButton = await screen.findAllByText(/submit/i);
+      fireEvent.click(submitButton[0]);
+
+      // Verify new status.
       await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Closed'));
+    });
+
+    it('Sets goal status without reason', async () => {
+      fetchMock.reset();
+      fetchMock.put('/api/goals/65479/changeStatus', {
+        id: 65479,
+        status: 'In Progress',
+        createdOn: '06/15/2021',
+        goalText: 'This is goal text 1.',
+        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+        objectiveCount: 5,
+        goalNumber: 'R14-G-65479',
+        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      });
+
+      // Open Context Menu.
+      const contextButton = await screen.findByRole('button', { name: /actions for goal 65479/i });
+      fireEvent.click(contextButton);
+
+      // Change goal status to 'Closed'.
+      const closeGoalButton = await screen.findByText(/mark in progress/i);
+      fireEvent.click(closeGoalButton);
+
+      // Verify goal status change.
+      await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent('In progress'));
     });
   });
 });

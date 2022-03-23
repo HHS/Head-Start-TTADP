@@ -122,10 +122,10 @@ describe('grant filtersToScopes', () => {
     await sequelize.close();
   });
 
-  describe('startDate', () => {
+  describe('activeWithin', () => {
     it('before', async () => {
       const filters = { 'startDate.bef': '1997/07/31' };
-      const scope = filtersToScopes(filters);
+      const scope = filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -136,7 +136,7 @@ describe('grant filtersToScopes', () => {
 
     it('after', async () => {
       const filters = { 'startDate.aft': '1997/07/31' };
-      const scope = filtersToScopes(filters);
+      const scope = filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -147,7 +147,7 @@ describe('grant filtersToScopes', () => {
 
     it('within', async () => {
       const filters = { 'startDate.win': '1997/07/31-1997/08/02' };
-      const scope = filtersToScopes(filters);
+      const scope = filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: {
           [Op.and]: [scope.grant, { id: possibleIds }],
