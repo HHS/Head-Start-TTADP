@@ -1,4 +1,4 @@
-import faker from 'faker';
+import faker from '@faker-js/faker';
 import { Model } from 'sequelize';
 import db, { User, ZALUser } from '..';
 import { auditLogger } from '../../logger';
