@@ -276,13 +276,24 @@ function Landing() {
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
 
+  const showFilterWithMyRegions = () => {
+    // Exclude region filters we dont't have access to and show.
+    const accessRegions = [...new Set(allRegionsFilters.map((r) => r.query))];
+    const newFilters = filters.filter((f) => f.topic !== 'region' || (f.topic === 'region' && accessRegions.includes(parseInt(f.query[0], 10))));
+    setFilters(newFilters);
+  };
+
   return (
     <>
       <Helmet>
         <title>Landing</title>
       </Helmet>
       <>
-        <RegionPermissionModal filters={filters} user={user} />
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={showFilterWithMyRegions}
+        />
         {showAlert && message && (
           <Alert
             type="success"
