@@ -14,18 +14,15 @@ export const history = createMemoryHistory();
 
 const user = {
   id: 1,
-  name: 'test@test.com',
+  name: 'Walter Burns',
+  role: ['Reporter'],
   permissions: [
-    {
-      scopeId: 3,
-      regionId: 1,
-    },
+    { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
   ],
 };
 
 export const formData = () => ({
   regionId: 1,
-  displayId: 'yabba dabba doo',
   deliveryMethod: 'in-person',
   ttaType: ['training'],
   approvers: [],
@@ -52,11 +49,11 @@ export const formData = () => ({
   author: { name: 'test' },
   topics: 'first',
   userId: 1,
+  goals: [],
   updatedAt: new Date().toISOString(),
   creatorRole: 'Reporter',
   attachments: [],
   creatorNameWithRole: 'test',
-  goals: [],
 });
 
 export const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
