@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { CLOSE_SUSPEND_REASONS } = require('../constants');
 
 /**
  * Goals table. Stores goals for tta.
@@ -32,6 +33,13 @@ module.exports = (sequelize, DataTypes) => {
         }
         return `R${regionId}-G-${id}`;
       },
+    },
+    closeSuspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
+    },
+    closeSuspendContext: {
+      type: DataTypes.TEXT,
     },
   }, {
     sequelize,

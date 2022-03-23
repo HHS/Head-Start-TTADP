@@ -73,7 +73,6 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
-  creatorRole: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -126,6 +125,36 @@ export const unflattenResourcesUsed = (array) => {
   }
 
   return array.map((value) => ({ value }));
+};
+
+/**
+ * Goals created are editable until the report is loaded again. The report used to
+ * not update freshly created goals with their DB id once saved, but this caused
+ * any additional updates to create a brand new goal instead of updating the old goal.
+ * We now use the goal created in the DB. However this means we no longer know if the
+ * goal should be editable or not, since it was loaded from the DB. This method takes
+ * the list of newly created goals and grabs their names, placed in the `editableGoals`
+ * variable. Then all goals returned form the API (the report object passed into this
+ * method) have their name compared against the list of fresh goals. The UI then uses
+ * the `new` property to determine if a goal should be editable or not.
+ * @param {*} report the freshly updated report
+ * @returns {function} function that can be used by `setState` to update
+ * formData
+ */
+export const updateGoals = (report) => (oldFormData) => {
+  const oldGoals = oldFormData.goals || [];
+  const newGoals = report.goals || [];
+
+  const goalsThatUsedToBeNew = oldGoals.filter((goal) => goal.new);
+  const goalsFreshlySavedInDB = goalsThatUsedToBeNew.map((goal) => goal.name);
+  const goals = newGoals.map((goal) => {
+    const goalEditable = goalsFreshlySavedInDB.includes(goal.name);
+    return {
+      ...goal,
+      new: goalEditable,
+    };
+  });
+  return { ...oldFormData, goals };
 };
 
 function ActivityReport({
@@ -190,6 +219,8 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
+  const userHasOneRole = user && user.role && user.role.length === 1;
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -204,13 +235,12 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
-            creatorRole: user && user.role && user.role.length === 1 ? user.role[0] : null,
+            creatorRole: userHasOneRole ? user.role[0] : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
           };
         }
-
         const apiCalls = [
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
@@ -374,7 +404,8 @@ function ActivityReport({
       } else {
         // if it isn't a new report, we compare it to the last response from the backend (formData)
         // and pass only the updated to save report
-        const updatedFields = findWhatsChanged(data, formData);
+        const creatorRole = !data.creatorRole && userHasOneRole ? user.role[0] : data.creatorRole;
+        const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
           reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
         );

@@ -11,7 +11,7 @@ import { filtersToQueryString } from '../../utils';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
 import { REPORTS_PER_PAGE } from '../../Constants';
-
+import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
 
 function ActivityReportsTable({
@@ -24,16 +24,19 @@ function ActivityReportsTable({
   const [error, setError] = useState('');
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
-  const [offset, setOffset] = useState(0);
   const [perPage] = useState(REPORTS_PER_PAGE);
-  const [activePage, setActivePage] = useState(1);
   const [reportsCount, setReportsCount] = useState(0);
   const [downloadError, setDownloadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [sortConfig, setSortConfig] = React.useState({
+  const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: 'updatedAt',
     direction: 'desc',
-  });
+    activePage: 1,
+  }, 'activityReportsTable');
+
+  const { activePage } = sortConfig;
+
+  const [offset, setOffset] = useState((activePage - 1) * perPage);
 
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
@@ -53,6 +56,7 @@ function ActivityReportsTable({
 
         setReports(rows);
         setReportsCount(count || 0);
+        setError('');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
@@ -106,7 +110,14 @@ function ActivityReportsTable({
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
-      setActivePage(pageNumber);
+      // copy state
+      const sort = { ...sortConfig };
+
+      // mutate
+      sort.activePage = pageNumber;
+
+      // store it
+      setSortConfig(sort);
       setOffset((pageNumber - 1) * perPage);
     }
   };
@@ -120,9 +131,9 @@ function ActivityReportsTable({
     ) {
       direction = 'desc';
     }
-    setActivePage(1);
+
     setOffset(0);
-    setSortConfig({ sortBy, direction });
+    setSortConfig({ sortBy, direction, activePage: 1 });
   };
 
   const handleDownloadAllReports = async () => {

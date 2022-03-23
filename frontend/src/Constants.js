@@ -235,3 +235,16 @@ const LOCAL_STORAGE_CACHE_NUMBER = '0.1';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
+
+export const GOAL_CLOSE_REASONS = [
+  'Duplicate goal',
+  'Recipient request',
+  'TTA complete',
+];
+
+export const GOAL_SUSPEND_REASONS = [
+  'Key staff turnover',
+  'Recipient request',
+  'Recipient is not responding',
+  'Other',
+];
