@@ -4,7 +4,7 @@
 /* eslint-disable no-loop-func */
 import sequelize, { Op } from 'sequelize';
 import cheerio from 'cheerio';
-import faker from 'faker';
+import faker from '@faker-js/faker';
 import {
   ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors,
 } from '../models';
