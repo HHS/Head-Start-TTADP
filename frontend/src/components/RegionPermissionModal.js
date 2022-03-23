@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from './Modal';
 import { DECIMAL_BASE } from '../Constants';
@@ -10,22 +10,26 @@ function RegionPermissionModal({
 }) {
   const modalRef = useRef();
   const userRegions = getUserRegions(user);
+  const [deniedRegions, setDeniedRegions] = useState([]);
 
   useEffect(() => {
     // Check if user has permission to region.
     const regionFilters = filters.filter((f) => f.topic === 'region');
     if (regionFilters.length > 0) {
       let showRegionPermissionsModal = false;
+      const deniedRegionsList = [];
       regionFilters.forEach((f) => {
         const filterRegion = f.query;
         const filterRegionNum = parseInt(filterRegion, DECIMAL_BASE);
         if (!userRegions.includes(filterRegionNum)) {
           showRegionPermissionsModal = true;
+          deniedRegionsList.push(filterRegionNum);
         }
       });
 
       if (showRegionPermissionsModal && !modalRef.current.modalIsOpen) {
         // Show region permission modal.
+        setDeniedRegions(deniedRegionsList);
         modalRef.current.toggleModal(true);
       }
     }
@@ -58,8 +62,8 @@ function RegionPermissionModal({
         isLarge
       >
         <p>
-          Most TTA Hub users have access to only one region. You may have received a link from
-          someone with more access.
+          { `Most TTA Hub users have access to only one region. You have received a link from
+          someone with access to region(s) ${deniedRegions.join(', ')}. You only have access to region(s) ${userRegions.join(', ')}.`}
         </p>
       </Modal>
     </div>

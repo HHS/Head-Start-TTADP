@@ -33,10 +33,22 @@ export default function FilterPanel({
     // Check if pill being removed is a region filter.
     const pillToRemove = filters.find((f) => f.id === id);
     const isRegionFilter = pillToRemove && pillToRemove.topic === 'region';
-    onRemoveFilter(id, isRegionFilter);
+
+    if (isRegionFilter) {
+      const otherRegion = filters.find((f) => f.id !== id && f.topic === 'region');
+      const haveRemainingRegions = !hideRegionFiltersByDefault && otherRegion;
+      onRemoveFilter(id, !haveRemainingRegions);
+      setHideRegionFilters(!haveRemainingRegions);
+    } else {
+      onRemoveFilter(id, false);
+    }
+
+    /*
+       onRemoveFilter(id, isRegionFilter);
     if (isRegionFilter) {
       setHideRegionFilters(true);
     }
+    */
   };
 
   return (
