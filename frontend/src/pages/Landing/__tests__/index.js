@@ -343,7 +343,6 @@ describe('My alerts sorting', () => {
     // Overview.
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 
-
     const user = {
       name: 'test@test.com',
       homeRegionId: 1,
