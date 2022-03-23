@@ -64,7 +64,7 @@ export default function ReadOnly({
                 <div key={`objective${objective.id}`}>
                   <h3>Objective summary</h3>
                   <h4 className="margin-bottom-1">Objective</h4>
-                  <p className="margin-top-0">{objective.text}</p>
+                  <p className="margin-top-0">{objective.title}</p>
                   <h4 className="margin-bottom-1">Topics</h4>
                   <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
                   <h4 className="margin-bottom-1">Resource link</h4>

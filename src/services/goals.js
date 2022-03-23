@@ -12,6 +12,7 @@ import {
   sequelize,
   ActivityReport,
 } from '../models';
+import { DECIMAL_BASE } from '../constants';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -75,7 +76,7 @@ export async function createOrUpdateGoals(goals) {
           ...objectiveFields
         } = o;
 
-        const where = id ? {
+        const where = parseInt(id, DECIMAL_BASE) ? {
           id: objectiveId,
           goalId: goal.id,
           ...objectiveFields,

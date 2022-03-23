@@ -38,6 +38,7 @@ export default function CreateGoal({ recipient, regionId }) {
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
+    id: 'new',
   }), [possibleGrants]);
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
@@ -262,6 +263,7 @@ export default function CreateGoal({ recipient, regionId }) {
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
+    setGoalId(goalDefaults.id);
     setShowForm(false);
     setObjectives([]);
   };

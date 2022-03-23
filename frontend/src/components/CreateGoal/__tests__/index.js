@@ -47,7 +47,20 @@ describe('create goal', () => {
     recipientId: 1,
     regionId: 1,
     objectives: [{
-      title: 'test', topics: [{ value: 4, label: 'CLASS: Instructional Support' }], resources: [{ key: '1d697eba-7c6a-44e9-b2cf-20841be8065e', value: 'https://search.marginalia.nu/' }], id: 'new0',
+      title: 'test',
+      topics: [
+        {
+          value: 4,
+          label: 'CLASS: Instructional Support',
+        },
+      ],
+      resources: [
+        {
+          key: '1d697eba-7c6a-44e9-b2cf-20841be8065e',
+          value: 'https://search.marginalia.nu/',
+        },
+      ],
+      id: 'new0',
     }],
   }];
 
@@ -254,8 +267,11 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
 
-    const goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
+
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -278,7 +294,7 @@ describe('create goal', () => {
     expect(modalDeleteButton.textContent).toBe('Delete');
 
     userEvent.click(modalDeleteButton);
-    await screen.findByRole('textbox', { name: 'Goal (required)' });
+    await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     expect(fetchMock.called()).toBeTruthy();
   });
 
@@ -348,7 +364,7 @@ describe('create goal', () => {
     expect(modalDeleteButton.textContent).toBe('Delete');
 
     userEvent.click(modalDeleteButton);
-    await screen.findByRole('textbox', { name: 'Goal (required)' });
+    await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
   });
 
   it('allows editing of goals', async () => {
@@ -366,10 +382,24 @@ describe('create goal', () => {
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });
-    expect(fetchMock.called()).toBe(false);
 
-    let goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
+
+    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    userEvent.type(ed, '08/15/2023');
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'test');
+
+    const topics = await screen.findByLabelText(/topics \*/i);
+    await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -383,10 +413,10 @@ describe('create goal', () => {
     const editButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /edit/i });
     userEvent.click(editButton);
 
-    goalText = await screen.findByRole('textbox', { name: 'Goal (required)' });
+    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
 
     expect(goalText.value).toBe('This is goal text');
-    userEvent.type(goalText, 'and I want to meet my goals');
+    userEvent.type(goalText, ' and I want to meet my goals');
     userEvent.click(save);
   });
 
