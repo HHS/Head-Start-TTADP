@@ -6,7 +6,7 @@ import { getUserRegions } from '../permissions';
 import './RegionPermissionModal.css';
 
 function RegionPermissionModal({
-  filters, user,
+  filters, user, showFilterWithMyRegions,
 }) {
   const modalRef = useRef();
   const userRegions = getUserRegions(user);
@@ -31,19 +31,23 @@ function RegionPermissionModal({
     }
   }, [userRegions, filters]);
 
-  const showFilter = () => {
-
+  const showFilterWithMyRegionAccess = () => {
+    showFilterWithMyRegions();
+    modalRef.current.toggleModal(false);
   };
 
+  const smartSheetAccessLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
   const requestSmartSheetAccess = () => {
-
+    // Open link in new tab and close modal.
+    window.open(smartSheetAccessLink, '_blank');
+    modalRef.current.toggleModal(false);
   };
 
   return (
     <div className="smart-hub--region-permission-modal">
       <Modal
         modalRef={modalRef}
-        onOk={showFilter}
+        onOk={showFilterWithMyRegionAccess}
         okButtonCss="usa-button--primary"
         modalId="RegionPermissionModal"
         title="You need permission to access a region"
@@ -86,6 +90,7 @@ RegionPermissionModal.propTypes = {
       regionId: PropTypes.number,
     })),
   }).isRequired,
+  showFilterWithMyRegions: PropTypes.func.isRequired,
 };
 
 export default RegionPermissionModal;
