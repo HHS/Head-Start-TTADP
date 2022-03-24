@@ -75,21 +75,11 @@ function Landing() {
   };
   const allRegionsFilters = buildDefaultRegionFilters();
 
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    filtersWithAllRegions.push({
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    });
-    return filtersWithAllRegions;
-  };
-
-  const showRegionFilter = defaultRegion !== 14 && defaultRegion !== 0 && hasMultipleRegions;
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
-    showRegionFilter
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      && hasMultipleRegions
       ? [{
         id: uuidv4(),
         topic: 'region',
@@ -102,7 +92,12 @@ function Landing() {
         condition: 'is within',
         query: defaultDate,
       }]
-      : getFiltersWithAllRegions(),
+      : [{
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      }],
   );
 
   const history = useHistory();
@@ -229,34 +224,20 @@ function Landing() {
   };
 
   // Apply filters.
-  const onApply = (newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFilters([
-        ...newFilters,
-      ]);
-    }
-
+  const onApply = (newFilters) => {
+    setFilters([
+      ...newFilters,
+    ]);
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
   };
 
   // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
+  const onRemoveFilter = (id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFilters(newFilters);
-      }
+      setFilters(newFilters);
     }
   };
 
@@ -334,7 +315,6 @@ function Landing() {
               dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
-              hideRegionFiltersByDefault={!showRegionFilter}
             />
           </Grid>
         </Grid>
