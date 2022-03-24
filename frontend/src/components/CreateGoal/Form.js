@@ -11,10 +11,8 @@ import PlusButton from './PlusButton';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
-
   FORM_FIELD_INDEXES,
   SELECT_STYLES,
-  validateListOfResources,
 } from './constants';
 
 export default function Form({
@@ -61,14 +59,6 @@ export default function Form({
   };
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
-
-  // Validate the objective fields and the correctness of the resources
-  const canAddNewObjective = objectives.reduce((acc, curr) => {
-    if (acc) {
-      return curr.title && curr.topics.length && validateListOfResources(curr.resources);
-    }
-    return acc;
-  }, true);
 
   return (
     <div className="ttahub-create-goals-form">
@@ -146,11 +136,11 @@ export default function Form({
           topicOptions={topicOptions}
         />
       ))}
-      { canAddNewObjective ? (
-        <div className="margin-top-4">
-          <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
-        </div>
-      ) : null }
+
+      <div className="margin-top-6">
+        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+      </div>
+
     </div>
   );
 }

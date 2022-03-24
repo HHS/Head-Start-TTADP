@@ -18,6 +18,7 @@ export const SELECT_STYLES = {
       ...provided,
       outline,
       padding: 0,
+      height: 'auto',
     };
   },
   control: (provided, state) => {
@@ -30,13 +31,6 @@ export const SELECT_STYLES = {
       boxShadow: '0',
       // Match uswds disabled style
       opacity: state.isDisabled ? '0.7' : '1',
-
-      overflow: state.isFocused ? 'visible' : 'hidden',
-      position: !state.isFocused ? 'absolute' : 'relative',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: state.isFocused && selected.length ? 'auto' : 0,
     };
   },
   indicatorsContainer: (provided) => ({
@@ -54,7 +48,6 @@ export const SELECT_STYLES = {
   multiValueLabel: (provided) => ({ ...provided }),
   valueContainer: (provided) => ({
     ...provided,
-    maxHeight: '100%',
   }),
 };
 

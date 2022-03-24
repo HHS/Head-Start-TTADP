@@ -177,14 +177,14 @@ describe('create goal', () => {
     userEvent.type(goalText, 'This is goal text');
 
     userEvent.click(save);
-    await screen.findByText('Please valid date in the format mm/dd/yyyy');
+    await screen.findByText('Please enter a valid date in the format mm/dd/yyyy');
 
     const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, 'apple season');
 
     userEvent.click(save);
 
-    await screen.findByText('Please valid date in the format mm/dd/yyyy');
+    await screen.findByText('Please enter a valid date in the format mm/dd/yyyy');
 
     userEvent.type(ed, '08/15/2023');
 
@@ -508,8 +508,6 @@ describe('create goal', () => {
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'garrgeler');
-
-    expect(newObjective).not.toBeVisible();
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);

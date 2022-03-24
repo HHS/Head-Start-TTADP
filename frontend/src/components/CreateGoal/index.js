@@ -111,7 +111,7 @@ export default function CreateGoal({ recipient, regionId }) {
     let error = <></>;
 
     if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
-      error = <span className="usa-error-message">Please valid date in the format mm/dd/yyyy</span>;
+      error = <span className="usa-error-message">Please enter a valid date in the format mm/dd/yyyy</span>;
     }
 
     const newErrors = [...errors];
