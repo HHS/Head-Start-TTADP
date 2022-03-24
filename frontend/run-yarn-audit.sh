@@ -17,17 +17,20 @@ fi
 
 if [ -f yarn-audit-known-issues ] && echo "$output" | grep auditAdvisory | diff -q yarn-audit-known-issues - > /dev/null 2>&1; then
 	echo
-	echo Ignorning known vulnerabilities
+	echo Ignoring known vulnerabilities
 	exit 0
 fi
 
+
+# we compare the json output to see if they are the same list of package names and version numbers
+# if so, exit without error
 
 curr=$(cat yarn-audit-known-issues | jq -s 'map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique | sort_by(.data.advisory.module_name) | tostring')
 new=$(yarn audit --level low --json --groups dependencies | jq -s 'map(select(.type == "auditAdvisory")) | map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique | sort_by(.data.advisory.module_name) | tostring')
 
 if [ "$curr" = "$new" ]; then
     echo
-	echo Ignorning known vulnerabilities
+	echo Ignoring previously known and accepted vulnerabilitie
 	exit 0
 fi
 
