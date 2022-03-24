@@ -16,6 +16,7 @@ import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
 import FilterContext from '../../FilterContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -37,6 +38,21 @@ export default function RegionalDashboard() {
   const regions = useMemo(() => getUserRegions(user), [user]);
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
+
+  const buildDefaultRegionFilters = () => {
+    const allRegionFilters = [];
+    for (let i = 0; i < regions.length; i += 1) {
+      allRegionFilters.push({
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: regions[i],
+      });
+    }
+
+    return allRegionFilters;
+  };
+  const allRegionsFilters = buildDefaultRegionFilters();
 
   const defaultFilters = useMemo(() => {
     if (hasCentralOffice) {
@@ -83,11 +99,23 @@ export default function RegionalDashboard() {
 
   const filtersToApply = expandFilters(filters);
 
+  const showFilterWithMyRegions = () => {
+    // Exclude region filters we dont't have access to and show.
+    const accessRegions = [...new Set(allRegionsFilters.map((r) => r.query))];
+    const newFilters = filters.filter((f) => f.topic !== 'region' || (f.topic === 'region' && accessRegions.includes(parseInt(f.query[0], 10))));
+    setFilters(newFilters);
+  };
+
   return (
     <div className="ttahub-dashboard">
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={showFilterWithMyRegions}
+        />
         <h1 className="landing">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
