@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.sequelize.query('ALTER TYPE "enum_Goals_closeSuspendReason" ADD VALUE \'Key staff turnover / vacancies\' BEFORE \'Key staff turnover\';');
+    await queryInterface.sequelize.query('ALTER TYPE "enum_Goals_closeSuspendReason" ADD VALUE \'Key staff turnover / vacancies\';');
     await queryInterface.sequelize.query('ALTER TYPE "enum_Goals_closeSuspendReason" ADD VALUE \'Regional Office request\';');
   },
   down: async (queryInterface) => {
