@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Modal from './Modal';
 import { DECIMAL_BASE } from '../Constants';
@@ -10,7 +10,6 @@ function RegionPermissionModal({
 }) {
   const modalRef = useRef();
   const userRegions = getUserRegions(user);
-  const [deniedRegions, setDeniedRegions] = useState([]);
 
   useEffect(() => {
     // Check if user has permission to region.
@@ -29,7 +28,6 @@ function RegionPermissionModal({
 
       if (showRegionPermissionsModal && !modalRef.current.modalIsOpen) {
         // Show region permission modal.
-        setDeniedRegions(deniedRegionsList);
         modalRef.current.toggleModal(true);
       }
     }
@@ -44,6 +42,7 @@ function RegionPermissionModal({
   const requestSmartSheetAccess = () => {
     // Open link in new tab and close modal.
     window.open(smartSheetAccessLink, '_blank');
+    showFilterWithMyRegions();
     modalRef.current.toggleModal(false);
   };
 
@@ -54,16 +53,17 @@ function RegionPermissionModal({
         onOk={showFilterWithMyRegionAccess}
         okButtonCss="usa-button--primary"
         modalId="RegionPermissionModal"
-        title="You need permission to access a region"
+        title="You need permission to access this region"
         okButtonText="Show filter with my regions"
         secondaryOkButtonText="Request access via Smartsheet"
         onSecondaryOk={requestSmartSheetAccess}
         hideCancelButton
         isLarge
+        forceAction
       >
         <p>
-          { `Most TTA Hub users have access to only one region. You have received a link from
-          someone with access to region(s) ${deniedRegions.join(', ')}. You only have access to region(s) ${userRegions.join(', ')}.`}
+          Most TTA Hub users have access to one region.
+          This link might be from someone working in a different region.
         </p>
       </Modal>
     </div>
