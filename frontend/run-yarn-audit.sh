@@ -21,6 +21,15 @@ if [ -f yarn-audit-known-issues ] && echo "$output" | grep auditAdvisory | diff 
 	exit 0
 fi
 
+curr=$(cat yarn-audit-known-issues | jq -s 'map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique | sort_by(.data.advisory.module_name) | tostring')
+new=$(yarn audit --level low --json --groups dependencies | jq -s 'map(select(.type == "auditAdvisory")) | map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique | sort_by(.data.advisory.module_name) | tostring')
+
+if [ "$curr" = "$new" ]; then
+    echo
+	echo Ignorning known vulnerabilities
+	exit 0
+fi
+
 echo
 echo Security vulnerabilities were found that were not ignored:
 echo "$output" | jq -s 'map(select(.type == "auditAdvisory")) | map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique'
