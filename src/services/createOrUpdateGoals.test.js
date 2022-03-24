@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import faker from '@faker-js/faker';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
@@ -9,7 +9,6 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
-  sequelize,
 } from '../models';
 
 describe('createOrUpdateGoals', () => {
@@ -18,49 +17,30 @@ describe('createOrUpdateGoals', () => {
   });
 
   let goal;
-  let recipient;
-  let newGoals;
   let topic;
   let objective;
-
-  let grants;
+  let recipient;
+  let newGoals;
+  let grants = [
+    {
+      id: faker.datatype.number(),
+      number: faker.random.alphaNumeric(5),
+      cdi: false,
+      regionId: 1,
+    },
+    {
+      id: faker.datatype.number(),
+      number: faker.random.alphaNumeric(5),
+      cdi: false,
+      regionId: 1,
+    },
+  ];
 
   beforeAll(async () => {
-    recipient = await Recipient.findOne({
-      where: {
-        id: {
-          [Op.in]: sequelize.literal(
-            `(
-              SELECT "Recipients"."id" FROM "Recipients" 
-              INNER JOIN "Grants" ON "Grants"."recipientId" = "Recipients"."id" 
-              WHERE "Grants"."regionId" = 1 AND "Recipients"."id" IN (
-                SELECT "Recipients"."id" FROM "Recipients"
-                INNER JOIN "Grants" on "Recipients"."id" = "Grants"."recipientId"
-                GROUP BY "Recipients"."id"
-                HAVING
-                  COUNT("Grants"."id") > 1                
-              )
-            )`,
-          ),
-        },
-      },
-    });
-    const grant = await Grant.findOne({
-      where: {
-        recipientId: recipient.id,
-      },
-    });
-
-    const secondGrant = await Grant.findOne({
-      where: {
-        recipientId: recipient.id,
-        id: {
-          [Op.notIn]: [grant.id],
-        },
-      },
-    });
-
-    grants = [grant, secondGrant];
+    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number() });
+    grants = await Promise.all(
+      grants.map((g) => Grant.create({ ...g, recipientId: recipient.id })),
+    );
 
     goal = await Goal.create({
       name: 'This is some serious goal text',
@@ -109,6 +89,18 @@ describe('createOrUpdateGoals', () => {
     await Goal.destroy({
       where: {
         id: newGoals.map((g) => g.id),
+      },
+    });
+
+    await Grant.destroy({
+      where: {
+        id: grants.map((g) => g.id),
+      },
+    });
+
+    await Recipient.destroy({
+      where: {
+        id: recipient.id,
       },
     });
 
