@@ -20,6 +20,39 @@ const logContext = {
   namespace,
 };
 
+async function cleanupObjectivesForGoal(goalId, currentObjectives) {
+  // get all objectives not currently on a goal
+  const orphanedObjectives = await Objective.findAll({
+    attributes: ['id'],
+    where: {
+      goalId,
+      id: {
+        [Op.notIn]: currentObjectives.map((objective) => objective.id),
+      },
+    },
+  });
+
+  const orphanedObjectiveIds = orphanedObjectives.map((objective) => objective.id);
+
+  await ObjectiveResource.destroy({
+    where: {
+      objectiveId: orphanedObjectiveIds,
+    },
+  });
+
+  await ObjectiveTopic.destroy({
+    where: {
+      objectiveId: orphanedObjectiveIds,
+    },
+  });
+
+  return Objective.destroy({
+    where: {
+      id: orphanedObjectiveIds,
+    },
+  });
+}
+
 /**
  * Goals is an array of an object with the following keys
     id,
@@ -117,6 +150,9 @@ export async function createOrUpdateGoals(goals) {
         };
       }),
     );
+
+    // this function deletes unused objectives
+    await cleanupObjectivesForGoal(goal.id, newObjectives);
 
     // we want to return the data in roughly the form it was provided
     return {
