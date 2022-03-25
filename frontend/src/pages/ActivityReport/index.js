@@ -43,6 +43,7 @@ import {
 } from '../../fetchers/activityReports';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext from '../../NetworkContext';
+import { HTTPError } from '../../fetchers';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -78,7 +79,7 @@ const defaultValues = {
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
-function cleanupLocalStorage(id) {
+export function cleanupLocalStorage(id) {
   try {
     window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
     window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
@@ -87,6 +88,16 @@ function cleanupLocalStorage(id) {
     // eslint-disable-next-line no-console
     console.warn('Local storage may not be available: ', e);
   }
+}
+
+function setConnectionActiveWithError(error, setConnectionActive) {
+  let connection = false;
+  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
+  // display the "network is unavailable" message
+  if (error instanceof HTTPError && ['403', '404'].includes(error.status)) {
+    connection = true;
+  }
+  setConnectionActive(connection);
 }
 
 /**
@@ -172,7 +183,8 @@ function ActivityReport({
     LOCAL_STORAGE_DATA_KEY(activityReportId), null,
   );
 
-  const savedToStorage = formData ? formData.savedToStorage : null;
+  // retrieve the last time the data was saved to local storage
+  const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
     LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {},
@@ -262,9 +274,13 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        if (formData && savedToStorage) {
+        // this if statement compares the "saved to storage time" and the
+        // time retrieved from the network (report.updatedAt)
+        // and whichever is newer "wins"
+
+        if (formData && savedToStorageTime) {
           const updatedAtFromNetwork = moment(report.updatedAt);
-          const updatedAtFromLocalStorage = moment(savedToStorage);
+          const updatedAtFromLocalStorage = moment(savedToStorageTime);
           if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
             const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
             if (storageIsNewer) {
@@ -303,7 +319,8 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        setConnectionActive(false);
+        setConnectionActiveWithError(error, setConnectionActive);
+
         const errorMsg = formData ? 'Unable to load activity report from our network. We found saved work on your computer, and we\'ve loaded that instead.' : 'Unable to load activity report';
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
@@ -332,6 +349,7 @@ function ActivityReport({
     return <Redirect to="/" />;
   }
 
+  // This error message is a catch all assuming that the network storage is
   if (error && !formData) {
     return (
       <Alert type="error">
@@ -413,7 +431,7 @@ function ActivityReport({
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
     } catch (e) {
-      setConnectionActive(false);
+      setConnectionActiveWithError(error, setConnectionActive);
     }
   };
 
@@ -514,7 +532,7 @@ function ActivityReport({
           onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
-          savedToStorage={savedToStorage}
+          savedToStorageTime={savedToStorageTime}
         />
       </NetworkContext.Provider>
     </div>

@@ -39,7 +39,7 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage, lastSaveTime, errorMessage, savedToStorage,
+  pages, skipTo, skipToMessage, lastSaveTime, errorMessage, savedToStorageTime,
 }) {
   const [fade, updateFade] = useState(true);
 
@@ -88,7 +88,7 @@ function SideNav({
             {errorMessage}
           </Alert>
         )}
-      {(lastSaveTime || savedToStorage) && !errorMessage
+      {(lastSaveTime || savedToStorageTime) && !errorMessage
         && (
           <Alert
             onAnimationEnd={onAnimationEnd}
@@ -107,11 +107,11 @@ function SideNav({
                   {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
                 </span>
               ) : null}
-            { savedToStorage && (
+            { savedToStorageTime && (
             <span className="margin-bottom-2 display-block">
               This report was last saved to your local backup on
               {' '}
-              {moment(savedToStorage).format(DATE_DISPLAY_SAVED_FORMAT)}
+              {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
             </span>
             )}
           </Alert>
@@ -133,13 +133,13 @@ SideNav.propTypes = {
   skipToMessage: PropTypes.string.isRequired,
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
-  savedToStorage: PropTypes.string,
+  savedToStorageTime: PropTypes.string,
 };
 
 SideNav.defaultProps = {
   lastSaveTime: undefined,
   errorMessage: undefined,
-  savedToStorage: undefined,
+  savedToStorageTime: undefined,
 };
 
 export default SideNav;
