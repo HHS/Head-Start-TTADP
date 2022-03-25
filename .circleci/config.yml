@@ -106,6 +106,12 @@ commands:
       hses_data_password:
         description: "Password used to access the HSES grants and recipient data"
         type: env_var_name
+      smtp_host:
+        description: "SMTP server"
+        type: env_var_name
+      smtp_port:
+        description: "SMTP port"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -126,7 +132,9 @@ commands:
               --var SESSION_SECRET=${<< parameters.session_secret >>} \
               --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
               --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
-              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>}
+              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
+              --var SMTP_HOST=${<< parameters.smtp_host >>} \
+              --var SMTP_PORT=${<< parameters.smtp_port >>}
       - run:
           name: Push maintenance application
           command: |
@@ -375,6 +383,8 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
             - run:
                 name: Migrate database
                 command: |
@@ -404,6 +414,8 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
             - run:
                 name: Migrate database
                 command: |
@@ -433,6 +445,8 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
             - run:
                 name: Run database migrations
                 command: |
@@ -460,6 +474,8 @@ jobs:
                 hses_data_file_url: PROD_HSES_DATA_FILE_URL
                 hses_data_username: PROD_HSES_DATA_USERNAME
                 hses_data_password: PROD_HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
             - run:
                 name: Run database migrations
                 command: |
