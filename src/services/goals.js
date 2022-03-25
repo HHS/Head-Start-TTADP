@@ -76,7 +76,7 @@ export async function createOrUpdateGoals(goals) {
           ...objectiveFields
         } = o;
 
-        const where = parseInt(id, DECIMAL_BASE) ? {
+        const where = parseInt(objectiveId, DECIMAL_BASE) ? {
           id: objectiveId,
           goalId: goal.id,
           ...objectiveFields,
