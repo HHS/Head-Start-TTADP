@@ -1,5 +1,7 @@
 import { updateGoalStatusById } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
+import Goal from '../../policies/goal';
+import { userById } from '../../services/users';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -11,8 +13,17 @@ const logContext = {
 export async function changeGoalStatus(req, res) {
   try {
     const { goalId } = req.params;
-    const { newStatus, closeSuspendReason, closeSuspendContext } = req.body;
-    // TODO: Who has permission to perform this operation.
+    const {
+      newStatus, closeSuspendReason, closeSuspendContext, regionId,
+    } = req.body;
+
+    const user = await userById(req.session.userId);
+
+    if (!new Goal(user, { regionId }).canEdit()) {
+      res.sendStatus(401);
+      return;
+    }
+
     const updatedGoal = await updateGoalStatusById(
       goalId,
       newStatus,

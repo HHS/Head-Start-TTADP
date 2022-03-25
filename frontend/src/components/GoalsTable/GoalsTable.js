@@ -177,6 +177,7 @@ function GoalsTable({
                   goal={goal}
                   openMenuUp={index > displayGoals.length - 1}
                   updateGoal={updateGoal}
+                  regionId={regionId}
                 />
               ))}
             </tbody>

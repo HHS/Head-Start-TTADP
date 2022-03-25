@@ -20,6 +20,7 @@ import './GoalRow.css';
 function GoalRow({
   goal,
   updateGoal,
+  regionId,
 }) {
   const {
     id,
@@ -54,6 +55,7 @@ function GoalRow({
   ) => {
     const updatedGoal = await updateGoalStatus(
       goalId,
+      regionId,
       status,
       closeSuspendReason,
       closeSuspendContext,
@@ -174,7 +176,11 @@ function GoalRow({
       />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
-          <StatusDropdown status={goalStatus} onUpdateGoalStatus={onUpdateGoalStatus} />
+          <StatusDropdown
+            goalId={id}
+            status={goalStatus}
+            onUpdateGoalStatus={onUpdateGoalStatus}
+          />
         </td>
         <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
         <td className="text-wrap maxw-mobile">
@@ -203,7 +209,7 @@ function GoalRow({
           <button
             type="button"
             ref={expandObjectivesRef}
-            className={`usa-button--unstyled text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
+            className={`usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
             onClick={() => closeOrOpenObjectives(false)}
             aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
             tabIndex={0}
@@ -288,5 +294,6 @@ goalPropTypes.defaultProps = {
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
   updateGoal: PropTypes.func.isRequired,
+  regionId: PropTypes.string.isRequired,
 };
 export default GoalRow;
