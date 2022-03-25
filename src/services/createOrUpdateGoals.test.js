@@ -55,6 +55,13 @@ describe('createOrUpdateGoals', () => {
       status: 'Not started',
     });
 
+    await Objective.create({
+      goalId: goal.id,
+      title: 'This objective will be deleted',
+      ttaProvided: '',
+      status: 'Not started',
+    });
+
     await ObjectiveResource.create({
       objectiveId: objective.id,
       userProvidedUrl: 'https://www.test.gov',
@@ -191,6 +198,10 @@ describe('createOrUpdateGoals', () => {
     });
 
     expect(objectivesOnUpdatedGoal.length).toBe(2);
+    const titles = objectivesOnUpdatedGoal.map((obj) => obj.title);
+    expect(titles).toContain('This is another objective');
+    expect(titles).toContain('This is an objective');
+    expect(titles).not.toContain('This objective will be deleted');
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
