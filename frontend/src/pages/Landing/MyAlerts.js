@@ -14,6 +14,7 @@ import { deleteReport } from '../../fetchers/activityReports';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
+import { cleanupLocalStorage } from '../ActivityReport';
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -26,6 +27,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     }
     await deleteReport(reportId);
     removeAlert(reportId);
+    cleanupLocalStorage(reportId);
   };
 
   const tableRows = reports.map((report, index, { length }) => {

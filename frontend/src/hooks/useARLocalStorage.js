@@ -30,17 +30,20 @@ export default function useARLocalStorage(key, defaultValue) {
     setSaveReport(toSave && localStorageAvailable);
   }, [key, localStorageAvailable, setStoredValue, storedValue]);
 
-  return [storedValue, (v) => {
-    const savedToStorage = new Date().toISOString();
-    const createdInLocalStorage = v.createdInLocalStorage || savedToStorage;
+  // we return the setter with a passthrough function that also adds local storage timestamps
+  // to the report data object, that way we can show them on the relevant alerts and stuff
+  // on the frontend
+  return [storedValue, (formData) => {
+    const savedToStorageTime = new Date().toISOString();
+    const createdInLocalStorage = formData.createdInLocalStorage || savedToStorageTime;
     if (saveReport) {
       setStoredValue({
-        ...v,
-        savedToStorage,
+        ...formData,
+        savedToStorageTime,
         createdInLocalStorage,
       });
     } else {
-      setStoredValue(v);
+      setStoredValue(formData);
     }
   }, localStorageAvailable];
 }
