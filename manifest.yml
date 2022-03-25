@@ -20,6 +20,8 @@ applications:
       HSES_DATA_USERNAME: ((HSES_DATA_USERNAME))
       HSES_DATA_PASSWORD: ((HSES_DATA_PASSWORD))
       CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
+      SMTP_HOST: ((SMTP_HOST))
+      SMTP_PORT: ((SMTP_PORT))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
