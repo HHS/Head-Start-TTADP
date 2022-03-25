@@ -9,8 +9,6 @@ export const notificationQueue = newQueue('notifications');
 const {
   SMTP_HOST,
   SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
   SMTP_SECURE,
   NODE_ENV,
   SEND_NON_PRODUCTION_NOTIFICATIONS,
