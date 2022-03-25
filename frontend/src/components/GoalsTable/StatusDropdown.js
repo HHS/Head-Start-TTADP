@@ -10,6 +10,7 @@ import {
   faMinusCircle,
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import './StatusDropdown.css';
 
 const STATUSES = {
   'In Progress': {
@@ -44,19 +45,41 @@ const STATUSES = {
   },
 };
 
-export default function StatusDropdown({ status, onUpdateGoalStatus }) {
+export default function StatusDropdown({ goalId, status, onUpdateGoalStatus }) {
   const key = status || 'Needs Status';
   const { icon, display } = STATUSES[key];
 
+  if (status === 'Draft' || status === 'Completed') {
+    return (
+      <>
+        {icon}
+        {display}
+      </>
+    );
+  }
+
+  const onChange = (e) => {
+    onUpdateGoalStatus(e.target.value);
+  };
+
   return (
-    <>
-      {icon}
-      {display}
-    </>
+    <div className="ttahub-status-select position-relative">
+      <label className="usa-button usa-button--unstyled" htmlFor={`statusSelect-${goalId}`} aria-label={`Change status for goal ${goalId}`}>
+        {icon}
+        {display}
+      </label>
+      <select className="usa-select margin-0 padding-0" id={`statusSelect-${goalId}`} onChange={onChange} value={status}>
+        { status !== 'In Progress' && <option value="Not Started">Not started</option> }
+        <option value="In Progress">In progress</option>
+        <option value="Completed">Closed</option>
+        <option value="Ceased/Suspended">Suspended</option>
+      </select>
+    </div>
   );
 }
 
 StatusDropdown.propTypes = {
+  goalId: PropTypes.string.isRequired,
   onUpdateGoalStatus: PropTypes.func.isRequired,
   status: PropTypes.string,
 };
