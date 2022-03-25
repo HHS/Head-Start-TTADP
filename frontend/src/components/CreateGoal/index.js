@@ -316,6 +316,7 @@ export default function CreateGoal({ recipient, regionId }) {
     setEndDate(goal.endDate);
     setStatus(goal.status);
     setGoalId(goal.id);
+    setSelectedGrants(goal.grants);
 
     // objectives need some special help
     const { objectives: goalObjectives } = goal;
