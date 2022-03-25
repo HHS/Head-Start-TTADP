@@ -76,7 +76,7 @@ describe('createOrUpdateGoals', () => {
 
     await Objective.destroy({
       where: {
-        id: objective.id,
+        goalId: goal.id,
       },
     });
 
@@ -142,6 +142,18 @@ describe('createOrUpdateGoals', () => {
               },
             ],
           },
+          {
+            id: 'new-0',
+            ttaProvided: '',
+            status: 'Not started',
+            title: 'This is another objective',
+            resources: [],
+            topics: [
+              {
+                value: topic.id,
+              },
+            ],
+          },
         ],
       },
       {
@@ -178,8 +190,9 @@ describe('createOrUpdateGoals', () => {
       raw: true,
     });
 
-    expect(objectivesOnUpdatedGoal.length).toBe(1);
-    const [objectiveOnUpdatedGoal] = objectivesOnUpdatedGoal;
+    expect(objectivesOnUpdatedGoal.length).toBe(2);
+
+    const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
     expect(objectiveOnUpdatedGoal.title).toBe('This is an objective');
     expect(objectiveOnUpdatedGoal.ttaProvided).toBe(objective.ttaProvided);
