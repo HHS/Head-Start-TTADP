@@ -23,10 +23,10 @@ const defaultTransport = createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure,
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
+  // auth: {
+  //   user: SMTP_USER,
+  //   pass: SMTP_PASS,
+  // },
 });
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
