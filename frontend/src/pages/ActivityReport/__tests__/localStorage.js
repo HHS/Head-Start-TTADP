@@ -70,8 +70,8 @@ describe('Local storage fallbacks', () => {
     const yesterday = moment(updatedAt).format('MM/DD/YYYY');
 
     const reggies = [
-      new RegExp(`this report was last saved to your local backup on ${today}`, 'i'),
-      new RegExp(`this report was last saved to our network on ${yesterday}`, 'i'),
+      new RegExp(`your computer at ${today}`, 'i'),
+      new RegExp(`our network at ${yesterday}`, 'i'),
     ];
 
     const reggiesMeasured = reggies.map((r) => alert.textContent.match(r).length);
@@ -86,7 +86,7 @@ describe('Local storage fallbacks', () => {
     await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
 
     expect(getItem).toHaveBeenCalled();
-    const alert = await screen.findByText(/ We found saved work on your computer, and we've loaded that instead/i);
+    const alert = await screen.findByText(/your work is saved on this computer, but you can't submit an activity report right now/i);
     expect(alert).toBeVisible();
   });
 

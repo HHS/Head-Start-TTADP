@@ -112,8 +112,8 @@ describe('ActivityReport', () => {
       const alert = screen.queryByTestId('alert');
 
       const reggies = [
-        new RegExp('this report was last saved to your local backup', 'i'),
-        new RegExp('this report was last saved to our network', 'i'),
+        new RegExp('your computer at', 'i'),
+        new RegExp('our network at', 'i'),
       ];
 
       const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
