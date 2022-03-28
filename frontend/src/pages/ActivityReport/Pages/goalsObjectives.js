@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Fieldset, Label, Alert } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -16,24 +16,29 @@ import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
-import NetworkContext from '../../../NetworkContext';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
-  const { connectionActive } = useContext(NetworkContext);
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
 
+  const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
-      if (isRecipientReport && hasGrants) {
-        const fetchedGoals = await getGoals(grantIds);
-        updateAvailableGoals(fetchedGoals);
+      try {
+        if (isRecipientReport && hasGrants) {
+          const fetchedGoals = await getGoals(grantIds);
+          updateAvailableGoals(fetchedGoals);
+        }
+
+        setFetchError(false);
+      } catch (error) {
+        setFetchError(true);
       }
     };
     fetch();
@@ -64,9 +69,10 @@ const GoalsObjectives = () => {
             <GoalPicker
               availableGoals={availableGoals}
             />
-            { !connectionActive && (
+            { !fetchError && (
             <Alert>
-              An issue with your network connection has prevented us from retrieving goals for you.
+              We&rsquo;re having trouble retrieving goals for you right now.
+              Your work is still being saved.
             </Alert>
             )}
           </Fieldset>
