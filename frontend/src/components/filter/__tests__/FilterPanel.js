@@ -219,4 +219,20 @@ describe('Filter Panel', () => {
     userEvent.click(filtersMenu);
     expect(screen.getAllByText(/date started/i).length).toBe(2);
   });
+
+  it('Filters with region arrays parse correctly', async () => {
+    const filters = [{
+      id: 1,
+      topic: 'region',
+      condition: 'is',
+      query: ['1'],
+    },
+    ];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    // If this pill exists we know it parsed the region correctly.
+    expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible();
+  });
 });
