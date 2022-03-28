@@ -29,7 +29,7 @@ const defaultTransport = createTransport({
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
 
-const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
+const emailTemplatePath = path.join(process.cwd(), 'email_templates');
 
 /**
  * Process function for changesRequested jobs added to notification queue
