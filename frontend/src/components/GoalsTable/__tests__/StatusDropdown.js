@@ -8,12 +8,14 @@ describe('StatusDropdown', () => {
   const renderStatusDropdown = (
     status,
     onUpdateGoalStatus,
+    previousStatus = 'Not Started',
   ) => {
     render((
       <StatusDropdown
-        goalId="345345"
+        goalId={345345}
         status={status}
         onUpdateGoalStatus={onUpdateGoalStatus}
+        previousStatus={previousStatus}
       />
     ));
   };
@@ -30,7 +32,7 @@ describe('StatusDropdown', () => {
     expect(onUpdate).toHaveBeenCalledWith('In Progress');
   });
 
-  it('displays the correct number of options', async () => {
+  it('displays the correct number of options for in progress', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('In Progress', onUpdate);
 
@@ -38,7 +40,29 @@ describe('StatusDropdown', () => {
     expect(options.length).toBe(3);
   });
 
-  it('renders not select on draft', async () => {
+  it('displays the previous status correctly on suspended', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('Ceased/Suspended', onUpdate, 'Not Started');
+
+    const options = document.querySelectorAll('option');
+    expect(options.length).toBe(2);
+
+    const labels = Array.from(options).map((option) => option.textContent);
+    expect(labels).toContain('Not started');
+    expect(labels).toContain('Closed');
+  });
+
+  it('falls back correctly when there is no previous on suspended', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('Ceased/Suspended', onUpdate, '');
+
+    const options = document.querySelectorAll('option');
+    expect(options.length).toBe(1);
+    const labels = Array.from(options).map((option) => option.textContent);
+    expect(labels).toContain('Closed');
+  });
+
+  it('no select on draft', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Draft', onUpdate);
 
@@ -46,7 +70,7 @@ describe('StatusDropdown', () => {
     expect(selects).toBe(null);
   });
 
-  it('renders not select on completed', async () => {
+  it('no select on completed', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Completed', onUpdate);
 
