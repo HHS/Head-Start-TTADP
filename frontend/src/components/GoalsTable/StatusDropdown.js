@@ -45,7 +45,9 @@ const STATUSES = {
   },
 };
 
-export default function StatusDropdown({ goalId, status, onUpdateGoalStatus }) {
+export default function StatusDropdown({
+  goalId, status, onUpdateGoalStatus, previousStatus,
+}) {
   const key = status || 'Needs Status';
   const { icon, display } = STATUSES[key];
 
@@ -62,6 +64,38 @@ export default function StatusDropdown({ goalId, status, onUpdateGoalStatus }) {
     onUpdateGoalStatus(e.target.value);
   };
 
+  const getOptions = () => {
+    // if the goal is ceased and has no "status suspended from" in the db you can only close it
+    // otherwise, if it is ceased and has a status suspended from, you get that as an
+    // additional option
+    if (status === 'Ceased/Suspended') {
+      if (!STATUSES[previousStatus]) {
+        return (
+          <option value="Completed">Closed</option>
+        );
+      }
+
+      const statusSuspendedFromDisplay = STATUSES[previousStatus].display;
+      return (
+        <>
+          <option value={previousStatus}>{statusSuspendedFromDisplay}</option>
+          <option value="Completed">Closed</option>
+        </>
+      );
+    }
+
+    return (
+      <>
+        { status !== 'In Progress' && <option value="Not Started">Not started</option> }
+        <option value="In Progress">In progress</option>
+        <option value="Completed">Closed</option>
+        <option value="Ceased/Suspended">Suspended</option>
+      </>
+    );
+  };
+
+  const options = getOptions();
+
   return (
     <div className="ttahub-status-select position-relative">
       <label className="usa-button usa-button--unstyled" htmlFor={`statusSelect-${goalId}`} aria-label={`Change status for goal ${goalId}`}>
@@ -69,10 +103,7 @@ export default function StatusDropdown({ goalId, status, onUpdateGoalStatus }) {
         {display}
       </label>
       <select className="usa-select margin-0 padding-0" id={`statusSelect-${goalId}`} onChange={onChange} value={status}>
-        { status !== 'In Progress' && <option value="Not Started">Not started</option> }
-        <option value="In Progress">In progress</option>
-        <option value="Completed">Closed</option>
-        <option value="Ceased/Suspended">Suspended</option>
+        { options }
       </select>
     </div>
   );
@@ -82,8 +113,10 @@ StatusDropdown.propTypes = {
   goalId: PropTypes.string.isRequired,
   onUpdateGoalStatus: PropTypes.func.isRequired,
   status: PropTypes.string,
+  previousStatus: PropTypes.string,
 };
 
 StatusDropdown.defaultProps = {
   status: '',
+  previousStatus: null,
 };

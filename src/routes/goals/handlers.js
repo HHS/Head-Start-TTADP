@@ -14,7 +14,7 @@ export async function changeGoalStatus(req, res) {
   try {
     const { goalId } = req.params;
     const {
-      newStatus, closeSuspendReason, closeSuspendContext, regionId,
+      newStatus, closeSuspendReason, closeSuspendContext, regionId, oldStatus,
     } = req.body;
 
     const user = await userById(req.session.userId);
@@ -26,6 +26,7 @@ export async function changeGoalStatus(req, res) {
 
     const updatedGoal = await updateGoalStatusById(
       goalId,
+      oldStatus,
       newStatus,
       closeSuspendReason,
       closeSuspendContext,
