@@ -10,7 +10,6 @@ import Sticky from 'react-stickynode';
 import { Button, Tag, Alert } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
-
 import Container from '../../Container';
 import './SideNav.css';
 import { REPORT_STATUSES } from '../../../Constants';
@@ -97,23 +96,27 @@ function SideNav({
             type="success"
             slim
             noIcon
-            className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}
+            className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
           >
-            {(lastSaveTime && connectionActive)
-              ? (
-                <span className="margin-bottom-2 display-block">
-                  This report was last saved to our network on
-                  {' '}
-                  {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-                </span>
-              ) : null}
-            { savedToStorageTime && (
-            <span className="margin-bottom-2 display-block">
-              This report was last saved to your local backup on
-              {' '}
-              {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
-            </span>
-            )}
+            Autosaved on:
+            <br />
+            <ul className="margin-y-0">
+              {(lastSaveTime && connectionActive)
+                ? (
+                  <li>
+                    our network at
+                    {' '}
+                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                  </li>
+                ) : null}
+              { savedToStorageTime && (
+              <li>
+                your computer at
+                {' '}
+                {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
+              </li>
+              )}
+            </ul>
           </Alert>
         )}
     </Sticky>
