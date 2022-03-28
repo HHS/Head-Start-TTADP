@@ -8,25 +8,31 @@ export default function FilterPanel({
   onRemoveFilter,
   filters,
   filterConfig,
-  hideRegionFiltersByDefault,
   onApplyFilters,
   applyButtonAria,
+  allUserRegions,
 }) {
-  // Prop 'hideRegionFiltersByDefault' is used to set the
-  // initial hide/show region filter state based on the User's settings.
-  const [hideRegionFilters, setHideRegionFilters] = useState(hideRegionFiltersByDefault);
   const [filtersToShow, setFiltersToShow] = useState([]);
 
   useEffect(() => {
-    // If we are hiding region filters prevent any underlying component from getting region filters.
-    setFiltersToShow(hideRegionFilters ? filters.filter((f) => f.topic !== 'region') : filters);
-  }, [hideRegionFilters, filters]);
+    // Determine if filters contain all regions.
+    const passedRegionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
+    let containsAllRegions = true;
+    if (allUserRegions) {
+      allUserRegions.forEach((r) => {
+        if (!passedRegionFilters.includes(r)) {
+          containsAllRegions = false;
+        }
+      });
+    }
+    // Hide or Show Region Filters.
+    setFiltersToShow(containsAllRegions ? filters.filter((f) => f.topic !== 'region') : filters);
+  }, [filters, allUserRegions]);
 
   const onApply = (items) => {
-    // Check for region filter.
-    const regionFilter = items.find((f) => f.topic === 'region');
-    onApplyFilters(items, !regionFilter);
-    setHideRegionFilters(!regionFilter);
+    // Check for region filters.
+    const regionFilters = items.filter((f) => f.topic === 'region');
+    onApplyFilters(items, regionFilters.length === 0);
   };
 
   const onRemoveFilterPill = (id) => {
@@ -35,20 +41,12 @@ export default function FilterPanel({
     const isRegionFilter = pillToRemove && pillToRemove.topic === 'region';
 
     if (isRegionFilter) {
-      const otherRegion = filters.find((f) => f.id !== id && f.topic === 'region');
-      const haveRemainingRegions = !hideRegionFiltersByDefault && otherRegion;
-      onRemoveFilter(id, !haveRemainingRegions);
-      setHideRegionFilters(!haveRemainingRegions);
+      // Check if we removed the last region filter.
+      const otherRegions = filters.filter((f) => f.id !== id && f.topic === 'region');
+      onRemoveFilter(id, otherRegions.length === 0);
     } else {
       onRemoveFilter(id, false);
     }
-
-    /*
-       onRemoveFilter(id, isRegionFilter);
-    if (isRegionFilter) {
-      setHideRegionFilters(true);
-    }
-    */
   };
 
   return (
@@ -74,9 +72,5 @@ FilterPanel.propTypes = {
   onRemoveFilter: PropTypes.func.isRequired,
   applyButtonAria: PropTypes.string.isRequired,
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
-  hideRegionFiltersByDefault: PropTypes.bool,
-};
-
-FilterPanel.defaultProps = {
-  hideRegionFiltersByDefault: false,
+  allUserRegions: PropTypes.arrayOf(PropTypes.number).isRequired,
 };

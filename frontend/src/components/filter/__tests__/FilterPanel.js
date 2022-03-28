@@ -28,13 +28,7 @@ describe('Filter Panel', () => {
     onApplyFilters = jest.fn(),
     onRemoveFilter = jest.fn(),
     filterConfig = LANDING_FILTER_CONFIG_WITH_REGIONS,
-    hideRegionFiltersByDefault = false,
-    dateRangeOptions = [{
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    }],
-
+    allUserRegions = [1],
   ) => {
     const user = {
       permissions: [
@@ -53,16 +47,15 @@ describe('Filter Panel', () => {
             applyButtonAria="apply filters for activity reports"
             filters={filters}
             onApplyFilters={onApplyFilters}
-            dateRangeOptions={dateRangeOptions}
             onRemoveFilter={onRemoveFilter}
             filterConfig={filterConfig}
-            hideRegionFiltersByDefault={hideRegionFiltersByDefault}
+            allUserRegions={allUserRegions}
           />
         </div>
       </UserContext.Provider>,
     );
   };
-  it('Removing region pill adds back all regions', async () => {
+  it('Removing last region pill adds back all regions', async () => {
     const filters = [{
       id: 1,
       topic: 'region',
@@ -85,8 +78,9 @@ describe('Filter Panel', () => {
 
     // Verify adds back all regions.
     expect(onRemovePill).toHaveBeenCalledWith(1, true);
+    expect(true).toBe(false);
   });
-
+/*
   it('Removing filter menu item adds back all regions', async () => {
     const filters = [{
       id: 1,
@@ -154,4 +148,5 @@ describe('Filter Panel', () => {
       condition: 'is', id: 1, query: '1', topic: 'region',
     }], false);
   });
+  */
 });

@@ -260,19 +260,6 @@ function Landing() {
     }
   };
 
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
-
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
 
@@ -331,10 +318,9 @@ function Landing() {
               applyButtonAria="apply filters for activity reports"
               filters={filters}
               onApplyFilters={onApply}
-              dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
-              hideRegionFiltersByDefault={!showRegionFilter}
+              allUserRegions={regions}
             />
           </Grid>
         </Grid>
