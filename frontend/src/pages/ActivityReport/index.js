@@ -193,7 +193,7 @@ function ActivityReport({
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), false,
+    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), false, currentPage !== 'review',
   );
 
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
@@ -320,8 +320,9 @@ function ActivityReport({
         updateError();
       } catch (e) {
         setConnectionActiveWithError(error, setConnectionActive);
-
-        const errorMsg = formData ? 'Unable to load activity report from our network. We found saved work on your computer, and we\'ve loaded that instead.' : 'Unable to load activity report';
+        const networkErrorMessage = `There's an issue with your network connection. Your work is saved on this computer, but you can't submit an activity report right now.
+        Wait a few minutes, then try again. If you continue to have problems, contact HELP@PLACEHOLDER.GOV`;
+        const errorMsg = formData ? networkErrorMessage : 'Unable to load activity report';
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
