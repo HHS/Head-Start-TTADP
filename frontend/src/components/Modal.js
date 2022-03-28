@@ -23,6 +23,7 @@ const Modal = ({
   secondaryOkButtonText,
   onSecondaryOk,
   hideCancelButton,
+  forceAction,
 
 }) => (
   <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
@@ -31,6 +32,7 @@ const Modal = ({
       id={`${modalId}`}
       isLarge={isLarge}
       aria-labelledby={`${modalId}-heading`}
+      forceAction={forceAction}
     >
       <ModalHeading className="font-sans" id={`${modalId}-heading`}>
         {title}
@@ -95,6 +97,7 @@ Modal.propTypes = {
   secondaryOkButtonText: PropTypes.string,
   onSecondaryOk: PropTypes.string,
   hideCancelButton: PropTypes.bool,
+  forceAction: PropTypes.bool,
 };
 
 Modal.defaultProps = {
@@ -111,6 +114,7 @@ Modal.defaultProps = {
   secondaryOkButtonText: null,
   onSecondaryOk: () => { },
   hideCancelButton: false,
+  forceAction: false,
 };
 
 export default Modal;

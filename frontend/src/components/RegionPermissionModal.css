@@ -3,6 +3,15 @@
     padding: 1.25rem 14% 4rem;
 }
 
+
+.smart-hub--region-permission-modal .usa-modal--lg .usa-modal__heading {
+    font-size: 1.85rem;
+}
+
+.smart-hub--region-permission-modal .popup-modal button {
+    padding: 9px 16px;
+}
+
 .smart-hub--region-permission-modal .usa-modal--lg .usa-button-group li:first-child {
     margin: 0px;
 }

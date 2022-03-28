@@ -59,7 +59,6 @@ function Landing() {
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
-
   const buildDefaultRegionFilters = () => {
     const allRegionFilters = [];
     for (let i = 0; i < regions.length; i += 1) {
@@ -70,7 +69,6 @@ function Landing() {
         query: regions[i],
       });
     }
-
     return allRegionFilters;
   };
   const allRegionsFilters = buildDefaultRegionFilters();
@@ -86,10 +84,11 @@ function Landing() {
     return filtersWithAllRegions;
   };
 
-  const showRegionFilter = defaultRegion !== 14 && defaultRegion !== 0 && hasMultipleRegions;
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
-    showRegionFilter
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      && hasMultipleRegions
       ? [{
         id: uuidv4(),
         topic: 'region',
