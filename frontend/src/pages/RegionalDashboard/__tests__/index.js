@@ -94,8 +94,6 @@ describe('Regional Dashboard page', () => {
     let heading = await screen.findByText(/regional tta activity dashboard/i);
     expect(heading).toBeVisible();
 
-    screen.debug(undefined,100000);
-
     // Remove filter pill for region 1.
     const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
     act(() => userEvent.click(remove));

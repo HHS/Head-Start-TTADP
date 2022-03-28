@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { isArray } from 'lodash';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
@@ -16,7 +17,13 @@ export default function FilterPanel({
 
   useEffect(() => {
     // Determine if filters contain all regions.
-    const passedRegionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
+    const passedRegionFilters = filters.filter((f) => f.topic === 'region').map((r) => {
+      if (isArray(r.query)) {
+        return parseInt(r.query[0], 10);
+      }
+      return r.query;
+    });
+
     let containsAllRegions = true;
     if (allUserRegions) {
       allUserRegions.forEach((r) => {

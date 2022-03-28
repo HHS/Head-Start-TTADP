@@ -25,10 +25,10 @@ describe('Filter Panel', () => {
 
   const renderFilterPanel = (
     filters = [],
+    allUserRegions = [1],
     onApplyFilters = jest.fn(),
     onRemoveFilter = jest.fn(),
     filterConfig = LANDING_FILTER_CONFIG_WITH_REGIONS,
-    allUserRegions = [1],
   ) => {
     const user = {
       permissions: [
@@ -70,7 +70,8 @@ describe('Filter Panel', () => {
     }];
     const onRemovePill = jest.fn();
     const onApplyFilters = jest.fn();
-    renderFilterPanel(filters, onApplyFilters, onRemovePill);
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
 
     // Remove region pill.
     const regionPill = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
@@ -78,10 +79,9 @@ describe('Filter Panel', () => {
 
     // Verify adds back all regions.
     expect(onRemovePill).toHaveBeenCalledWith(1, true);
-    expect(true).toBe(false);
   });
-/*
-  it('Removing filter menu item adds back all regions', async () => {
+
+  it('Removing the last region filter menu item adds back all regions', async () => {
     const filters = [{
       id: 1,
       topic: 'region',
@@ -96,7 +96,8 @@ describe('Filter Panel', () => {
     }];
     const onRemovePill = jest.fn();
     const onApplyFilters = jest.fn();
-    renderFilterPanel(filters, onApplyFilters, onRemovePill);
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
 
     // Open filters.
     const filtersMenu = await screen.findByText(/filters \(2\)/i);
@@ -116,7 +117,7 @@ describe('Filter Panel', () => {
     }], true);
   });
 
-  it('Adding region filter menu prevents adding back all regions', async () => {
+  it('Adding region filter via menu prevents adding back all regions', async () => {
     const filters = [
       {
         id: 1,
@@ -126,7 +127,8 @@ describe('Filter Panel', () => {
       }];
     const onRemovePill = jest.fn();
     const onApplyFilters = jest.fn();
-    renderFilterPanel(filters, onApplyFilters, onRemovePill);
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
 
     // Open filters.
     const filtersMenu = await screen.findByText(/filters \(1\)/i);
@@ -148,5 +150,73 @@ describe('Filter Panel', () => {
       condition: 'is', id: 1, query: '1', topic: 'region',
     }], false);
   });
-  */
+
+  it('Adding a filter with all users regions hides region pills', async () => {
+    const filters = [
+      {
+        id: 1,
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+      {
+        id: 2,
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+      {
+        id: 3,
+        topic: 'region',
+        condition: 'is',
+        query: 2,
+      },
+    ];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+
+    // Date filter pill exists.
+    expect(await screen.findByRole('button', { name: /this button removes the filter: date started is within/i })).toBeVisible();
+
+    // Region filter pills are hidden.
+    expect(screen.queryByRole('button', { name: /this button removes the filter: region is 1/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /this button removes the filter: region is 2/i })).toBeNull();
+  });
+
+  it('Adding a filter with all users regions hides region filter menu items', async () => {
+    const filters = [
+      {
+        id: 1,
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+      {
+        id: 2,
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+      {
+        id: 3,
+        topic: 'region',
+        condition: 'is',
+        query: 2,
+      },
+    ];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1, 2];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+
+    // Verify menu contains one filter.
+    expect(await screen.findByText(/filters \(1\)/i)).toBeVisible();
+
+    // Open filters.
+    const filtersMenu = await screen.findByText(/filters \(1\)/i);
+    userEvent.click(filtersMenu);
+    expect(screen.getAllByText(/date started/i).length).toBe(2);
+  });
 });

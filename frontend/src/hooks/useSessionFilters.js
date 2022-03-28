@@ -15,7 +15,7 @@ export default function useSessionFilters(key, initialValue) {
   const initial = useMemo(() => {
     try {
       const filtersFromStorage = sessionStorage.getItem(key);
-      if (filtersFromStorage && filtersFromStorage !== '[]') {
+      if (filtersFromStorage) {
         return JSON.parse(filtersFromStorage);
       }
     } catch (error) {
