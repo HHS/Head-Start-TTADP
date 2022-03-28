@@ -119,8 +119,8 @@ const Draft = ({
           </p>
           { !connectionActive && (
             <Alert>
-              An issue with your network connection has
-              prevented us from retrieving available approvers for you.
+              We had trouble retrieving available approvers for you. You may not see all available
+              right now. Your work is still saved.
             </Alert>
           )}
           <FormItem

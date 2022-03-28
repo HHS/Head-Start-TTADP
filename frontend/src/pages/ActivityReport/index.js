@@ -42,7 +42,7 @@ import {
   resetToDraft,
 } from '../../fetchers/activityReports';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import NetworkContext from '../../NetworkContext';
+import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import { HTTPError } from '../../fetchers';
 
 const defaultValues = {
@@ -509,7 +509,13 @@ function ActivityReport({
           )}
         </Grid>
       </Grid>
-      <NetworkContext.Provider value={{ connectionActive, localStorageAvailable }}>
+      <NetworkContext.Provider value={
+        {
+          connectionActive: isOnlineMode && connectionActive,
+          localStorageAvailable,
+        }
+      }
+      >
         <Navigator
           key={currentPage}
           editable={editable}
