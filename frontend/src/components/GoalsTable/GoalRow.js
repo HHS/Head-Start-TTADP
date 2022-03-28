@@ -32,6 +32,7 @@ function GoalRow({
     goalNumber,
     reasons,
     objectives,
+    previousStatus,
   } = goal;
 
   // Close/Suspend Reason Modal.
@@ -56,6 +57,7 @@ function GoalRow({
     const updatedGoal = await updateGoalStatus(
       goalId,
       regionId,
+      goalStatus,
       status,
       closeSuspendReason,
       closeSuspendContext,
@@ -180,6 +182,7 @@ function GoalRow({
             goalId={id}
             status={goalStatus}
             onUpdateGoalStatus={onUpdateGoalStatus}
+            previousStatus={previousStatus}
           />
         </td>
         <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
@@ -285,6 +288,7 @@ export const goalPropTypes = PropTypes.shape({
   objectiveCount: PropTypes.number.isRequired,
   goalNumber: PropTypes.string.isRequired,
   objectives: PropTypes.arrayOf(objectivePropTypes),
+  previousStatus: PropTypes.string,
 });
 
 goalPropTypes.defaultProps = {

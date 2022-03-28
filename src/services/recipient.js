@@ -180,7 +180,7 @@ export async function getGoalsByActivityRecipient(
 
   // Get Goals.
   const rows = await Goal.findAll({
-    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber',
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Completed\' THEN 4 WHEN "Goal"."status" = \'Ceased/Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
     ],
     where: {

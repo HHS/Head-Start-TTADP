@@ -7,6 +7,7 @@ const recipientUrl = join('/', 'api', 'goals');
 export const updateGoalStatus = async (
   goalId,
   regionId,
+  oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
@@ -16,6 +17,7 @@ export const updateGoalStatus = async (
     recipientGoalsUrl,
     {
       regionId,
+      oldStatus,
       newStatus,
       closeSuspendReason,
       closeSuspendContext,
