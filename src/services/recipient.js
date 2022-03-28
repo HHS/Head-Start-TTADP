@@ -236,6 +236,7 @@ export async function getGoalsByActivityRecipient(
       goalTopics: [],
       reasons: [],
       objectives: [],
+      previousStatus: g.previousStatus,
     };
 
     // Objectives.

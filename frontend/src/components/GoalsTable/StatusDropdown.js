@@ -110,7 +110,7 @@ export default function StatusDropdown({
 }
 
 StatusDropdown.propTypes = {
-  goalId: PropTypes.string.isRequired,
+  goalId: PropTypes.number.isRequired,
   onUpdateGoalStatus: PropTypes.func.isRequired,
   status: PropTypes.string,
   previousStatus: PropTypes.string,
