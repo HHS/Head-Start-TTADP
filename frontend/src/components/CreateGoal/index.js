@@ -243,11 +243,9 @@ export default function CreateGoal({ recipient, regionId }) {
 
       await createOrUpdateGoals(goals);
 
-      // on success, redirect back to RTR Goals & Objectives page
-      // once integrated into the AR, this will probably have to be turned into a prop function
-      // that gets called on success
-      history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
-        ids: goals.map((g) => g.id),
+      setAlert({
+        message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
+        type: 'success',
       });
     } catch (error) {
       setAlert({
