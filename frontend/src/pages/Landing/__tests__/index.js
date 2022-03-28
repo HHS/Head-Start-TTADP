@@ -321,6 +321,26 @@ describe('Landing page table menus & selections', () => {
         expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
         expect(getAllAlertsDownloadURL).toHaveBeenCalledWith(dateFilterWithRegionOne);
       });
+
+      it('central office correctly shows all regions', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 14,
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+            {
+              scopeId: 2,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        expect(await screen.findByRole('heading', { name: /activity reports \- all regions/i })).toBeVisible();
+      });
     });
   });
 });
