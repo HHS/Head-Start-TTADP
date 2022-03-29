@@ -32,6 +32,7 @@ import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndRe
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -59,19 +60,8 @@ function Landing() {
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
-  const buildDefaultRegionFilters = () => {
-    const allRegionFilters = [];
-    for (let i = 0; i < regions.length; i += 1) {
-      allRegionFilters.push({
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: regions[i],
-      });
-    }
-    return allRegionFilters;
-  };
-  const allRegionsFilters = buildDefaultRegionFilters();
+
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
   const getFiltersWithAllRegions = () => {
     const filtersWithAllRegions = [...allRegionsFilters];
@@ -262,13 +252,6 @@ function Landing() {
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
 
-  const showFilterWithMyRegions = () => {
-    // Exclude region filters we dont't have access to and show.
-    const accessRegions = [...new Set(allRegionsFilters.map((r) => r.query))];
-    const newFilters = filters.filter((f) => f.topic !== 'region' || (f.topic === 'region' && accessRegions.includes(parseInt(f.query[0], 10))));
-    setFilters(newFilters);
-  };
-
   return (
     <>
       <Helmet>
@@ -278,7 +261,9 @@ function Landing() {
         <RegionPermissionModal
           filters={filters}
           user={user}
-          showFilterWithMyRegions={showFilterWithMyRegions}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
         />
         {showAlert && message && (
           <Alert

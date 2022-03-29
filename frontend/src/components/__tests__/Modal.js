@@ -19,8 +19,8 @@ const ModalComponent = (
     cancelButtonText = 'Cancel',
     showCloseX = false,
     isLarge = false,
-    secondaryOkButtonText = null,
-    onSecondaryOk = () => {},
+    secondaryActionButtonText = null,
+    onSecondaryAction = () => {},
     hideCancelButton = false,
   },
 ) => {
@@ -41,8 +41,8 @@ const ModalComponent = (
         cancelButtonText={cancelButtonText}
         showCloseX={showCloseX}
         isLarge={isLarge}
-        secondaryOkButtonText={secondaryOkButtonText}
-        onSecondaryOk={onSecondaryOk}
+        secondaryActionButtonText={secondaryActionButtonText}
+        onSecondaryAction={onSecondaryAction}
         hideCancelButton={hideCancelButton}
       >
         <div>
@@ -115,7 +115,7 @@ describe('Modal', () => {
 
   it('shows secondary ok button', async () => {
     const secondaryOk = jest.fn();
-    render(<ModalComponent secondaryOkButtonText="My Secondary Button" onSecondaryOk={secondaryOk} />);
+    render(<ModalComponent secondaryActionButtonText="My Secondary Button" onSecondaryAction={secondaryOk} />);
     expect(await screen.findByText(/my secondary button/i)).toBeVisible();
 
     // Click secondary OK.
