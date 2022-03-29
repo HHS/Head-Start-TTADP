@@ -20,8 +20,8 @@ const Modal = ({
   okButtonCss,
   cancelButtonCss,
   showTitleRequired,
-  secondaryOkButtonText,
-  onSecondaryOk,
+  secondaryActionButtonText,
+  onSecondaryAction,
   hideCancelButton,
   forceAction,
 
@@ -55,17 +55,17 @@ const Modal = ({
           {
             showOkButton
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} data-focus={!!hideCancelButton} type="button" aria-label={okButtonAriaLabel} onClick={onOk}>
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} data-focus={hideCancelButton} type="button" aria-label={okButtonAriaLabel} onClick={onOk}>
                   {okButtonText}
                 </Button>
               )
               : null
           }
           {
-            secondaryOkButtonText
+            secondaryActionButtonText
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} onClick={onSecondaryOk}>
-                  {secondaryOkButtonText}
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} onClick={onSecondaryAction}>
+                  {secondaryActionButtonText}
                 </Button>
               )
               : null
@@ -94,8 +94,8 @@ Modal.propTypes = {
   okButtonCss: PropTypes.string,
   cancelButtonCss: PropTypes.string,
   showTitleRequired: PropTypes.bool,
-  secondaryOkButtonText: PropTypes.string,
-  onSecondaryOk: PropTypes.string,
+  secondaryActionButtonText: PropTypes.string,
+  onSecondaryAction: PropTypes.string,
   hideCancelButton: PropTypes.bool,
   forceAction: PropTypes.bool,
 };
@@ -111,8 +111,8 @@ Modal.defaultProps = {
   okButtonCss: null,
   cancelButtonCss: null,
   showTitleRequired: false,
-  secondaryOkButtonText: null,
-  onSecondaryOk: () => { },
+  secondaryActionButtonText: null,
+  onSecondaryAction: () => { },
   hideCancelButton: false,
   forceAction: false,
 };
