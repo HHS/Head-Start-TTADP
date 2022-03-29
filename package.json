@@ -78,7 +78,9 @@
     "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
     "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js",
     "updateChildInvolvementLegacyTargetPopulation": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
-    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js"
+    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
+    "updateParticipantsList": "node ./build/server/tools/updateParticipantsListCLI.js",
+    "updateParticipantsList:local": "./node_modules/.bin/babel-node ./src/tools/updateParticipantsListCLI.js"
   },
   "repository": {
     "type": "git",
