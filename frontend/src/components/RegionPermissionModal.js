@@ -55,8 +55,8 @@ function RegionPermissionModal({
         modalId="RegionPermissionModal"
         title="You need permission to access this region"
         okButtonText="Show filter with my regions"
-        secondaryOkButtonText="Request access via Smartsheet"
-        onSecondaryOk={requestSmartSheetAccess}
+        secondaryActionButtonText="Request access via Smartsheet"
+        onSecondaryAction={requestSmartSheetAccess}
         hideCancelButton
         isLarge
         forceAction
