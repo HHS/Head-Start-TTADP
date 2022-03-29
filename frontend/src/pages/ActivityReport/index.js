@@ -79,8 +79,23 @@ const defaultValues = {
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
-export function cleanupLocalStorage(id) {
+export function cleanupLocalStorage(id, replacementKey) {
   try {
+    if (replacementKey) {
+      window.localStorage.setItem(
+        LOCAL_STORAGE_DATA_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_DATA_KEY(id)),
+      );
+      window.localStorage.setItem(
+        LOCAL_STORAGE_EDITABLE_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_EDITABLE_KEY(id)),
+      );
+      window.localStorage.setItem(
+        LOCAL_STORAGE_ADDITIONAL_DATA_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id)),
+      );
+    }
+
     window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
     window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
     window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(id));
@@ -289,7 +304,8 @@ function ActivityReport({
           }
         }
 
-        if (shouldUpdateFromNetwork) {
+        //
+        if (shouldUpdateFromNetwork && activityReportId !== 'new') {
           updateFormData({ ...formData, ...report });
         } else {
           updateFormData({ ...report, ...formData });
@@ -297,7 +313,7 @@ function ActivityReport({
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
 
-        // ***Determine if the current user matches any of the approvers for this activity report.
+        // Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
         const matchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
 
@@ -414,7 +430,7 @@ function ActivityReport({
 
         reportId.current = savedReport.id;
 
-        cleanupLocalStorage('new');
+        cleanupLocalStorage('new', savedReport.id);
 
         window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
 
