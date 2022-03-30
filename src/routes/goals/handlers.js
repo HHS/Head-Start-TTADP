@@ -71,7 +71,7 @@ export async function deleteGoal(req, res) {
 
     const policy = new Goal(user, goal);
 
-    const canDelete = await policy.canDelete();
+    const canDelete = policy.canDelete();
 
     if (!canDelete) {
       res.sendStatus(401);
