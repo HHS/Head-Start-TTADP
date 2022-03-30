@@ -90,6 +90,7 @@
     "follow-redirects": "^1.14.8",
     "json-pointer": "0.6.2",
     "marked": "^4.0.10",
+    "minimist": "^1.2.6",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7"
   },
@@ -179,6 +180,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
+    "@faker-js/faker": "^6.0.0",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "axios": "^0.24.0",
@@ -196,7 +198,6 @@
     "express-http-context": "^1.2.4",
     "express-unless": "^1.0.0",
     "express-winston": "^4.0.5",
-    "faker": "^5.5.3",
     "file-type": "^16.1.0",
     "form-data": "^4.0.0",
     "helmet": "^5.0.1",
