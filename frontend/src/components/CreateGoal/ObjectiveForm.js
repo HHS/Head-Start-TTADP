@@ -75,7 +75,7 @@ export default function ObjectiveForm({
         <h3>Objective summary</h3>
         <Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>
       </div>
-      <FormGroup className="margin-top-1">
+      <FormGroup className="margin-top-1" error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE].props.children}>
         <Label htmlFor="objectiveTitle">
           TTA objective
           {' '}
@@ -84,7 +84,7 @@ export default function ObjectiveForm({
         {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
         <Textarea id="objectiveTitle" name="objectiveTitle" required value={title} onChange={onChangeTitle} onBlur={validateObjectiveTitle} />
       </FormGroup>
-      <FormGroup>
+      <FormGroup error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS].props.children}>
         <Label htmlFor="topics">
           Topics
           {' '}

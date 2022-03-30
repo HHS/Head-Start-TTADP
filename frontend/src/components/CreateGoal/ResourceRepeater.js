@@ -34,7 +34,7 @@ export default function ResourceRepeater({
   const areAllResourcesValid = resources.reduce((acc, curr) => acc && curr.value, resourcesWrapper.current && !resourcesWrapper.current.querySelector(':invalid'));
 
   return (
-    <FormGroup>
+    <FormGroup error={error.props.children}>
       <div ref={resourcesWrapper}>
         <Label htmlFor="resources">
           Resource links

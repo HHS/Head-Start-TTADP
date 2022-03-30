@@ -70,7 +70,7 @@ export default function Form({
       </div>
 
       <h3>Goal summary</h3>
-      <FormGroup>
+      <FormGroup error={errors[FORM_FIELD_INDEXES.GRANTS].props.children}>
         <Label htmlFor="recipientGrantNumbers">
           Recipient grant numbers
           {' '}
@@ -99,7 +99,7 @@ export default function Form({
           </>
         )}
       </FormGroup>
-      <FormGroup>
+      <FormGroup error={errors[FORM_FIELD_INDEXES.NAME].props.children}>
         <Label htmlFor="goalText">
           Recipient&apos;s goal
           {' '}
@@ -108,7 +108,7 @@ export default function Form({
         {errors[FORM_FIELD_INDEXES.NAME]}
         <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
       </FormGroup>
-      <FormGroup>
+      <FormGroup error={errors[FORM_FIELD_INDEXES.END_DATE].props.children}>
         <Label htmlFor="goalEndDate">
           Estimated close date (mm/dd/yyyy)
           {' '}
