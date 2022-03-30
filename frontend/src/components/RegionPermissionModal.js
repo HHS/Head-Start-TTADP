@@ -13,7 +13,7 @@ function RegionPermissionModal({
 
   useEffect(() => {
     // Check if user has permission to region.
-    const regionFilters = filters.filter((f) => f.topic === 'region');
+    const regionFilters = filters.filter((f) => f.topic === 'region' && f.condition !== 'is not');
     if (regionFilters.length > 0) {
       let showRegionPermissionsModal = false;
       const deniedRegionsList = [];
