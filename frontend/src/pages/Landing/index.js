@@ -31,6 +31,8 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
 import FilterContext from '../../FilterContext';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -58,6 +60,8 @@ function Landing() {
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
+
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
@@ -247,6 +251,13 @@ function Landing() {
         <title>Landing</title>
       </Helmet>
       <>
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
         {showAlert && message && (
           <Alert
             type="success"
