@@ -16,6 +16,7 @@ export default async function updateParticipantsList() {
     attributes: [
       'id',
       'participants',
+      'imported',
     ],
     where: {
       [Op.or]: participantsToUpdate.map((p) => ({
@@ -30,14 +31,34 @@ export default async function updateParticipantsList() {
 
   return Promise.all(participantReports.map(async (report) => {
     const participants = [...report.participants];
+    let importedGranteeParticipants = report.imported.granteeParticipants;
 
+    let updatedImported = false;
     participantsToUpdate.forEach((p) => {
+      // Check Participants Column.
       if (participants.includes(p.old)) {
         const indexOfUpdate = participants.indexOf(p.old);
         participants.splice(indexOfUpdate, 1, p.new);
       }
+
+      if (importedGranteeParticipants && importedGranteeParticipants.includes(p.old)) {
+        // Check Imported Grantee Participants.
+        importedGranteeParticipants = importedGranteeParticipants.replace(p.old, p.new);
+        updatedImported = true;
+      }
     });
+
     auditLogger.info(`Updating report ${report.id}'s participant from [${report.participants}] to [${participants}].`);
-    return report.update({ participants });
+
+    if (updatedImported) {
+      auditLogger.info(`Updating report ${report.id}'s imported participant from [${report.imported.granteeParticipants.replaceAll('\n', ' ')}] to [${importedGranteeParticipants.replaceAll('\n', ' ')}].`);
+    }
+
+    const imported = {
+      ...report.imported,
+      granteeParticipants: importedGranteeParticipants,
+    };
+
+    return report.update({ participants, imported });
   }));
 }
