@@ -27,15 +27,37 @@ describe('updateParticipants', () => {
   beforeAll(async () => {
     reports = await Promise.all(
       [
-        ['Coach / Trainer', 'test 2'],
-        ['test 1', 'Direct Service / Front line / Home Visitors', 'test 2'],
-        ['test 1', 'Program Director (HS/EHS)'],
-        ['State Agency staff'],
-        ['test 3', 'test 4', 'test 5'],
-        ['test 6', 'Coach / Trainer', 'test 7', 'Direct Service / Front line / Home Visitors', 'test 8'],
-      ].map(async (participants) => ActivityReport.create({
+        {
+          array: ['Coach / Trainer', 'test 2'],
+          string: 'Coach / Trainer\ntest 2',
+        },
+        {
+          array: ['test 1', 'Direct Service / Front line / Home Visitors', 'test 2'],
+          string: 'test 1\nDirect Service / Front line / Home Visitors\ntest 2',
+        },
+        {
+          array: ['test 1', 'Program Director (HS/EHS)'],
+          string: 'test 1\nProgram Director (HS/EHS)',
+        },
+        {
+          array: ['State Agency staff'],
+          string: 'State Agency staff',
+        },
+        {
+          array: ['test 3', 'test 4', 'test 5'],
+          string: 'test 3\ntest 4\ntest 5',
+        },
+        {
+          array: ['test 6', 'Coach / Trainer', 'test 7', 'Direct Service / Front line / Home Visitors', 'test 8'],
+          string: 'test 6\nCoach / Trainer\ntest 7\nDirect Service / Front line / Home Visitors\ntest 8',
+        },
+      ].map(async (p) => ActivityReport.create({
         ...baseReport,
-        participants,
+        participants: p.array,
+        imported: {
+          granteeParticipants: p.string,
+        },
+
       })),
     );
   });
@@ -76,5 +98,13 @@ describe('updateParticipants', () => {
     expect(updatedParticipants).toContainEqual(['State Head Start Association']);
     expect(updatedParticipants).toContainEqual(['test 3', 'test 4', 'test 5']);
     expect(updatedParticipants).toContainEqual(['test 6', 'Coach', 'test 7', 'Home Visitor', 'test 8']);
+
+    const updatedImportParticipants = after.map(({ imported }) => imported.granteeParticipants);
+    expect(updatedImportParticipants).toContainEqual('Coach\ntest 2');
+    expect(updatedImportParticipants).toContainEqual('test 1\nHome Visitor\ntest 2');
+    expect(updatedImportParticipants).toContainEqual('test 1\nProgram Director (HS / EHS)');
+    expect(updatedImportParticipants).toContainEqual('State Head Start Association');
+    expect(updatedImportParticipants).toContainEqual('test 3\ntest 4\ntest 5');
+    expect(updatedImportParticipants).toContainEqual('test 6\nCoach\ntest 7\nHome Visitor\ntest 8');
   });
 });
