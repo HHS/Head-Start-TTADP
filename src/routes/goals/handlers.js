@@ -1,4 +1,6 @@
-import { updateGoalStatusById, createOrUpdateGoals, destroyGoal } from '../../services/goals';
+import {
+  updateGoalStatusById, createOrUpdateGoals, destroyGoal, goalByIdWithActivityReportsAndRegions,
+} from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
@@ -19,7 +21,7 @@ export async function createGoals(req, res) {
     let canCreate = true;
 
     goals.forEach((goal) => {
-      if (canCreate && !new Goal(user, goal).canCreate()) {
+      if (canCreate && !new Goal(user, null, goal.regionId).canCreate()) {
         canCreate = false;
       }
     });
@@ -63,15 +65,15 @@ export async function changeGoalStatus(req, res) {
 export async function deleteGoal(req, res) {
   try {
     const { goalId } = req.params;
-    const { regionId } = req.body;
 
     const user = await userById(req.session.userId);
+    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
-    const policy = new Goal(user, {
-      regionId: parseInt(regionId, 10),
-    });
+    const policy = new Goal(user, goal);
 
-    if (!policy.canDelete()) {
+    const canDelete = await policy.canDelete();
+
+    if (!canDelete) {
       res.sendStatus(401);
       return;
     }
