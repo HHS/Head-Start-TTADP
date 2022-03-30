@@ -19,15 +19,7 @@ export default class Goal {
     // I assume that if you can delete in ANY of the goals regions,
     // than you can delete it
     const regions = this.goal.grants.map((grant) => grant.regionId);
-    return regions.reduce((previous, region) => {
-      // if true, than always true
-      if (previous) {
-        return previous;
-      }
-
-      // else, return the result of the lookup
-      return this.canWriteInRegion(region);
-    }, false);
+    return regions.some((region) => this.canWriteInRegion(region));
   }
 
   canCreate() {
