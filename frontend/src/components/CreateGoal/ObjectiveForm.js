@@ -103,6 +103,7 @@ export default function ObjectiveForm({
           onBlur={validateObjectiveTopics}
           value={topics}
           onChange={onChangeTopics}
+          closeMenuOnSelect={false}
         />
       </FormGroup>
       <ResourceRepeater
