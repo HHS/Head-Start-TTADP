@@ -1,6 +1,11 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { changeGoalStatus, createGoals, deleteGoal } from './handlers';
-import { updateGoalStatusById, createOrUpdateGoals, destroyGoal } from '../../services/goals';
+import {
+  updateGoalStatusById,
+  createOrUpdateGoals,
+  destroyGoal,
+  goalByIdWithActivityReportsAndRegions,
+} from '../../services/goals';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 
@@ -12,6 +17,7 @@ jest.mock('../../services/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
   destroyGoal: jest.fn(),
+  goalByIdWithActivityReportsAndRegions: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -168,9 +174,6 @@ describe('deleteGoal', () => {
       params: {
         goalId: 1,
       },
-      body: {
-        regionId: 2,
-      },
       session: {
         userId: 1,
       },
@@ -185,6 +188,11 @@ describe('deleteGoal', () => {
       ],
     });
 
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 2 }],
+    });
+
     await deleteGoal(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
@@ -195,13 +203,15 @@ describe('deleteGoal', () => {
       params: {
         goalId: 1,
       },
-      body: {
-        regionId: 2,
-      },
       session: {
         userId: 1,
       },
     };
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 2 }],
+    });
 
     userById.mockResolvedValueOnce({
       permissions: [
@@ -223,13 +233,15 @@ describe('deleteGoal', () => {
       params: {
         goalId: 1,
       },
-      body: {
-        regionId: 2,
-      },
       session: {
         userId: 1,
       },
     };
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 2 }],
+    });
 
     userById.mockResolvedValueOnce({
       permissions: [
