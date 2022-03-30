@@ -90,6 +90,7 @@
     "follow-redirects": "^1.14.8",
     "json-pointer": "0.6.2",
     "marked": "^4.0.10",
+    "minimist": "^1.2.6",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7"
   },
