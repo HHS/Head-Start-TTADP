@@ -178,4 +178,23 @@ describe('Region Permission Modal', () => {
     const modalElement = document.querySelector('.popup-modal');
     expect(modalElement.firstChild).toHaveClass('is-hidden');
   });
+
+  it('region is not filters are ignored', async () => {
+    const filtersToPass = [
+      ...defaultFilters,
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is not',
+        query: 3,
+      },
+    ];
+
+    const showFiltersFn = jest.fn();
+    render(<PermissionModal filters={filtersToPass} showFilterWithMyRegions={showFiltersFn} />);
+
+    // Modal is hidden.
+    const modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-hidden');
+  });
 });
