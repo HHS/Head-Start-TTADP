@@ -20,6 +20,34 @@ const logContext = {
   namespace,
 };
 
+export async function goalByIdWithActivityReportsAndRegions(goalId) {
+  return Goal.findOne({
+    attributes: ['name', 'id', 'status'],
+    where: {
+      id: goalId,
+    },
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: ['regionId'],
+      },
+      {
+        attributes: ['id'],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [{
+          attributes: ['id'],
+          model: ActivityReport,
+          as: 'activityReports',
+          required: false,
+        }],
+      },
+    ],
+  });
+}
+
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   // get all objectives not currently on a goal
   const orphanedObjectives = await Objective.findAll({

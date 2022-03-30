@@ -1,38 +1,67 @@
-/*
-  This class handles authorization for Activity Reports. In express handlers this
-  object should be constructed with the current user and the activity report to be
-  updated/retrieved for update/get or the new report for create. The permissions
-  of the user are checked against the report and simple questions about the actions
-  the user can take on that report are answered, mainly can the user create, update
-  or get the report.
-*/
-import _ from 'lodash';
+import { find, isUndefined } from 'lodash';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Goal {
-  constructor(user, goal) {
+  constructor(user, goal, regionId) {
     this.user = user;
     this.goal = goal;
+    this.regionId = regionId;
   }
 
+  // this expects goal to have been found with associated data, specifically
+  // goalByIdWithActivityReportsAndRegions in services/goals
+  // you can see the structure expected in the conditions below
   canDelete() {
-    return this.canWriteInRegion();
+    if (this.isOnApprovedActivityReports()) {
+      return false;
+    }
+
+    // I assume that if you can delete in ANY of the goals regions,
+    // than you can delete it
+    const regions = this.goal.grants.map((grant) => grant.regionId);
+    return regions.reduce((previous, region) => {
+      // if true, than always true
+      if (previous) {
+        return previous;
+      }
+
+      // else, return the result of the lookup
+      return this.canWriteInRegion(region);
+    }, false);
   }
 
   canCreate() {
-    return this.canWriteInRegion();
+    return this.canWriteInRegion(this.regionId);
   }
 
-  canWriteInRegion() {
-    const permissions = _.find(
+  // just aliasing canCreate
+  canEdit() {
+    return this.canCreate();
+  }
+
+  // refactored to take a region id rather than directly check
+  // the instance props so we can use it in the reduce and in other situations
+  canWriteInRegion(region) {
+    // a goal can have multiple regions
+    const permissions = find(
       this.user.permissions,
       (permission) => (
         (
           permission.scopeId === SCOPES.READ_WRITE_REPORTS
           || permission.scopeId === SCOPES.APPROVE_REPORTS
         )
-        && permission.regionId === this.goal.regionId),
+        && permission.regionId === region),
     );
-    return !_.isUndefined(permissions);
+    return !isUndefined(permissions);
+  }
+
+  // this expects goal to have been found with associated data, specifically
+  // goalByIdWithActivityReportsAndRegions in services/goals
+  // you can see the structure expected in the conditions below
+  isOnApprovedActivityReports() {
+    return this.goal.objectives
+      && this.goal.objectives.length
+      && this.goal.objectives[0].activityReports
+      && this.goal.objectives[0].activityReports.length;
   }
 }
