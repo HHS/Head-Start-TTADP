@@ -19,6 +19,9 @@ const ModalComponent = (
     cancelButtonText = 'Cancel',
     showCloseX = false,
     isLarge = false,
+    secondaryActionButtonText = null,
+    onSecondaryAction = () => {},
+    hideCancelButton = false,
   },
 ) => {
   const modalRef = useRef();
@@ -38,6 +41,9 @@ const ModalComponent = (
         cancelButtonText={cancelButtonText}
         showCloseX={showCloseX}
         isLarge={isLarge}
+        secondaryActionButtonText={secondaryActionButtonText}
+        onSecondaryAction={onSecondaryAction}
+        hideCancelButton={hideCancelButton}
       >
         <div>
           Are you sure you want to perform this action?
@@ -105,5 +111,21 @@ describe('Modal', () => {
   it('hides ok button', async () => {
     render(<ModalComponent showOkButton={false} showCloseX />);
     expect(screen.queryByRole('button', { name: /this button will ok the modal action\./i })).not.toBeInTheDocument();
+  });
+
+  it('shows secondary ok button', async () => {
+    const secondaryOk = jest.fn();
+    render(<ModalComponent secondaryActionButtonText="My Secondary Button" onSecondaryAction={secondaryOk} />);
+    expect(await screen.findByText(/my secondary button/i)).toBeVisible();
+
+    // Click secondary OK.
+    const secondaryOkBtn = await screen.findByText(/my secondary button/i);
+    userEvent.click(secondaryOkBtn);
+    expect(secondaryOk).toHaveBeenCalled();
+  });
+
+  it('hides the cancel button', async () => {
+    render(<ModalComponent hideCancelButton />);
+    expect(screen.queryByText(/cancel/i)).toBeNull();
   });
 });
