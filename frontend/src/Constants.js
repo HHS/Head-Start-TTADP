@@ -243,8 +243,8 @@ export const GOAL_CLOSE_REASONS = [
 ];
 
 export const GOAL_SUSPEND_REASONS = [
-  'Key staff turnover',
+  'Key staff turnover / vacancies',
   'Recipient request',
   'Recipient is not responding',
-  'Other',
+  'Regional Office request',
 ];
