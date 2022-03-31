@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { createOrUpdateGoals } from './goals';
 import db, {
@@ -11,7 +12,7 @@ import db, {
   ObjectiveTopic,
 } from '../models';
 
-describe('createOrUpdateGoals', () => {
+describe.skip('createOrUpdateGoals', () => {
   afterEach(async () => {
     jest.clearAllMocks();
   });
