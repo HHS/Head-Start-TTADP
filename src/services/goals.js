@@ -12,7 +12,7 @@ import {
   sequelize,
   ActivityReport,
 } from '../models';
-import { DECIMAL_BASE } from '../constants';
+// import { DECIMAL_BASE } from '../constants';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -103,94 +103,98 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
  * @returns created or updated goal with grant goals
  */
 export async function createOrUpdateGoals(goals) {
-  return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
-    const {
-      id, grants, recipientId, regionId, objectives,
-      ...fields
-    } = goalData;
+  // per a discussion with Patrice, we are disabling the backend "for real"
+  // for now
+  return goals;
 
-    const options = {
-      ...fields,
-      isFromSmartsheetTtaPlan: false,
-      id: id === 'new' ? null : id,
-    };
+  // return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
+  //   const {
+  //     id, grants, recipientId, regionId, objectives,
+  //     ...fields
+  //   } = goalData;
 
-    const [goal] = await Goal.upsert(options, { transaction });
+  //   const options = {
+  //     ...fields,
+  //     isFromSmartsheetTtaPlan: false,
+  //     id: id === 'new' ? null : id,
+  //   };
 
-    await Promise.all(
-      grants.map((grant) => GrantGoal.findOrCreate({
-        where: {
-          goalId: goal.id,
-          recipientId,
-          grantId: grant.value,
-        },
-        transaction,
-      })),
-    );
+  //   const [goal] = await Goal.upsert(options, { transaction });
 
-    const newObjectives = await Promise.all(
-      objectives.map(async (o) => {
-        const {
-          id: objectiveId,
-          resources,
-          topics,
-          ...objectiveFields
-        } = o;
+  //   await Promise.all(
+  //     grants.map((grant) => GrantGoal.findOrCreate({
+  //       where: {
+  //         goalId: goal.id,
+  //         recipientId,
+  //         grantId: grant.value,
+  //       },
+  //       transaction,
+  //     })),
+  //   );
 
-        const where = parseInt(objectiveId, DECIMAL_BASE) ? {
-          id: objectiveId,
-          goalId: goal.id,
-          ...objectiveFields,
-        } : {
-          goalId: goal.id,
-          title: o.title,
-          ttaProvided: '',
-          status: 'Not started',
-        };
+  //   const newObjectives = await Promise.all(
+  //     objectives.map(async (o) => {
+  //       const {
+  //         id: objectiveId,
+  //         resources,
+  //         topics,
+  //         ...objectiveFields
+  //       } = o;
 
-        const [objective] = await Objective.upsert(
-          where,
-          { transaction },
-        );
+  //       const where = parseInt(objectiveId, DECIMAL_BASE) ? {
+  //         id: objectiveId,
+  //         goalId: goal.id,
+  //         ...objectiveFields,
+  //       } : {
+  //         goalId: goal.id,
+  //         title: o.title,
+  //         ttaProvided: '',
+  //         status: 'Not started',
+  //       };
 
-        // topics
-        await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
-          where: {
-            objectiveId: objective.id,
-            topicId: ot.value,
-          },
-          transaction,
-        }))));
+  //       const [objective] = await Objective.upsert(
+  //         where,
+  //         { transaction },
+  //       );
 
-        // resources
-        await Promise.all((resources.map((or) => ObjectiveResource.findOrCreate({
-          where: {
-            userProvidedUrl: or.value,
-            objectiveId: objective.id,
-          },
-          transaction,
-        }))));
+  //       // topics
+  //       await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
+  //         where: {
+  //           objectiveId: objective.id,
+  //           topicId: ot.value,
+  //         },
+  //         transaction,
+  //       }))));
 
-        return {
-          ...objective.dataValues,
-          topics,
-          resources,
-        };
-      }),
-    );
+  //       // resources
+  //       await Promise.all((resources.map((or) => ObjectiveResource.findOrCreate({
+  //         where: {
+  //           userProvidedUrl: or.value,
+  //           objectiveId: objective.id,
+  //         },
+  //         transaction,
+  //       }))));
 
-    // this function deletes unused objectives
-    await cleanupObjectivesForGoal(goal.id, newObjectives);
+  //       return {
+  //         ...objective.dataValues,
+  //         topics,
+  //         resources,
+  //       };
+  //     }),
+  //   );
 
-    // we want to return the data in roughly the form it was provided
-    return {
-      ...goal.dataValues,
-      grants,
-      recipientId,
-      regionId,
-      objectives: newObjectives,
-    };
-  })));
+  //   // this function deletes unused objectives
+  //   await cleanupObjectivesForGoal(goal.id, newObjectives);
+
+  //   // we want to return the data in roughly the form it was provided
+  //   return {
+  //     ...goal.dataValues,
+  //     grants,
+  //     recipientId,
+  //     regionId,
+  //     objectives: newObjectives,
+  //   };
+  // })));
 }
 
 export async function goalsForGrants(grantIds) {
@@ -409,91 +413,94 @@ export async function updateGoalStatusById(
 }
 
 export async function destroyGoal(goalId) {
-  return sequelize.transaction(async (transaction) => {
-    try {
-      const reportsWithGoal = await ActivityReport.findAll({
-        attributes: ['id'],
-        include: [
-          {
-            attributes: ['id'],
-            model: Objective,
-            required: true,
-            as: 'objectivesWithGoals',
-            include: [
-              {
-                attributes: ['id'],
-                model: Goal,
-                required: true,
-                where: {
-                  id: goalId,
-                },
-                as: 'goal',
-              },
-            ],
-          },
-        ],
-        transaction,
-        raw: true,
-      });
+  return goalId;
+  // return sequelize.transaction(async (transaction) => {
+  //   try {
+  //     const reportsWithGoal = await ActivityReport.findAll({
+  //       attributes: ['id'],
+  //       include: [
+  //         {
+  //           attributes: ['id'],
+  //           model: Objective,
+  //           required: true,
+  //           as: 'objectivesWithGoals',
+  //           include: [
+  //             {
+  //               attributes: ['id'],
+  //               model: Goal,
+  //               required: true,
+  //               where: {
+  //                 id: goalId,
+  //               },
+  //               as: 'goal',
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //       transaction,
+  //       raw: true,
+  //     });
 
-      const isOnReport = reportsWithGoal.length;
-      if (isOnReport) {
-        throw new Error('Goal is on an activity report and can\'t be deleted');
-      }
+  //     const isOnReport = reportsWithGoal.length;
+  //     if (isOnReport) {
+  //       throw new Error('Goal is on an activity report and can\'t be deleted');
+  //     }
 
-      const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
-        where: {
-          objectiveId: {
-            [Op.in]: sequelize.literal(
-              `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
-            ),
-          },
-        },
-        transaction,
-      });
+  //     const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
+  //       where: {
+  //         objectiveId: {
+  //           [Op.in]: sequelize.literal(
+  //             `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
+  //           ),
+  //         },
+  //       },
+  //       transaction,
+  //     });
 
-      const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
-        where: {
-          objectiveId: {
-            [Op.in]: sequelize.literal(
-              `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
-            ),
-          },
-        },
-        transaction,
-      });
+  //     const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
+  //       where: {
+  //         objectiveId: {
+  //           [Op.in]: sequelize.literal(
+  //             `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
+  //           ),
+  //         },
+  //       },
+  //       transaction,
+  //     });
 
-      const objectivesDestroyed = await Objective.destroy({
-        where: {
-          goalId,
-        },
-        transaction,
-      });
+  //     const objectivesDestroyed = await Objective.destroy({
+  //       where: {
+  //         goalId,
+  //       },
+  //       transaction,
+  //     });
 
-      const grantGoalsDestroyed = await GrantGoal.destroy({
-        where: {
-          goalId,
-        },
-        transaction,
-      });
+  //     const grantGoalsDestroyed = await GrantGoal.destroy({
+  //       where: {
+  //         goalId,
+  //       },
+  //       transaction,
+  //     });
 
-      const goalsDestroyed = await Goal.destroy({
-        where: {
-          id: goalId,
-        },
-        transaction,
-      });
+  //     const goalsDestroyed = await Goal.destroy({
+  //       where: {
+  //         id: goalId,
+  //       },
+  //       transaction,
+  //     });
 
-      return {
-        goalsDestroyed,
-        grantGoalsDestroyed,
-        objectiveResourcesDestroyed,
-        objectiveTopicsDestroyed,
-        objectivesDestroyed,
-      };
-    } catch (error) {
-      auditLogger.error(`${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`);
-      return 0;
-    }
-  });
+  //     return {
+  //       goalsDestroyed,
+  //       grantGoalsDestroyed,
+  //       objectiveResourcesDestroyed,
+  //       objectiveTopicsDestroyed,
+  //       objectivesDestroyed,
+  //     };
+  //   } catch (error) {
+  //     auditLogger.error(
+  //  `${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`
+  //  );
+  //     return 0;
+  //   }
+  // });
 }
