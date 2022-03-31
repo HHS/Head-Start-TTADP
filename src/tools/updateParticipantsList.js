@@ -8,7 +8,7 @@ const participantsToUpdate = [
   { old: 'Coach / Trainer', new: 'Coach' },
   { old: 'Direct Service / Front line / Home Visitors', new: 'Home Visitor' },
   { old: 'Program Director (HS/EHS)', new: 'Program Director (HS / EHS)' },
-  { old: 'State Agency staff', new: 'State Head Start Association' },
+  { old: 'State Agency staff', new: 'Local/State Agency(ies)' },
 ];
 
 export default async function updateParticipantsList() {

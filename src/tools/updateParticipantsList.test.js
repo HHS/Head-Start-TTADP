@@ -95,7 +95,7 @@ describe('updateParticipants', () => {
     expect(updatedParticipants).toContainEqual(['Coach', 'test 2']);
     expect(updatedParticipants).toContainEqual(['test 1', 'Home Visitor', 'test 2']);
     expect(updatedParticipants).toContainEqual(['test 1', 'Program Director (HS / EHS)']);
-    expect(updatedParticipants).toContainEqual(['State Head Start Association']);
+    expect(updatedParticipants).toContainEqual(['Local/State Agency(ies)']);
     expect(updatedParticipants).toContainEqual(['test 3', 'test 4', 'test 5']);
     expect(updatedParticipants).toContainEqual(['test 6', 'Coach', 'test 7', 'Home Visitor', 'test 8']);
 
@@ -103,7 +103,7 @@ describe('updateParticipants', () => {
     expect(updatedImportParticipants).toContainEqual('Coach\ntest 2');
     expect(updatedImportParticipants).toContainEqual('test 1\nHome Visitor\ntest 2');
     expect(updatedImportParticipants).toContainEqual('test 1\nProgram Director (HS / EHS)');
-    expect(updatedImportParticipants).toContainEqual('State Head Start Association');
+    expect(updatedImportParticipants).toContainEqual('Local/State Agency(ies)');
     expect(updatedImportParticipants).toContainEqual('test 3\ntest 4\ntest 5');
     expect(updatedImportParticipants).toContainEqual('test 6\nCoach\ntest 7\nHome Visitor\ntest 8');
   });
