@@ -4,11 +4,17 @@ import PropTypes from 'prop-types';
 import './Tooltip.css';
 
 export default function Tooltip({
-  displayText, tooltipText, buttonLabel, screenReadDisplayText, hideUnderline, svgLineTo,
+  displayText,
+  tooltipText,
+  buttonLabel,
+  screenReadDisplayText,
+  hideUnderline,
+  svgLineTo,
+  className,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const cssClasses = showTooltip ? 'smart-hub--tooltip show-tooltip' : 'smart-hub--tooltip';
+  const cssClasses = showTooltip ? `smart-hub-tooltip show-tooltip ${className}` : `smart-hub-tooltip ${className}`;
 
   const onClick = () => {
     setShowTooltip(!showTooltip);
@@ -24,7 +30,7 @@ export default function Tooltip({
             {
               hideUnderline ? null
                 : (
-                  <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true">
+                  <svg height="5" xmlns="http://www.w3.org/2000/svg" version="1.1" aria-hidden="true" className="ttahub-tooltip-underline">
                     <path
                       d={`M 0 5 L ${svgLineTo} 5`}
                       stroke="black"
@@ -61,10 +67,12 @@ Tooltip.propTypes = {
   screenReadDisplayText: PropTypes.bool,
   hideUnderline: PropTypes.bool,
   svgLineTo: PropTypes.number,
+  className: PropTypes.string,
 };
 
 Tooltip.defaultProps = {
   screenReadDisplayText: true,
   hideUnderline: false,
   svgLineTo: 190,
+  className: '',
 };

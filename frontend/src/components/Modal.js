@@ -95,7 +95,7 @@ Modal.propTypes = {
   cancelButtonCss: PropTypes.string,
   showTitleRequired: PropTypes.bool,
   secondaryActionButtonText: PropTypes.string,
-  onSecondaryAction: PropTypes.string,
+  onSecondaryAction: PropTypes.func,
   hideCancelButton: PropTypes.bool,
   forceAction: PropTypes.bool,
 };

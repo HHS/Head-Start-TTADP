@@ -21,7 +21,7 @@ export default function TooltipWithCollection({ collection, collectionTitle }) {
   const tags = (collection).map((member) => (
     <span
       key={uuidv4()}
-      className="smart-hub--tooltip-truncated smart-hub--tooltip-truncated--with-collection"
+      className="smart-hub-tooltip--truncated smart-hub-tooltip--truncated--with-collection"
     >
       {member}
       &nbsp;

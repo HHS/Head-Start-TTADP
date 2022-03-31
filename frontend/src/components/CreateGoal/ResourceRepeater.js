@@ -7,6 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
+import QuestionTooltip from './QuestionTooltip';
 
 export default function ResourceRepeater({
   resources, setResources, error, validateResources,
@@ -37,7 +38,10 @@ export default function ResourceRepeater({
     <FormGroup error={error.props.children}>
       <div ref={resourcesWrapper}>
         <Label htmlFor="resources">
-          Resource links
+          Links to TTA resource used
+          <QuestionTooltip
+            text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
+          />
         </Label>
         {error}
         { resources.map((r, i) => (

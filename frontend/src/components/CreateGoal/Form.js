@@ -8,6 +8,7 @@ import {
 import ObjectiveForm from './ObjectiveForm';
 import './Form.css';
 import PlusButton from './PlusButton';
+import QuestionTooltip from './QuestionTooltip';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -113,6 +114,7 @@ export default function Form({
           Estimated close date (mm/dd/yyyy)
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+          <QuestionTooltip text="When do you expect to end TTA work and mark this goal as closed?" />
         </Label>
         {errors[FORM_FIELD_INDEXES.END_DATE]}
         <DatePicker
