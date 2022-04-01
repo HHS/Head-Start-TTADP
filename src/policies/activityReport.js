@@ -26,9 +26,14 @@ export default class ActivityReport {
   }
 
   canUpdate() {
-    return (this.isAuthor() || this.isCollaborator())
+    const canUpdateAsAuthorAndCollaborator = (this.isAuthor() || this.isCollaborator())
       && this.canWriteInRegion()
       && this.reportHasEditableStatus();
+
+    const canUpdateAsApprover = (this.canReview()
+    && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
+
+    return canUpdateAsAuthorAndCollaborator || canUpdateAsApprover;
   }
 
   canReset() {

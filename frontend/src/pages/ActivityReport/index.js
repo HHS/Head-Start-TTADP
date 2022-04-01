@@ -2,7 +2,9 @@
   Activity report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, useRef, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   keyBy, mapValues, startCase, isEqual,
@@ -32,6 +34,7 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
+import UserContext from '../../UserContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -136,7 +139,7 @@ export const updateGoals = (report) => (oldFormData) => {
 };
 
 function ActivityReport({
-  match, user, location, region,
+  match, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
   const history = useHistory();
@@ -153,6 +156,7 @@ function ActivityReport({
   const [errorMessage, updateErrorMessage] = useState();
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
+  const { user } = useContext(UserContext);
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
 
@@ -222,7 +226,7 @@ function ActivityReport({
         // ***Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
 
-        if (isMatchingApprover && isMatchingApprover.length > 0 && !canWriteReport) {
+        if (isMatchingApprover && isMatchingApprover.length > 0) {
           // This user is an approver on the report.
           updateIsApprover(true);
 
@@ -291,6 +295,7 @@ function ActivityReport({
     if (!editable) {
       return;
     }
+
     const state = {};
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;
