@@ -16,6 +16,8 @@ import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
 import FilterContext from '../../FilterContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -37,6 +39,8 @@ export default function RegionalDashboard() {
   const regions = useMemo(() => getUserRegions(user), [user]);
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
+
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
   const defaultFilters = useMemo(() => {
     if (hasCentralOffice) {
@@ -88,6 +92,13 @@ export default function RegionalDashboard() {
       <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
       <>
         <Helmet titleTemplate="%s - Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
         <h1 className="landing">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
