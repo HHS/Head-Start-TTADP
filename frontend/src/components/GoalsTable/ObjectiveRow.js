@@ -117,7 +117,7 @@ function ObjectiveRow({
         </td>
         <td>{endDate}</td>
         <td>
-          {displayReasonsList(reasons.sort())}
+          {reasons && displayReasonsList(reasons.sort())}
         </td>
         <td>
           {getObjectiveStatusIcon()}
