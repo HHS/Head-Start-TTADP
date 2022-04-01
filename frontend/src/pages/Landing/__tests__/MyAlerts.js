@@ -118,7 +118,7 @@ describe('My Alerts', () => {
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
     const truncated = collaborators.firstChild.firstChild.firstChild;
-    expect(truncated).toHaveClass('smart-hub--tooltip-truncated');
+    expect(truncated).toHaveClass('smart-hub-tooltip--truncated');
     expect(truncated).toHaveTextContent('Orange, GS');
   });
 
