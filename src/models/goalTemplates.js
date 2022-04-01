@@ -8,10 +8,10 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveResource.belongsToMany(models.Goal, { foreignKey: 'goalTemplateId' });
+      GoalTemplate.belongsToMany(models.Goal, { foreignKey: 'goalTemplateId' });
     }
   }
-  ObjectiveResource.init({
+  GoalTemplate.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
