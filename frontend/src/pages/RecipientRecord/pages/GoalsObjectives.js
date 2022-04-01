@@ -50,6 +50,11 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
     },
   ];
 
+  let hasActiveGrants = false;
+  if (recipient.grants.find((g) => g.status === 'Active')) {
+    hasActiveGrants = true;
+  }
+
   return (
     <>
       <Helmet>
@@ -76,6 +81,7 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
           recipientId={recipientId}
           regionId={regionId}
           filters={expandFilters(filters)}
+          hasActiveGrants={hasActiveGrants}
         />
       </div>
     </>

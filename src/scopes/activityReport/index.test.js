@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
-import faker from 'faker';
+import faker from '@faker-js/faker';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 

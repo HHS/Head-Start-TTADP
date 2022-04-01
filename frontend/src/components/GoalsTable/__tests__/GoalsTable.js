@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
+import { SCOPE_IDS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -23,7 +24,7 @@ const defaultUser = {
   homeRegionId: 1,
   permissions: [
     {
-      scopeId: 3,
+      scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
       regionId: 1,
     },
   ],
@@ -181,7 +182,7 @@ const noStatusGoalWithOneObjective = [{
   }],
 }];
 
-const renderTable = (user) => {
+const renderTable = (user, hasActiveGrants = true) => {
   render(
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -191,6 +192,7 @@ const renderTable = (user) => {
             recipientId={recipientId}
             regionId={regionId}
             onUpdateFilters={() => { }}
+            hasActiveGrants={hasActiveGrants}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -229,6 +231,8 @@ describe('Goals Table', () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-5 of 6/i)).toBeVisible();
+
+      await screen.findByRole('link', { name: /Add new goal/i });
 
       // In progress.
       expect(screen.getAllByRole('cell')[0].firstChild).toHaveClass('fa-clock');
@@ -403,6 +407,32 @@ describe('Goals Table', () => {
       // We should set focus back to the expand button.
       const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
       expect(expandWithFocus).toHaveFocus();
+    });
+
+    it('hides the add new goal button if recipient has no active grants', async () => {
+      renderTable(defaultUser, false);
+      await screen.findByText('TTA goals and objectives');
+
+      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      expect(link).toBe(null);
+    });
+
+    it('hides the add new goal button if user doesn\'t have permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable(user);
+      await screen.findByText('TTA goals and objectives');
+
+      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      expect(link).toBe(null);
     });
   });
 
@@ -594,7 +624,7 @@ describe('Goals Table', () => {
 
   describe('Context Menu', () => {
     beforeEach(async () => {
-      fetchMock.reset();
+      fetchMock.restore();
       fetchMock.get(
         baseWithRegionOne,
         { count: 1, goalRows: [goals[0], goals[3]] },
@@ -610,7 +640,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status with reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/4598/changeStatus', {
+      fetchMock.put('/api/recipient/4598/changeStatus', {
         id: 4598,
         status: 'Completed',
         createdOn: '06/15/2021',
@@ -643,7 +673,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status without reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/65479/changeStatus', {
+      fetchMock.put('/api/recipient/65479/changeStatus', {
         id: 65479,
         status: 'In Progress',
         createdOn: '06/15/2021',
@@ -663,7 +693,8 @@ describe('Goals Table', () => {
       fireEvent.click(closeGoalButton);
 
       // Verify goal status change.
-      await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent('In progress'));
+      const cells = await screen.findAllByRole('cell');
+      expect(cells[7]).toHaveTextContent('In progress');
     });
   });
 });
