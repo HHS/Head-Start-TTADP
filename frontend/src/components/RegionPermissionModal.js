@@ -19,7 +19,7 @@ function RegionPermissionModal({
       .includes(parseInt(f.query, DECIMAL_BASE)))
     .map((m) => m.query), [filters, userRegions]);
 
-  const showMultipleRegions = missingRegions && missingRegions.length > 1 ? "'s" : '';
+  const showMultipleRegions = missingRegions && missingRegions.length > 1 ? 's' : '';
   const missingRegionsList = missingRegions && missingRegions.length > 0 ? missingRegions.sort().join(', ') : '';
 
   useEffect(() => {

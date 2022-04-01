@@ -245,6 +245,6 @@ describe('Region Permission Modal', () => {
 
     render(<PermissionModal filters={filtersToPass} />);
 
-    expect(await screen.findByRole('heading', { name: /you need permission to access region's 3, 4/i, hidden: true })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /you need permission to access regions 3, 4/i, hidden: true })).toBeVisible();
   });
 });
