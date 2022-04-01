@@ -175,7 +175,8 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
       id,
       displayId,
     } = report;
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    // const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,

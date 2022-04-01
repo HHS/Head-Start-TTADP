@@ -112,6 +112,12 @@ commands:
       smtp_port:
         description: "SMTP port"
         type: env_var_name
+      smtp_secure:
+        description: "SMTP secure transport"
+        type: env_var_name
+      from_email_address:
+        description: "From email address"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -134,7 +140,9 @@ commands:
               --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
               --var SMTP_HOST=${<< parameters.smtp_host >>} \
-              --var SMTP_PORT=${<< parameters.smtp_port >>}
+              --var SMTP_PORT=${<< parameters.smtp_port >>} \
+              --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
+              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
       - run:
           name: Push maintenance application
           command: |
@@ -385,6 +393,8 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Migrate database
                 command: |
@@ -416,6 +426,8 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Migrate database
                 command: |
@@ -447,6 +459,8 @@ jobs:
                 hses_data_password: HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Run database migrations
                 command: |
@@ -476,6 +490,8 @@ jobs:
                 hses_data_password: PROD_HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Run database migrations
                 command: |
