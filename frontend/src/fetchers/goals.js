@@ -15,7 +15,6 @@ export async function createOrUpdateGoals(goals) {
 
 export async function updateGoalStatus(
   goalId,
-  regionId,
   oldStatus,
   newStatus,
   closeSuspendReason,
@@ -25,7 +24,6 @@ export async function updateGoalStatus(
   const updatedGoal = await put(
     recipientGoalsUrl,
     {
-      regionId,
       oldStatus,
       newStatus,
       closeSuspendReason,
