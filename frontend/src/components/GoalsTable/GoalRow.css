@@ -73,11 +73,11 @@
 vertical-align: top;
 }
 
-.tta-smarthub--goal-row td:nth-child(3) .smart-hub--tooltip button {
+.tta-smarthub--goal-row td:nth-child(3) .smart-hub-tooltip button {
   line-height: 0;
 }
 
-.tta-smarthub--goal-row td:nth-child(4) .smart-hub--tooltip button {
+.tta-smarthub--goal-row td:nth-child(4) .smart-hub-tooltip button {
   line-height: 1.7;
   vertical-align: baseline;
 }

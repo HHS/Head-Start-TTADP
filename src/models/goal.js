@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     timeframe: DataTypes.STRING,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
+    endDate: DataTypes.DATEONLY,
     goalNumber: {
       type: DataTypes.VIRTUAL,
       get() {
