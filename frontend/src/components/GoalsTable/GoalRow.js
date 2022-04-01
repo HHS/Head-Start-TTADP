@@ -20,7 +20,6 @@ import './GoalRow.css';
 function GoalRow({
   goal,
   updateGoal,
-  regionId,
 }) {
   const {
     id,
@@ -56,7 +55,6 @@ function GoalRow({
   ) => {
     const updatedGoal = await updateGoalStatus(
       goalId,
-      regionId,
       goalStatus,
       status,
       closeSuspendReason,
@@ -298,6 +296,5 @@ goalPropTypes.defaultProps = {
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
   updateGoal: PropTypes.func.isRequired,
-  regionId: PropTypes.string.isRequired,
 };
 export default GoalRow;

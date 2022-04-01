@@ -43,12 +43,12 @@ export async function changeGoalStatus(req, res) {
   try {
     const { goalId } = req.params;
     const {
-      newStatus, closeSuspendReason, closeSuspendContext, regionId, oldStatus,
+      newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
     } = req.body;
 
     const user = await userById(req.session.userId);
 
-    if (!new Goal(user, { regionId }).canEdit()) {
+    if (!new Goal(user).canEdit()) {
       res.sendStatus(401);
       return;
     }
