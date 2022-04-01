@@ -21,10 +21,7 @@ const defaultTransport = createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure,
-  // auth: {
-  //   user: SMTP_USER,
-  //   pass: SMTP_PASS,
-  // },
+  ignoreTLS: true,
 });
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
@@ -51,7 +48,7 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     const approverNote = approver.note;
     logger.info(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
     const collabArray = collaborators.map((c) => c.email);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -96,7 +93,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     } = report;
     logger.info(`MAILER: Notifying users that report ${displayId}} was approved.`);
     const collaboratorEmailAddresses = collaborators.map((c) => c.email);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -136,7 +133,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
     } = report;
     const approverEmail = newApprover.user.email;
     logger.info(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -175,7 +172,7 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
       id,
       displayId,
     } = report;
-    // const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
