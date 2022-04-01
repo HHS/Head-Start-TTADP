@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
       Goal.belongsToMany(models.Recipient, { through: models.GrantGoal, foreignKey: 'goalId', as: 'recipients' });
-      Goal.belongsToMany(models.Grant, { through: models.GrantGoal, foreignKey: 'goalId', as: 'grants' });
+      Goal.belongsTo(models.Grant, { foreignKey: 'goalId', as: 'grants' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
     }
   }
