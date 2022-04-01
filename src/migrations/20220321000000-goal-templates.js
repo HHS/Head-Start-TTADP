@@ -18,7 +18,6 @@ module.exports = {
         console.error(err); // eslint-disable-line no-console
         throw (err);
       }
-      
 
       // Add GoalTemplates table
       queryInterface.createTable('GoalTemplates', {
@@ -40,24 +39,25 @@ module.exports = {
           allowNull: false,
           type: Sequelize.DATE,
         },
-        //To support up/down on the migration
+        // To support up/down on the migration
         sourceGoal: {
           allowNull: false,
           type: Sequelize.INTEGER,
         },
-      }, { transaction }),
-      
+      }, { transaction });
+
       // Disable logging while doing mass updates
       try {
         await queryInterface.sequelize.query(
-          `SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');`,
+          `
+          SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+          `,
           { transaction },
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
-      },
-
+      }
 
       // Populate GoalTemplates from existing Goals
       try {
@@ -69,12 +69,13 @@ module.exports = {
           { transaction },
         );
       } catch (err) {
-        console.error(err);
+        console.error(err); // eslint-disable-line no-console
         throw (err);
       }
 
-      // Add the foreign key relation from Goals table to GoalTemplates for recording the parent template
-      // leave goalTemplateId nullable for now until it can be populated with the IDs of the parent templates
+      // Add the foreign key relation from Goals table to GoalTemplates for recording the parent
+      // template leave goalTemplateId nullable for now until it can be populated with the IDs of
+      // the parent templates
       queryInterface.addColumn('Goals', 'goalTemplateId', {
         type: Sequelize.INTEGER,
         allowNull: true,
@@ -86,29 +87,28 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
-      }, { transaction }),
+      }, { transaction });
 
-      // Make goalTemplateId 
-      queryInterface.changeColumn('Goals', 'goalTemplateId', {allowNull: false}, { transaction })
-      
+      // Make goalTemplateId
+      queryInterface.changeColumn('Goals', 'goalTemplateId', { allowNull: false }, { transaction });
 
       // Enable logging while doing structural updates
       try {
         await queryInterface.sequelize.query(
-          `SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');`,
+          `
+          SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+          `,
           { transaction },
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
-      },
-
-
-    }
+      }
+    },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      queryInterface.dropTable('GoalTemplates', { transaction })
+      queryInterface.dropTable('GoalTemplates', { transaction });
     },
   ),
 };
