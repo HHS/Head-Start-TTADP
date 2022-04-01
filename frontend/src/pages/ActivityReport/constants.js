@@ -46,11 +46,11 @@ export const otherEntityParticipants = [
   'Local/State Agency(ies)',
   'OCC Regional Office',
   'OHS Regional Office',
-  'Other',
   'Regional Head Start Association',
   'Regional TTA Team / Specialists',
   'State Early Learning System',
   'State Head Start Association',
+  'Other',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in

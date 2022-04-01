@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import {
   ActivityReport,
+  sequelize,
 } from '../models';
 import { auditLogger } from '../logger';
 
@@ -58,7 +59,7 @@ export default async function updateParticipantsList() {
       ...report.imported,
       granteeParticipants: importedGranteeParticipants,
     };
-
-    return report.update({ participants, imported });
+    // eslint-disable-next-line max-len
+    return sequelize.transaction(async (transaction) => report.update({ participants, imported }, { transaction }));
   }));
 }
