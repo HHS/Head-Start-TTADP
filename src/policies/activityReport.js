@@ -31,9 +31,10 @@ export default class ActivityReport {
       && this.reportHasEditableStatus();
 
     const canUpdateAsApprover = (this.canReview()
-    && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
+      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
 
-    return canUpdateAsAuthorAndCollaborator || canUpdateAsApprover;
+    return canUpdateAsAuthorAndCollaborator
+      || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
   }
 
   canReset() {
@@ -99,6 +100,15 @@ export default class ActivityReport {
         && permission.regionId === this.activityReport.regionId),
     );
     return !_.isUndefined(permissions);
+  }
+
+  hasBeenMarkedByApprover() {
+    return (
+      this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+      || this.activityReport.approvers.some((approver) => (
+        approver.status === REPORT_STATUSES.APPROVED
+      ))
+    );
   }
 
   isAdmin() {
