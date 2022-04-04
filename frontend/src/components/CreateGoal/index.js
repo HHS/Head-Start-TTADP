@@ -1,13 +1,15 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useEffect, useState, useMemo } from 'react';
 import moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal, goalById } from '../../fetchers/goals';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -24,7 +26,9 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-export default function CreateGoal({ recipient, regionId }) {
+export default function CreateGoal({ recipient, regionId, match }) {
+  const { params: { goalId: urlId } } = match;
+
   const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
@@ -38,8 +42,8 @@ export default function CreateGoal({ recipient, regionId }) {
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
-    id: 'new',
-  }), [possibleGrants]);
+    id: urlId,
+  }), [possibleGrants, urlId]);
 
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
@@ -59,6 +63,61 @@ export default function CreateGoal({ recipient, regionId }) {
   const [goalId, setGoalId] = useState(goalDefaults.id);
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
+
+  // for fetching goal data from api if it exists
+  useEffect(() => {
+    async function fetchGoal() {
+      const goal = await goalById(urlId, recipient.id.toString());
+
+      if (!goal) {
+        // handle error in UI
+      }
+
+      // the API sends us back things in a format we expect
+      setGoalName(goal.goalName);
+      setStatus(goal.status);
+      setEndDate(goal.endDate);
+
+      // this is a lot of work to avoid two loops through the goal.objectives
+      // but I'm sure you'll agree its totally worth it
+      const [
+        newObjectives, // return objectives w/ resources and topics formatted as expected
+        objectiveErrors, // and we need a matching error for each objective
+      ] = goal.objectives.reduce((previous, objective) => {
+        const [newObjs, objErrors] = previous;
+        let newObjective = objective;
+
+        if (!objective.resources.length) {
+          newObjective = {
+            ...objective,
+            resources: [
+              // this is the expected format of a blank resource
+              // all objectives start off with one
+              { key: uuidv4(), value: '' },
+            ],
+          };
+        }
+
+        newObjs.push(newObjective);
+        // this is the format of an objective error
+        // three JSX nodes representing each of three possible errors
+        objErrors.push([<></>, <></>, <></>]);
+
+        return [newObjs, objErrors];
+      }, [[], []]);
+
+      const newErrors = [...errors];
+      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+      setErrors(newErrors);
+
+      setObjectives(newObjectives);
+    }
+
+    // wrapped in such a way as to prevent infinite loops
+    if (!goalName) {
+      fetchGoal();
+    }
+  }, [errors, goalName, recipient.id, urlId]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -382,7 +441,7 @@ export default function CreateGoal({ recipient, regionId }) {
               onEdit={onEdit}
             />
             <div className="margin-bottom-4">
-              {!showForm
+              {!showForm && urlId !== 'new'
                 ? (
                   <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                 ) : null }
@@ -439,6 +498,7 @@ export default function CreateGoal({ recipient, regionId }) {
 }
 
 CreateGoal.propTypes = {
+  match: ReactRouterPropTypes.match.isRequired,
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

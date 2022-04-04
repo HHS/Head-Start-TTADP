@@ -1,8 +1,16 @@
 import join from 'url-join';
-import { put, post, destroy } from './index';
+import {
+  get, put, post, destroy,
+} from './index';
 
 const goalsUrl = join('/', 'api', 'goals');
 const recipientUrl = join('/', 'api', 'recipient');
+
+export async function goalById(goalId, recipientId) {
+  const url = join(goalsUrl, goalId, 'recipient', recipientId);
+  const response = await get(url);
+  return response.json();
+}
 
 export async function createOrUpdateGoals(goals) {
   const data = {

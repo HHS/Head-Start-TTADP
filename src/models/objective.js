@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Objective.belongsToMany(models.ActivityReport, { through: models.ActivityReportObjective, foreignKey: 'objectiveId', as: 'activityReports' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.belongsToMany(models.Topic, { through: models.ObjectiveTopic, foreignKey: 'topicId', as: 'topics' });
+      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
     }
   }
   Objective.init({

@@ -1,5 +1,9 @@
 import {
-  updateGoalStatusById, createOrUpdateGoals, destroyGoal, goalByIdWithActivityReportsAndRegions,
+  updateGoalStatusById,
+  createOrUpdateGoals,
+  destroyGoal,
+  goalByIdWithActivityReportsAndRegions,
+  goalById,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -101,6 +105,33 @@ export async function deleteGoal(req, res) {
     }
 
     res.json(deletedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function retrieveGoal(req, res) {
+  try {
+    const { goalId, recipientId } = req.params;
+
+    const user = await userById(req.session.userId);
+    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+
+    const policy = new Goal(user, goal);
+
+    if (!policy.canView()) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const retrievedGoal = await goalById(parseInt(goalId, 10), parseInt(recipientId, 10));
+
+    if (!retrievedGoal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(retrievedGoal);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

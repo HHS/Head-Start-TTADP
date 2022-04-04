@@ -9,8 +9,9 @@ import {
   ObjectiveTopic,
   ActivityReportObjective,
   GrantGoal,
-  sequelize,
+  Recipient,
   ActivityReport,
+  Topic,
 } from '../models';
 // import { DECIMAL_BASE } from '../constants';
 
@@ -19,6 +20,54 @@ const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
 };
+
+export async function goalById(id, recipientId) {
+  return Goal.findOne({
+    attributes: [
+      'id',
+      'endDate',
+      ['name', 'goalName'],
+      'status',
+    ],
+    where: {
+      id,
+    },
+    include: [
+      {
+        attributes: ['title', 'id'],
+        model: Objective,
+        as: 'objectives',
+        include: [
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+          },
+          {
+            model: Topic,
+            as: 'topics',
+          },
+        ],
+      },
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: [
+          'id',
+        ],
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            where: {
+              id: recipientId,
+            },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
+}
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
