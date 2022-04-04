@@ -215,17 +215,17 @@ describe('Landing Page', () => {
 
     expect(topics).toBeVisible();
     expect(topics.firstChild).toHaveClass('smart-hub--ellipsis');
-    expect(topics.firstChild.firstChild.firstChild).toHaveClass('smart-hub--tooltip-truncated');
+    expect(topics.firstChild.firstChild.firstChild).toHaveClass('smart-hub-tooltip--truncated');
     expect(topics.firstChild).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support');
   });
 
   test('displays the correct collaborators', async () => {
     const collaborators = await screen.findByRole('cell', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
     expect(collaborators).toBeVisible();
-    expect(collaborators.firstChild).toHaveClass('smart-hub--tooltip');
+    expect(collaborators.firstChild).toHaveClass('smart-hub-tooltip');
     expect(collaborators.firstChild.children.length).toBe(2);
     const truncated = collaborators.firstChild.children[1].firstChild.firstChild.firstChild;
-    expect(truncated).toHaveClass('smart-hub--tooltip-truncated');
+    expect(truncated).toHaveClass('smart-hub-tooltip--truncated');
     expect(truncated).toHaveTextContent('Orange, GS');
   });
 

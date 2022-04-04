@@ -1,9 +1,9 @@
-.smart-hub--tooltip .smart-hub--ellipsis{
+.smart-hub-tooltip .smart-hub--ellipsis{
     font-size: 15px;
     position: relative;
 }
 
-.smart-hub--tooltip svg {
+.smart-hub-tooltip .ttahub-tooltip-underline {
     position: absolute;
     max-width: 100%;
     left: 0;
@@ -11,8 +11,8 @@
     right: 0;
 }
 
-.smart-hub--tooltip .usa-button,
-.smart-hub--tooltip .usa-button:hover {
+.smart-hub-tooltip .usa-button,
+.smart-hub-tooltip .usa-button:hover {
     text-decoration: none;
 }
 
@@ -30,17 +30,17 @@
     position: relative;
 }
 
-.smart-hub--tooltip {
+.smart-hub-tooltip {
     display: inline-block;
     position: relative;
 }
 
-.smart-hub--tooltip button {
+.smart-hub-tooltip button {
     line-height: 1.7;    
 }
 
-.smart-hub--tooltip:hover .usa-tooltip__body,
-.smart-hub--tooltip.show-tooltip .usa-tooltip__body{        
+.smart-hub-tooltip:hover .usa-tooltip__body,
+.smart-hub-tooltip.show-tooltip .usa-tooltip__body{        
     animation: fadein;
     /* This ensures the tool tips stays while the user is hovering.  */
     animation-fill-mode: forwards;

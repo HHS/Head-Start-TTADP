@@ -170,12 +170,81 @@ describe('Region Permission Modal', () => {
     render(<PermissionModal filters={filtersToPass} showFilterWithMyRegions={showFiltersFn} />);
 
     // Click show filters with my regions.
-    const showFiltersBtn = await screen.findByRole('button', { name: /request access via smartsheet/i, hidden: true });
+    const showFiltersBtn = await screen.findByRole('link', { name: /request access via smartsheet/i, hidden: true });
     userEvent.click(showFiltersBtn);
     expect(showFiltersFn).toHaveBeenCalled();
 
     // Modal has closed.
     const modalElement = document.querySelector('.popup-modal');
     expect(modalElement.firstChild).toHaveClass('is-hidden');
+  });
+
+  it('region is not filters are ignored', async () => {
+    const filtersToPass = [
+      ...defaultFilters,
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is not',
+        query: 3,
+      },
+    ];
+
+    const showFiltersFn = jest.fn();
+    render(<PermissionModal filters={filtersToPass} showFilterWithMyRegions={showFiltersFn} />);
+
+    // Modal is hidden.
+    const modalElement = document.querySelector('.popup-modal');
+    expect(modalElement.firstChild).toHaveClass('is-hidden');
+  });
+
+  it('correctly shows the header with a single denied regions', async () => {
+    const filtersToPass = [
+      ...defaultFilters,
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: 3,
+      },
+    ];
+
+    render(<PermissionModal filters={filtersToPass} />);
+
+    expect(await screen.findByRole('heading', { name: /you need permission to access region 3/i, hidden: true })).toBeVisible();
+  });
+
+  it('correctly shows the header with multiple denied regions', async () => {
+    const filtersToPass = [
+      ...defaultFilters,
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: 3,
+      },
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: 4,
+      },
+    ];
+
+    render(<PermissionModal filters={filtersToPass} />);
+
+    expect(await screen.findByRole('heading', { name: /you need permission to access regions 3, 4/i, hidden: true })).toBeVisible();
   });
 });
