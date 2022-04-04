@@ -5,7 +5,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ModalToggleButton } from '@trussworks/react-uswds';
+import { ModalToggleButton, Button } from '@trussworks/react-uswds';
 import Modal from '../Modal';
 
 const ModalComponent = (
@@ -19,10 +19,12 @@ const ModalComponent = (
     cancelButtonText = 'Cancel',
     showCloseX = false,
     isLarge = false,
+    SecondaryActionButton = null,
+    onSecondaryAction = () => {},
+    hideCancelButton = false,
   },
 ) => {
   const modalRef = useRef();
-
   return (
     <div>
       <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
@@ -38,6 +40,9 @@ const ModalComponent = (
         cancelButtonText={cancelButtonText}
         showCloseX={showCloseX}
         isLarge={isLarge}
+        SecondaryActionButton={SecondaryActionButton}
+        onSecondaryAction={onSecondaryAction}
+        hideCancelButton={hideCancelButton}
       >
         <div>
           Are you sure you want to perform this action?
@@ -105,5 +110,22 @@ describe('Modal', () => {
   it('hides ok button', async () => {
     render(<ModalComponent showOkButton={false} showCloseX />);
     expect(screen.queryByRole('button', { name: /this button will ok the modal action\./i })).not.toBeInTheDocument();
+  });
+
+  it('shows secondary ok button', async () => {
+    const secondaryOk = jest.fn();
+    const secondaryButton = () => <Button type="button" onClick={secondaryOk}>my secondary button</Button>;
+    render(<ModalComponent SecondaryActionButton={secondaryButton} />);
+    expect(await screen.findByText(/my secondary button/i)).toBeVisible();
+
+    // Click secondary OK.
+    const secondaryOkBtn = await screen.findByText(/my secondary button/i);
+    userEvent.click(secondaryOkBtn);
+    expect(secondaryOk).toHaveBeenCalled();
+  });
+
+  it('hides the cancel button', async () => {
+    render(<ModalComponent hideCancelButton />);
+    expect(screen.queryByText(/cancel/i)).toBeNull();
   });
 });

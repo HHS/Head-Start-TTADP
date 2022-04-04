@@ -4,17 +4,11 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faClock,
-  faCheckCircle,
-  faExclamationCircle,
-  faPencilAlt,
-  faMinusCircle,
-  faTimesCircle,
   faFlag,
   faAngleUp,
   faAngleDown,
 } from '@fortawesome/free-solid-svg-icons';
-import ContextMenu from '../ContextMenu';
+import StatusDropdown from './StatusDropdown';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
@@ -25,7 +19,6 @@ import './GoalRow.css';
 
 function GoalRow({
   goal,
-  openMenuUp,
   updateGoal,
 }) {
   const {
@@ -38,6 +31,7 @@ function GoalRow({
     goalNumber,
     reasons,
     objectives,
+    previousStatus,
   } = goal;
 
   // Close/Suspend Reason Modal.
@@ -53,11 +47,38 @@ function GoalRow({
     closeSuspendModalRef.current.toggleModal(true);
   };
 
+  const performGoalStatusUpdate = async (
+    goalId,
+    status,
+    closeSuspendReason = null,
+    closeSuspendContext = null,
+  ) => {
+    const updatedGoal = await updateGoalStatus(
+      goalId,
+      goalStatus,
+      status,
+      closeSuspendReason,
+      closeSuspendContext,
+    );
+    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
+      // Close from a close suspend reason submit.
+      closeSuspendModalRef.current.toggleModal(false);
+    }
+    updateGoal(updatedGoal);
+  };
+
+  const onUpdateGoalStatus = (newStatus) => {
+    if (newStatus === 'Completed' || newStatus === 'Ceased/Suspended') {
+      // Must provide reason for Close or Suspend.
+      showCloseSuspendGoalModal(newStatus, id);
+    } else {
+      performGoalStatusUpdate(id, newStatus);
+    }
+  };
+
   const expandObjectivesRef = useRef();
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
-
-  const contextMenuLabel = `Actions for goal ${id}`;
 
   const mapToDisplay = [
     {
@@ -91,132 +112,6 @@ function GoalRow({
       color: '#c5c5c5',
     },
   ];
-
-  const getGoalStatusIcon = () => {
-    if (goalStatus) {
-      if (goalStatus === 'In Progress') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
-      } if (goalStatus === 'Completed') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
-      }
-      if (goalStatus === 'Draft') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#475260" icon={faPencilAlt} />;
-      }
-      if (goalStatus === 'Not Started') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
-      }
-      if (goalStatus === 'Ceased/Suspended') {
-        return <FontAwesomeIcon className="margin-right-1" size="1x" color="#b50908" icon={faTimesCircle} />;
-      }
-    }
-    return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
-  };
-
-  const getGoalDisplayStatusText = () => {
-    if (goalStatus) {
-      const displayStatus = mapToDisplay.find((m) => m.stored === goalStatus);
-      return displayStatus ? displayStatus.display : 'Needs status';
-    }
-    return 'Needs status';
-  };
-
-  const displayStatus = getGoalDisplayStatusText();
-
-  let showContextMenu = false;
-  const availableMenuItems = [
-    {
-      status: 'Needs status',
-      values: ['Mark not started', 'Mark in progress', 'Close goal', 'Cease/suspend goal'],
-    },
-    {
-      status: 'Not started',
-      values: ['Close goal', 'Cease/suspend goal'],
-    },
-    {
-      status: 'In progress',
-      values: ['Close goal', 'Cease/suspend goal'],
-    },
-    {
-      status: 'Closed',
-      values: ['Re-open goal'],
-    },
-    {
-      status: 'Suspended',
-      values: ['Re-open goal'],
-    },
-  ];
-
-  const mapToStoredStatus = [
-    {
-      status: 'Mark not started',
-      stored: 'Not Started',
-    },
-    {
-      status: 'Mark in progress',
-      stored: 'In Progress',
-    },
-    {
-      status: 'Close goal',
-      stored: 'Completed',
-    },
-    {
-      status: 'Cease/suspend goal',
-      stored: 'Ceased/Suspended',
-    },
-    {
-      status: 'Re-open goal',
-      stored: 'In Progress',
-    },
-  ];
-
-  const performGoalStatusUpdate = async (
-    goalId,
-    status,
-    closeSuspendReason = null,
-    closeSuspendContext = null,
-  ) => {
-    const updatedGoal = await updateGoalStatus(
-      goalId,
-      status,
-      closeSuspendReason,
-      closeSuspendContext,
-    );
-    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
-      // Close from a close suspend reason submit.
-      closeSuspendModalRef.current.toggleModal(false);
-    }
-    updateGoal(updatedGoal);
-  };
-
-  const onUpdateGoalStatus = (status) => {
-    const changeGoalType = mapToStoredStatus.find((m) => m.status === status);
-    if (changeGoalType) {
-      if (changeGoalType.stored === 'Completed' || changeGoalType.stored === 'Ceased/Suspended') {
-        // Must provide reason for Close or Suspend.
-        showCloseSuspendGoalModal(changeGoalType.stored, id);
-      } else {
-        performGoalStatusUpdate(id, changeGoalType.stored);
-      }
-    }
-  };
-
-  const determineAvailableMenuItems = () => {
-    const menuItemsToDisplay = availableMenuItems.find((m) => m.status === displayStatus);
-
-    let menuItemsToReturn = [];
-    if (menuItemsToDisplay) {
-      showContextMenu = true;
-      menuItemsToReturn = menuItemsToDisplay.values.map((v) => (
-        {
-          label: v,
-          onClick: () => { onUpdateGoalStatus(v); },
-        }
-      ));
-    }
-    return menuItemsToReturn;
-  };
-
-  const menuItems = determineAvailableMenuItems();
 
   const determineFlagStatus = () => {
     const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
@@ -281,8 +176,12 @@ function GoalRow({
       />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
-          {getGoalStatusIcon()}
-          {displayStatus}
+          <StatusDropdown
+            goalId={id}
+            status={goalStatus}
+            onUpdateGoalStatus={onUpdateGoalStatus}
+            previousStatus={previousStatus}
+          />
         </td>
         <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
         <td className="text-wrap maxw-mobile">
@@ -311,7 +210,7 @@ function GoalRow({
           <button
             type="button"
             ref={expandObjectivesRef}
-            className={`usa-button--unstyled text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
+            className={`usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
             onClick={() => closeOrOpenObjectives(false)}
             aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
             tabIndex={0}
@@ -327,17 +226,6 @@ function GoalRow({
                 : null
             }
           </button>
-        </td>
-        <td>
-          {showContextMenu
-            ? (
-              <ContextMenu
-                label={contextMenuLabel}
-                menuItems={menuItems}
-                up={openMenuUp}
-              />
-            )
-            : null}
         </td>
       </tr>
       <tr className="tta-smarthub--objective-rows">
@@ -369,7 +257,7 @@ function GoalRow({
           </table>
         </td>
       </tr>
-      <tr className="height-1" aria-hidden />
+      <tr className="height-1" aria-hidden="true" />
     </>
   );
 }
@@ -398,6 +286,7 @@ export const goalPropTypes = PropTypes.shape({
   objectiveCount: PropTypes.number.isRequired,
   goalNumber: PropTypes.string.isRequired,
   objectives: PropTypes.arrayOf(objectivePropTypes),
+  previousStatus: PropTypes.string,
 });
 
 goalPropTypes.defaultProps = {
@@ -406,7 +295,6 @@ goalPropTypes.defaultProps = {
 };
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
-  openMenuUp: PropTypes.bool.isRequired,
   updateGoal: PropTypes.func.isRequired,
 };
 export default GoalRow;
