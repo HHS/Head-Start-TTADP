@@ -139,7 +139,7 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-    expect(screen.getAllByRole('cell')[0].firstChild).toHaveClass('fa-clock');
+    expect(screen.getAllByRole('cell')[0].querySelector('.fa-clock')).toBeTruthy();
     expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
     expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
     expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
@@ -156,7 +156,7 @@ describe('Goals and Objectives', () => {
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
     expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-    expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
+    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
 
     // Change Filter and Apply.
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
@@ -188,10 +188,10 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
     expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
 
-    expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
-    expect(screen.getAllByRole('cell')[8]).toHaveTextContent('07/15/2021');
-    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/this is goal text 2/i);
-    expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/program planning and services/i);
-    expect(screen.getAllByRole('cell')[11]).toHaveTextContent('1 Objective(s)');
+    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
+    expect(screen.getAllByRole('cell')[7]).toHaveTextContent('07/15/2021');
+    expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/this is goal text 2/i);
+    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/program planning and services/i);
+    expect(screen.getAllByRole('cell')[10]).toHaveTextContent('1 Objective(s)');
   });
 });
