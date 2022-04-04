@@ -237,11 +237,21 @@ describe('Activity report service', () => {
 
       const { count, rows } = await activityReportAlerts(mockUserFour.id, {});
       expect(count).toBe(5);
-      expect(rows[0].userId).toBe(mockUserFour.id);
-      expect(rows[1].userId).toBe(mockUserFive.id);
-      expect(rows[2].userId).toBe(mockUserFour.id);
-      expect(rows[3].userId).toBe(mockUserFour.id); // Approver Only.
-      expect(rows[4].userId).toBe(mockUserFive.id); // Collaborator Only.
+
+      const counter = rows.reduce((prev, curr) => {
+        const val = prev[curr.userId];
+
+        return {
+          ...prev,
+          [curr.userId]: val + 1,
+        };
+      }, {
+        [mockUserFour.id]: 0,
+        [mockUserFive.id]: 0,
+      });
+
+      expect(counter[mockUserFour.id]).toBe(3);
+      expect(counter[mockUserFive.id]).toBe(2);
     });
   });
 
