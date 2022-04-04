@@ -157,7 +157,7 @@ function GoalsTable({
           hasActiveGrants={hasActiveGrants}
         />
         <div className="usa-table-container">
-          <Table className="goals-table-content" fullWidth>
+          <Table fullWidth scrollable>
             <caption className="usa-sr-only">
               TTA goals and objective count with sorting and pagination
             </caption>
@@ -168,6 +168,7 @@ function GoalsTable({
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
                 {renderColumnHeader('Goal topic(s)', 'goalTopics', false)}
                 {renderColumnHeader('Objectives', 'objectiveCount', false)}
+                <th scope="col" aria-label="context menu" />
               </tr>
             </thead>
             <tbody>
@@ -177,6 +178,8 @@ function GoalsTable({
                   goal={goal}
                   openMenuUp={index > displayGoals.length - 1}
                   updateGoal={updateGoal}
+                  recipientId={recipientId}
+                  regionId={regionId}
                 />
               ))}
             </tbody>

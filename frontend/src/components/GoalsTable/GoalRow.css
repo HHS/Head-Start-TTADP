@@ -1,12 +1,12 @@
 .goals-table .usa-table .tta-smarthub--goal-row td:first-child {
   border-left: 1px solid #c5c5c5;
-  min-width: 160px;
+  /* min-width: 160px; */
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row td:last-child {
   border-right: 1px solid #c5c5c5;
 }
-
+/* 
 .goals-table .usa-table .tta-smarthub--goal-row td:nth-child(2) {
   min-width: 120px;
 }
@@ -22,7 +22,7 @@
 }
 .goals-table .usa-table .tta-smarthub--goal-row td:nth-child(5) {
   min-width: 168px;
-}
+} */
 
 .goals-table .usa-table .tta-smarthub--goal-row-objectives-enabled {
   cursor: pointer;
