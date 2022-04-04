@@ -20,8 +20,7 @@ const Modal = ({
   okButtonCss,
   cancelButtonCss,
   showTitleRequired,
-  secondaryActionButtonText,
-  onSecondaryAction,
+  SecondaryActionButton,
   hideCancelButton,
   forceAction,
 
@@ -62,12 +61,8 @@ const Modal = ({
               : null
           }
           {
-            secondaryActionButtonText
-              ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} onClick={onSecondaryAction}>
-                  {secondaryActionButtonText}
-                </Button>
-              )
+            SecondaryActionButton
+              ? <SecondaryActionButton />
               : null
           }
         </ButtonGroup>
@@ -94,11 +89,14 @@ Modal.propTypes = {
   okButtonCss: PropTypes.string,
   cancelButtonCss: PropTypes.string,
   showTitleRequired: PropTypes.bool,
-  secondaryActionButtonText: PropTypes.string,
-  onSecondaryAction: PropTypes.func,
+  SecondaryActionButton: PropTypes.func,
   hideCancelButton: PropTypes.bool,
   forceAction: PropTypes.bool,
 };
+
+function DefaultSecondaryActionButton() {
+  return <span />;
+}
 
 Modal.defaultProps = {
   onOk: () => { },
@@ -111,8 +109,7 @@ Modal.defaultProps = {
   okButtonCss: null,
   cancelButtonCss: null,
   showTitleRequired: false,
-  secondaryActionButtonText: null,
-  onSecondaryAction: () => { },
+  SecondaryActionButton: DefaultSecondaryActionButton,
   hideCancelButton: false,
   forceAction: false,
 };
