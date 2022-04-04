@@ -47,8 +47,14 @@ export async function changeGoalStatus(req, res) {
     } = req.body;
 
     const user = await userById(req.session.userId);
+    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
-    if (!new Goal(user).canEdit()) {
+    if (!goal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    if (!new Goal(user, goal).canEdit()) {
       res.sendStatus(401);
       return;
     }
@@ -60,11 +66,6 @@ export async function changeGoalStatus(req, res) {
       closeSuspendReason,
       closeSuspendContext,
     );
-
-    if (!updatedGoal) {
-      res.sendStatus(404);
-      return;
-    }
 
     res.json(updatedGoal);
   } catch (error) {

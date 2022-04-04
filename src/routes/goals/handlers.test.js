@@ -152,6 +152,12 @@ describe('changeGoalStatus', () => {
         },
       ],
     });
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 1 }],
+    });
+
     await changeGoalStatus(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(goalWhere);
   });
@@ -180,6 +186,12 @@ describe('changeGoalStatus', () => {
         },
       ],
     });
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 1 }],
+    });
+
     await changeGoalStatus(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
   });
@@ -208,6 +220,8 @@ describe('changeGoalStatus', () => {
         },
       ],
     });
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce(null);
 
     updateGoalStatusById.mockResolvedValue(null);
     await changeGoalStatus(req, mockResponse);
