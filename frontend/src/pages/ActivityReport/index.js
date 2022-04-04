@@ -213,11 +213,9 @@ function ActivityReport({
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
           || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
-        const canWriteAsApprover = (isMatchingApprover && (
+        const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
-
-        const canWriteReport = canWriteAsCollaboratorOrAuthor || canWriteAsApprover;
 
         updateAdditionalData({ recipients, collaborators, availableApprovers });
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -235,6 +233,18 @@ function ActivityReport({
             updateIsPendingApprover(true);
           }
         }
+
+        // if a report has been marked as need action or approved by any approver, it can no longer
+        // be edited even by an approver
+        const approverHasMarkedReport = report.approvers.some((approver) => (
+          approver.status === REPORT_STATUSES.APPROVED
+        ));
+
+        const canWriteReport = canWriteAsCollaboratorOrAuthor
+          || (
+            canWriteAsApprover
+             && !approverHasMarkedReport
+          );
 
         updateEditable(canWriteReport);
 
