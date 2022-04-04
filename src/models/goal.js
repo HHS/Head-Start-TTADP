@@ -42,6 +42,9 @@ module.exports = (sequelize, DataTypes) => {
     closeSuspendContext: {
       type: DataTypes.TEXT,
     },
+    previousStatus: {
+      type: DataTypes.STRING,
+    },
   }, {
     sequelize,
     modelName: 'Goal',

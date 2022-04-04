@@ -392,19 +392,22 @@ export async function copyGoalsToGrants(goals, grantIds, transaction) {
 
 export async function updateGoalStatusById(
   goalId,
+  oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
 ) {
   /* TODO:
-    Disable for now until goals are unique grants.
+    Disable for now until goals are unique grants. ?????
   */
   /*
+
   const updatedGoal = await Goal.update(
     {
       status: newStatus,
       closeSuspendReason,
       closeSuspendContext,
+      previousStatus: oldStatus,
     },
     { where: { id: goalId }, returning: true },
   );

@@ -2,7 +2,7 @@ import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
 
 describe('Goals policies', () => {
-  describe('canDelete', () => {
+  describe('canDelete && canEdit', () => {
     it('returns false if the goal is on an approved activity report', async () => {
       const goal = {
         objectives: [
@@ -70,7 +70,7 @@ describe('Goals policies', () => {
     });
   });
 
-  describe('canCreate && canEdit', () => {
+  describe('canCreate', () => {
     it('returns false if they can\'t', async () => {
       const goal = {};
       const regionId = 2;
@@ -85,7 +85,6 @@ describe('Goals policies', () => {
 
       const policy = new Goal(user, goal, regionId);
 
-      expect(policy.canEdit()).toBe(false);
       expect(policy.canCreate()).toBe(false);
     });
 
@@ -104,7 +103,6 @@ describe('Goals policies', () => {
 
       const policy = new Goal(user, goal, regionId);
 
-      expect(policy.canEdit()).toBe(true);
       expect(policy.canCreate()).toBe(true);
     });
 
@@ -122,7 +120,6 @@ describe('Goals policies', () => {
 
       const policy = new Goal(user, goal, regionId);
 
-      expect(policy.canEdit()).toBe(true);
       expect(policy.canCreate()).toBe(true);
     });
   });
