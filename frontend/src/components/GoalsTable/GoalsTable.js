@@ -17,6 +17,7 @@ function GoalsTable({
   regionId,
   filters,
   hasActiveGrants,
+  showNewGoals,
 }) {
   // Goal Data.
   const [goals, setGoals] = useState([]);
@@ -30,10 +31,15 @@ function GoalsTable({
   const [goalsCount, setGoalsCount] = useState(0);
   const [offset, setOffset] = useState(0);
   const [perPage] = useState(GOALS_PER_PAGE);
-  const [sortConfig, setSortConfig] = useState({
-    sortBy: 'goalStatus',
-    direction: 'asc',
-  });
+  const [sortConfig, setSortConfig] = useState(showNewGoals
+    ? {
+      sortBy: 'createdOn',
+      direction: 'desc',
+    }
+    : {
+      sortBy: 'goalStatus',
+      direction: 'asc',
+    });
 
   useEffect(() => {
     async function fetchGoals() {
@@ -60,7 +66,7 @@ function GoalsTable({
       setLoading(false);
     }
     fetchGoals();
-  }, [sortConfig, offset, perPage, filters, recipientId, regionId]);
+  }, [sortConfig, offset, perPage, filters, recipientId, regionId, showNewGoals]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -200,6 +206,7 @@ GoalsTable.propTypes = {
     }),
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  showNewGoals: PropTypes.bool.isRequired,
 };
 
 export default GoalsTable;

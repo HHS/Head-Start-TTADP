@@ -89,7 +89,7 @@ describe('Goals and Objectives', () => {
     ],
   };
 
-  const renderGoalsAndObjectives = () => {
+  const renderGoalsAndObjectives = (ids = []) => {
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
@@ -97,6 +97,9 @@ describe('Goals and Objectives', () => {
             recipientId="401"
             regionId="1"
             recipient={recipient}
+            location={{
+              state: { ids }, hash: '', pathname: '', search: '',
+            }}
           />
         </UserContext.Provider>
       </Router>,
@@ -130,6 +133,10 @@ describe('Goals and Objectives', () => {
 
     const goalStatusGraphUnfiltered = '/api/widgets/goalStatusGraph?region.in[]=1&recipientId.ctn[]=401';
     fetchMock.get(goalStatusGraphUnfiltered, statusRes);
+
+    // Created New Goal.
+    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=5';
+    fetchMock.get(newGoalsUrl, { count: 1, goalRows: goals });
   });
 
   afterEach(() => {
@@ -193,5 +200,10 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/this is goal text 2/i);
     expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/program planning and services/i);
     expect(screen.getAllByRole('cell')[11]).toHaveTextContent('1 Objective(s)');
+  });
+
+  it('sorts by created on desc when new goals are created', async () => {
+    act(() => renderGoalsAndObjectives([1]));
+    expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
   });
 });
