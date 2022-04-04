@@ -85,6 +85,7 @@ export default function StatusDropdown({
 
     return (
       <>
+        { !status && <option value="" disabled>Needs status</option> }
         { status !== 'In Progress' && <option value="Not Started">Not started</option> }
         <option value="In Progress">In progress</option>
         <option value="Completed">Closed</option>
