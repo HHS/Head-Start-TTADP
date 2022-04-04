@@ -5,7 +5,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ModalToggleButton } from '@trussworks/react-uswds';
+import { ModalToggleButton, Button } from '@trussworks/react-uswds';
 import Modal from '../Modal';
 
 const ModalComponent = (
@@ -19,13 +19,12 @@ const ModalComponent = (
     cancelButtonText = 'Cancel',
     showCloseX = false,
     isLarge = false,
-    secondaryActionButtonText = null,
+    SecondaryActionButton = null,
     onSecondaryAction = () => {},
     hideCancelButton = false,
   },
 ) => {
   const modalRef = useRef();
-
   return (
     <div>
       <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
@@ -41,7 +40,7 @@ const ModalComponent = (
         cancelButtonText={cancelButtonText}
         showCloseX={showCloseX}
         isLarge={isLarge}
-        secondaryActionButtonText={secondaryActionButtonText}
+        SecondaryActionButton={SecondaryActionButton}
         onSecondaryAction={onSecondaryAction}
         hideCancelButton={hideCancelButton}
       >
@@ -115,7 +114,8 @@ describe('Modal', () => {
 
   it('shows secondary ok button', async () => {
     const secondaryOk = jest.fn();
-    render(<ModalComponent secondaryActionButtonText="My Secondary Button" onSecondaryAction={secondaryOk} />);
+    const secondaryButton = () => <Button type="button" onClick={secondaryOk}>my secondary button</Button>;
+    render(<ModalComponent SecondaryActionButton={secondaryButton} />);
     expect(await screen.findByText(/my secondary button/i)).toBeVisible();
 
     // Click secondary OK.

@@ -53,6 +53,7 @@ describe('recipient record page', () => {
         regionId: 45,
         programSpecialistName: 'The Mighty Program Specialist',
         recipientId: 9,
+        numberWithProgramTypes: 'RECIPIENT_NUMBER EHS',
       },
     ],
   };
@@ -70,7 +71,7 @@ describe('recipient record page', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <RecipientRecord user={user} match={match} />
+          <RecipientRecord match={match} />
         </UserContext.Provider>
       </Router>,
     );

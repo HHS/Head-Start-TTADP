@@ -1,4 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, {
+  useEffect, useRef, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import Modal from './Modal';
 import { DECIMAL_BASE } from '../Constants';
@@ -11,41 +13,36 @@ function RegionPermissionModal({
   const modalRef = useRef();
   const userRegions = getUserRegions(user);
 
-  useEffect(() => {
-    // Check if user has permission to region.
-    const regionFilters = filters.filter((f) => f.topic === 'region');
-    if (regionFilters.length > 0) {
-      let showRegionPermissionsModal = false;
-      const deniedRegionsList = [];
-      regionFilters.forEach((f) => {
-        const filterRegion = f.query;
-        const filterRegionNum = parseInt(filterRegion, DECIMAL_BASE);
-        if (!userRegions.includes(filterRegionNum)) {
-          showRegionPermissionsModal = true;
-          deniedRegionsList.push(filterRegionNum);
-        }
-      });
+  const missingRegions = useMemo(() => filters.filter((f) => f.topic === 'region'
+    && f.condition !== 'is not'
+    && !userRegions
+      .includes(parseInt(f.query, DECIMAL_BASE)))
+    .map((m) => m.query), [filters, userRegions]);
 
-      if (showRegionPermissionsModal && !modalRef.current.modalIsOpen) {
-        // Show region permission modal.
-        modalRef.current.toggleModal(true);
-      }
+  const showMultipleRegions = missingRegions && missingRegions.length > 1 ? 's' : '';
+  const missingRegionsList = missingRegions && missingRegions.length > 0 ? missingRegions.sort().join(', ') : '';
+
+  useEffect(() => {
+    if (missingRegions
+        && missingRegions.length > 0
+        && !modalRef.current.modalIsOpen) {
+      // Show region permission modal.
+      modalRef.current.toggleModal(true);
     }
-  }, [userRegions, filters]);
+  }, [missingRegions]);
 
   const showFilterWithMyRegionAccess = () => {
     showFilterWithMyRegions();
     modalRef.current.toggleModal(false);
   };
 
-  const smartSheetAccessLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
   const requestSmartSheetAccess = () => {
-    // Open link in new tab and close modal.
-    window.open(smartSheetAccessLink, '_blank');
     showFilterWithMyRegions();
     modalRef.current.toggleModal(false);
   };
 
+  const smartSheetAccessLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
+  const openSmartSheetRequest = () => <a href={smartSheetAccessLink} className="usa-button usa-button--primary" target="_blank" rel="noreferrer" onClick={requestSmartSheetAccess}>Request access via Smartsheet</a>;
   return (
     <div className="smart-hub--region-permission-modal">
       <Modal
@@ -53,10 +50,9 @@ function RegionPermissionModal({
         onOk={showFilterWithMyRegionAccess}
         okButtonCss="usa-button--primary"
         modalId="RegionPermissionModal"
-        title="You need permission to access this region"
+        title={`You need permission to access region${showMultipleRegions} ${missingRegionsList}`}
         okButtonText="Show filter with my regions"
-        secondaryActionButtonText="Request access via Smartsheet"
-        onSecondaryAction={requestSmartSheetAccess}
+        SecondaryActionButton={openSmartSheetRequest}
         hideCancelButton
         isLarge
         forceAction

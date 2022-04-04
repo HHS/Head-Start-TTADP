@@ -4,7 +4,7 @@ export function activeBefore(dates) {
   const scopes = dates.reduce((acc, date) => [
     ...acc,
     {
-      endDate: {
+      startDate: {
         [Op.lte]: new Date(date),
       },
     },
