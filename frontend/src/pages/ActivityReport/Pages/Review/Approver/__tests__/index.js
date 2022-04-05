@@ -27,9 +27,21 @@ const defaultApprover = [{
   id: 1, status: null, note: '', User: { id: 1, fullName: 'name' },
 }];
 
+const defaultPages = [{
+  label: 'label',
+  state: 'Complete',
+  review: false,
+}];
+
+const incompletePages = [{
+  label: 'incomplete',
+  state: 'In progress',
+  review: false,
+}];
+
 const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
-  onFormReview, reviewed, formData,
+  onFormReview, reviewed, formData, pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -43,6 +55,7 @@ const RenderApprover = ({
         reviewed={reviewed}
         formData={formData}
         isPendingApprover
+        pages={pages}
       >
         <div>
           test
@@ -52,9 +65,10 @@ const RenderApprover = ({
   );
 };
 
-const renderReview = (calculatedStatus, onFormReview, reviewed, approvers = defaultApprover) => {
+const renderReview = (
+  calculatedStatus, onFormReview, reviewed, approvers = defaultApprover, pages = defaultPages,
+) => {
   const formData = {
-
     author: { name: 'user' },
     additionalNotes: '',
     calculatedStatus,
@@ -69,6 +83,7 @@ const renderReview = (calculatedStatus, onFormReview, reviewed, approvers = defa
           onFormReview={onFormReview}
           reviewed={reviewed}
           formData={formData}
+          pages={pages}
         />
       </UserContext.Provider>
     </Router>,
@@ -125,6 +140,15 @@ describe('Approver review page', () => {
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
       expect(await screen.findByText(/choose report status/i)).toBeVisible();
+    });
+
+    it('a report can\'t be submitted with incomplete pages', async () => {
+      const mockSubmit = jest.fn();
+      renderReview(
+        REPORT_STATUSES.SUBMITTED, mockSubmit, true, defaultApprover, incompletePages,
+      );
+      const button = await screen.findByRole('button');
+      expect(button).toBeDisabled();
     });
   });
 
