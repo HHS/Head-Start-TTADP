@@ -96,8 +96,7 @@ module.exports = {
         await queryInterface.sequelize.query(
           `INSERT INTO "GoalTemplates" ("templateName","createdAt","updatedAt","sourceGoal")
           SELECT name, NOW(), NOW(), id
-          FROM "Goals"
-          )`,
+          FROM "Goals";`,
           { transaction },
         );
       } catch (err) {
@@ -112,8 +111,7 @@ module.exports = {
           SELECT o.title, NOW(), NOW(), gt.id, o.id
           FROM "Objectives" o
           JOIN "GoalTemplates" gt
-          ON o."goalId" = gt."sourceGoal"
-          )`,
+          ON o."goalId" = gt."sourceGoal";`,
           { transaction },
         );
       } catch (err) {
