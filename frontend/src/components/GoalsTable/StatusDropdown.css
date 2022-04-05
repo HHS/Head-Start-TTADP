@@ -1,0 +1,11 @@
+
+.ttahub-status-select select {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: -9999999px;
+}
+
+.ttahub-status-select select:focus {
+    left: 0;
+}
