@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       Goal.belongsToMany(models.Recipient, { through: models.GrantGoal, foreignKey: 'goalId', as: 'recipients' });
       Goal.belongsTo(models.Grant, { foreignKey: 'goalId', as: 'grants' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', onDelete: 'cascade' });
     }
   }
   Goal.init({
@@ -41,6 +42,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     closeSuspendContext: {
       type: DataTypes.TEXT,
+    },
+    goalTemplateId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'goalTemplates',
+        },
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
     },
   }, {
     sequelize,
