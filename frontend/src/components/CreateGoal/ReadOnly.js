@@ -56,7 +56,7 @@ export default function ReadOnly({
               <p className="margin-top-0">{goal.name}</p>
               {goal.endDate ? (
                 <>
-                  <h4 className="margin-bottom-1">Goal end date</h4>
+                  <h4 className="margin-bottom-1">Estimated close date</h4>
                   <p className="margin-top-0">{moment(goal.endDate, 'yyyy-mm-dd').format('mm/DD/yyyy')}</p>
                 </>
               ) : null }
