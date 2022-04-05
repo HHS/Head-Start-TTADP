@@ -23,7 +23,7 @@ import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 
 const [
-  objectiveTextError, objectiveTopicsError, objectiveResourcesError,
+  objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function CreateGoal({ recipient, regionId, match }) {
@@ -63,6 +63,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [goalId, setGoalId] = useState(goalDefaults.id);
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
+
+  const isOnApprovedReport = useMemo(() => objectives.some(
+    (objective) => objective.activityReports && objective.activityReports.length > 0,
+  ), [objectives]);
 
   // for fetching goal data from api if it exists
   useEffect(() => {
@@ -152,7 +156,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     let error = <></>;
 
     if (!goalName) {
-      error = <span className="usa-error-message">Please enter a goal name</span>;
+      error = <span className="usa-error-message">Enter the recipient&apos;s goal</span>;
     }
 
     const newErrors = [...errors];
@@ -170,7 +174,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     let error = <></>;
 
     if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
-      error = <span className="usa-error-message">Please enter a valid date in the format mm/dd/yyyy</span>;
+      error = <span className="usa-error-message">Enter a valid date</span>;
     }
 
     const newErrors = [...errors];
@@ -183,7 +187,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     let error = <></>;
 
     if (!selectedGrants.length) {
-      error = <span className="usa-error-message">Please select at least one recipient grant</span>;
+      error = <span className="usa-error-message">Select at least one recipient grant number</span>;
     }
 
     const newErrors = [...errors];
@@ -212,6 +216,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
           <span className="usa-error-message">{objectiveTextError}</span>,
           <></>,
           <></>,
+          <></>,
         ];
       }
 
@@ -220,6 +225,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         return [
           <></>,
           <span className="usa-error-message">{objectiveTopicsError}</span>,
+          <></>,
           <></>,
         ];
       }
@@ -230,10 +236,22 @@ export default function CreateGoal({ recipient, regionId, match }) {
           <></>,
           <></>,
           <span className="usa-error-message">{objectiveResourcesError}</span>,
+          <></>,
+        ];
+      }
+
+      if (!objective.status) {
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveStatusError}</span>,
         ];
       }
 
       return [
+        <></>,
         <></>,
         <></>,
         <></>,
@@ -471,6 +489,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
             validateObjectives={validateObjectives}
             setObjectiveError={setObjectiveError}
             topicOptions={topicOptions}
+            isOnApprovedReport={isOnApprovedReport}
+            status={status}
           />
           )}
 

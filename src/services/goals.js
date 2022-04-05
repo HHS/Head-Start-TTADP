@@ -12,8 +12,9 @@ import {
   Recipient,
   ActivityReport,
   Topic,
+  sequelize,
 } from '../models';
-// import { DECIMAL_BASE } from '../constants';
+import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -34,17 +35,37 @@ export async function goalById(id, recipientId) {
     },
     include: [
       {
-        attributes: ['title', 'id'],
+        attributes: [
+          'title',
+          'id',
+          'status',
+        ],
         model: Objective,
         as: 'objectives',
         include: [
           {
             model: ObjectiveResource,
             as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
           },
           {
             model: Topic,
             as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+          },
+          {
+            model: ActivityReport,
+            as: 'activityReports',
+            where: {
+              calculatedStatus: REPORT_STATUSES.APPROVED,
+            },
+            required: false,
           },
         ],
       },
@@ -154,96 +175,130 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
 export async function createOrUpdateGoals(goals) {
   // per a discussion with Patrice, we are disabling the backend "for real"
   // for now
-  return goals;
+  // return goals;
 
-  // return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
-  //   const {
-  //     id, grants, recipientId, regionId, objectives,
-  //     ...fields
-  //   } = goalData;
+  return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
+    const {
+      id, grants, recipientId, regionId, objectives,
+      ...fields
+    } = goalData;
 
-  //   const options = {
-  //     ...fields,
-  //     isFromSmartsheetTtaPlan: false,
-  //     id: id === 'new' ? null : id,
-  //   };
+    const options = {
+      ...fields,
+      isFromSmartsheetTtaPlan: false,
+      id: id === 'new' ? null : id,
+    };
 
-  //   const [goal] = await Goal.upsert(options, { transaction });
+    const [goal] = await Goal.upsert(options, { transaction });
 
-  //   await Promise.all(
-  //     grants.map((grant) => GrantGoal.findOrCreate({
-  //       where: {
-  //         goalId: goal.id,
-  //         recipientId,
-  //         grantId: grant.value,
-  //       },
-  //       transaction,
-  //     })),
-  //   );
+    const grantGoals = await Promise.all(
+      grants.map((grant) => GrantGoal.findOrCreate({
+        where: {
+          goalId: goal.id,
+          recipientId,
+          grantId: grant.value,
+        },
+        transaction,
+      })),
+    );
 
-  //   const newObjectives = await Promise.all(
-  //     objectives.map(async (o) => {
-  //       const {
-  //         id: objectiveId,
-  //         resources,
-  //         topics,
-  //         ...objectiveFields
-  //       } = o;
+    const grantGoalIds = grantGoals.map((gg) => gg.id);
 
-  //       const where = parseInt(objectiveId, DECIMAL_BASE) ? {
-  //         id: objectiveId,
-  //         goalId: goal.id,
-  //         ...objectiveFields,
-  //       } : {
-  //         goalId: goal.id,
-  //         title: o.title,
-  //         ttaProvided: '',
-  //         status: 'Not started',
-  //       };
+    // cleanup grant goals
+    await GrantGoal.destroy({
+      where: {
+        id: {
+          [Op.notIn]: grantGoalIds,
+        },
+        goalId: goal.id,
+      },
+    });
 
-  //       const [objective] = await Objective.upsert(
-  //         where,
-  //         { transaction },
-  //       );
+    const newObjectives = await Promise.all(
+      objectives.map(async (o) => {
+        const {
+          id: objectiveId,
+          resources,
+          topics,
+          ...objectiveFields
+        } = o;
 
-  //       // topics
-  //       await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
-  //         where: {
-  //           objectiveId: objective.id,
-  //           topicId: ot.value,
-  //         },
-  //         transaction,
-  //       }))));
+        const where = parseInt(objectiveId, DECIMAL_BASE) ? {
+          id: objectiveId,
+          goalId: goal.id,
+          ...objectiveFields,
+        } : {
+          goalId: goal.id,
+          title: o.title,
+          ttaProvided: '',
+          status: 'Not started',
+        };
 
-  //       // resources
-  //       await Promise.all((resources.map((or) => ObjectiveResource.findOrCreate({
-  //         where: {
-  //           userProvidedUrl: or.value,
-  //           objectiveId: objective.id,
-  //         },
-  //         transaction,
-  //       }))));
+        const [objective] = await Objective.upsert(
+          where,
+          { transaction },
+        );
 
-  //       return {
-  //         ...objective.dataValues,
-  //         topics,
-  //         resources,
-  //       };
-  //     }),
-  //   );
+        // topics
+        const objectiveTopics = await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
+          where: {
+            objectiveId: objective.id,
+            topicId: ot.value,
+          },
+          transaction,
+        }))));
 
-  //   // this function deletes unused objectives
-  //   await cleanupObjectivesForGoal(goal.id, newObjectives);
+        // cleanup objective topics
+        await ObjectiveTopic.destroy({
+          where: {
+            id: {
+              [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+            },
+            objectiveId: objective.id,
+          },
+        });
 
-  //   // we want to return the data in roughly the form it was provided
-  //   return {
-  //     ...goal.dataValues,
-  //     grants,
-  //     recipientId,
-  //     regionId,
-  //     objectives: newObjectives,
-  //   };
-  // })));
+        // resources
+        const objectiveResources = await Promise.all(
+          resources.filter(({ value }) => value).map(({ value }) => ObjectiveResource.findOrCreate({
+            where: {
+              userProvidedUrl: value,
+              objectiveId: objective.id,
+            },
+            transaction,
+          })),
+        );
+
+        // cleanup objective resources
+        await ObjectiveResource.destroy({
+          where: {
+            id: {
+              [Op.notIn]: objectiveResources.length ? objectiveResources.map(([or]) => or.id) : [],
+            },
+            objectiveId: objective.id,
+          },
+        });
+
+        return {
+          ...objective.dataValues,
+          topics,
+          resources,
+        };
+      }),
+    );
+
+    // this function deletes unused objectives
+    await cleanupObjectivesForGoal(goal.id, newObjectives);
+
+    // we want to return the data in roughly the form it was provided
+    return {
+      ...goal.dataValues,
+      grants,
+      recipientId,
+      regionId,
+      objectives: newObjectives,
+    };
+  })));
 }
 
 export async function goalsForGrants(grantIds) {
@@ -449,19 +504,19 @@ export async function updateGoalStatusById(
   /* TODO:
     Disable for now until goals are unique grants. ?????
   */
-  /*
 
-  const updatedGoal = await Goal.update(
-    {
-      status: newStatus,
-      closeSuspendReason,
-      closeSuspendContext,
-      previousStatus: oldStatus,
-    },
-    { where: { id: goalId }, returning: true },
-  );
-  return updatedGoal[1][0];
-  */
+  return sequelize.transaction(async (transaction) => {
+    const updatedGoal = await Goal.update(
+      {
+        status: newStatus,
+        closeSuspendReason,
+        closeSuspendContext,
+        previousStatus: oldStatus,
+      },
+      { where: { id: goalId }, returning: true, transaction },
+    );
+    return updatedGoal[1][0];
+  });
 }
 
 export async function destroyGoal(goalId) {

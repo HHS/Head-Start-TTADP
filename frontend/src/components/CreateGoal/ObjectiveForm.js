@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Button, FormGroup, Label, Textarea,
+  Button, Dropdown, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import ResourceRepeater from './ResourceRepeater';
@@ -11,7 +11,7 @@ import {
 } from './constants';
 
 const [
-  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
+  objectiveTitleError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -22,14 +22,21 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
+  goalStatus,
 }) {
   // the parent objective data from props
-  const { title, topics, resources } = objective;
+  const {
+    id, title, topics, resources, status,
+  } = objective;
+  const isOnApprovedReport = useMemo(() => (
+    objective.activityReports && objective.activityReports.length > 0
+  ), [objective.activityReports]);
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
   const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
+  const setStatus = (e) => setObjective({ ...objective, status: e.target.value });
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -69,11 +76,24 @@ export default function ObjectiveForm({
     setObjectiveError(index, newErrors);
   };
 
+  const validateStatus = () => {
+    let error = <></>;
+
+    if (!status) {
+      error = <span className="usa-error-message">{objectiveStatusError}</span>;
+    }
+
+    const newErrors = [...errors];
+    newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.STATUS, 1, error);
+    setObjectiveError(index, newErrors);
+  };
+
   return (
     <div className="margin-top-2">
       <div className="display-flex flex-justify maxw-mobile-lg">
         <h3>Objective summary</h3>
-        <Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>
+        { !isOnApprovedReport
+          && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
       <FormGroup className="margin-top-1" error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE].props.children}>
         <Label htmlFor="objectiveTitle">
@@ -81,8 +101,14 @@ export default function ObjectiveForm({
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-        <Textarea id="objectiveTitle" name="objectiveTitle" required value={title} onChange={onChangeTitle} onBlur={validateObjectiveTitle} />
+        { isOnApprovedReport && title ? (
+          <p>{title}</p>
+        ) : (
+          <>
+            {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
+            <Textarea id="objectiveTitle" name="objectiveTitle" required value={title} onChange={onChangeTitle} onBlur={validateObjectiveTitle} />
+          </>
+        )}
       </FormGroup>
       <FormGroup error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS].props.children}>
         <Label htmlFor="topics">
@@ -90,28 +116,52 @@ export default function ObjectiveForm({
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
-        <Select
-          inputId="topics"
-          styles={SELECT_STYLES}
-          components={{
-            DropdownIndicator: null,
-          }}
-          className="usa-select"
-          isMulti
-          options={topicOptions}
-          onBlur={validateObjectiveTopics}
-          value={topics}
-          onChange={onChangeTopics}
-          closeMenuOnSelect={false}
-        />
+        { isOnApprovedReport ? (
+          <span className="margin-bottom-1">{topics.map((topic) => topic.label).join(', ')}</span>
+        ) : (
+          <>
+            {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
+            <Select
+              inputId="topics"
+              styles={SELECT_STYLES}
+              components={{
+                DropdownIndicator: null,
+              }}
+              className="usa-select"
+              isMulti
+              options={topicOptions}
+              onBlur={validateObjectiveTopics}
+              value={topics}
+              onChange={onChangeTopics}
+              closeMenuOnSelect={false}
+            />
+          </>
+        )}
       </FormGroup>
-      <ResourceRepeater
-        resources={resources}
-        setResources={setResources}
-        validateResources={validateResources}
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
-      />
+      { isOnApprovedReport ? (
+        <span className="margin-bottom-1">{resources.map((resource) => resource.value).join(', ')}</span>
+      ) : (
+        <ResourceRepeater
+          resources={resources}
+          setResources={setResources}
+          validateResources={validateResources}
+          error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
+          isOnApprovedReport={isOnApprovedReport}
+        />
+      )}
+
+      { goalStatus !== 'Draft' && isOnApprovedReport
+        ? (
+          <FormGroup>
+            <Label htmlFor={`obj-status-${id}`}>Status</Label>
+            <Dropdown onBlur={validateStatus} id={`obj-status-${id}`} name={`obj-status-${id}`} onChange={setStatus} value={status}>
+              <option>Not started</option>
+              <option>In progress</option>
+            </Dropdown>
+          </FormGroup>
+        )
+        : null}
+
     </div>
   );
 }
@@ -122,16 +172,25 @@ ObjectiveForm.propTypes = {
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
+  goalStatus: PropTypes.string.isRequired,
   objective: PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
     title: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
       value: PropTypes.number,
     })),
+    activityReports: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+    })),
     resources: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string,
       value: PropTypes.string,
     })),
+    status: PropTypes.string,
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,

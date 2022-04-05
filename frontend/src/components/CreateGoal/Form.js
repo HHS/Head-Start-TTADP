@@ -32,6 +32,8 @@ export default function Form({
   setObjectives,
   setObjectiveError,
   topicOptions,
+  isOnApprovedReport,
+  status,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -77,8 +79,8 @@ export default function Form({
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        {possibleGrants.length === 1 ? (
-          <span className="margin-bottom-1">{selectedGrants[0].label}</span>
+        {selectedGrants.length === 1 || isOnApprovedReport ? (
+          <span className="margin-bottom-1">{selectedGrants.map((grant) => grant.label).join(', ')}</span>
         ) : (
           <>
             {errors[FORM_FIELD_INDEXES.GRANTS]}
@@ -106,8 +108,14 @@ export default function Form({
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        {errors[FORM_FIELD_INDEXES.NAME]}
-        <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
+        { isOnApprovedReport ? (
+          <p className="margin-top-0">{goalName}</p>
+        ) : (
+          <>
+            {errors[FORM_FIELD_INDEXES.NAME]}
+            <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
+          </>
+        )}
       </FormGroup>
       <FormGroup error={errors[FORM_FIELD_INDEXES.END_DATE].props.children}>
         <Label htmlFor="goalEndDate">
@@ -116,15 +124,22 @@ export default function Form({
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
           <QuestionTooltip text="When do you expect to end TTA work and mark this goal as closed?" />
         </Label>
-        {errors[FORM_FIELD_INDEXES.END_DATE]}
-        <DatePicker
-          id="goalEndDate"
-          name="goalEndDate"
-          onChange={setEndDate}
-          defaultValue={endDate}
-          required
-          onBlur={validateEndDate}
-        />
+
+        { isOnApprovedReport ? (
+          <span>{endDate}</span>
+        ) : (
+          <>
+            {errors[FORM_FIELD_INDEXES.END_DATE]}
+            <DatePicker
+              id="goalEndDate"
+              name="goalEndDate"
+              onChange={setEndDate}
+              defaultValue={endDate}
+              required
+              onBlur={validateEndDate}
+            />
+          </>
+        )}
       </FormGroup>
       { objectives.map((objective, i) => (
         <ObjectiveForm
@@ -136,6 +151,7 @@ export default function Form({
           errors={objectiveErrors[i]}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
+          goalStatus={status}
         />
       ))}
 
@@ -148,6 +164,7 @@ export default function Form({
 }
 
 Form.propTypes = {
+  isOnApprovedReport: PropTypes.bool.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
@@ -197,6 +214,7 @@ Form.propTypes = {
     })),
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   })).isRequired,
+  status: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

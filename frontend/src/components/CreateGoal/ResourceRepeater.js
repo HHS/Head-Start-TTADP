@@ -10,9 +10,12 @@ import PlusButton from './PlusButton';
 import QuestionTooltip from './QuestionTooltip';
 
 export default function ResourceRepeater({
-  resources, setResources, error, validateResources,
+  resources, setResources, error, validateResources, isOnApprovedReport,
 }) {
   const resourcesWrapper = useRef();
+  if (isOnApprovedReport) {
+    return null;
+  }
 
   const addResource = () => {
     const newResources = [...resources, { key: uuidv4(), value: '' }];
@@ -83,4 +86,5 @@ ResourceRepeater.propTypes = {
   setResources: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
+  isOnApprovedReport: PropTypes.bool.isRequired,
 };

@@ -65,19 +65,22 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   topics: [],
   resources: [{ key: uuidv4(), value: '' }],
   id: `new${l}`,
+  status: 'Not started',
 });
 
 export const OBJECTIVE_FORM_FIELD_INDEXES = {
   TITLE: 0,
   TOPICS: 1,
   RESOURCES: 2,
+  STATUS: 3,
 };
 
 export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>];
 export const OBJECTIVE_ERROR_MESSAGES = [
-  'Please enter objective text',
-  'Please select at least one topic',
-  'Please enter only valid URLs',
+  'Enter the TTA objective',
+  'Select at least one topic',
+  'Enter a valid link',
+  'Select a status',
 ];
 
 export const validateListOfResources = (resources) => {
