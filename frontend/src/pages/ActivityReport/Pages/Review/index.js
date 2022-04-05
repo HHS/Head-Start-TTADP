@@ -43,6 +43,8 @@ const ReviewSubmit = ({
   };
 
   const onFormReview = async (data) => {
+    // we need to validate as we do on submit
+
     try {
       await onReview(data);
       updateReviewed(true);
@@ -97,6 +99,7 @@ const ReviewSubmit = ({
         && (
           <Approver
             reviewed={reviewed}
+            pages={pages}
             additionalNotes={additionalNotes}
             onFormReview={onFormReview}
             error={error}
