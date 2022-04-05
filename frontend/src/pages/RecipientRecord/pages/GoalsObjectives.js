@@ -14,7 +14,7 @@ import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 export default function GoalsObjectives({
   recipientId, regionId, recipient, location,
 }) {
-  const showNewGoals = !!((location.state && location.state.ids && location.state.ids.length > 0));
+  const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
   const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
   const FILTER_KEY = 'goals-objectives-filters';
