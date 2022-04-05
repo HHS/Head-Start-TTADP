@@ -174,7 +174,7 @@ function GoalRow({
   const showContextMenu = true;
   const menuItems = [
     {
-      label: 'Edit goal',
+      label: 'Edit',
       onClick: () => {
         history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals/${id}`);
       },
