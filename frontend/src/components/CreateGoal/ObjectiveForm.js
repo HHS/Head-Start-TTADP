@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Button, Dropdown, FormGroup, Label, Textarea,
+  Alert, Button, Dropdown, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import ResourceRepeater from './ResourceRepeater';
@@ -95,6 +95,15 @@ export default function ObjectiveForm({
         { !isOnApprovedReport
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
+      { isOnApprovedReport
+        ? (
+          <Alert type="warning" noIcon className="margin-top-0">
+            This objective is used on an activity report.
+            <br />
+            Some fields can&apos;t be edited
+          </Alert>
+        )
+        : null }
       <FormGroup className="margin-top-1" error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE].props.children}>
         <Label htmlFor="objectiveTitle">
           TTA objective
@@ -116,27 +125,22 @@ export default function ObjectiveForm({
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        { isOnApprovedReport ? (
-          <span className="margin-bottom-1">{topics.map((topic) => topic.label).join(', ')}</span>
-        ) : (
-          <>
-            {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
-            <Select
-              inputId="topics"
-              styles={SELECT_STYLES}
-              components={{
-                DropdownIndicator: null,
-              }}
-              className="usa-select"
-              isMulti
-              options={topicOptions}
-              onBlur={validateObjectiveTopics}
-              value={topics}
-              onChange={onChangeTopics}
-              closeMenuOnSelect={false}
-            />
-          </>
-        )}
+        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
+        <Select
+          inputId="topics"
+          styles={SELECT_STYLES}
+          components={{
+            DropdownIndicator: null,
+          }}
+          className="usa-select"
+          isMulti
+          options={topicOptions}
+          onBlur={validateObjectiveTopics}
+          value={topics}
+          onChange={onChangeTopics}
+          closeMenuOnSelect={false}
+        />
+
       </FormGroup>
       { isOnApprovedReport ? (
         <span className="margin-bottom-1">{resources.map((resource) => resource.value).join(', ')}</span>
@@ -187,7 +191,7 @@ ObjectiveForm.propTypes = {
       id: PropTypes.number,
     })),
     resources: PropTypes.arrayOf(PropTypes.shape({
-      key: PropTypes.string,
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       value: PropTypes.string,
     })),
     status: PropTypes.string,

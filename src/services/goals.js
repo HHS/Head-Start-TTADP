@@ -175,130 +175,133 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
 export async function createOrUpdateGoals(goals) {
   // per a discussion with Patrice, we are disabling the backend "for real"
   // for now
-  // return goals;
+  return goals;
 
-  return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
-    const {
-      id, grants, recipientId, regionId, objectives,
-      ...fields
-    } = goalData;
+  // return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
+  //   const {
+  //     id, grants, recipientId, regionId, objectives,
+  //     ...fields
+  //   } = goalData;
 
-    const options = {
-      ...fields,
-      isFromSmartsheetTtaPlan: false,
-      id: id === 'new' ? null : id,
-    };
+  //   const options = {
+  //     ...fields,
+  //     isFromSmartsheetTtaPlan: false,
+  //     id: id === 'new' ? null : id,
+  //   };
 
-    const [goal] = await Goal.upsert(options, { transaction });
+  //   const [goal] = await Goal.upsert(options, { transaction });
 
-    const grantGoals = await Promise.all(
-      grants.map((grant) => GrantGoal.findOrCreate({
-        where: {
-          goalId: goal.id,
-          recipientId,
-          grantId: grant.value,
-        },
-        transaction,
-      })),
-    );
+  //   const grantGoals = await Promise.all(
+  //     grants.map((grant) => GrantGoal.findOrCreate({
+  //       where: {
+  //         goalId: goal.id,
+  //         recipientId,
+  //         grantId: grant.value,
+  //       },
+  //       transaction,
+  //     })),
+  //   );
 
-    const grantGoalIds = grantGoals.map((gg) => gg.id);
+  //   const grantGoalIds = grantGoals.map((gg) => gg.id);
 
-    // cleanup grant goals
-    await GrantGoal.destroy({
-      where: {
-        id: {
-          [Op.notIn]: grantGoalIds,
-        },
-        goalId: goal.id,
-      },
-    });
+  //   // cleanup grant goals
+  //   await GrantGoal.destroy({
+  //     where: {
+  //       id: {
+  //         [Op.notIn]: grantGoalIds,
+  //       },
+  //       goalId: goal.id,
+  //     },
+  //   });
 
-    const newObjectives = await Promise.all(
-      objectives.map(async (o) => {
-        const {
-          id: objectiveId,
-          resources,
-          topics,
-          ...objectiveFields
-        } = o;
+  //   const newObjectives = await Promise.all(
+  //     objectives.map(async (o) => {
+  //       const {
+  //         id: objectiveId,
+  //         resources,
+  //         topics,
+  //         ...objectiveFields
+  //       } = o;
 
-        const where = parseInt(objectiveId, DECIMAL_BASE) ? {
-          id: objectiveId,
-          goalId: goal.id,
-          ...objectiveFields,
-        } : {
-          goalId: goal.id,
-          title: o.title,
-          ttaProvided: '',
-          status: 'Not started',
-        };
+  //       const where = parseInt(objectiveId, DECIMAL_BASE) ? {
+  //         id: objectiveId,
+  //         goalId: goal.id,
+  //         ...objectiveFields,
+  //       } : {
+  //         goalId: goal.id,
+  //         title: o.title,
+  //         ttaProvided: '',
+  //         status: 'Not started',
+  //       };
 
-        const [objective] = await Objective.upsert(
-          where,
-          { transaction },
-        );
+  //       const [objective] = await Objective.upsert(
+  //         where,
+  //         { transaction },
+  //       );
 
-        // topics
-        const objectiveTopics = await Promise.all((topics.map((ot) => ObjectiveTopic.findOrCreate({
-          where: {
-            objectiveId: objective.id,
-            topicId: ot.value,
-          },
-          transaction,
-        }))));
+  //       // topics
+  //       const objectiveTopics = await Promise.all(
+  //          (topics.map((ot) => ObjectiveTopic.findOrCreate({
+  //         where: {
+  //           objectiveId: objective.id,
+  //           topicId: ot.value,
+  //         },
+  //         transaction,
+  //       }))));
 
-        // cleanup objective topics
-        await ObjectiveTopic.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
+  //       // cleanup objective topics
+  //       await ObjectiveTopic.destroy({
+  //         where: {
+  //           id: {
+  //             [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+  //           },
+  //           objectiveId: objective.id,
+  //         },
+  //       });
 
-        // resources
-        const objectiveResources = await Promise.all(
-          resources.filter(({ value }) => value).map(({ value }) => ObjectiveResource.findOrCreate({
-            where: {
-              userProvidedUrl: value,
-              objectiveId: objective.id,
-            },
-            transaction,
-          })),
-        );
+  //       // resources
+  //       const objectiveResources = await Promise.all(
+  //         resources.filter(({ value }) => value).map(
+  //            ({ value }) => ObjectiveResource.findOrCreate({
+  //           where: {
+  //             userProvidedUrl: value,
+  //             objectiveId: objective.id,
+  //           },
+  //           transaction,
+  //         })),
+  //       );
 
-        // cleanup objective resources
-        await ObjectiveResource.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveResources.length ? objectiveResources.map(([or]) => or.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
+  //       // cleanup objective resources
+  //       await ObjectiveResource.destroy({
+  //         where: {
+  //           id: {
+  //             [Op.notIn]: objectiveResources.length ?
+  // objectiveResources.map(([or]) => or.id) : [],
+  //           },
+  //           objectiveId: objective.id,
+  //         },
+  //       });
 
-        return {
-          ...objective.dataValues,
-          topics,
-          resources,
-        };
-      }),
-    );
+  //       return {
+  //         ...objective.dataValues,
+  //         topics,
+  //         resources,
+  //       };
+  //     }),
+  //   );
 
-    // this function deletes unused objectives
-    await cleanupObjectivesForGoal(goal.id, newObjectives);
+  //   // this function deletes unused objectives
+  //   await cleanupObjectivesForGoal(goal.id, newObjectives);
 
-    // we want to return the data in roughly the form it was provided
-    return {
-      ...goal.dataValues,
-      grants,
-      recipientId,
-      regionId,
-      objectives: newObjectives,
-    };
-  })));
+  //   // we want to return the data in roughly the form it was provided
+  //   return {
+  //     ...goal.dataValues,
+  //     grants,
+  //     recipientId,
+  //     regionId,
+  //     objectives: newObjectives,
+  //   };
+  // })));
 }
 
 export async function goalsForGrants(grantIds) {
