@@ -56,7 +56,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
-  const [datePickerKey, setDatePickerKey] = useState('0');
+  const [datePickerKey, setDatePickerKey] = useState('00');
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
@@ -81,7 +81,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
       // the API sends us back things in a format we expect
       setGoalName(goal.goalName);
       setStatus(goal.status);
-      setEndDate(goal.endDate);
+      setEndDate(moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
       setDatePickerKey(goal.endDate);
 
       // this is a lot of work to avoid two loops through the goal.objectives
@@ -343,6 +343,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     setGoalId(goalDefaults.id);
     setShowForm(false);
     setObjectives([]);
+    setDatePickerKey('00');
   };
 
   const onSaveAndContinue = async () => {
@@ -394,6 +395,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
     setStatus(goal.status);
     setGoalId(goal.id);
     setSelectedGrants(goal.grants);
+
+    // we need to update the date key so it re-renders all the
+    // date pickers, as they are uncontrolled inputs
+    setDatePickerKey(goal.endDate);
 
     // objectives need some special help
     const { objectives: goalObjectives } = goal;

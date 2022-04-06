@@ -80,7 +80,7 @@ export default function ResourceRepeater({
 
 ResourceRepeater.propTypes = {
   resources: PropTypes.arrayOf(PropTypes.shape({
-    key: PropTypes.string,
+    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     value: PropTypes.string,
   })).isRequired,
   setResources: PropTypes.func.isRequired,

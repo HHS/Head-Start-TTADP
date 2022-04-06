@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
-import './ReadOnly.css';
 import ContextMenu from '../ContextMenu';
 import Modal from '../Modal';
+
+import './ReadOnly.css';
 
 export default function ReadOnly({
   onEdit,
@@ -57,7 +57,7 @@ export default function ReadOnly({
               {goal.endDate ? (
                 <>
                   <h4 className="margin-bottom-1">Estimated close date</h4>
-                  <p className="margin-top-0">{moment(goal.endDate, 'yyyy-mm-dd').format('mm/DD/yyyy')}</p>
+                  <p className="margin-top-0">{goal.endDate}</p>
                 </>
               ) : null }
               { goal.objectives.map((objective) => (
