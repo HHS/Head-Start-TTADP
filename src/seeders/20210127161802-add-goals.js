@@ -12,6 +12,33 @@ const bulletedGoal = `
 const longGoal = `Recipient will receive support in developing a full enrollment action plan that covers the 12-month under-enrollment period.
 Recipient will receive strategies for ensuring they can consistently meet enrollment requirement via their ERSEA policies and procedures. Recipient will receive strategies for ensuring their partnership with Skyline leads to sustainable enrollment.`;
 
+const goalTemplates = [
+  {
+    id: 1,
+    templateName: 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 2,
+    templateName: 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 3,
+    templateName: bulletedGoal,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 4,
+    templateName: longGoal,
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
 const goals = [
   {
     id: 1,
@@ -19,6 +46,8 @@ const goals = [
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
+    goalTemplateId: 1,
+    grantId: 1,
   },
   {
     id: 2,
@@ -26,6 +55,8 @@ const goals = [
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
+    goalTemplateId: 2,
+    grantId: 1,
   },
   {
     id: 3,
@@ -33,6 +64,8 @@ const goals = [
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
+    goalTemplateId: 3,
+    grantId: 1,
   },
   {
     id: 4,
@@ -40,49 +73,52 @@ const goals = [
     status: 'Not Started',
     createdAt: now,
     updatedAt: now,
+    goalTemplateId: 4,
+    grantId: 2,
   },
 ];
 
-const grantGoals = [
-  {
-    id: 1,
-    grantId: 1,
-    goalId: 1,
-    recipientId: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: 2,
-    grantId: 1,
-    goalId: 2,
-    recipientId: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: 3,
-    grantId: 1,
-    goalId: 3,
-    recipientId: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: 4,
-    grantId: 2,
-    goalId: 4,
-    recipientId: 2,
-    createdAt: now,
-    updatedAt: now,
-  },
-];
+// const grantGoals = [
+//   {
+//     id: 1,
+//     grantId: 1,
+//     goalId: 1,
+//     recipientId: 1,
+//     createdAt: now,
+//     updatedAt: now,
+//   },
+//   {
+//     id: 2,
+//     grantId: 1,
+//     goalId: 2,
+//     recipientId: 1,
+//     createdAt: now,
+//     updatedAt: now,
+//   },
+//   {
+//     id: 3,
+//     grantId: 1,
+//     goalId: 3,
+//     recipientId: 1,
+//     createdAt: now,
+//     updatedAt: now,
+//   },
+//   {
+//     id: 4,
+//     grantId: 2,
+//     goalId: 4,
+//     recipientId: 2,
+//     createdAt: now,
+//     updatedAt: now,
+//   },
+// ];
 
 module.exports = {
   up: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.bulkInsert('GoalTemplates', goalTemplates, { transaction });
       await queryInterface.bulkInsert('Goals', goals, { transaction });
-      await queryInterface.bulkInsert('GrantGoals', grantGoals, { transaction });
+      // await queryInterface.bulkInsert('GrantGoals', grantGoals, { transaction });
       await queryInterface.sequelize.query('ALTER SEQUENCE "Goals_id_seq" RESTART WITH 10;', { transaction });
       await queryInterface.sequelize.query('ALTER SEQUENCE "GrantGoals_id_seq" RESTART WITH 10;', { transaction });
     });
@@ -91,7 +127,8 @@ module.exports = {
   down: async (queryInterface) => {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await queryInterface.bulkDelete('Goals', null, { transaction });
-      await queryInterface.bulkDelete('GrantGoals', null, { transaction });
+      await queryInterface.bulkDelete('GoalTemplates', null, { transaction });
+      // await queryInterface.bulkDelete('GrantGoals', null, { transaction });
     });
   },
 };

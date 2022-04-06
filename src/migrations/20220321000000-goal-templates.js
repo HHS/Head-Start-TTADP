@@ -29,7 +29,7 @@ module.exports = {
         },
         templateName: {
           allowNull: false,
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
         },
         createdAt: {
           allowNull: false,
@@ -56,7 +56,7 @@ module.exports = {
         },
         templateTitle: {
           allowNull: false,
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
         },
         createdAt: {
           allowNull: false,

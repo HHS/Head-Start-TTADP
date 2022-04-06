@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       ObjectiveTemplate.belongsToMany(models.Objective, { foreignKey: 'objectiveTemplateId' });
+      ObjectiveTemplate.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', onDelete: 'cascade' });
     }
   }
   ObjectiveTemplate.init({
@@ -19,8 +20,19 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
     },
     templateTitle: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
+    },
+    goalTemplateId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'goalTemplates',
+        },
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
     },
   }, {
     sequelize,

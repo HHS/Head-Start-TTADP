@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Objective.belongsToMany(models.ActivityReport, { through: models.ActivityReportObjective, foreignKey: 'objectiveId', as: 'activityReports' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.belongsToMany(models.Topic, { through: models.ObjectiveTopic, foreignKey: 'topicId', as: 'topics' });
+      Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: +'objectiveTemplates', onDelete: 'cascade' });
     }
   }
   Objective.init({
@@ -24,6 +25,17 @@ module.exports = (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     ttaProvided: DataTypes.TEXT,
     status: DataTypes.STRING,
+    objectiveTemplateId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'objectiveTemplates',
+        },
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+    },
   }, {
     sequelize,
     modelName: 'Objective',
