@@ -1,5 +1,12 @@
-// eslint-disable-next-line import/prefer-default-export
-export const FILE_STATUSES = [
+export const CREATOR_ROLES_REPORTS_TEST_UPDATE = [
+  { id: '5452', role: 'Early Childhood Specialist' },
+  { id: 'R01-AR-000001', role: 'Grantee Specialist' },
+  { id: '5453', role: 'Health Specialist' },
+  { id: 'R01-AR-000002', role: 'Health Specialist' },
+  { id: '5456', role: 'Early Childhood Specialist' },
+];
+
+export const CREATOR_ROLES_REPORTS_TO_UPDATE = [
   { id: '11121', role: 'Early Childhood Specialist' },
   { id: '11854', role: 'Early Childhood Specialist' },
   { id: '12144', role: 'Early Childhood Specialist' },
