@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
       Goal.belongsToMany(models.Recipient, { through: models.GrantGoal, foreignKey: 'goalId', as: 'recipients' });
-      Goal.belongsTo(models.Grant, { foreignKey: 'goalId', as: 'grants' });
+      Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grants' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', onDelete: 'cascade' });
     }
@@ -43,9 +43,20 @@ module.exports = (sequelize, DataTypes) => {
     closeSuspendContext: {
       type: DataTypes.TEXT,
     },
+    grantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'grants',
+        },
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+    },
     goalTemplateId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
         model: {
           tableName: 'goalTemplates',
@@ -53,7 +64,6 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id',
       },
       onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
     },
   }, {
     sequelize,
