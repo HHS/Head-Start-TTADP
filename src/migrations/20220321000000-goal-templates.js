@@ -78,6 +78,14 @@ module.exports = {
         },
       }, { transaction });
 
+      // Drop TopicGoals
+      try {
+        queryInterface.dropTable('TopicGoals', { transaction });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
       // Disable logging while doing mass updates
       try {
         await queryInterface.sequelize.query(
@@ -122,211 +130,167 @@ module.exports = {
       // Add the foreign key relation from Goals table to GoalTemplates for recording the parent
       // template leave goalTemplateId nullable for now until it can be populated with the IDs of
       // the parent templates
-      queryInterface.addColumn('Goals', 'goalTemplateId', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: {
-            tableName: 'goalTemplates',
+      try {
+        queryInterface.addColumn('Goals', 'goalTemplateId', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'GoalTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-      }, { transaction });
+          onUpdate: 'CASCADE',
+        }, { transaction });
+
+        queryInterface.addColumn('Goals', 'grantId', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'Grants',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+        }, { transaction });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
 
       // Add the foreign key relation from Objectives table to ObjectiveTemplates for recording the
       // parent template leave goalTemplateId nullable for now until it can be populated with the
       // IDs of the parent templates
-      queryInterface.addColumn('Objectives', 'objectiveTemplateId', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: {
-            tableName: 'ObjectiveTemplates',
+      try {
+        queryInterface.addColumn('Objectives', 'objectiveTemplateId', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
           },
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-      }, { transaction });
+          onUpdate: 'CASCADE',
+        }, { transaction });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
 
-      // populate goals
+      // populate Goals, TopicGoals, Objectives, ObjectiveTopics, & ObjectiveResources
       try {
         await queryInterface.sequelize.query(
           `DO $$
           BEGIN
             CREATE TEMP TABLE "TempGoals"
             (
-                id integer NOT NULL DEFAULT nextval('"TempGrants_id_seq"'::regclass),
-              "grantId" integer,
-                name text COLLATE pg_catalog."default",
-                status character varying(255) COLLATE pg_catalog."default",
-                timeframe text COLLATE pg_catalog."default",
+                "id" serial,
+                "grantId" integer,
+                "name" text COLLATE pg_catalog."default",
+                "status" character varying(255) COLLATE pg_catalog."default",
+                "timeframe" text COLLATE pg_catalog."default",
                 "isFromSmartsheetTtaPlan" boolean,
                 "createdAt" timestamp with time zone NOT NULL,
                 "updatedAt" timestamp with time zone NOT NULL,
                 "closeSuspendReason" "enum_Goals_closeSuspendReason",
                 "closeSuspendContext" text COLLATE pg_catalog."default",
-              "goalTemplateId" integer,
-                CONSTRAINT "TempGrants_pkey" PRIMARY KEY (id)
+                "goalTemplateId" integer
+            );
+
+            CREATE TEMP TABLE "TempObjectives"
+            (
+                "id" serial,
+                "goalId" integer,
+                "title" text COLLATE pg_catalog."default",
+                "ttaProvided" text COLLATE pg_catalog."default",
+                "status" character varying(255) COLLATE pg_catalog."default",
+                "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "updatedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "objectiveTemplateId" integer
+            );
+
+            CREATE TEMP TABLE "TempObjectiveTopics"
+            (
+                "id" serial,
+                "objectiveId" integer NOT NULL,
+                "topicId" integer NOT NULL,
+                "createdAt" timestamp with time zone NOT NULL,
+                "updatedAt" timestamp with time zone NOT NULL
+            );
+
+            CREATE TEMP TABLE "TempObjectiveResources"
+            (
+                "id" serial,
+                "userProvidedUrl" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+                "objectiveId" integer NOT NULL,
+                "createdAt" timestamp with time zone NOT NULL,
+                "updatedAt" timestamp with time zone NOT NULL
+            );
+
+            CREATE TEMP TABLE "TempActivityReportObjectives"
+            (
+                id serial,
+                "activityReportId" integer NOT NULL,
+                "objectiveId" integer NOT NULL,
+                "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "updatedAt" timestamp with time zone NOT NULL DEFAULT now()
             );
 
             INSERT INTO "TempGoals" (
               "grantId",
-              name,
-              status,
-              timeframe,
+              "name",
+              "status",
+              "timeframe",
               "isFromSmartsheetTtaPlan",
               "createdAt",
               "updatedAt",
               "closeSuspendReason",
+              "closeSuspendContext",
               "goalTemplateId"
             )
             select
-              gg."grantId",
-              g.name,
-              g.status,
-              g.timeframe,
-              g."isFromSmartsheetTtaPlan",
-              g."createdAt",
-              g."updatedAt",
-              g."closeSuspendReason",
-              g."closeSuspendContext"--,
-              gt.id "goalTemplateId"
-            From "GrantGoals" gg
-            JOIN "Goals" g
-            ON gg."goalId" = g.id
-            JOIN "GoalTemplates" gt
-            ON g.id = gt."sourceGoal";
-
-            SET CONSTRAINTS ALL DEFERRED;
-
-            TRUNCATE TABLE "Goals" RESTART IDENTITY;
-
-            INSERT INTO "Goals" (
-              id,
-              "grantId",
-              name,
-              status,
-              timeframe,
-              "isFromSmartsheetTtaPlan",
-              "createdAt",
-              "updatedAt",
-              "closeSuspendReason",
-              "goalTemplateId"
-            )
-            SELECT
-              id,
-              "grantId",
-              name,
-              status,
-              timeframe,
-              "isFromSmartsheetTtaPlan",
-              "createdAt",
-              "updatedAt",
-              "closeSuspendReason",
-              "goalTemplateId"
-            FROM "TempGoals";
-
-            DROP TABLE "TempGoals";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // populate objectives
-      try {
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-            CREATE TEMP TABLE "TempObjectives"
-            (
-                id integer NOT NULL DEFAULT nextval('"TempObjectives_id_seq"'::regclass),
-                "goalId" integer,
-                title text COLLATE pg_catalog."default",
-                "ttaProvided" text COLLATE pg_catalog."default",
-                status character varying(255) COLLATE pg_catalog."default",
-                "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
-                "updatedAt" timestamp with time zone NOT NULL DEFAULT now(),
-                "goalId" integer,
-                CONSTRAINT "TempObjectives_pkey" PRIMARY KEY (id)
-            );
+              "gg"."grantId",
+              "g"."name",
+              "g"."status",
+              "g"."timeframe",
+              "g"."isFromSmartsheetTtaPlan",
+              "g"."createdAt",
+              "g"."updatedAt",
+              "g"."closeSuspendReason",
+              "g"."closeSuspendContext",
+              "gt"."id" "goalTemplateId"
+            From "GrantGoals" "gg"
+            JOIN "Goals" "g"
+            ON "gg"."goalId" = "g"."id"
+            JOIN "GoalTemplates" "gt"
+            ON "g"."id" = "gt"."sourceGoal";
 
             INSERT INTO "TempObjectives" (
               "goalId",
-              title,
+              "title",
               "ttaProvided",
-              status,
+              "status",
               "createdAt",
               "updatedAt",
               "objectiveTemplateId"
             )
             select
-              g."id" "goalId",
-              o.title,
-              o."ttaProvided",
-              o.status,
-              o."createdAt",
-              o."updatedAt",
-              ot.id "objectiveTemplateId"
-            FROM "GoalTemplates" gt
-            JOIN "Goals" g
-            ON gt.id = g."goalTemplateId"
-            JOIN "Objectives" o
-            ON gt."sourceGoal" = o."goalId"
-            JOIN "ObjectiveTemplates" ot
-            ON o.id = ot."sourceObjective";
-
-            SET CONSTRAINTS ALL DEFERRED;
-
-            TRUNCATE TABLE "Objectives" RESTART IDENTITY;
-
-            INSERT INTO "Objectives"(
-              id,
-              "goalId",
-              title,
-              "ttaProvided",
-              status,
-              "createdAt",
-              "updatedAt",
-              "objectiveTemplateId"
-            )
-            SELECT
-              id,
-              "goalId",
-              title,
-              "ttaProvided",
-              status,
-              "createdAt",
-              "updatedAt",
-              "objectiveTemplateId"
-            FROM "TempObjectives";
-
-            DROP TABLE "TempObjectives";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // populate ObjectiveTopics
-      try {
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-            CREATE TEMP TABLE "TempObjectiveTopics"
-            (
-                id integer NOT NULL DEFAULT nextval('"TempObjectiveTopics_id_seq"'::regclass),
-                "objectiveId" integer NOT NULL,
-                "topicId" integer NOT NULL,
-                "createdAt" timestamp with time zone NOT NULL,
-                "updatedAt" timestamp with time zone NOT NULL,
-                CONSTRAINT "TempObjectiveTopics_pkey" PRIMARY KEY (id)
-            );
+              "g"."id" "goalId",
+              "o"."title",
+              "o"."ttaProvided",
+              "o"."status",
+              "o"."createdAt",
+              "o"."updatedAt",
+              "ot"."id" "objectiveTemplateId"
+            FROM "GoalTemplates" "gt"
+            JOIN "TempGoals" "g"
+            ON "gt"."id" = "g"."goalTemplateId"
+            JOIN "Objectives" "o"
+            ON "gt"."sourceGoal" = "o"."goalId"
+            JOIN "ObjectiveTemplates" "ot"
+            ON "o"."id" = "ot"."sourceObjective";
 
             INSERT INTO "TempObjectiveTopics" (
               "objectiveId",
@@ -335,58 +299,15 @@ module.exports = {
               "updatedAt"
             )
             SELECT
-              o.id "objectiveId",
-              oto."topicId",
-              oto."createdAt",
-              oto."updatedAt"
-            FROM "ObjectiveTopics" oto
-            JOIN "ObjectiveTemplates" ote
-            ON oto."objectiveId" = ote."sourceObjective"
-            JOIN "Objective" o
-            ON ote.id = o."objectiveTemplateId";
-
-            SET CONSTRAINTS ALL DEFERRED;
-
-            TRUNCATE TABLE "ObjectiveTopics" RESTART IDENTITY;
-
-            INSERT INTO "ObjectiveTopics" (
-              id
-              "objectiveId",
-              "topicId",
-              "createdAt",
-              "updatedAt"
-            )
-            SELECT
-              id,
-              "objectiveId",
-              "topicId",
-              "createdAt",
-              "updatedAt"
-            FROM "TempObjectiveTopics";z
-
-            DROP TABLE "TempObjectiveTopics";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // populate ObjectiveTopics
-      try {
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-            CREATE TEMP TABLE "TempObjectiveResources"
-            (
-                id integer NOT NULL DEFAULT nextval('"TempObjectiveResources_id_seq"'::regclass),
-                "userProvidedUrl" character varying(255) COLLATE pg_catalog."default" NOT NULL,
-                "objectiveId" integer NOT NULL,
-                "createdAt" timestamp with time zone NOT NULL,
-                "updatedAt" timestamp with time zone NOT NULL,
-                CONSTRAINT "TempObjectiveResources_pkey" PRIMARY KEY (id)
-            );
+              "o"."id" "objectiveId",
+              "oto"."topicId",
+              "oto"."createdAt",
+              "oto"."updatedAt"
+            FROM "ObjectiveTopics" "oto"
+            JOIN "ObjectiveTemplates" "ote"
+            ON "oto"."objectiveId" = "ote"."sourceObjective"
+            JOIN "TempObjectives" "o"
+            ON "ote"."id" = "o"."objectiveTemplateId";
 
             INSERT INTO "TempObjectiveResources" (
               "userProvidedUrl",
@@ -395,35 +316,144 @@ module.exports = {
               "updatedAt"
             )
             SELECT
-              ore."userProvidedUrl"
-              "o".id objectiveId",
-              ore."createdAt",
-              ore."updatedAt"
-            FROM "ObjectiveResources" ore
-            JOIN "ObjectiveTemplates" ote
-            ON ore."objectiveId" = ote."sourceObjective"
-            JOIN "Objective" o
-            ON ote.id = o."objectiveTemplateId";
+              "ore"."userProvidedUrl",
+              "o"."id" "objectiveId",
+              "ore"."createdAt",
+              "ore"."updatedAt"
+            FROM "ObjectiveResources" "ore"
+            JOIN "ObjectiveTemplates" "ote"
+            ON "ore"."objectiveId" = "ote"."sourceObjective"
+            JOIN "TempObjectives" "o"
+            ON "ote"."id" = "o"."objectiveTemplateId";
 
-            SET CONSTRAINTS ALL DEFERRED;
+            INSERT INTO "TempActivityReportObjectives" (
+              "activityReportId",
+              "objectiveId",
+              "createdAt",
+              "updatedAt"
+            )
+            SELECT
+              "aro"."activityReportId",
+              o."id" "objectiveId",
+              "aro"."createdAt",
+              "aro"."updatedAt"
+            FROM "ActivityReportObjectives" aro
+            JOIN "ObjectiveTemplates" ot
+            ON aro."objectiveId" = ot."sourceObjective"
+            JOIN "TempObjectives" o
+            ON ot.id = o."objectiveTemplateId";
 
-            TRUNCATE TABLE "ObjectiveResources" RESTART IDENTITY;
+            TRUNCATE TABLE
+              "ActivityReportObjectives",
+              "ObjectiveResources",
+              "ObjectiveTopics",
+              "Objectives",
+              "Goals",
+              "GrantGoals"
+            RESTART IDENTITY;
+
+            INSERT INTO "Goals" (
+              "id",
+              "grantId",
+              "name",
+              "status",
+              "timeframe",
+              "isFromSmartsheetTtaPlan",
+              "createdAt",
+              "updatedAt",
+              "closeSuspendReason",
+              "closeSuspendContext",
+              "goalTemplateId"
+            )
+            SELECT
+              "id",
+              "grantId",
+              "name",
+              "status",
+              "timeframe",
+              "isFromSmartsheetTtaPlan",
+              "createdAt",
+              "updatedAt",
+              "closeSuspendReason",
+              "closeSuspendContext",
+              "goalTemplateId"
+            FROM "TempGoals";
+
+            INSERT INTO "Objectives"(
+              "id",
+              "goalId",
+              "title",
+              "ttaProvided",
+              "status",
+              "createdAt",
+              "updatedAt",
+              "objectiveTemplateId"
+            )
+            SELECT
+              "id",
+              "goalId",
+              "title",
+              "ttaProvided",
+              "status",
+              "createdAt",
+              "updatedAt",
+              "objectiveTemplateId"
+            FROM "TempObjectives";
+
+            INSERT INTO "ObjectiveTopics" (
+              "id",
+              "objectiveId",
+              "topicId",
+              "createdAt",
+              "updatedAt"
+            )
+            SELECT
+              "id",
+              "objectiveId",
+              "topicId",
+              "createdAt",
+              "updatedAt"
+            FROM "TempObjectiveTopics";
 
             INSERT INTO "ObjectiveResources" (
+              "id",
               "userProvidedUrl",
               "objectiveId",
               "createdAt",
               "updatedAt"
             )
             SELECT
-              id,
+              "id",
               "userProvidedUrl",
               "objectiveId",
               "createdAt",
               "updatedAt"
             FROM "TempObjectiveResources";
 
+            INSERT INTO "ActivityReportObjectives"(
+              "id",
+              "activityReportId",
+              "objectiveId",
+              "createdAt",
+              "updatedAt"
+            )
+            SELECT
+              "id",
+              "activityReportId",
+              "objectiveId",
+              "createdAt",
+              "updatedAt"
+            FROM "TempActivityReportObjectives";
+
+            DROP TABLE "TempGoals";
+
+            DROP TABLE "TempObjectives";
+
+            DROP TABLE "TempObjectiveTopics";
+
             DROP TABLE "TempObjectiveResources";
+
+            DROP TABLE "TempActivityReportObjectives";
           END$$;`,
           { transaction },
         );
@@ -452,6 +482,7 @@ module.exports = {
 
       // Make goalTemplateId required
       queryInterface.changeColumn('Goals', 'goalTemplateId', { allowNull: false }, { transaction });
+      queryInterface.changeColumn('Goals', 'grantId', { allowNull: false }, { transaction });
 
       // Make objectiveTemplateId required
       queryInterface.changeColumn('Objectives', 'objectiveTemplateId', { allowNull: false }, { transaction });
