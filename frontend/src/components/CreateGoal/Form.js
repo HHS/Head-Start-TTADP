@@ -34,6 +34,7 @@ export default function Form({
   topicOptions,
   isOnApprovedReport,
   status,
+  datePickerKey,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -135,8 +136,9 @@ export default function Form({
               name="goalEndDate"
               onChange={setEndDate}
               defaultValue={endDate}
-              required
               onBlur={validateEndDate}
+              key={datePickerKey}
+              required
             />
           </>
         )}
@@ -215,6 +217,7 @@ Form.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   })).isRequired,
   status: PropTypes.string.isRequired,
+  datePickerKey: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

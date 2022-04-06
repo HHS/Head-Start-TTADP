@@ -56,6 +56,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
+  const [datePickerKey, setDatePickerKey] = useState('0');
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
@@ -80,7 +81,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
       // the API sends us back things in a format we expect
       setGoalName(goal.goalName);
       setStatus(goal.status);
-      setEndDate(goal.endDate); // TODO - this needs to be formatted for date picker control
+      setEndDate(goal.endDate);
+      setDatePickerKey(goal.endDate);
 
       // this is a lot of work to avoid two loops through the goal.objectives
       // but I'm sure you'll agree its totally worth it
@@ -121,7 +123,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     if (!goalName) {
       fetchGoal();
     }
-  }, [errors, goalName, recipient.id, urlId]);
+  }, [endDate, errors, goalName, recipient.id, urlId]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -480,6 +482,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             regionId={regionId}
             endDate={endDate}
             setEndDate={setEndDate}
+            datePickerKey={datePickerKey}
             errors={errors}
             validateGoalName={validateGoalName}
             validateEndDate={validateEndDate}
