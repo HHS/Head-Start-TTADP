@@ -20,7 +20,7 @@ module.exports = {
       }
 
       // Add GoalTemplates table
-      queryInterface.createTable('GoalTemplates', {
+      await queryInterface.createTable('GoalTemplates', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -47,7 +47,7 @@ module.exports = {
       }, { transaction });
 
       // Add ObjectiveTemplates table
-      queryInterface.createTable('ObjectiveTemplates', {
+      await queryInterface.createTable('ObjectiveTemplates', {
         id: {
           allowNull: false,
           autoIncrement: true,
@@ -80,7 +80,7 @@ module.exports = {
 
       // Drop TopicGoals
       try {
-        queryInterface.dropTable('TopicGoals', { transaction });
+        await queryInterface.dropTable('TopicGoals', { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
@@ -131,7 +131,7 @@ module.exports = {
       // template leave goalTemplateId nullable for now until it can be populated with the IDs of
       // the parent templates
       try {
-        queryInterface.addColumn('Goals', 'goalTemplateId', {
+        await queryInterface.addColumn('Goals', 'goalTemplateId', {
           type: Sequelize.INTEGER,
           allowNull: true,
           references: {
@@ -143,7 +143,7 @@ module.exports = {
           onUpdate: 'CASCADE',
         }, { transaction });
 
-        queryInterface.addColumn('Goals', 'grantId', {
+        await queryInterface.addColumn('Goals', 'grantId', {
           type: Sequelize.INTEGER,
           allowNull: true,
           references: {
@@ -163,7 +163,7 @@ module.exports = {
       // parent template leave goalTemplateId nullable for now until it can be populated with the
       // IDs of the parent templates
       try {
-        queryInterface.addColumn('Objectives', 'objectiveTemplateId', {
+        await queryInterface.addColumn('Objectives', 'objectiveTemplateId', {
           type: Sequelize.INTEGER,
           allowNull: true,
           references: {
@@ -480,12 +480,28 @@ module.exports = {
         throw (err);
       }
 
-      // Make goalTemplateId required
-      queryInterface.changeColumn('Goals', 'goalTemplateId', { allowNull: false }, { transaction });
-      queryInterface.changeColumn('Goals', 'grantId', { allowNull: false }, { transaction });
+      // Make goalTemplateId & grantId required
+      await queryInterface.changeColumn(
+        'Goals',
+        'goalTemplateId',
+        { type: Sequelize.INTEGER, allowNull: false },
+        { transaction },
+      );
+
+      await queryInterface.changeColumn(
+        'Goals',
+        'grantId',
+        { type: Sequelize.INTEGER, allowNull: false },
+        { transaction },
+      );
 
       // Make objectiveTemplateId required
-      queryInterface.changeColumn('Objectives', 'objectiveTemplateId', { allowNull: false }, { transaction });
+      await queryInterface.changeColumn(
+        'Objectives',
+        'objectiveTemplateId',
+        { type: Sequelize.INTEGER, allowNull: false },
+        { transaction },
+      );
 
       // Enable logging while doing structural updates
       try {
@@ -503,8 +519,8 @@ module.exports = {
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-      queryInterface.dropTable('GoalTemplates', { transaction });
-      queryInterface.dropTable('ObjectiveTemplates', { transaction });
+      await queryInterface.dropTable('GoalTemplates', { transaction });
+      await queryInterface.dropTable('ObjectiveTemplates', { transaction });
     },
   ),
 };
