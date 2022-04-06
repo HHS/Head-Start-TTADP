@@ -80,7 +80,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
       // the API sends us back things in a format we expect
       setGoalName(goal.goalName);
       setStatus(goal.status);
-      setEndDate(goal.endDate);
+      setEndDate(goal.endDate); // TODO - this needs to be formatted for date picker control
 
       // this is a lot of work to avoid two loops through the goal.objectives
       // but I'm sure you'll agree its totally worth it
