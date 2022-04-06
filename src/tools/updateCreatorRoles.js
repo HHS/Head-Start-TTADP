@@ -5,7 +5,7 @@ import { CREATOR_ROLES_REPORTS_TO_UPDATE } from './creatorRolesToUpdate';
 
 const rolesToUpdate = [
   { role: 'Early Childhood Specialist', ids: [], legacyIds: [] },
-  { role: 'Family Engagement', ids: [], legacyIds: [] },
+  { role: 'Family Engagement Specialist', ids: [], legacyIds: [] },
   { role: 'Grantee Specialist', ids: [], legacyIds: [] },
   { role: 'Health Specialist', ids: [], legacyIds: [] },
   { role: 'System Specialist', ids: [], legacyIds: [] },
@@ -15,6 +15,8 @@ export default async function updateCreatorRoles(
   updateFileValues = CREATOR_ROLES_REPORTS_TO_UPDATE,
 ) {
   let updateCount = 0;
+  let reportCount = 0;
+  let legacyCount = 0;
   // Loop and Bucket Report Ids by Role.
   updateFileValues.forEach((r) => {
     const index = rolesToUpdate.findIndex((item) => item.role === r.role);
@@ -23,11 +25,13 @@ export default async function updateCreatorRoles(
         // Add to Legacy Ids.
         rolesToUpdate[index].legacyIds.push(r.id);
         updateCount += 1;
+        legacyCount += 1;
       } else {
         // Add to regular Ids.
         const numId = parseInt(r.id, 10);
         rolesToUpdate[index].ids.push(numId);
         updateCount += 1;
+        reportCount += 1;
       }
     }
   });
@@ -36,6 +40,8 @@ export default async function updateCreatorRoles(
   const legacyIdsToUpdate = rolesToUpdate.filter((r) => r.legacyIds.length > 0);
 
   auditLogger.info(`Attempting to update creator role for ${updateCount} report(s)...`);
+  auditLogger.info(`Reports to Update: ${reportCount}`);
+  auditLogger.info(`Legacy Reports to Update: ${legacyCount}`);
 
   // Loop and Update Reports by Role.
   const res = await sequelize.transaction(async (transaction) => {
@@ -79,6 +85,7 @@ export default async function updateCreatorRoles(
   const totalReports = res.reports.reduce((runningTotal, next) => runningTotal + next, 0);
   const totalLegacyReports = res.legacy.reduce((runningTotal, next) => runningTotal + next, 0);
 
-  auditLogger.info(`...Updated ${totalReports} Report(s) with new creator role`);
-  auditLogger.info(`...Updated ${totalLegacyReports} Legacy Report(s) with new creator role`);
+  auditLogger.info(`...Updated ${totalReports + totalLegacyReports} Report(s) with new creator role`);
+  auditLogger.info(`Updated ${totalReports} Report(s)`);
+  auditLogger.info(`Updated ${totalLegacyReports} Legacy Report(s)`);
 }
