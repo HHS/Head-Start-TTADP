@@ -19,7 +19,7 @@ export default function GoalText({
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
       </Label>
       { isOnReport ? (
-        <p className="margin-top-0">{goalName}</p>
+        <p className="usa-prose margin-top-0">{goalName}</p>
       ) : (
         <>
           {error}

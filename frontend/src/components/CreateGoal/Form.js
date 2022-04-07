@@ -36,6 +36,7 @@ export default function Form({
   isOnReport,
   status,
   datePickerKey,
+  unchangingApiData,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -74,7 +75,7 @@ export default function Form({
         indicates required field
       </div>
 
-      { isOnApprovedReport
+      { isOnReport
         ? (
           <Alert type="warning" noIcon>
             This goal is used on an activity report
@@ -123,6 +124,7 @@ export default function Form({
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
           goalStatus={status}
+          unchangingApiData={unchangingApiData}
         />
       ))}
 
@@ -188,6 +190,15 @@ Form.propTypes = {
   })).isRequired,
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
+  unchangingApiData: PropTypes.objectOf(
+    PropTypes.shape({
+      resources: PropTypes.arrayOf(PropTypes.string),
+      topics: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.number,
+      })),
+    }),
+  ).isRequired,
 };
 
 Form.defaultProps = {
