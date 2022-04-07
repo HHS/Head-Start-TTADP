@@ -33,14 +33,7 @@ const RichEditor = ({
 }) => {
   const [height, setHeight] = useState(BASE_EDITOR_HEIGHT);
 
-  // I wish I could link to a reason/some documentation why I had to do this
-  // but honestly I just reverse engineered the errors I was getting in the console
-  // until it worked (not setting a value to ref said something to the effect of
-  // 'editorRef is not a function' and we went from there)
-  const editorRef = useRef((ref) => {
-    editorRef.current = ref;
-    return ref;
-  });
+  const editorRef = useRef();
 
   let defaultEditorState;
   if (value) {
@@ -58,7 +51,14 @@ const RichEditor = ({
 
   return (
     <Editor
-      editorRef={editorRef}
+      // I wish I could link to a reason/some documentation why I had to do this
+      // but honestly I just reverse engineered the errors I was getting in the console
+      // until it worked (not setting a value to ref said something to the effect of
+      // 'editorRef is not a function' and we went from there)
+      editorRef={(ref) => {
+        editorRef.current = ref;
+        return ref;
+      }}
       spellCheck
       defaultEditorState={defaultEditorState}
       onChange={onInternalChange}
