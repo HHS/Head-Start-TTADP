@@ -12,12 +12,6 @@ const labelPropTypes = {
   label: PropTypes.node.isRequired,
   children: PropTypes.node.isRequired,
   className: PropTypes.string.isRequired,
-  // eslint-disable-next-line react/no-unused-prop-types
-  htmlFor: PropTypes.string,
-};
-
-const labelDefaultProps = {
-  htmlFor: '',
 };
 
 function FieldSetWrapper({ label, children, className }) {
@@ -30,7 +24,7 @@ function FieldSetWrapper({ label, children, className }) {
 }
 
 FieldSetWrapper.propTypes = labelPropTypes;
-FieldSetWrapper.defaultProps = labelDefaultProps;
+
 function LabelWrapper({
   label, children, className, htmlFor,
 }) {
@@ -58,8 +52,14 @@ function LabelWrapper({
   );
 }
 
-LabelWrapper.propTypes = labelPropTypes;
-LabelWrapper.defaultProps = labelDefaultProps;
+LabelWrapper.propTypes = {
+  ...labelPropTypes,
+  htmlFor: PropTypes.string,
+};
+
+LabelWrapper.defaultProps = {
+  htmlFor: '',
+};
 
 function FormItem({
   label, children, required, name, fieldSetWrapper, className, htmlFor,
