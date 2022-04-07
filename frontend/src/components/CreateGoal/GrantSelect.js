@@ -12,19 +12,19 @@ import {
 export default function GrantSelect({
   error,
   selectedGrants,
-  isOnApprovedReport,
+  isOnReport,
   setSelectedGrants,
   possibleGrants,
   validateGrantNumbers,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="recipientGrantNumbers">
+      <Label htmlFor="recipientGrantNumbers" className={isOnReport ? 'text-bold' : ''}>
         Recipient grant numbers
         {' '}
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
       </Label>
-      {selectedGrants.length === 1 || isOnApprovedReport ? (
+      {selectedGrants.length === 1 || isOnReport ? (
         <span className="margin-bottom-1">{selectedGrants.map((grant) => grant.label).join(', ')}</span>
       ) : (
         <>
@@ -56,7 +56,7 @@ GrantSelect.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
   setSelectedGrants: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,

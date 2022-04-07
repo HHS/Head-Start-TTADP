@@ -63,7 +63,9 @@ export async function goalById(id, recipientId) {
             model: ActivityReport,
             as: 'activityReports',
             where: {
-              calculatedStatus: REPORT_STATUSES.APPROVED,
+              calculatedStatus: {
+                [Op.not]: REPORT_STATUSES.DELETED,
+              },
             },
             required: false,
           },

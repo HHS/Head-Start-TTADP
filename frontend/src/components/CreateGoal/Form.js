@@ -33,6 +33,7 @@ export default function Form({
   setObjectiveError,
   topicOptions,
   isOnApprovedReport,
+  isOnReport,
   status,
   datePickerKey,
 }) {
@@ -87,7 +88,7 @@ export default function Form({
 
       <GrantSelect
         selectedGrants={selectedGrants}
-        isOnApprovedReport={isOnApprovedReport}
+        isOnReport={isOnReport}
         setSelectedGrants={setSelectedGrants}
         possibleGrants={possibleGrants}
         validateGrantNumbers={validateGrantNumbers}
@@ -96,8 +97,8 @@ export default function Form({
 
       <GoalText
         error={errors[FORM_FIELD_INDEXES.NAME]}
-        isOnApprovedReport={isOnApprovedReport}
         goalName={goalName}
+        isOnReport={isOnReport}
         validateGoalName={validateGoalName}
         onUpdateText={onUpdateText}
       />
@@ -134,6 +135,7 @@ export default function Form({
 }
 
 Form.propTypes = {
+  isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   validateGoalName: PropTypes.func.isRequired,
