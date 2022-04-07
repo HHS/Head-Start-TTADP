@@ -38,7 +38,7 @@ const GoalsObjectives = () => {
   }, [grantIds]);
 
   const showGoals = isRecipientReport && hasGrants;
-
+  // Move context.
   return (
     <>
       <Helmet>
