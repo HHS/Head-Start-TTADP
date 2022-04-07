@@ -25,7 +25,7 @@ export default function GrantSelect({
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
       </Label>
       {selectedGrants.length === 1 || isOnReport ? (
-        <span className="margin-bottom-1">{selectedGrants.map((grant) => grant.label).join(', ')}</span>
+        <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
       ) : (
         <>
           {error}

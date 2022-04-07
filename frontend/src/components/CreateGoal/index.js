@@ -64,6 +64,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
+  // this will hold the topics and resources for objectives retrieved from the API
+  // in the case where that data is NOT editable
+  const [unchangingApiData, setUnchangingApiData] = useState({});
+
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalId, setGoalId] = useState(goalDefaults.id);
 
@@ -413,10 +417,33 @@ export default function CreateGoal({ recipient, regionId, match }) {
     // objectives need some special help
     const { objectives: goalObjectives } = goal;
 
-    setObjectives(goalObjectives.map((objective) => ({
-      ...objective,
-      resources: objective.resources.map((value) => value),
-    })));
+    const newObjectives = [];
+    const objectiveApiData = {};
+
+    // we need to break out certain fields that will only allow adding data to them
+    // not deleting existing data
+    goalObjectives.forEach((objective) => {
+      if (objective.activityReports && objective.activityReports.length) {
+        newObjectives.push({
+          ...objective,
+          resources: [],
+          topics: [],
+        });
+
+        objectiveApiData[objective.id] = {
+          resources: objective.resources.map((value) => value),
+          topics: objective.topics,
+        };
+      } else {
+        newObjectives.push({
+          ...objective,
+          resources: objective.resources.map((value) => value),
+        });
+      }
+    });
+
+    setUnchangingApiData(objectiveApiData);
+    setObjectives(newObjectives);
 
     setShowForm(true);
   };
@@ -510,6 +537,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             isOnReport={isOnReport}
             isOnApprovedReport={isOnApprovedReport}
             status={status}
+            unchangingApiData={unchangingApiData}
           />
           )}
 

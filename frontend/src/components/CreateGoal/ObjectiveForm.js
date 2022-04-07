@@ -24,6 +24,7 @@ export default function ObjectiveForm({
   errors,
   topicOptions,
   goalStatus,
+  unchangingApiData,
 }) {
   // the parent objective data from props
   const {
@@ -38,6 +39,8 @@ export default function ObjectiveForm({
       report.status === REPORT_STATUSES.APPROVED
     ))
   ), [objective.activityReports]);
+
+  const data = unchangingApiData[objective.id];
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
@@ -104,8 +107,8 @@ export default function ObjectiveForm({
       </div>
       { isOnReport
         ? (
-          <Alert type="warning" noIcon className="margin-top-0">
-            This objective is used on an activity report.
+          <Alert type="warning" noIcon className="margin-top-0 margin-bottom-1">
+            This objective is used on an activity report
             <br />
             Some fields can&apos;t be edited
           </Alert>
@@ -118,7 +121,7 @@ export default function ObjectiveForm({
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
         { isOnReport && title ? (
-          <span>{title}</span>
+          <p className="margin-top-0 usa-prose">{title}</p>
         ) : (
           <>
             {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
@@ -126,11 +129,26 @@ export default function ObjectiveForm({
           </>
         )}
       </FormGroup>
+      { data && data.topics && data.topics.length
+        ? (
+          <>
+            <span>Topics</span>
+            {data.topics.map((topic) => topic.value).join(', ')}
+          </>
+        )
+        : null}
+
       <FormGroup error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS].props.children}>
         <Label htmlFor="topics">
-          Topics
-          {' '}
-          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+          { data && data.topics && data.topics.length
+            ? <>Add more topics</>
+            : (
+              <>
+                Topics
+                {' '}
+                <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+              </>
+            )}
         </Label>
         {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
         <Select
@@ -179,6 +197,15 @@ export default function ObjectiveForm({
 }
 
 ObjectiveForm.propTypes = {
+  unchangingApiData: PropTypes.objectOf(
+    PropTypes.shape({
+      resources: PropTypes.arrayOf(PropTypes.string),
+      topics: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.number,
+      })),
+    }),
+  ).isRequired,
   index: PropTypes.number.isRequired,
   removeObjective: PropTypes.func.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
