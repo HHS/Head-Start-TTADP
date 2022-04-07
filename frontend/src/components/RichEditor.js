@@ -33,6 +33,10 @@ const RichEditor = ({
 }) => {
   const [height, setHeight] = useState(BASE_EDITOR_HEIGHT);
 
+  // I wish I could link to a reason/some documentation why I had to do this
+  // but honestly I just reverse engineered the errors I was getting in the console
+  // until it worked (not setting a value to ref said something to the effect of
+  // 'editorRef is not a function' and we went from there)
   const editorRef = useRef((ref) => {
     editorRef.current = ref;
     return ref;
@@ -44,6 +48,8 @@ const RichEditor = ({
   }
 
   const onInternalChange = (currentContentState) => {
+    // an improvement would be converting to rems to match the initial height but
+    // it might not matter since we're deriving the scroll height directly from the client here
     setHeight(editorRef.current && editorRef.current.scrollHeight ? `${editorRef.current.scrollHeight}px` : BASE_EDITOR_HEIGHT);
 
     const html = draftToHtml(currentContentState);
@@ -59,7 +65,7 @@ const RichEditor = ({
       ariaLabel={ariaLabel}
       handlePastedText={() => false}
       tabIndex="0"
-      editorStyle={{ border: '1px solid #565c65', height: `${height}` }}
+      editorStyle={{ border: '1px solid #565c65', height }}
       toolbar={{
         options: ['inline', 'blockType', 'list'],
         inline: {
