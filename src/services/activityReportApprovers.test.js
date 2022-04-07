@@ -103,6 +103,7 @@ describe('activityReportApprovers services', () => {
             userId: secondMockManager.id,
           }, transaction);
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+          expect(approver.user).toBeDefined();
         });
         const updatedReport = await activityReportById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();
@@ -192,6 +193,22 @@ describe('activityReportApprovers services', () => {
     it('adds approvers who are in userIds param', async () => {
       const report = await ActivityReport.create({ ...submittedReport, userId: mockUserTwo.id });
       const result = await syncApprovers(report.id, [mockManager.id, secondMockManager.id]);
+const sid = mockManager.id;
+      const preexistingApprovers = await ActivityReportApprover.findAll({
+        where: { userId: sid, },
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name', 'email'],
+            // where: { id: userId }
+            // raw: true,
+          },
+        ],
+        // transaction,
+      });
+
+expect(preexistingApprovers[0].User).toBe(1);
+      expect(result).toBe(1);
       expect(result.length).toBe(2);
     });
     it('destroys approvers who are not in userIds param, restores them if added later', async () => {
