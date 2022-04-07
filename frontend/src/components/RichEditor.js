@@ -10,13 +10,15 @@
  * threshold as well.
 */
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import draftToHtml from 'draftjs-to-html';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 import { getEditorState } from '../utils';
+
+const BASE_EDITOR_HEIGHT = '10rem';
 
 /**
  * Component that provides basic Rich Text Editor.
@@ -29,24 +31,35 @@ import { getEditorState } from '../utils';
 const RichEditor = ({
   ariaLabel, value, onChange,
 }) => {
+  const [height, setHeight] = useState(BASE_EDITOR_HEIGHT);
+
+  const editorRef = useRef((ref) => {
+    editorRef.current = ref;
+    return ref;
+  });
+
   let defaultEditorState;
   if (value) {
     defaultEditorState = getEditorState(value);
   }
 
   const onInternalChange = (currentContentState) => {
+    setHeight(editorRef.current && editorRef.current.scrollHeight ? `${editorRef.current.scrollHeight}px` : BASE_EDITOR_HEIGHT);
+
     const html = draftToHtml(currentContentState);
     onChange(html);
   };
+
   return (
     <Editor
+      editorRef={editorRef}
       spellCheck
       defaultEditorState={defaultEditorState}
       onChange={onInternalChange}
       ariaLabel={ariaLabel}
       handlePastedText={() => false}
       tabIndex="0"
-      editorStyle={{ border: '1px solid #565c65', height: '10rem' }}
+      editorStyle={{ border: '1px solid #565c65', height: `${height}` }}
       toolbar={{
         options: ['inline', 'blockType', 'list'],
         inline: {
