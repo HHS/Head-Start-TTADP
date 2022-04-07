@@ -6,19 +6,19 @@ import {
 
 export default function GoalText({
   error,
-  isOnApprovedReport,
+  isOnReport,
   goalName,
   validateGoalName,
   onUpdateText,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="goalText">
+      <Label htmlFor="goalText" className={isOnReport ? 'text-bold' : ''}>
         Recipient&apos;s goal
         {' '}
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
       </Label>
-      { isOnApprovedReport ? (
+      { isOnReport ? (
         <p className="margin-top-0">{goalName}</p>
       ) : (
         <>
@@ -32,7 +32,7 @@ export default function GoalText({
 
 GoalText.propTypes = {
   error: PropTypes.node.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
   goalName: PropTypes.string.isRequired,
   validateGoalName: PropTypes.func.isRequired,
   onUpdateText: PropTypes.func.isRequired,

@@ -136,15 +136,14 @@ function GoalsTable({
 
   return (
     <>
+      {error && (
       <Grid row>
-        {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-        )}
+        <Alert type="error" role="alert">
+          {error}
+        </Alert>
       </Grid>
-
-      <Container className="goals-table inline-size maxw-full" padding={0} loading={loading} loadingLabel="Goals table loading">
+      )}
+      <Container className="goals-table inline-size maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
         <GoalsTableHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}

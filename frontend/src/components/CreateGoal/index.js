@@ -18,7 +18,7 @@ import {
   validateListOfResources,
   OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
-import { DECIMAL_BASE } from '../../Constants';
+import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 
@@ -45,18 +45,22 @@ export default function CreateGoal({ recipient, regionId, match }) {
     id: urlId,
   }), [possibleGrants, urlId]);
 
-  const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
-
   const [showForm, setShowForm] = useState(true);
 
-  // this will store our created goals
+  // this will store our created goals (vs the goal that's occupying the form at present)
   const [createdGoals, setCreatedGoals] = useState([]);
 
+  // this is for the topic options returned from the API
   const [topicOptions, setTopicOptions] = useState([]);
 
   const [goalName, setGoalName] = useState(goalDefaults.goalName);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
+  const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
+
+  // we need to set this key to get the component to re-render (uncontrolled input)
+  // the idea is that if we need to add another date picker we can just re-render them all at once
   const [datePickerKey, setDatePickerKey] = useState('00');
+
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
@@ -65,8 +69,14 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
-  const isOnApprovedReport = useMemo(() => objectives.some(
+  const isOnReport = useMemo(() => objectives.some(
     (objective) => objective.activityReports && objective.activityReports.length > 0,
+  ), [objectives]);
+
+  const isOnApprovedReport = useMemo(() => objectives.some(
+    (objective) => objective.activityReports && objective.activityReports.some((report) => (
+      report.status === REPORT_STATUSES.APPROVED
+    )),
   ), [objectives]);
 
   // for fetching goal data from api if it exists
@@ -497,6 +507,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             validateObjectives={validateObjectives}
             setObjectiveError={setObjectiveError}
             topicOptions={topicOptions}
+            isOnReport={isOnReport}
             isOnApprovedReport={isOnApprovedReport}
             status={status}
           />

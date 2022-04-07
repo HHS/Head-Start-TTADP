@@ -1,15 +1,15 @@
-.usa-table-container,
-.usa-checkbox__label {
+.goals-table .usa-table-container {
+  min-width: 1400px;
+}
+
+.goals-table .usa-table-container,
+.goals-table .usa-checkbox__label {
   margin-top: 0px;
 }
 
 .goals-table .usa-table {
   line-height: 2.5;
   margin-left: 1px;
-}
-
-.goals-table {
-  width: 100%;
 }
 
 .goals-table h2 {

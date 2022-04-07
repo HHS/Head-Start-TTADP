@@ -9,6 +9,7 @@ import ResourceRepeater from './ResourceRepeater';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
+import { REPORT_STATUSES } from '../../Constants';
 
 const [
   objectiveTitleError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
@@ -28,8 +29,14 @@ export default function ObjectiveForm({
   const {
     id, title, topics, resources, status,
   } = objective;
-  const isOnApprovedReport = useMemo(() => (
+  const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
+  ), [objective.activityReports]);
+
+  const isOnApprovedReport = useMemo(() => (
+    objective.activityReports && objective.activityReports.some((report) => (
+      report.status === REPORT_STATUSES.APPROVED
+    ))
   ), [objective.activityReports]);
 
   // onchange handlers
@@ -89,13 +96,13 @@ export default function ObjectiveForm({
   };
 
   return (
-    <div className="margin-top-2">
+    <div className="margin-top-2 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
         <h3>Objective summary</h3>
-        { !isOnApprovedReport
+        { !isOnReport
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
-      { isOnApprovedReport
+      { isOnReport
         ? (
           <Alert type="warning" noIcon className="margin-top-0">
             This objective is used on an activity report.
@@ -105,13 +112,13 @@ export default function ObjectiveForm({
         )
         : null }
       <FormGroup className="margin-top-1" error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE].props.children}>
-        <Label htmlFor="objectiveTitle">
+        <Label htmlFor="objectiveTitle" className={isOnReport ? 'text-bold' : ''}>
           TTA objective
           {' '}
           <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         </Label>
-        { isOnApprovedReport && title ? (
-          <p>{title}</p>
+        { isOnReport && title ? (
+          <span>{title}</span>
         ) : (
           <>
             {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
@@ -142,7 +149,7 @@ export default function ObjectiveForm({
         />
 
       </FormGroup>
-      { isOnApprovedReport ? (
+      { isOnReport ? (
         <span className="margin-bottom-1">{resources.map((resource) => resource.value).join(', ')}</span>
       ) : (
         <ResourceRepeater
@@ -150,6 +157,7 @@ export default function ObjectiveForm({
           setResources={setResources}
           validateResources={validateResources}
           error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
+          isOnReport={isOnReport}
           isOnApprovedReport={isOnApprovedReport}
         />
       )}
