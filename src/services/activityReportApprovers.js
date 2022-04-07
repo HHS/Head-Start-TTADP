@@ -30,7 +30,7 @@ export async function upsertApprover(values, transaction) {
       where: { id: approver.userId },
     });
     if (user) {
-      approver.user = user.get({ plain: true });
+      approver.User = user.get({ plain: true });
     }
   }
 

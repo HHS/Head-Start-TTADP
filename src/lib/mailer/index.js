@@ -43,8 +43,8 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
       displayId,
       collaborators,
     } = report;
-    const approverEmail = approver.user.email;
-    const approverName = approver.user.name;
+    const approverEmail = approver.User.email;
+    const approverName = approver.User.name;
     const approverNote = approver.note;
     logger.info(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
     const collabArray = collaborators.map((c) => c.email);
