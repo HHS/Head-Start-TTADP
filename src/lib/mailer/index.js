@@ -131,7 +131,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       id,
       displayId,
     } = report;
-    const approverEmail = newApprover.user.email;
+    const approverEmail = newApprover.User.email;
     logger.info(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
