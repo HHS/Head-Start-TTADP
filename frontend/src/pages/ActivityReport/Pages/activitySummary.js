@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { isEmpty } from 'lodash';
+import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox,
+  Fieldset, Radio, Grid, TextInput, Checkbox, Label,
 } from '@trussworks/react-uswds';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
@@ -19,6 +19,11 @@ import {
   REASONS as reasons,
   TARGET_POPULATIONS as targetPopulations,
 } from '../../../Constants';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
+
+import HtmlReviewItem from './Review/HtmlReviewItem';
+import Section from './Review/ReviewSection';
+import { reportIsEditable } from '../../../utils';
 
 const ActivitySummary = ({
   recipients,
@@ -59,9 +64,10 @@ const ActivitySummary = ({
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient name(s)';
+  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient names';
   const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
   const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
+  const placeholderText = '- Select -';
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
@@ -109,6 +115,10 @@ const ActivitySummary = ({
       <Helmet>
         <title>Activity summary</title>
       </Helmet>
+      <legend className="margin-top-1">
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
+        indicates required field
+      </legend>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
@@ -116,6 +126,7 @@ const ActivitySummary = ({
             label="Was this activity for a recipient or other entity?"
             name="activityRecipientType"
             fieldSetWrapper
+            requiredText="*"
           >
             <Radio
               id="category-recipient"
@@ -139,6 +150,7 @@ const ActivitySummary = ({
           <FormItem
             label={recipientLabel}
             name="activityRecipients"
+            requiredText="*"
           >
             <MultiSelect
               name="activityRecipients"
@@ -149,6 +161,7 @@ const ActivitySummary = ({
               simple={false}
               required="Please select at least one recipient or other entity"
               options={selectedRecipients}
+              placeholderText={placeholderText}
             />
           </FormItem>
         </div>
@@ -157,6 +170,7 @@ const ActivitySummary = ({
             label="Collaborating Specialists"
             name="collaborators"
             required={false}
+            requiredText="*"
           >
             <MultiSelect
               name="collaborators"
@@ -165,6 +179,7 @@ const ActivitySummary = ({
               valueProperty="id"
               labelProperty="name"
               simple={false}
+              placeholderText={placeholderText}
               options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
             />
           </FormItem>
@@ -174,12 +189,14 @@ const ActivitySummary = ({
             label="Target Populations addressed. You may choose more than one."
             name="targetPopulations"
             required
+            requiredText="*"
           >
             <MultiSelect
               name="targetPopulations"
               control={control}
               required="Please select at least one target population"
               options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
+              placeholderText="- Select -"
             />
           </FormItem>
         </div>
@@ -191,6 +208,7 @@ const ActivitySummary = ({
             label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by recipient."
             name="requester"
             fieldSetWrapper
+            requiredText="*"
           >
             <Radio
               id="recipientRequest"
@@ -212,13 +230,18 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Reason(s). You may choose more than one."
+            label="Reasons"
             name="reason"
+            requiredText="*"
           >
+            <div className="usa-hint">
+              Select at least one
+            </div>
             <MultiSelect
               name="reason"
               control={control}
               options={reasons.map((reason) => ({ value: reason, label: reason }))}
+              placeholderText={placeholderText}
             />
           </FormItem>
         </div>
@@ -232,6 +255,7 @@ const ActivitySummary = ({
                 label="Start Date"
                 name="startDate"
                 id="startDate-label"
+                requiredText="*"
               >
                 <div
                   className="usa-hint"
@@ -255,6 +279,7 @@ const ActivitySummary = ({
                 label="End Date"
                 name="endDate"
                 id="endDate-label"
+                requiredText="*"
               >
                 <div
                   className="usa-hint"
@@ -276,6 +301,7 @@ const ActivitySummary = ({
               <FormItem
                 label="Duration in hours (round to the nearest half hour)"
                 name="duration"
+                requiredText="*"
               >
                 <TextInput
                   id="duration"
@@ -304,6 +330,7 @@ const ActivitySummary = ({
             label="What TTA was provided"
             name="ttaType"
             fieldSetWrapper
+            requiredText="*"
           >
             {renderCheckbox('ttaType', 'training', 'Training', 'Please specify the type of TTA provided')}
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
@@ -314,6 +341,7 @@ const ActivitySummary = ({
             label="How was the activity conducted?"
             name="deliveryMethod"
             fieldSetWrapper
+            requiredText="*"
           >
             <Radio
               id="delivery-method-virtual"
@@ -339,6 +367,7 @@ const ActivitySummary = ({
                 label="Please specify how the virtual event was conducted."
                 name="virtualDeliveryType"
                 fieldSetWrapper
+                requiredText="*"
               >
                 <Radio
                   id="virtual-deliver-method-video"
@@ -368,10 +397,12 @@ const ActivitySummary = ({
           <FormItem
             label={participantsLabel}
             name="participants"
+            requiredText="*"
           >
             <MultiSelect
               name="participants"
               control={control}
+              placeholderText={placeholderText}
               options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
@@ -382,6 +413,7 @@ const ActivitySummary = ({
           <FormItem
             label="Number of participants involved"
             name="numberOfParticipants"
+            requiredText="*"
           >
             <Grid row gap>
               <Grid col={5}>
@@ -404,6 +436,12 @@ const ActivitySummary = ({
               </Grid>
             </Grid>
           </FormItem>
+          <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
+            <Label htmlFor="context">Provide background or context for this activity</Label>
+            <div className="smart-hub--text-area__resize-vertical margin-top-1">
+              <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
+            </div>
+          </Fieldset>
         </div>
       </Fieldset>
     </>
@@ -446,7 +484,7 @@ const sections = [
       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
-        label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
+        label: 'Collaborating specialists', name: 'collaborators', path: 'name', sort: true,
       },
       { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],
@@ -456,7 +494,7 @@ const sections = [
     anchor: 'reasons',
     items: [
       { label: 'Requested by', name: 'requester' },
-      { label: 'Reason(s)', name: 'reason', sort: true },
+      { label: 'Reasons', name: 'reason', sort: true },
     ],
   },
   {
@@ -486,9 +524,33 @@ const sections = [
   },
 ];
 
-const ReviewSection = () => (
-  <ReviewPage sections={sections} path="activity-summary" />
-);
+const ReviewSection = () => {
+  const { watch } = useFormContext();
+  const {
+    context,
+    calculatedStatus,
+  } = watch();
+
+  const canEdit = reportIsEditable(calculatedStatus);
+  return (
+    <>
+      <ReviewPage sections={sections} path="activity-summary" />
+      <Section
+        hidePrint={isUndefined(context)}
+        key="context"
+        basePath="goals-objectives"
+        anchor="context"
+        title="Context"
+        canEdit={canEdit}
+      >
+        <HtmlReviewItem
+          label="Context"
+          name="context"
+        />
+      </Section>
+    </>
+  );
+};
 
 export default {
   position: 1,
