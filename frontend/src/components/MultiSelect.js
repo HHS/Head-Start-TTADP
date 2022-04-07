@@ -56,6 +56,7 @@ function MultiSelect({
   singleRowInput,
   canCreate,
   onCreateOption,
+  placeholderText,
   components: componentReplacements,
 }) {
   const inputId = `select-${uuidv4()}`;
@@ -77,6 +78,10 @@ function MultiSelect({
         outline,
       };
     },
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#1b1b1b',
+    }),
     groupHeading: (provided) => ({
       ...provided,
       fontWeight: 'bold',
@@ -183,7 +188,7 @@ function MultiSelect({
             closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
             controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
             hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-            placeholder=""
+            placeholder={placeholderText || ''}
             onCreateOption={onCreateOption}
             isMulti
           />
@@ -242,6 +247,7 @@ MultiSelect.propTypes = {
   disabled: PropTypes.bool,
   rules: PropTypes.shape({}),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  placeholderText: PropTypes.string,
 };
 
 MultiSelect.defaultProps = {
@@ -257,6 +263,7 @@ MultiSelect.defaultProps = {
   rules: {},
   onItemSelected: null,
   onCreateOption: null,
+  placeholderText: null,
 };
 
 export default MultiSelect;

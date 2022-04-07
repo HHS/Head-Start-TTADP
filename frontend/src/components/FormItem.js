@@ -37,14 +37,19 @@ function LabelWrapper({ label, children, className }) {
 LabelWrapper.propTypes = labelPropTypes;
 
 function FormItem({
-  label, children, required, name, fieldSetWrapper, className,
+  label, children, required, name, fieldSetWrapper, className, requiredText,
 }) {
   const { formState: { errors } } = useFormContext();
   const fieldErrors = errors[name];
   const labelWithRequiredTag = (
     <>
       {label}
-      {required && (<span className="smart-hub--form-required font-family-sans font-ui-xs"> (Required)</span>)}
+      {required && (
+      <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
+        {' '}
+        {requiredText || '(Required)'}
+      </span>
+      )}
     </>
   );
 
@@ -71,12 +76,15 @@ FormItem.propTypes = {
   fieldSetWrapper: PropTypes.bool,
   required: PropTypes.bool,
   className: PropTypes.string,
+  requiredText: PropTypes.string,
 };
 
 FormItem.defaultProps = {
   required: true,
   fieldSetWrapper: false,
   className: '',
+  requiredText: null,
+
 };
 
 export default FormItem;
