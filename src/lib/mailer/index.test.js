@@ -8,7 +8,7 @@ const mockManager = {
   email: 'mockManager@test.gov',
 };
 const mockApprover = {
-  user: mockManager,
+  User: mockManager,
   note: 'You are awesome! Nice work!',
 };
 const mockAuthor = {
