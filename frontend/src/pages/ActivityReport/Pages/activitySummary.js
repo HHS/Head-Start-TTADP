@@ -115,10 +115,10 @@ const ActivitySummary = ({
       <Helmet>
         <title>Activity summary</title>
       </Helmet>
-      <legend className="margin-top-1">
+      <p className="usa-prose">
         <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
         indicates required field
-      </legend>
+      </p>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
@@ -135,6 +135,7 @@ const ActivitySummary = ({
               value="recipient"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Please specify recipient or other entity' })}
+              required
             />
             <Radio
               id="category-other-entity"
