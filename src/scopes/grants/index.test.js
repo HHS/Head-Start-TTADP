@@ -17,6 +17,10 @@ const recipients = [
     id: 13279,
     name: 'recipient 13279',
   },
+  {
+    id: 13289,
+    name: 'recipient 13279',
+  },
 ];
 
 const possibleIds = recipients.map((recipient) => recipient.id);
@@ -25,6 +29,17 @@ describe('grant filtersToScopes', () => {
   beforeAll(async () => {
     await Promise.all(recipients.map((g) => Recipient.create(g)));
     await Promise.all([
+      Grant.create({
+        id: recipients[3].id,
+        number: '119559',
+        regionId: 4,
+        recipientId: recipients[3].id,
+        status: 'Active',
+        startDate: new Date('08/03/1997'),
+        endDate: new Date('08/03/1997'),
+        programSpecialistName: 'No',
+        stateCode: 'RI',
+      }),
       Grant.create({
         id: recipients[0].id,
         number: '1195543',
@@ -140,9 +155,9 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id]));
+        .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id]));
     });
 
     it('within', async () => {
@@ -199,7 +214,11 @@ describe('grant filtersToScopes', () => {
           },
         ],
       });
-      expect(found.map((f) => f.id)).toStrictEqual([13259, 13279]);
+      expect(found.length).toBe(3);
+      const recips = found.map((f) => f.id);
+      expect(recips).toContain(recipients[0].id);
+      expect(recips).toContain(recipients[2].id);
+      expect(recips).toContain(recipients[3].id);
     });
   });
 
@@ -219,8 +238,11 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id)).toStrictEqual([13259, 13269]);
+      expect(found.length).toBe(3);
+      const recips = found.map((f) => f.id);
+      expect(recips).toContain(recipients[0].id);
+      expect(recips).toContain(recipients[1].id);
+      expect(recips).toContain(recipients[3].id);
     });
   });
   describe('programType', () => {
@@ -251,9 +273,11 @@ describe('grant filtersToScopes', () => {
           },
         ],
       });
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id)).toContain(recipients[2].id);
-      expect(found.map((f) => f.id)).toContain(recipients[1].id);
+      expect(found.length).toBe(3);
+      const recips = found.map((f) => f.id);
+      expect(recips).toContain(recipients[3].id);
+      expect(recips).toContain(recipients[2].id);
+      expect(recips).toContain(recipients[1].id);
     });
   });
   describe('grantNumber', () => {
@@ -272,9 +296,11 @@ describe('grant filtersToScopes', () => {
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id)).toContain(recipients[2].id);
-      expect(found.map((f) => f.id)).toContain(recipients[1].id);
+      expect(found.length).toBe(3);
+      const recips = found.map((f) => f.id);
+      expect(recips).toContain(recipients[3].id);
+      expect(recips).toContain(recipients[2].id);
+      expect(recips).toContain(recipients[1].id);
     });
   });
   describe('stateCode', () => {

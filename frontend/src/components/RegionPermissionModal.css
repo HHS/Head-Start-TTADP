@@ -1,0 +1,23 @@
+.smart-hub--region-permission-modal .usa-modal--lg .usa-modal__main {
+    max-width: 100%;
+    padding: 1.25rem 14% 4rem;
+}
+
+
+.smart-hub--region-permission-modal .usa-modal--lg .usa-modal__heading {
+    font-size: 1.70rem;
+}
+
+.smart-hub--region-permission-modal .popup-modal button,
+.smart-hub--region-permission-modal .popup-modal a {
+    padding: 8px 16px;
+    font-size: medium;
+}
+
+.smart-hub--region-permission-modal .usa-modal--lg .usa-button-group li:first-child {
+    margin: 0px;
+}
+
+.smart-hub--region-permission-modal .usa-modal--lg .usa-button-group li:nth-child(2) > button {
+    margin-right: 8px;
+}
