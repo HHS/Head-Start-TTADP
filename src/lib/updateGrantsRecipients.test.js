@@ -240,6 +240,7 @@ describe('Update grants and recipients', () => {
     expect(dml_txid).not.toMatch(/^00000000/);
     expect(session_sig).not.toBeNull();
 
+    // eslint-disable-next-line camelcase
     const res = await sequelize.query(`SELECT descriptor FROM "ZADescriptor" WHERE id = ${descriptor_id}`, { type: QueryTypes.SELECT });
     expect(res[0].descriptor).toEqual('Grant data import from HSES');
   });
