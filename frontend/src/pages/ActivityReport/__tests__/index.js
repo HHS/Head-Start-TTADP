@@ -193,7 +193,7 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: 'Topics and resources Not Started' });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
     });
   });
 

@@ -17,7 +17,7 @@ import ResourceSelector from './components/ResourceSelector';
 import { TOPICS as topics } from '../../../Constants';
 import { reportIsEditable } from '../../../utils';
 
-const TopicsResources = ({
+const SupportingAttachments = ({
   reportId,
 }) => {
   const { control } = useFormContext();
@@ -25,7 +25,7 @@ const TopicsResources = ({
   return (
     <>
       <Helmet>
-        <title>Topics and resources</title>
+        <title>Supporting attachments</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Topics Covered">
         <div id="topics-covered" />
@@ -95,7 +95,7 @@ const TopicsResources = ({
   );
 };
 
-TopicsResources.propTypes = {
+SupportingAttachments.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
@@ -117,8 +117,8 @@ const ReviewSection = () => {
       <Section
         hidePrint={isUndefined(formTopics)}
         key="Topics covered"
-        basePath="topics-resources"
-        anchor="topics-resources"
+        basePath="supporting-attachments"
+        anchor="supporting-attachments"
         title="Topics covered"
         canEdit={canEdit}
       >
@@ -131,7 +131,7 @@ const ReviewSection = () => {
       <Section
         hidePrint={isUndefined(ECLKCResources)}
         key="OHS / ECLKC resources"
-        basePath="topics-resources"
+        basePath="supporting-attachments"
         anchor="ECLKCResources"
         title="OHS / ECLKC resources"
         canEdit={canEdit}
@@ -145,7 +145,7 @@ const ReviewSection = () => {
       <Section
         hidePrint={isUndefined(nonECLKCResources)}
         key="Non-ECLKC resources"
-        basePath="topics-resources"
+        basePath="supporting-attachments"
         anchor="nonECLKCResources"
         title="Non-ECLKC resources"
         canEdit={canEdit}
@@ -159,7 +159,7 @@ const ReviewSection = () => {
       <Section
         hidePrint={!hasAttachments}
         key="Attachments"
-        basePath="topics-resources"
+        basePath="supporting-attachments"
         anchor="attachments"
         title="Attachments"
         canEdit={canEdit}
@@ -179,12 +179,12 @@ const ReviewSection = () => {
 
 export default {
   position: 2,
-  label: 'Topics and resources',
-  path: 'topics-resources',
+  label: 'Supporting attachments',
+  path: 'supporting-attachments',
   reviewSection: () => <ReviewSection />,
   review: false,
   render: (additionalData, formData, reportId) => (
-    <TopicsResources
+    <SupportingAttachments
       reportId={reportId}
     />
   ),
