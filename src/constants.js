@@ -129,7 +129,7 @@ export const CLOSE_SUSPEND_REASONS = [
   'Duplicate goal',
   'Recipient request',
   'TTA complete',
-  'Key staff turnover',
+  'Key staff turnover / vacancies',
   'Recipient is not responding',
-  'Other',
+  'Regional Office request',
 ];

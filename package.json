@@ -78,7 +78,11 @@
     "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
     "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js",
     "updateChildInvolvementLegacyTargetPopulation": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
-    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js"
+    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
+    "updateParticipantsList": "node ./build/server/tools/updateParticipantsListCLI.js",
+    "updateParticipantsList:local": "./node_modules/.bin/babel-node ./src/tools/updateParticipantsListCLI.js",
+    "updateCreatorRoles": "node ./build/server/tools/updateCreatorRolesCLI.js",
+    "updateCreatorRoles:local": "./node_modules/.bin/babel-node ./src/tools/updateCreatorRolesCLI.js"
   },
   "repository": {
     "type": "git",
@@ -90,6 +94,7 @@
     "follow-redirects": "^1.14.8",
     "json-pointer": "0.6.2",
     "marked": "^4.0.10",
+    "minimist": "^1.2.6",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7"
   },

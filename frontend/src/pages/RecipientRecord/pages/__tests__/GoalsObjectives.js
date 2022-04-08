@@ -10,6 +10,8 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
+import UserContext from '../../../../UserContext';
+import { SCOPE_IDS } from '../../../../Constants';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -73,16 +75,33 @@ describe('Goals and Objectives', () => {
         number: 'number',
       },
     ],
+    grants: [],
   };
 
-  const renderGoalsAndObjectives = () => {
+  const user = {
+    name: 'test@test.com',
+    homeRegionId: 1,
+    permissions: [
+      {
+        scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+        regionId: 1,
+      },
+    ],
+  };
+
+  const renderGoalsAndObjectives = (ids = []) => {
     render(
       <Router history={memoryHistory}>
-        <GoalsObjectives
-          recipientId="401"
-          regionId="1"
-          recipient={recipient}
-        />
+        <UserContext.Provider value={{ user }}>
+          <GoalsObjectives
+            recipientId="401"
+            regionId="1"
+            recipient={recipient}
+            location={{
+              state: { ids }, hash: '', pathname: '', search: '',
+            }}
+          />
+        </UserContext.Provider>
       </Router>,
     );
   };
@@ -123,7 +142,7 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-    expect(screen.getAllByRole('cell')[0].firstChild).toHaveClass('fa-clock');
+    expect(screen.getAllByRole('cell')[0].querySelector('.fa-clock')).toBeTruthy();
     expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
     expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
     expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
@@ -140,7 +159,7 @@ describe('Goals and Objectives', () => {
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
     expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-    expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
+    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
 
     // Change Filter and Apply.
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
@@ -172,10 +191,26 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
     expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
 
-    expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
-    expect(screen.getAllByRole('cell')[8]).toHaveTextContent('07/15/2021');
-    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/this is goal text 2/i);
-    expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/program planning and services/i);
-    expect(screen.getAllByRole('cell')[11]).toHaveTextContent('1 Objective(s)');
+    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
+    expect(screen.getAllByRole('cell')[7]).toHaveTextContent('07/15/2021');
+    expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/this is goal text 2/i);
+    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/program planning and services/i);
+    expect(screen.getAllByRole('cell')[10]).toHaveTextContent('1 Objective(s)');
+  });
+
+  it('sorts by created on desc when new goals are created', async () => {
+    // Created New Goal.
+    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=5';
+    fetchMock.get(newGoalsUrl, {
+      count: 3,
+      goalRows: [
+        { id: 1, ...goals[0] },
+        { id: 2, ...goals[0] },
+        { id: 3, ...goals[0] },
+      ],
+    });
+    act(() => renderGoalsAndObjectives([1]));
+    // If api request contains 3 we know it included the desired sort.
+    expect(await screen.findByText(/1-3 of 3/i)).toBeVisible();
   });
 });

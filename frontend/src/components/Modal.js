@@ -20,6 +20,10 @@ const Modal = ({
   okButtonCss,
   cancelButtonCss,
   showTitleRequired,
+  SecondaryActionButton,
+  hideCancelButton,
+  forceAction,
+
 }) => (
   <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
     <TrussWorksModal
@@ -27,6 +31,7 @@ const Modal = ({
       id={`${modalId}`}
       isLarge={isLarge}
       aria-labelledby={`${modalId}-heading`}
+      forceAction={forceAction}
     >
       <ModalHeading className="font-sans" id={`${modalId}-heading`}>
         {title}
@@ -37,16 +42,27 @@ const Modal = ({
       </div>
       <ModalFooter>
         <ButtonGroup>
-          <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
-            {cancelButtonText}
-          </ModalToggleButton>
+          {
+            !hideCancelButton
+              ? (
+                <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
+                  {cancelButtonText}
+                </ModalToggleButton>
+              )
+              : null
+          }
           {
             showOkButton
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
+                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} data-focus={hideCancelButton} type="button" aria-label={okButtonAriaLabel} onClick={onOk}>
                   {okButtonText}
                 </Button>
               )
+              : null
+          }
+          {
+            SecondaryActionButton
+              ? <SecondaryActionButton />
               : null
           }
         </ButtonGroup>
@@ -73,7 +89,14 @@ Modal.propTypes = {
   okButtonCss: PropTypes.string,
   cancelButtonCss: PropTypes.string,
   showTitleRequired: PropTypes.bool,
+  SecondaryActionButton: PropTypes.func,
+  hideCancelButton: PropTypes.bool,
+  forceAction: PropTypes.bool,
 };
+
+function DefaultSecondaryActionButton() {
+  return <span />;
+}
 
 Modal.defaultProps = {
   onOk: () => { },
@@ -86,6 +109,9 @@ Modal.defaultProps = {
   okButtonCss: null,
   cancelButtonCss: null,
   showTitleRequired: false,
+  SecondaryActionButton: DefaultSecondaryActionButton,
+  hideCancelButton: false,
+  forceAction: false,
 };
 
 export default Modal;
