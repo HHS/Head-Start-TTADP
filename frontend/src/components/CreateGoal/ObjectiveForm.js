@@ -35,9 +35,9 @@ export default function ObjectiveForm({
   ), [objective.activityReports]);
 
   const isOnApprovedReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.some((report) => (
+    (objective.activityReports && objective.activityReports.some((report) => (
       report.status === REPORT_STATUSES.APPROVED
-    ))
+    )))
   ), [objective.activityReports]);
 
   const data = unchangingApiData[objective.id];
@@ -108,7 +108,7 @@ export default function ObjectiveForm({
 
       <ObjectiveTitle
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-        isOnReport={isOnReport}
+        isOnReport={isOnReport || false}
         title={title}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
@@ -129,8 +129,8 @@ export default function ObjectiveForm({
         setResources={setResources}
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
-        isOnReport={isOnReport}
-        isOnApprovedReport={isOnApprovedReport}
+        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
       />
 
       { goalStatus !== 'Draft'
