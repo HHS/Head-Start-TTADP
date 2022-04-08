@@ -134,7 +134,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     // wrapped in such a way as to prevent infinite loops
-    if (!goalName) {
+    if (!goalName && urlId !== 'new') {
       fetchGoal();
     }
   }, [endDate, errors, goalName, recipient.id, urlId]);
@@ -503,7 +503,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
               onEdit={onEdit}
             />
             <div className="margin-bottom-4">
-              {!showForm && urlId !== 'new'
+              {!showForm && urlId === 'new'
                 ? (
                   <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                 ) : null }

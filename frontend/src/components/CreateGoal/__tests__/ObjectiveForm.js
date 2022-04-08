@@ -45,6 +45,8 @@ describe('ObjectiveForm', () => {
         objective={objective}
         setObjective={setObjective}
         errors={[<></>, <></>, <></>]}
+        unchangingApiData={{}}
+        goalStatus="Draft"
         topicOptions={[
           'Behavioral / Mental Health / Trauma',
           'Child Assessment, Development, Screening',
