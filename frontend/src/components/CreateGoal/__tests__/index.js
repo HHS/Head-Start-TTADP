@@ -627,8 +627,7 @@ describe('create goal', () => {
     const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
     expect(endDate.value).toBe('10/08/2021');
 
-    const status = await screen.findByRole('combobox', { name: /objective status/i });
-    expect(status.value).toBe('Not started');
+    expect(screen.queryByRole('combobox', { name: /objective status/i })).toBe(null);
   });
 
   it('not started goals on AR', async () => {
@@ -642,7 +641,7 @@ describe('create goal', () => {
           title: 'This is an objective',
           status: 'Not Started',
           resources: [],
-          topcs: [topicsFromApi[0]],
+          topics: [topicsFromApi[0]],
           activityReports: [
             {
               status: REPORT_STATUSES.SUBMITTED,
@@ -685,7 +684,9 @@ describe('create goal', () => {
           title: 'This is an objective',
           status: 'Not Started',
           resources: [],
-          topics: [topicsFromApi[0]],
+          topics: [
+            topicsFromApi[0],
+          ],
           activityReports: [
             {
               status: REPORT_STATUSES.APPROVED,
@@ -704,16 +705,10 @@ describe('create goal', () => {
     });
 
     const goalName = await screen.findByText(/this is a goal name/i);
-    const objectiveTitle = await screen.findByText(/This is an objective/i);
 
+    await screen.findByText(/This goal is used on an activity report/i);
+    await screen.findByText(/Some fields can't be edited/i);
     expect(goalName).toBeVisible();
-    expect(objectiveTitle).toBeVisible();
-
-    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
-    expect(endDate.value).toBe('10/08/2021');
-
-    const status = await screen.findByRole('combobox', { name: /objective status/i });
-    expect(status.value).toBe('Not started');
   });
 
   it('the correct fields are read only when the goal is in progress', async () => {

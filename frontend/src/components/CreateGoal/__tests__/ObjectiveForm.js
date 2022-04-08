@@ -40,6 +40,7 @@ describe('ObjectiveForm', () => {
     render((
       <ObjectiveForm
         index={index}
+        isOnReport={false}
         removeObjective={removeObjective}
         setObjectiveError={setObjectiveError}
         objective={objective}
