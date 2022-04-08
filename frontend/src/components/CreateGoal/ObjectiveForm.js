@@ -1,16 +1,15 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-
 import {
-  Alert, Button, Dropdown, FormGroup, Label,
+  Button, Dropdown, FormGroup, Label,
 } from '@trussworks/react-uswds';
-import Select from 'react-select';
+import ObjectiveTitle from './ObjectiveTitle';
+import ObjectiveTopics from './ObjectiveTopics';
 import ResourceRepeater from './ResourceRepeater';
 import {
-  OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
+  OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
 import { REPORT_STATUSES } from '../../Constants';
-import ObjectiveTitle from './ObjectiveTitle';
 
 const [
   objectiveTitleError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
@@ -106,15 +105,6 @@ export default function ObjectiveForm({
         { !isOnReport
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
-      { isOnReport
-        ? (
-          <Alert type="warning" noIcon className="margin-top-0 margin-bottom-1">
-            This objective is used on an activity report
-            <br />
-            Some fields can&apos;t be edited
-          </Alert>
-        )
-        : null }
 
       <ObjectiveTitle
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
@@ -124,61 +114,29 @@ export default function ObjectiveForm({
         validateObjectiveTitle={validateObjectiveTitle}
       />
 
-      { data && data.topics && data.topics.length
-        ? (
-          <>
-            <span>Topics</span>
-            {data.topics.map((topic) => topic.value).join(', ')}
-          </>
-        )
-        : null}
+      <ObjectiveTopics
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
+        savedTopics={data && data.topics ? data.topics : []}
+        topicOptions={topicOptions}
+        validateObjectiveTopics={validateObjectiveTopics}
+        topics={topics}
+        onChangeTopics={onChangeTopics}
+      />
 
-      <FormGroup error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS].props.children}>
-        <Label htmlFor="topics">
-          { data && data.topics && data.topics.length
-            ? <>Add more topics</>
-            : (
-              <>
-                Topics
-                {' '}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-              </>
-            )}
-        </Label>
-        {errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
-        <Select
-          inputId="topics"
-          styles={SELECT_STYLES}
-          components={{
-            DropdownIndicator: null,
-          }}
-          className="usa-select"
-          isMulti
-          options={topicOptions}
-          onBlur={validateObjectiveTopics}
-          value={topics}
-          onChange={onChangeTopics}
-          closeMenuOnSelect={false}
-        />
+      <ResourceRepeater
+        resources={resources}
+        savedResources={data && data.resources ? data.resources : []}
+        setResources={setResources}
+        validateResources={validateResources}
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
+        isOnReport={isOnReport}
+        isOnApprovedReport={isOnApprovedReport}
+      />
 
-      </FormGroup>
-      { isOnReport ? (
-        <span className="margin-bottom-1">{resources.map((resource) => resource.value).join(', ')}</span>
-      ) : (
-        <ResourceRepeater
-          resources={resources}
-          setResources={setResources}
-          validateResources={validateResources}
-          error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
-          isOnReport={isOnReport}
-          isOnApprovedReport={isOnApprovedReport}
-        />
-      )}
-
-      { goalStatus !== 'Draft' && isOnApprovedReport
+      { goalStatus !== 'Draft'
         ? (
           <FormGroup>
-            <Label htmlFor={`obj-status-${id}`}>Status</Label>
+            <Label htmlFor={`obj-status-${id}`}>Objective status</Label>
             <Dropdown onBlur={validateStatus} id={`obj-status-${id}`} name={`obj-status-${id}`} onChange={setStatus} value={status}>
               <option>Not started</option>
               <option>In progress</option>

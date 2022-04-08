@@ -10,9 +10,29 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
+import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
+import { REPORT_STATUSES } from '../../../Constants';
+
+const [
+  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
+] = OBJECTIVE_ERROR_MESSAGES;
+
+const topicsFromApi = [
+  'Behavioral / Mental Health / Trauma',
+  'Child Assessment, Development, Screening',
+  'CLASS: Classroom Organization',
+  'CLASS: Emotional Support',
+  'CLASS: Instructional Support',
+  'Coaching',
+  'Communication',
+  'Community and Self-Assessment',
+  'Culture & Language',
+  'Curriculum (Instructional or Parenting)',
+  'Data and Evaluation',
+].map((name, id) => ({ name, id }));
 
 describe('create goal', () => {
-  const match = {
+  const defaultMatch = {
     path: '',
     url: '',
     params: {
@@ -64,7 +84,7 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient) {
+  function renderForm(recipient = defaultRecipient, match = defaultMatch) {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
@@ -79,19 +99,7 @@ describe('create goal', () => {
 
   beforeEach(async () => {
     fetchMock.restore();
-    fetchMock.get('/api/topic', [
-      'Behavioral / Mental Health / Trauma',
-      'Child Assessment, Development, Screening',
-      'CLASS: Classroom Organization',
-      'CLASS: Emotional Support',
-      'CLASS: Instructional Support',
-      'Coaching',
-      'Communication',
-      'Community and Self-Assessment',
-      'Culture & Language',
-      'Curriculum (Instructional or Parenting)',
-      'Data and Evaluation',
-    ].map((name, id) => ({ name, id })));
+    fetchMock.get('/api/topic', topicsFromApi);
   });
 
   it('you can create a goal', async () => {
@@ -116,7 +124,7 @@ describe('create goal', () => {
     userEvent.click(save);
 
     // validate grant number
-    await screen.findByText('Please select at least one recipient grant');
+    await screen.findByText('Select at least one recipient grant number');
 
     const combo = await screen.findByLabelText(/Recipient grant numbers/i);
     await selectEvent.select(combo, ['Turtle 1']);
@@ -171,20 +179,20 @@ describe('create goal', () => {
 
     expect(fetchMock.called()).toBe(false);
 
-    await screen.findByText('Please enter a goal name');
+    await screen.findByText(/Enter the recipient's goal/i);
 
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
     userEvent.click(save);
-    await screen.findByText('Please enter a valid date in the format mm/dd/yyyy');
+    await screen.findByText('Enter a valid date');
 
     const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, 'apple season');
 
     userEvent.click(save);
 
-    await screen.findByText('Please enter a valid date in the format mm/dd/yyyy');
+    await screen.findByText('Enter a valid date');
 
     userEvent.type(ed, '08/15/2023');
 
@@ -451,14 +459,14 @@ describe('create goal', () => {
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    await screen.findByText('Please enter objective text');
+    await screen.findByText(objectiveTitleError);
 
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
     userEvent.click(save);
 
-    await screen.findByText('Please select at least one topic');
+    await screen.findByText(objectiveTopicsError);
 
     const topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['Coaching']);
@@ -512,7 +520,7 @@ describe('create goal', () => {
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    await screen.findByText('Please enter only valid URLs');
+    await screen.findByText(objectiveResourcesError);
 
     userEvent.clear(resourceOne);
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -528,7 +536,7 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    await screen.findByText('Please enter only valid URLs');
+    await screen.findByText(objectiveResourcesError);
 
     const removeResource = await screen.findByRole('button', { name: /remove resource 3/i });
     userEvent.click(removeResource);
@@ -546,5 +554,202 @@ describe('create goal', () => {
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
     expect(fetchMock.called()).toBe(true);
+  });
+
+  it('fetches and prepopulates goal data given an appropriate ID', async () => {
+    fetchMock.get('/api/goals/12389/recipient/1', {
+      goalName: 'This is a goal name',
+      status: 'Not Started',
+      endDate: '2021-10-08',
+      objectives: [
+        {
+          id: 1238474,
+          title: 'This is an objective',
+          status: 'Not Started',
+          resources: [],
+          topics: [topicsFromApi[0]],
+        },
+      ],
+    });
+
+    renderForm(defaultRecipient, {
+      path: '',
+      url: '',
+      params: {
+        goalId: '12389',
+      },
+    });
+
+    const goalName = await screen.findByText(/this is a goal name/i);
+    const objectiveTitle = await screen.findByText(/This is an objective/i);
+
+    expect(goalName).toBeVisible();
+    expect(objectiveTitle).toBeVisible();
+
+    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    expect(endDate.value).toBe('10/08/2021');
+
+    // not started goals show status dropdown
+    const status = await screen.findByRole('combobox', { name: /objective status/i });
+    expect(status.value).toBe('Not started');
+  });
+
+  it('draft goals don\'t show status dropdowns', async () => {
+    fetchMock.get('/api/goals/12389/recipient/1', {
+      goalName: 'This is a goal name',
+      status: 'Draft',
+      endDate: '2021-10-08',
+      objectives: [
+        {
+          id: 1238474,
+          title: 'This is an objective',
+          status: 'Not Started',
+          resources: [],
+          topics: [topicsFromApi[0]],
+        },
+      ],
+    });
+
+    renderForm(defaultRecipient, {
+      path: '',
+      url: '',
+      params: {
+        goalId: '12389',
+      },
+    });
+
+    const goalName = await screen.findByText(/this is a goal name/i);
+    const objectiveTitle = await screen.findByText(/This is an objective/i);
+
+    expect(goalName).toBeVisible();
+    expect(objectiveTitle).toBeVisible();
+
+    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    expect(endDate.value).toBe('10/08/2021');
+
+    const status = await screen.findByRole('combobox', { name: /objective status/i });
+    expect(status.value).toBe('Not started');
+  });
+
+  it('not started goals on AR', async () => {
+    fetchMock.get('/api/goals/12389/recipient/1', {
+      goalName: 'This is a goal name',
+      status: 'Draft',
+      endDate: '2021-10-08',
+      objectives: [
+        {
+          id: 1238474,
+          title: 'This is an objective',
+          status: 'Not Started',
+          resources: [],
+          topcs: [topicsFromApi[0]],
+          activityReports: [
+            {
+              status: REPORT_STATUSES.SUBMITTED,
+            },
+          ],
+        },
+      ],
+    });
+
+    renderForm(defaultRecipient, {
+      path: '',
+      url: '',
+      params: {
+        goalId: '12389',
+      },
+    });
+
+    const goalName = await screen.findByText(/this is a goal name/i);
+    const objectiveTitle = await screen.findByText(/This is an objective/i);
+
+    expect(goalName).toBeVisible();
+    expect(objectiveTitle).toBeVisible();
+
+    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    expect(endDate.value).toBe('10/08/2021');
+
+    const status = await screen.findByRole('combobox', { name: /objective status/i });
+    expect(status.value).toBe('Not started');
+    // only close date should be editable
+  });
+
+  it('warns if the goal is on an AR', async () => {
+    fetchMock.get('/api/goals/12389/recipient/1', {
+      goalName: 'This is a goal name',
+      status: 'Draft',
+      endDate: '2021-10-08',
+      objectives: [
+        {
+          id: 1238474,
+          title: 'This is an objective',
+          status: 'Not Started',
+          resources: [],
+          topics: [topicsFromApi[0]],
+          activityReports: [
+            {
+              status: REPORT_STATUSES.APPROVED,
+            },
+          ],
+        },
+      ],
+    });
+
+    renderForm(defaultRecipient, {
+      path: '',
+      url: '',
+      params: {
+        goalId: '12389',
+      },
+    });
+
+    const goalName = await screen.findByText(/this is a goal name/i);
+    const objectiveTitle = await screen.findByText(/This is an objective/i);
+
+    expect(goalName).toBeVisible();
+    expect(objectiveTitle).toBeVisible();
+
+    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    expect(endDate.value).toBe('10/08/2021');
+
+    const status = await screen.findByRole('combobox', { name: /objective status/i });
+    expect(status.value).toBe('Not started');
+  });
+
+  it('the correct fields are read only when the goal is in progress', async () => {
+    fetchMock.get('/api/goals/12389/recipient/1', {
+      goalName: 'This is a goal name',
+      status: 'In Progress',
+      endDate: '2021-10-08',
+      objectives: [
+        {
+          id: 1238474,
+          title: 'This is an objective',
+          status: 'Not Started',
+          resources: [],
+          topics: [topicsFromApi[0]],
+        },
+      ],
+    });
+
+    renderForm(defaultRecipient, {
+      path: '',
+      url: '',
+      params: {
+        goalId: '12389',
+      },
+    });
+
+    const goalName = await screen.findByText(/this is a goal name/i);
+    const objectiveTitle = await screen.findByText(/This is an objective/i);
+
+    expect(goalName).toBeVisible();
+    expect(objectiveTitle).toBeVisible();
+
+    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    expect(endDate.value).toBe('10/08/2021');
+
+    const status = await screen.findByRole('combobox', { name: /objective status/i });
+    expect(status.value).toBe('Not started');
   });
 });
