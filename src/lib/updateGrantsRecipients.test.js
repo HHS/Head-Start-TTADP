@@ -1,14 +1,17 @@
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  Recipient, Grant, Program,
+  sequelize, Recipient, Grant, Program, ZALGrant,
 } from '../models';
 
 jest.mock('axios');
 const mockZip = jest.fn();
 jest.mock('adm-zip', () => jest.fn().mockImplementation(() => ({ extractAllTo: mockZip })));
+jest.mock('./fileUtils', () => ({
+  fileHash: () => 'hash',
+}));
 
 const SMALLEST_GRANT_ID = 100;
 
@@ -223,5 +226,21 @@ describe('Update grants and recipients', () => {
     expect(program.status).toBe('Inactive');
     expect(program.grant.id).toBe(10567);
     expect(program.programType).toBe('HS');
+  });
+
+  it('sets metadata in audit tables', async () => {
+    await processFiles('hex');
+    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630 } });
+    const {
+      // eslint-disable-next-line camelcase
+      descriptor_id, dml_by, dml_txid, session_sig,
+    } = grantAuditEntry;
+
+    expect(dml_by).toBe(0);
+    expect(dml_txid).not.toMatch(/^00000000/);
+    expect(session_sig).not.toBeNull();
+
+    const res = await sequelize.query(`SELECT descriptor FROM "ZADescriptor" WHERE id = ${descriptor_id}`, { type: QueryTypes.SELECT });
+    expect(res[0].descriptor).toEqual('Grant data import from HSES');
   });
 });
