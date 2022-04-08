@@ -54,6 +54,7 @@ export default class Goal {
         (
           permission.scopeId === SCOPES.READ_WRITE_REPORTS
           || permission.scopeId === SCOPES.APPROVE_REPORTS
+          || permission.scopeId === SCOPES.READ_REPORTS
         )
         && permission.regionId === region),
     );
