@@ -44,10 +44,10 @@ export async function processFiles(hashSumHex) {
     await sequelize.transaction(async (transaction) => {
       await sequelize.query(
         `SELECT
-          set_config('audit.loggedUser', '0', TRUE) as "loggedUser",
-          set_config('audit.transactionId', '${uuidv4()}', TRUE) as "transactionId",
-          set_config('audit.sessionSig', '${new Date().toISOString()}T${hashSumHex}', TRUE) as "sessionSig",
-          set_config('audit.auditDescriptor', 'Grant data import from HSES', TRUE) as "auditDescriptor";`,
+          set_config('audit.loggedUser', '0', true) as "loggedUser",
+          set_config('audit.transactionId', '${uuidv4()}', true) as "transactionId",
+          set_config('audit.sessionSig', '${new Date().toISOString()}T${hashSumHex}', true) as "sessionSig",
+          set_config('audit.auditDescriptor', 'Grant data import from HSES', true) as "auditDescriptor";`,
         { transaction },
       );
 

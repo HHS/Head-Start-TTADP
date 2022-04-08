@@ -23,12 +23,12 @@ const tryJsonParse = (data) => {
   return newData;
 };
 
-const pgSetConfigIfNull = (settingName, value) => `
+const pgSetConfigIfNull = (settingName, value, alias) => `
   set_config(
     '${settingName}',
     COALESCE(current_setting('${settingName}', true), '${value}'),
     true
-  )`;
+  ) as "${alias}"`;
 
 const addAuditTransactionSettings = async (sequelize, instance, options, type) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
@@ -37,10 +37,10 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
 
   const statements = [
-    pgSetConfigIfNull('audit.loggedUser', loggedUser),
-    pgSetConfigIfNull('audit.transactionId', transactionId),
-    pgSetConfigIfNull('audit.sessionSig', sessionSig),
-    pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor),
+    pgSetConfigIfNull('audit.loggedUser', loggedUser, 'loggedUser'),
+    pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
+    pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
+    pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
   ];
 
   if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
