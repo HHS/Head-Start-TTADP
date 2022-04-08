@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Alert, Button, Dropdown, FormGroup, Label, Textarea,
+  Alert, Button, Dropdown, FormGroup, Label,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import ResourceRepeater from './ResourceRepeater';
@@ -10,6 +10,7 @@ import {
   OBJECTIVE_FORM_FIELD_INDEXES, SELECT_STYLES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
 import { REPORT_STATUSES } from '../../Constants';
+import ObjectiveTitle from './ObjectiveTitle';
 
 const [
   objectiveTitleError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
@@ -114,21 +115,15 @@ export default function ObjectiveForm({
           </Alert>
         )
         : null }
-      <FormGroup className="margin-top-1" error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE].props.children}>
-        <Label htmlFor="objectiveTitle" className={isOnReport ? 'text-bold' : ''}>
-          TTA objective
-          {' '}
-          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-        </Label>
-        { isOnReport && title ? (
-          <p className="margin-top-0 usa-prose">{title}</p>
-        ) : (
-          <>
-            {errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-            <Textarea id="objectiveTitle" name="objectiveTitle" required value={title} onChange={onChangeTitle} onBlur={validateObjectiveTitle} />
-          </>
-        )}
-      </FormGroup>
+
+      <ObjectiveTitle
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
+        isOnReport={isOnReport}
+        title={title}
+        onChangeTitle={onChangeTitle}
+        validateObjectiveTitle={validateObjectiveTitle}
+      />
+
       { data && data.topics && data.topics.length
         ? (
           <>
