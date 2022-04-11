@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor, fireEvent,
+  render, screen, waitFor, fireEvent, act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
@@ -152,7 +152,7 @@ const goalWithObjectives = [{
     arStatus: REPORT_STATUSES.APPROVED,
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
-    status: null,
+    status: 'In Progress',
     id: 255384234,
     ttaProvided: '',
   },
@@ -297,15 +297,14 @@ describe('Goals Table', () => {
     it('Shows the correct objective data', async () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
-      const inProgress = await screen.findAllByRole('cell', { name: /in progress/i });
-      console.log(inProgress);
+      const inProgress = await screen.findAllByRole('cell', { name: 'In progress' });
+      expect(inProgress.length).toBe(2);
 
       // Objective 1.
       await screen.findByRole('cell', { name: /objective 1 title/i });
       await screen.findByRole('cell', { name: /ar-number-1/i });
       await screen.findByRole('cell', { name: '06/14/2021' });
       await screen.findByRole('cell', { name: /monitoring | deficiency/i });
-      await screen.findByRole('cell', { name: /in progress/i });
 
       // Objective 2.
       await screen.findByRole('cell', { name: /objective 2 title/i });
@@ -605,25 +604,25 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.put('/api/recipient/65479/changeStatus', {
         id: 65479,
-        status: 'In Progress',
+        goalStatus: 'In Progress',
         createdOn: '06/15/2021',
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-        objectiveCount: 5,
+        objectiveCount: 0,
         goalNumber: 'R14-G-65479',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+        objectives: [],
+        previousStatus: 'Needs status',
       });
 
-      let inProgress = await screen.findAllByRole('cell', { name: /in progress/i });
-      expect(inProgress.length).toBe(1);
+      expect(fetchMock.called()).toBe(false);
 
       // Open Context Menu.
       const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 65479/i });
-      userEvent.selectOptions(changeStatus, 'In progress');
+      act(() => userEvent.selectOptions(changeStatus, 'In Progress'));
 
       // Verify goal status change.
-      inProgress = await screen.findAllByRole('cell', { name: /in progress/i });
-      expect(inProgress.length).toBe(2);
+      expect(fetchMock.called()).toBe(true);
     });
   });
 });
