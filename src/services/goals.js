@@ -510,18 +510,18 @@ export async function updateGoalStatusById(
     Disable for now until goals are unique grants. ?????
   */
 
-  return sequelize.transaction(async (transaction) => {
-    const updatedGoal = await Goal.update(
-      {
-        status: newStatus,
-        closeSuspendReason,
-        closeSuspendContext,
-        previousStatus: oldStatus,
-      },
-      { where: { id: goalId }, returning: true, transaction },
-    );
-    return updatedGoal[1][0];
-  });
+  // return sequelize.transaction(async (transaction) => {
+  //   const updatedGoal = await Goal.update(
+  //     {
+  //       status: newStatus,
+  //       closeSuspendReason,
+  //       closeSuspendContext,
+  //       previousStatus: oldStatus,
+  //     },
+  //     { where: { id: goalId }, returning: true, transaction },
+  //   );
+  //   return updatedGoal[1][0];
+  // });
 }
 
 export async function destroyGoal(goalId) {

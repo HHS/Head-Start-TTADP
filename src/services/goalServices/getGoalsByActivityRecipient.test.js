@@ -10,10 +10,10 @@ import {
   Goal,
   ActivityReportObjective,
   Objective,
-} from '../models';
+} from '../../models';
 
-import { getGoalsByActivityRecipient } from './recipient';
-import { REPORT_STATUSES } from '../constants';
+import { getGoalsByActivityRecipient } from '../recipient';
+import { REPORT_STATUSES } from '../../constants';
 
 describe('Goals by Recipient Test', () => {
   const recipient = {
