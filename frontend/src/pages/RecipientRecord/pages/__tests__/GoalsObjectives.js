@@ -89,7 +89,7 @@ describe('Goals and Objectives', () => {
     ],
   };
 
-  const renderGoalsAndObjectives = () => {
+  const renderGoalsAndObjectives = (ids = []) => {
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
@@ -97,6 +97,9 @@ describe('Goals and Objectives', () => {
             recipientId="401"
             regionId="1"
             recipient={recipient}
+            location={{
+              state: { ids }, hash: '', pathname: '', search: '',
+            }}
           />
         </UserContext.Provider>
       </Router>,
@@ -193,5 +196,21 @@ describe('Goals and Objectives', () => {
     await screen.findByRole('cell', { name: '1 Objective(s)' });
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
+  });
+
+  it('sorts by created on desc when new goals are created', async () => {
+    // Created New Goal.
+    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=5';
+    fetchMock.get(newGoalsUrl, {
+      count: 3,
+      goalRows: [
+        { id: 1, ...goals[0] },
+        { id: 2, ...goals[0] },
+        { id: 3, ...goals[0] },
+      ],
+    });
+    act(() => renderGoalsAndObjectives([1]));
+    // If api request contains 3 we know it included the desired sort.
+    expect(await screen.findByText(/1-3 of 3/i)).toBeVisible();
   });
 });
