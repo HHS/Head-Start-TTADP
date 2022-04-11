@@ -42,16 +42,22 @@ export default function RegionalDashboard() {
 
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
+  const getFiltersWithAllRegions = () => {
+    const filtersWithAllRegions = [...allRegionsFilters];
+    filtersWithAllRegions.push({
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'is within',
+      query: defaultDate,
+    });
+    return filtersWithAllRegions;
+  };
+
+  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
+
   const defaultFilters = useMemo(() => {
     if (hasCentralOffice) {
-      return [
-        {
-          id: uuidv4(),
-          topic: 'startDate',
-          condition: 'is within',
-          query: defaultDate,
-        },
-      ];
+      return centralOfficeWithAllRegionFilters;
     }
 
     return [
@@ -68,20 +74,35 @@ export default function RegionalDashboard() {
         query: defaultDate,
       },
     ];
-  }, [defaultRegion, hasCentralOffice]);
+  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
 
-  const onApplyFilters = (newFilters) => {
-    setFilters(newFilters);
+  // Apply filters.
+  const onApplyFilters = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters(newFilters);
+    }
   };
 
-  const onRemoveFilter = (id) => {
+  // Remove Filters.
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      setFilters(newFilters);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
     }
   };
 
@@ -111,6 +132,7 @@ export default function RegionalDashboard() {
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
             filterConfig={DASHBOARD_FILTER_CONFIG}
+            allUserRegions={regions}
           />
         </Grid>
         <GridContainer className="margin-0 padding-0">
