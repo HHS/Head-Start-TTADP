@@ -178,12 +178,13 @@ Submitter.propTypes = {
       }),
     ),
   }).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment).isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
 
 };
 
 Submitter.defaultProps = {
   error: '',
+  lastSaveTime: undefined,
 };
 
 export default Submitter;
