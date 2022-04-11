@@ -16,7 +16,7 @@ export default function ObjectiveTitle({
       <Label htmlFor="objectiveTitle" className={isOnReport ? 'text-bold' : ''}>
         TTA objective
         {' '}
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        { !isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
       { isOnReport && title ? (
         <p className="margin-top-0 usa-prose">{title}</p>

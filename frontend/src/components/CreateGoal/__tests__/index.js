@@ -624,6 +624,10 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
+    // we should expect there to be a warning here
+    await screen.findByText(/This goal is used on an activity report/i);
+    await screen.findByText(/Some fields can't be edited/i);
+
     const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
     expect(endDate.value).toBe('10/08/2021');
 
@@ -665,50 +669,12 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
+    // only close date should be editable
     const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
     expect(endDate.value).toBe('10/08/2021');
 
     const status = await screen.findByRole('combobox', { name: /objective status/i });
     expect(status.value).toBe('Not started');
-    // only close date should be editable
-  });
-
-  it('warns if the goal is on an AR', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
-      goalName: 'This is a goal name',
-      status: 'Draft',
-      endDate: '2021-10-08',
-      objectives: [
-        {
-          id: 1238474,
-          title: 'This is an objective',
-          status: 'Not Started',
-          resources: [],
-          topics: [
-            topicsFromApi[0],
-          ],
-          activityReports: [
-            {
-              status: REPORT_STATUSES.APPROVED,
-            },
-          ],
-        },
-      ],
-    });
-
-    renderForm(defaultRecipient, {
-      path: '',
-      url: '',
-      params: {
-        goalId: '12389',
-      },
-    });
-
-    const goalName = await screen.findByText(/this is a goal name/i);
-
-    await screen.findByText(/This goal is used on an activity report/i);
-    await screen.findByText(/Some fields can't be edited/i);
-    expect(goalName).toBeVisible();
   });
 
   it('the correct fields are read only when the goal is in progress', async () => {

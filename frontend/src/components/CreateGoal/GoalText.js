@@ -16,7 +16,7 @@ export default function GoalText({
       <Label htmlFor="goalText" className={isOnReport ? 'text-bold' : ''}>
         Recipient&apos;s goal
         {' '}
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
       { isOnReport ? (
         <p className="usa-prose margin-top-0">{goalName}</p>

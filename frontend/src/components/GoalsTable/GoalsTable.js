@@ -143,7 +143,7 @@ function GoalsTable({
         </Alert>
       </Grid>
       )}
-      <Container className="goals-table inline-size maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
+      <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
         <GoalsTableHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}

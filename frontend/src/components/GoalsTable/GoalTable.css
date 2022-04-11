@@ -1,15 +1,13 @@
-.goals-table .usa-table-container {
-  min-width: 1400px;
-}
-
 .goals-table .usa-table-container,
 .goals-table .usa-checkbox__label {
   margin-top: 0px;
 }
 
 .goals-table .usa-table {
+  box-sizing: border-box;
   line-height: 2.5;
   margin-left: 1px;
+  max-width: calc(100% - 1px);
 }
 
 .goals-table h2 {
@@ -21,7 +19,6 @@
 }
 
 .goals-table .usa-table thead th {
-  white-space: nowrap;
   background-color: white;
   border-top: solid 1.5px;
   border-color: #eceef1;
@@ -30,6 +27,9 @@
   padding-top: 24px;
   padding-left: 24px;
   padding-bottom: 8px;
+  background-color: white;
+  border-style: none;
+  color: black;
 }
 
 .goals-table .usa-table-container {
@@ -52,14 +52,6 @@
 }
 .goals-table .usa-table .usa-checkbox__label::before {
   position: relative;
-}
-
-.goals-table .usa-table th {
-  font-size: 15px;
-  white-space: nowrap;
-  background-color: transparent;
-  border-style: none;
-  color: black;
 }
 
 .goals-table .padding-0 > .desktop\:display-flex:first-child{

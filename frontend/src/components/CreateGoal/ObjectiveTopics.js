@@ -52,7 +52,6 @@ export default function ObjectiveTopics({
           onChange={onChangeTopics}
           closeMenuOnSelect={false}
         />
-
       </FormGroup>
     </>
   );

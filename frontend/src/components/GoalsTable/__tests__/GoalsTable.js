@@ -9,7 +9,7 @@ import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
-import { SCOPE_IDS } from '../../../Constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -34,7 +34,7 @@ const defaultUser = {
 const goals = [{
   id: 4598,
   goalStatus: 'In Progress',
-  createdOn: '06/15/2021',
+  createdOn: '2021-06-15',
   goalText: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
   objectiveCount: 5,
@@ -45,7 +45,7 @@ const goals = [{
 {
   id: 8547,
   goalStatus: 'Not Started',
-  createdOn: '05/15/2021',
+  createdOn: '2021-05-15',
   goalText: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
   objectiveCount: 2,
@@ -56,7 +56,7 @@ const goals = [{
 {
   id: 65478,
   goalStatus: 'Completed',
-  createdOn: '04/15/2021',
+  createdOn: '2021-04-15',
   goalText: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
   objectiveCount: 4,
@@ -67,7 +67,7 @@ const goals = [{
 {
   id: 65479,
   goalStatus: '', // Needs Status.
-  createdOn: '03/15/2021',
+  createdOn: '2021-03-15',
   goalText: 'This is goal text 4.',
   goalTopics: ['Partnerships and Community Engagement'],
   objectiveCount: 3,
@@ -78,7 +78,7 @@ const goals = [{
 {
   id: 65480,
   goalStatus: 'Draft',
-  createdOn: '02/15/2021',
+  createdOn: '2021-02-15',
   goalText: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
   objectiveCount: 1,
@@ -89,7 +89,7 @@ const goals = [{
 {
   id: 65481,
   goalStatus: 'Ceased/Suspended',
-  createdOn: '01/15/2021',
+  createdOn: '2021-01-15',
   goalText: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
   objectiveCount: 8,
@@ -102,7 +102,7 @@ const goals = [{
 const goalWithObjectives = [{
   id: 4458,
   goalStatus: 'In Progress',
-  createdOn: '06/15/2021',
+  createdOn: '2021-06-15',
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
@@ -117,6 +117,8 @@ const goalWithObjectives = [{
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
+    id: 345345345,
+    ttaProvided: '',
   },
   {
     title: 'Objective 2 Title',
@@ -127,36 +129,44 @@ const goalWithObjectives = [{
     endDate: '05/14/2021',
     reasons: ['Below Competitive Threshold (CLASS)'],
     status: 'Not Started',
+    id: 234234253,
+    ttaProvided: '',
   },
   {
     title: 'Objective 3 Title',
     arId: 3,
     arNumber: 'ar-number-3',
     arLegacyId: null,
-    arStatus: 'approved',
+    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '04/14/2021',
     reasons: ['COVID-19 response'],
     status: 'Complete',
+    id: 2938234,
+    ttaProvided: '',
   },
   {
     title: 'Objective 4 Title',
     arId: 4,
     arNumber: 'ar-number-4',
     arLegacyId: 'ar-legacy-4',
-    arStatus: null,
+    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
     status: null,
+    id: 255384234,
+    ttaProvided: '',
   },
   {
     title: 'Objective 5 Title',
     arId: 5,
     arNumber: 'ar-number-5',
     arLegacyId: null,
-    arStatus: null,
+    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '02/14/2021',
     reasons: ['Complaint'],
     status: 'Unknown Status',
+    id: 298398934834,
+    ttaProvided: '',
   },
   ],
 },
@@ -165,7 +175,7 @@ const goalWithObjectives = [{
 const noStatusGoalWithOneObjective = [{
   id: 4459,
   goalStatus: null,
-  createdOn: '06/15/2021',
+  createdOn: '2021-06-15',
   goalText: 'This is a goal with a single objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
@@ -180,6 +190,8 @@ const noStatusGoalWithOneObjective = [{
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
+    id: 2832434,
+    ttaProvided: '',
   }],
 }];
 
@@ -285,35 +297,32 @@ describe('Goals Table', () => {
     it('Shows the correct objective data', async () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
-      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+      const inProgress = await screen.findAllByRole('cell', { name: /in progress/i });
+      console.log(inProgress);
 
       // Objective 1.
-      expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/objective 1 title/i);
-      expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/ar-number-1/i);
-      expect(screen.getAllByRole('cell')[8]).toHaveTextContent('06/14/2021');
-      expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/monitoring | deficiency/i);
-      expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/in progress/i);
-      expect(screen.getAllByRole('cell')[10].firstChild).toHaveClass('fa-clock');
-      expect(await screen.findByRole('link', { name: /ar-number-1/i })).toHaveAttribute('href', '/activity-reports/1');
+      await screen.findByRole('cell', { name: /objective 1 title/i });
+      await screen.findByRole('cell', { name: /ar-number-1/i });
+      await screen.findByRole('cell', { name: '06/14/2021' });
+      await screen.findByRole('cell', { name: /monitoring | deficiency/i });
+      await screen.findByRole('cell', { name: /in progress/i });
 
       // Objective 2.
-      expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/objective 2 title/i);
-      expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/ar-number-2/i);
-      expect(screen.getAllByRole('cell')[13]).toHaveTextContent('05/14/2021');
-      expect(screen.getAllByRole('cell')[14]).toHaveTextContent('Below Competitive Threshold (CLASS)');
-      expect(screen.getAllByRole('cell')[15]).toHaveTextContent(/not started/i);
-      expect(screen.getAllByRole('cell')[15].firstChild).toHaveClass('fa-minus-circle');
-      expect(await screen.findByRole('link', { name: /ar-number-2/i })).toHaveAttribute('href', '/activity-reports/2');
+      await screen.findByRole('cell', { name: /objective 2 title/i });
+      await screen.findByRole('cell', { name: /ar-number-2/i });
+      await screen.findByRole('cell', { name: '05/14/2021' });
+      await screen.findByRole('cell', { name: 'Below Competitive Threshold (CLASS)' });
+      await screen.findByRole('cell', { name: /not started/i });
 
       // Objective 3.
-      expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/objective 3 title/i);
-      expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/ar-number-3/i);
-      expect(screen.getAllByRole('cell')[18]).toHaveTextContent('04/14/2021');
-      expect(screen.getAllByRole('cell')[19]).toHaveTextContent('COVID-19 response');
-      expect(screen.getAllByRole('cell')[20]).toHaveTextContent(/closed/i);
-      expect(screen.getAllByRole('cell')[20].firstChild).toHaveClass('fa-check-circle');
-      expect(await screen.findByRole('link', { name: /ar-number-3/i })).toHaveAttribute('href', '/activity-reports/view/3');
+      await screen.findByRole('cell', { name: /objective 3 title/i });
+      await screen.findByRole('cell', { name: /ar-number-3/i });
+      await screen.findByRole('cell', { name: '04/14/2021' });
+      await screen.findByRole('cell', { name: 'COVID-19 response' });
+      await screen.findByRole('cell', { name: /closed/i });
+
+      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
     });
 
     it('Expands and collapses objectives', async () => {
@@ -420,8 +429,7 @@ describe('Goals Table', () => {
       fireEvent.click(columnHeaderAsc);
       await screen.findByText('TTA goals and objectives');
 
-      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[31]).toHaveTextContent('06/15/2021'));
+      expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021');
 
       // Desc.
       const columnHeaderDesc = await screen.findByRole('button', { name: /created on\. activate to sort descending/i });
@@ -437,7 +445,6 @@ describe('Goals Table', () => {
 
       const cells = await screen.findAllByRole('cell');
       expect(cells[1]).toHaveTextContent('06/15/2021');
-      expect(cells[31]).toHaveTextContent('01/15/2021');
     });
 
     it('clicking Goal status column header sorts', async () => {
@@ -456,7 +463,6 @@ describe('Goals Table', () => {
 
       const cells = await screen.findAllByRole('cell');
       expect(cells[0]).toHaveTextContent('Not started');
-      expect(cells[24]).toHaveTextContent('Suspended');
 
       // Desc (via button press).
       const goalsAsc = [...goals];
@@ -472,8 +478,8 @@ describe('Goals Table', () => {
       expect(columnHeaderAsc).toHaveFocus();
       fireEvent.keyPress(columnHeaderAsc, { key: 'Enter', code: 13, charCode: 13 });
       await screen.findByText('TTA goals and objectives');
-      await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Needs status'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Not started'));
+      const [cell] = await screen.findAllByRole('cell'); // cell[0]
+      expect(cell).toHaveTextContent('Needs status');
     });
   });
 
@@ -520,7 +526,7 @@ describe('Goals Table', () => {
       );
       fireEvent.click(pageOne);
       const cells = await screen.findAllByRole('cell');
-      expect(cells.length).toBe(36);
+      expect(cells.length).toBe(42);
     });
 
     it('clicking on the second page updates page values', async () => {
@@ -608,12 +614,16 @@ describe('Goals Table', () => {
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       });
 
+      let inProgress = await screen.findAllByRole('cell', { name: /in progress/i });
+      expect(inProgress.length).toBe(1);
+
       // Open Context Menu.
       const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 65479/i });
       userEvent.selectOptions(changeStatus, 'In progress');
 
       // Verify goal status change.
-      await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('In progress'));
+      inProgress = await screen.findAllByRole('cell', { name: /in progress/i });
+      expect(inProgress.length).toBe(2);
     });
   });
 });
