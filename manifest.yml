@@ -22,7 +22,7 @@ applications:
       CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
       SMTP_HOST: ((SMTP_HOST))
       SMTP_PORT: ((SMTP_PORT))
-      SEND_NOTIFICATIONS: "true"
+      SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
