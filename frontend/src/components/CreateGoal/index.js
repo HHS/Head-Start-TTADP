@@ -536,7 +536,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             topicOptions={topicOptions}
             isOnReport={isOnReport}
             isOnApprovedReport={isOnApprovedReport}
-            status={status}
+            status={status || 'Needs status'}
             unchangingApiData={unchangingApiData}
           />
           )}

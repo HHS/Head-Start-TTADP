@@ -206,6 +206,7 @@ const renderTable = (user, hasActiveGrants = true) => {
             regionId={regionId}
             onUpdateFilters={() => { }}
             hasActiveGrants={hasActiveGrants}
+            showNewGoals={false}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>

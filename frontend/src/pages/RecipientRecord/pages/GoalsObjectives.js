@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
@@ -10,10 +10,14 @@ import { expandFilters, formatDateRange } from '../../../utils';
 import { getGoalsAndObjectivesFilterConfig } from './constants';
 import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
+import UserContext from '../../../UserContext';
+import { getUserRegions } from '../../../permissions';
 
 export default function GoalsObjectives({
   recipientId, regionId, recipient, location,
 }) {
+  const { user } = useContext(UserContext);
+  const regions = useMemo(() => getUserRegions(user), [user]);
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
   const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
@@ -74,6 +78,7 @@ export default function GoalsObjectives({
             filterConfig={getGoalsAndObjectivesFilterConfig(possibleGrants)}
             applyButtonAria="Apply filters to goals"
             filters={filters}
+            allUserRegions={regions}
           />
         </div>
         <Grid row>
@@ -86,7 +91,7 @@ export default function GoalsObjectives({
           regionId={regionId}
           filters={expandFilters(filters)}
           hasActiveGrants={hasActiveGrants}
-          showNewGoals={showNewGoals}
+          showNewGoals={showNewGoals || false}
         />
       </div>
     </>
