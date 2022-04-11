@@ -109,7 +109,7 @@ function Landing() {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
-  const [downloadAlertsError, setDownloadAlertsError] = useState('');
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
   const downloadAllAlertsButtonRef = useRef();
 
   function getAppliedRegion() {
