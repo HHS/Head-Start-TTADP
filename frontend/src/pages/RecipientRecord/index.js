@@ -161,7 +161,7 @@ export default function RecipientRecord({ match }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives"
-          render={() => (
+          render={({ location }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -170,6 +170,7 @@ export default function RecipientRecord({ match }) {
             >
               <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
                 <GoalsObjectives
+                  location={location}
                   recipientId={recipientId}
                   regionId={regionId}
                   recipient={recipientData}

@@ -9,8 +9,6 @@ export const notificationQueue = newQueue('notifications');
 const {
   SMTP_HOST,
   SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
   SMTP_SECURE,
   NODE_ENV,
   SEND_NON_PRODUCTION_NOTIFICATIONS,
@@ -23,15 +21,12 @@ const defaultTransport = createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure,
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
+  ignoreTLS: true,
 });
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
 
-const emailTemplatePath = path.join(process.cwd(), 'src', 'email_templates');
+const emailTemplatePath = path.join(process.cwd(), 'email_templates');
 
 /**
  * Process function for changesRequested jobs added to notification queue
@@ -48,12 +43,12 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
       displayId,
       collaborators,
     } = report;
-    const approverEmail = approver.user.email;
-    const approverName = approver.user.name;
+    const approverEmail = approver.User.email;
+    const approverName = approver.User.name;
     const approverNote = approver.note;
     logger.info(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
     const collabArray = collaborators.map((c) => c.email);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -98,7 +93,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     } = report;
     logger.info(`MAILER: Notifying users that report ${displayId}} was approved.`);
     const collaboratorEmailAddresses = collaborators.map((c) => c.email);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -136,9 +131,9 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       id,
       displayId,
     } = report;
-    const approverEmail = newApprover.user.email;
+    const approverEmail = newApprover.User.email;
     logger.info(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -177,7 +172,8 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
       id,
       displayId,
     } = report;
-    const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(id));
+
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
