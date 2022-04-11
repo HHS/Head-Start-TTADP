@@ -126,7 +126,6 @@ const ActivitySummary = ({
             label="Was this activity for a recipient or other entity?"
             name="activityRecipientType"
             fieldSetWrapper
-            requiredText="*"
           >
             <Radio
               id="category-recipient"
@@ -151,7 +150,6 @@ const ActivitySummary = ({
           <FormItem
             label={recipientLabel}
             name="activityRecipients"
-            requiredText="*"
           >
             <MultiSelect
               name="activityRecipients"
@@ -171,7 +169,6 @@ const ActivitySummary = ({
             label="Collaborating Specialists"
             name="collaborators"
             required={false}
-            requiredText="*"
           >
             <MultiSelect
               name="collaborators"
@@ -190,7 +187,6 @@ const ActivitySummary = ({
             label="Target Populations addressed. You may choose more than one."
             name="targetPopulations"
             required
-            requiredText="*"
           >
             <MultiSelect
               name="targetPopulations"
@@ -209,7 +205,6 @@ const ActivitySummary = ({
             label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by recipient."
             name="requester"
             fieldSetWrapper
-            requiredText="*"
           >
             <Radio
               id="recipientRequest"
@@ -233,7 +228,6 @@ const ActivitySummary = ({
           <FormItem
             label="Reasons"
             name="reason"
-            requiredText="*"
           >
             <div className="usa-hint">
               Select at least one
@@ -256,7 +250,6 @@ const ActivitySummary = ({
                 label="Start Date"
                 name="startDate"
                 id="startDate-label"
-                requiredText="*"
               >
                 <div
                   className="usa-hint"
@@ -280,7 +273,6 @@ const ActivitySummary = ({
                 label="End Date"
                 name="endDate"
                 id="endDate-label"
-                requiredText="*"
               >
                 <div
                   className="usa-hint"
@@ -302,7 +294,6 @@ const ActivitySummary = ({
               <FormItem
                 label="Duration in hours (round to the nearest half hour)"
                 name="duration"
-                requiredText="*"
               >
                 <TextInput
                   id="duration"
@@ -331,7 +322,6 @@ const ActivitySummary = ({
             label="What TTA was provided"
             name="ttaType"
             fieldSetWrapper
-            requiredText="*"
           >
             {renderCheckbox('ttaType', 'training', 'Training', 'Please specify the type of TTA provided')}
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
@@ -342,7 +332,6 @@ const ActivitySummary = ({
             label="How was the activity conducted?"
             name="deliveryMethod"
             fieldSetWrapper
-            requiredText="*"
           >
             <Radio
               id="delivery-method-virtual"
@@ -368,7 +357,6 @@ const ActivitySummary = ({
                 label="Please specify how the virtual event was conducted."
                 name="virtualDeliveryType"
                 fieldSetWrapper
-                requiredText="*"
               >
                 <Radio
                   id="virtual-deliver-method-video"
@@ -398,7 +386,6 @@ const ActivitySummary = ({
           <FormItem
             label={participantsLabel}
             name="participants"
-            requiredText="*"
           >
             <MultiSelect
               name="participants"
@@ -414,7 +401,6 @@ const ActivitySummary = ({
           <FormItem
             label="Number of participants involved"
             name="numberOfParticipants"
-            requiredText="*"
           >
             <Grid row gap>
               <Grid col={5}>
@@ -539,7 +525,7 @@ const ReviewSection = () => {
       <Section
         hidePrint={isUndefined(context)}
         key="context"
-        basePath="goals-objectives"
+        basePath="activity-summary"
         anchor="context"
         title="Context"
         canEdit={canEdit}
