@@ -12,7 +12,7 @@ import {
 import { REPORT_STATUSES } from '../../Constants';
 
 const [
-  objectiveTitleError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
+  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -86,18 +86,6 @@ export default function ObjectiveForm({
     setObjectiveError(index, newErrors);
   };
 
-  const validateStatus = () => {
-    let error = <></>;
-
-    if (!status) {
-      error = <span className="usa-error-message">{objectiveStatusError}</span>;
-    }
-
-    const newErrors = [...errors];
-    newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.STATUS, 1, error);
-    setObjectiveError(index, newErrors);
-  };
-
   return (
     <div className="margin-top-2 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
@@ -137,7 +125,7 @@ export default function ObjectiveForm({
         ? (
           <FormGroup>
             <Label htmlFor={`obj-status-${id}`}>Objective status</Label>
-            <Dropdown onBlur={validateStatus} id={`obj-status-${id}`} name={`obj-status-${id}`} onChange={setStatus} value={status}>
+            <Dropdown id={`obj-status-${id}`} name={`obj-status-${id}`} onChange={setStatus} value={status}>
               <option>Not started</option>
               <option>In progress</option>
             </Dropdown>

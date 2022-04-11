@@ -373,7 +373,20 @@ export default function CreateGoal({ recipient, regionId, match }) {
         endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
-        objectives,
+        objectives: objectives.map((objective) => {
+          const apiData = unchangingApiData[objective.id];
+          if (apiData) {
+            const topicsFromApi = apiData.topics;
+            const resourcesFromApi = apiData.resources;
+            return {
+              ...objective,
+              topics: [...objective.topics, ...topicsFromApi],
+              resources: [...objective.resources, ...resourcesFromApi],
+            };
+          }
+
+          return objective;
+        }),
         id: goalId,
       }, ...createdGoals];
 
@@ -431,8 +444,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
         });
 
         objectiveApiData[objective.id] = {
-          resources: objective.resources.map((value) => value),
-          topics: objective.topics,
+          resources: objective.resources.map((value) => ({ ...value, isFromApi: true })),
+          topics: objective.topics.map((value) => ({ ...value, isFromApi: true })),
         };
       } else {
         newObjectives.push({

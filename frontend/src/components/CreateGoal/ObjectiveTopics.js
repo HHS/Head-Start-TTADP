@@ -20,7 +20,7 @@ export default function ObjectiveTopics({
         ? (
           <>
             <span>Topics</span>
-            {savedTopics.map((topic) => topic.value).join(', ')}
+            {savedTopics.map((topic) => topic.label).join(', ')}
           </>
         )
         : null}
