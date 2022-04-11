@@ -30,40 +30,49 @@ let realGrants = [];
 let transformedGrants = [];
 const hsesUsers = [
   {
-    name: 'Adam Levin', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam@adhocteam.us',
+    name: 'Adam Levin', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
   },
   {
-    name: 'Angela Waner', hsesUsername: 'test.tta.angela', hsesUserId: '50599', email: 'angela@adhocteam.us',
+    name: 'Angela Waner', hsesUsername: 'test.tta.angela', hsesUserId: '50599', email: 'angela.waner@adhocteam.us',
   },
   {
-    name: 'Krys Wisnaskas', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krys@adhocteam.us',
+    name: 'Krys Wisnaskas', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krystyna@adhocteam.us',
   },
   {
-    name: 'Matt Bevilacqua', hsesUsername: 'test.tta.mattb', hsesUserId: '50832', email: 'matt@adhocteam.us',
+    name: 'Matt Bevilacqua', hsesUsername: 'test.tta.mattb', hsesUserId: '50832', email: 'matt.bevilacqua@adhocteam.us',
   },
   {
-    name: 'Kelly Born', hsesUsername: 'test.tta.kelly', hsesUserId: '51113', email: 'kelly@adhocteam.us',
+    name: 'Kelly Born', hsesUsername: 'test.tta.kelly', hsesUserId: '51113', email: 'kelly.born@adhocteam.us',
   },
   {
-    name: 'Lauren Rodriguez', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren@adhocteam.us',
+    name: 'Lauren Rodriguez', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren.rodriguez@adhocteam.us',
   },
   {
-    name: 'Maria Puhl', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria@adhocteam.us',
+    name: 'Maria Puhl', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria.puhl@adhocteam.us',
   },
   {
-    name: 'Patrice Pascual', hsesUsername: 'test.tta.patrice', hsesUserId: '45594', email: 'patrice@adhocteam.us',
+    name: 'Patrice Pascual', hsesUsername: 'test.tta.patrice', hsesUserId: '45594', email: 'patrice.pascual@acf.hhs.gov',
   },
   {
     name: 'Josh Salisbury', hsesUsername: 'test.tta.josh', hsesUserId: '50490', email: 'josh@adhocteam.us',
   },
   {
-    name: 'Rachel Miner', hsesUsername: 'test.tta.rachel', hsesUserId: '51352', email: 'rachel@adhocteam.us',
+    name: 'Rachel Miner', hsesUsername: 'test.tta.rachel', hsesUserId: '51352', email: 'rachel.miner@adhocteam.us',
   },
   {
     name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
   },
   {
     name: 'Garrett Hill', hsesUsername: 'test.tta.garrett', hsesUserId: '51548', email: 'garrett.hill@adhocteam.us',
+  },
+  {
+    name: 'Adam Roux', hsesUsername: 'test.tta.adamr', hsesUserId: '52047', email: 'adam.roux@adhocteam.us',
+  },
+  {
+    name: 'C\'era Oliveira-Norris', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
+  },
+  {
+    name: 'Crystal George', hsesUsername: 'test.tta.crystal', hsesUserId: 'tbd', email: 'crystal.george@adhocteam.us',
   },
 ];
 
