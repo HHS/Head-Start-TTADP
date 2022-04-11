@@ -106,6 +106,7 @@ describe('create goal', () => {
     renderForm();
 
     await screen.findByRole('heading', { name: 'Goal summary' });
+
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
 
@@ -624,10 +625,6 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
-    // we should expect there to be a warning here
-    await screen.findByText(/This goal is used on an activity report/i);
-    await screen.findByText(/Some fields can't be edited/i);
-
     const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
     expect(endDate.value).toBe('10/08/2021');
 
@@ -637,7 +634,7 @@ describe('create goal', () => {
   it('not started goals on AR', async () => {
     fetchMock.get('/api/goals/12389/recipient/1', {
       goalName: 'This is a goal name',
-      status: 'Draft',
+      status: 'Not Started',
       endDate: '2021-10-08',
       objectives: [
         {
@@ -669,7 +666,11 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
-    // only close date should be editable
+    // we should expect there to be a warning here
+    await screen.findByText(/This goal is used on an activity report/i);
+    await screen.findByText(/Some fields can't be edited/i);
+
+    // only close date & status should be editable
     const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
     expect(endDate.value).toBe('10/08/2021');
 
