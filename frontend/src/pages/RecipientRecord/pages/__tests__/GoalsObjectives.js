@@ -180,17 +180,18 @@ describe('Goals and Objectives', () => {
     const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
     userEvent.click(removeFilter);
 
-    expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-    expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
-    expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
-    expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
-    expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
+    await screen.findByRole('cell', { name: /in progress/i });
+    await screen.findByRole('cell', { name: '06/15/2021' });
+    await screen.findByRole('cell', { name: /this is goal text 1/i });
+    await screen.findByRole('cell', { name: /human resources, safety practices, program planning and services/i });
+    await screen.findByRole('cell', { name: '5 Objective(s)' });
 
-    expect(screen.getAllByRole('cell')[6]).toHaveTextContent(/not started/i);
-    expect(screen.getAllByRole('cell')[7]).toHaveTextContent('07/15/2021');
-    expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/this is goal text 2/i);
-    expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/program planning and services/i);
-    expect(screen.getAllByRole('cell')[10]).toHaveTextContent('1 Objective(s)');
+    await screen.findByRole('cell', { name: /not started/i });
+    await screen.findByRole('cell', { name: '07/15/2021' });
+    await screen.findByRole('cell', { name: /this is goal text 2/i });
+    await screen.findByRole('cell', { name: 'Program Planning and Services' });
+    await screen.findByRole('cell', { name: '1 Objective(s)' });
+
+    expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
   });
 });

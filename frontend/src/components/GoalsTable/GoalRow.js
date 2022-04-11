@@ -216,7 +216,7 @@ function GoalRow({
               <Tooltip
                 displayText={displayGoalTopics}
                 screenReadDisplayText={false}
-                buttonLabel={`goal topics: ${goalTopics}. Click button to visually reveal this information.`}
+                buttonLabel={`${goalTopics.join(', ')} click to visually reveal`}
                 tooltipText={goalTopics.join(', ')}
                 hideUnderline={false}
                 svgLineTo={300}
