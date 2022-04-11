@@ -397,11 +397,6 @@ export async function updateGoalStatusById(
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  /* TODO:
-    Disable for now until goals are unique grants. ?????
-  */
-  /*
-
   const updatedGoal = await Goal.update(
     {
       status: newStatus,
@@ -412,7 +407,6 @@ export async function updateGoalStatusById(
     { where: { id: goalId }, returning: true },
   );
   return updatedGoal[1][0];
-  */
 }
 
 export async function destroyGoal(goalId) {
