@@ -63,6 +63,17 @@ function Landing() {
 
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
+  const getFiltersWithAllRegions = () => {
+    const filtersWithAllRegions = [...allRegionsFilters];
+    filtersWithAllRegions.push({
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'is within',
+      query: defaultDate,
+    });
+    return filtersWithAllRegions;
+  };
+
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
@@ -80,12 +91,7 @@ function Landing() {
         condition: 'is within',
         query: defaultDate,
       }]
-      : [{
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      }],
+      : getFiltersWithAllRegions(),
   );
 
   const history = useHistory();
@@ -212,35 +218,36 @@ function Landing() {
   };
 
   // Apply filters.
-  const onApply = (newFilters) => {
-    setFilters([
-      ...newFilters,
-    ]);
+  const onApply = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters([
+        ...newFilters,
+      ]);
+    }
+
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
   };
 
   // Remove Filters.
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      setFilters(newFilters);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
     }
   };
-
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
 
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
@@ -295,9 +302,9 @@ function Landing() {
               applyButtonAria="apply filters for activity reports"
               filters={filters}
               onApplyFilters={onApply}
-              dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
+              allUserRegions={regions}
             />
           </Grid>
         </Grid>

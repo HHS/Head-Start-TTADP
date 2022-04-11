@@ -74,12 +74,16 @@ describe('Regional Dashboard page', () => {
       }],
     };
 
-    fetchMock.get(`${overViewUrl}?${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${reasonListUrl}?${lastThirtyDaysParams}`, reasonListResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${lastThirtyDaysParams}`, activityReportsResponse);
+    const allRegions = 'region.in[]=1&region.in[]=2';
 
+    // Initial Page Load.
+    fetchMock.get(`${overViewUrl}?${allRegions}&${lastThirtyDaysParams}`, overViewResponse);
+    fetchMock.get(`${reasonListUrl}?${allRegions}&${lastThirtyDaysParams}`, reasonListResponse);
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, totalHoursResponse);
+    fetchMock.get(`${topicFrequencyGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, topicFrequencyResponse);
+    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}&${lastThirtyDaysParams}`, activityReportsResponse);
+
+    // Only Region 1.
     fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse);
     fetchMock.get(`${reasonListUrl}?${regionInParams}`, reasonListResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse);
@@ -90,12 +94,15 @@ describe('Regional Dashboard page', () => {
     let heading = await screen.findByText(/regional tta activity dashboard/i);
     expect(heading).toBeVisible();
 
+    // Remove filter pill for region 1.
     const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
     act(() => userEvent.click(remove));
 
+    // Open filters menu.
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
 
+    // Change first filter to Region 1.
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     act(() => userEvent.selectOptions(lastTopic, 'region'));
 
@@ -105,12 +112,15 @@ describe('Regional Dashboard page', () => {
     const select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
     act(() => userEvent.selectOptions(select, 'Region 1'));
 
+    // Apply filter menu with Region 1 filter.
     const apply = await screen.findByRole('button', { name: /apply filters for regional dashboard/i });
     act(() => userEvent.click(apply));
 
+    // Verify page render after apply.
     heading = await screen.findByText(/regional tta activity dashboard/i);
     expect(heading).toBeVisible();
 
+    // Remove Region 1 filter pill.
     const removeRegion = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
     act(() => userEvent.click(removeRegion));
 
