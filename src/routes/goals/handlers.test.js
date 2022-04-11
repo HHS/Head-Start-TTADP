@@ -43,13 +43,9 @@ const mockResponse = {
 describe('retrieve goal', () => {
   it('checks permissions', async () => {
     const req = {
-      body: {
-        goals: [
-          {
-            regionId: 2,
-            recipientId: 2,
-          },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
@@ -62,7 +58,9 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grants: [{
+        regionId: 2,
+      }],
     });
 
     await retrieveGoal(req, mockResponse);
@@ -71,10 +69,9 @@ describe('retrieve goal', () => {
   });
   it('handles success', async () => {
     const req = {
-      body: {
-        goals: [
-          { regionId: 2, recipientId: 2 },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
@@ -103,10 +100,9 @@ describe('retrieve goal', () => {
 
   it('handles not found', async () => {
     const req = {
-      body: {
-        goals: [
-          { regionId: 2, recipientId: 2 },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
@@ -135,10 +131,9 @@ describe('retrieve goal', () => {
 
   it('handles failures', async () => {
     const req = {
-      body: {
-        goals: [
-          { regionId: 2, recipientId: 2 },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
@@ -176,10 +171,9 @@ describe('createGoals', () => {
 
   it('checks permissions', async () => {
     const req = {
-      body: {
-        goals: [
-          { regionId: 2 },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
@@ -202,10 +196,9 @@ describe('createGoals', () => {
 
   it('handles success', async () => {
     const req = {
-      body: {
-        goals: [
-          { regionId: 2 },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
@@ -229,10 +222,9 @@ describe('createGoals', () => {
 
   it('handles failures', async () => {
     const req = {
-      body: {
-        goals: [
-          { regionId: 2 },
-        ],
+      params: {
+        goalId: 2,
+        recipientId: 2,
       },
       session: {
         userId: 1,
