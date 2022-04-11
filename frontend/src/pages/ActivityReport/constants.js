@@ -42,8 +42,8 @@ export const recipientParticipants = [
 ];
 
 export const otherEntityParticipants = [
-  'Local/State Agency(ies)',
   'HSCO',
+  'Local/State Agency(ies)',
   'OCC Regional Office',
   'OHS Regional Office',
   'Regional Head Start Association',

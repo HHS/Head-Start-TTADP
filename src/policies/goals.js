@@ -24,9 +24,8 @@ export default class Goal {
     return this.canWriteInRegion(this.regionId);
   }
 
-  // just aliasing canCreate
   canEdit() {
-    return this.canCreate();
+    return this.canDelete();
   }
 
   // refactored to take a region id rather than directly check

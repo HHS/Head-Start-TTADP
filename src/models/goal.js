@@ -65,6 +65,9 @@ module.exports = (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
     },
+    previousStatus: {
+      type: DataTypes.STRING,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
