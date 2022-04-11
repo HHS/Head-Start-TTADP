@@ -348,7 +348,7 @@ export const truncateAuditTables = async () => {
 
   for await (const table of tablesToTruncate) {
     await sequelize.query(`ALTER TABLE "${table}" DISABLE TRIGGER all`);
-    await sequelize.query(`TRUNCATE TABLE "${table}"`);
+    await sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY`);
     await sequelize.query(`ALTER TABLE "${table}" ENABLE TRIGGER all`);
   }
 };
