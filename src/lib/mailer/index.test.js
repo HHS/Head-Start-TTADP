@@ -1,5 +1,4 @@
 import { createTransport } from 'nodemailer';
-import * as path from 'path';
 import {
   notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
 } from '.';
@@ -9,7 +8,7 @@ const mockManager = {
   email: 'mockManager@test.gov',
 };
 const mockApprover = {
-  user: mockManager,
+  User: mockManager,
   note: 'You are awesome! Nice work!',
 };
 const mockAuthor = {
@@ -33,7 +32,7 @@ const mockReport = {
   approvers: [mockApprover],
 };
 
-const reportPath = path.join(process.env.TTA_SMART_HUB_URI, 'activity-reports', String(mockReport.id));
+const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${mockReport.id}`;
 const jsonTransport = createTransport({ jsonTransport: true });
 
 const oldEnv = process.env;

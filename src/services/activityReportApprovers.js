@@ -1,4 +1,4 @@
-import { ActivityReportApprover } from '../models';
+import { ActivityReportApprover, User } from '../models';
 
 /**
  * Update or create new Approver
@@ -8,7 +8,7 @@ import { ActivityReportApprover } from '../models';
  */
 export async function upsertApprover(values, transaction) {
   // Create approver, on unique constraint violation do update
-  const [approver] = await ActivityReportApprover.upsert(values, {
+  let [approver] = await ActivityReportApprover.upsert(values, {
     transaction,
     returning: true,
   });
@@ -21,6 +21,17 @@ export async function upsertApprover(values, transaction) {
       transaction,
       individualHooks: true,
     });
+  }
+
+  if (approver) {
+    approver = approver.get({ plain: true });
+    const user = await User.findOne({
+      attributes: ['email', 'name', 'fullName'],
+      where: { id: approver.userId },
+    });
+    if (user) {
+      approver.User = user.get({ plain: true });
+    }
   }
 
   return approver;
@@ -74,5 +85,15 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
     await Promise.all(upsertApproverPromises);
   }
 
-  return ActivityReportApprover.findAll({ where: { activityReportId }, transaction });
+  return ActivityReportApprover.findAll({
+    where: { activityReportId },
+    include: [
+      {
+        model: User,
+        attributes: ['id', 'name', 'email'],
+        raw: true,
+      },
+    ],
+    transaction,
+  });
 }
