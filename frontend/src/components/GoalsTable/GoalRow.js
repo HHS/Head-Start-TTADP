@@ -201,7 +201,7 @@ function GoalRow({
             previousStatus={previousStatus}
           />
         </td>
-        <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
+        <td>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</td>
         <td className="text-wrap maxw-mobile">
           {goalText}
           {' '}

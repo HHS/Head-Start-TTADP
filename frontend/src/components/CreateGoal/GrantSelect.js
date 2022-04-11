@@ -22,7 +22,7 @@ export default function GrantSelect({
       <Label htmlFor="recipientGrantNumbers" className={isOnReport ? 'text-bold' : ''}>
         Recipient grant numbers
         {' '}
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+        {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
       {selectedGrants.length === 1 || isOnReport ? (
         <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>

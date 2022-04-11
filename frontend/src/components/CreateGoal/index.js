@@ -88,10 +88,6 @@ export default function CreateGoal({ recipient, regionId, match }) {
     async function fetchGoal() {
       const goal = await goalById(urlId, recipient.id.toString());
 
-      if (!goal) {
-        // handle error in UI
-      }
-
       // the API sends us back things in a format we expect
       setGoalName(goal.goalName);
       setStatus(goal.status);
@@ -113,7 +109,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
             resources: [
               // this is the expected format of a blank resource
               // all objectives start off with one
-              { key: uuidv4(), value: '' },
+              {
+                key: uuidv4(),
+                value: '',
+              },
             ],
           };
         }
@@ -134,6 +133,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     // wrapped in such a way as to prevent infinite loops
+    // if the goal has a name & the id isn't 'new'
     if (!goalName && urlId !== 'new') {
       fetchGoal();
     }
@@ -486,7 +486,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         <FontAwesomeIcon className="margin-right-1" color="#0166ab" icon={faArrowLeft} />
         <span>Back to Goals & Objectives</span>
       </Link>
-      <h1 className="landing margin-top-0 margin-bottom-1 margin-left-2">
+      <h1 className="page-heading margin-top-0 margin-bottom-1 margin-left-2">
         TTA Goals for
         {' '}
         {recipient.name}

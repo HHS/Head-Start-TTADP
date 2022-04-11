@@ -35,7 +35,7 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className="ttahub-recipient-record--heading margin-top-0 margin-bottom-1 margin-left-2">
+                <h1 className="ttahub-recipient-record--heading page-heading margin-top-0 margin-bottom-1 margin-left-2">
                   {recipientNameWithRegion}
                 </h1>
                 {children}

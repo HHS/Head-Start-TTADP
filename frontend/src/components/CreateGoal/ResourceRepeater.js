@@ -59,33 +59,35 @@ export default function ResourceRepeater({
             />
           </Label>
           {error}
-          { resources.map((r, i) => (
-            <div key={r.key} className="display-flex" id="resources">
-              <Label htmlFor={`resource-${i + 1}`} className="sr-only">
-                Resource
-                {' '}
-                { i + 1 }
-              </Label>
-              <TextInput
-                id={`resource-${i + 1}`}
-                onBlur={validateResources}
-                type="url"
-                placeholder="https://"
-                onChange={({ target: { value } }) => updateResource(value, i)}
-                value={r.value}
-              />
-              { resources.count > 1 ? (
-                <Button unstyled type="button" onClick={() => removeResource(i)}>
-                  <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
-                  <span className="sr-only">
-                    remove resource
-                    {' '}
-                    { i + 1 }
-                  </span>
-                </Button>
-              ) : null}
-            </div>
-          ))}
+          <div className="ttahub-resource-repeater">
+            { resources.map((r, i) => (
+              <div key={r.key} className="display-flex" id="resources">
+                <Label htmlFor={`resource-${i + 1}`} className="sr-only">
+                  Resource
+                  {' '}
+                  { i + 1 }
+                </Label>
+                <TextInput
+                  id={`resource-${i + 1}`}
+                  onBlur={validateResources}
+                  type="url"
+                  placeholder="https://"
+                  onChange={({ target: { value } }) => updateResource(value, i)}
+                  value={r.value}
+                />
+                { resources.length > 1 ? (
+                  <Button unstyled type="button" onClick={() => removeResource(i)}>
+                    <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
+                    <span className="sr-only">
+                      remove resource
+                      {' '}
+                      { i + 1 }
+                    </span>
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+          </div>
 
           <div className="margin-top-2 margin-bottom-4">
             <PlusButton text="Add new resource" onClick={addResource} />
