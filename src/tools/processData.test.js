@@ -12,7 +12,9 @@ import {
   RequestErrors,
   ZALGoal,
 } from '../models';
-import processData, { truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers } from './processData';
+import processData, {
+  truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers,
+} from './processData';
 import { REPORT_STATUSES } from '../constants';
 
 jest.mock('../logger');
