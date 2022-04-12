@@ -52,7 +52,7 @@ export default function ControlledDatePicker({
     const newValue = moment(v, DATE_DISPLAY_FORMAT);
 
     if (!newValue.isValid()) {
-      return 'Please enter a valid date';
+      return 'Enter valid date';
     }
 
     if (newValue.isBefore(min.moment)) {

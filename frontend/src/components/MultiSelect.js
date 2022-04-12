@@ -166,7 +166,7 @@ function MultiSelect({
         const values = value ? getValues(value) : value;
         return (
           <Selector
-            className="margin-top-1"
+            className="ttahub-multi-select margin-top-1"
             id={name}
             value={values}
             onChange={(event) => {

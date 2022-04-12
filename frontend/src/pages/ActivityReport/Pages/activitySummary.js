@@ -133,7 +133,7 @@ const ActivitySummary = ({
               label="Recipient"
               value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or other entity' })}
+              inputRef={register({ required: 'Select one' })}
               required
             />
             <Radio
@@ -142,7 +142,7 @@ const ActivitySummary = ({
               label="Other entity"
               value="other-entity"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or other entity' })}
+              inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
         </div>
@@ -158,7 +158,7 @@ const ActivitySummary = ({
               valueProperty="activityRecipientId"
               labelProperty="name"
               simple={false}
-              required="Please select at least one recipient or other entity"
+              required="Select at least one"
               options={selectedRecipients}
               placeholderText={placeholderText}
             />
@@ -184,14 +184,14 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Target Populations addressed. You may choose more than one."
+            label="Target Populations addressed"
             name="targetPopulations"
             required
           >
             <MultiSelect
               name="targetPopulations"
               control={control}
-              required="Please select at least one target population"
+              required="Select at least one"
               options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
               placeholderText="- Select -"
             />
@@ -212,7 +212,7 @@ const ActivitySummary = ({
               label="Recipient"
               value="recipient"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or regional office' })}
+              inputRef={register({ required: 'Select one' })}
             />
             <Radio
               id="requestorRegionalOffice"
@@ -220,7 +220,7 @@ const ActivitySummary = ({
               label="Regional Office"
               value="regionalOffice"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify recipient or regional office' })}
+              inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
         </div>
@@ -229,13 +229,11 @@ const ActivitySummary = ({
             label="Reasons"
             name="reason"
           >
-            <div className="usa-hint">
-              Select at least one
-            </div>
             <MultiSelect
               name="reason"
               control={control}
               options={reasons.map((reason) => ({ value: reason, label: reason }))}
+              required="Select at least one"
               placeholderText={placeholderText}
             />
           </FormItem>
@@ -263,6 +261,7 @@ const ActivitySummary = ({
                   setEndDate={setEndDate}
                   maxDate={endDate}
                   isStartDate
+                  required="this is a test"
                 />
               </FormItem>
             </Grid>
@@ -303,7 +302,7 @@ const ActivitySummary = ({
                   step={0.5}
                   inputRef={
                     register({
-                      required: 'Please enter the duration of the activity',
+                      required: 'Enter duration',
                       valueAsNumber: true,
                       pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
                       min: { value: 0, message: 'Duration can not be negative' },
@@ -323,8 +322,8 @@ const ActivitySummary = ({
             name="ttaType"
             fieldSetWrapper
           >
-            {renderCheckbox('ttaType', 'training', 'Training', 'Please specify the type of TTA provided')}
-            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Please specify the type of TTA provided')}
+            {renderCheckbox('ttaType', 'training', 'Training', 'Select at least one')}
+            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Select at least one')}
           </FormItem>
         </div>
         <div className="margin-top-2">
@@ -339,7 +338,7 @@ const ActivitySummary = ({
               label="Virtual"
               value="virtual"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify how the activity was conducted' })}
+              inputRef={register({ required: 'Select one' })}
             />
             <Radio
               id="delivery-method-in-person"
@@ -347,7 +346,7 @@ const ActivitySummary = ({
               label="In Person"
               value="in-person"
               className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Please specify how the activity was conducted' })}
+              inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
           <div aria-live="polite">
@@ -394,6 +393,7 @@ const ActivitySummary = ({
               options={
               participants.map((participant) => ({ value: participant, label: participant }))
             }
+              required="Select at least one"
             />
           </FormItem>
         </div>
@@ -411,7 +411,7 @@ const ActivitySummary = ({
                   min={1}
                   inputRef={
                     register({
-                      required: 'Please enter the number of participants involved in the activity',
+                      required: 'Enter number of participants',
                       valueAsNumber: true,
                       min: {
                         value: 1,

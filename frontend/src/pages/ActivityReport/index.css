@@ -88,3 +88,7 @@
 .smart-hub--text-area__resize-vertical .rdw-editor-main {
   resize: vertical;
 }
+
+.usa-form-group--error .ttahub-multi-select [class$="-control"] {
+  border: 2px solid #b50909;
+}
