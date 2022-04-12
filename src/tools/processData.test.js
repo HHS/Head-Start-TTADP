@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   sequelize,
   ActivityReport,
@@ -9,8 +10,11 @@ import {
   NextStep,
   Permission,
   RequestErrors,
+  ZALGoal,
 } from '../models';
-import processData, { hideUsers, hideRecipientsGrants, bootstrapUsers } from './processData';
+import processData, {
+  truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers,
+} from './processData';
 import { REPORT_STATUSES } from '../constants';
 
 jest.mock('../logger');
@@ -223,6 +227,20 @@ describe('processData', () => {
 
     const requestErrors = await RequestErrors.findAll();
     expect(requestErrors.length).toBe(0);
+  });
+
+  it('truncates audit tables', async () => {
+    await ZALGoal.create({
+      data_id: 1,
+      dml_type: 'INSERT',
+      new_row_data: { test: 'test' },
+      dml_timestamp: new Date().toISOString(),
+      dml_by: 1,
+      dml_txid: uuidv4(),
+    });
+
+    await truncateAuditTables();
+    expect(await ZALGoal.count()).toBe(0);
   });
 
   describe('hideUsers', () => {
