@@ -3,7 +3,7 @@ services:
   api-docs:
     image: redocly/redoc
     ports:
-      - "5000:80"
+      - "5003:80"
     volumes:
       - "./docs/openapi/:/usr/share/nginx/html/swagger/"
     environment:
