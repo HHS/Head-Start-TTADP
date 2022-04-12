@@ -80,7 +80,9 @@
     "updateChildInvolvementLegacyTargetPopulation": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
     "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
     "updateParticipantsList": "node ./build/server/tools/updateParticipantsListCLI.js",
-    "updateParticipantsList:local": "./node_modules/.bin/babel-node ./src/tools/updateParticipantsListCLI.js"
+    "updateParticipantsList:local": "./node_modules/.bin/babel-node ./src/tools/updateParticipantsListCLI.js",
+    "updateCreatorRoles": "node ./build/server/tools/updateCreatorRolesCLI.js",
+    "updateCreatorRoles:local": "./node_modules/.bin/babel-node ./src/tools/updateCreatorRolesCLI.js"
   },
   "repository": {
     "type": "git",
@@ -93,6 +95,7 @@
     "json-pointer": "0.6.2",
     "marked": "^4.0.10",
     "minimist": "^1.2.6",
+    "moment": "^2.29.2",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7"
   },
@@ -206,7 +209,7 @@
     "html-to-text": "^8.1.0",
     "http-codes": "^1.0.0",
     "lodash": "^4.17.20",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
     "newrelic": "^8.7.0",

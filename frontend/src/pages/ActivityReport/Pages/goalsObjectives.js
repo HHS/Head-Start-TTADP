@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Fieldset, Label } from '@trussworks/react-uswds';
+import { Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { isUndefined } from 'lodash';
-
-import HtmlReviewItem from './Review/HtmlReviewItem';
-import Section from './Review/ReviewSection';
 import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
-import { reportIsEditable } from '../../../utils';
-import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
@@ -38,18 +32,12 @@ const GoalsObjectives = () => {
   }, [grantIds]);
 
   const showGoals = isRecipientReport && hasGrants;
-  // Move context.
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
-        <Label htmlFor="context">Provide background or context for this activity</Label>
-        <div className="smart-hub--text-area__resize-vertical margin-top-1">
-          <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
-        </div>
-      </Fieldset>
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for other entity TTA">
           <ObjectivePicker />
@@ -73,29 +61,13 @@ GoalsObjectives.propTypes = {};
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    context,
-    calculatedStatus,
     activityRecipientType,
   } = watch();
 
-  const canEdit = reportIsEditable(calculatedStatus);
   const otherEntity = activityRecipientType === 'other-entity';
 
   return (
     <>
-      <Section
-        hidePrint={isUndefined(context)}
-        key="context"
-        basePath="goals-objectives"
-        anchor="context"
-        title="Context"
-        canEdit={canEdit}
-      >
-        <HtmlReviewItem
-          label="Context"
-          name="context"
-        />
-      </Section>
       {!otherEntity
         && <RecipientReviewSection />}
       {otherEntity
