@@ -61,13 +61,11 @@ describe('goals objectives', () => {
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
-      await screen.findByText('Context');
       expect(await screen.findByText('Goals and objectives')).toBeVisible();
     });
 
     it('the display goals section does not show if no grants are selected', async () => {
       renderGoals([], 'recipient');
-      await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
     });
   });
@@ -75,7 +73,6 @@ describe('goals objectives', () => {
   describe('when activity recipient type is not "recipient"', () => {
     it('the objectives section is displayed', async () => {
       renderGoals([1], 'otherEntity');
-      await screen.findByText('Context');
       expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
     });
   });

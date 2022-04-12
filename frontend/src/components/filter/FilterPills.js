@@ -22,7 +22,7 @@ export function Pill({
     if (filterConfigToUse) {
       return filterConfigToUse.display;
     }
-    return null;
+    return topic === 'region' ? 'Region' : null;
   };
 
   const filterName = determineFilterName();
