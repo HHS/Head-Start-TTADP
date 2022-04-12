@@ -9,3 +9,4 @@ AUTH_BASE: https://hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
+SEND_NOTIFICATIONS: "false"
