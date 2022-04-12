@@ -29,7 +29,7 @@
     "lint:fix:single": "eslint --fix",
     "lint:fix:all": "yarn lint:fix && yarn --cwd frontend lint:fix",
     "clean": "rm -rf coverage reports frontend/coverage frontend/reports frontend/build",
-    "docs:serve": "npx redoc-cli serve -p 5000 docs/openapi/index.yaml",
+    "docs:serve": "npx redoc-cli serve -p 5003 docs/openapi/index.yaml",
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn cucumber",
     "migrate:create": "npx sequelize-cli migration:generate --name",
@@ -74,15 +74,7 @@
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
-    "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
-    "updateChildInvolvementTargetPopulation": "node ./build/server/tools/updateChildInvolvementTargetPopulationCLI.js",
-    "updateChildInvolvementTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementTargetPopulationCLI.js",
-    "updateChildInvolvementLegacyTargetPopulation": "node ./build/server/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
-    "updateChildInvolvementLegacyTargetPopulation:local": "./node_modules/.bin/babel-node ./src/tools/updateChildInvolvementLegacyTargetPopulationCLI.js",
-    "updateParticipantsList": "node ./build/server/tools/updateParticipantsListCLI.js",
-    "updateParticipantsList:local": "./node_modules/.bin/babel-node ./src/tools/updateParticipantsListCLI.js",
-    "updateCreatorRoles": "node ./build/server/tools/updateCreatorRolesCLI.js",
-    "updateCreatorRoles:local": "./node_modules/.bin/babel-node ./src/tools/updateCreatorRolesCLI.js"
+    "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js"
   },
   "repository": {
     "type": "git",
