@@ -208,9 +208,13 @@ function Navigator({
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
-                    <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
-                    <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
+                    <Button className="margin-right-1" type="button" onClick={onContinue}>Save and Continue</Button>
+                    <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
+                    {
+                      page.position <= 1
+                        ? null
+                        : <Button outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                    }
                   </div>
                 </Form>
                 <DismissingComponentWrapper
