@@ -2,11 +2,11 @@
 /* eslint-disable quotes */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import sequelize, { Op } from 'sequelize';
+import { Op } from 'sequelize';
 import cheerio from 'cheerio';
 import faker from '@faker-js/faker';
 import {
-  ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors,
+  ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors, sequelize,
 } from '../models';
 
 const SITE_ACCESS = 1;
@@ -338,6 +338,21 @@ export const bootstrapUsers = async () => {
   }
 };
 
+export const truncateAuditTables = async () => {
+  const tablesToTruncate = await sequelize.query(`
+    SELECT table_name FROM information_schema.tables
+    WHERE
+      table_name like 'ZAL%' AND
+      table_name not in ('ZALDDL', 'ZALZADescriptor', 'ZALZAFilter')
+  `, { raw: true });
+
+  for await (const table of tablesToTruncate) {
+    await sequelize.query(`ALTER TABLE "${table}" DISABLE TRIGGER all`);
+    await sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY`);
+    await sequelize.query(`ALTER TABLE "${table}" ENABLE TRIGGER all`);
+  }
+};
+
 const processData = async (mockReport) => {
   const activityReportId = mockReport ? mockReport.id : null;
   const where = activityReportId ? { id: activityReportId } : {};
@@ -359,6 +374,8 @@ const processData = async (mockReport) => {
   await hideUsers(userIds);
   // Hide recipients and grants
   await hideRecipientsGrants(recipientsGrants);
+
+  await truncateAuditTables();
 
   // loop through the found reports
   for await (const report of reports) {
