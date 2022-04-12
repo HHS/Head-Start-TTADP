@@ -10,13 +10,15 @@
  * threshold as well.
 */
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import draftToHtml from 'draftjs-to-html';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 import { getEditorState } from '../utils';
+
+const BASE_EDITOR_HEIGHT = '10rem';
 
 /**
  * Component that provides basic Rich Text Editor.
@@ -29,24 +31,41 @@ import { getEditorState } from '../utils';
 const RichEditor = ({
   ariaLabel, value, onChange,
 }) => {
+  const [height, setHeight] = useState(BASE_EDITOR_HEIGHT);
+
+  const editorRef = useRef();
+
   let defaultEditorState;
   if (value) {
     defaultEditorState = getEditorState(value);
   }
 
   const onInternalChange = (currentContentState) => {
+    // an improvement would be converting to rems to match the initial height but
+    // it might not matter since we're deriving the scroll height directly from the client here
+    setHeight(editorRef.current && editorRef.current.scrollHeight ? `${editorRef.current.scrollHeight}px` : BASE_EDITOR_HEIGHT);
+
     const html = draftToHtml(currentContentState);
     onChange(html);
   };
+
   return (
     <Editor
+      // I wish I could link to a reason/some documentation why I had to do this
+      // but honestly I just reverse engineered the errors I was getting in the console
+      // until it worked (not setting a value to ref said something to the effect of
+      // 'editorRef is not a function' and we went from there)
+      editorRef={(ref) => {
+        editorRef.current = ref;
+        return ref;
+      }}
       spellCheck
       defaultEditorState={defaultEditorState}
       onChange={onInternalChange}
       ariaLabel={ariaLabel}
       handlePastedText={() => false}
       tabIndex="0"
-      editorStyle={{ border: '1px solid #565c65', height: '10rem' }}
+      editorStyle={{ border: '1px solid #565c65', height }}
       toolbar={{
         options: ['inline', 'blockType', 'list'],
         inline: {
