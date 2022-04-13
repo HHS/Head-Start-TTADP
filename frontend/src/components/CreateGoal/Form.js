@@ -37,6 +37,7 @@ export default function Form({
   status,
   datePickerKey,
   unchangingApiData,
+  fetchError,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -68,6 +69,7 @@ export default function Form({
 
   return (
     <div className="ttahub-create-goals-form">
+      { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <h2>Recipient TTA goal</h2>
       <div>
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
@@ -192,13 +194,17 @@ Form.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   unchangingApiData: PropTypes.objectOf(
     PropTypes.shape({
-      resources: PropTypes.arrayOf(PropTypes.string),
+      resources: PropTypes.arrayOf(PropTypes.shape({
+        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        value: PropTypes.string,
+      })),
       topics: PropTypes.arrayOf(PropTypes.shape({
         label: PropTypes.string,
         value: PropTypes.number,
       })),
     }),
   ).isRequired,
+  fetchError: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

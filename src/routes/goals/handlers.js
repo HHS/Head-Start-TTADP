@@ -3,7 +3,7 @@ import {
   createOrUpdateGoals,
   destroyGoal,
   goalByIdWithActivityReportsAndRegions,
-  goalById,
+  goalByIdAndRecipient,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -124,7 +124,10 @@ export async function retrieveGoal(req, res) {
       return;
     }
 
-    const retrievedGoal = await goalById(parseInt(goalId, 10), parseInt(recipientId, 10));
+    const gId = parseInt(goalId, 10);
+    const rId = parseInt(recipientId, 10);
+
+    const retrievedGoal = await goalByIdAndRecipient(gId, rId);
 
     if (!retrievedGoal) {
       res.sendStatus(404);

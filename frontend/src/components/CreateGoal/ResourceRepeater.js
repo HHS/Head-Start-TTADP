@@ -45,8 +45,8 @@ export default function ResourceRepeater({
       { savedResources && savedResources.length
         ? (
           <>
-            <p className="usa-prose margin-bottom-0">Resource links</p>
-            <p className="usa-prose margin-top-0">{savedResources.join(', ')}</p>
+            <p className="usa-prose margin-bottom-0 text-bold">Resource links</p>
+            <p className="usa-prose margin-top-0">{savedResources.map(({ value }) => value).join(', ')}</p>
           </>
         )
         : null }
@@ -107,5 +107,8 @@ ResourceRepeater.propTypes = {
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  savedResources: PropTypes.arrayOf(PropTypes.string).isRequired,
+  savedResources: PropTypes.arrayOf(PropTypes.shape({
+    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    value: PropTypes.string,
+  })).isRequired,
 };

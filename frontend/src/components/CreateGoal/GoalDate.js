@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import {
   DatePicker, FormGroup, Label,
 } from '@trussworks/react-uswds';
-
 import QuestionTooltip from './QuestionTooltip';
+import { formatEndDateForPicker } from './constants';
 
 export default function GoalDate({
   error,
@@ -14,7 +13,7 @@ export default function GoalDate({
   validateEndDate,
   datePickerKey,
 }) {
-  const endDateFormatted = moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD');
+  const f = formatEndDateForPicker(endDate);
 
   return (
     <FormGroup error={error.props.children}>
@@ -29,7 +28,7 @@ export default function GoalDate({
         id="goalEndDate"
         name="goalEndDate"
         onChange={setEndDate}
-        defaultValue={endDateFormatted}
+        defaultValue={f}
         onBlur={validateEndDate}
         key={datePickerKey}
         required
