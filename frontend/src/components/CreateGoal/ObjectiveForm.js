@@ -24,10 +24,11 @@ export default function ObjectiveForm({
   errors,
   topicOptions,
   unchangingApiData,
+  goalStatus,
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources,
+    title, topics, resources, status,
   } = objective;
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
@@ -118,11 +119,21 @@ export default function ObjectiveForm({
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
       />
+
+      { goalStatus !== 'Draft'
+        ? (
+          <>
+            <p className="usa-prose margin-bottom-0 text-bold">Objective status</p>
+            <p className="usa-prose margin-top-0">{status}</p>
+          </>
+        )
+        : null }
     </div>
   );
 }
 
 ObjectiveForm.propTypes = {
+  goalStatus: PropTypes.string.isRequired,
   unchangingApiData: PropTypes.objectOf(
     PropTypes.shape({
       resources: PropTypes.arrayOf(PropTypes.shape({
