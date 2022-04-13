@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Dropdown, FormGroup, Label,
+  Button,
 } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from './ObjectiveTopics';
@@ -23,12 +23,11 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
-  goalStatus,
   unchangingApiData,
 }) {
   // the parent objective data from props
   const {
-    id, title, topics, resources, status,
+    title, topics, resources,
   } = objective;
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
@@ -46,7 +45,6 @@ export default function ObjectiveForm({
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
   const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
-  const setStatus = (e) => setObjective({ ...objective, status: e.target.value });
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -120,19 +118,6 @@ export default function ObjectiveForm({
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
       />
-
-      { goalStatus !== 'Draft'
-        ? (
-          <FormGroup>
-            <Label htmlFor={`obj-status-${id}`}>Objective status</Label>
-            <Dropdown id={`obj-status-${id}`} name={`obj-status-${id}`} onChange={setStatus} value={status}>
-              <option>Not started</option>
-              <option>In progress</option>
-            </Dropdown>
-          </FormGroup>
-        )
-        : null}
-
     </div>
   );
 }
@@ -140,7 +125,10 @@ export default function ObjectiveForm({
 ObjectiveForm.propTypes = {
   unchangingApiData: PropTypes.objectOf(
     PropTypes.shape({
-      resources: PropTypes.arrayOf(PropTypes.string),
+      resources: PropTypes.arrayOf(PropTypes.shape({
+        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        value: PropTypes.string,
+      })),
       topics: PropTypes.arrayOf(PropTypes.shape({
         label: PropTypes.string,
         value: PropTypes.number,
@@ -152,7 +140,6 @@ ObjectiveForm.propTypes = {
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
-  goalStatus: PropTypes.string.isRequired,
   objective: PropTypes.shape({
     id: PropTypes.oneOfType([
       PropTypes.string,

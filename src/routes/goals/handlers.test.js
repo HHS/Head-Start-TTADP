@@ -10,7 +10,7 @@ import {
   createOrUpdateGoals,
   destroyGoal,
   goalByIdWithActivityReportsAndRegions,
-  goalById,
+  goalByIdAndRecipient,
 } from '../../services/goals';
 
 jest.mock('../../services/users', () => ({
@@ -22,7 +22,7 @@ jest.mock('../../services/goals', () => ({
   createOrUpdateGoals: jest.fn(),
   destroyGoal: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),
-  goalById: jest.fn(),
+  goalByIdAndRecipient: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -93,7 +93,7 @@ describe('retrieve goal', () => {
       grants: [{ regionId: 2 }],
     });
 
-    goalById.mockResolvedValueOnce({});
+    goalByIdAndRecipient.mockResolvedValueOnce({});
     await retrieveGoal(req, mockResponse);
 
     expect(mockResponse.json).toHaveBeenCalledWith({});
@@ -124,7 +124,7 @@ describe('retrieve goal', () => {
       grants: [{ regionId: 2 }],
     });
 
-    goalById.mockResolvedValueOnce(null);
+    goalByIdAndRecipient.mockResolvedValueOnce(null);
     await retrieveGoal(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
@@ -155,7 +155,7 @@ describe('retrieve goal', () => {
       grants: [{ regionId: 2 }],
     });
 
-    goalById.mockImplementationOnce(() => {
+    goalByIdAndRecipient.mockImplementationOnce(() => {
       throw new Error();
     });
 

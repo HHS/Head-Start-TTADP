@@ -12,6 +12,7 @@ import {
   Recipient,
   ActivityReport,
   Topic,
+  Program,
   sequelize,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
@@ -22,74 +23,90 @@ const logContext = {
   namespace,
 };
 
-export async function goalById(id, recipientId) {
-  return Goal.findOne({
-    attributes: [
-      'id',
-      'endDate',
-      ['name', 'goalName'],
-      'status',
-    ],
-    where: {
-      id,
+const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
+  attributes: [
+    'id',
+    'endDate',
+    ['name', 'goalName'],
+    'status',
+    [sequelize.col('grants.regionId'), 'regionId'],
+    [sequelize.col('grants.recipient.id'), 'recipientId'],
+  ],
+  where: {
+    id,
+  },
+  include: [
+    {
+      attributes: [
+        'title',
+        'id',
+        'status',
+      ],
+      model: Objective,
+      as: 'objectives',
+      include: [
+        {
+          model: ObjectiveResource,
+          as: 'resources',
+          attributes: [
+            ['userProvidedUrl', 'value'],
+            ['id', 'key'],
+          ],
+        },
+        {
+          model: Topic,
+          as: 'topics',
+          attributes: [
+            ['id', 'value'],
+            ['name', 'label'],
+          ],
+        },
+        {
+          model: ActivityReport,
+          as: 'activityReports',
+          where: {
+            calculatedStatus: {
+              [Op.not]: REPORT_STATUSES.DELETED,
+            },
+          },
+          required: false,
+        },
+      ],
     },
-    include: [
-      {
-        attributes: [
-          'title',
-          'id',
-          'status',
-        ],
-        model: Objective,
-        as: 'objectives',
-        include: [
-          {
-            model: ObjectiveResource,
-            as: 'resources',
-            attributes: [
-              ['userProvidedUrl', 'value'],
-              ['id', 'key'],
-            ],
+    {
+      model: Grant,
+      as: 'grants',
+      attributes: [
+        'id',
+        'number',
+        'regionId',
+      ],
+      include: [
+        {
+          attributes: ['programType'],
+          model: Program,
+          as: 'programs',
+        },
+        {
+          attributes: ['id'],
+          model: Recipient,
+          as: 'recipient',
+          where: {
+            id: recipientId,
           },
-          {
-            model: Topic,
-            as: 'topics',
-            attributes: [
-              ['id', 'value'],
-              ['name', 'label'],
-            ],
-          },
-          {
-            model: ActivityReport,
-            as: 'activityReports',
-            where: {
-              calculatedStatus: {
-                [Op.not]: REPORT_STATUSES.DELETED,
-              },
-            },
-            required: false,
-          },
-        ],
-      },
-      {
-        model: Grant,
-        as: 'grants',
-        attributes: [
-          'id',
-        ],
-        include: [
-          {
-            model: Recipient,
-            as: 'recipient',
-            where: {
-              id: recipientId,
-            },
-            required: true,
-          },
-        ],
-      },
-    ],
-  });
+          required: true,
+        },
+      ],
+    },
+  ],
+});
+
+export async function goalByIdAndRecipient(id, recipientId) {
+  return Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
+}
+
+export async function goalsByIdAndRecipient(ids, recipientId) {
+  return Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
@@ -179,11 +196,20 @@ export async function createOrUpdateGoals(goals) {
   // for now
   return goals;
 
-  // return sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
+  // there can only be one on the goal form (multiple grants maybe, but one recipient)
+  // we will need this after the transaction, as trying to do a find all within a transaction
+  // yields the previous data values
+  // let recipient;
+
+  // eslint-disable-next-line max-len
+  // const goalIds = await sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
   //   const {
   //     id, grants, recipientId, regionId, objectives,
   //     ...fields
   //   } = goalData;
+
+  //   // there can only be one on the goal form (multiple grants maybe, but one recipient)
+  //   recipient = recipientId;
 
   //   const options = {
   //     ...fields,
@@ -243,13 +269,14 @@ export async function createOrUpdateGoals(goals) {
 
   //       // topics
   //       const objectiveTopics = await Promise.all(
-  //          (topics.map((ot) => ObjectiveTopic.findOrCreate({
-  //         where: {
-  //           objectiveId: objective.id,
-  //           topicId: ot.value,
-  //         },
-  //         transaction,
-  //       }))));
+  //         (topics.map((ot) => ObjectiveTopic.findOrCreate({
+  //           where: {
+  //             objectiveId: objective.id,
+  //             topicId: ot.value,
+  //           },
+  //           transaction,
+  //         }))),
+  //       );
 
   //       // cleanup objective topics
   //       await ObjectiveTopic.destroy({
@@ -264,21 +291,22 @@ export async function createOrUpdateGoals(goals) {
   //       // resources
   //       const objectiveResources = await Promise.all(
   //         resources.filter(({ value }) => value).map(
-  //            ({ value }) => ObjectiveResource.findOrCreate({
-  //           where: {
-  //             userProvidedUrl: value,
-  //             objectiveId: objective.id,
-  //           },
-  //           transaction,
-  //         })),
+  //           ({ value }) => ObjectiveResource.findOrCreate({
+  //             where: {
+  //               userProvidedUrl: value,
+  //               objectiveId: objective.id,
+  //             },
+  //             transaction,
+  //           }),
+  //         ),
   //       );
 
   //       // cleanup objective resources
   //       await ObjectiveResource.destroy({
   //         where: {
   //           id: {
-  //             [Op.notIn]: objectiveResources.length ?
-  // objectiveResources.map(([or]) => or.id) : [],
+  //             [Op.notIn]: objectiveResources.length
+  //               ? objectiveResources.map(([or]) => or.id) : [],
   //           },
   //           objectiveId: objective.id,
   //         },
@@ -295,15 +323,12 @@ export async function createOrUpdateGoals(goals) {
   //   // this function deletes unused objectives
   //   await cleanupObjectivesForGoal(goal.id, newObjectives);
 
-  //   // we want to return the data in roughly the form it was provided
-  //   return {
-  //     ...goal.dataValues,
-  //     grants,
-  //     recipientId,
-  //     regionId,
-  //     objectives: newObjectives,
-  //   };
+  //   return goal.id;
   // })));
+
+  // // we have to do this outside of the transaction otherwise
+  // // we get the old values
+  // return goalsByIdAndRecipient(goalIds, recipient);
 }
 
 export async function goalsForGrants(grantIds) {

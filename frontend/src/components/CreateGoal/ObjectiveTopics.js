@@ -14,13 +14,17 @@ export default function ObjectiveTopics({
   topics,
   onChangeTopics,
 }) {
+  const savedTopicIds = savedTopics ? savedTopics.map(({ value }) => value) : [];
+
+  const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.value));
+
   return (
     <>
       { savedTopics && savedTopics.length
         ? (
           <>
-            <span>Topics</span>
-            {savedTopics.map((topic) => topic.label).join(', ')}
+            <p className="usa-prose margin-bottom-0 text-bold">Topics</p>
+            <p className="usa-prose margin-top-0">{savedTopics.map((topic) => topic.label).join(', ')}</p>
           </>
         )
         : null}
@@ -46,7 +50,7 @@ export default function ObjectiveTopics({
           }}
           className="usa-select"
           isMulti
-          options={topicOptions}
+          options={filteredOptions}
           onBlur={validateObjectiveTopics}
           value={topics}
           onChange={onChangeTopics}

@@ -12,7 +12,7 @@ import db, {
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
 
-import { goalById } from '../goals';
+import { goalByIdAndRecipient } from '../goals';
 import { REPORT_STATUSES } from '../../constants';
 
 describe('goalById', () => {
@@ -137,7 +137,7 @@ describe('goalById', () => {
   });
 
   it('retrieves a goal with associated data', async () => {
-    const goal = await goalById(goalOnActivityReport.id, grantRecipient.id);
+    const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
     // seems to be something with the aliasing attributes that requires
     // them to be accessed in this way
     expect(goal.dataValues.goalName).toBe('Goal on activity report');
