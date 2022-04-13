@@ -91,7 +91,7 @@ export default {
   path: 'supporting-attachments',
   reviewSection: () => <ReviewSection />,
   review: false,
-  render: (reportId) => (
+  render: (_additionalData, _formData, reportId) => (
     <SupportingAttachments
       reportId={reportId}
     />
