@@ -158,9 +158,20 @@ ObjectiveForm.propTypes = {
       value: PropTypes.string,
     })),
     status: PropTypes.string,
-  }).isRequired,
+  }),
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
+};
+
+ObjectiveForm.defaultProps = {
+  objective: {
+    id: '',
+    title: '',
+    topics: [],
+    activityReports: [],
+    resources: [],
+    status: '',
+  },
 };
