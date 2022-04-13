@@ -23,19 +23,32 @@ const tryJsonParse = (data) => {
   return newData;
 };
 
+const pgSetConfigIfNull = (settingName, value, alias) => `
+  set_config(
+    '${settingName}',
+    COALESCE(current_setting('${settingName}', true), '${value}'),
+    true
+  ) as "${alias}"`;
+
 const addAuditTransactionSettings = async (sequelize, instance, options, type) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
+
+  const statements = [
+    pgSetConfigIfNull('audit.loggedUser', loggedUser, 'loggedUser'),
+    pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
+    pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
+    pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
+  ];
+
   if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
     const result = await sequelize.queryInterface.sequelize.query(
       `SELECT
         -- Type: ${type}
-        set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
-        set_config('audit.transactionId', '${transactionId}', TRUE) as "transactionId",
-        set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
-        set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
+        ${statements.join(',')}
+      `,
       { transaction: options.transaction },
     );
     auditLogger.info(JSON.stringify(result));
