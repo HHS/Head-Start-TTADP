@@ -111,7 +111,7 @@ describe('ObjectiveForm', () => {
     const setObjective = jest.fn();
     const unchangingApiData = {
       [defaultObjective.id]: {
-        resources: ['gee-whix.com'],
+        resources: [{ key: 'sdf', value: 'gee-whix.com' }],
         topics: [],
       },
     };

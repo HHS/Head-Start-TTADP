@@ -57,6 +57,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [showForm, setShowForm] = useState(true);
   const [fetchError, setFetchError] = useState('');
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   // this will store our created goals (vs the goal that's occupying the form at present)
   const [createdGoals, setCreatedGoals] = useState([]);
@@ -97,6 +98,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   // for fetching goal data from api if it exists
   useEffect(() => {
     async function fetchGoal() {
+      setFetchAttempted(true); // as to only fetch once
       try {
         const goal = await goalById(urlId, recipient.id.toString());
 
@@ -170,12 +172,11 @@ export default function CreateGoal({ recipient, regionId, match }) {
       }
     }
 
-    // wrapped in such a way as to prevent infinite loops
-    // if the goal has a name & the id isn't 'new'
-    if (!goalName && urlId !== 'new') {
+    // only fetch once, on load, and only if the id isn't 'new'
+    if (!fetchAttempted && urlId !== 'new') {
       fetchGoal();
     }
-  }, [endDate, errors, goalName, recipient.id, urlId]);
+  }, [errors, fetchAttempted, recipient.id, urlId]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -227,7 +228,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const validateEndDate = () => {
     let error = <></>;
 
-    if (!endDate || !moment(endDate, 'YYYY-MM-DD').isValid()) {
+    if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
       error = <span className="usa-error-message">Enter a valid date</span>;
     }
 
@@ -275,8 +276,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
       }
 
       if (!objective.topics.length
-        && !unchangingApiData[objective.id]
-        && !unchangingApiData[objective.id].topics.length) {
+        || (unchangingApiData[objective.id] && !unchangingApiData[objective.id].topics.length)) {
         isValid = false;
         return [
           <></>,
