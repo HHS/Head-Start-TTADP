@@ -148,7 +148,11 @@ ReviewSubmit.propTypes = {
     state: PropTypes.string,
     label: PropTypes.string,
   })).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment).isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
+};
+
+ReviewSubmit.defaultProps = {
+  lastSaveTime: undefined,
 };
 
 export default ReviewSubmit;

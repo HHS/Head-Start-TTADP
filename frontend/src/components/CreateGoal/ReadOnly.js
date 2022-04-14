@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
-import './ReadOnly.css';
 import ContextMenu from '../ContextMenu';
 import Modal from '../Modal';
+
+import './ReadOnly.css';
 
 export default function ReadOnly({
   onEdit,
@@ -53,11 +53,11 @@ export default function ReadOnly({
               <h4 className="margin-bottom-1">Recipient grant numbers</h4>
               { goal.grants.map((g) => <p key={`grant${g.value}`}>{g.label}</p>) }
               <h4 className="margin-bottom-1">Goal</h4>
-              <p className="margin-top-0">{goal.name}</p>
+              <p className="margin-top-0">{goal.goalName}</p>
               {goal.endDate ? (
                 <>
-                  <h4 className="margin-bottom-1">Goal end date</h4>
-                  <p className="margin-top-0">{moment(goal.endDate, 'yyyy-mm-dd').format('mm/DD/yyyy')}</p>
+                  <h4 className="margin-bottom-1">Estimated close date</h4>
+                  <p className="margin-top-0">{goal.endDate}</p>
                 </>
               ) : null }
               { goal.objectives.map((objective) => (
