@@ -6,19 +6,22 @@ import {
 
 export default function ObjectiveTitle({
   error,
-  isOnReport,
+  isOnApprovedReport,
   title,
   onChangeTitle,
   validateObjectiveTitle,
+  status,
 }) {
+  const readOnly = isOnApprovedReport || status === 'Complete';
+
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>
-      <Label htmlFor="objectiveTitle" className={isOnReport ? 'text-bold' : ''}>
+      <Label htmlFor="objectiveTitle" className={readOnly ? 'text-bold' : ''}>
         TTA objective
         {' '}
-        { !isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
+        { !readOnly ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
-      { isOnReport && title ? (
+      { readOnly && title ? (
         <p className="margin-top-0 usa-prose">{title}</p>
       ) : (
         <>
@@ -32,8 +35,9 @@ export default function ObjectiveTitle({
 
 ObjectiveTitle.propTypes = {
   error: PropTypes.node.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnApprovedReport: PropTypes.bool.isRequired,
   title: PropTypes.string.isRequired,
   validateObjectiveTitle: PropTypes.func.isRequired,
   onChangeTitle: PropTypes.func.isRequired,
+  status: PropTypes.string.isRequired,
 };

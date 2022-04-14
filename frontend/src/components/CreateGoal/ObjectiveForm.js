@@ -95,10 +95,11 @@ export default function ObjectiveForm({
 
       <ObjectiveTitle
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
         title={title}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
+        status={status}
       />
 
       <ObjectiveTopics
@@ -108,6 +109,7 @@ export default function ObjectiveForm({
         validateObjectiveTopics={validateObjectiveTopics}
         topics={topics}
         onChangeTopics={onChangeTopics}
+        status={status}
       />
 
       <ResourceRepeater
@@ -118,6 +120,7 @@ export default function ObjectiveForm({
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
+        status={status}
       />
 
       { goalStatus !== 'Draft'
