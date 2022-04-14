@@ -323,7 +323,7 @@ MyAlerts.propTypes = {
   loading: PropTypes.bool.isRequired,
   message: PropTypes.shape({
     time: PropTypes.string,
-    reportId: PropTypes.string,
+    reportId: PropTypes.number,
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
@@ -349,7 +349,7 @@ MyAlerts.defaultProps = {
   alertsActivePage: 1,
   message: {
     time: '',
-    reportId: '',
+    reportId: null,
     displayId: '',
     status: '',
   },

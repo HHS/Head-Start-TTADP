@@ -1,10 +1,10 @@
 import {
   updateGoalStatusById,
-} from './goals';
+} from '../goals';
 import {
   Goal,
   sequelize,
-} from '../models';
+} from '../../models';
 
 /* TODO:
    Once we determine who has permission to update a goal.
