@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -11,6 +11,8 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters, formatDateRange } from '../../../utils';
 import FilterContext from '../../../FilterContext';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
+import UserContext from '../../../UserContext';
+import { getUserRegions } from '../../../permissions';
 
 import './TTAHistory.css';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
@@ -23,6 +25,8 @@ export default function TTAHistory({
   recipientName, recipientId, regionId,
 }) {
   const filterKey = `ttahistory-filters-${recipientId}`;
+  const { user } = useContext(UserContext);
+  const regions = useMemo(() => getUserRegions(user), [user]);
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     filterKey,
@@ -86,6 +90,7 @@ export default function TTAHistory({
             onRemoveFilter={onRemoveFilter}
             filterConfig={TTAHISTORY_FILTER_CONFIG}
             applyButtonAria="Apply filters to recipient record data"
+            allUserRegions={regions}
           />
         </div>
         <Overview

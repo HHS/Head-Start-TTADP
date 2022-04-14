@@ -142,15 +142,14 @@ function GoalsTable({
 
   return (
     <>
+      {error && (
       <Grid row>
-        {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-        )}
+        <Alert type="error" role="alert">
+          {error}
+        </Alert>
       </Grid>
-
-      <Container className="goals-table inline-size maxw-full" padding={0} loading={loading} loadingLabel="Goals table loading">
+      )}
+      <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
         <GoalsTableHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
@@ -163,7 +162,7 @@ function GoalsTable({
           hasActiveGrants={hasActiveGrants}
         />
         <div className="usa-table-container">
-          <Table className="goals-table-content" fullWidth>
+          <Table fullWidth scrollable>
             <caption className="usa-sr-only">
               TTA goals and objective count with sorting and pagination
             </caption>
@@ -174,6 +173,7 @@ function GoalsTable({
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
                 {renderColumnHeader('Goal topic(s)', 'goalTopics', false)}
                 {renderColumnHeader('Objectives', 'objectiveCount', false)}
+                <th scope="col" aria-label="context menu" />
               </tr>
             </thead>
             <tbody>
@@ -183,6 +183,8 @@ function GoalsTable({
                   goal={goal}
                   openMenuUp={index > displayGoals.length - 1}
                   updateGoal={updateGoal}
+                  recipientId={recipientId}
+                  regionId={regionId}
                 />
               ))}
             </tbody>

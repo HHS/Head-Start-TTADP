@@ -437,6 +437,8 @@ You would then need to rebuild the relevant browser images (docker will likely n
 
 <!-- Links -->
 
+[Current tech stack](./tech-stack.md)
+
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
 [TTAHUB-System-Operations]: https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations
 [circleci-envvar]: https://app.circleci.com/settings/project/github/adhocteam/Head-Start-TTADP/environment-variables?return-to=https%3A%2F%2Fcircleci.com%2Fdashboard

@@ -16,7 +16,7 @@ const labelPropTypes = {
 
 function FieldSetWrapper({ label, children, className }) {
   return (
-    <Fieldset unstyled className={className}>
+    <Fieldset unstyled="true" className={className}>
       <legend>{label}</legend>
       {children}
     </Fieldset>
