@@ -10,7 +10,9 @@ const {
    */
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveTopic extends Model {
-    static associate() {
+    static associate(models) {
+      ObjectiveTopic.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
+      ObjectiveTopic.belongsTo(models.Topic, { foreignKey: 'topicId', onDelete: 'cascade', as: 'topic' });
     }
   }
   ObjectiveTopic.init({
@@ -21,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     objectiveId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    topicId: {
       type: DataTypes.STRING,
       allowNull: false,
     },
