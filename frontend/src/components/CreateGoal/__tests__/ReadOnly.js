@@ -8,7 +8,7 @@ import ReadOnly from '../ReadOnly';
 describe('ReadOnly', () => {
   const createdGoals = [
     {
-      name: 'Sample goal',
+      goalName: 'Sample goal',
       grants: [],
       objectives: [],
       endDate: null,

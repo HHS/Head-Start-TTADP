@@ -2,14 +2,7 @@ const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
-
-function formatDate(fieldName) {
-  const raw = this.getDataValue(fieldName);
-  if (raw) {
-    return moment(raw).format('MM/DD/YYYY');
-  }
-  return null;
-}
+const { formatDate } = require('../lib/modelHelpers');
 
 /**
  * Helper function called by model hooks.

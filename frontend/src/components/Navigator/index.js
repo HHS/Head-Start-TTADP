@@ -265,7 +265,7 @@ Navigator.propTypes = {
       position: PropTypes.number.isRequired,
       path: PropTypes.string.isRequired,
       render: PropTypes.func.isRequired,
-      label: PropTypes.isRequired,
+      label: PropTypes.string.isRequired,
     }),
   ).isRequired,
   currentPage: PropTypes.string.isRequired,
