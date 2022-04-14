@@ -13,6 +13,7 @@ export default function ObjectiveTopics({
   validateObjectiveTopics,
   topics,
   onChangeTopics,
+  status,
 }) {
   const savedTopicIds = savedTopics ? savedTopics.map(({ value }) => value) : [];
 
@@ -29,34 +30,36 @@ export default function ObjectiveTopics({
         )
         : null}
 
-      <FormGroup error={error.props.children}>
-        <Label htmlFor="topics">
-          { savedTopics && savedTopics.length
-            ? <>Add more topics</>
-            : (
-              <>
-                Topics
-                {' '}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-              </>
-            )}
-        </Label>
-        {error}
-        <Select
-          inputId="topics"
-          styles={SELECT_STYLES}
-          components={{
-            DropdownIndicator: null,
-          }}
-          className="usa-select"
-          isMulti
-          options={filteredOptions}
-          onBlur={validateObjectiveTopics}
-          value={topics}
-          onChange={onChangeTopics}
-          closeMenuOnSelect={false}
-        />
-      </FormGroup>
+      { status !== 'Complete' ? (
+        <FormGroup error={error.props.children}>
+          <Label htmlFor="topics">
+            { savedTopics && savedTopics.length
+              ? <>Add more topics</>
+              : (
+                <>
+                  Topics
+                  {' '}
+                  <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+                </>
+              )}
+          </Label>
+          {error}
+          <Select
+            inputId="topics"
+            styles={SELECT_STYLES}
+            components={{
+              DropdownIndicator: null,
+            }}
+            className="usa-select"
+            isMulti
+            options={filteredOptions}
+            onBlur={validateObjectiveTopics}
+            value={topics}
+            onChange={onChangeTopics}
+            closeMenuOnSelect={false}
+          />
+        </FormGroup>
+      ) : null }
     </>
   );
 }
@@ -77,6 +80,7 @@ ObjectiveTopics.propTypes = {
     value: PropTypes.number,
   })).isRequired,
   onChangeTopics: PropTypes.func.isRequired,
+  status: PropTypes.string.isRequired,
 };
 
 ObjectiveTopics.defaultProps = {
