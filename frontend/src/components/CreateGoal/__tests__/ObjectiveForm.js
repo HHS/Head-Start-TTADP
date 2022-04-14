@@ -17,7 +17,7 @@ const [
 
 describe('ObjectiveForm', () => {
   const defaultObjective = {
-    text: 'This is an objective',
+    title: 'This is an objective',
     topics: [
       {
         value: 0,
@@ -27,6 +27,8 @@ describe('ObjectiveForm', () => {
     resources: [
       { key: 'gee-whix', value: '' },
     ],
+    id: 123,
+    status: 'Not started',
   };
 
   const index = 1;
@@ -36,15 +38,19 @@ describe('ObjectiveForm', () => {
     removeObjective = jest.fn(),
     setObjectiveError = jest.fn(),
     setObjective = jest.fn(),
+    unchangingApiData = {},
   ) => {
     render((
       <ObjectiveForm
         index={index}
+        isOnReport={false}
         removeObjective={removeObjective}
         setObjectiveError={setObjectiveError}
         objective={objective}
         setObjective={setObjective}
         errors={[<></>, <></>, <></>]}
+        unchangingApiData={unchangingApiData}
+        goalStatus="Draft"
         topicOptions={[
           'Behavioral / Mental Health / Trauma',
           'Child Assessment, Development, Screening',
@@ -64,11 +70,12 @@ describe('ObjectiveForm', () => {
 
   it('validates text and topics', async () => {
     const objective = {
-      text: '',
+      title: '',
       topics: [],
       resources: [
         { key: 'gee-whix', value: '' },
       ],
+      status: 'Not started',
     };
 
     const removeObjective = jest.fn();
@@ -96,5 +103,28 @@ describe('ObjectiveForm', () => {
     userEvent.click(resourceOne);
 
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>]);
+  });
+
+  it('displays the correct label based on resources from api', async () => {
+    const removeObjective = jest.fn();
+    const setObjectiveError = jest.fn();
+    const setObjective = jest.fn();
+    const unchangingApiData = {
+      [defaultObjective.id]: {
+        resources: [{ key: 'sdf', value: 'gee-whix.com' }],
+        topics: [],
+      },
+    };
+
+    renderObjectiveForm(
+      defaultObjective,
+      removeObjective,
+      setObjectiveError,
+      setObjective,
+      unchangingApiData,
+    );
+
+    const label = await screen.findByText('Resource links');
+    expect(label).toBeVisible();
   });
 });

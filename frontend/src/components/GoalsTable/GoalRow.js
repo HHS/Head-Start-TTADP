@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFlag,
@@ -9,6 +10,7 @@ import {
   faAngleDown,
 } from '@fortawesome/free-solid-svg-icons';
 import StatusDropdown from './StatusDropdown';
+import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
@@ -20,6 +22,9 @@ import './GoalRow.css';
 function GoalRow({
   goal,
   updateGoal,
+  openMenuUp,
+  recipientId,
+  regionId,
 }) {
   const {
     id,
@@ -33,6 +38,8 @@ function GoalRow({
     objectives,
     previousStatus,
   } = goal;
+
+  const history = useHistory();
 
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
@@ -163,6 +170,17 @@ function GoalRow({
     return '#c5c5c5';
   };
 
+  const contextMenuLabel = `Actions for goal ${id}`;
+  const showContextMenu = true;
+  const menuItems = [
+    {
+      label: 'Edit',
+      onClick: () => {
+        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals/${id}`);
+      },
+    },
+  ];
+
   return (
     <>
       <CloseSuspendReasonModal
@@ -183,7 +201,7 @@ function GoalRow({
             previousStatus={previousStatus}
           />
         </td>
-        <td>{moment(createdOn).format(DATE_DISPLAY_FORMAT)}</td>
+        <td>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</td>
         <td className="text-wrap maxw-mobile">
           {goalText}
           {' '}
@@ -198,7 +216,7 @@ function GoalRow({
               <Tooltip
                 displayText={displayGoalTopics}
                 screenReadDisplayText={false}
-                buttonLabel={`goal topics: ${goalTopics}. Click button to visually reveal this information.`}
+                buttonLabel={`${goalTopics.join(', ')} click to visually reveal`}
                 tooltipText={goalTopics.join(', ')}
                 hideUnderline={false}
                 svgLineTo={300}
@@ -226,6 +244,17 @@ function GoalRow({
                 : null
             }
           </button>
+        </td>
+        <td>
+          {showContextMenu
+            ? (
+              <ContextMenu
+                label={contextMenuLabel}
+                menuItems={menuItems}
+                up={openMenuUp}
+              />
+            )
+            : null}
         </td>
       </tr>
       <tr className="tta-smarthub--objective-rows">
@@ -263,18 +292,14 @@ function GoalRow({
 }
 
 export const objectivePropTypes = PropTypes.shape({
-  id: PropTypes.number.isRequired,
-  title: PropTypes.string.isRequired,
-  arNumber: PropTypes.string.isRequired,
-  ttaProvided: PropTypes.string.isRequired,
+  id: PropTypes.number,
+  title: PropTypes.string,
+  arNumber: PropTypes.string,
+  ttaProvided: PropTypes.string,
   endDate: PropTypes.string,
-  reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
-  status: PropTypes.string.isRequired,
+  reasons: PropTypes.arrayOf(PropTypes.string),
+  status: PropTypes.string,
 });
-
-objectivePropTypes.defaultProps = {
-  endDate: null,
-};
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
@@ -295,6 +320,9 @@ goalPropTypes.defaultProps = {
 };
 GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
+  recipientId: PropTypes.string.isRequired,
+  regionId: PropTypes.string.isRequired,
   updateGoal: PropTypes.func.isRequired,
+  openMenuUp: PropTypes.bool.isRequired,
 };
 export default GoalRow;

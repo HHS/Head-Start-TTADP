@@ -1,14 +1,14 @@
 import { Op } from 'sequelize';
 import {
   copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
-} from './goals';
+} from '../goals';
 import {
   Goal,
   Grant,
   Objective,
   ActivityReportObjective,
   GrantGoal,
-} from '../models';
+} from '../../models';
 
 describe('Goals DB service', () => {
   afterEach(async () => {
