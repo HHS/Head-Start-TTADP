@@ -1,19 +1,19 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React from 'react';
 import PropTypes from 'prop-types';
-import Select from 'react-select';
 import {
-  DatePicker, FormGroup, Label, Textarea,
+  Alert,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import './Form.css';
 import PlusButton from './PlusButton';
-import QuestionTooltip from './QuestionTooltip';
+import GrantSelect from './GrantSelect';
+import GoalText from './GoalText';
+import GoalDate from './GoalDate';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
   FORM_FIELD_INDEXES,
-  SELECT_STYLES,
 } from './constants';
 
 export default function Form({
@@ -32,6 +32,12 @@ export default function Form({
   setObjectives,
   setObjectiveError,
   topicOptions,
+  isOnApprovedReport,
+  isOnReport,
+  status,
+  datePickerKey,
+  unchangingApiData,
+  fetchError,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -63,6 +69,7 @@ export default function Form({
 
   return (
     <div className="ttahub-create-goals-form">
+      { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <h2>Recipient TTA goal</h2>
       <div>
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
@@ -70,62 +77,44 @@ export default function Form({
         indicates required field
       </div>
 
+      { isOnReport
+        ? (
+          <Alert type="warning" noIcon>
+            This goal is used on an activity report
+            <br />
+            Some fields can&apos;t be edited
+          </Alert>
+        )
+        : null }
+
       <h3>Goal summary</h3>
-      <FormGroup error={errors[FORM_FIELD_INDEXES.GRANTS].props.children}>
-        <Label htmlFor="recipientGrantNumbers">
-          Recipient grant numbers
-          {' '}
-          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-        </Label>
-        {possibleGrants.length === 1 ? (
-          <span className="margin-bottom-1">{selectedGrants[0].label}</span>
-        ) : (
-          <>
-            {errors[FORM_FIELD_INDEXES.GRANTS]}
-            <Select
-              placeholder=""
-              inputId="recipientGrantNumbers"
-              onChange={setSelectedGrants}
-              options={possibleGrants}
-              styles={SELECT_STYLES}
-              components={{
-                DropdownIndicator: null,
-              }}
-              className="usa-select"
-              closeMenuOnSelect={false}
-              value={selectedGrants}
-              isMulti
-              onBlur={validateGrantNumbers}
-            />
-          </>
-        )}
-      </FormGroup>
-      <FormGroup error={errors[FORM_FIELD_INDEXES.NAME].props.children}>
-        <Label htmlFor="goalText">
-          Recipient&apos;s goal
-          {' '}
-          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-        </Label>
-        {errors[FORM_FIELD_INDEXES.NAME]}
-        <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
-      </FormGroup>
-      <FormGroup error={errors[FORM_FIELD_INDEXES.END_DATE].props.children}>
-        <Label htmlFor="goalEndDate">
-          Estimated close date (mm/dd/yyyy)
-          {' '}
-          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-          <QuestionTooltip text="When do you expect to end TTA work and mark this goal as closed?" />
-        </Label>
-        {errors[FORM_FIELD_INDEXES.END_DATE]}
-        <DatePicker
-          id="goalEndDate"
-          name="goalEndDate"
-          onChange={setEndDate}
-          defaultValue={endDate}
-          required
-          onBlur={validateEndDate}
-        />
-      </FormGroup>
+
+      <GrantSelect
+        selectedGrants={selectedGrants}
+        isOnReport={isOnReport}
+        setSelectedGrants={setSelectedGrants}
+        possibleGrants={possibleGrants}
+        validateGrantNumbers={validateGrantNumbers}
+        error={errors[FORM_FIELD_INDEXES.GRANTS]}
+      />
+
+      <GoalText
+        error={errors[FORM_FIELD_INDEXES.NAME]}
+        goalName={goalName}
+        isOnReport={isOnReport}
+        validateGoalName={validateGoalName}
+        onUpdateText={onUpdateText}
+      />
+
+      <GoalDate
+        error={errors[FORM_FIELD_INDEXES.END_DATE]}
+        isOnApprovedReport={isOnApprovedReport}
+        setEndDate={setEndDate}
+        endDate={endDate}
+        validateEndDate={validateEndDate}
+        datePickerKey={datePickerKey}
+      />
+
       { objectives.map((objective, i) => (
         <ObjectiveForm
           index={i}
@@ -136,6 +125,8 @@ export default function Form({
           errors={objectiveErrors[i]}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
+          goalStatus={status}
+          unchangingApiData={unchangingApiData}
         />
       ))}
 
@@ -148,6 +139,8 @@ export default function Form({
 }
 
 Form.propTypes = {
+  isOnReport: PropTypes.bool.isRequired,
+  isOnApprovedReport: PropTypes.bool.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
@@ -192,11 +185,26 @@ Form.propTypes = {
       value: PropTypes.number,
     })),
     resources: PropTypes.arrayOf(PropTypes.shape({
-      key: PropTypes.string,
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       value: PropTypes.string,
     })),
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   })).isRequired,
+  status: PropTypes.string.isRequired,
+  datePickerKey: PropTypes.string.isRequired,
+  unchangingApiData: PropTypes.objectOf(
+    PropTypes.shape({
+      resources: PropTypes.arrayOf(PropTypes.shape({
+        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        value: PropTypes.string,
+      })),
+      topics: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.number,
+      })),
+    }),
+  ).isRequired,
+  fetchError: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

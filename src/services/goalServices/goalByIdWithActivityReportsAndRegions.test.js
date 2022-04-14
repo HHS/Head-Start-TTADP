@@ -6,11 +6,11 @@ import db, {
   Goal,
   ActivityReportObjective,
   Objective,
-} from '../models';
-import { createReport, destroyReport } from '../testUtils';
+} from '../../models';
+import { createReport, destroyReport } from '../../testUtils';
 
-import { goalByIdWithActivityReportsAndRegions } from './goals';
-import { REPORT_STATUSES } from '../constants';
+import { goalByIdWithActivityReportsAndRegions } from '../goals';
+import { REPORT_STATUSES } from '../../constants';
 
 describe('goalByIdWithActivityReportsAndRegions', () => {
   let recipientForFirstGrant;
