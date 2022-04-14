@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { destroyGoal } from './goals';
+import { destroyGoal } from '../goals';
 import db, {
   Goal,
   Grant,
@@ -9,8 +9,8 @@ import db, {
   Objective,
   ObjectiveResource,
   ActivityReport,
-} from '../models';
-import { auditLogger } from '../logger';
+} from '../../models';
+import { auditLogger } from '../../logger';
 
 describe.skip('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
