@@ -86,7 +86,7 @@ const ReviewSection = () => {
 };
 
 export default {
-  position: 2,
+  position: 3,
   label: 'Supporting attachments',
   path: 'supporting-attachments',
   reviewSection: () => <ReviewSection />,
