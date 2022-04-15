@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  Label, TextInput, Button,
+  Label, Button, Textarea,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
@@ -42,14 +42,16 @@ export default function NextStepsRepeater({
                 {' '}
                 { i + 1 }
               </Label>
-              <TextInput
-                id={`next-step-${i + 1}`}
+              <Textarea
+                className="maxh-10 smart-hub--text-area__resize-vertical"
+                name={`next-steps-text-${i + 1}`}
+                key={`next-steps-text-${i + 1}`}
                 type="text"
-                onChange={({ target: { value } }) => updateNextStep(value, i)}
                 value={s.value}
+                onChange={({ target: { value } }) => updateNextStep(value, i)}
               />
               { nextSteps.length > 1 ? (
-                <Button unstyled type="button" onClick={() => removeNextStep(i)}>
+                <Button className="margin-top-0" unstyled type="button" onClick={() => removeNextStep(i)}>
                   <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
                   <span className="sr-only">
                     remove step
@@ -62,7 +64,7 @@ export default function NextStepsRepeater({
           ))}
         </div>
 
-        <div className="margin-top-2 margin-bottom-4">
+        <div className="margin-05 margin-bottom-4">
           <Button type="button" unstyled onClick={addNextStep}>
             <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
             Add next step
