@@ -7,7 +7,6 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalById } from '../../fetchers/goals';
 import { getTopics } from '../../fetchers/topics';
@@ -36,9 +35,9 @@ const formatGrantsFromApi = (grants) => grants.map((grant) => {
   };
 });
 
-export default function CreateGoal({ recipient, regionId, match }) {
-  const { params: { goalId: urlId } } = match;
-
+export default function GoalForm({
+  recipient, regionId, id, showRTRnavigation,
+}) {
   const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
@@ -52,8 +51,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
-    id: urlId,
-  }), [possibleGrants, urlId]);
+    id,
+  }), [possibleGrants, id]);
 
   const [showForm, setShowForm] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -100,7 +99,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const goal = await goalById(urlId, recipient.id.toString());
+        const goal = await goalById(id, recipient.id.toString());
 
         // the API sends us back things in a format we expect
         setGoalName(goal.goalName);
@@ -173,10 +172,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     // only fetch once, on load, and only if the id isn't 'new'
-    if (!fetchAttempted && urlId !== 'new') {
+    if (!fetchAttempted && id !== 'new') {
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, urlId]);
+  }, [errors, fetchAttempted, recipient.id, id]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -536,13 +535,15 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   return (
     <>
-      <Link
-        className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-        to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-      >
-        <FontAwesomeIcon className="margin-right-1" color="#0166ab" icon={faArrowLeft} />
-        <span>Back to Goals & Objectives</span>
-      </Link>
+      { showRTRnavigation ? (
+        <Link
+          className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
+          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+        >
+          <FontAwesomeIcon className="margin-right-1" color="#0166ab" icon={faArrowLeft} />
+          <span>Back to Goals & Objectives</span>
+        </Link>
+      ) : null }
       <h1 className="page-heading margin-top-0 margin-bottom-1 margin-left-2">
         TTA Goals for
         {' '}
@@ -561,7 +562,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
               onEdit={onEdit}
             />
             <div className="margin-bottom-4">
-              {!showForm && urlId === 'new'
+              {!showForm && id === 'new'
                 ? (
                   <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                 ) : null }
@@ -623,8 +624,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
   );
 }
 
-CreateGoal.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
+GoalForm.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.number.isRequired, PropTypes.string.isRequired]).isRequired,
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -636,4 +637,9 @@ CreateGoal.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
+  showRTRnavigation: PropTypes.bool,
+};
+
+GoalForm.defaultProps = {
+  showRTRnavigation: false,
 };
