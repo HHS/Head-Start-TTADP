@@ -1,41 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
-import {
-  Fieldset, Button, Textarea,
-} from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import { Fieldset } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
-import ContextMenu from '../../../components/ContextMenu';
 import FormItem from '../../../components/FormItem';
 import ReviewPage from './Review/ReviewPage';
 
 const NextSteps = ({ activityRecipientType }) => {
-  const {
-    register, control, setValue, trigger,
-  } = useFormContext();
+  // Get form context.
+  const { setValue } = useFormContext();
 
-  const [specialistNextSteps, setSpecialistNextSteps] = useState([]);
-  const [recipientNextSteps, setRecipientNextSteps] = useState([]);
+  // Get form data values.
+  const specialistNextSteps = useWatch({ name: 'specialistNextSteps' });
+  const recipientNextSteps = useWatch({ name: 'recipientNextSteps' });
 
+  // Create labels.
   const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
   const tipDisplayName = activityRecipientType === 'other-entity' ? 'other entity' : 'recipient';
 
-  const specialistNextStepsUpdated = (updatedSteps) => setSpecialistNextSteps(updatedSteps);
-  const recipientNextStepsUpdated = (updatedSteps) => setRecipientNextSteps(updatedSteps);
+  // Update specialists next steps form data and state var.
+  const specialistNextStepsUpdated = (updatedSpecialistSteps) => {
+    setValue('specialistNextSteps', updatedSpecialistSteps);
+  };
 
-  /*
-  const notes = useWatch({ name, control });
+  // Update recipients next steps form data and state var.
+  const recipientNextStepsUpdated = (updatedRecipientSteps) => {
+    setValue('recipientNextSteps', updatedRecipientSteps);
+  };
 
-  const [showPrompt, updateShowPrompt] = useState(false);
-  const [targetIndex, updateTargetIndex] = useState(-1);
-
-  useEffect(() => {
-    register({ name }, { validate: (allNotes) => (allNotes.length !== 0 ? true : `${humanName} requires at least one step`) });
-  });
-  */
   return (
     <>
       <Helmet>

@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
 import {
   Label, Button, Textarea,
 } from '@trussworks/react-uswds';
@@ -14,19 +13,21 @@ export default function NextStepsRepeater({
   const nextStepsWrapper = useRef();
 
   const addNextStep = () => {
-    const newNextStep = [...nextSteps, { key: uuidv4(), value: '' }];
+    const newNextStep = [...nextSteps, { id: null, note: '' }];
     setNextSteps(newNextStep);
   };
 
   const removeNextStep = (i) => {
+    console.log('Step to remove: ', i);
     const newSteps = [...nextSteps];
     newSteps.splice(i, 1);
+    console.log('After remove: ', i);
     setNextSteps(newSteps);
   };
 
-  const updateNextStep = (value, i) => {
+  const updateNextStep = (note, i) => {
     const newSteps = [...nextSteps];
-    const toUpdate = { ...newSteps[i], value };
+    const toUpdate = { ...newSteps[i], note };
     newSteps.splice(i, 1, toUpdate);
     setNextSteps(newSteps);
   };
@@ -36,19 +37,20 @@ export default function NextStepsRepeater({
       <div ref={nextStepsWrapper}>
         <div className="ttahub-next-steps-repeater">
           { nextSteps.map((s, i) => (
-            <div key={s.key} className="display-flex" id="next-steps">
+            <div key={`next-step-flex-${i + 1}`} className="display-flex" id="next-steps">
               <Label htmlFor={`next-step-${i + 1}`} className="sr-only">
                 Next step
                 {' '}
                 { i + 1 }
               </Label>
               <Textarea
-                className="maxh-10 smart-hub--text-area__resize-vertical"
+                className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                 name={`next-steps-text-${i + 1}`}
                 key={`next-steps-text-${i + 1}`}
                 type="text"
-                value={s.value}
-                onChange={({ target: { value } }) => updateNextStep(value, i)}
+                value={s.note}
+                onChange={({ target: { note } }) => updateNextStep(note, i)}
+                required
               />
               { nextSteps.length > 1 ? (
                 <Button className="margin-top-0" unstyled type="button" onClick={() => removeNextStep(i)}>
