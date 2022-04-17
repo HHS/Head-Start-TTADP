@@ -102,7 +102,7 @@ export default function StatusDropdown({
         {icon}
         {display}
       </label>
-      <select className="usa-select margin-0 padding-0" id={`statusSelect-${goalId}`} onChange={onChange} value={status}>
+      <select className="usa-select margin-0 padding-0" id={`statusSelect-${goalId}`} onChange={onChange} value={key}>
         { options }
       </select>
     </div>

@@ -35,7 +35,7 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className="ttahub-recipient-record--heading margin-top-0 margin-bottom-1 margin-left-2">
+                <h1 className="ttahub-recipient-record--heading page-heading margin-top-0 margin-bottom-1 margin-left-2">
                   {recipientNameWithRegion}
                 </h1>
                 {children}
@@ -183,6 +183,13 @@ export default function RecipientRecord({ match }) {
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
           render={({ match: goalMatch }) => (
             <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+              <Helmet>
+                <title>
+                  {goalMatch.params.goalId === 'new'
+                    ? `Create a goal for ${recipientName}`
+                    : `Edit goal ${goalMatch.params.goalId} for ${recipientName}` }
+                </title>
+              </Helmet>
               <CreateGoal match={goalMatch} regionId={regionId} recipient={recipientData} />
             </FeatureFlag>
           )}
