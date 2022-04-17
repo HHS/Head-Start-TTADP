@@ -6,14 +6,17 @@ import {
   Recipient,
   Grant,
   ActivityRecipient,
-  GrantGoal,
+  // GrantGoal,
+  GoalTemplate,
   Goal,
   ActivityReportObjective,
+  ObjectiveTemplate,
   Objective,
 } from '../models';
 
 import { getGoalsByActivityRecipient } from './recipient';
 import { REPORT_STATUSES } from '../constants';
+import { auditLogger } from '../logger';
 
 describe('Goals by Recipient Test', () => {
   const recipient = {
@@ -133,6 +136,9 @@ describe('Goals by Recipient Test', () => {
     ttaType: ['type'],
   };
 
+  let objectiveTemplateIds = [];
+  let goalTemplateIds = [];
+
   let objectiveIds = [];
   let goalIds = [];
 
@@ -169,93 +175,171 @@ describe('Goals by Recipient Test', () => {
       activityReportId: savedGoalReport3.id,
       grantId: savedGrant3.id,
     });
-
+    auditLogger.error(await GoalTemplate.findOrCreate({
+      where: { templateName: 'Goal 1' },
+      default: { templateName: 'Goal 1' },
+    }));
     // Create Goals.
-    const goals = await Promise.all(
+    const goalTemplates = await Promise.all(
       [
-        // goal 1 (AR1)
-        await Goal.create({
-          name: 'Goal 1',
-          status: null,
-          timeframe: '12 months',
-          isFromSmartsheetTtaPlan: false,
-          createdAt: '2021-01-10T19:16:15.842Z',
+        await GoalTemplate.findOrCreate({
+          where: { templateName: 'Goal 1' },
+          default: { templateName: 'Goal 1' },
         }),
-        // goal 2 (AR1)
-        await Goal.create({
-          name: 'Goal 2',
-          status: 'Not Started',
-          timeframe: '12 months',
-          isFromSmartsheetTtaPlan: false,
-          createdAt: '2021-02-15T19:16:15.842Z',
+        await GoalTemplate.findOrCreate({
+          where: { templateName: 'Goal 2' },
+          default: { templateName: 'Goal 2' },
         }),
-        // goal 3 (AR1)
-        await Goal.create({
-          name: 'Goal 3',
-          status: 'Active',
-          timeframe: '12 months',
-          isFromSmartsheetTtaPlan: false,
-          createdAt: '2021-03-03T19:16:15.842Z',
+        await GoalTemplate.findOrCreate({
+          where: { templateName: 'Goal 3' },
+          default: { templateName: 'Goal 3' },
         }),
-        // goal 4 (AR2)
-        await Goal.create({
-          name: 'Goal 4',
-          status: 'Active',
-          timeframe: '12 months',
-          isFromSmartsheetTtaPlan: false,
-          createdAt: '2021-04-02T19:16:15.842Z',
+        await GoalTemplate.findOrCreate({
+          where: { templateName: 'Goal 4' },
+          default: { templateName: 'Goal 4' },
         }),
-        // goal 5 (AR3 Exclude)
-        await Goal.create({
-          name: 'Goal 5',
-          status: 'Active',
-          timeframe: '12 months',
-          isFromSmartsheetTtaPlan: false,
-          createdAt: '2021-05-02T19:16:15.842Z',
+        await GoalTemplate.findOrCreate({
+          where: { templateName: 'Goal 5' },
+          default: { templateName: 'Goal 5' },
         }),
       ],
     );
+    goalTemplateIds = goalTemplates.map((o) => o.id);
+    if (goalTemplateIds[0] === null) {
+      auditLogger.error(goalTemplateIds[0]);
+      throw new Error();
+    }
+    let goals = [];
+    try {
+      goals = await Promise.all(
+        [
+          // goal 1 (AR1)t
+          await Goal.create({
+            name: 'Goal 1',
+            status: null,
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            goalTemplateId: goalTemplateIds[0],
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
+          }),
+          // goal 2 (AR1)
+          await Goal.create({
+            name: 'Goal 2',
+            status: 'Not Started',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            goalTemplateId: goalTemplateIds[1],
+            grantId: 300,
+            createdAt: '2021-02-15T19:16:15.842Z',
+          }),
+          // goal 3 (AR1)
+          await Goal.create({
+            name: 'Goal 3',
+            status: 'Active',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            goalTemplateId: goalTemplateIds[2],
+            grantId: 300,
+            createdAt: '2021-03-03T19:16:15.842Z',
+          }),
+          // goal 4 (AR2)
+          await Goal.create({
+            name: 'Goal 4',
+            status: 'Active',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            goalTemplateId: goalTemplateIds[3],
+            grantId: 301,
+            createdAt: '2021-04-02T19:16:15.842Z',
+          }),
+          // goal 5 (AR3 Exclude)
+          await Goal.create({
+            name: 'Goal 5',
+            status: 'Active',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            goalTemplateId: goalTemplateIds[4],
+            grantId: 302,
+            createdAt: '2021-05-02T19:16:15.842Z',
+          }),
+        ],
+      );
+    } catch (err) {
+      auditLogger.error(JSON.stringify(goalTemplateIds));
+      auditLogger.error(err);
+      throw (err);
+    }
 
     // Get Goal Ids for Delete.
     goalIds = goals.map((o) => o.id);
 
     // Grant Goals.
-    await Promise.all(
+    // await Promise.all(
+    //   [
+    //     // grant goal 1 (AR1)
+    //     await GrantGoal.create({
+    //       recipientId: 300,
+    //       grantId: 300,
+    //       goalId: goals[0].id,
+    //     }),
+    //     // grant goal 2 (AR1)
+    //     await GrantGoal.create({
+    //       recipientId: 300,
+    //       grantId: 300,
+    //       goalId: goals[1].id,
+    //     }),
+    //     // grant goal 3 (AR1)
+    //     await GrantGoal.create({
+    //       recipientId: 300,
+    //       grantId: 300,
+    //       goalId: goals[2].id,
+    //     }),
+    //     // grant goal 4 (AR2)
+    //     await GrantGoal.create({
+    //       recipientId: 300,
+    //       grantId: 301,
+    //       goalId: goals[3].id,
+    //     }),
+    //     // grant goal 5 (AR3 Exclude)
+    //     await GrantGoal.create({
+    //       recipientId: 301,
+    //       grantId: 302,
+    //       goalId: goals[4].id,
+    //     }),
+    //   ],
+    // );
+
+    // Crete Objectives.
+    const objectiveTemplates = await Promise.all(
       [
-        // grant goal 1 (AR1)
-        await GrantGoal.create({
-          recipientId: 300,
-          grantId: 300,
-          goalId: goals[0].id,
+        await ObjectiveTemplate.findOrCreate({
+          where: { templateTitle: 'objective 1' },
+          default: { templateTitle: 'objective 1' },
         }),
-        // grant goal 2 (AR1)
-        await GrantGoal.create({
-          recipientId: 300,
-          grantId: 300,
-          goalId: goals[1].id,
+        await ObjectiveTemplate.findOrCreate({
+          where: { templateTitle: 'objective 2' },
+          default: { templateTitle: 'objective 2' },
         }),
-        // grant goal 3 (AR1)
-        await GrantGoal.create({
-          recipientId: 300,
-          grantId: 300,
-          goalId: goals[2].id,
+        await ObjectiveTemplate.findOrCreate({
+          where: { templateTitle: 'objective 3' },
+          default: { templateTitle: 'objective 3' },
         }),
-        // grant goal 4 (AR2)
-        await GrantGoal.create({
-          recipientId: 300,
-          grantId: 301,
-          goalId: goals[3].id,
+        await ObjectiveTemplate.findOrCreate({
+          where: { templateTitle: 'objective 4' },
+          default: { templateTitle: 'objective 4' },
         }),
-        // grant goal 5 (AR3 Exclude)
-        await GrantGoal.create({
-          recipientId: 301,
-          grantId: 302,
-          goalId: goals[4].id,
+        await ObjectiveTemplate.findOrCreate({
+          where: { templateTitle: 'objective 5' },
+          default: { templateTitle: 'objective 5' },
+        }),
+        await ObjectiveTemplate.findOrCreate({
+          where: { templateTitle: 'objective 6' },
+          default: { templateTitle: 'objective 6' },
         }),
       ],
     );
-
-    // Crete Objectives.
+    objectiveTemplateIds = objectiveTemplates.map((o) => o.id);
     const objectives = await Promise.all(
       [
         // objective 1 (AR1)
@@ -264,6 +348,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 1',
           ttaProvided: 'Objective for Goal 1',
           status: 'Not Started',
+          objectiveTemplateId: objectiveTemplateIds[0],
         }),
         // objective 2 (AR1)
         await Objective.create({
@@ -271,6 +356,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 2',
           ttaProvided: 'Objective for Goal 2',
           status: 'Not Started',
+          objectiveTemplateId: objectiveTemplateIds[1],
         }),
         // objective 3 (AR1)
         await Objective.create({
@@ -278,6 +364,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 3',
           ttaProvided: 'Objective for Goal 3',
           status: 'In Progress',
+          objectiveTemplateId: objectiveTemplateIds[2],
         }),
         // objective 4 (AR1)
         await Objective.create({
@@ -285,6 +372,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 4',
           ttaProvided: 'Objective for Goal 3 b',
           status: 'Completed',
+          objectiveTemplateId: objectiveTemplateIds[3],
         }),
         // objective 5 (AR2)
         await Objective.create({
@@ -292,6 +380,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 5',
           ttaProvided: 'Objective for Goal 4',
           status: 'Not Started',
+          objectiveTemplateId: objectiveTemplateIds[4],
         }),
         // objective 6 (AR3)
         await Objective.create({
@@ -299,6 +388,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 6',
           ttaProvided: 'Objective for Goal 5 Exclude',
           status: 'Not Started',
+          objectiveTemplateId: objectiveTemplateIds[5],
         }),
       ],
     );
@@ -362,15 +452,26 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
+    await ObjectiveTemplate.destroy({
+      where: {
+        id: objectiveTemplateIds,
+      },
+    });
+
     // Delete Grant Goals.
-    const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: [300, 301] } });
-    const grantGoalIdsToDelete = grantGoalsToDelete.map((grantGoal) => grantGoal.id);
-    await GrantGoal.destroy({ where: { id: grantGoalIdsToDelete } });
+    // const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: [300, 301] } });
+    // const grantGoalIdsToDelete = grantGoalsToDelete.map((grantGoal) => grantGoal.id);
+    // await GrantGoal.destroy({ where: { id: grantGoalIdsToDelete } });
 
     // Delete Goals.
     await Goal.destroy({
       where: {
         id: goalIds,
+      },
+    });
+    await GoalTemplate.destroy({
+      where: {
+        id: goalTemplateIds,
       },
     });
 

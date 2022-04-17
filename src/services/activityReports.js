@@ -10,6 +10,7 @@ import {
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
+  ActivityReportFile,
   sequelize,
   ActivityRecipient,
   File,
@@ -198,14 +199,22 @@ export function activityReportByLegacyId(legacyId) {
     },
     include: [
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
+        model: ActivityReportFile,
+        as: 'activityReportFiles',
         required: false,
+        separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'files',
+            required: false,
+          },
+        ],
       },
       {
         model: ActivityReportApprover,
@@ -288,15 +297,22 @@ export function activityReportById(activityReportId) {
         required: false,
       },
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
+        model: ActivityReportFile,
+        as: 'activityReportFiles',
         required: false,
         separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'files',
+            required: false,
+          },
+        ],
       },
       {
         model: NextStep,
@@ -605,7 +621,7 @@ export async function createOrUpdate(newActivityReport, report) {
     objectivesWithoutGoals,
     collaborators,
     activityRecipients,
-    attachments,
+    files,
     author,
     recipientNextSteps,
     specialistNextSteps,
@@ -785,15 +801,22 @@ async function getDownloadableActivityReports(where, separate = true) {
         ],
       },
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
-        separate,
+        model: ActivityReportFile,
+        as: 'activityReportFiles',
         required: false,
+        separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'files',
+            required: false,
+          },
+        ],
       },
       {
         model: User,

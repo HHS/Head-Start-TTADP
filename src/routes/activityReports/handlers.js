@@ -151,7 +151,7 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Non-ECLKC resources',
         },
         {
-          key: 'attachments',
+          key: 'files',
           header: 'Attachments',
         },
         {

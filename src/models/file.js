@@ -9,14 +9,16 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      File.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'activityReportFiles' });
+      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'activityReportObjectiveFiles' });
+      File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
     }
   }
   File.init({
-    activityReportId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
+    // activityReportId: {
+    //   allowNull: false,
+    //   type: DataTypes.INTEGER,
+    // },
     originalFileName: {
       allowNull: false,
       type: DataTypes.STRING,

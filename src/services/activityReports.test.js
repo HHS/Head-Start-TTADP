@@ -915,22 +915,28 @@ describe('Activity report service', () => {
 
     it('handles results with less items then the limit', async () => {
       const ids = reports.map((r) => r.id);
+      ids.sort();
       const where = {
         id: ids,
       };
 
       const res = await batchQuery({ where }, 100);
-      expect(res.map((r) => r.id)).toEqual(ids);
+      const resIds = res.map((r) => r.id);
+      resIds.sort();
+      expect(resIds).toEqual(ids);
     });
 
     it('handles results with more items then the limit', async () => {
       const ids = reports.map((r) => r.id);
+      ids.sort();
       const where = {
         id: ids,
       };
 
       const res = await batchQuery({ where }, 1);
-      expect(res.map((r) => r.id)).toEqual(ids);
+      const resIds = res.map((r) => r.id);
+      resIds.sort();
+      expect(resIds).toEqual(ids);
     });
   });
 });

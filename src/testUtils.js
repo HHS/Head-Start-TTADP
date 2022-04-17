@@ -8,6 +8,7 @@ import {
   Recipient,
   Grant,
   Region,
+  GoalTemplate,
   Goal,
   GrantGoal,
 } from './models';
@@ -236,9 +237,22 @@ export async function createGoal(goal) {
   if (!grant) {
     grant = await createGrant({});
   }
-
-  const dbGoal = await Goal.create({ ...defaultGoal(), ...goal });
-  await GrantGoal.create({ grantId: grant.id, goalId: dbGoal.id, recipientId: grant.recipientId });
+  const dg = defaultGoal();
+  const dbGoalTemplate = await GoalTemplate.findOrCreate({
+    where: { templateName: dg.name },
+    defaults: { templateName: dg.name },
+  });
+  const dbGoal = await Goal.create({
+    ...dg,
+    ...goal,
+    grantId: grant.id,
+    goalTemplateId: dbGoalTemplate.id,
+  });
+  // await GrantGoal.create({
+  //   grantId: grant.id,
+  //   goalId: dbGoal.id,
+  //   recipientId: grant.recipientId,
+  // });
   return dbGoal;
 }
 

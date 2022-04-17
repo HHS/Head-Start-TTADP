@@ -8,7 +8,7 @@ import {
   ObjectiveResource,
   ObjectiveTopic,
   ActivityReportObjective,
-  GrantGoal,
+  // GrantGoal,
   sequelize,
   ActivityReport,
 } from '../models';

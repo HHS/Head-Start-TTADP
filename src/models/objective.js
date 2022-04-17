@@ -15,6 +15,16 @@ module.exports = (sequelize, DataTypes) => {
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.belongsToMany(models.Topic, { through: models.ObjectiveTopic, foreignKey: 'topicId', as: 'topics' });
       Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: +'objectiveTemplates', onDelete: 'cascade' });
+      Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
+      Objective.belongsToMany(models.File, {
+        through: models.ObjectiveFile,
+        // The key in the join table that points to the model defined in this file
+        foreignKey: 'objectiveId',
+        // The key in the join table that points to the "target" of the belongs to many (Users in
+        // this case)
+        otherKey: 'fileId',
+        as: 'files',
+      });
     }
   }
   Objective.init({
