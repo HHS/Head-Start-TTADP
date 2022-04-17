@@ -12,7 +12,7 @@ import {
   ActivityReportObjective,
   ObjectiveTemplate,
   Objective,
-} from '../models';
+} from '../../models';
 
 import { getGoalsByActivityRecipient } from './recipient';
 import { REPORT_STATUSES } from '../constants';

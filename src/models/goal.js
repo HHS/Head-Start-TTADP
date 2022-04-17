@@ -2,6 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { formatDate } = require('../lib/modelHelpers');
 
 /**
  * Goals table. Stores goals for tta.
@@ -24,7 +25,10 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     timeframe: DataTypes.STRING,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
-    endDate: DataTypes.DATEONLY,
+    endDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
     goalNumber: {
       type: DataTypes.VIRTUAL,
       get() {

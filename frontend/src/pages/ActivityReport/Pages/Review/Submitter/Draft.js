@@ -178,8 +178,12 @@ Draft.propTypes = {
     approver: PropTypes.string,
     status: PropTypes.string,
   })).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment).isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
   creatorRole: PropTypes.string.isRequired,
+};
+
+Draft.defaultProps = {
+  lastSaveTime: undefined,
 };
 
 export default Draft;
