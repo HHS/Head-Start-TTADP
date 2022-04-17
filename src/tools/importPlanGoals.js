@@ -208,12 +208,12 @@ export default async function importGoals(fileKey, region) {
     await TopicGoal.bulkCreate(cleanTopicGoals, {
       ignoreDuplicates: true,
     });
-    await GrantGoal.bulkCreate(
-      cleanGrantGoals,
-      {
-        ignoreDuplicates: true,
-      },
-    );
+    // await GrantGoal.bulkCreate(
+    //   cleanGrantGoals,
+    //   {
+    //     ignoreDuplicates: true,
+    //   },
+    // );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log(err);

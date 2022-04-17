@@ -8,7 +8,14 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      GoalTemplate.belongsToMany(models.Goal, { foreignKey: 'goalTemplateId' });
+      GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId' });
+      // GoalTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' });
+      // GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
+      //   through: models.GoalTemplateObjectiveTemplate,
+      //   foreignKey: 'goalTemplateId',
+      //   otherKey: 'objectiveTemplateId',
+      //   as: 'goalTemplates',
+      // });
     }
   }
   GoalTemplate.init({

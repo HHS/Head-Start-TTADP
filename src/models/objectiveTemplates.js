@@ -8,8 +8,14 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveTemplate.belongsToMany(models.Objective, { foreignKey: 'objectiveTemplateId' });
-      ObjectiveTemplate.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', onDelete: 'cascade' });
+      ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
+      ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
+      ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
+        through: models.GoalTemplateObjectiveTemplate,
+        foreignKey: 'objectiveTemplateId',
+        otherKey: 'goalTemplateId',
+        as: 'goalTemplates',
+      });
     }
   }
   ObjectiveTemplate.init({
@@ -22,17 +28,6 @@ module.exports = (sequelize, DataTypes) => {
     templateTitle: {
       type: DataTypes.TEXT,
       allowNull: false,
-    },
-    goalTemplateId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: {
-          tableName: 'goalTemplates',
-        },
-        key: 'id',
-      },
-      onUpdate: 'CASCADE',
     },
   }, {
     sequelize,

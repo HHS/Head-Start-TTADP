@@ -263,7 +263,7 @@ const arTransformers = [
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
-  transformRelatedModel('attachments', 'originalFileName'),
+  transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
   transformRelatedModel('recipientNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),

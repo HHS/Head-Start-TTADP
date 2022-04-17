@@ -1,4 +1,4 @@
-import db, { File } from '../models';
+import db, { ActivityReportFile,File } from '../models';
 import { FILE_STATUSES } from '../constants';
 
 const { UPLOADING } = FILE_STATUSES;
@@ -37,6 +37,7 @@ export default async function createFileMetaData(
   try {
     await db.sequelize.transaction(async (transaction) => {
       file = await File.create(newFile, transaction);
+      await ActivityReportFile.create({ activityReportId: reportId, fileId: file.id }, transaction);
     });
     return file.dataValues;
   } catch (error) {

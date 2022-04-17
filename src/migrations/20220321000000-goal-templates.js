@@ -67,18 +67,73 @@ module.exports = {
           type: Sequelize.DATE,
         },
         // To support up/down on the migration
-        goalTemplateId: {
-          allowNull: false,
-          type: Sequelize.INTEGER,
-        },
-        // To support up/down on the migration
         sourceObjective: {
           allowNull: false,
           type: Sequelize.INTEGER,
         },
       }, { transaction });
 
-      // Drop TopicGoals
+      // Add GoalTemplateObjectiveTemplates table
+      await queryInterface.createTable('GoalTemplateObjectiveTemplates', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        goalTemplateId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'GoalTemplates',
+            },
+            key: 'id',
+          },
+        },
+        objectiveTemplateId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      // Move Topics from goals to objectives
+      try {
+        await queryInterface.sequelize.query(
+          `INSERT INTO "ObjectiveTopics" ("objectiveId", "topicId", "createdAt", "updatedAt")
+          SELECT
+            o.id "objectiveId",
+            tg."topicId",
+            tg."createdAt",
+            tg."updatedAt"
+          FROM "Objectives" o
+          JOIN "TopicGoals" tg
+          on o."goalId" = tg."goalId"
+          LEFT JOIN "ObjectiveTopics" ot
+          ON o.id = ot."objectiveId"
+          WHERE ot.id is null;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Drop TopicGoals table
       try {
         await queryInterface.dropTable('TopicGoals', { transaction });
       } catch (err) {
@@ -102,7 +157,7 @@ module.exports = {
       // Populate GoalTemplates from existing Goals
       try {
         await queryInterface.sequelize.query(
-          `INSERT INTO "GoalTemplates" ("templateName","createdAt","updatedAt","sourceGoal")
+          `INSERT INTO "GoalTemplates" ("templateName", "createdAt", "updatedAt", "sourceGoal")
           SELECT name, NOW(), NOW(), id
           FROM "Goals";`,
           { transaction },
@@ -115,11 +170,9 @@ module.exports = {
       // Populate ObjectiveTemplates from existing Objectives linking to GoalTemplates
       try {
         await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTemplates" ("templateTitle","createdAt","updatedAt","goalTemplateId", "sourceObjective")
-          SELECT o.title, NOW(), NOW(), gt.id, o.id
-          FROM "Objectives" o
-          JOIN "GoalTemplates" gt
-          ON o."goalId" = gt."sourceGoal";`,
+          `INSERT INTO "ObjectiveTemplates" ("templateTitle", "createdAt", "updatedAt", "sourceObjective")
+          SELECT o.title, NOW(), NOW(), o.id
+          FROM "Objectives" o;`,
           { transaction },
         );
       } catch (err) {
@@ -284,13 +337,13 @@ module.exports = {
               "o"."createdAt",
               "o"."updatedAt",
               "ot"."id" "objectiveTemplateId"
-            FROM "GoalTemplates" "gt"
-            JOIN "TempGoals" "g"
-            ON "gt"."id" = "g"."goalTemplateId"
-            JOIN "Objectives" "o"
-            ON "gt"."sourceGoal" = "o"."goalId"
+            FROM "Objectives" "o"
             JOIN "ObjectiveTemplates" "ot"
-            ON "o"."id" = "ot"."sourceObjective";
+            ON "o"."id" = "ot"."sourceObjective"
+            LEFT JOIN "GoalTemplates" "gt"
+            ON "gt"."sourceGoal" = "o"."goalId"
+            LEFT JOIN "TempGoals" "g"
+            ON "gt"."id" = "g"."goalTemplateId";
 
             INSERT INTO "TempObjectiveTopics" (
               "objectiveId",
@@ -445,15 +498,12 @@ module.exports = {
               "updatedAt"
             FROM "TempActivityReportObjectives";
 
-            DROP TABLE "TempGoals";
-
-            DROP TABLE "TempObjectives";
-
-            DROP TABLE "TempObjectiveTopics";
-
-            DROP TABLE "TempObjectiveResources";
-
-            DROP TABLE "TempActivityReportObjectives";
+            DROP TABLE
+              "TempGoals",
+              "TempObjectives",
+              "TempObjectiveTopics",
+              "TempObjectiveResources",
+              "TempActivityReportObjectives";
           END$$;`,
           { transaction },
         );
@@ -473,6 +523,73 @@ module.exports = {
             ALTER TABLE "ObjectiveTemplates"
             DROP COLUMN "sourceObjective";
           END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Remove duplicate templates and realign references duplicates to first instance
+      try {
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+            CREATE TEMP TABLE "TempObjectiveTemplatesReductionMap" AS
+            SELECT
+              otA.id "primaryTemplateId",
+              otB.id "secondaryTemplateId"
+            FROM "ObjectiveTemplates" otA
+            JOIN "ObjectiveTemplates" otB
+            ON otA.id < otB.id
+            AND otA."templateTitle" = otB."templateTitle";
+
+            UPDATE ONLY "Objectives"
+            SET "objectiveTemplateId" = otrm."primaryTemplateId"
+            FROM "TempObjectiveTemplatesReductionMap" otrm
+            WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
+
+            DELETE FROM "ObjectiveTemplates" ot
+            USING  "TempObjectiveTemplatesReductionMap" otrm
+            WHERE ot.id = otrm."secondaryTemplateId";
+
+            CREATE TEMP TABLE "TempGoalTemplatesReductionMap" AS
+            SELECT
+              gtA.id "primaryTemplateId",
+              gtB.id "secondaryTemplateId"
+            FROM "GoalTemplates" gtA
+            JOIN "GoalTemplates" gtB
+            ON gtA.id < gtB.id
+            AND gtA."templateName" = gtB."templateName";
+
+            UPDATE ONLY "Goals"
+            SET "goalTemplateId" = gtrm."primaryTemplateId"
+            FROM "TempGoalTemplatesReductionMap" gtrm
+            WHERE "goalTemplateId" = gtrm."secondaryTemplateId";
+
+            DELETE FROM "GoalTemplates" gt
+            USING  "TempGoalTemplatesReductionMap" gtrm
+            WHERE gt.id = gtrm."secondaryTemplateId";
+
+            DROP TABLE
+              "TempObjectiveTemplatesReductionMap",
+              "TempGoalTemplatesReductionMap";
+          END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Populate GoalTemplateObjectiveTemplates linking  ObjectiveTemplates to GoalTemplates
+      try {
+        await queryInterface.sequelize.query(
+          `INSERT INTO "GoalTemplateObjectiveTemplates" ("objectiveTemplateId", "goalTemplateId")
+          SELECT DISTINCT o."objectiveTemplateId", g."goalTemplateId"
+          FROM "Objectives" o
+          JOIN "Goals" g
+          ON o."goalId" = g."id";`,
           { transaction },
         );
       } catch (err) {
@@ -502,6 +619,199 @@ module.exports = {
         { type: Sequelize.INTEGER, allowNull: false },
         { transaction },
       );
+
+      // Enable logging while doing structural updates
+      try {
+        await queryInterface.sequelize.query(
+          `
+          SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+          `,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      await queryInterface.createTable('ActivityReportFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        activityReportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ActivityReports',
+            },
+            key: 'id',
+          },
+        },
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ActivityReportObjectiveFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        activityReporObjectivetId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ActivityReportObjectives',
+            },
+            key: 'id',
+          },
+        },
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ObjectiveFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        objectivetId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Objectives',
+            },
+            key: 'id',
+          },
+        },
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ObjectiveTemplateFiles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        objectivetTemplateId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
+          },
+        },
+        fileId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Files',
+            },
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      // Disable logging while doing mass updates
+      try {
+        await queryInterface.sequelize.query(
+          `
+          SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+          `,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Realign files to use ActivityReportFiles table
+      try {
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+            INSERT INTO "ActivityReportFiles" ("activityReportId", "fileId", "createdAt", "updatedAt")
+            SELECT "activityReportId", id, "createdAt", "updatedAt"
+            FROM "Files";
+
+            ALTER TABLE "Files"
+            DROP COLUMN "activityReportId";
+          END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
 
       // Enable logging while doing structural updates
       try {
