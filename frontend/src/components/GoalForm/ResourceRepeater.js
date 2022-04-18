@@ -51,7 +51,7 @@ export default function ResourceRepeater({
         <FormGroup error={error.props.children}>
           <div ref={resourcesWrapper}>
             <Label htmlFor="resources">
-              Add resource link
+              Links to TTA resources used
               <QuestionTooltip
                 text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
               />

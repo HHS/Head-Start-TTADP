@@ -3,12 +3,14 @@ import {
   createGoals,
   changeGoalStatus,
   deleteGoal,
-  retrieveGoal,
+  retrieveGoalById,
+  retrieveGoalByIdAndRecipient,
 } from './handlers';
 
 const router = express.Router();
 router.post('/', createGoals);
-router.get('/:goalId/recipient/:recipientId', retrieveGoal);
+router.get('/:goalId', retrieveGoalById);
+router.get('/:goalId/recipient/:recipientId', retrieveGoalByIdAndRecipient);
 router.delete('/:goalId', deleteGoal);
 router.put('/:goalId/changeStatus', changeGoalStatus);
 

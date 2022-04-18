@@ -1,199 +1,118 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { Editor } from 'react-draft-wysiwyg';
-import {
-  Tag, Label, Button, TextInput, Dropdown, Grid,
-} from '@trussworks/react-uswds';
+import { v4 as uuidv4 } from 'uuid';
+import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
+import { REPORT_STATUSES } from '../../../../Constants';
+import SpecialistRole from './SpecialistRole';
+import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
+import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
+import ObjectiveTta from './ObjectiveTta';
+import ObjectiveStatus from './ObjectiveStatus';
 
-import ObjectiveFormItem from './ObjectiveFormItem';
-import ContextMenu from '../../../../components/ContextMenu';
-import RichEditor from '../../../../components/RichEditor';
-import { getEditorState } from '../../../../utils';
-import './Objective.css';
-
-const statuses = [
-  'Not Started',
-  'In Progress',
-  'Complete',
-];
-
-const EMPTY_TEXT_BOX = '<p></p>';
-
-const Objective = ({
-  objectiveAriaLabel,
+export default function Objective({
   objective,
-  onRemove,
-  onUpdate,
-  parentLabel,
-}) => {
-  const firstInput = useRef();
-  const { errors, trigger } = useFormContext();
-  const isValid = !errors[parentLabel];
-  const [oldObjective, updateOldObjective] = useState(objective);
+  topicOptions,
+  onChange,
+}) {
+  const isOnApprovedReport = objective.activityReports && objective.activityReports.some(
+    (report) => report.status === REPORT_STATUSES.APPROVED,
+  );
 
-  useEffect(() => {
-    if (firstInput.current) {
-      firstInput.current.focus();
-    }
-  }, []);
-
-  const onChange = (e) => {
-    onUpdate({
-      ...objective,
-      [e.target.name]: e.target.value,
-    });
+  const onChangeTitle = (newTitle) => {
+    onChange({ ...objective, label: newTitle });
   };
 
-  const { title, ttaProvided, status } = objective;
-  const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
-  const [showEdit, updateShowEdit] = useState(defaultShowEdit);
-
-  const updateEdit = (isEditing) => {
-    if (isEditing) {
-      updateShowEdit(true);
-    } else if (title && ttaProvided !== EMPTY_TEXT_BOX) {
-      updateShowEdit(false);
-      updateOldObjective(objective);
-    } else {
-      trigger(parentLabel);
-    }
-
-    if (!isValid) {
-      trigger(parentLabel);
-    }
+  const onChangeTopics = (topics) => {
+    onChange({ ...objective, topics });
   };
 
-  const onCancel = () => {
-    if (objective.title || objective.ttaProvided !== EMPTY_TEXT_BOX) {
-      updateShowEdit(false);
-      onUpdate(oldObjective);
-    } else {
-      onRemove();
-    }
+  const onChangeStatus = (status) => {
+    onChange({ ...objective, status });
   };
 
-  const menuItems = [
-    {
-      label: 'Edit',
-      onClick: () => { updateEdit(true); },
-    },
-    {
-      label: 'Delete',
-      onClick: onRemove,
-    },
-  ];
+  const setResources = (resources) => {
+    onChange({ ...objective, resources });
+  };
 
-  const contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
+  const onChangeTTA = (ttaProvided) => {
+    onChange({ ...objective, ttaProvided });
+  };
+
+  let savedTopics = [];
+  let savedResources = [];
+
+  if (isOnApprovedReport) {
+    savedTopics = objective.topics;
+    savedResources = objective.resources;
+  }
+
+  const resourcesForRepeater = objective.resources.length ? objective.resources : [{ key: uuidv4(), value: '' }];
 
   return (
-    <div className="smart-hub--objective">
-      {showEdit && (
-        <>
-          <ObjectiveFormItem
-            showErrors={!isValid}
-            className="margin-top-0"
-            message="Please enter the title for this objective"
-            label="Objective"
-            value={title}
-          >
-            <TextInput
-              name="title"
-              aria-label={`title for objective ${objectiveAriaLabel}`}
-              onChange={onChange}
-              inputRef={firstInput}
-              value={title}
-              spellCheck="true"
-            />
-          </ObjectiveFormItem>
-          <ObjectiveFormItem
-            showErrors={!isValid}
-            message="Please enter the TTA provided for this objective"
-            label="TTA Provided"
-            value={ttaProvided}
-          >
-            <div className="smart-hub--text-area__resize-vertical">
-              <RichEditor
-                value={ttaProvided}
-                ariaLabel={`TTA provided for objective ${objectiveAriaLabel}`}
-                defaultValue={ttaProvided}
-                onChange={(content) => {
-                  onUpdate({
-                    ...objective,
-                    ttaProvided: content,
-                  });
-                }}
-              />
-            </div>
-          </ObjectiveFormItem>
-          <Grid row gap>
-            <Grid col={4}>
-              <Label>
-                Status
-                <Dropdown
-                  name="status"
-                  onChange={onChange}
-                  value={status}
-                  aria-label={`Status for objective ${objectiveAriaLabel}`}
-                >
-                  {statuses.map((possibleStatus) => (
-                    <option
-                      key={possibleStatus}
-                      value={possibleStatus}
-                    >
-                      {possibleStatus}
-                    </option>
-                  ))}
-                </Dropdown>
-              </Label>
-            </Grid>
-            <Grid col={8} className="display-flex flex-align-end">
-              <Button aria-label={`Save objective ${objectiveAriaLabel}`} type="button" onClick={() => { updateEdit(false); }}>Save Objective</Button>
-              <Button aria-label={`Cancel update of objective ${objectiveAriaLabel}`} secondary type="button" onClick={() => { onCancel(); }}>Cancel</Button>
-            </Grid>
-          </Grid>
-        </>
-      )}
-      {!showEdit
-      && (
-        <>
-          <div className="display-flex flex-align-end">
-            <div className="margin-top-0 margin-left-auto">
-              <ContextMenu
-                label={contextMenuLabel}
-                menuItems={menuItems}
-              />
-            </div>
-          </div>
-          <p className="smart-hub--objective-title margin-top-0">
-            <span className="text-bold">Objective: </span>
-            {title}
-          </p>
-          <p>
-            <span className="text-bold">TTA Provided: </span>
-          </p>
-          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(ttaProvided)} />
-          <Tag className="smart-hub--objective-tag">{status}</Tag>
-        </>
-      )}
-    </div>
+    <>
+      <ObjectiveTitle
+        error={<></>}
+        isOnApprovedReport={isOnApprovedReport || false}
+        title={objective.title}
+        onChangeTitle={onChangeTitle}
+        validateObjectiveTitle={() => {}}
+        status={objective.status}
+      />
+      <SpecialistRole
+        objective={objective}
+      />
+      <ObjectiveTopics
+        error={<></>}
+        savedTopics={savedTopics}
+        topicOptions={topicOptions}
+        validateObjectiveTopics={() => {}}
+        topics={isOnApprovedReport ? [] : objective.topics}
+        onChangeTopics={onChangeTopics}
+        status={objective.status}
+      />
+      <ResourceRepeater
+        resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        setResources={setResources}
+        error={<></>}
+        validateResources={() => {}}
+        savedResources={savedResources}
+        status={objective.status}
+      />
+      <ObjectiveTta
+        ttaProvided={objective.ttaProvided}
+        onChangeTTA={onChangeTTA}
+        status={objective.status}
+        isOnApprovedReport={isOnApprovedReport || false}
+      />
+      <ObjectiveStatus
+        status={objective.status}
+        onChangeStatus={onChangeStatus}
+      />
+    </>
   );
-};
+}
 
 Objective.propTypes = {
   objective: PropTypes.shape({
     title: PropTypes.string,
     ttaProvided: PropTypes.string,
     status: PropTypes.string,
+    id: PropTypes.number,
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })),
+    activityReports: PropTypes.arrayOf(PropTypes.shape({
+      status: PropTypes.string,
+    })),
   }).isRequired,
-  onRemove: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired,
-  parentLabel: PropTypes.string.isRequired,
-  objectiveAriaLabel: PropTypes.string,
+  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })).isRequired,
+  onChange: PropTypes.func.isRequired,
 };
-
-Objective.defaultProps = {
-  objectiveAriaLabel: '',
-};
-
-export default Objective;
