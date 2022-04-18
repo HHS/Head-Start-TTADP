@@ -8,7 +8,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal, goalById } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -99,7 +99,7 @@ export default function GoalForm({
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const goal = await goalById(id, recipient.id.toString());
+        const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
         // the API sends us back things in a format we expect
         setGoalName(goal.goalName);

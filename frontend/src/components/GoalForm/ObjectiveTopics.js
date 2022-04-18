@@ -4,7 +4,7 @@ import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { SELECT_STYLES } from './constants';
+import selectOptionsReset from '../selectOptionsReset';
 
 export default function ObjectiveTopics({
   error,
@@ -46,7 +46,7 @@ export default function ObjectiveTopics({
           {error}
           <Select
             inputId="topics"
-            styles={SELECT_STYLES}
+            styles={selectOptionsReset}
             components={{
               DropdownIndicator: null,
             }}

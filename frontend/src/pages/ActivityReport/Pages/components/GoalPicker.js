@@ -1,26 +1,22 @@
-import React, { useState } from 'react';
-import { uniqBy, cloneDeep } from 'lodash';
+import React, { useState, useEffect } from 'react';
+import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
-import { v4 as uuidv4 } from 'uuid';
-
-import FormItem from '../../../../components/FormItem';
-import Goal from './Goal';
-import MultiSelect from '../../../../components/MultiSelect';
+import Select from 'react-select';
+import { getTopics } from '../../../../fetchers/topics';
+import Req from '../../../../components/Req';
 import Option from './GoalOption';
-import Input from './GoalInput';
+import SingleValue from './GoalValue';
+import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
+import GoalForm from './GoalForm';
 
 const components = {
-  Input,
   Option,
+  SingleValue,
 };
-
-const createObjective = () => ({
-  title: '', ttaProvided: '<p></p>', status: 'Not Started', id: uuidv4(), new: true,
-});
 
 const GoalPicker = ({
   availableGoals,
@@ -28,126 +24,82 @@ const GoalPicker = ({
   const {
     control, setValue,
   } = useFormContext();
-  const [inMemoryGoals, updateInMemoryGoals] = useState([]);
+  const [inMemoryGoals] = useState([]);
+  const [topicOptions, setTopicOptions] = useState([]);
   const selectedGoals = useWatch({ name: 'goals' });
   // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
   // inMemoryGoals: unsaved goals, deselected goals
   // selectedGoals: goals selected by user in MultiSelect
   const allAvailableGoals = [...selectedGoals, ...inMemoryGoals, ...availableGoals];
 
-  const onRemoveGoal = (id) => {
-    const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateInMemoryGoals([...inMemoryGoals, ...newGoals]);
-    setValue('goals', newGoals);
+  const onChange = (goal) => {
+    // need to build this out for when multiple goals are selected
+    setValue('goals', [goal]);
   };
 
-  const onUpdateGoal = (index, name) => {
-    if (name !== '') {
-      const oldGoal = selectedGoals[index];
-      const goal = {
-        ...oldGoal,
-        name,
-      };
-      const updatedGoals = cloneDeep(selectedGoals);
-      updatedGoals[index] = goal;
-      setValue('goals', updatedGoals);
+  // for fetching topic options from API
+  useEffect(() => {
+    async function fetchTopics() {
+      const topicsFromApi = await getTopics();
+
+      const topicsAsOptions = topicsFromApi.map((topic) => ({
+        label: topic.name,
+        value: topic.id,
+      }));
+      setTopicOptions(topicsAsOptions);
     }
-  };
 
-  const onUpdateObjectives = (index, objectives) => {
-    const newGoals = cloneDeep(selectedGoals);
-    newGoals[index].objectives = objectives;
-    // When objecttives are added/updated, make sure they are attached to available goals
-    updateInMemoryGoals(newGoals);
-    setValue('goals', newGoals);
-  };
-
-  const onItemSelected = (event) => {
-    // Use selections from MultiSelect to update goals form state
-    const newlySelectedGoals = event.map((e) => {
-      const goal = allAvailableGoals.find((g) => g.id === e.value);
-      let objectives = [createObjective()];
-
-      if (goal.objectives && goal.objectives.length > 0) {
-        objectives = goal.objectives;
-      }
-      return {
-        ...goal,
-        objectives,
-      };
-    });
-    // Preserve deselected goals so they can be re-reselected
-    const selectedIds = event.map((g) => g.id);
-    const deselectedGoals = selectedGoals.filter((g) => !selectedIds.includes(g.id));
-    updateInMemoryGoals([...inMemoryGoals, ...deselectedGoals]);
-
-    setValue('goals', newlySelectedGoals);
-  };
-
-  const onNewGoalChange = (newGoal) => {
-    const goal = {
-      id: uuidv4(),
-      new: true,
-      name: newGoal,
-      objectives: [createObjective()],
-    };
-    setValue('goals', [...selectedGoals, goal]);
-    updateInMemoryGoals((oldGoals) => [...oldGoals, goal]);
-  };
+    fetchTopics();
+  }, []);
 
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
 
+  // We need options with the number and also we need to add the
+  // "create new goal to the front of all the options"
+  const options = [
+    {
+      value: 'new', number: false, label: 'Create new goal', objectives: [],
+    },
+    ...uniqueAvailableGoals.map(({
+      goalNumber, ...goal
+    }) => (
+      {
+        value: goal.id, number: goalNumber, label: goal.name, objectives: [], ...goal,
+      }
+    )),
+  ];
+
   return (
     <div className="margin-top-4">
-      <FormItem
-        label="Select all goals that apply to this report before leaving this page."
-        name="goals"
-        fieldSetWrapper
-      >
-        <Label>
-          Select from existing goal(s) or type to create a new goal.
-          <MultiSelect
-            name="goals"
-            control={control}
-            valueProperty="id"
-            labelProperty="name"
-            simple={false}
-            components={components}
-            onItemSelected={onItemSelected}
-            rules={{
-              validate: validateGoals,
-            }}
-            options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
-            singleRowInput
-            multiSelectOptions={{
-              isClearable: false,
-              closeMenuOnSelect: true,
-              controlShouldRenderValue: false,
-              hideSelectedOptions: false,
-            }}
-            onCreateOption={onNewGoalChange}
-            canCreate
-          />
-        </Label>
-        <div>
-          {selectedGoals.map((goal, index) => (
-            <Goal
-              key={goal.id}
-              goalIndex={index}
-              id={goal.id}
-              objectives={goal.objectives}
-              name={goal.name}
-              isEditable={goal.new === true}
-              createObjective={createObjective}
-              onRemoveGoal={() => onRemoveGoal(goal.id)}
-              onUpdateObjectives={(newObjectives) => {
-                onUpdateObjectives(index, newObjectives);
-              }}
-              onUpdateGoal={(goalName) => onUpdateGoal(index, goalName)}
-            />
-          ))}
-        </div>
-      </FormItem>
+      <Label>
+        Select recipient&apos;s goal
+        <Req />
+        <Select
+          name="goals"
+          control={control}
+          components={components}
+          onChange={onChange}
+          rules={{
+            validate: validateGoals,
+          }}
+          className="usa-select"
+          options={options}
+          styles={{
+            ...selectOptionsReset,
+            option: (provided) => ({
+              ...provided,
+              marginBottom: '0.5em',
+            }),
+          }}
+          placeholder="- Select -"
+          value={selectedGoals}
+        />
+      </Label>
+      <div>
+        {selectedGoals.map((goal) => (
+          <GoalForm key={goal.id} topicOptions={topicOptions} goal={goal} />
+        ))}
+      </div>
     </div>
   );
 };

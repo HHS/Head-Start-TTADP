@@ -22,6 +22,8 @@ import {
   Objective,
   Program,
   ActivityReportObjective,
+  ObjectiveResource,
+  Topic,
 } from '../models';
 
 import { saveGoalsForReport } from './goals';
@@ -267,12 +269,47 @@ export function activityReportById(activityReportId) {
         ],
       },
       {
+        attributes: [
+          ['id', 'value'],
+          ['title', 'label'],
+          'id',
+          'title',
+          'ttaProvided',
+          'status',
+          'goalId',
+        ],
         model: Objective,
         as: 'objectivesWithGoals',
-        include: [{
-          model: Goal,
-          as: 'goal',
-        }],
+        include: [
+          {
+            model: Goal,
+            as: 'goal',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+              'id',
+              'name',
+              'status',
+              'endDate',
+            ],
+          },
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+          },
+        ],
       },
       {
         model: Objective,

@@ -10,6 +10,7 @@ import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
+import Req from '../../../components/Req';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
@@ -38,14 +39,18 @@ const GoalsObjectives = () => {
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      <p className="usa-prose">
+        <Req className="margin-right-1" />
+        indicates required field
+      </p>
       {!isRecipientReport && (
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for other entity TTA">
+        <Fieldset className="smart-hub--report-legend" legend="Objectives for other entity TTA">
           <ObjectivePicker />
         </Fieldset>
       )}
       {showGoals
         && (
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
+        <Fieldset className="smart-hub--report-legend" legend="Goal summary">
           <div id="goals-and-objectives" />
           <GoalPicker
             availableGoals={availableGoals}
