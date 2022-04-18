@@ -14,7 +14,6 @@ import {
   ActivityReport,
   Topic,
   Program,
-  sequelize,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
