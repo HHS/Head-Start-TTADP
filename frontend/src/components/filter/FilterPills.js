@@ -17,7 +17,15 @@ export function Pill({
     query,
   } = filter;
 
-  const filterName = filterConfig.find((f) => f.id === topic).display;
+  const determineFilterName = () => {
+    const filterConfigToUse = filterConfig.find((f) => f.id === topic);
+    if (filterConfigToUse) {
+      return filterConfigToUse.display;
+    }
+    return topic === 'region' ? 'Region' : null;
+  };
+
+  const filterName = determineFilterName();
 
   let showToolTip = false;
 

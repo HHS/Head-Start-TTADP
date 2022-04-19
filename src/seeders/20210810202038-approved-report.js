@@ -52,18 +52,14 @@ const approvers = [{
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.bulkInsert('ActivityReports', reports, { transaction });
-      await queryInterface.bulkInsert('ActivityRecipients', recipients, { transaction });
-      await queryInterface.bulkInsert('ActivityReportApprovers', approvers, { transaction });
-    });
+    await queryInterface.bulkInsert('ActivityReports', reports);
+    await queryInterface.bulkInsert('ActivityRecipients', recipients);
+    await queryInterface.bulkInsert('ActivityReportApprovers', approvers);
   },
 
   down: async (queryInterface) => {
-    await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.bulkDelete('ActivityReports', null, { transaction });
-      await queryInterface.bulkDelete('ActivityRecipients', null, { transaction });
-      await queryInterface.bulkDelete('ActivityReportApprovers', null, { transaction });
-    });
+    await queryInterface.bulkDelete('ActivityReports', null);
+    await queryInterface.bulkDelete('ActivityRecipients', null);
+    await queryInterface.bulkDelete('ActivityReportApprovers', null);
   },
 };
