@@ -2,14 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import Objective from './Objective';
 
 export default function Objectives({ goal, objectives, topicOptions }) {
   const { objectives: selectedObjectives } = goal;
-  const selectedGoals = useWatch({ name: 'goals' });
   const { setValue } = useFormContext();
   const options = [
     {
@@ -30,10 +29,9 @@ export default function Objectives({ goal, objectives, topicOptions }) {
   ];
 
   const onChange = (objective) => {
-    const updatedGoals = selectedGoals.map((g) => ({ ...g }));
-    const goalToUpdate = updatedGoals.find((g) => goal.value === g.value);
+    const goalToUpdate = { ...goal };
     goalToUpdate.objectives = [{ ...objective }];
-    setValue('goals', updatedGoals);
+    setValue('goalForEditing', goalToUpdate);
   };
 
   return (

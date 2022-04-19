@@ -1,3 +1,7 @@
+/* eslint-disable react/jsx-props-no-spreading */
+// disabling prop spreading to use the "register" function from react hook form the same
+// way they did in thier examples
+/* eslint-disable arrow-body-style */
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
@@ -11,11 +15,14 @@ import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 import Req from '../../../components/Req';
+import ReadOnly from '../../../components/GoalForm/ReadOnly';
 
 const GoalsObjectives = () => {
-  const { watch } = useFormContext();
+  const { watch, register } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
+  const isGoalFormClosed = watch('goalFormClosed');
+
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
 
@@ -43,20 +50,36 @@ const GoalsObjectives = () => {
         <Req className="margin-right-1" />
         indicates required field
       </p>
+      <input type="hidden" {...register('isGoalFormClosed')} />
+
+      <input
+        type="hidden"
+        {...register('goals', {
+          required: true,
+          validate: validateGoals,
+        })}
+      />
+
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend" legend="Objectives for other entity TTA">
           <ObjectivePicker />
         </Fieldset>
       )}
-      {showGoals
-        && (
-        <Fieldset className="smart-hub--report-legend" legend="Goal summary">
-          <div id="goals-and-objectives" />
-          <GoalPicker
-            availableGoals={availableGoals}
+      {showGoals && !isGoalFormClosed
+        ? (
+          <Fieldset className="smart-hub--report-legend" legend="Goal summary">
+            <div id="goals-and-objectives" />
+            <GoalPicker
+              availableGoals={availableGoals}
+            />
+          </Fieldset>
+        ) : (
+          <ReadOnly
+            onEdit={() => {}}
+            onDelete={() => {}}
+            createdGoals={[]}
           />
-        </Fieldset>
-        )}
+        ) }
     </>
   );
 };

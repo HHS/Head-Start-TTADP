@@ -24,17 +24,16 @@ const GoalPicker = ({
   const {
     control, setValue,
   } = useFormContext();
-  const [inMemoryGoals] = useState([]);
   const [topicOptions, setTopicOptions] = useState([]);
-  const selectedGoals = useWatch({ name: 'goals' });
+  const goalForEditing = useWatch({ name: 'goalForEditing' });
+
   // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
   // inMemoryGoals: unsaved goals, deselected goals
   // selectedGoals: goals selected by user in MultiSelect
-  const allAvailableGoals = [...selectedGoals, ...inMemoryGoals, ...availableGoals];
+  const allAvailableGoals = [...availableGoals];
 
   const onChange = (goal) => {
-    // need to build this out for when multiple goals are selected
-    setValue('goals', [goal]);
+    setValue('goalForEditing', goal);
   };
 
   // for fetching topic options from API
@@ -75,7 +74,7 @@ const GoalPicker = ({
         Select recipient&apos;s goal
         <Req />
         <Select
-          name="goals"
+          name="goalForEditing"
           control={control}
           components={components}
           onChange={onChange}
@@ -92,14 +91,14 @@ const GoalPicker = ({
             }),
           }}
           placeholder="- Select -"
-          value={selectedGoals}
+          value={goalForEditing}
         />
       </Label>
-      <div>
-        {selectedGoals.map((goal) => (
-          <GoalForm key={goal.id} topicOptions={topicOptions} goal={goal} />
-        ))}
-      </div>
+      {goalForEditing ? (
+        <div>
+          <GoalForm topicOptions={topicOptions} goal={goalForEditing} />
+        </div>
+      ) : null }
     </div>
   );
 };

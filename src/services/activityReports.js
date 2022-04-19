@@ -291,6 +291,7 @@ export function activityReportById(activityReportId) {
               'name',
               'status',
               'endDate',
+              'goalNumber',
             ],
           },
           {
