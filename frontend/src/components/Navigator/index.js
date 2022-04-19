@@ -27,6 +27,7 @@ import {
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
+// import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
 
 function Navigator({
   editable,
@@ -119,6 +120,7 @@ function Navigator({
   const onGoalFormNavigate = async () => {
     await onSaveForm();
     setValue('goalFormClosed', true);
+    // console.log(validateGoals([goalForEditing]));
     setValue('goals', [...selectedGoals, goalForEditing]);
     setValue('goalForEditing', null);
   };

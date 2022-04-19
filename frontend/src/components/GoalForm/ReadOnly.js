@@ -50,7 +50,7 @@ export default function ReadOnly({
                 />
               </div>
               <h3>Goal summary</h3>
-              <h4 className="margin-bottom-1">Recipient grant numbers</h4>
+              {goal.grants.length ? <h4 className="margin-bottom-1">Recipient grant numbers</h4> : null }
               { goal.grants.map((g) => <p key={`grant${g.value}`}>{g.label}</p>) }
               <h4 className="margin-bottom-1">Goal</h4>
               <p className="margin-top-0">{goal.goalName}</p>
@@ -65,9 +65,9 @@ export default function ReadOnly({
                   <h3>Objective summary</h3>
                   <h4 className="margin-bottom-1">Objective</h4>
                   <p className="margin-top-0">{objective.title}</p>
-                  <h4 className="margin-bottom-1">Topics</h4>
+                  {objective.topics.length ? <h4 className="margin-bottom-1">Topics</h4> : null }
                   <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
-                  <h4 className="margin-bottom-1">Resource link</h4>
+                  {objective.resources.length ? <h4 className="margin-bottom-1">Resource links</h4> : null }
                   <ul className="usa-list usa-list--unstyled">
                     { objective.resources.map((resource) => (
                       <li key={resource.key}>{resource.value}</li>
