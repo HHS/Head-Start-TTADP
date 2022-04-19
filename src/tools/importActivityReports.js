@@ -275,27 +275,25 @@ export default async function importActivityReports(fileKey, region) {
         // Imported ARs won't pass `checkRequiredForSubmission`,
         // because `approvingManagerId`, `requester`, etc. may be null
         // so we build, then save without validating;
-        await sequelize.transaction(async (transaction) => {
-          const [ar, built] = await ActivityReport.findOrBuild(
-            { where: { legacyId }, defaults: arRecord, transaction },
-          );
-          if (built) {
-            await ar.save({ validate: false, transaction });
-          } else {
-            await ar.update(arRecord, { validate: false, transaction });
-          }
+        const [ar, built] = await ActivityReport.findOrBuild(
+          { where: { legacyId }, defaults: arRecord },
+        );
+        if (built) {
+          await ar.save({ validate: false });
+        } else {
+          await ar.update(arRecord, { validate: false });
+        }
 
-          // ActivityRecipients: connect Grants to ActivityReports
-          const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
-          for await (const n of grantNumbers) {
-            const grant = await Grant.findOne({ where: { number: n }, transaction });
-            if (grant) {
-              ActivityRecipient.findOrCreate(
-                { where: { activityReportId: ar.id, grantId: grant.id }, transaction },
-              );
-            }
+        // ActivityRecipients: connect Grants to ActivityReports
+        const grantNumbers = parseGrantNumbers(getValue(data, 'granteeName'));
+        for await (const n of grantNumbers) {
+          const grant = await Grant.findOne({ where: { number: n } });
+          if (grant) {
+            ActivityRecipient.findOrCreate(
+              { where: { activityReportId: ar.id, grantId: grant.id } },
+            );
           }
-        });
+        }
       } catch (e) {
         auditLogger.error(`Error processing legacy report: ${legacyId}`);
         auditLogger.error(e);

@@ -382,16 +382,15 @@ export async function goalsForGrants(grantIds) {
   });
 }
 
-async function removeActivityReportObjectivesFromReport(reportId, transaction) {
+async function removeActivityReportObjectivesFromReport(reportId) {
   return ActivityReportObjective.destroy({
     where: {
       activityReportId: reportId,
     },
-    transaction,
   });
 }
 
-export async function removeGoals(goalsToRemove, transaction) {
+export async function removeGoals(goalsToRemove) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
     where: {
@@ -403,7 +402,6 @@ export async function removeGoals(goalsToRemove, transaction) {
       as: 'grants',
       required: true,
     },
-    transaction,
   });
 
   const goalIdsToKeep = goalsWithGrants.map((g) => g.id);
@@ -413,20 +411,18 @@ export async function removeGoals(goalsToRemove, transaction) {
     where: {
       id: goalsWithoutGrants,
     },
-    transaction,
   });
 }
 
-async function removeObjectives(currentObjectiveIds, transaction) {
+async function removeObjectives(currentObjectiveIds) {
   return Objective.destroy({
     where: {
       id: currentObjectiveIds,
     },
-    transaction,
   });
 }
 
-async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, transaction) {
+async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals) {
   const previousObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
@@ -457,13 +453,13 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals, tra
     }),
   );
 
-  await removeActivityReportObjectivesFromReport(reportId, transaction);
-  await removeObjectives(objectiveIdsToRemove, transaction);
-  await removeGoals(goalIdsToRemove, transaction);
+  await removeActivityReportObjectivesFromReport(reportId);
+  await removeObjectives(objectiveIdsToRemove);
+  await removeGoals(goalIdsToRemove);
 }
 
-export async function saveGoalsForReport(goals, report, transaction) {
-  await removeUnusedObjectivesGoalsFromReport(report.id, goals, transaction);
+export async function saveGoalsForReport(goals, report) {
+  await removeUnusedObjectivesGoalsFromReport(report.id, goals);
 
   return Promise.all(goals.map(async (goal) => {
     const goalId = goal.id;
@@ -477,7 +473,7 @@ export async function saveGoalsForReport(goals, report, transaction) {
     // - add returning: true to options to get an array of [<Model>,<created>] (postgres only)
     // - https://sequelize.org/v5/class/lib/model.js~Model.html#static-method-upsert
 
-    const newGoal = await Goal.upsert(fields, { returning: true, transaction });
+    const newGoal = await Goal.upsert(fields, { returning: true });
 
     return Promise.all(goal.objectives.map(async (objective) => {
       const { id, ...updatedFields } = objective;
@@ -489,18 +485,18 @@ export async function saveGoalsForReport(goals, report, transaction) {
 
       const savedObjective = await Objective.upsert(
         updatedObjective,
-        { returning: true, transaction },
+        { returning: true },
       );
 
       return ActivityReportObjective.create({
         objectiveId: savedObjective[0].id,
         activityReportId: report.id,
-      }, { transaction });
+      });
     }));
   }));
 }
 
-export async function copyGoalsToGrants(goals, grantIds, transaction) {
+export async function copyGoalsToGrants(goals, grantIds) {
   const grants = await Grant.findAll({
     where: {
       id: grantIds,
@@ -520,7 +516,6 @@ export async function copyGoalsToGrants(goals, grantIds, transaction) {
 
   await GrantGoal.bulkCreate(grantGoals, {
     ignoreDuplicates: true,
-    transaction,
   });
 }
 
