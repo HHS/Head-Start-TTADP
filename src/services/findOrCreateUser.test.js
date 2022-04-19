@@ -151,7 +151,7 @@ describe('findOrCreateUser', () => {
   });
 
   it('Throws when there is something wrong', async () => {
-    await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
+    await expect(() => findOrCreateUser({ id: 9999999 })).rejects.toBeInstanceOf(Error);
   });
 
   it('Logs an error message on error', async () => {

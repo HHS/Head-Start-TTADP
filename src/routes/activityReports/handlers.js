@@ -306,13 +306,12 @@ export async function reviewReport(req, res) {
       return;
     }
 
-    const transaction = await sequelize.transaction(async () => { });
     const savedApprover = await upsertApprover({
       status,
       note,
       activityReportId,
       userId,
-    }, transaction);
+    });
 
     const reviewedReport = await activityReportById(activityReportId);
 
@@ -321,7 +320,6 @@ export async function reviewReport(req, res) {
         await copyGoalsToGrants(
           reviewedReport.goals,
           reviewedReport.activityRecipients.map((recipient) => recipient.activityRecipientId),
-          transaction,
         );
       }
       reportApprovedNotification(reviewedReport);

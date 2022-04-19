@@ -34,15 +34,12 @@ const mockUser = {
   ],
 };
 
-const setupUser = async (user) => (
-  sequelize.transaction(async (transaction) => {
-    await User.destroy({ where: { id: user.id } }, { transaction });
-    await User.create(user, {
-      include: [{ model: Permission, as: 'permissions' }],
-      transaction,
-    });
-  })
-);
+const setupUser = async (user) => {
+  await User.destroy({ where: { id: user.id } });
+  await User.create(user, {
+    include: [{ model: Permission, as: 'permissions' }],
+  });
+};
 
 describe('accessValidation', () => {
   afterAll(async () => {

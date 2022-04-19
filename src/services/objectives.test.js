@@ -4,6 +4,7 @@ import db, {
 import { REPORT_STATUSES } from '../constants';
 
 import { saveObjectivesForReport } from './objectives';
+import waitFor from 'wait-for-expect';
 
 const mockUser = {
   id: 8088,
@@ -66,8 +67,8 @@ describe('Objectives DB service', () => {
       activityReportId: report.id,
     });
 
-    await sequelize.transaction(async (transaction) => {
-      await saveObjectivesForReport([...objectives, objective], report, transaction);
+    await sequelize.transaction(async () => {
+      await saveObjectivesForReport([...objectives, objective], report);
     });
   });
 
@@ -83,10 +84,12 @@ describe('Objectives DB service', () => {
 
   describe('saveObjectivesForReport', () => {
     it('deletes old objectives', async () => {
-      const found = await Objective.findOne({
-        where: { id: secondObjective.id, title: secondObjective.title },
+      waitFor(async () => {
+        const found = await Objective.findOne({
+          where: { id: secondObjective.id, title: secondObjective.title },
+        });
+        expect(found).toBeNull();
       });
-      expect(found).toBeNull();
     });
 
     it('deletes old activity report objectives', async () => {

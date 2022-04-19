@@ -4,12 +4,10 @@ import { ActivityReportApprover, User } from '../models';
  * Update or create new Approver
  *
  * @param {*} values - object containing Approver properties to create or update
- * @param {*} transaction - sequelize transaction
  */
-export async function upsertApprover(values, transaction) {
+export async function upsertApprover(values) {
   // Create approver, on unique constraint violation do update
   let [approver] = await ActivityReportApprover.upsert(values, {
-    transaction,
     returning: true,
   });
 
@@ -18,7 +16,6 @@ export async function upsertApprover(values, transaction) {
   if (approver.deletedAt) {
     return ActivityReportApprover.restore({
       where: values,
-      transaction,
       individualHooks: true,
     });
   }
@@ -43,12 +40,10 @@ export async function upsertApprover(values, transaction) {
  * @param {*} activityReportId - pk of ActivityReport, used to find ActivityReportApprovers
  * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
  * deleted or created to match this list
- * @param {*} transaction - sequelize transaction
  */
-export async function syncApprovers(activityReportId, userIds = [], transaction = null) {
+export async function syncApprovers(activityReportId, userIds = []) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
-    transaction,
   });
 
   // Destroy any preexisting approvers now missing from userId request param
@@ -62,7 +57,6 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
           where: { id: approver.id },
           individualHooks: true,
           force: true,
-          transaction,
         });
       }
       // Approver had reviewed the report, soft delete
@@ -70,7 +64,6 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
       return ActivityReportApprover.destroy({
         where: { id: approver.id },
         individualHooks: true,
-        transaction,
       });
     });
     await Promise.all(destroyPromises);
@@ -81,7 +74,7 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
     const upsertApproverPromises = userIds.map(async (userId) => upsertApprover({
       activityReportId,
       userId,
-    }, transaction));
+    }));
     await Promise.all(upsertApproverPromises);
   }
 
@@ -94,6 +87,5 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
         raw: true,
       },
     ],
-    transaction,
   });
 }
