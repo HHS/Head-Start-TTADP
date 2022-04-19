@@ -2,7 +2,7 @@ import stringify from 'csv-stringify/lib/sync';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  sequelize, ActivityReport as ActivityReportModel, ActivityReportApprover, User as UserModel,
+  ActivityReport as ActivityReportModel, ActivityReportApprover, User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';

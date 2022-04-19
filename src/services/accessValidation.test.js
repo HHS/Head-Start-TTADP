@@ -1,4 +1,4 @@
-import db, { User, Permission, sequelize } from '../models';
+import db, { User, Permission } from '../models';
 import {
   validateUserAuthForAccess,
   validateUserAuthForAdmin,

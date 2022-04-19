@@ -1,10 +1,10 @@
+import waitFor from 'wait-for-expect';
 import db, {
   ActivityReport, User, Objective, ActivityReportObjective, sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
 import { saveObjectivesForReport } from './objectives';
-import waitFor from 'wait-for-expect';
 
 const mockUser = {
   id: 8088,
