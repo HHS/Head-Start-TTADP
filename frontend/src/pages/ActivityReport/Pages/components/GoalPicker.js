@@ -13,6 +13,16 @@ import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
 import GoalForm from './GoalForm';
 
+export const newGoal = {
+  value: 'new',
+  number: false,
+  label: 'Create new goal',
+  objectives: [],
+  name: '',
+  goalNumber: '',
+  id: 'new',
+};
+
 const components = {
   Option,
   SingleValue,
@@ -26,11 +36,10 @@ const GoalPicker = ({
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
   const goalForEditing = useWatch({ name: 'goalForEditing' });
+  const selectedGoals = useWatch({ name: 'goals' });
 
-  // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
-  // inMemoryGoals: unsaved goals, deselected goals
-  // selectedGoals: goals selected by user in MultiSelect
-  const allAvailableGoals = [...availableGoals];
+  const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
+  const allAvailableGoals = availableGoals.filter((goal) => !selectedIds.includes(goal.id));
 
   const onChange = (goal) => {
     setValue('goalForEditing', goal);
@@ -56,9 +65,7 @@ const GoalPicker = ({
   // We need options with the number and also we need to add the
   // "create new goal to the front of all the options"
   const options = [
-    {
-      value: 'new', number: false, label: 'Create new goal', objectives: [],
-    },
+    newGoal,
     ...uniqueAvailableGoals.map(({
       goalNumber, ...goal
     }) => (

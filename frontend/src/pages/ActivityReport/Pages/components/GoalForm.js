@@ -5,6 +5,7 @@ import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalById } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
+import { validateGoals } from './goalValidator';
 
 export default function GoalForm({ goal, topicOptions }) {
   const {
@@ -22,6 +23,8 @@ export default function GoalForm({ goal, topicOptions }) {
 
     if (goal.id !== 'new') {
       fetchData();
+    } else {
+      setObjectives([]);
     }
   }, [goal.id]);
 
@@ -41,7 +44,7 @@ export default function GoalForm({ goal, topicOptions }) {
   };
 
   const validateGoalName = () => {
-    console.log('validating goal name');
+    validateGoals([goal]);
   };
 
   const validateEndDate = () => {};

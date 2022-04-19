@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import GoalPicker from './components/GoalPicker';
+import GoalPicker, { newGoal } from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import ObjectivePicker from './components/ObjectivePicker';
@@ -16,12 +16,14 @@ import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
+import PlusButton from '../../../components/GoalForm/PlusButton';
 
 const GoalsObjectives = () => {
-  const { watch, register } = useFormContext();
+  const { watch, register, setValue } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const isGoalFormClosed = watch('goalFormClosed');
+  const selectedGoals = watch('goals');
 
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
@@ -40,6 +42,45 @@ const GoalsObjectives = () => {
   }, [grantIds]);
 
   const showGoals = isRecipientReport && hasGrants;
+
+  const addNewGoal = () => {
+    setValue('goalFormClosed', false);
+    setValue('goalForEditing', newGoal);
+  };
+
+  const onDelete = (goalId) => {
+    const copyOfSelectedGoals = selectedGoals.map((goal) => ({ ...goal }));
+    const index = copyOfSelectedGoals.findIndex((goal) => goal.id === goalId);
+
+    if (index !== -1) {
+      copyOfSelectedGoals.splice(index, 1);
+    }
+
+    setValue('goals', copyOfSelectedGoals);
+  };
+
+  const onEdit = (goal, index) => {
+    // remove the goal from the "selected goals"
+    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+
+    if (index !== -1) {
+      copyOfSelectedGoals.splice(index, 1);
+    }
+
+    setValue('goals', copyOfSelectedGoals);
+
+    setValue('goalForEditing', goal);
+    setValue('goalFormClosed', false);
+  };
+
+  // the read only component expects things a little differently
+  const goalsForReview = selectedGoals.map((goal) => {
+    return {
+      ...goal,
+      goalName: goal.name,
+      grants: [],
+    };
+  });
 
   return (
     <>
@@ -65,6 +106,15 @@ const GoalsObjectives = () => {
           <ObjectivePicker />
         </Fieldset>
       )}
+
+      { goalsForReview.length ? (
+        <ReadOnly
+          onEdit={onEdit}
+          onDelete={onDelete}
+          createdGoals={goalsForReview}
+        />
+      ) : null }
+
       {showGoals && !isGoalFormClosed
         ? (
           <Fieldset className="smart-hub--report-legend" legend="Goal summary">
@@ -74,11 +124,7 @@ const GoalsObjectives = () => {
             />
           </Fieldset>
         ) : (
-          <ReadOnly
-            onEdit={() => {}}
-            onDelete={() => {}}
-            createdGoals={[]}
-          />
+          <PlusButton onClick={addNewGoal} text="Add new goal" />
         ) }
     </>
   );
