@@ -6,7 +6,9 @@
 */
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import {
+  FormProvider, useForm,
+} from 'react-hook-form/dist/index.ie11';
 import {
   Form,
   Button,
@@ -58,13 +60,19 @@ function Navigator({
     defaultValues: formData,
     shouldUnregister: false,
   });
+
   const pageState = hookForm.watch('pageState');
+  const isGoalFormClosed = hookForm.watch('goalFormClosed');
+  const selectedGoals = hookForm.watch('goals');
+  const goalForEditing = hookForm.watch('goalForEditing');
+  const isGoalsObjectivesPage = page.path === 'goals-objectives';
 
   const {
     formState,
     getValues,
     reset,
     trigger,
+    setValue,
   } = hookForm;
 
   const { isDirty, errors, isValid } = formState;
@@ -107,6 +115,12 @@ function Navigator({
       console.log(error);
       updateErrorMessage('Unable to save activity report');
     }
+  };
+  const onGoalFormNavigate = async () => {
+    await onSaveForm();
+    setValue('goalFormClosed', true);
+    setValue('goals', [...selectedGoals, goalForEditing]);
+    setValue('goalForEditing', null);
   };
 
   const onUpdatePage = async (index) => {
@@ -208,7 +222,9 @@ function Navigator({
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
-                    <Button className="margin-right-1" type="button" onClick={onContinue}>Save and Continue</Button>
+                    { isGoalsObjectivesPage && !isGoalFormClosed
+                      ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
+                      : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and Continue</Button> }
                     <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
                     {
                       page.position <= 1

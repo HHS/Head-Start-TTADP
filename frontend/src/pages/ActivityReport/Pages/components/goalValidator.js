@@ -1,11 +1,25 @@
-export const UNFINISHED_OBJECTIVES = 'Every objective must have both a title and TTA provided';
+export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
 export const GOAL_MISSING_OBJECTIVE = 'Every goal requires at least one objective';
 export const GOALS_EMPTY = 'Every report must have at least one goal';
 
 export const unfinishedObjectives = (objectives) => {
   // Every objective for this goal has to have a title and ttaProvided
   const unfinished = objectives.some(
-    (objective) => !(objective.title && objective.ttaProvided !== '<p></p>'),
+    (objective) => {
+      if (!objective.title) {
+        return false;
+      }
+
+      if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
+        return false;
+      }
+
+      if (!objective.topics.length) {
+        return false;
+      }
+
+      return true;
+    },
   );
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };

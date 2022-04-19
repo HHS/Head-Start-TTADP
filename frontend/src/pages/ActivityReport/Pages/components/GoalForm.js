@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalById } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
@@ -10,7 +10,6 @@ export default function GoalForm({ goal, topicOptions }) {
   const {
     setValue,
   } = useFormContext();
-  const selectedGoals = useWatch({ name: 'goals' });
   const [objectives, setObjectives] = useState([]);
   const { name } = goal;
 
@@ -27,10 +26,9 @@ export default function GoalForm({ goal, topicOptions }) {
   }, [goal.id]);
 
   const updateGoal = (field, value) => {
-    const updatedGoals = selectedGoals.map((g) => ({ ...g }));
-    const goalToUpdate = updatedGoals.find((g) => goal.value === g.value);
+    const goalToUpdate = { ...goal };
     goalToUpdate[field] = value;
-    setValue('goals', updatedGoals);
+    setValue('goalForEditing', goalToUpdate);
   };
 
   const onUpdateText = (e) => {
@@ -42,13 +40,19 @@ export default function GoalForm({ goal, topicOptions }) {
     updateGoal('endDate', date);
   };
 
+  const validateGoalName = () => {
+    console.log('validating goal name');
+  };
+
+  const validateEndDate = () => {};
+
   return (
     <>
       <GoalText
         error={<></>}
         isOnReport={false}
         goalName={name}
-        validateGoalName={() => {}}
+        validateGoalName={validateGoalName}
         onUpdateText={onUpdateText}
       />
 
@@ -58,7 +62,7 @@ export default function GoalForm({ goal, topicOptions }) {
             error={<></>}
             setEndDate={onUpdateDate}
             endDate={goal.endDate}
-            validateEndDate={() => {}}
+            validateEndDate={validateEndDate}
             datePickerKey="end-date-key"
           />
         )
