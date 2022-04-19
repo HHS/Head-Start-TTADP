@@ -1,6 +1,6 @@
 import {} from 'dotenv/config';
 import { UNAUTHORIZED } from 'http-codes';
-import db, { User, Permission, sequelize } from '../models';
+import db, { User, Permission } from '../models';
 import authMiddleware, { login } from './authMiddleware';
 import SCOPES from './scopeConstants';
 

@@ -13,18 +13,21 @@ import { auditLogger } from '../logger';
 export default async function changeReportStatus(ids, status) {
   const idsArray = ids.split(',');
 
-  for await (const id of idsArray) {
-    const report = await ActivityReport.unscoped().findOne({ where: { id } });
+  await sequelize.transaction(async (transaction) => {
+    for await (const id of idsArray) {
+      const report = await ActivityReport.unscoped().findOne({ where: { id } });
 
-    if (report) {
-      auditLogger.info(`Changing status of report: ${id} to ${status}`);
-      await report.update(
-        {
-          submissionStatus: status,
-        },
-      );
-    } else {
-      auditLogger.info(`Couldn't find any reports with the id: ${id}`);
+      if (report) {
+        auditLogger.info(`Changing status of report: ${id} to ${status}`);
+        await report.update(
+          {
+            submissionStatus: status,
+          },
+          transaction,
+        );
+      } else {
+        auditLogger.info(`Couldn't find any reports with the id: ${id}`);
+      }
     }
-  }
+  });
 }
