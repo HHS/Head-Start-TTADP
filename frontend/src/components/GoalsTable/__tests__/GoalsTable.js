@@ -1,13 +1,15 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor, fireEvent,
+  render, screen, waitFor, fireEvent, act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -23,7 +25,7 @@ const defaultUser = {
   homeRegionId: 1,
   permissions: [
     {
-      scopeId: 3,
+      scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
       regionId: 1,
     },
   ],
@@ -32,7 +34,7 @@ const defaultUser = {
 const goals = [{
   id: 4598,
   goalStatus: 'In Progress',
-  createdOn: '06/15/2021',
+  createdOn: '2021-06-15',
   goalText: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
   objectiveCount: 5,
@@ -43,7 +45,7 @@ const goals = [{
 {
   id: 8547,
   goalStatus: 'Not Started',
-  createdOn: '05/15/2021',
+  createdOn: '2021-05-15',
   goalText: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
   objectiveCount: 2,
@@ -54,7 +56,7 @@ const goals = [{
 {
   id: 65478,
   goalStatus: 'Completed',
-  createdOn: '04/15/2021',
+  createdOn: '2021-04-15',
   goalText: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
   objectiveCount: 4,
@@ -65,7 +67,7 @@ const goals = [{
 {
   id: 65479,
   goalStatus: '', // Needs Status.
-  createdOn: '03/15/2021',
+  createdOn: '2021-03-15',
   goalText: 'This is goal text 4.',
   goalTopics: ['Partnerships and Community Engagement'],
   objectiveCount: 3,
@@ -76,7 +78,7 @@ const goals = [{
 {
   id: 65480,
   goalStatus: 'Draft',
-  createdOn: '02/15/2021',
+  createdOn: '2021-02-15',
   goalText: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
   objectiveCount: 1,
@@ -87,7 +89,7 @@ const goals = [{
 {
   id: 65481,
   goalStatus: 'Ceased/Suspended',
-  createdOn: '01/15/2021',
+  createdOn: '2021-01-15',
   goalText: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
   objectiveCount: 8,
@@ -100,7 +102,7 @@ const goals = [{
 const goalWithObjectives = [{
   id: 4458,
   goalStatus: 'In Progress',
-  createdOn: '06/15/2021',
+  createdOn: '2021-06-15',
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
@@ -115,6 +117,8 @@ const goalWithObjectives = [{
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
+    id: 345345345,
+    ttaProvided: '',
   },
   {
     title: 'Objective 2 Title',
@@ -125,36 +129,44 @@ const goalWithObjectives = [{
     endDate: '05/14/2021',
     reasons: ['Below Competitive Threshold (CLASS)'],
     status: 'Not Started',
+    id: 234234253,
+    ttaProvided: '',
   },
   {
     title: 'Objective 3 Title',
     arId: 3,
     arNumber: 'ar-number-3',
     arLegacyId: null,
-    arStatus: 'approved',
+    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '04/14/2021',
     reasons: ['COVID-19 response'],
     status: 'Complete',
+    id: 2938234,
+    ttaProvided: '',
   },
   {
     title: 'Objective 4 Title',
     arId: 4,
     arNumber: 'ar-number-4',
     arLegacyId: 'ar-legacy-4',
-    arStatus: null,
+    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
-    status: null,
+    status: 'In Progress',
+    id: 255384234,
+    ttaProvided: '',
   },
   {
     title: 'Objective 5 Title',
     arId: 5,
     arNumber: 'ar-number-5',
     arLegacyId: null,
-    arStatus: null,
+    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '02/14/2021',
     reasons: ['Complaint'],
     status: 'Unknown Status',
+    id: 298398934834,
+    ttaProvided: '',
   },
   ],
 },
@@ -163,7 +175,7 @@ const goalWithObjectives = [{
 const noStatusGoalWithOneObjective = [{
   id: 4459,
   goalStatus: null,
-  createdOn: '06/15/2021',
+  createdOn: '2021-06-15',
   goalText: 'This is a goal with a single objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
@@ -178,10 +190,12 @@ const noStatusGoalWithOneObjective = [{
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
+    id: 2832434,
+    ttaProvided: '',
   }],
 }];
 
-const renderTable = (user) => {
+const renderTable = (user, hasActiveGrants = true) => {
   render(
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -191,6 +205,8 @@ const renderTable = (user) => {
             recipientId={recipientId}
             regionId={regionId}
             onUpdateFilters={() => { }}
+            hasActiveGrants={hasActiveGrants}
+            showNewGoals={false}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -230,92 +246,38 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-5 of 6/i)).toBeVisible();
 
-      // In progress.
-      expect(screen.getAllByRole('cell')[0].firstChild).toHaveClass('fa-clock');
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-      expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
-      expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
-      expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
-      expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
-
-      // Click Context Menu on 'In progress'.
-      let rowContextBtn = await screen.findByRole('button', { name: /actions for goal 4598/i });
-      fireEvent.click(rowContextBtn);
-      let contextMenus = await screen.findByRole('menu');
-      expect(contextMenus).toHaveTextContent(/close goal/i);
-      expect(contextMenus).toHaveTextContent(/cease\/suspend goal/i);
+      await screen.findByRole('cell', { name: '06/15/2021' });
+      await screen.findByRole('cell', { name: /this is goal text 1/i });
+      await screen.findByRole('cell', { name: '5 Objective(s)' });
 
       // Not started.
-      expect(screen.getAllByRole('cell')[7].firstChild).toHaveClass('fa-minus-circle');
-      expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/not started/i);
-      expect(screen.getAllByRole('cell')[8]).toHaveTextContent('05/15/2021');
-      expect(screen.getAllByRole('cell')[9]).toHaveTextContent(/this is goal text 2/i);
-      expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/nutrition, oral health/i);
-      expect(screen.getAllByRole('cell')[11]).toHaveTextContent('2 Objective(s)');
-
-      // Click Context Menu on 'Not started'.
-      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 8547/i });
-      fireEvent.click(rowContextBtn);
-      contextMenus = await screen.findAllByRole('menu');
-      expect(contextMenus.length).toBe(2);
-      expect(contextMenus[1]).toHaveTextContent(/close goal/i);
-      expect(contextMenus[1]).toHaveTextContent(/cease\/suspend goal/i);
+      await screen.findByRole('cell', { name: '05/15/2021' });
+      await screen.findByRole('cell', { name: /this is goal text 2/i });
+      await screen.findByRole('cell', { name: /nutrition, oral health/i });
+      await screen.findByRole('cell', { name: '2 Objective(s)' });
 
       // Closed.
-      expect(screen.getAllByRole('cell')[14].firstChild).toHaveClass('fa-check-circle');
-      expect(screen.getAllByRole('cell')[14]).toHaveTextContent(/closed/i);
-      expect(screen.getAllByRole('cell')[15]).toHaveTextContent('04/15/2021');
-      expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/this is goal text 3/i);
-      expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/parent and family engagement/i);
-      expect(screen.getAllByRole('cell')[18]).toHaveTextContent('4 Objective(s)');
-
-      // Click Context Menu on 'Closed'.
-      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65478/i });
-      fireEvent.click(rowContextBtn);
-      contextMenus = await screen.findAllByRole('menu');
-      expect(contextMenus.length).toBe(3);
-      expect(contextMenus[2]).toHaveTextContent(/Re-open goal/i);
+      await screen.findByRole('cell', { name: '04/15/2021' });
+      await screen.findByRole('cell', { name: /this is goal text 3/i });
+      await screen.findByRole('cell', { name: /parent and family engagement/i });
+      await screen.findByRole('cell', { name: '4 Objective(s)' });
 
       // Needs status.
-      expect(screen.getAllByRole('cell')[21].firstChild).toHaveClass('fa-exclamation-circle ');
-      expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/needs status/i);
-      expect(screen.getAllByRole('cell')[22]).toHaveTextContent('03/15/2021');
-      expect(screen.getAllByRole('cell')[23]).toHaveTextContent(/this is goal text 4/i);
-      expect(screen.getAllByRole('cell')[24]).toHaveTextContent(/partnerships and community engagement/i);
-      expect(screen.getAllByRole('cell')[25]).toHaveTextContent('3 Objective(s)');
-
-      // Click Context Menu on 'Needs status'.
-      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65479/i });
-      fireEvent.click(rowContextBtn);
-      contextMenus = await screen.findAllByRole('menu');
-      expect(contextMenus.length).toBe(4);
-      expect(contextMenus[3]).toHaveTextContent(/Mark not started/i);
-      expect(contextMenus[3]).toHaveTextContent(/Mark in progress/i);
-      expect(contextMenus[3]).toHaveTextContent(/Close goal/i);
-      expect(contextMenus[3]).toHaveTextContent(/cease\/suspend goal/i);
+      await screen.findByRole('cell', { name: '03/15/2021' });
+      await screen.findByRole('cell', { name: /this is goal text 4/i });
+      await screen.findByRole('cell', { name: /partnerships and community engagement/i });
+      await screen.findByRole('cell', { name: '3 Objective(s)' });
 
       // Draft.
-      expect(screen.getAllByRole('cell')[28].firstChild).toHaveClass('fa-pencil-alt');
-      expect(screen.getAllByRole('cell')[28]).toHaveTextContent(/draft/i);
-      expect(screen.getAllByRole('cell')[29]).toHaveTextContent('02/15/2021');
-      expect(screen.getAllByRole('cell')[30]).toHaveTextContent(/this is goal text 5/i);
-      expect(screen.getAllByRole('cell')[31]).toHaveTextContent(/safety practices/i);
-      expect(screen.getAllByRole('cell')[32]).toHaveTextContent('1 Objective(s)');
+      await screen.findByRole('cell', { name: '02/15/2021' });
+      await screen.findByRole('cell', { name: /this is goal text 5/i });
+      await screen.findByRole('cell', { name: '1 Objective(s)' });
 
       // Ceased/Suspended.
-      expect(screen.getAllByRole('cell')[35].firstChild).toHaveClass('fa-times-circle');
-      expect(screen.getAllByRole('cell')[35]).toHaveTextContent('Suspended');
-      expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021');
-      expect(screen.getAllByRole('cell')[37]).toHaveTextContent(/this is goal text 6/i);
-      expect(screen.getAllByRole('cell')[38]).toHaveTextContent(/recordkeeping and reporting/i);
-      expect(screen.getAllByRole('cell')[39]).toHaveTextContent('8 Objective(s)');
-
-      // Click Context Menu on 'Ceased/Suspended'.
-      rowContextBtn = await screen.findByRole('button', { name: /actions for goal 65481/i });
-      fireEvent.click(rowContextBtn);
-      contextMenus = await screen.findAllByRole('menu');
-      expect(contextMenus.length).toBe(5);
-      expect(contextMenus[4]).toHaveTextContent(/Re-open goal/i);
+      await screen.findByRole('cell', { name: '01/15/2021' });
+      await screen.findByRole('cell', { name: /this is goal text 6/i });
+      await screen.findByRole('cell', { name: /recordkeeping and reporting/i });
+      await screen.findByRole('cell', { name: '8 Objective(s)' });
     });
   });
 
@@ -336,53 +298,31 @@ describe('Goals Table', () => {
     it('Shows the correct objective data', async () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
-      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+      const inProgress = await screen.findAllByRole('cell', { name: 'In progress' });
+      expect(inProgress.length).toBe(2);
 
       // Objective 1.
-      expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/objective 1 title/i);
-      expect(screen.getAllByRole('cell')[8]).toHaveTextContent(/ar-number-1/i);
-      expect(screen.getAllByRole('cell')[9]).toHaveTextContent('06/14/2021');
-      expect(screen.getAllByRole('cell')[10]).toHaveTextContent(/monitoring | deficiency/i);
-      expect(screen.getAllByRole('cell')[11]).toHaveTextContent(/in progress/i);
-      expect(screen.getAllByRole('cell')[11].firstChild).toHaveClass('fa-clock');
-      expect(await screen.findByRole('link', { name: /ar-number-1/i })).toHaveAttribute('href', '/activity-reports/1');
+      await screen.findByRole('cell', { name: /objective 1 title/i });
+      await screen.findByRole('cell', { name: /ar-number-1/i });
+      await screen.findByRole('cell', { name: '06/14/2021' });
+      await screen.findByRole('cell', { name: /monitoring | deficiency/i });
 
       // Objective 2.
-      expect(screen.getAllByRole('cell')[12]).toHaveTextContent(/objective 2 title/i);
-      expect(screen.getAllByRole('cell')[13]).toHaveTextContent(/ar-number-2/i);
-      expect(screen.getAllByRole('cell')[14]).toHaveTextContent('05/14/2021');
-      expect(screen.getAllByRole('cell')[15]).toHaveTextContent('Below Competitive Threshold (CLASS)');
-      expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/not started/i);
-      expect(screen.getAllByRole('cell')[16].firstChild).toHaveClass('fa-minus-circle');
-      expect(await screen.findByRole('link', { name: /ar-number-2/i })).toHaveAttribute('href', '/activity-reports/2');
+      await screen.findByRole('cell', { name: /objective 2 title/i });
+      await screen.findByRole('cell', { name: /ar-number-2/i });
+      await screen.findByRole('cell', { name: '05/14/2021' });
+      await screen.findByRole('cell', { name: 'Below Competitive Threshold (CLASS)' });
+      await screen.findByRole('cell', { name: /not started/i });
 
       // Objective 3.
-      expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/objective 3 title/i);
-      expect(screen.getAllByRole('cell')[18]).toHaveTextContent(/ar-number-3/i);
-      expect(screen.getAllByRole('cell')[19]).toHaveTextContent('04/14/2021');
-      expect(screen.getAllByRole('cell')[20]).toHaveTextContent('COVID-19 response');
-      expect(screen.getAllByRole('cell')[21]).toHaveTextContent(/closed/i);
-      expect(screen.getAllByRole('cell')[21].firstChild).toHaveClass('fa-check-circle');
-      expect(await screen.findByRole('link', { name: /ar-number-3/i })).toHaveAttribute('href', '/activity-reports/view/3');
+      await screen.findByRole('cell', { name: /objective 3 title/i });
+      await screen.findByRole('cell', { name: /ar-number-3/i });
+      await screen.findByRole('cell', { name: '04/14/2021' });
+      await screen.findByRole('cell', { name: 'COVID-19 response' });
+      await screen.findByRole('cell', { name: /closed/i });
 
-      // Objective 4.
-      expect(screen.getAllByRole('cell')[22]).toHaveTextContent(/objective 4 title/i);
-      expect(screen.getAllByRole('cell')[23]).toHaveTextContent(/ar-number-4/i);
-      expect(screen.getAllByRole('cell')[24]).toHaveTextContent('03/14/2021');
-      expect(screen.getAllByRole('cell')[25]).toHaveTextContent('New Staff / Turnover');
-      expect(screen.getAllByRole('cell')[26]).toHaveTextContent(/Needs status/i);
-      expect(screen.getAllByRole('cell')[26].firstChild).toHaveClass('fa-exclamation-circle ');
-      expect(await screen.findByRole('link', { name: /ar-number-4/i })).toHaveAttribute('href', '/activity-reports/legacy/ar-legacy-4');
-
-      // Objective 5.
-      expect(screen.getAllByRole('cell')[27]).toHaveTextContent(/objective 5 title/i);
-      expect(screen.getAllByRole('cell')[28]).toHaveTextContent(/ar-number-5/i);
-      expect(screen.getAllByRole('cell')[29]).toHaveTextContent('02/14/2021');
-      expect(screen.getAllByRole('cell')[30]).toHaveTextContent('Complaint');
-      expect(screen.getAllByRole('cell')[31]).toHaveTextContent(/Needs status/i);
-      expect(screen.getAllByRole('cell')[31].firstChild).toHaveClass('fa-exclamation-circle ');
-      expect(await screen.findByRole('link', { name: /ar-number-5/i })).toHaveAttribute('href', '/activity-reports/5');
+      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
     });
 
     it('Expands and collapses objectives', async () => {
@@ -403,6 +343,32 @@ describe('Goals Table', () => {
       // We should set focus back to the expand button.
       const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
       expect(expandWithFocus).toHaveFocus();
+    });
+
+    it('hides the add new goal button if recipient has no active grants', async () => {
+      renderTable(defaultUser, false);
+      await screen.findByText('TTA goals and objectives');
+
+      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      expect(link).toBe(null);
+    });
+
+    it('hides the add new goal button if user doesn\'t have permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable(user);
+      await screen.findByText('TTA goals and objectives');
+
+      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      expect(link).toBe(null);
     });
   });
 
@@ -463,8 +429,7 @@ describe('Goals Table', () => {
       fireEvent.click(columnHeaderAsc);
       await screen.findByText('TTA goals and objectives');
 
-      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[36]).toHaveTextContent('06/15/2021'));
+      expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021');
 
       // Desc.
       const columnHeaderDesc = await screen.findByRole('button', { name: /created on\. activate to sort descending/i });
@@ -478,8 +443,8 @@ describe('Goals Table', () => {
       fireEvent.click(columnHeaderDesc);
       await screen.findByText('TTA goals and objectives');
 
-      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021'));
+      const cells = await screen.findAllByRole('cell');
+      expect(cells[1]).toHaveTextContent('06/15/2021');
     });
 
     it('clicking Goal status column header sorts', async () => {
@@ -496,8 +461,8 @@ describe('Goals Table', () => {
       fireEvent.click(columnHeaderDesc);
       await screen.findByText('TTA goals and objectives');
 
-      await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Not started'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[28]).toHaveTextContent('Suspended'));
+      const cells = await screen.findAllByRole('cell');
+      expect(cells[0]).toHaveTextContent('Not started');
 
       // Desc (via button press).
       const goalsAsc = [...goals];
@@ -513,9 +478,8 @@ describe('Goals Table', () => {
       expect(columnHeaderAsc).toHaveFocus();
       fireEvent.keyPress(columnHeaderAsc, { key: 'Enter', code: 13, charCode: 13 });
       await screen.findByText('TTA goals and objectives');
-
-      await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Needs status'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[35]).toHaveTextContent('Not started'));
+      const [cell] = await screen.findAllByRole('cell'); // cell[0]
+      expect(cell).toHaveTextContent('Needs status');
     });
   });
 
@@ -561,8 +525,8 @@ describe('Goals Table', () => {
         { count: 6, goalRows: [goals[0], goals[1], goals[2], goals[3], goals[4]] },
       );
       fireEvent.click(pageOne);
-      await waitFor(() => expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[36]).toHaveTextContent('01/15/2021'));
+      const cells = await screen.findAllByRole('cell');
+      expect(cells.length).toBe(42);
     });
 
     it('clicking on the second page updates page values', async () => {
@@ -594,7 +558,7 @@ describe('Goals Table', () => {
 
   describe('Context Menu', () => {
     beforeEach(async () => {
-      fetchMock.reset();
+      fetchMock.restore();
       fetchMock.get(
         baseWithRegionOne,
         { count: 1, goalRows: [goals[0], goals[3]] },
@@ -610,7 +574,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status with reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/4598/changeStatus', {
+      fetchMock.put('/api/recipient/4598/changeStatus', {
         id: 4598,
         status: 'Completed',
         createdOn: '06/15/2021',
@@ -622,12 +586,8 @@ describe('Goals Table', () => {
       });
 
       // Open Context Menu.
-      const contextButton = await screen.findByRole('button', { name: /actions for goal 4598/i });
-      fireEvent.click(contextButton);
-
-      // Change goal status to 'Closed'.
-      const closeGoalButton = await screen.findByText(/close goal/i);
-      fireEvent.click(closeGoalButton);
+      const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 4598/i });
+      userEvent.selectOptions(changeStatus, 'Completed');
 
       // Select a reason.
       const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
@@ -643,27 +603,27 @@ describe('Goals Table', () => {
 
     it('Sets goal status without reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/65479/changeStatus', {
+      fetchMock.put('/api/recipient/65479/changeStatus', {
         id: 65479,
-        status: 'In Progress',
+        goalStatus: 'In Progress',
         createdOn: '06/15/2021',
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-        objectiveCount: 5,
+        objectiveCount: 0,
         goalNumber: 'R14-G-65479',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+        objectives: [],
+        previousStatus: 'Needs status',
       });
 
-      // Open Context Menu.
-      const contextButton = await screen.findByRole('button', { name: /actions for goal 65479/i });
-      fireEvent.click(contextButton);
+      expect(fetchMock.called()).toBe(false);
 
-      // Change goal status to 'Closed'.
-      const closeGoalButton = await screen.findByText(/mark in progress/i);
-      fireEvent.click(closeGoalButton);
+      // Open Context Menu.
+      const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 65479/i });
+      act(() => userEvent.selectOptions(changeStatus, 'In Progress'));
 
       // Verify goal status change.
-      await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent('In progress'));
+      expect(fetchMock.called()).toBe(true);
     });
   });
 });

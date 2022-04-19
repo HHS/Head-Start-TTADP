@@ -1,16 +1,24 @@
-import React from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { expandFilters, formatDateRange } from '../../../utils';
 import { getGoalsAndObjectivesFilterConfig } from './constants';
 import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
+import UserContext from '../../../UserContext';
+import { getUserRegions } from '../../../permissions';
 
-export default function GoalsObjectives({ recipientId, regionId, recipient }) {
+export default function GoalsObjectives({
+  recipientId, regionId, recipient, location,
+}) {
+  const { user } = useContext(UserContext);
+  const regions = useMemo(() => getUserRegions(user), [user]);
+  const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
   const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
   const FILTER_KEY = 'goals-objectives-filters';
@@ -50,6 +58,11 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
     },
   ];
 
+  let hasActiveGrants = false;
+  if (recipient.grants.find((g) => g.status === 'Active')) {
+    hasActiveGrants = true;
+  }
+
   return (
     <>
       <Helmet>
@@ -65,6 +78,7 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
             filterConfig={getGoalsAndObjectivesFilterConfig(possibleGrants)}
             applyButtonAria="Apply filters to goals"
             filters={filters}
+            allUserRegions={regions}
           />
         </div>
         <Grid row>
@@ -76,6 +90,8 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
           recipientId={recipientId}
           regionId={regionId}
           filters={expandFilters(filters)}
+          hasActiveGrants={hasActiveGrants}
+          showNewGoals={showNewGoals || false}
         />
       </div>
     </>
@@ -91,4 +107,5 @@ GoalsObjectives.propTypes = {
       numberWithProgramTypes: PropTypes.string.isRequired,
     })).isRequired,
   }).isRequired,
+  location: ReactRouterPropTypes.location.isRequired,
 };

@@ -1,4 +1,5 @@
 import { validate } from 'uuid';
+import waitFor from 'wait-for-expect';
 import db, {
   File,
   ActivityReport,
@@ -84,7 +85,13 @@ describe('File Upload', () => {
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
-      const file = await File.findOne({ where: { id: fileId } });
+      let file;
+
+      await waitFor(async () => {
+        file = await File.findOne({ where: { id: fileId } });
+        expect(file).not.toBeNull();
+      });
+
       const uuid = file.dataValues.key.slice(0, -4);
       expect(file.dataValues.id).toBe(fileId);
       expect(file.dataValues.status).not.toBe(null);
@@ -106,7 +113,13 @@ describe('File Upload', () => {
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
-      const file = await File.findOne({ where: { id: fileId } });
+      let file;
+
+      await waitFor(async () => {
+        file = await File.findOne({ where: { id: fileId } });
+        expect(file).not.toBeNull();
+      });
+
       const uuid = file.dataValues.key.slice(0, -4);
       expect(file.dataValues.id).toBe(fileId);
       expect(file.dataValues.status).not.toBe(null);
@@ -170,10 +183,8 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
-        .expect(400, { error: 'file required' })
-        .then(() => {
-          expect(uploadFile).not.toHaveBeenCalled();
-        });
+        .expect(400, { error: 'file required' });
+      await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests an unauthorized upload', async () => {
       validateUserAuthForAdmin.mockResolvedValue(false);

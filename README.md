@@ -40,7 +40,7 @@ those services are already running on your machine.
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 3. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them.
-10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`, API documentation will run on `localhost:5000`, and minio will run on `localhost:9000`.
+10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`, API documentation will run on `localhost:5003`, and minio will run on `localhost:9000`.
 11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
@@ -116,7 +116,7 @@ You may run into some issues running the docker commands on Windows:
 | | Run the linter only for the backend | `yarn lint` | |
 | | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
-| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` | |
+| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve` | |
 | | Run cucumber tests | `yarn cucumber` | |
 
 ## Infrastructure
@@ -436,6 +436,8 @@ You should also update it where it is specified this README file.
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
 
 <!-- Links -->
+
+[Current tech stack](./tech-stack.md)
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
 [TTAHUB-System-Operations]: https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations

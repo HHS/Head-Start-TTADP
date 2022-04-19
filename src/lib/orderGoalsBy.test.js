@@ -14,5 +14,8 @@ describe('orderGoalsBy', () => {
     expect(two).toStrictEqual([[
       'createdAt', 'desc',
     ]]);
+
+    const three = orderGoalsBy('fuzzbucket', 'desc');
+    expect(three).toStrictEqual('');
   });
 });

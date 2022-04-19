@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveResource.belongsTo(models.Objective, { foreignKey: 'objectiveId' });
+      ObjectiveResource.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objectiveResource' });
     }
   }
   ObjectiveResource.init({
@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     objectiveId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   }, {

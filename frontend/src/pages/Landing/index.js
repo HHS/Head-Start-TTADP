@@ -31,6 +31,8 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
 import FilterContext from '../../FilterContext';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -59,6 +61,19 @@ function Landing() {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+
+  const getFiltersWithAllRegions = () => {
+    const filtersWithAllRegions = [...allRegionsFilters];
+    filtersWithAllRegions.push({
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'is within',
+      query: defaultDate,
+    });
+    return filtersWithAllRegions;
+  };
+
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
@@ -76,12 +91,7 @@ function Landing() {
         condition: 'is within',
         query: defaultDate,
       }]
-      : [{
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      }],
+      : getFiltersWithAllRegions(),
   );
 
   const history = useHistory();
@@ -99,7 +109,7 @@ function Landing() {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
-  const [downloadAlertsError, setDownloadAlertsError] = useState('');
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
   const downloadAllAlertsButtonRef = useRef();
 
   function getAppliedRegion() {
@@ -208,35 +218,36 @@ function Landing() {
   };
 
   // Apply filters.
-  const onApply = (newFilters) => {
-    setFilters([
-      ...newFilters,
-    ]);
+  const onApply = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters([
+        ...newFilters,
+      ]);
+    }
+
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
   };
 
   // Remove Filters.
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      setFilters(newFilters);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
     }
   };
-
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
 
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
@@ -247,6 +258,13 @@ function Landing() {
         <title>Landing</title>
       </Helmet>
       <>
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
         {showAlert && message && (
           <Alert
             type="success"
@@ -284,9 +302,9 @@ function Landing() {
               applyButtonAria="apply filters for activity reports"
               filters={filters}
               onApplyFilters={onApply}
-              dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
+              allUserRegions={regions}
             />
           </Grid>
         </Grid>

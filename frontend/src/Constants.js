@@ -10,6 +10,7 @@ export const IS_NOT = 'is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
+export const REGION_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
@@ -238,8 +239,8 @@ export const GOAL_CLOSE_REASONS = [
 ];
 
 export const GOAL_SUSPEND_REASONS = [
-  'Key staff turnover',
+  'Key staff turnover / vacancies',
   'Recipient request',
   'Recipient is not responding',
-  'Other',
+  'Regional Office request',
 ];
