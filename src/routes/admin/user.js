@@ -6,6 +6,7 @@ import { featureFlags } from '../../models/user';
 import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:USER';
 
@@ -59,15 +60,12 @@ export async function createUser(req, res) {
   const newUser = req.body;
   let user;
   try {
-    await sequelize.transaction(async (transaction) => {
-      user = await User.create(
-        newUser,
-        {
-          include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-        },
-        transaction,
-      );
-    });
+    user = await User.create(
+      newUser,
+      {
+        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
+      },
+    );
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
   } catch (error) {
@@ -86,18 +84,15 @@ export async function updateUser(req, res) {
   const { userId } = req.params;
 
   try {
-    await sequelize.transaction(async (transaction) => {
-      await User.update(
-        requestUser,
-        {
-          include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-          where: { id: userId },
-          transaction,
-        },
-      );
-      await Permission.destroy({ where: { userId }, transaction });
-      await Permission.bulkCreate(requestUser.permissions, { transaction });
-    });
+    await User.update(
+      requestUser,
+      {
+        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
+        where: { id: userId },
+      },
+    );
+    await Permission.destroy({ where: { userId } });
+    await Permission.bulkCreate(requestUser.permissions);
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
     const user = await userById(userId);
     res.json(user);
@@ -135,11 +130,11 @@ export async function getFeatures(req, res) {
 
 const router = express.Router();
 
-router.get('/features', getFeatures);
-router.get('/:userId', getUser);
-router.get('/', getUsers);
-router.post('/', createUser);
-router.put('/:userId', updateUser);
-router.delete('/:userId', deleteUser);
+router.get('/features', transactionWrapper(getFeatures));
+router.get('/:userId', transactionWrapper(getUser));
+router.get('/', transactionWrapper(getUsers));
+router.post('/', transactionWrapper(createUser));
+router.put('/:userId', transactionWrapper(updateUser));
+router.delete('/:userId', transactionWrapper(deleteUser));
 
 export default router;

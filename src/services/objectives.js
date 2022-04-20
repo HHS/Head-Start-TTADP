@@ -5,7 +5,7 @@ import {
   ActivityReportObjective,
 } from '../models';
 
-export async function saveObjectivesForReport(objectives, report, transaction) {
+export async function saveObjectivesForReport(objectives, report) {
   const objectivesToCreate = objectives.filter((obj) => obj.new).map(({
     ttaProvided,
     title,
@@ -15,7 +15,7 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
   ));
 
   const newObjectives = await Promise.all(
-    objectivesToCreate.map((o) => Objective.create(o, { transaction })),
+    objectivesToCreate.map((o) => Objective.create(o)),
   );
 
   const existingObjectiveIds = objectives.filter((obj) => !obj.new).map((o) => o.id);
@@ -31,7 +31,6 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
         objectiveId,
         activityReportId: report.id,
       },
-      transaction,
     })),
   );
 
@@ -43,7 +42,6 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
         [Op.notIn]: activityReportObjectives.map(([aro]) => aro.id),
       },
     },
-    transaction,
   });
 
   const allObjectivesFromActivityReportObjectives = await ActivityReportObjective.findAll({
@@ -68,6 +66,5 @@ export async function saveObjectivesForReport(objectives, report, transaction) {
         },
       ],
     },
-    transaction,
   });
 }
