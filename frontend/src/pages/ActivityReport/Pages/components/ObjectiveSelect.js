@@ -1,0 +1,54 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Button, Label } from '@trussworks/react-uswds';
+import Select from 'react-select';
+import Req from '../../../../components/Req';
+import selectOptionsReset from '../../../../components/selectOptionsReset';
+import { OBJECTIVE_PROP } from './constants';
+import './ObjectiveSelect.css';
+
+export default function ObjectiveSelect({
+  onChange, selectedObjective, options, onRemove,
+}) {
+  return (
+    <>
+      <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
+        <h3>Objective summary</h3>
+        { onRemove
+          && (<Button type="button" className="ttahub-objective-select-remove-objective" unstyled onClick={onRemove}>Remove this objective</Button>)}
+      </div>
+      <Label>
+        Select TTA objective
+        <Req />
+        <Select
+          name="objectives"
+          onChange={onChange}
+          className="usa-select"
+          options={options}
+          styles={selectOptionsReset}
+          placeholder="- Select -"
+          value={selectedObjective}
+        />
+      </Label>
+    </>
+  );
+}
+
+ObjectiveSelect.propTypes = {
+  onChange: PropTypes.func.isRequired,
+  selectedObjective: PropTypes.oneOfType([
+    PropTypes.arrayOf(OBJECTIVE_PROP),
+    OBJECTIVE_PROP,
+  ]).isRequired,
+  options: PropTypes.arrayOf(
+    OBJECTIVE_PROP,
+  ).isRequired,
+  onRemove: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.func,
+  ]),
+};
+
+ObjectiveSelect.defaultProps = {
+  onRemove: false,
+};

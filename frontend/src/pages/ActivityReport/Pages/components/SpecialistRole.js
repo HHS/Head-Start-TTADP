@@ -5,8 +5,9 @@ import Select from 'react-select';
 import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
+import { OBJECTIVE_PROP } from './constants';
 
-export default function SpecialistRole({ objective }) {
+export default function SpecialistRole({ objective, error, validateSpecialistRole }) {
   // we need to figure out our options based on author/collaborator roles
   const collaborators = useWatch({ name: 'collaborators' });
   const author = useWatch({ name: 'author' });
@@ -35,28 +36,37 @@ export default function SpecialistRole({ objective }) {
     setValue('objectiveRoles', newObjectiveRoles);
   };
 
+  // get all the objective roles, filter for this objective
+  // and format them in a way that react select can understand
+  const selected = (objectiveRoles
+    ? objectiveRoles.filter(({ objectiveId }) => objectiveId !== objective.value)
+    : []).map(({ role }) => ({
+    label: role,
+    value: role,
+  }));
+
   return (
     <Label>
       Specialist role
       {' '}
       <Req />
+      {error}
       <Select
         onChange={onChange}
         styles={selectOptionsReset}
         className="usa-select"
         name={`objective-${objective.value}-roles`}
         options={options}
+        value={selected}
+        onBlur={validateSpecialistRole}
         isMulti
       />
     </Label>
   );
 }
 
-const OBJECTIVE_PROP = PropTypes.shape({
-  label: PropTypes.string,
-  value: PropTypes.number,
-});
-
 SpecialistRole.propTypes = {
   objective: OBJECTIVE_PROP.isRequired,
+  error: PropTypes.node.isRequired,
+  validateSpecialistRole: PropTypes.func.isRequired,
 };

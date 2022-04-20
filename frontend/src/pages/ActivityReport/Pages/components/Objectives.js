@@ -1,32 +1,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label } from '@trussworks/react-uswds';
-import Select from 'react-select';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import Req from '../../../../components/Req';
-import selectOptionsReset from '../../../../components/selectOptionsReset';
 import Objective from './Objective';
+import PlusButton from '../../../../components/GoalForm/PlusButton';
+import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
+import ObjectiveSelect from './ObjectiveSelect';
 
-export default function Objectives({ goal, objectives, topicOptions }) {
+export default function Objectives({
+  goal, objectives, topicOptions, objectiveErrors,
+}) {
   const { objectives: selectedObjectives } = goal;
   const { setValue } = useFormContext();
   const options = [
-    {
-      id: 'new',
-      value: 'new',
-      label: 'Create a new objective',
-      text: '',
-      ttaProvided: '',
-      activityReports: [],
-      resources: [],
-      topics: [],
-    },
+    NEW_OBJECTIVE,
     ...objectives.map((objective) => ({
       label: objective.title,
       value: objective.id,
       ...objective,
     })),
   ];
+
+  const onAdd = (objective) => {
+    const goalToUpdate = { ...goal };
+    goalToUpdate.objectives = [...goalToUpdate.objectives, objective];
+    setValue('goalForEditing', goalToUpdate);
+  };
+
+  const onAddNew = () => {
+    onAdd(NEW_OBJECTIVE);
+  };
 
   const onChange = (objective) => {
     const goalToUpdate = { ...goal };
@@ -36,34 +38,36 @@ export default function Objectives({ goal, objectives, topicOptions }) {
 
   return (
     <>
-      <Label>
-        Select TTA objective
-        <Req />
-        <Select
-          name="objectives"
-          onChange={onChange}
-          className="usa-select"
-          options={options}
-          styles={selectOptionsReset}
-          placeholder="- Select -"
-          value={selectedObjectives}
-        />
-      </Label>
-      {selectedObjectives.map((objective) => (
+      { /*
+
+          we show this picker only when there aren't any objectives selected
+          afterwards, it does something slightly different and is shown within
+          each objective
+
+        */}
+      {selectedObjectives.length < 1
+        ? (
+          <ObjectiveSelect
+            onChange={onChange}
+            options={options}
+            selectedObjectives={[]}
+          />
+        ) : null }
+      {selectedObjectives.map((objective, index) => (
         <Objective
           key={objective.id}
           objective={objective}
           topicOptions={topicOptions}
           onChange={onChange}
+          options={options}
+          selectedObjectives={selectedObjectives}
+          errors={objectiveErrors[index]}
         />
       ))}
+      <PlusButton text="Add new objective" onClick={onAddNew} />
     </>
   );
 }
-
-const OBJECTIVE_PROP = PropTypes.shape({
-  label: PropTypes.string,
-});
 
 Objectives.propTypes = {
   goal: PropTypes.shape({
@@ -80,4 +84,5 @@ Objectives.propTypes = {
   objectives: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
+  objectiveErrors: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

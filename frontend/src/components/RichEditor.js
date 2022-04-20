@@ -29,7 +29,7 @@ const BASE_EDITOR_HEIGHT = '10rem';
  * onChange: Called whenever there is a change typed in the editor
  */
 const RichEditor = ({
-  ariaLabel, value, onChange,
+  ariaLabel, value, onChange, onBlur,
 }) => {
   const [height, setHeight] = useState(BASE_EDITOR_HEIGHT);
 
@@ -59,6 +59,7 @@ const RichEditor = ({
         editorRef.current = ref;
         return ref;
       }}
+      onBlur={onBlur}
       spellCheck
       defaultEditorState={defaultEditorState}
       onChange={onInternalChange}
@@ -92,10 +93,12 @@ RichEditor.propTypes = {
   value: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   ariaLabel: PropTypes.string.isRequired,
+  onBlur: PropTypes.func,
 };
 
 RichEditor.defaultProps = {
   value: '',
+  onBlur: () => {},
 };
 
 export default RichEditor;

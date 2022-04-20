@@ -8,7 +8,12 @@ import { getEditorState } from '../../../../utils';
 
 export default function ObjectiveTta(
   {
-    ttaProvided, onChangeTTA, status, isOnApprovedReport,
+    ttaProvided,
+    onChangeTTA,
+    status,
+    isOnApprovedReport,
+    error,
+    validateTta,
   },
 ) {
   if (status === 'Complete' || isOnApprovedReport) {
@@ -30,12 +35,14 @@ export default function ObjectiveTta(
       TTA provided
       {' '}
       <Req />
+      {error}
       <div className="smart-hub--text-area__resize-vertical margin-top-1">
         <RichEditor
           value={ttaProvided}
           ariaLabel="TTA provided for objective"
           defaultValue={ttaProvided}
           onChange={onChangeTTA}
+          onBlur={validateTta}
         />
       </div>
     </Label>
@@ -47,4 +54,6 @@ ObjectiveTta.propTypes = {
   onChangeTTA: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
+  error: PropTypes.node.isRequired,
+  validateTta: PropTypes.func.isRequired,
 };
