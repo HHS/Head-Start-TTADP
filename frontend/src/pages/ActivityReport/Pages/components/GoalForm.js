@@ -5,14 +5,30 @@ import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalById } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
-import { validateGoals } from './goalValidator';
+import { GOAL_NAME, GOAL_ERROR_INDEXES, GOALS_END_DATE } from './goalValidator';
 
+const NO_ERROR = <></>;
+const GOAL_DATE_ERROR = <span className="usa-error-message">{GOALS_END_DATE}</span>;
+const GOAL_NAME_ERROR = <span className="usa-error-message">{GOAL_NAME}</span>;
 export default function GoalForm({ goal, topicOptions }) {
   const {
-    setValue,
+    setValue, register, watch,
   } = useFormContext();
   const [objectives, setObjectives] = useState([]);
+  const [goalNameError, setGoalNameError] = useState(NO_ERROR);
+  const [goalDateError, setGoalDateError] = useState(NO_ERROR);
+  const goalErrors = watch('goalErrors');
   const { name } = goal;
+
+  useEffect(() => {
+    const nameError = goalErrors && goalErrors[GOAL_ERROR_INDEXES.NAME]
+      ? GOAL_NAME_ERROR : NO_ERROR;
+    setGoalNameError(nameError);
+
+    const dateError = goalErrors && goalErrors[GOAL_ERROR_INDEXES.END_DATE]
+      ? GOAL_DATE_ERROR : NO_ERROR;
+    setGoalDateError(dateError);
+  }, [goalErrors]);
 
   // fetch associated goal data
   useEffect(() => {
@@ -44,15 +60,28 @@ export default function GoalForm({ goal, topicOptions }) {
   };
 
   const validateGoalName = () => {
-    validateGoals([goal]);
+    let error = NO_ERROR;
+    if (!goal.name) {
+      error = GOAL_DATE_ERROR;
+    }
+    setGoalNameError(error);
   };
 
-  const validateEndDate = () => {};
+  const validateEndDate = () => {
+    let error = NO_ERROR;
+    if (goal.id === 'new' && !goal.endDate) {
+      error = GOAL_DATE_ERROR;
+    }
+    setGoalDateError(error);
+  };
 
   return (
     <>
+      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+      <input type="hidden" {...register('goalErrors')} />
+
       <GoalText
-        error={<></>}
+        error={goalNameError}
         isOnReport={false}
         goalName={name}
         validateGoalName={validateGoalName}
@@ -62,11 +91,12 @@ export default function GoalForm({ goal, topicOptions }) {
       { goal.value === 'new'
         ? (
           <GoalDate
-            error={<></>}
+            error={goalDateError}
             setEndDate={onUpdateDate}
             endDate={goal.endDate}
             validateEndDate={validateEndDate}
             datePickerKey="end-date-key"
+
           />
         )
         : null }
@@ -75,6 +105,7 @@ export default function GoalForm({ goal, topicOptions }) {
         goal={goal}
         objectives={objectives}
         topicOptions={topicOptions}
+        objectiveErrors={goalErrors ? goalErrors[GOAL_ERROR_INDEXES.OBJECTIVES] : []}
       />
     </>
   );

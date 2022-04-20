@@ -116,6 +116,11 @@ export function goalById(id) {
     },
     include: [
       {
+        where: {
+          status: {
+            [Op.ne]: 'Complete',
+          },
+        },
         attributes: [
           ['id', 'value'],
           ['title', 'label'],
