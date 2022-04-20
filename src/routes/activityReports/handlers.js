@@ -374,7 +374,7 @@ export async function softDeleteReport(req, res) {
       return;
     }
 
-    setStatus(report, REPORT_STATUSES.DELETED);
+    await setStatus(report, REPORT_STATUSES.DELETED);
     res.sendStatus(204);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
