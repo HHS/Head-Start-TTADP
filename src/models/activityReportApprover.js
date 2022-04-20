@@ -67,13 +67,12 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
-      afterCreate: async (instance, options) => {
+      afterCreate: async (instance) => {
         // The following code should match other hooks.
         // This can not be abstracted into a function.
         // Begin
         const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
           attributes: ['submissionStatus'],
-          transaction: options.transaction,
         });
         // We allow users to create approvers before submitting the report. Calculated
         // status should only exist for submitted reports.
@@ -82,7 +81,6 @@ module.exports = (sequelize, DataTypes) => {
             attributes: ['status'],
             raw: true,
             where: { activityReportId: instance.activityReportId },
-            transaction: options.transaction,
           });
           const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
@@ -91,17 +89,15 @@ module.exports = (sequelize, DataTypes) => {
             calculatedStatus: newCalculatedStatus,
           }, {
             where: { id: instance.activityReportId },
-            transaction: options.transaction,
             hooks: false,
           });
         }
         // End
       },
-      afterDestroy: async (instance, options) => {
+      afterDestroy: async (instance) => {
         // Code unique to this hook
         const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
           attributes: ['submissionStatus'],
-          transaction: options.transaction,
         });
         // We allow users to create approvers before submitting the report. Calculated
         // status should only exist for submitted reports.
@@ -110,7 +106,6 @@ module.exports = (sequelize, DataTypes) => {
             attributes: ['status'],
             raw: true,
             where: { activityReportId: instance.activityReportId },
-            transaction: options.transaction,
           });
           const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
@@ -120,18 +115,16 @@ module.exports = (sequelize, DataTypes) => {
             calculatedStatus: newCalculatedStatus,
           }, {
             where: { id: instance.activityReportId },
-            transaction: options.transaction,
             hooks: false,
           });
         }
       },
-      afterRestore: async (instance, options) => {
+      afterRestore: async (instance) => {
         // The following code should match other hooks.
         // This can not be abstracted into a function.
         // Begin
         const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
           attributes: ['submissionStatus'],
-          transaction: options.transaction,
         });
         // We allow users to create approvers before submitting the report. Calculated
         // status should only exist for submitted reports.
@@ -140,7 +133,6 @@ module.exports = (sequelize, DataTypes) => {
             attributes: ['status'],
             raw: true,
             where: { activityReportId: instance.activityReportId },
-            transaction: options.transaction,
           });
           const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
@@ -149,19 +141,17 @@ module.exports = (sequelize, DataTypes) => {
             calculatedStatus: newCalculatedStatus,
           }, {
             where: { id: instance.activityReportId },
-            transaction: options.transaction,
             hooks: false,
           });
         }
         // End
       },
-      afterUpdate: async (instance, options) => {
+      afterUpdate: async (instance) => {
         // The following code should match other hooks.
         // This can not be abstracted into a function.
         // Begin
         const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
           attributes: ['submissionStatus'],
-          transaction: options.transaction,
         });
         // We allow users to create approvers before submitting the report. Calculated
         // status should only exist for submitted reports.
@@ -170,7 +160,6 @@ module.exports = (sequelize, DataTypes) => {
             attributes: ['status'],
             raw: true,
             where: { activityReportId: instance.activityReportId },
-            transaction: options.transaction,
           });
           const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
@@ -179,13 +168,12 @@ module.exports = (sequelize, DataTypes) => {
             calculatedStatus: newCalculatedStatus,
           }, {
             where: { id: instance.activityReportId },
-            transaction: options.transaction,
             hooks: false,
           });
         }
         // End
       },
-      afterUpsert: async (created, options) => {
+      afterUpsert: async (created) => {
         // Created is an array. First item in created array is
         // a model instance, second item is boolean indicating
         // if record was newly created (false = updated existing object.)
@@ -202,7 +190,6 @@ module.exports = (sequelize, DataTypes) => {
         // Begin
         const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
           attributes: ['submissionStatus'],
-          transaction: options.transaction,
         });
         // We allow users to create approvers before submitting the report. Calculated
         // status should only exist for submitted reports.
@@ -211,7 +198,6 @@ module.exports = (sequelize, DataTypes) => {
             attributes: ['status'],
             raw: true,
             where: { activityReportId: instance.activityReportId },
-            transaction: options.transaction,
           });
           const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
@@ -232,7 +218,6 @@ module.exports = (sequelize, DataTypes) => {
 
           await sequelize.models.ActivityReport.update(updatedFields, {
             where: { id: instance.activityReportId },
-            transaction: options.transaction,
             hooks: false,
           });
         }

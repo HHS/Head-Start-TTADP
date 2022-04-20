@@ -2,7 +2,7 @@ import stringify from 'csv-stringify/lib/sync';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  sequelize, ActivityReport as ActivityReportModel, ActivityReportApprover, User as UserModel,
+  ActivityReport as ActivityReportModel, ActivityReportApprover, User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
@@ -306,13 +306,12 @@ export async function reviewReport(req, res) {
       return;
     }
 
-    const transaction = await sequelize.transaction(async () => { });
     const savedApprover = await upsertApprover({
       status,
       note,
       activityReportId,
       userId,
-    }, transaction);
+    });
 
     const reviewedReport = await activityReportById(activityReportId);
 
@@ -321,7 +320,6 @@ export async function reviewReport(req, res) {
         await copyGoalsToGrants(
           reviewedReport.goals,
           reviewedReport.activityRecipients.map((recipient) => recipient.activityRecipientId),
-          transaction,
         );
       }
       reportApprovedNotification(reviewedReport);
