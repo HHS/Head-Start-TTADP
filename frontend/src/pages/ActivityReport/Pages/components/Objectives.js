@@ -1,16 +1,24 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useWatch, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
 import ObjectiveSelect from './ObjectiveSelect';
 
 export default function Objectives({
-  goal, objectives, topicOptions, objectiveErrors,
+  objectives,
+  topicOptions,
+  objectiveErrors,
+  // noObjectiveError,
 }) {
-  const { objectives: selectedObjectives } = goal;
-  const { setValue } = useFormContext();
+  const goal = useWatch({ name: 'goalForEditing' });
+  // const { setValue } = useFormContext();
+  const { fields, append, update } = useFieldArray({
+    name: `${goal ? goal.id : 'new'}.objectives`,
+    defaultValues: [NEW_OBJECTIVE],
+  });
+
   const options = [
     NEW_OBJECTIVE,
     ...objectives.map((objective) => ({
@@ -20,48 +28,43 @@ export default function Objectives({
     })),
   ];
 
-  const onAdd = (objective) => {
-    const goalToUpdate = { ...goal };
-    goalToUpdate.objectives = [...goalToUpdate.objectives, objective];
-    setValue('goalForEditing', goalToUpdate);
-  };
-
   const onAddNew = () => {
-    onAdd(NEW_OBJECTIVE);
+    // onAdd(NEW_OBJECTIVE);
+    append(NEW_OBJECTIVE);
   };
 
-  const onChange = (objective) => {
-    const goalToUpdate = { ...goal };
-    goalToUpdate.objectives = [{ ...objective }];
-    setValue('goalForEditing', goalToUpdate);
+  const onSelect = (objective) => {
+    append(objective);
   };
 
   return (
     <>
       { /*
-
           we show this picker only when there aren't any objectives selected
           afterwards, it does something slightly different and is shown within
           each objective
-
         */}
-      {selectedObjectives.length < 1
+
+      {fields.length < 1
         ? (
           <ObjectiveSelect
-            onChange={onChange}
+            onChange={onSelect}
             options={options}
             selectedObjectives={[]}
           />
-        ) : null }
-      {selectedObjectives.map((objective, index) => (
+        )
+        : null }
+
+      {fields.map((objective, index) => (
         <Objective
+          index={index}
           key={objective.id}
           objective={objective}
           topicOptions={topicOptions}
-          onChange={onChange}
           options={options}
-          selectedObjectives={selectedObjectives}
+          selectedObjectives={[]}
           errors={objectiveErrors[index]}
+          update={update}
         />
       ))}
       <PlusButton text="Add new objective" onClick={onAddNew} />
@@ -70,13 +73,6 @@ export default function Objectives({
 }
 
 Objectives.propTypes = {
-  goal: PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-    objectives: PropTypes.arrayOf(
-      OBJECTIVE_PROP,
-    ),
-  }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
@@ -85,4 +81,5 @@ Objectives.propTypes = {
     OBJECTIVE_PROP,
   ).isRequired,
   objectiveErrors: PropTypes.arrayOf(PropTypes.string).isRequired,
+  // noObjectiveError: PropTypes.node.isRequired,
 };

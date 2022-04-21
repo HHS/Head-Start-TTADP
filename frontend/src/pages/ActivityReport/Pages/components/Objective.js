@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
@@ -19,6 +19,7 @@ import {
   OBJECTIVE_ERROR_INDEXES,
   OBJECTIVE_TOPICS,
 } from './goalValidator';
+import './Objective.css';
 
 const NO_ERROR = <></>;
 const TITLE_ERROR = <span className="usa-error-message">{OBJECTIVE_TITLE}</span>;
@@ -30,15 +31,19 @@ const TOPICS_ERROR = <span className="usa-error-message">{OBJECTIVE_TOPICS}</spa
 export default function Objective({
   objective,
   topicOptions,
-  onChange,
   selectedObjectives,
   options,
   errors,
+  index,
+  update,
 }) {
   const selectedGoal = useWatch({ name: 'goalForEditing' });
   const objectiveRoles = useWatch({ name: 'objectiveRoles' });
-  const roles = objectiveRoles
-    ? objectiveRoles.filter(({ objectiveId }) => objectiveId !== objective.value) : [];
+
+  // no need to recalculate this every time I don't think
+  const roles = useMemo(() => (objectiveRoles
+    ? objectiveRoles.filter(({ objectiveId }) => objectiveId !== objective.value) : []),
+  [objective.value, objectiveRoles]);
 
   const { setValue } = useFormContext();
 
@@ -62,28 +67,28 @@ export default function Objective({
     (report) => report.status === REPORT_STATUSES.APPROVED,
   );
 
-  const onChangeTitle = (newTitle) => {
-    onChange({ ...objective, label: newTitle });
+  const onChangeTitle = (title) => {
+    update(index, { ...objective, title });
   };
 
   const onChangeTopics = (topics) => {
-    onChange({ ...objective, topics });
+    update(index, { ...objective, topics });
   };
 
   const onChangeStatus = (status) => {
-    onChange({ ...objective, status });
+    update(index, { ...objective, status });
   };
 
   const setResources = (resources) => {
-    onChange({ ...objective, resources });
+    update(index, { ...objective, resources });
   };
 
   const onChangeTTA = (ttaProvided) => {
-    onChange({ ...objective, ttaProvided });
+    update(index, { ...objective, ttaProvided });
   };
 
   const onChangeObjective = (newObjective) => {
-    onChange({ ...newObjective });
+    update(index, { ...newObjective });
   };
 
   let savedTopics = [];
@@ -152,6 +157,7 @@ export default function Objective({
         options={options}
         onRemove={onRemove}
       />
+
       <ObjectiveTitle
         error={titleError}
         isOnApprovedReport={isOnApprovedReport || false}
@@ -199,17 +205,18 @@ export default function Objective({
 }
 
 Objective.propTypes = {
+  index: PropTypes.number.isRequired,
   objective: OBJECTIVE_PROP.isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
-  onChange: PropTypes.func.isRequired,
   selectedObjectives: OBJECTIVE_PROP.isRequired,
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
   errors: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.bool])),
+  update: PropTypes.func.isRequired,
 };
 
 Objective.defaultProps = {
