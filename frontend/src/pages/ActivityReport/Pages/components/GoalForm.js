@@ -5,10 +5,13 @@ import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalById } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
-import { GOAL_NAME, GOAL_ERROR_INDEXES, GOALS_END_DATE } from './goalValidator';
+import { GOAL_NAME, GOAL_ERROR_INDEXES } from './goalValidator';
+import {
+  GOAL_DATE_ERROR,
+} from '../../../../components/GoalForm/constants';
 
 const NO_ERROR = <></>;
-const GOAL_DATE_ERROR = <span className="usa-error-message">{GOALS_END_DATE}</span>;
+const GOAL_DATE_ERROR_MESSAGE = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
 const GOAL_NAME_ERROR = <span className="usa-error-message">{GOAL_NAME}</span>;
 export default function GoalForm({ goal, topicOptions }) {
   const {
@@ -70,7 +73,7 @@ export default function GoalForm({ goal, topicOptions }) {
   const validateEndDate = () => {
     let error = NO_ERROR;
     if (goal.id === 'new' && !goal.endDate) {
-      error = GOAL_DATE_ERROR;
+      error = GOAL_DATE_ERROR_MESSAGE;
     }
     setGoalDateError(error);
   };

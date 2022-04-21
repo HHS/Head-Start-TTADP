@@ -16,6 +16,9 @@ import {
   FORM_FIELD_DEFAULT_ERRORS,
   validateListOfResources,
   OBJECTIVE_ERROR_MESSAGES,
+  GOAL_NAME_ERROR,
+  GOAL_DATE_ERROR,
+  SELECT_GRANTS_ERROR,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -210,7 +213,7 @@ export default function GoalForm({
     let error = <></>;
 
     if (!goalName) {
-      error = <span className="usa-error-message">Enter the recipient&apos;s goal</span>;
+      error = <span className="usa-error-message">{GOAL_NAME_ERROR}</span>;
     }
 
     const newErrors = [...errors];
@@ -228,7 +231,7 @@ export default function GoalForm({
     let error = <></>;
 
     if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
-      error = <span className="usa-error-message">Enter a valid date</span>;
+      error = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
     }
 
     const newErrors = [...errors];
@@ -241,7 +244,7 @@ export default function GoalForm({
     let error = <></>;
 
     if (!selectedGrants.length) {
-      error = <span className="usa-error-message">Select at least one recipient grant number</span>;
+      error = <span className="usa-error-message">{SELECT_GRANTS_ERROR}</span>;
     }
 
     const newErrors = [...errors];

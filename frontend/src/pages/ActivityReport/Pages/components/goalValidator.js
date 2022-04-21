@@ -1,8 +1,11 @@
+import {
+  GOAL_DATE_ERROR,
+} from '../../../../components/GoalForm/constants';
+
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
 export const GOAL_MISSING_OBJECTIVE = 'Every goal requires at least one objective';
 export const GOALS_EMPTY = 'Every report must have at least one goal';
 export const GOAL_NAME = 'Every goal must have a name';
-export const GOALS_END_DATE = 'Every goal requires an anticipated close date';
 export const OBJECTIVE_TITLE = 'Every objective requires a title';
 export const OBJECTIVE_ROLE = 'Every objective requires at least one role';
 export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link';
@@ -95,7 +98,7 @@ export const validateGoal = (goal) => {
   }
 
   if (goal.id === 'new' && !goal.endDate) {
-    errors[GOAL_ERROR_INDEXES.END_DATE] = GOALS_END_DATE;
+    errors[GOAL_ERROR_INDEXES.END_DATE] = GOAL_DATE_ERROR;
     isValid = false;
   }
 

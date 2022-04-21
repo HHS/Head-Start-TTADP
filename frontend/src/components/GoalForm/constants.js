@@ -11,6 +11,10 @@ export const isValidUrl = (attempted) => {
   }
 };
 
+export const GOAL_NAME_ERROR = 'Enter the recipient&apos;s goal';
+export const GOAL_DATE_ERROR = 'Enter a valid date';
+export const SELECT_GRANTS_ERROR = 'Select at least one recipient grant number';
+
 export const FORM_FIELD_INDEXES = {
   GRANTS: 0,
   NAME: 1,
@@ -36,11 +40,17 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
 };
 
 export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>];
+
+export const TTA_OBJECTIVE_ERROR = 'Enter the TTA objective';
+export const OBJECTIVE_TOPIC_ERROR = 'Select at least one topic';
+export const OBJECTIVE_LINK_ERROR = 'Enter a valid link';
+export const OBJECTIVE_STATUS_ERROR = 'Select a status';
+
 export const OBJECTIVE_ERROR_MESSAGES = [
-  'Enter the TTA objective',
-  'Select at least one topic',
-  'Enter a valid link',
-  'Select a status',
+  TTA_OBJECTIVE_ERROR,
+  OBJECTIVE_TOPIC_ERROR,
+  OBJECTIVE_LINK_ERROR,
+  OBJECTIVE_STATUS_ERROR,
 ];
 
 export const validateListOfResources = (resources) => {
