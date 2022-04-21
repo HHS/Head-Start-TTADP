@@ -11,6 +11,7 @@ export default function ObjectiveTitle({
   onChangeTitle,
   validateObjectiveTitle,
   status,
+  inputName,
 }) {
   const readOnly = isOnApprovedReport || status === 'Complete';
 
@@ -26,7 +27,14 @@ export default function ObjectiveTitle({
       ) : (
         <>
           {error}
-          <Textarea id="objectiveTitle" name="objectiveTitle" required value={title} onChange={onChangeTitle} onBlur={validateObjectiveTitle} />
+          <Textarea
+            id={inputName}
+            name={inputName}
+            value={title}
+            onChange={onChangeTitle}
+            onBlur={validateObjectiveTitle}
+            required
+          />
         </>
       )}
     </FormGroup>
@@ -40,4 +48,9 @@ ObjectiveTitle.propTypes = {
   validateObjectiveTitle: PropTypes.func.isRequired,
   onChangeTitle: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
+  inputName: PropTypes.string,
+};
+
+ObjectiveTitle.defaultProps = {
+  inputName: 'objectiveTitle',
 };

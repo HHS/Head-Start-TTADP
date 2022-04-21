@@ -9,11 +9,18 @@ import './ObjectiveSelect.css';
 
 export default function ObjectiveSelect({
   onChange,
-  selectedObjective,
+  selectedObjectives,
   options,
   onRemove,
   noObjectiveError,
 }) {
+  let selection = selectedObjectives;
+
+  if (selectedObjectives.id) {
+    const { id, ...fields } = selectedObjectives;
+    selection = fields;
+  }
+
   return (
     <>
       <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
@@ -32,7 +39,7 @@ export default function ObjectiveSelect({
           options={options}
           styles={selectOptionsReset}
           placeholder="- Select -"
-          value={selectedObjective}
+          value={selection}
         />
       </Label>
     </>
@@ -41,7 +48,7 @@ export default function ObjectiveSelect({
 
 ObjectiveSelect.propTypes = {
   onChange: PropTypes.func.isRequired,
-  selectedObjective: PropTypes.oneOfType([
+  selectedObjectives: PropTypes.oneOfType([
     PropTypes.arrayOf(OBJECTIVE_PROP),
     OBJECTIVE_PROP,
   ]).isRequired,

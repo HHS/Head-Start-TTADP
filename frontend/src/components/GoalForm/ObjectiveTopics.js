@@ -14,9 +14,9 @@ export default function ObjectiveTopics({
   topics,
   onChangeTopics,
   status,
+  inputName,
 }) {
   const savedTopicIds = savedTopics ? savedTopics.map(({ value }) => value) : [];
-
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.value));
 
   return (
@@ -45,7 +45,9 @@ export default function ObjectiveTopics({
           </Label>
           {error}
           <Select
-            inputId="topics"
+            objectiveTopicsInputName={inputName}
+            inputId={inputName}
+            name={inputName}
             styles={selectOptionsReset}
             components={{
               DropdownIndicator: null,
@@ -81,8 +83,10 @@ ObjectiveTopics.propTypes = {
   })).isRequired,
   onChangeTopics: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
+  inputName: PropTypes.string,
 };
 
 ObjectiveTopics.defaultProps = {
   savedTopics: [],
+  inputName: 'topics',
 };

@@ -12,7 +12,6 @@ export default function GoalText({
   onUpdateText,
   onBlur,
   inputName,
-  inputRef,
 }) {
   const onBlurHandler = () => {
     onBlur();
@@ -38,7 +37,6 @@ export default function GoalText({
             required
             value={goalName}
             onChange={onUpdateText}
-            ref={inputRef}
           />
         </>
       )}
@@ -54,14 +52,9 @@ GoalText.propTypes = {
   onUpdateText: PropTypes.func.isRequired,
   onBlur: PropTypes.func,
   inputName: PropTypes.string,
-  inputRef: PropTypes.oneOfType([
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-    PropTypes.bool,
-  ]),
 };
 
 GoalText.defaultProps = {
   onBlur: () => {},
   inputName: 'goalText',
-  inputRef: false,
 };

@@ -8,15 +8,21 @@ const statuses = [
   'Complete',
 ];
 
-export default function ObjectiveStatus({ status, onChangeStatus }) {
+export default function ObjectiveStatus({
+  status,
+  onChangeStatus,
+  onBlur,
+  inputName,
+}) {
   return (
     <Label>
       Status
       <Dropdown
-        name="status"
+        name={inputName}
         onChange={onChangeStatus}
         value={status}
         aria-label="Status for objective "
+        onBlur={onBlur}
       >
         {statuses.map((possibleStatus) => (
           <option
@@ -34,4 +40,11 @@ export default function ObjectiveStatus({ status, onChangeStatus }) {
 ObjectiveStatus.propTypes = {
   onChangeStatus: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
+  inputName: PropTypes.string,
+  onBlur: PropTypes.func,
+};
+
+ObjectiveStatus.defaultProps = {
+  inputName: 'objectiveStatus',
+  onBlur: () => {},
 };
