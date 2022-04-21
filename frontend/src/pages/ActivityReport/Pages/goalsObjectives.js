@@ -151,7 +151,7 @@ const ReviewSection = () => {
 };
 
 export default {
-  position: 3,
+  position: 2,
   label: 'Goals and objectives',
   titleOverride: (formData) => {
     const { activityRecipientType } = formData;
