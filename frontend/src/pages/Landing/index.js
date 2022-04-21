@@ -23,7 +23,7 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString, expandFilters, formatDateRange } from '../../utils';
+import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
@@ -33,11 +33,6 @@ import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from '
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-
-const defaultDate = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
 
 const FILTER_KEY = 'landing-filters';
 
@@ -65,12 +60,6 @@ function Landing() {
 
   const getFiltersWithAllRegions = () => {
     const filtersWithAllRegions = [...allRegionsFilters];
-    filtersWithAllRegions.push({
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    });
     return filtersWithAllRegions;
   };
 
@@ -84,12 +73,6 @@ function Landing() {
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
       }]
       : getFiltersWithAllRegions(),
   );
