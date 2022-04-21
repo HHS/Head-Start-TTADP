@@ -28,7 +28,6 @@ export default function GoalForm({ goal, topicOptions }) {
       onChange: onUpdateDate,
       onBlur: onBlurDate,
       value: goalEndDate,
-      ref: goalDateRef,
       name: goalEndDateInputName,
     },
   } = useController({
@@ -42,7 +41,6 @@ export default function GoalForm({ goal, topicOptions }) {
       onChange: onUpdateText,
       onBlur: onBlurGoalText,
       value: goalText,
-      ref: goalTextRef,
       name: goalTextInputName,
     },
   } = useController({
@@ -128,7 +126,6 @@ export default function GoalForm({ goal, topicOptions }) {
         onUpdateText={onUpdateText}
         onBlur={onBlurGoalText}
         inputName={goalTextInputName}
-        inputRef={goalTextRef}
       />
 
       { goal.value === 'new'
@@ -140,7 +137,6 @@ export default function GoalForm({ goal, topicOptions }) {
             validateEndDate={validateEndDate}
             datePickerKey="end-date-key"
             onBlur={onBlurDate}
-            inputRef={goalDateRef}
             inputName={goalEndDateInputName}
           />
         )

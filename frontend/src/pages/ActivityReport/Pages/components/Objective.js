@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from './SpecialistRole';
@@ -14,44 +14,112 @@ import { OBJECTIVE_PROP } from './constants';
 import {
   OBJECTIVE_TITLE,
   OBJECTIVE_ROLE,
-  OBJECTIVE_RESOURCES,
-  OBJECTIVE_TTA,
+  // OBJECTIVE_RESOURCES,
+  // OBJECTIVE_TTA,
   OBJECTIVE_ERROR_INDEXES,
-  OBJECTIVE_TOPICS,
+  // OBJECTIVE_TOPICS,
 } from './goalValidator';
 import './Objective.css';
 
 const NO_ERROR = <></>;
 const TITLE_ERROR = <span className="usa-error-message">{OBJECTIVE_TITLE}</span>;
 const ROLE_ERROR = <span className="usa-error-message">{OBJECTIVE_ROLE}</span>;
-const RESOURCES_ERROR = <span className="usa-error-message">{OBJECTIVE_RESOURCES}</span>;
-const TTA_ERROR = <span className="usa-error-message">{OBJECTIVE_TTA}</span>;
-const TOPICS_ERROR = <span className="usa-error-message">{OBJECTIVE_TOPICS}</span>;
+// const RESOURCES_ERROR = <span className="usa-error-message">{OBJECTIVE_RESOURCES}</span>;
+// const TTA_ERROR = <span className="usa-error-message">{OBJECTIVE_TTA}</span>;
+// const TOPICS_ERROR = <span className="usa-error-message">{OBJECTIVE_TOPICS}</span>;
 
 export default function Objective({
   objective,
   topicOptions,
-  selectedObjectives,
   options,
   errors,
   index,
-  update,
+  remove,
+  fieldArrayName,
 }) {
-  const selectedGoal = useWatch({ name: 'goalForEditing' });
-  const objectiveRoles = useWatch({ name: 'objectiveRoles' });
+  const {
+    field: {
+      onChange: onChangeTitle,
+      onBlur: onBlurTitle,
+      value: objectiveTitle,
+      name: objectiveTitleInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].title`,
+    rules: { required: true },
+    defaultValue: objective.title,
+  });
 
-  // no need to recalculate this every time I don't think
-  const roles = useMemo(() => (objectiveRoles
-    ? objectiveRoles.filter(({ objectiveId }) => objectiveId !== objective.value) : []),
-  [objective.value, objectiveRoles]);
+  const {
+    field: {
+      onChange: onChangeTopics,
+      onBlur: onBlurTopics,
+      value: objectiveTopics,
+      name: objectiveTopicsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].topics`,
+    rules: { required: true },
+    defaultValue: objective.topics,
+  });
 
-  const { setValue } = useFormContext();
+  const {
+    field: {
+      onChange: onChangeResources,
+      onBlur: onBlurResources,
+      value: objectiveResources,
+      name: objectiveResourcesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].resources`,
+    rules: { required: true },
+    defaultValue: objective.resources,
+  });
+
+  const {
+    field: {
+      onChange: onChangeRoles,
+      onBlur: onBlurRoles,
+      value: objectiveRoles,
+      name: objectiveRolesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].roles`,
+    rules: { required: true },
+    defaultValue: objective.roles,
+  });
+
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].ttaProvided`,
+    rules: { required: true },
+    defaultValue: objective.ttaProvided,
+  });
+
+  const {
+    field: {
+      onChange: onChangeStatus,
+      onBlur: onBlurStatus,
+      value: objectiveStatus,
+      name: objectiveStatusInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].status`,
+    rules: { required: true },
+    defaultValue: objective.status,
+  });
 
   const [titleError, setTitleError] = useState(NO_ERROR);
   const [roleError, setRoleError] = useState(NO_ERROR);
-  const [resourcesError, setResourcesError] = useState(NO_ERROR);
-  const [topicError, setTopicError] = useState(NO_ERROR);
-  const [ttaError, setTtaError] = useState(NO_ERROR);
+  const [resourcesError] = useState(NO_ERROR);
+  const [topicError] = useState(NO_ERROR);
+  const [ttaError] = useState(NO_ERROR);
 
   useEffect(() => {
     if (errors) {
@@ -67,28 +135,8 @@ export default function Objective({
     (report) => report.status === REPORT_STATUSES.APPROVED,
   );
 
-  const onChangeTitle = (title) => {
-    update(index, { ...objective, title });
-  };
-
-  const onChangeTopics = (topics) => {
-    update(index, { ...objective, topics });
-  };
-
-  const onChangeStatus = (status) => {
-    update(index, { ...objective, status });
-  };
-
-  const setResources = (resources) => {
-    update(index, { ...objective, resources });
-  };
-
-  const onChangeTTA = (ttaProvided) => {
-    update(index, { ...objective, ttaProvided });
-  };
-
-  const onChangeObjective = (newObjective) => {
-    update(index, { ...newObjective });
+  const onChangeObjective = () => {
+    // update(index, { ...newObjective });
   };
 
   let savedTopics = [];
@@ -99,55 +147,50 @@ export default function Objective({
     savedResources = objective.resources;
   }
 
-  const resourcesForRepeater = objective.resources.length ? objective.resources : [{ key: uuidv4(), value: '' }];
+  const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
 
-  const onRemove = () => {
-    const goalToUpdate = { ...selectedGoal };
-    const copyOfObjectives = selectedObjectives.map((obj) => ({ ...obj }));
-    goalToUpdate.objectives = copyOfObjectives.filter((obj) => obj.id !== objective.id);
-    setValue('goalForEditing', goalToUpdate);
-  };
+  const onRemove = () => remove(index);
 
-  const validateObjectiveTitle = () => {
-    let error = NO_ERROR;
-    if (!objective.title) {
-      error = TITLE_ERROR;
-    }
-    setTitleError(error);
-  };
+  // const validateObjectiveTitle = () => {
+  //   let error = NO_ERROR;
+  //   if (!objective.title) {
+  //     error = TITLE_ERROR;
+  //   }
+  //   setTitleError(error);
+  // };
 
-  const validateSpecialistRole = () => {
-    let error = NO_ERROR;
+  // const validateSpecialistRole = () => {
+  //   const error = NO_ERROR;
 
-    if (!roles.length) {
-      error = ROLE_ERROR;
-    }
-    setRoleError(error);
-  };
+  //   // if (!roles.length) {
+  //   //   error = ROLE_ERROR;
+  //   // }
+  //   setRoleError(error);
+  // };
 
-  const validateObjectiveResources = () => {
-    let error = NO_ERROR;
-    if (!objective.resources.length) {
-      error = RESOURCES_ERROR;
-    }
-    setResourcesError(error);
-  };
+  // const validateObjectiveResources = () => {
+  //   let error = NO_ERROR;
+  //   if (!objective.resources.length) {
+  //     error = RESOURCES_ERROR;
+  //   }
+  //   setResourcesError(error);
+  // };
 
-  const validateObjectiveTopics = () => {
-    let error = NO_ERROR;
-    if (!objective.topics.length) {
-      error = TOPICS_ERROR;
-    }
-    setTopicError(error);
-  };
+  // const validateObjectiveTopics = () => {
+  //   let error = NO_ERROR;
+  //   if (!objective.topics.length) {
+  //     error = TOPICS_ERROR;
+  //   }
+  //   setTopicError(error);
+  // };
 
-  const validateTta = () => {
-    let error = NO_ERROR;
-    if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
-      error = TTA_ERROR;
-    }
-    setTtaError(error);
-  };
+  // const validateTta = () => {
+  //   let error = NO_ERROR;
+  //   if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
+  //     error = TTA_ERROR;
+  //   }
+  //   setTtaError(error);
+  // };
 
   return (
     <>
@@ -157,47 +200,55 @@ export default function Objective({
         options={options}
         onRemove={onRemove}
       />
-
       <ObjectiveTitle
         error={titleError}
         isOnApprovedReport={isOnApprovedReport || false}
-        title={objective.title}
+        title={objectiveTitle}
         onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={validateObjectiveTitle}
+        validateObjectiveTitle={onBlurTitle}
         status={objective.status}
+        inputName={objectiveTitleInputName}
       />
       <SpecialistRole
-        objective={objective}
+        isOnApprovedReport={isOnApprovedReport || false}
         error={roleError}
-        validateSpecialistRole={validateSpecialistRole}
+        onChange={onChangeRoles}
+        roles={objectiveRoles}
+        inputName={objectiveRolesInputName}
+        validateSpecialistRole={onBlurRoles}
       />
       <ObjectiveTopics
         error={topicError}
         savedTopics={savedTopics}
         topicOptions={topicOptions}
-        validateObjectiveTopics={validateObjectiveTopics}
-        topics={isOnApprovedReport ? [] : objective.topics}
+        validateObjectiveTopics={onBlurTopics}
+        topics={isOnApprovedReport ? [] : objectiveTopics}
         onChangeTopics={onChangeTopics}
+        inputName={objectiveTopicsInputName}
         status={objective.status}
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
-        setResources={setResources}
+        setResources={onChangeResources}
         error={resourcesError}
-        validateResources={validateObjectiveResources}
+        validateResources={onBlurResources}
         savedResources={savedResources}
         status={objective.status}
+        inputName={objectiveResourcesInputName}
       />
       <ObjectiveTta
-        ttaProvided={objective.ttaProvided}
-        onChangeTTA={onChangeTTA}
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
         status={objective.status}
         isOnApprovedReport={isOnApprovedReport || false}
         error={ttaError}
-        validateTta={validateTta}
+        validateTta={onBlurTta}
       />
       <ObjectiveStatus
-        status={objective.status}
+        onBlur={onBlurStatus}
+        inputName={objectiveStatusInputName}
+        status={objectiveStatus}
         onChangeStatus={onChangeStatus}
       />
     </>
@@ -211,12 +262,12 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
-  selectedObjectives: OBJECTIVE_PROP.isRequired,
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
   errors: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.bool])),
-  update: PropTypes.func.isRequired,
+  remove: PropTypes.func.isRequired,
+  fieldArrayName: PropTypes.string.isRequired,
 };
 
 Objective.defaultProps = {

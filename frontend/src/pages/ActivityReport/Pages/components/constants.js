@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 
 export const NEW_OBJECTIVE = {
-  id: 'new',
   value: 'new',
   label: 'Create a new objective',
   text: '',
@@ -9,6 +8,7 @@ export const NEW_OBJECTIVE = {
   activityReports: [],
   resources: [],
   topics: [],
+  roles: [],
 };
 
 export const OBJECTIVE_PROP = PropTypes.shape({

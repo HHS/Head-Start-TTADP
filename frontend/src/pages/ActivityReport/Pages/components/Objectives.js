@@ -13,9 +13,11 @@ export default function Objectives({
   // noObjectiveError,
 }) {
   const goal = useWatch({ name: 'goalForEditing' });
+  const fieldArrayName = `goal.${goal ? goal.id : 'new'}.objectives`;
+
   // const { setValue } = useFormContext();
-  const { fields, append, update } = useFieldArray({
-    name: `${goal ? goal.id : 'new'}.objectives`,
+  const { fields, append, remove } = useFieldArray({
+    name: fieldArrayName,
     defaultValues: [NEW_OBJECTIVE],
   });
 
@@ -34,7 +36,7 @@ export default function Objectives({
   };
 
   const onSelect = (objective) => {
-    append(objective);
+    append({ ...objective, roles: [] });
   };
 
   return (
@@ -58,13 +60,14 @@ export default function Objectives({
       {fields.map((objective, index) => (
         <Objective
           index={index}
-          key={objective.id}
+          key={objective.value}
           objective={objective}
           topicOptions={topicOptions}
           options={options}
           selectedObjectives={[]}
           errors={objectiveErrors[index]}
-          update={update}
+          remove={remove}
+          fieldArrayName={fieldArrayName}
         />
       ))}
       <PlusButton text="Add new objective" onClick={onAddNew} />

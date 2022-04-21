@@ -14,6 +14,7 @@ export default function ObjectiveTta(
     isOnApprovedReport,
     error,
     validateTta,
+    inputName,
   },
 ) {
   if (status === 'Complete' || isOnApprovedReport) {
@@ -37,6 +38,7 @@ export default function ObjectiveTta(
       <Req />
       {error}
       <div className="smart-hub--text-area__resize-vertical margin-top-1">
+        <input type="hidden" name={inputName} value={ttaProvided} />
         <RichEditor
           value={ttaProvided}
           ariaLabel="TTA provided for objective"
@@ -56,4 +58,5 @@ ObjectiveTta.propTypes = {
   isOnApprovedReport: PropTypes.bool.isRequired,
   error: PropTypes.node.isRequired,
   validateTta: PropTypes.func.isRequired,
+  inputName: PropTypes.string.isRequired,
 };

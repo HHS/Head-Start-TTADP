@@ -125,7 +125,6 @@ export function goalById(id) {
           ['id', 'value'],
           ['title', 'label'],
           'title',
-          'id',
           'status',
           'ttaProvided',
         ],
