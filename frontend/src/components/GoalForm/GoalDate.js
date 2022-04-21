@@ -12,16 +12,8 @@ export default function GoalDate({
   endDate,
   validateEndDate,
   datePickerKey,
-  onBlur,
-  inputRef,
-  inputName,
 }) {
   const f = formatEndDateForPicker(endDate);
-
-  const onBlurHandler = () => {
-    onBlur();
-    validateEndDate();
-  };
 
   return (
     <FormGroup error={error.props.children}>
@@ -33,13 +25,12 @@ export default function GoalDate({
       </Label>
       {error}
       <DatePicker
-        id={inputName}
-        name={inputName}
+        id="goalEndDate"
+        name="goalEndDate"
         onChange={setEndDate}
         defaultValue={f}
-        onBlur={onBlurHandler}
+        onBlur={validateEndDate}
         key={datePickerKey}
-        inputRef={inputRef}
         required
       />
     </FormGroup>
@@ -52,17 +43,8 @@ GoalDate.propTypes = {
   endDate: PropTypes.string, // can come back from the API as null
   validateEndDate: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
-  onBlur: PropTypes.func,
-  inputRef: PropTypes.oneOfType([
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-    PropTypes.bool,
-  ]),
-  inputName: PropTypes.string,
 };
 
 GoalDate.defaultProps = {
   endDate: '',
-  onBlur: () => {},
-  inputRef: false,
-  inputName: 'goalEndDate',
 };
