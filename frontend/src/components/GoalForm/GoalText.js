@@ -10,15 +10,7 @@ export default function GoalText({
   goalName,
   validateGoalName,
   onUpdateText,
-  onBlur,
-  inputName,
-  inputRef,
 }) {
-  const onBlurHandler = () => {
-    onBlur();
-    validateGoalName();
-  };
-
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor="goalText" className={isOnReport ? 'text-bold' : ''}>
@@ -31,15 +23,7 @@ export default function GoalText({
       ) : (
         <>
           {error}
-          <Textarea
-            onBlur={onBlurHandler}
-            id={inputName}
-            name={inputName}
-            required
-            value={goalName}
-            onChange={onUpdateText}
-            ref={inputRef}
-          />
+          <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
         </>
       )}
     </FormGroup>
@@ -52,16 +36,4 @@ GoalText.propTypes = {
   goalName: PropTypes.string.isRequired,
   validateGoalName: PropTypes.func.isRequired,
   onUpdateText: PropTypes.func.isRequired,
-  onBlur: PropTypes.func,
-  inputName: PropTypes.string,
-  inputRef: PropTypes.oneOfType([
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-    PropTypes.bool,
-  ]),
-};
-
-GoalText.defaultProps = {
-  onBlur: () => {},
-  inputName: 'goalText',
-  inputRef: false,
 };

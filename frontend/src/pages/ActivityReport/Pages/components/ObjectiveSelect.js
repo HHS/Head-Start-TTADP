@@ -8,11 +8,7 @@ import { OBJECTIVE_PROP } from './constants';
 import './ObjectiveSelect.css';
 
 export default function ObjectiveSelect({
-  onChange,
-  selectedObjective,
-  options,
-  onRemove,
-  noObjectiveError,
+  onChange, selectedObjective, options, onRemove,
 }) {
   return (
     <>
@@ -24,7 +20,6 @@ export default function ObjectiveSelect({
       <Label>
         Select TTA objective
         <Req />
-        {noObjectiveError}
         <Select
           name="objectives"
           onChange={onChange}
@@ -52,10 +47,8 @@ ObjectiveSelect.propTypes = {
     PropTypes.bool,
     PropTypes.func,
   ]),
-  noObjectiveError: PropTypes.node,
 };
 
 ObjectiveSelect.defaultProps = {
   onRemove: false,
-  noObjectiveError: <></>,
 };
