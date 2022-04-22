@@ -28,6 +28,7 @@ app.use(helmet({
       scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
       imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
       defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
+      scriptSrc: ["'self'", 'sha256-PVdLMy9DHabEqXvKtr5/zVtwnsEl/TweuaaniHQnwSk='],
     },
   },
 }));
