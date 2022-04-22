@@ -5,6 +5,7 @@ import '@trussworks/react-uswds/lib/index.css';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
+import TagManager from 'react-gtm-module';
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
 
@@ -39,6 +40,12 @@ function App() {
   const authenticated = user !== undefined;
   const [timedOut, updateTimedOut] = useState(false);
   const [announcements, updateAnnouncements] = useState([]);
+
+  const tagManagerArgs = {
+    gtmId: 'GTM-MKSDS7M',
+  };
+
+  TagManager.initialize(tagManagerArgs);
 
   useEffect(() => {
     const fetchData = async () => {
