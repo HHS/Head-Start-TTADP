@@ -25,10 +25,9 @@ app.use(helmet({
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
+      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js', 'sha256-PVdLMy9DHabEqXvKtr5/zVtwnsEl/TweuaaniHQnwSk='],
       imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
       defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
-      scriptSrc: ["'self'", 'sha256-PVdLMy9DHabEqXvKtr5/zVtwnsEl/TweuaaniHQnwSk='],
     },
   },
 }));
