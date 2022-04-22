@@ -11,7 +11,7 @@ export const isValidUrl = (attempted) => {
   }
 };
 
-export const GOAL_NAME_ERROR = 'Enter the recipient&apos;s goal';
+export const GOAL_NAME_ERROR = 'Enter the recipient\'s goal';
 export const GOAL_DATE_ERROR = 'Enter a valid date';
 export const SELECT_GRANTS_ERROR = 'Select at least one recipient grant number';
 

@@ -49,6 +49,7 @@ ObjectiveTitle.propTypes = {
   onChangeTitle: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
+
 };
 
 ObjectiveTitle.defaultProps = {

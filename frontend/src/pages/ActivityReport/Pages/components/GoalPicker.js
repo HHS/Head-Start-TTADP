@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
@@ -13,15 +14,16 @@ import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
 import GoalForm from './GoalForm';
 
-export const newGoal = {
-  value: 'new',
+export const newGoal = () => ({
+  value: uuidv4(),
   number: false,
   label: 'Create new goal',
   objectives: [],
   name: '',
   goalNumber: '',
   id: 'new',
-};
+  isNew: true,
+});
 
 const components = {
   Option,
@@ -65,12 +67,17 @@ const GoalPicker = ({
   // We need options with the number and also we need to add the
   // "create new goal to the front of all the options"
   const options = [
-    newGoal,
+    newGoal(),
     ...uniqueAvailableGoals.map(({
       goalNumber, ...goal
     }) => (
       {
-        value: goal.id, number: goalNumber, label: goal.name, objectives: [], ...goal,
+        value: goal.id,
+        number: goalNumber,
+        label: goal.name,
+        objectives: [],
+        isNew: false,
+        ...goal,
       }
     )),
   ];

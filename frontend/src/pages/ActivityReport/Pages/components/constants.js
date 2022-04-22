@@ -1,15 +1,21 @@
+import React from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 
-export const NEW_OBJECTIVE = {
-  value: 'new',
+export const NO_ERROR = <></>;
+export const ERROR_FORMAT = (message) => <span className="usa-error-message">{message}</span>;
+
+export const NEW_OBJECTIVE = () => ({
+  value: uuidv4(),
   label: 'Create a new objective',
-  text: '',
+  title: '',
   ttaProvided: '',
   activityReports: [],
   resources: [],
   topics: [],
   roles: [],
-};
+  status: 'Not Started',
+});
 
 export const OBJECTIVE_PROP = PropTypes.shape({
   title: PropTypes.string,

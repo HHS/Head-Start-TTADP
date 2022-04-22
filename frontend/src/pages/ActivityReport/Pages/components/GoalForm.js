@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
+import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalById } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
-import { GOAL_ERROR_INDEXES } from './goalValidator';
 import {
   GOAL_DATE_ERROR,
+  GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
+import { NO_ERROR, ERROR_FORMAT } from './constants';
 
-const NO_ERROR = <></>;
-// const NO_OBJECTIVES_ERROR = <span className="usa-error-message">{GOAL_MISSING_OBJECTIVE}</span>;
-const GOAL_DATE_ERROR_MESSAGE = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
-// const GOAL_NAME_ERROR = <span className="usa-error-message">{GOAL_NAME}</span>;
 export default function GoalForm({ goal, topicOptions }) {
-  const { watch } = useFormContext();
+  // pull the errors out of the form context
+  const { errors } = useFormContext();
+
+  // memoize whether or not the end date is required, so we only
+  // do it when the goal changes from new to not new
+  const endDateRequired = useMemo(() => goal.isNew, [goal.isNew]);
 
   /**
    * add controllers for all the controlled fields
@@ -23,6 +25,7 @@ export default function GoalForm({ goal, topicOptions }) {
    * but we want to keep the logic in one place for the AR/RTR
    * if at all possible
    */
+
   const {
     field: {
       onChange: onUpdateDate,
@@ -32,7 +35,16 @@ export default function GoalForm({ goal, topicOptions }) {
     },
   } = useController({
     name: 'goalEndDate',
-    rules: { required: true },
+    rules: {
+      required: {
+        value: endDateRequired,
+        message: GOAL_DATE_ERROR,
+      },
+      valueAsDate: {
+        value: endDateRequired,
+        message: GOAL_DATE_ERROR,
+      },
+    },
     defaultValue: goal.endDate,
   });
 
@@ -45,33 +57,23 @@ export default function GoalForm({ goal, topicOptions }) {
     },
   } = useController({
     name: 'goalText',
-    rules: { required: true },
+    rules: {
+      required: {
+        value: true,
+        message: GOAL_NAME_ERROR,
+      },
+    },
     defaultValue: goal.name,
   });
 
   const [objectives, setObjectives] = useState([]);
-  // const [noObjectiveError, setNoObjectiveError] = useState(NO_ERROR);
-  const [goalNameError, setGoalNameError] = useState(NO_ERROR);
-  const [goalDateError, setGoalDateError] = useState(NO_ERROR);
-  const goalErrors = watch('goalErrors');
 
-  // /**
-  //  * this use effect handles the doling out of errors
-  //  * to each of the little error handlers
-  //  */
-  // useEffect(() => {
-  //   const objectiveError = goalErrors && goalErrors[GOAL_ERROR_INDEXES.NO_OBJECTIVES]
-  //     ? NO_OBJECTIVES_ERROR : NO_ERROR;
-  //   setNoObjectiveError(objectiveError);
-
-  //   const nameError = goalErrors && goalErrors[GOAL_ERROR_INDEXES.NAME]
-  //     ? GOAL_NAME_ERROR : NO_ERROR;
-  //   setGoalNameError(nameError);
-
-  //   const dateError = goalErrors && goalErrors[GOAL_ERROR_INDEXES.END_DATE]
-  //     ? GOAL_DATE_ERROR : NO_ERROR;
-  //   setGoalDateError(dateError);
-  // }, [goalErrors]);
+  // when the goal is updated in the selection, we want to update
+  // the fields via the useController functions
+  useEffect(() => {
+    onUpdateText(goal.name);
+    onUpdateDate(goal.endDate);
+  }, [goal.endDate, goal.name, onUpdateDate, onUpdateText]);
 
   /*
    * this use effect fetches
@@ -90,53 +92,26 @@ export default function GoalForm({ goal, topicOptions }) {
     }
   }, [goal.id]);
 
-  /**
-   * Sets the goal name errors on blur
-   */
-  const validateGoalName = () => {
-    let error = NO_ERROR;
-    if (!goal.name) {
-      error = GOAL_DATE_ERROR;
-    }
-    setGoalNameError(error);
-  };
-
-  /**
-   * sets the goal date errors on blur
-   */
-  const validateEndDate = () => {
-    let error = NO_ERROR;
-    if (goal.id === 'new' && !goal.endDate) {
-      error = GOAL_DATE_ERROR_MESSAGE;
-    }
-    setGoalDateError(error);
-  };
-
   return (
     <>
 
-      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-      {/* <input type="hidden" {...register('goalErrors')} /> */}
-
       <GoalText
-        error={goalNameError}
+        error={errors.goalText ? ERROR_FORMAT(errors.goalText.message) : NO_ERROR}
         isOnReport={false}
         goalName={goalText}
-        validateGoalName={validateGoalName}
+        validateGoalName={onBlurGoalText}
         onUpdateText={onUpdateText}
-        onBlur={onBlurGoalText}
         inputName={goalTextInputName}
       />
 
-      { goal.value === 'new'
+      { endDateRequired
         ? (
           <GoalDate
-            error={goalDateError}
+            error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
             setEndDate={onUpdateDate}
             endDate={goalEndDate}
-            validateEndDate={validateEndDate}
+            validateEndDate={onBlurDate}
             datePickerKey="end-date-key"
-            onBlur={onBlurDate}
             inputName={goalEndDateInputName}
           />
         )
@@ -144,10 +119,9 @@ export default function GoalForm({ goal, topicOptions }) {
 
       <Objectives
         goal={goal}
-        // noObjectiveError={noObjectiveError}
         objectives={objectives}
         topicOptions={topicOptions}
-        objectiveErrors={goalErrors ? goalErrors[GOAL_ERROR_INDEXES.OBJECTIVES] : []}
+        objectiveErrors={[]}
       />
 
     </>
@@ -156,11 +130,15 @@ export default function GoalForm({ goal, topicOptions }) {
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.number,
+    id: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
     value: PropTypes.number,
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,
+    isNew: PropTypes.bool,
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
