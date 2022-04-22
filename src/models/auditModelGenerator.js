@@ -49,7 +49,6 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
         -- Type: ${type}
         ${statements.join(',')}
       `,
-      { transaction: options.transaction },
     );
     auditLogger.info(JSON.stringify(result));
   }
