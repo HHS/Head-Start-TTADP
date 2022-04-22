@@ -37,6 +37,8 @@ export default function Objective({
   remove,
   fieldArrayName,
 }) {
+  const [selectedObjectives, setSelectedObjectives] = useState(objective);
+
   const {
     field: {
       onChange: onChangeTitle,
@@ -135,9 +137,28 @@ export default function Objective({
     (report) => report.status === REPORT_STATUSES.APPROVED,
   );
 
-  const onChangeObjective = () => {
-    // update(index, { ...newObjective });
+  const onChangeObjective = (newObjective) => {
+    setSelectedObjectives(newObjective);
   };
+
+  useEffect(() => {
+    onChangeResources(selectedObjectives.resources);
+    onChangeRoles(selectedObjectives.roles);
+    onChangeTitle(selectedObjectives.title);
+    onChangeTta(selectedObjectives.ttaProvided);
+    onChangeStatus(selectedObjectives.status);
+    onChangeTopics(selectedObjectives.topics);
+  }, [
+    onChangeResources,
+    onChangeRoles,
+    onChangeStatus,
+    onChangeTitle,
+    onChangeTopics,
+    onChangeTta,
+    selectedObjectives,
+    // this last value is the only thing that should be changing, when a new objective is
+    // selected from the dropdown.
+  ]);
 
   let savedTopics = [];
   let savedResources = [];
@@ -151,52 +172,11 @@ export default function Objective({
 
   const onRemove = () => remove(index);
 
-  // const validateObjectiveTitle = () => {
-  //   let error = NO_ERROR;
-  //   if (!objective.title) {
-  //     error = TITLE_ERROR;
-  //   }
-  //   setTitleError(error);
-  // };
-
-  // const validateSpecialistRole = () => {
-  //   const error = NO_ERROR;
-
-  //   // if (!roles.length) {
-  //   //   error = ROLE_ERROR;
-  //   // }
-  //   setRoleError(error);
-  // };
-
-  // const validateObjectiveResources = () => {
-  //   let error = NO_ERROR;
-  //   if (!objective.resources.length) {
-  //     error = RESOURCES_ERROR;
-  //   }
-  //   setResourcesError(error);
-  // };
-
-  // const validateObjectiveTopics = () => {
-  //   let error = NO_ERROR;
-  //   if (!objective.topics.length) {
-  //     error = TOPICS_ERROR;
-  //   }
-  //   setTopicError(error);
-  // };
-
-  // const validateTta = () => {
-  //   let error = NO_ERROR;
-  //   if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
-  //     error = TTA_ERROR;
-  //   }
-  //   setTtaError(error);
-  // };
-
   return (
     <>
       <ObjectiveSelect
         onChange={onChangeObjective}
-        selectedObjectives={objective}
+        selectedObjectives={selectedObjectives}
         options={options}
         onRemove={onRemove}
       />
@@ -206,14 +186,14 @@ export default function Objective({
         title={objectiveTitle}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={onBlurTitle}
-        status={objective.status}
+        status={objectiveStatus}
         inputName={objectiveTitleInputName}
       />
       <SpecialistRole
         isOnApprovedReport={isOnApprovedReport || false}
         error={roleError}
         onChange={onChangeRoles}
-        roles={objectiveRoles}
+        selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
       />
@@ -225,7 +205,7 @@ export default function Objective({
         topics={isOnApprovedReport ? [] : objectiveTopics}
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
-        status={objective.status}
+        status={objectiveStatus}
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -233,14 +213,14 @@ export default function Objective({
         error={resourcesError}
         validateResources={onBlurResources}
         savedResources={savedResources}
-        status={objective.status}
+        status={objectiveStatus}
         inputName={objectiveResourcesInputName}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
         onChangeTTA={onChangeTta}
         inputName={objectiveTtaInputName}
-        status={objective.status}
+        status={objectiveStatus}
         isOnApprovedReport={isOnApprovedReport || false}
         error={ttaError}
         validateTta={onBlurTta}

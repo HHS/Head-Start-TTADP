@@ -10,20 +10,25 @@ export default function Objectives({
   objectives,
   topicOptions,
   objectiveErrors,
-  // noObjectiveError,
 }) {
   const goal = useWatch({ name: 'goalForEditing' });
   const fieldArrayName = `goal.${goal ? goal.id : 'new'}.objectives`;
 
-  // const { setValue } = useFormContext();
-  const { fields, append, remove } = useFieldArray({
+  const {
+    fields,
+    append,
+    remove,
+  } = useFieldArray({
     name: fieldArrayName,
     defaultValues: [NEW_OBJECTIVE],
   });
 
+  const objectiveIds = fields ? fields.map(({ value }) => value) : [];
+
   const options = [
     NEW_OBJECTIVE,
-    ...objectives.map((objective) => ({
+    // filter out used objectives and return them in them in a format that react-select understands
+    ...objectives.filter((objective) => !objectiveIds.includes(objective.id)).map((objective) => ({
       label: objective.title,
       value: objective.id,
       ...objective,
@@ -31,7 +36,6 @@ export default function Objectives({
   ];
 
   const onAddNew = () => {
-    // onAdd(NEW_OBJECTIVE);
     append(NEW_OBJECTIVE);
   };
 
@@ -41,11 +45,11 @@ export default function Objectives({
 
   return (
     <>
-      { /*
-          we show this picker only when there aren't any objectives selected
-          afterwards, it does something slightly different and is shown within
-          each objective
-        */}
+      {/*
+        we show this picker only when there aren't any objectives selected
+        afterwards, it does something slightly different and is shown within
+        each objective
+      */}
 
       {fields.length < 1
         ? (
@@ -64,7 +68,6 @@ export default function Objectives({
           objective={objective}
           topicOptions={topicOptions}
           options={options}
-          selectedObjectives={[]}
           errors={objectiveErrors[index]}
           remove={remove}
           fieldArrayName={fieldArrayName}
@@ -84,5 +87,4 @@ Objectives.propTypes = {
     OBJECTIVE_PROP,
   ).isRequired,
   objectiveErrors: PropTypes.arrayOf(PropTypes.string).isRequired,
-  // noObjectiveError: PropTypes.node.isRequired,
 };
