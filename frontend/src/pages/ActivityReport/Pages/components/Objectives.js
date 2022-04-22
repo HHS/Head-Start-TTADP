@@ -9,24 +9,31 @@ import ObjectiveSelect from './ObjectiveSelect';
 export default function Objectives({
   objectives,
   topicOptions,
-  objectiveErrors,
 }) {
   const goal = useWatch({ name: 'goalForEditing' });
-  const fieldArrayName = `goal.${goal ? goal.id : 'new'}.objectives`;
+  const fieldArrayName = `goal-${goal ? goal.id : 'new'}.objectives`;
+  const objectivesForGoal = useWatch({ name: fieldArrayName });
+  const defaultValues = objectivesForGoal || [];
 
+  /**
+   * we can use the useFieldArray hook from react hook form to
+   * dynamically generate fields. this also seems to handle weird recursion
+   * errors that I was getting trying to manage existing inputs with
+   * watch/setValue
+   */
   const {
     fields,
     append,
     remove,
   } = useFieldArray({
     name: fieldArrayName,
-    defaultValues: [NEW_OBJECTIVE],
+    defaultValues,
   });
 
   const objectiveIds = fields ? fields.map(({ value }) => value) : [];
 
   const options = [
-    NEW_OBJECTIVE,
+    NEW_OBJECTIVE(),
     // filter out used objectives and return them in them in a format that react-select understands
     ...objectives.filter((objective) => !objectiveIds.includes(objective.id)).map((objective) => ({
       label: objective.title,
@@ -36,10 +43,11 @@ export default function Objectives({
   ];
 
   const onAddNew = () => {
-    append(NEW_OBJECTIVE);
+    append(NEW_OBJECTIVE());
   };
 
   const onSelect = (objective) => {
+    // we need to remove the roles: [] when the DB is in shape
     append({ ...objective, roles: [] });
   };
 
@@ -68,9 +76,10 @@ export default function Objectives({
           objective={objective}
           topicOptions={topicOptions}
           options={options}
-          errors={objectiveErrors[index]}
+          errors={[]}
           remove={remove}
           fieldArrayName={fieldArrayName}
+          goalId={goal ? goal.id : 'new'}
         />
       ))}
       <PlusButton text="Add new objective" onClick={onAddNew} />
@@ -86,5 +95,4 @@ Objectives.propTypes = {
   objectives: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
-  objectiveErrors: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

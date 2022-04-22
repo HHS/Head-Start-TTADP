@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import { useController } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from './SpecialistRole';
@@ -10,34 +10,37 @@ import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
-import { OBJECTIVE_PROP } from './constants';
+import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import {
   OBJECTIVE_TITLE,
   OBJECTIVE_ROLE,
-  // OBJECTIVE_RESOURCES,
-  // OBJECTIVE_TTA,
-  OBJECTIVE_ERROR_INDEXES,
-  // OBJECTIVE_TOPICS,
+  OBJECTIVE_RESOURCES,
+  OBJECTIVE_TTA,
+  OBJECTIVE_TOPICS,
 } from './goalValidator';
 import './Objective.css';
-
-const NO_ERROR = <></>;
-const TITLE_ERROR = <span className="usa-error-message">{OBJECTIVE_TITLE}</span>;
-const ROLE_ERROR = <span className="usa-error-message">{OBJECTIVE_ROLE}</span>;
-// const RESOURCES_ERROR = <span className="usa-error-message">{OBJECTIVE_RESOURCES}</span>;
-// const TTA_ERROR = <span className="usa-error-message">{OBJECTIVE_TTA}</span>;
-// const TOPICS_ERROR = <span className="usa-error-message">{OBJECTIVE_TOPICS}</span>;
+import { validateListOfResources } from '../../../../components/GoalForm/constants';
 
 export default function Objective({
   objective,
   topicOptions,
   options,
-  errors,
   index,
   remove,
   fieldArrayName,
+  goalId,
 }) {
   const [selectedObjectives, setSelectedObjectives] = useState(objective);
+  // pull the errors out of the form context
+  const { errors } = useFormContext();
+  const objectiveErrors = errors[`goal-${goalId}`] && errors[`goal-${goalId}`].objectives && errors[`goal-${goalId}`].objectives[index] ? errors[`goal-${goalId}`].objectives[index] : {};
+
+  /**
+   * add controllers for all the controlled fields
+   * react hook form uses uncontrolled fields by default
+   * but we want to keep the logic in one place for the AR/RTR
+   * if at all possible
+   */
 
   const {
     field: {
@@ -48,7 +51,12 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].title`,
-    rules: { required: true },
+    rules: {
+      required: {
+        value: true,
+        message: OBJECTIVE_TITLE,
+      },
+    },
     defaultValue: objective.title,
   });
 
@@ -61,7 +69,11 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].topics`,
-    rules: { required: true },
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_TOPICS,
+      },
+    },
     defaultValue: objective.topics,
   });
 
@@ -74,7 +86,12 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].resources`,
-    rules: { required: true },
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_RESOURCES,
+        allResourcesAreValid: (value) => validateListOfResources(value) || OBJECTIVE_RESOURCES,
+      },
+    },
     defaultValue: objective.resources,
   });
 
@@ -87,7 +104,11 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].roles`,
-    rules: { required: true },
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_ROLE,
+      },
+    },
     defaultValue: objective.roles,
   });
 
@@ -100,7 +121,11 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].ttaProvided`,
-    rules: { required: true },
+    rules: {
+      validate: {
+        notEmptyTag: (value) => (value && value !== '<p></p>') || OBJECTIVE_TTA,
+      },
+    },
     defaultValue: objective.ttaProvided,
   });
 
@@ -114,24 +139,8 @@ export default function Objective({
   } = useController({
     name: `${fieldArrayName}[${index}].status`,
     rules: { required: true },
-    defaultValue: objective.status,
+    defaultValue: objective.status || 'Not Started',
   });
-
-  const [titleError, setTitleError] = useState(NO_ERROR);
-  const [roleError, setRoleError] = useState(NO_ERROR);
-  const [resourcesError] = useState(NO_ERROR);
-  const [topicError] = useState(NO_ERROR);
-  const [ttaError] = useState(NO_ERROR);
-
-  useEffect(() => {
-    if (errors) {
-      const objectiveTitleError = errors[OBJECTIVE_ERROR_INDEXES.TITLE] ? TITLE_ERROR : NO_ERROR;
-      setTitleError(objectiveTitleError);
-
-      const objectiveRoleError = errors[OBJECTIVE_ERROR_INDEXES.ROLE] ? ROLE_ERROR : NO_ERROR;
-      setRoleError(objectiveRoleError);
-    }
-  }, [errors]);
 
   const isOnApprovedReport = objective.activityReports && objective.activityReports.some(
     (report) => report.status === REPORT_STATUSES.APPROVED,
@@ -142,8 +151,13 @@ export default function Objective({
   };
 
   useEffect(() => {
+    // firing these off as side effects updates all the fields
+    // and seems a little less janky visually than handling it all in
+    // "onChangeObjective". Note that react hook form v7 offers an "update"
+    // function w/ useFieldArray, so this can be removed and the above function
+    // simplified if we get around to moving to that
     onChangeResources(selectedObjectives.resources);
-    onChangeRoles(selectedObjectives.roles);
+    onChangeRoles(selectedObjectives.roles || []);
     onChangeTitle(selectedObjectives.title);
     onChangeTta(selectedObjectives.ttaProvided);
     onChangeStatus(selectedObjectives.status);
@@ -155,9 +169,11 @@ export default function Objective({
     onChangeTitle,
     onChangeTopics,
     onChangeTta,
+    fieldArrayName,
+    index,
     selectedObjectives,
     // this last value is the only thing that should be changing, when a new objective is
-    // selected from the dropdown.
+    // selected from the dropdown. the others, I would assume, are refs that won't be changing
   ]);
 
   let savedTopics = [];
@@ -181,7 +197,9 @@ export default function Objective({
         onRemove={onRemove}
       />
       <ObjectiveTitle
-        error={titleError}
+        error={objectiveErrors.title
+          ? ERROR_FORMAT(objectiveErrors.title.message)
+          : NO_ERROR}
         isOnApprovedReport={isOnApprovedReport || false}
         title={objectiveTitle}
         onChangeTitle={onChangeTitle}
@@ -191,14 +209,18 @@ export default function Objective({
       />
       <SpecialistRole
         isOnApprovedReport={isOnApprovedReport || false}
-        error={roleError}
+        error={objectiveErrors.roles
+          ? ERROR_FORMAT(objectiveErrors.roles.message)
+          : NO_ERROR}
         onChange={onChangeRoles}
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
       />
       <ObjectiveTopics
-        error={topicError}
+        error={objectiveErrors.topics
+          ? ERROR_FORMAT(objectiveErrors.topics.message)
+          : NO_ERROR}
         savedTopics={savedTopics}
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
@@ -210,7 +232,9 @@ export default function Objective({
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
         setResources={onChangeResources}
-        error={resourcesError}
+        error={objectiveErrors.resources
+          ? ERROR_FORMAT(objectiveErrors.resources.message)
+          : NO_ERROR}
         validateResources={onBlurResources}
         savedResources={savedResources}
         status={objectiveStatus}
@@ -222,7 +246,9 @@ export default function Objective({
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
         isOnApprovedReport={isOnApprovedReport || false}
-        error={ttaError}
+        error={objectiveErrors.ttaProvided
+          ? ERROR_FORMAT(objectiveErrors.ttaProvided.message)
+          : NO_ERROR}
         validateTta={onBlurTta}
       />
       <ObjectiveStatus
@@ -238,6 +264,10 @@ export default function Objective({
 Objective.propTypes = {
   index: PropTypes.number.isRequired,
   objective: OBJECTIVE_PROP.isRequired,
+  goalId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
@@ -245,11 +275,6 @@ Objective.propTypes = {
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
-  errors: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.bool])),
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
-};
-
-Objective.defaultProps = {
-  errors: [],
 };
