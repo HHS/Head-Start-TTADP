@@ -17,13 +17,29 @@ export default function SpecialistRole({
   const collaborators = useWatch({ name: 'collaborators' });
   const author = useWatch({ name: 'author' });
 
-  const roles = [...collaborators, author].map(({ role }) => role);
+  // create an exclusive set of roles
+  // from the collaborators & author
+  const roles = Array.from(
+    new Set(
+      [...collaborators, author].map(({ role }) => role).flat(),
+    ),
+  );
 
-  const options = [...new Set(roles)].map((role) => ({
+  // format them in a way react select can understand
+  const options = roles.map((role) => ({
     label: role,
     value: role,
   }));
 
+  // if there is only one option, we just set the objectives to be
+  // that value without any UI
+  // if (options.length === 1) {
+  //   return (
+  //     <input type="hidden" name={inputName} value={selectedRoles} />
+  //   );
+  // }
+
+  // build our selector
   return (
     <Label>
       Specialist role
@@ -39,6 +55,7 @@ export default function SpecialistRole({
         options={options}
         value={selectedRoles}
         onBlur={validateSpecialistRole}
+        closeMenuOnSelect={false}
         isMulti
       />
     </Label>
