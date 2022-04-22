@@ -9,11 +9,10 @@ import { auditLogger } from '../logger';
  * @returns {Promise<any>} - returns a promise
  */
 export default function findOrCreateUser(data) {
-  return sequelize.transaction((transaction) => User.findOne({
+  return User.findOne({
     where: {
       hsesUserId: data.hsesUserId,
     },
-    transaction,
   }).then((userFoundByHsesUserId) => {
     if (!userFoundByHsesUserId) {
       return User.findOrCreate({
@@ -21,7 +20,6 @@ export default function findOrCreateUser(data) {
           hsesUsername: data.hsesUsername,
         },
         defaults: data,
-        transaction,
       }).then(([user, created]) => {
         if (created) {
           auditLogger.info(`Created user ${user.id} with no access permissions`);
@@ -33,7 +31,7 @@ export default function findOrCreateUser(data) {
           hsesAuthorities: data.hsesAuthorities,
           hsesUserId: data.hsesUserId,
           lastLogin: sequelize.fn('NOW'),
-        }, { transaction });
+        });
       });
     }
     return userFoundByHsesUserId.update({
@@ -41,10 +39,10 @@ export default function findOrCreateUser(data) {
       hsesAuthorities: data.hsesAuthorities,
       hsesUserId: data.hsesUserId,
       lastLogin: sequelize.fn('NOW'),
-    }, { transaction });
+    });
   }).catch((error) => {
     const msg = `Error finding or creating user in database - ${error}`;
     auditLogger.error(`SERVICE:FIND_OR_CREATE_USER - ${msg}`);
     throw new Error(msg);
-  }));
+  });
 }
