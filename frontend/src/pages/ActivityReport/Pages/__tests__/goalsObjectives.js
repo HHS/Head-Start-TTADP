@@ -19,7 +19,7 @@ const RenderGoalsObjectives = ({
   const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
   const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
-    mode: 'onChange',
+    mode: 'onSubmit',
     defaultValues: { goals: [], objectivesWithoutGoals: [], ...data },
   });
   return (
@@ -57,16 +57,19 @@ const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWi
 };
 
 describe('goals objectives', () => {
+  beforeEach(async () => {
+    fetchMock.get('/api/topic', []);
+  });
   afterEach(() => fetchMock.restore());
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
-      expect(await screen.findByText('Goals and objectives')).toBeVisible();
+      expect(await screen.findByText('Goal summary')).toBeVisible();
     });
 
     it('the display goals section does not show if no grants are selected', async () => {
       renderGoals([], 'recipient');
-      expect(screen.queryByText('Goals and objectives')).toBeNull();
+      expect(screen.queryByText('Goal summary')).toBeNull();
     });
   });
 
@@ -108,6 +111,15 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
+            topics: [
+              'Clumsy',
+            ],
+            roles: [
+              'Central office',
+            ],
+            resources: [
+              'https://www.resource.org',
+            ],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -128,6 +140,15 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
+            topics: [
+              'Clumsy',
+            ],
+            roles: [
+              'Central office',
+            ],
+            resources: [
+              'https://www.resource.org',
+            ],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -148,10 +169,34 @@ describe('goals objectives', () => {
         activityRecipientType="other-entity"
         objectivesWithoutGoals={[
           {
-            id: 1, title: 'title one', ttaProvided: 'ttaProvided one', status: 'Not Started',
+            id: 1,
+            title: 'title one',
+            ttaProvided: 'ttaProvided one',
+            status: 'Not Started',
+            topics: [
+              'Clumsy',
+            ],
+            roles: [
+              'Central office',
+            ],
+            resources: [
+              'https://www.resource.org',
+            ],
           },
           {
-            id: 2, title: 'title two', ttaProvided: 'ttaProvided two', status: 'Not Started',
+            id: 2,
+            title: 'title two',
+            ttaProvided: 'ttaProvided two',
+            status: 'Not Started',
+            topics: [
+              'Clumsy',
+            ],
+            roles: [
+              'Central office',
+            ],
+            resources: [
+              'https://www.resource.org',
+            ],
           },
         ]}
       />);
@@ -164,7 +209,20 @@ describe('goals objectives', () => {
         id: 1,
         name: 'goal',
         objectives: [{
-          id: 1, title: 'title', ttaProvided: 'ttaProvided', status: 'Not Started',
+          id: 1,
+          title: 'title',
+          ttaProvided:
+          'ttaProvided',
+          status: 'Not Started',
+          topics: [
+            'Clumsy',
+          ],
+          roles: [
+            'Central office',
+          ],
+          resources: [
+            'https://www.resource.org',
+          ],
         }],
       }]}
       />);
@@ -179,12 +237,30 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          topics: [
+            'Clumsy',
+          ],
+          roles: [
+            'Central office',
+          ],
+          resources: [
+            'https://www.resource.org',
+          ],
         },
         {
           id: 2,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          topics: [
+            'Clumsy',
+          ],
+          roles: [
+            'Central office',
+          ],
+          resources: [
+            'https://www.resource.org',
+          ],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };

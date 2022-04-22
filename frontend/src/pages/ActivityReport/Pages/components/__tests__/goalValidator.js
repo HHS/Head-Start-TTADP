@@ -10,19 +10,29 @@ import {
 const missingTitle = {
   title: '',
   ttaProvided: 'ttaProvided',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 const missingTTAProvided = {
-  title: 'title',
+  title: 'missing tta',
   ttaProvided: '<p></p>',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 const validObjective = {
   title: 'title',
   ttaProvided: 'ttaProvided',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 const goalUnfinishedObjective = {
+  name: 'Goal name',
   objectives: [
     { ...validObjective },
     { ...missingTTAProvided },
@@ -30,10 +40,12 @@ const goalUnfinishedObjective = {
 };
 
 const goalNoObjectives = {
+  name: 'Goal name',
   objectives: [],
 };
 
 const goalValid = {
+  name: 'Goal name',
   objectives: [
     { ...validObjective },
     { ...validObjective },

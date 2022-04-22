@@ -89,6 +89,7 @@ describe('Navigator', () => {
         updateLastSaveTime={() => {}}
         showValidationErrors={false}
         updateShowValidationErrors={() => {}}
+        isPendingApprover={false}
       />,
     );
   };

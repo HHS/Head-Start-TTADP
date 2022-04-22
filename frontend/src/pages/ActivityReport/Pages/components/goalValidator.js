@@ -29,46 +29,34 @@ export const OBJECTIVE_ERROR_INDEXES = {
   TOPICS: 4,
 };
 
-const OBJECTIVE_DEFAULT_ERRORS = Object.keys(OBJECTIVE_ERROR_INDEXES).map(() => false);
-
 export const unfinishedObjectives = (objectives) => {
   // Every objective for this goal has to have a title and ttaProvided
   const unfinished = objectives.some(
     (objective) => {
       if (!objective.title) {
-        return false;
+        return true;
       }
 
       if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
-        return false;
+        return true;
       }
 
       if (!objective.topics.length) {
-        return false;
+        return true;
       }
 
-      return true;
+      if (!objective.resources.length) {
+        return true;
+      }
+
+      if (!objective.roles.length) {
+        return true;
+      }
+
+      return false;
     },
   );
   return unfinished ? UNFINISHED_OBJECTIVES : false;
-};
-
-export const validateObjectivesOnGoal = (goal) => {
-  let isValid = true;
-
-  const errors = goal.objectives.map((objective) => {
-    const objectiveErrors = [...OBJECTIVE_DEFAULT_ERRORS];
-    if (!objective.title) {
-      isValid = false;
-      objectiveErrors[OBJECTIVE_ERROR_INDEXES.TITLE] = 'Enter an objective title';
-    }
-
-    // TODO - finish this
-
-    return objectiveErrors;
-  });
-
-  return [isValid, errors];
 };
 
 export const unfinishedGoals = (goals) => {
@@ -97,7 +85,7 @@ export const validateGoal = (goal) => {
     return [isValid, errors];
   }
 
-  if (goal.id === 'new' && !goal.endDate) {
+  if (goal.isNew === 'new' && !goal.endDate) {
     errors[GOAL_ERROR_INDEXES.END_DATE] = GOAL_DATE_ERROR;
     isValid = false;
   }
@@ -107,10 +95,8 @@ export const validateGoal = (goal) => {
     isValid = false;
   }
 
-  const [objectivesValid, objectiveErrors] = validateObjectivesOnGoal(goal);
-  isValid = objectivesValid && isValid;
-
-  errors[GOAL_ERROR_INDEXES.OBJECTIVES] = objectiveErrors;
+  const unfinished = unfinishedObjectives(goal.objectives);
+  isValid = !unfinished && isValid;
 
   return [isValid, errors];
 };
@@ -144,10 +130,4 @@ export const validateGoals = (goals) => {
   }
 
   return true;
-
-  // const unfinishedMessage = unfinishedGoals(goals);
-  // if (unfinishedMessage) {
-  //   return unfinishedMessage;
-  // }
-  // return true;
 };
