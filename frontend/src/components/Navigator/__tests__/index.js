@@ -105,6 +105,7 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
+    userEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
         pageState: { ...initialData.pageState, 2: COMPLETE },
