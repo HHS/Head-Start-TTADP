@@ -32,7 +32,7 @@ export default function ObjectiveTopics({
 
       { status !== 'Complete' ? (
         <FormGroup error={error.props.children}>
-          <Label htmlFor="topics">
+          <Label htmlFor={inputName}>
             { savedTopics && savedTopics.length
               ? <>Add more topics</>
               : (

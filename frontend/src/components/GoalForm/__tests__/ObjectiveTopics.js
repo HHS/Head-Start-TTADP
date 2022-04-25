@@ -17,6 +17,7 @@ describe('ObjectiveTopics', () => {
       validateObjectiveTopics={jest.fn()}
       topics={[]}
       onChangeTopics={jest.fn()}
+      status="Over"
     />
   ));
 
