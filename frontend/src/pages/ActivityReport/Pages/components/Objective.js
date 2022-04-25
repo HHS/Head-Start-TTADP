@@ -29,11 +29,16 @@ export default function Objective({
   remove,
   fieldArrayName,
   goalId,
+  roles,
 }) {
   const [selectedObjectives, setSelectedObjectives] = useState(objective);
   // pull the errors out of the form context
   const { errors } = useFormContext();
-  const objectiveErrors = errors[`goal-${goalId}`] && errors[`goal-${goalId}`].objectives && errors[`goal-${goalId}`].objectives[index] ? errors[`goal-${goalId}`].objectives[index] : {};
+  const objectiveErrors = errors[`goal-${goalId}`]
+    && errors[`goal-${goalId}`].objectives
+    && errors[`goal-${goalId}`].objectives[index]
+    ? errors[`goal-${goalId}`].objectives[index]
+    : {};
 
   /**
    * add controllers for all the controlled fields
@@ -95,6 +100,8 @@ export default function Objective({
     defaultValue: objective.resources,
   });
 
+  const defaultRoles = roles.length === 1 ? roles : objective.roles;
+
   const {
     field: {
       onChange: onChangeRoles,
@@ -109,7 +116,7 @@ export default function Objective({
         notEmpty: (value) => (value && value.length) || OBJECTIVE_ROLE,
       },
     },
-    defaultValue: objective.roles,
+    defaultValue: defaultRoles,
   });
 
   const {
@@ -216,6 +223,7 @@ export default function Objective({
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
+        options={roles}
       />
       <ObjectiveTopics
         error={objectiveErrors.topics
@@ -277,4 +285,5 @@ Objective.propTypes = {
   ).isRequired,
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
+  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

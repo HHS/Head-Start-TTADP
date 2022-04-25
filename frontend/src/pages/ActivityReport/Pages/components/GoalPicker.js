@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useWatch, useController } from 'react-hook-form/dist/index.ie11';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
 import Req from '../../../../components/Req';
@@ -23,6 +23,7 @@ export const newGoal = () => ({
   goalNumber: '',
   id: 'new',
   isNew: true,
+  endDate: '',
 });
 
 const components = {
@@ -34,18 +35,28 @@ const GoalPicker = ({
   availableGoals,
 }) => {
   const {
-    control, setValue,
+    control, setError,
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
-  const goalForEditing = useWatch({ name: 'goalForEditing' });
-  const selectedGoals = useWatch({ name: 'goals' });
 
+  const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
   const allAvailableGoals = availableGoals.filter((goal) => !selectedIds.includes(goal.id));
 
-  const onChange = (goal) => {
-    setValue('goalForEditing', goal);
-  };
+  const {
+    field: {
+      onChange,
+      value: goalForEditing,
+    },
+  } = useController({
+    name: 'goalForEditing',
+    rules: {
+      validate: {
+        validateGoal: (g) => validateGoals([g], setError) === true,
+      },
+    },
+    defaultValue: newGoal(),
+  });
 
   // for fetching topic options from API
   useEffect(() => {
@@ -69,7 +80,8 @@ const GoalPicker = ({
   const options = [
     newGoal(),
     ...uniqueAvailableGoals.map(({
-      goalNumber, ...goal
+      goalNumber,
+      ...goal
     }) => (
       {
         value: goal.id,

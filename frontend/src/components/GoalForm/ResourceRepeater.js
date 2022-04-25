@@ -16,7 +16,6 @@ export default function ResourceRepeater({
   validateResources,
   savedResources,
   status,
-  inputName,
 }) {
   const resourcesWrapper = useRef();
 
@@ -40,7 +39,6 @@ export default function ResourceRepeater({
 
   return (
     <>
-      <input type="hidden" value={resources} name={inputName} />
       { savedResources && savedResources.length
         ? (
           <>
@@ -112,9 +110,4 @@ ResourceRepeater.propTypes = {
     value: PropTypes.string,
   })).isRequired,
   status: PropTypes.string.isRequired,
-  inputName: PropTypes.string,
-};
-
-ResourceRepeater.defaultProps = {
-  inputName: 'objectiveResources',
 };

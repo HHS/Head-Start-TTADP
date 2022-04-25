@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useWatch, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
@@ -30,6 +30,18 @@ export default function Objectives({
     defaultValues,
   });
 
+  // we need to figure out our options based on author/collaborator roles
+  const collaborators = useWatch({ name: 'collaborators' });
+  const author = useWatch({ name: 'author' });
+
+  // create an exclusive set of roles
+  // from the collaborators & author
+  const roles = useMemo(() => Array.from(
+    new Set(
+      [...collaborators, author].map(({ role }) => role).flat(),
+    ),
+  ), [author, collaborators]);
+
   const objectiveIds = fields ? fields.map(({ value }) => value) : [];
 
   const options = [
@@ -43,12 +55,13 @@ export default function Objectives({
   ];
 
   const onAddNew = () => {
-    append(NEW_OBJECTIVE());
+    const defaultRoles = roles.length === 1 ? roles : [];
+    append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
   };
 
   const onSelect = (objective) => {
-    // we need to remove the roles: [] when the DB is in shape
-    append({ ...objective, roles: [] });
+    const defaultRoles = roles.length === 1 ? roles : objective.roles;
+    append({ ...objective, roles: defaultRoles });
   };
 
   return (
@@ -67,21 +80,20 @@ export default function Objectives({
             selectedObjectives={[]}
           />
         )
-        : null }
-
-      {fields.map((objective, index) => (
-        <Objective
-          index={index}
-          key={objective.value}
-          objective={objective}
-          topicOptions={topicOptions}
-          options={options}
-          errors={[]}
-          remove={remove}
-          fieldArrayName={fieldArrayName}
-          goalId={goal ? goal.id : 'new'}
-        />
-      ))}
+        : fields.map((objective, index) => (
+          <Objective
+            index={index}
+            key={objective.value}
+            objective={objective}
+            topicOptions={topicOptions}
+            options={options}
+            errors={[]}
+            remove={remove}
+            fieldArrayName={fieldArrayName}
+            goalId={goal ? goal.id : 'new'}
+            roles={roles}
+          />
+        ))}
       <PlusButton text="Add new objective" onClick={onAddNew} />
     </>
   );

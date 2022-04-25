@@ -7,7 +7,7 @@ import {
 
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
-import { NOT_STARTED } from '../constants';
+import { NOT_STARTED, COMPLETE } from '../constants';
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -105,8 +105,12 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
-    userEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: null }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        pageState: { ...initialData.pageState, 2: COMPLETE },
+        second: null,
+      },
+    ));
   });
 
   it('submits data when "continuing" from the review page', async () => {

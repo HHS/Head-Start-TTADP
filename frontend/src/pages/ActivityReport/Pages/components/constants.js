@@ -9,7 +9,7 @@ export const NEW_OBJECTIVE = () => ({
   value: uuidv4(),
   label: 'Create a new objective',
   title: '',
-  ttaProvided: '',
+  ttaProvided: '<p></p>',
   activityReports: [],
   resources: [],
   topics: [],
