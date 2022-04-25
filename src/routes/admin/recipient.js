@@ -1,6 +1,7 @@
 import express from 'express';
 import { allRecipients } from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
+import transactionWrapper from '../transactionWrapper';
 /**
  * Gets all recipients from the database.
  *
@@ -18,6 +19,6 @@ export async function getRecipients(req, res) {
 
 const router = express.Router();
 
-router.get('/', getRecipients);
+router.get('/', transactionWrapper(getRecipients));
 
 export default router;

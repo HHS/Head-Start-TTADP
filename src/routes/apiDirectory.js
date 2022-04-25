@@ -17,6 +17,7 @@ import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
 import goalsRouter from './goals';
 import topicsRouter from './topics';
+import transactionWrapper from './transactionWrapper';
 
 export const loginPath = '/login';
 
@@ -51,7 +52,7 @@ router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
 router.use('/topic', topicsRouter);
 
-router.get('/user', async (req, res) => {
+const getUser = async (req, res) => {
   const { userId } = req.session;
   try {
     const user = await userById(userId);
@@ -59,8 +60,9 @@ router.get('/user', async (req, res) => {
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:SELF' });
   }
-});
+};
 
+router.get('/user', transactionWrapper(getUser));
 router.get('/logout', (req, res) => {
   const { userId } = req.session;
   auditLogger.info(`User ${userId} logged out`);

@@ -66,7 +66,7 @@ export async function batchQuery(query, limit) {
   return finalResult;
 }
 
-async function saveReportCollaborators(activityReportId, collaborators, transaction) {
+async function saveReportCollaborators(activityReportId, collaborators) {
   const newCollaborators = collaborators.map((collaborator) => ({
     activityReportId,
     userId: collaborator,
@@ -75,7 +75,7 @@ async function saveReportCollaborators(activityReportId, collaborators, transact
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
       newCollaborators,
-      { transaction, ignoreDuplicates: true },
+      { ignoreDuplicates: true },
     );
     await ActivityReportCollaborator.destroy(
       {
@@ -86,9 +86,6 @@ async function saveReportCollaborators(activityReportId, collaborators, transact
           },
         },
       },
-      {
-        transaction,
-      },
     );
   } else {
     await ActivityReportCollaborator.destroy(
@@ -96,9 +93,6 @@ async function saveReportCollaborators(activityReportId, collaborators, transact
         where: {
           activityReportId,
         },
-      },
-      {
-        transaction,
       },
     );
   }
@@ -108,7 +102,6 @@ async function saveReportRecipients(
   activityReportId,
   activityRecipientIds,
   activityRecipientType,
-  transaction,
 ) {
   const newRecipients = activityRecipientIds.map((activityRecipientId) => {
     const activityRecipient = {
@@ -150,11 +143,11 @@ async function saveReportRecipients(
     };
   }
 
-  await ActivityRecipient.bulkCreate(newRecipients, { transaction, ignoreDuplicates: true });
-  await ActivityRecipient.destroy({ where }, { transaction });
+  await ActivityRecipient.bulkCreate(newRecipients, { ignoreDuplicates: true });
+  await ActivityRecipient.destroy({ where });
 }
 
-async function saveNotes(activityReportId, notes, isRecipientNotes, transaction) {
+async function saveNotes(activityReportId, notes, isRecipientNotes) {
   const noteType = isRecipientNotes ? 'RECIPIENT' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
   const where = {
@@ -165,7 +158,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes, transaction)
     },
   };
   // Remove any notes that are no longer relevant
-  await NextStep.destroy({ where }, { transaction });
+  await NextStep.destroy({ where });
 
   if (notes.length > 0) {
     // If a note has an id, and its content has changed, update to the newer content
@@ -176,20 +169,19 @@ async function saveNotes(activityReportId, notes, isRecipientNotes, transaction)
       activityReportId,
       noteType,
     }));
-    await NextStep.bulkCreate(newNotes, { transaction, updateOnDuplicate: ['note', 'updatedAt'] });
+    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'] });
   }
 }
 
-async function update(newReport, report, transaction) {
+async function update(newReport, report) {
   const updatedReport = await report.update(newReport, {
-    transaction,
     fields: _.keys(newReport),
   });
   return updatedReport;
 }
 
-async function create(report, transaction) {
-  return ActivityReport.create(report, { transaction });
+async function create(report) {
+  return ActivityReport.create(report);
 }
 
 export function activityReportByLegacyId(legacyId) {
@@ -641,64 +633,62 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   const updatedFields = { ...allFields, ...resources };
-  await sequelize.transaction(async (transaction) => {
-    if (report) {
-      savedReport = await update(updatedFields, report, transaction);
-    } else {
-      savedReport = await create(updatedFields, transaction);
-    }
-    if (collaborators) {
-      const { id } = savedReport;
-      const newCollaborators = collaborators.map(
-        (g) => g.id,
-      );
-      await saveReportCollaborators(id, newCollaborators, transaction);
-    }
-    if (activityRecipients) {
-      const { activityRecipientType, id } = savedReport;
-      const activityRecipientIds = activityRecipients.map(
-        (g) => g.activityRecipientId,
-      );
-      await saveReportRecipients(id, activityRecipientIds, activityRecipientType, transaction);
-    }
-    if (recipientNextSteps) {
-      const { id } = savedReport;
-      await saveNotes(id, recipientNextSteps, true, transaction);
-    }
-    if (specialistNextSteps) {
-      const { id } = savedReport;
-      await saveNotes(id, specialistNextSteps, false, transaction);
-    }
+  if (report) {
+    savedReport = await update(updatedFields, report);
+  } else {
+    savedReport = await create(updatedFields);
+  }
+  if (collaborators) {
+    const { id } = savedReport;
+    const newCollaborators = collaborators.map(
+      (g) => g.id,
+    );
+    await saveReportCollaborators(id, newCollaborators);
+  }
+  if (activityRecipients) {
+    const { activityRecipientType, id } = savedReport;
+    const activityRecipientIds = activityRecipients.map(
+      (g) => g.activityRecipientId,
+    );
+    await saveReportRecipients(id, activityRecipientIds, activityRecipientType);
+  }
+  if (recipientNextSteps) {
+    const { id } = savedReport;
+    await saveNotes(id, recipientNextSteps, true);
+  }
+  if (specialistNextSteps) {
+    const { id } = savedReport;
+    await saveNotes(id, specialistNextSteps, false);
+  }
 
-    /**
+  /**
      * since on partial updates, a new value for activity recipient type may not be passed,
      * we use the old one in that case
      */
 
-    const recipientType = () => {
-      if (allFields && allFields.activityRecipientType) {
-        return allFields.activityRecipientType;
-      }
-      if (report && report.activityRecipientType) {
-        return report.activityRecipientType;
-      }
-
-      return '';
-    };
-
-    const activityRecipientType = recipientType();
-
-    if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
-      await saveObjectivesForReport(objectivesWithoutGoals, savedReport, transaction);
-    } else if (activityRecipientType === 'recipient' && goals) {
-      await saveGoalsForReport(goals, savedReport, transaction);
+  const recipientType = () => {
+    if (allFields && allFields.activityRecipientType) {
+      return allFields.activityRecipientType;
+    }
+    if (report && report.activityRecipientType) {
+      return report.activityRecipientType;
     }
 
-    // Approvers are removed if approverUserIds is an empty array
-    if (approverUserIds) {
-      await syncApprovers(savedReport.id, approverUserIds, transaction);
-    }
-  });
+    return '';
+  };
+
+  const activityRecipientType = recipientType();
+
+  if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
+    await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
+  } else if (activityRecipientType === 'recipient' && goals) {
+    await saveGoalsForReport(goals, savedReport);
+  }
+
+  // Approvers are removed if approverUserIds is an empty array
+  if (approverUserIds) {
+    await syncApprovers(savedReport.id, approverUserIds);
+  }
 
   return activityReportById(savedReport.id);
 }

@@ -85,7 +85,6 @@ describe('Goals DB service', () => {
             where: {
               id: [1],
             },
-            transaction: undefined,
           },
         );
       });
@@ -97,7 +96,6 @@ describe('Goals DB service', () => {
           where: {
             activityReportId: 1,
           },
-          transaction: undefined,
         });
       });
 
@@ -128,7 +126,6 @@ describe('Goals DB service', () => {
           where: {
             id: [2],
           },
-          transaction: undefined,
         });
       });
     });
@@ -138,7 +135,7 @@ describe('Goals DB service', () => {
       expect(Goal.upsert).toHaveBeenCalledWith({
         name: 'name',
         objectives: [],
-      }, { returning: true, transaction: undefined });
+      }, { returning: true });
     });
 
     it('can use existing goals', async () => {
@@ -148,7 +145,7 @@ describe('Goals DB service', () => {
         objectives: [],
       };
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Goal.upsert).toHaveBeenCalledWith({ id: 1, name: 'name', objectives: [] }, { returning: true, transaction: undefined });
+      expect(Goal.upsert).toHaveBeenCalledWith({ id: 1, name: 'name', objectives: [] }, { returning: true });
     });
 
     test.todo('can update an existing goal');
@@ -171,7 +168,7 @@ describe('Goals DB service', () => {
       expect(Objective.upsert).toHaveBeenCalledWith({
         goalId: 1,
         title: 'title',
-      }, { returning: true, transaction: undefined });
+      }, { returning: true });
     });
 
     it('can update existing objectives', async () => {
@@ -185,7 +182,7 @@ describe('Goals DB service', () => {
       Goal.upsert.mockResolvedValue([{ id: 1 }]);
 
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Objective.upsert).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' }, { returning: true, transaction: undefined });
+      expect(Objective.upsert).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' }, { returning: true });
     });
   });
 });

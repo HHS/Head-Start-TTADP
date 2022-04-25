@@ -119,20 +119,14 @@ const goals = [
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.bulkInsert('GoalTemplates', goalTemplates, { transaction });
-      await queryInterface.bulkInsert('Goals', goals, { transaction });
-      // await queryInterface.bulkInsert('GrantGoals', grantGoals, { transaction });
-      await queryInterface.sequelize.query('ALTER SEQUENCE "Goals_id_seq" RESTART WITH 10;', { transaction });
-      await queryInterface.sequelize.query('ALTER SEQUENCE "GrantGoals_id_seq" RESTART WITH 10;', { transaction });
-    });
+    await queryInterface.bulkInsert('Goals', goals);
+    await queryInterface.bulkInsert('GrantGoals', grantGoals);
+    await queryInterface.sequelize.query('ALTER SEQUENCE "Goals_id_seq" RESTART WITH 10;');
+    await queryInterface.sequelize.query('ALTER SEQUENCE "GrantGoals_id_seq" RESTART WITH 10;');
   },
 
   down: async (queryInterface) => {
-    await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.bulkDelete('Goals', null, { transaction });
-      await queryInterface.bulkDelete('GoalTemplates', null, { transaction });
-      // await queryInterface.bulkDelete('GrantGoals', null, { transaction });
-    });
+    await queryInterface.bulkDelete('Goals', null);
+    await queryInterface.bulkDelete('GrantGoals', null);
   },
 };
