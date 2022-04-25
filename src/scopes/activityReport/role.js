@@ -2,11 +2,23 @@ import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
 function userQuery(escapedRoles) {
-  return `SELECT "ActivityReports"."id" FROM "Users" INNER JOIN "ActivityReports" ON "ActivityReports"."userId" = "Users"."id" WHERE ARRAY[${escapedRoles}] && "Users".role::text[]`;
+  return `
+  SELECT
+    "ActivityReports"."id"
+  FROM "Users" "Users"
+  INNER JOIN "ActivityReports" "ActivityReports"
+  ON "ActivityReports"."userId" = "Users"."id"
+  WHERE ARRAY[${escapedRoles}] && "Users"."role"::text[]`;
 }
 
 function collaboratorQuery(escapedRoles) {
-  return `SELECT "ActivityReportCollaborators"."activityReportId" FROM "Users" INNER JOIN "ActivityReportCollaborators" ON "ActivityReportCollaborators"."userId" = "Users"."id" WHERE ARRAY[${escapedRoles}] && "Users".role::text[]`;
+  return `
+  SELECT
+    "ActivityReportCollaborators"."activityReportId"
+  FROM "Users" "Users"
+  INNER JOIN "ActivityReportCollaborators" "ActivityReportCollaborators"
+  ON "ActivityReportCollaborators"."userId" = "Users"."id"
+  WHERE ARRAY[${escapedRoles}] && "Users"."role"::text[]`;
 }
 
 function generateWhere(escapedSearchTerms, exclude) {

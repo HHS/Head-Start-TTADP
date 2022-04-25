@@ -3,6 +3,7 @@ const {
 } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+// const { auditLogger } = require('../logger');
 
 /**
  * Goals table. Stores goals for tta.
@@ -75,6 +76,25 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Goal',
+    hooks: {
+      beforeValidate: async (instance, options) => {
+        // eslint-disable-next-line no-prototype-builtins
+        if (!instance.hasOwnProperty('goalTemplateId')
+        || instance.goalTemplateId === null
+        || instance.goalTemplateId === undefined) {
+          const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
+            where: { templateName: instance.name },
+            default: {
+              templateName: instance.name,
+              lastUsed: instance.createdAt,
+            },
+            transaction: options.transaction,
+          });
+          // eslint-disable-next-line no-param-reassign
+          instance.goalTemplateId = goalTemplate[0].id;
+        }
+      },
+    },
   });
   return Goal;
 };

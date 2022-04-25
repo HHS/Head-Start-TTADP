@@ -18,24 +18,28 @@ const goalTemplates = [
     templateName: 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
     createdAt: now,
     updatedAt: now,
+    templateNameModifiedAt: now,
   },
   {
     id: 2,
     templateName: 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
     createdAt: now,
     updatedAt: now,
+    templateNameModifiedAt: now,
   },
   {
     id: 3,
     templateName: bulletedGoal,
     createdAt: now,
     updatedAt: now,
+    templateNameModifiedAt: now,
   },
   {
     id: 4,
     templateName: longGoal,
     createdAt: now,
     updatedAt: now,
+    templateNameModifiedAt: now,
   },
 ];
 

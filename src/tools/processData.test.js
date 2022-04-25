@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   sequelize,
   ActivityReport,
+  ActivityReportFile,
   ActivityRecipient,
   User,
   Recipient,
@@ -60,9 +61,15 @@ const mockCollaboratorTwo = {
   email: 'user3003@test.com',
 };
 
-const mockFile = {
+// TODO: Use Activity file link table
+const mockActivityReportFile = {
   id: 140000,
   activityReportId: 1,
+  fileId: 140000,
+};
+
+const mockFile = {
+  id: 140000,
   originalFileName: 'test.pdf',
   key: '508bdc9e-8dec-4d64-b83d-59a72a4f2353.pdf',
   status: 'APPROVED',
@@ -188,6 +195,7 @@ describe('processData', () => {
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
     await File.destroy({ where: { id: mockFile.id } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({
@@ -209,7 +217,8 @@ describe('processData', () => {
 
   it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
-    mockFile.activityReportId = report.id;
+    mockActivityReportFile.activityReportId = report.id;
+    await ActivityReportFile.destroy(mockActivityReportFile);
     const file = await File.create(mockFile);
     await processData(report);
     const transformedReport = await ActivityReport.findOne({ where: { id: report.id } });

@@ -14,9 +14,9 @@ import {
   Objective,
 } from '../../models';
 
-import { getGoalsByActivityRecipient } from './recipient';
-import { REPORT_STATUSES } from '../constants';
-import { auditLogger } from '../logger';
+import { getGoalsByActivityRecipient } from '../recipient';
+import { REPORT_STATUSES } from '../../constants';
+import { auditLogger } from '../../logger';
 
 describe('Goals by Recipient Test', () => {
   const recipient = {
