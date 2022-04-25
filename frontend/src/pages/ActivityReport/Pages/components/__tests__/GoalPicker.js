@@ -11,6 +11,13 @@ import selectEvent from 'react-select-event';
 
 import GoalPicker, { newGoal } from '../GoalPicker';
 
+const defaultSelectedGoals = [
+  {
+    label: '123',
+    value: 123,
+  },
+];
+
 // eslint-disable-next-line react/prop-types
 const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
   const hookForm = useForm({
@@ -34,7 +41,9 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
   );
 };
 
-const renderGoalPicker = (availableGoals, selectedGoals = [], goalForEditing = undefined) => {
+const renderGoalPicker = (
+  availableGoals, selectedGoals = defaultSelectedGoals, goalForEditing = undefined,
+) => {
   render(
     <GP
       availableGoals={availableGoals}
@@ -57,6 +66,24 @@ describe('GoalPicker', () => {
     }];
 
     renderGoalPicker(availableGoals);
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+  });
+
+  it('you can select a goal with no selected goals', async () => {
+    const availableGoals = [{
+      ...newGoal(),
+      label: 'Goal 1',
+      value: 1,
+    }];
+
+    renderGoalPicker(availableGoals, null);
 
     const selector = await screen.findByLabelText(/Select recipient's goal*/i);
     const [availableGoal] = availableGoals;
