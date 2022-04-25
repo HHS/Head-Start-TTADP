@@ -58,11 +58,6 @@ function Landing() {
 
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    return filtersWithAllRegions;
-  };
-
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
@@ -74,7 +69,7 @@ function Landing() {
         condition: 'is',
         query: defaultRegion,
       }]
-      : getFiltersWithAllRegions(),
+      : allRegionsFilters,
   );
 
   const history = useHistory();
