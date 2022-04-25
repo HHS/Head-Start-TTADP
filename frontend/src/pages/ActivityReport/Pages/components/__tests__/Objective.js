@@ -1,18 +1,27 @@
 /* eslint-disable no-unused-vars */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import Objective from '../Objective';
 
+const defaultObjective = {
+  id: 1,
+  resources: [],
+  roles: [],
+  topics: [],
+  title: 'This is an objective title',
+  ttaProvided: '<p><ul><li>What</li></ul></p>',
+  status: 'Not started',
+};
+
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  defaultObjective, onRemove = () => {},
+  objective = defaultObjective, onRemove = () => {},
 }) => {
   const hookForm = useForm({
     defaultValues: {
-      objective: defaultObjective,
+      objective,
       collaborators: [],
       author: {
         role: 'Central office',
@@ -22,7 +31,7 @@ const RenderObjective = ({
 
   hookForm.register('goals');
   hookForm.register('objective');
-  const objective = hookForm.watch('objective');
+  const val = hookForm.watch('objective');
 
   const onUpdate = (obj) => {
     hookForm.setValue('objective', obj);
@@ -32,8 +41,8 @@ const RenderObjective = ({
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Objective
-        objective={objective}
-        topicOption={[]}
+        objective={val}
+        topicOptions={[]}
         options={[]}
         index={1}
         remove={onRemove}
@@ -45,11 +54,16 @@ const RenderObjective = ({
         objectiveAriaLabel="1 on goal 1"
         goalIndex={0}
         objectiveIndex={0}
+        status="In progress"
+        roles={['Central office']}
       />
     </FormProvider>
   );
 };
 
 describe('Objective', () => {
-
+  it('renders an objective', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i)).toBeVisible();
+  });
 });

@@ -45,7 +45,7 @@ export default function GoalForm({ goal, topicOptions }) {
         message: GOAL_DATE_ERROR,
       },
     },
-    defaultValue: goal.endDate,
+    defaultValue: goal.endDate || '',
   });
 
   const {
@@ -63,7 +63,7 @@ export default function GoalForm({ goal, topicOptions }) {
         message: GOAL_NAME_ERROR,
       },
     },
-    defaultValue: goal.name,
+    defaultValue: goal.name || '',
   });
 
   const [objectives, setObjectives] = useState([]);
@@ -134,7 +134,10 @@ GoalForm.propTypes = {
       PropTypes.number,
       PropTypes.string,
     ]),
-    value: PropTypes.number,
+    value: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,

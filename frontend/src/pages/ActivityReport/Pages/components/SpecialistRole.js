@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { useWatch } from 'react-hook-form/dist/index.ie11';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 
@@ -12,32 +11,28 @@ export default function SpecialistRole({
   selectedRoles,
   inputName,
   validateSpecialistRole,
+  options,
 }) {
-  // we need to figure out our options based on author/collaborator roles
-  const collaborators = useWatch({ name: 'collaborators' });
-  const author = useWatch({ name: 'author' });
-
-  // create an exclusive set of roles
-  // from the collaborators & author
-  const roles = Array.from(
-    new Set(
-      [...collaborators, author].map(({ role }) => role).flat(),
-    ),
-  );
+  // if there is only one option, we just set the objectives to be
+  // that value without any UI
+  if (options.length === 1) {
+    return null;
+  }
 
   // format them in a way react select can understand
-  const options = roles.map((role) => ({
+  const roleOptions = options.map((role) => ({
     label: role,
     value: role,
   }));
 
-  // if there is only one option, we just set the objectives to be
-  // that value without any UI
-  // if (options.length === 1) {
-  //   return (
-  //     <input type="hidden" name={inputName} value={selectedRoles} />
-  //   );
-  // }
+  const selected = selectedRoles.map((role) => ({
+    label: role,
+    value: role,
+  }));
+
+  const onSelect = (selection) => {
+    onChange(selection.map(({ value }) => value));
+  };
 
   // build our selector
   return (
@@ -47,13 +42,13 @@ export default function SpecialistRole({
       <Req />
       {error}
       <Select
-        onChange={onChange}
+        onChange={onSelect}
         styles={selectOptionsReset}
         className="usa-select"
         name={inputName}
         inputId={inputName}
-        options={options}
-        value={selectedRoles}
+        options={roleOptions}
+        value={selected}
         onBlur={validateSpecialistRole}
         closeMenuOnSelect={false}
         isMulti
@@ -68,6 +63,7 @@ SpecialistRole.propTypes = {
   selectedRoles: PropTypes.arrayOf(PropTypes.string),
   inputName: PropTypes.string,
   validateSpecialistRole: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 SpecialistRole.defaultProps = {

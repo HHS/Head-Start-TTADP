@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import GoalPicker, { newGoal } from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
@@ -19,17 +19,42 @@ import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 
 const GoalsObjectives = () => {
-  const { watch, register, setValue } = useFormContext();
+  const {
+    watch, setValue, getValues,
+  } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
-  const isGoalFormClosed = watch('goalFormClosed');
-  const selectedGoals = watch('goals');
 
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
 
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
+
+  const {
+    field: {
+      onChange: onUpdateGoals,
+      value: selectedGoals,
+    },
+  } = useController({
+    name: 'goals',
+    rules: {
+      validate: {
+        validateGoals,
+      },
+    },
+    defaultValue: [],
+  });
+
+  const {
+    field: {
+      onChange: toggleGoalForm,
+      value: isGoalFormClosed,
+    },
+  } = useController({
+    name: 'isGoalFormClosed',
+    defaultValue: false,
+  });
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -44,7 +69,7 @@ const GoalsObjectives = () => {
   const showGoals = isRecipientReport && hasGrants;
 
   const addNewGoal = () => {
-    setValue('goalFormClosed', false);
+    toggleGoalForm(false);
     setValue('goalForEditing', newGoal);
   };
 
@@ -56,7 +81,7 @@ const GoalsObjectives = () => {
       copyOfSelectedGoals.splice(index, 1);
     }
 
-    setValue('goals', copyOfSelectedGoals);
+    onUpdateGoals(copyOfSelectedGoals);
   };
 
   const onEdit = (goal, index) => {
@@ -67,18 +92,21 @@ const GoalsObjectives = () => {
       copyOfSelectedGoals.splice(index, 1);
     }
 
-    setValue('goals', copyOfSelectedGoals);
+    onUpdateGoals(copyOfSelectedGoals);
 
     setValue('goalForEditing', goal);
-    setValue('goalFormClosed', false);
+    toggleGoalForm(false);
   };
 
   // the read only component expects things a little differently
   const goalsForReview = selectedGoals.map((goal) => {
+    const fieldArrayName = `goal-${goal.id}.objectives`;
+    const objectives = getValues(fieldArrayName) || [];
     return {
       ...goal,
       goalName: goal.name,
       grants: [],
+      objectives,
     };
   });
 
@@ -91,15 +119,6 @@ const GoalsObjectives = () => {
         <Req className="margin-right-1" />
         indicates required field
       </p>
-      <input type="hidden" {...register('isGoalFormClosed')} />
-
-      <input
-        type="hidden"
-        {...register('goals', {
-          required: true,
-          validate: validateGoals,
-        })}
-      />
 
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend" legend="Objectives for other entity TTA">

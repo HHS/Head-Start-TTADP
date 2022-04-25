@@ -9,7 +9,7 @@ import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
 
-import GoalPicker from '../GoalPicker';
+import GoalPicker, { newGoal } from '../GoalPicker';
 
 // eslint-disable-next-line react/prop-types
 const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
@@ -18,6 +18,10 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
     defaultValues: {
       goals: selectedGoals,
       goalForEditing,
+      author: {
+        role: 'central office',
+      },
+      collaborators: [],
     },
   });
 
@@ -47,16 +51,19 @@ describe('GoalPicker', () => {
 
   it('you can select a goal', async () => {
     const availableGoals = [{
+      ...newGoal(),
       label: 'Goal 1',
       value: 1,
     }];
 
     renderGoalPicker(availableGoals);
 
-    const selector = await screen.findByText(/Select recipient's goal*/i);
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
 
-    await selectEvent.select(selector, ['Goal 1']);
+    await selectEvent.select(selector, [availableGoal.label]);
 
-    expect(await screen.findByRole('heading', { name: /objective summary/i })).toBeInTheDocument();
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
   });
 });

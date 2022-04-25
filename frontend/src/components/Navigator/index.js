@@ -27,7 +27,7 @@ import {
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
-import { validateGoal } from '../../pages/ActivityReport/Pages/components/goalValidator';
+import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
 
 function Navigator({
   editable,
@@ -57,16 +57,10 @@ function Navigator({
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
-    mode: 'onSubmit',
+    mode: 'onBlur',
     defaultValues: formData,
     shouldUnregister: false,
   });
-
-  const pageState = hookForm.watch('pageState');
-  const isGoalFormClosed = hookForm.watch('goalFormClosed');
-  const selectedGoals = hookForm.watch('goals');
-  const goalForEditing = hookForm.watch('goalForEditing');
-  const isGoalsObjectivesPage = page.path === 'goals-objectives';
 
   const {
     formState,
@@ -74,9 +68,17 @@ function Navigator({
     reset,
     trigger,
     setValue,
+    setError,
+    watch,
   } = hookForm;
 
-  const { isDirty, errors } = formState;
+  const pageState = watch('pageState');
+  const isGoalFormClosed = watch('isGoalFormClosed');
+  const selectedGoals = watch('goals');
+  const goalForEditing = watch('goalForEditing');
+  const isGoalsObjectivesPage = page.path === 'goals-objectives';
+
+  const { isDirty, errors, isValid } = formState;
   const hasErrors = Object.keys(errors).length > 0;
 
   const newNavigatorState = () => {
@@ -85,7 +87,7 @@ function Navigator({
     }
 
     const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : hasErrors;
+    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
     const newPageState = { ...pageState };
 
     if (isComplete) {
@@ -118,13 +120,17 @@ function Navigator({
     }
   };
   const onGoalFormNavigate = async () => {
-    await onSaveForm();
-    const [areGoalsValid, goalErrors] = validateGoal(goalForEditing);
-    if (!areGoalsValid) {
-      setValue('goalErrors', goalErrors);
+    const fieldArrayName = `goal-${goalForEditing ? goalForEditing.id : 'new'}.objectives`;
+    const objectives = getValues(fieldArrayName);
+
+    const areGoalsValid = validateGoals(
+      [{ ...goalForEditing, objectives }],
+      setError,
+    );
+    if (areGoalsValid !== true) {
       return;
     }
-    setValue('goalFormClosed', true);
+    setValue('isGoalFormClosed', true);
     setValue('goals', [...selectedGoals, goalForEditing]);
     setValue('goalForEditing', null);
   };

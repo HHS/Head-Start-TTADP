@@ -117,13 +117,23 @@ export function goalById(id) {
     include: [
       {
         where: {
-          status: {
-            [Op.ne]: 'Complete',
-            [Op.ne]: 'Draft',
-          },
-          title: {
-            [Op.ne]: '',
-          },
+          [Op.and]: [
+            {
+              title: {
+                [Op.ne]: '',
+              },
+            },
+            {
+              status: {
+                [Op.not]: 'Complete',
+              },
+            },
+            {
+              status: {
+                [Op.not]: 'Draft',
+              },
+            },
+          ],
         },
         attributes: [
           ['id', 'value'],

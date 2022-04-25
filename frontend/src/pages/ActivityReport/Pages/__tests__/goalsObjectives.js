@@ -19,8 +19,16 @@ const RenderGoalsObjectives = ({
   const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
   const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
-    mode: 'onSubmit',
-    defaultValues: { goals: [], objectivesWithoutGoals: [], ...data },
+    mode: 'onChange',
+    defaultValues: {
+      goals: [],
+      objectivesWithoutGoals: [],
+      author: {
+        role: 'central office',
+      },
+      collaborators: [],
+      ...data,
+    },
   });
   return (
     <FormProvider {...hookForm}>
@@ -69,7 +77,7 @@ describe('goals objectives', () => {
 
     it('the display goals section does not show if no grants are selected', async () => {
       renderGoals([], 'recipient');
-      expect(screen.queryByText('Goal summary')).toBeNull();
+      expect(screen.queryByText('Goals and objectives')).toBeNull();
     });
   });
 
@@ -111,15 +119,9 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
-            topics: [
-              'Clumsy',
-            ],
-            roles: [
-              'Central office',
-            ],
-            resources: [
-              'https://www.resource.org',
-            ],
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -140,15 +142,9 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
-            topics: [
-              'Clumsy',
-            ],
-            roles: [
-              'Central office',
-            ],
-            resources: [
-              'https://www.resource.org',
-            ],
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -173,30 +169,18 @@ describe('goals objectives', () => {
             title: 'title one',
             ttaProvided: 'ttaProvided one',
             status: 'Not Started',
-            topics: [
-              'Clumsy',
-            ],
-            roles: [
-              'Central office',
-            ],
-            resources: [
-              'https://www.resource.org',
-            ],
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
           {
             id: 2,
             title: 'title two',
             ttaProvided: 'ttaProvided two',
             status: 'Not Started',
-            topics: [
-              'Clumsy',
-            ],
-            roles: [
-              'Central office',
-            ],
-            resources: [
-              'https://www.resource.org',
-            ],
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
         ]}
       />);
@@ -211,18 +195,11 @@ describe('goals objectives', () => {
         objectives: [{
           id: 1,
           title: 'title',
-          ttaProvided:
-          'ttaProvided',
+          ttaProvided: 'ttaProvided',
           status: 'Not Started',
-          topics: [
-            'Clumsy',
-          ],
-          roles: [
-            'Central office',
-          ],
-          resources: [
-            'https://www.resource.org',
-          ],
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         }],
       }]}
       />);
@@ -237,30 +214,18 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
-          topics: [
-            'Clumsy',
-          ],
-          roles: [
-            'Central office',
-          ],
-          resources: [
-            'https://www.resource.org',
-          ],
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         },
         {
           id: 2,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
-          topics: [
-            'Clumsy',
-          ],
-          roles: [
-            'Central office',
-          ],
-          resources: [
-            'https://www.resource.org',
-          ],
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
