@@ -18,10 +18,8 @@ export default function NextStepsRepeater({
   };
 
   const removeNextStep = (i) => {
-    console.log('Step to remove: ', i);
     const newSteps = [...nextSteps];
     newSteps.splice(i, 1);
-    console.log('After remove: ', i);
     setNextSteps(newSteps);
   };
 
@@ -49,7 +47,7 @@ export default function NextStepsRepeater({
                 key={`next-steps-text-${i + 1}`}
                 type="text"
                 value={s.note}
-                onChange={({ target: { note } }) => updateNextStep(note, i)}
+                onChange={({ target: { value } }) => updateNextStep(value, i)}
                 required
               />
               { nextSteps.length > 1 ? (
