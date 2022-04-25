@@ -3,9 +3,13 @@ import { filterAssociation } from './utils';
 // this should return an array of activityReport ids. That where clause will be finished when the
 // function is called
 const programTypes = `
-    SELECT "ActivityRecipients"."activityReportId" FROM "ActivityRecipients"
-    INNER JOIN "Grants" ON "Grants".id = "ActivityRecipients"."grantId"
-    INNER JOIN "Programs" ON "Programs"."grantId" = "Grants"."id" 
+    SELECT
+      "ActivityRecipients"."activityReportId"
+    FROM "ActivityRecipients" "ActivityRecipients"
+    INNER JOIN "Grants" "Grants"
+    ON "Grants".id = "ActivityRecipients"."grantId"
+    INNER JOIN "Programs" "Programs"
+    ON "Programs"."grantId" = "Grants"."id"
     WHERE "Programs"."programType"`;
 
 /**

@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
+      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources' });
+      ObjectiveTemplate.belongsToMany(models.Topic, { through: models.ObjectiveTemplateTopic, foreignKey: 'objectiveTemplateId', as: 'topics' });
       ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
       ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
         through: models.GoalTemplateObjectiveTemplate,
@@ -28,6 +30,14 @@ module.exports = (sequelize, DataTypes) => {
     templateTitle: {
       type: DataTypes.TEXT,
       allowNull: false,
+    },
+    lastUsed: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
+    templateNameModifiedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
     },
   }, {
     sequelize,

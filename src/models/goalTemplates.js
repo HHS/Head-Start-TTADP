@@ -1,4 +1,6 @@
 const { Model } = require('sequelize');
+const { CREATION_METHOD } = require('../constants');
+// const { auditLogger } = require('../logger');
 
 module.exports = (sequelize, DataTypes) => {
   class GoalTemplate extends Model {
@@ -9,13 +11,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId' });
-      // GoalTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' });
-      // GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
-      //   through: models.GoalTemplateObjectiveTemplate,
-      //   foreignKey: 'goalTemplateId',
-      //   otherKey: 'objectiveTemplateId',
-      //   as: 'goalTemplates',
-      // });
+      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId' });
+      GoalTemplate.hasMany(
+        models.GoalTemplateObjectiveTemplate,
+        { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
+      );
+      GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
+        through: models.GoalTemplateObjectiveTemplate,
+        foreignKey: 'goalTemplateId',
+        otherKey: 'objectiveTemplateId',
+        as: 'goalTemplates',
+      });
     }
   }
   GoalTemplate.init({
@@ -29,9 +35,33 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    regionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    creationMethod: {
+      allowNull: false,
+      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+    },
+    lastUsed: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
+    templateNameModifiedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplate',
+    hooks: {
+      beforeValidate: async (instance) => {
+        if (instance.changed().includes('templateName')) {
+          // eslint-disable-next-line no-param-reassign
+          instance.templateNameModifiedAt = new Date();
+        }
+      },
+    },
   });
   return GoalTemplate;
 };

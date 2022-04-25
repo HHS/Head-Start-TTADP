@@ -39,9 +39,10 @@ const altFileTypes = [
     mime: 'text/csv',
   },
 ];
+//TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 
 export const deleteHandler = async (req, res) => {
-  const { reportId, fileId } = req.params;
+  const { reportId, objectiveId, fileId } = req.params;
   const user = await userById(req.session.userId);
   const report = await activityReportById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -60,6 +61,7 @@ export const deleteHandler = async (req, res) => {
   }
 };
 
+//TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 export default async function uploadHandler(req, res) {
   const form = new multiparty.Form();
   await form.parse(req, async (error, fields, files) => {

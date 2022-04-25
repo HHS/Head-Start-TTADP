@@ -19,6 +19,83 @@ module.exports = {
         throw (err);
       }
 
+      await queryInterface.createTable('ActivityReportGoals', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        activityReportId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+        },
+        goalId: {
+          allowNull: false,
+          type: Sequelize.INTEGER,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('DisconnectedGoals', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        name: {
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        status: {
+          type: Sequelize.STRING,
+        },
+        timeframe: {
+          type: Sequelize.STRING,
+        },
+        isFromSmartsheetTtaPlan: {
+          type: Sequelize.BOOLEAN,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        closeSuspendReason: {
+          allowNull: true,
+          type: Sequelize.ENUM([
+            'Duplicate goal',
+            'Recipient request',
+            'TTA complete',
+            'Key staff turnover / vacancies',
+            'Recipient is not responding',
+            'Regional Office request',
+          ]),
+        },
+        closeSuspendContext: {
+          allowNull: true,
+          type: Sequelize.TEXT,
+        },
+        endDate: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        previousStatus: {
+          type: Sequelize.STRING,
+        },
+      }, { transaction });
+
       // Add GoalTemplates table
       await queryInterface.createTable('GoalTemplates', {
         id: {
@@ -31,11 +108,30 @@ module.exports = {
           allowNull: false,
           type: Sequelize.TEXT,
         },
+        regionId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        creationMethod: {
+          allowNull: false,
+          type: Sequelize.ENUM(
+            'Automatic',
+            'Manual',
+          ),
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
         },
         updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        lastUsed: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        templateNameModifiedAt: {
           allowNull: false,
           type: Sequelize.DATE,
         },
@@ -58,6 +154,17 @@ module.exports = {
           allowNull: false,
           type: Sequelize.TEXT,
         },
+        regionId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        creationMethod: {
+          allowNull: false,
+          type: Sequelize.ENUM(
+            'Automatic',
+            'Manual',
+          ),
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -66,10 +173,94 @@ module.exports = {
           allowNull: false,
           type: Sequelize.DATE,
         },
+        lastUsed: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        templateNameModifiedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
         // To support up/down on the migration
         sourceObjective: {
           allowNull: false,
           type: Sequelize.INTEGER,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ObjectiveTemplateResources', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        userProvidedUrl: {
+          type: Sequelize.STRING,
+          allowNull: false,
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        objectiveTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ObjectiveTemplateTopics', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        objectiveTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        topicId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Topics',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -157,9 +348,64 @@ module.exports = {
       // Populate GoalTemplates from existing Goals
       try {
         await queryInterface.sequelize.query(
-          `INSERT INTO "GoalTemplates" ("templateName", "createdAt", "updatedAt", "sourceGoal")
-          SELECT name, NOW(), NOW(), id
-          FROM "Goals";`,
+          `INSERT INTO "GoalTemplates" ("templateName", "regionId", "creationMethod", "createdAt", "updatedAt", "lastUsed", "templateNameModifiedAt", "sourceGoal")
+          SELECT DISTINCT
+            g.name,
+            COALESCE(gr."regionId",ar."regionId") "regionId",
+            'Automatic'::"enum_GoalTemplates_creationMethod",
+            NOW() "createdAt",
+            NOW() "updatedAt",
+            g."createdAt" "lastUsed",
+            NOW() "templateNameModifiedAt",
+            g.id "sourceGoal"
+          FROM "Goals" g
+          LEFT JOIN "Objectives" o
+          ON g.id = o."goalId"
+          LEFT JOIN public."ActivityReportObjectives" aro
+          ON o."id" = aro."objectiveId"
+          LEFT JOIN public."ActivityReports" ar
+          ON aro."activityReportId" = ar."id"
+          LEFT JOIN "GrantGoals" gg
+          ON g.id = gg."goalId"
+          LEFT JOIN public."Grants" gr
+          ON gg."grantId" = gr."id"
+          WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL
+          ORDER BY g.id`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Migrate all goals not matched to a regionId to DisconnectedGoals as they are inaccessible
+      try {
+        await queryInterface.sequelize.query(
+          `INSERT INTO "DisconnectedGoals" ("name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "closeSuspendReason", "closeSuspendContext", "endDate", "previousStatus")
+          SELECT DISTINCT
+            "g"."name",
+            "g"."status",
+            "g"."timeframe",
+            "g"."isFromSmartsheetTtaPlan",
+            "g"."createdAt",
+            "g"."updatedAt",
+            "g"."closeSuspendReason",
+            "g"."closeSuspendContext",
+            "g"."endDate",
+            "g"."previousStatus"
+          FROM "Goals" g
+          LEFT JOIN "Objectives" o
+          ON g.id = o."goalId"
+          LEFT JOIN "ActivityReportObjectives" aro
+          ON o."id" = aro."objectiveId"
+          LEFT JOIN "ActivityReports" ar
+          ON aro."activityReportId" = ar."id"
+          LEFT JOIN "GrantGoals" gg
+          ON g.id = gg."goalId"
+          LEFT JOIN "Grants" gr
+          ON gg."grantId" = gr."id"
+          WHERE COALESCE(gr."regionId",ar."regionId") IS NULL
+          ORDER BY g.id`,
           { transaction },
         );
       } catch (err) {
@@ -170,9 +416,47 @@ module.exports = {
       // Populate ObjectiveTemplates from existing Objectives linking to GoalTemplates
       try {
         await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTemplates" ("templateTitle", "createdAt", "updatedAt", "sourceObjective")
-          SELECT o.title, NOW(), NOW(), o.id
-          FROM "Objectives" o;`,
+          `INSERT INTO "ObjectiveTemplates" ("templateTitle", "createdAt", "updatedAt", "lastUsed", "templateNameModifiedAt", "sourceObjective")
+          SELECT DISTINCT
+            o.title,
+            COALESCE(ar."regionId") "regionId",
+            'Automatic'::"enum_ObjectiveTemplates_creationMethod",
+            NOW() "createdAt",
+            NOW() "updatedAt",
+            o."createdAt" "lastUsed",
+            NOW() "templateNameModifiedAt",
+            o.id "sourceObjective"
+          FROM "Objectives" o
+          LEFT JOIN "ActivityReportObjectives" aro
+          ON o."id" = aro."objectiveId"
+          LEFT JOIN "ActivityReports" ar
+          ON aro."activityReportId" = ar."id"`,
+          { transaction },
+        );
+
+        await queryInterface.sequelize.query(
+          `INSERT INTO "ObjectiveTemplateTopics" ("objectiveTemplateId", "topicId", "createdAt", "updatedAt")
+          SELECT
+            o.id,
+            ot."topicId",
+            ot."createdAt",
+            ot."updatedAt"
+          FROM "ObjectiveTemplates" o
+          JOIN "ObjectiveTopics" ot
+          ON o."sourceObjective" = ot."objectiveId";`,
+          { transaction },
+        );
+
+        await queryInterface.sequelize.query(
+          `INSERT INTO "ObjectiveTemplateResources" ("objectiveTemplateId", "userProvidedUrl", "createdAt", "updatedAt")
+          SELECT
+            ot.id,
+            "or"."userProvidedUrl",
+            "or"."createdAt",
+            "or"."updatedAt"
+          FROM "ObjectiveTemplates" ot
+          JOIN "ObjectiveResources" "or"
+          ON ot."sourceObjective" = "or"."objectiveId";`,
           { transaction },
         );
       } catch (err) {
@@ -207,6 +491,42 @@ module.exports = {
           },
           onUpdate: 'CASCADE',
         }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'onApprovedAR', {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          default: false,
+        }, { transaction });
+
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+            CREATE TEMP TABLE "TempGoalsONApprovedARs" AS
+            SELECT distinct
+              g.id "goalId",
+              bool_or(gg.id IS NOT null) OR bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
+            FROM "Goals" g
+            LEFT JOIN "Objectives" o
+            ON g.id = o."goalId"
+            LEFT JOIN "ActivityReportObjectives" aro
+            ON o."id" = aro."objectiveId"
+            LEFT JOIN "ActivityReports" ar
+            ON aro."activityReportId" = ar."id"
+            LEFT JOIN "GrantGoals" gg
+            ON g.id = gg."goalId"
+            LEFT JOIN "Grants" gr
+            ON gg."grantId" = gr."id"
+            WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL
+            group by g.id
+            order by g.id;
+
+            UPDATE ONLY "Goals"
+            SET "onApprovedAR" = goaa."onApprovedAR"
+            FROM "TempGoalsONApprovedARs" goaa
+            WHERE "Goals"."id" = goaa."goalId";
+          END$$;`,
+          { transaction },
+        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
@@ -227,6 +547,42 @@ module.exports = {
           },
           onUpdate: 'CASCADE',
         }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'onApprovedAR', {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          default: false,
+        }, { transaction });
+
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+          CREATE TEMP TABLE "TempObjectivesONApprovedARs" AS
+            SELECT distinct
+              o.id "objectiveId",
+              bool_or(gg.id IS NOT null) OR bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
+            FROM "Goals" g
+            LEFT JOIN "Objectives" o
+            ON g.id = o."goalId"
+            LEFT JOIN "ActivityReportObjectives" aro
+            ON o."id" = aro."objectiveId"
+            LEFT JOIN "ActivityReports" ar
+            ON aro."activityReportId" = ar."id"
+            LEFT JOIN "GrantGoals" gg
+            ON g.id = gg."goalId"
+            LEFT JOIN "Grants" gr
+            ON gg."grantId" = gr."id"
+            WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL
+            group by o.id
+            order by o.id;
+
+            UPDATE ONLY "Objectives"
+            SET "onApprovedAR" = ooaa."onApprovedAR"
+            FROM "TempObjectivesONApprovedARs" ooaa
+            WHERE "Objectives"."id" = ooaa."objectiveId";
+          END$$;`,
+          { transaction },
+        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
@@ -249,7 +605,8 @@ module.exports = {
                 "updatedAt" timestamp with time zone NOT NULL,
                 "closeSuspendReason" "enum_Goals_closeSuspendReason",
                 "closeSuspendContext" text COLLATE pg_catalog."default",
-                "goalTemplateId" integer
+                "goalTemplateId" integer,
+                "onApprovedAR" boolean
             );
 
             CREATE TEMP TABLE "TempObjectives"
@@ -261,7 +618,8 @@ module.exports = {
                 "status" character varying(255) COLLATE pg_catalog."default",
                 "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
                 "updatedAt" timestamp with time zone NOT NULL DEFAULT now(),
-                "objectiveTemplateId" integer
+                "objectiveTemplateId" integer,
+                "onApprovedAR" boolean
             );
 
             CREATE TEMP TABLE "TempObjectiveTopics"
@@ -301,10 +659,11 @@ module.exports = {
               "updatedAt",
               "closeSuspendReason",
               "closeSuspendContext",
-              "goalTemplateId"
+              "goalTemplateId",
+              "onApprovedAR"
             )
-            select
-              "gg"."grantId",
+            SELECT DISTINCT
+              COALESCE("ars"."grantId","gg"."grantId") "grantId",
               "g"."name",
               "g"."status",
               "g"."timeframe",
@@ -313,12 +672,24 @@ module.exports = {
               "g"."updatedAt",
               "g"."closeSuspendReason",
               "g"."closeSuspendContext",
-              "gt"."id" "goalTemplateId"
-            From "GrantGoals" "gg"
-            JOIN "Goals" "g"
-            ON "gg"."goalId" = "g"."id"
+              "gt"."id" "goalTemplateId",
+              "g"."onApprovedAR"
+            FROM "Goals" g
+            LEFT JOIN "Objectives" o
+            ON g.id = o."goalId"
+            LEFT JOIN "ActivityReportObjectives" aro
+            ON o."id" = aro."objectiveId"
+            LEFT JOIN "ActivityReports" ar
+            ON aro."activityReportId" = ar."id"
+            LEFT JOIN "ActivityRecipients" ars
+            ON ar."id" = ars."activityReportId"
+            LEFT JOIN "GrantGoals" gg
+            ON g.id = gg."goalId"
+            LEFT JOIN "Grants" gr
+            ON gg."grantId" = gr."id"
             JOIN "GoalTemplates" "gt"
-            ON "g"."id" = "gt"."sourceGoal";
+            ON "g"."id" = "gt"."sourceGoal"
+            WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL;
 
             INSERT INTO "TempObjectives" (
               "goalId",
@@ -327,7 +698,8 @@ module.exports = {
               "status",
               "createdAt",
               "updatedAt",
-              "objectiveTemplateId"
+              "objectiveTemplateId",
+              "onApprovedAR"
             )
             select
               "g"."id" "goalId",
@@ -336,7 +708,8 @@ module.exports = {
               "o"."status",
               "o"."createdAt",
               "o"."updatedAt",
-              "ot"."id" "objectiveTemplateId"
+              "ot"."id" "objectiveTemplateId",
+              "o"."onApprovedAR"
             FROM "Objectives" "o"
             JOIN "ObjectiveTemplates" "ot"
             ON "o"."id" = "ot"."sourceObjective"
@@ -538,13 +911,26 @@ module.exports = {
             CREATE TEMP TABLE "TempObjectiveTemplatesReductionMap" AS
             SELECT
               otA.id "primaryTemplateId",
-              otB.id "secondaryTemplateId"
+              otB.id "secondaryTemplateId",
+              otA."regionId",
+              otB."lastUsed"
             FROM "ObjectiveTemplates" otA
             JOIN "ObjectiveTemplates" otB
             ON otA.id < otB.id
-            AND otA."templateTitle" = otB."templateTitle";
+            AND otA."templateTitle" = otB."templateTitle"
+            AND COALESCE(otA."regionId",-1) = COALESCE(otB."regionId",-1);
 
             UPDATE ONLY "Objectives"
+            SET "objectiveTemplateId" = otrm."primaryTemplateId"
+            FROM "TempObjectiveTemplatesReductionMap" otrm
+            WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
+
+            UPDATE ONLY "ObjectiveTemplateResources"
+            SET "objectiveTemplateId" = otrm."primaryTemplateId"
+            FROM "TempObjectiveTemplatesReductionMap" otrm
+            WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
+
+            UPDATE ONLY "ObjectiveTemplateTopics"
             SET "objectiveTemplateId" = otrm."primaryTemplateId"
             FROM "TempObjectiveTemplatesReductionMap" otrm
             WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
@@ -553,14 +939,42 @@ module.exports = {
             USING  "TempObjectiveTemplatesReductionMap" otrm
             WHERE ot.id = otrm."secondaryTemplateId";
 
+            DELETE FROM "ObjectiveTemplateResources" otrA
+            USING "ObjectiveTemplateResources" otrB
+            WHERE otrA.id > otrB.id
+            AND otrA."objectiveTemplateId" = otrB."objectiveTemplateId"
+            AND otrA."userProvidedUrl" = otrB."userProvidedUrl";
+
+            DELETE FROM "ObjectiveTemplateTopics" ottA
+            USING "ObjectiveTemplateTopics" ottB
+            WHERE ottA.id > ottB.id
+            AND ottA."objectiveTemplateId" = ottB."objectiveTemplateId"
+            AND ottA."topicId" = ottB."topicId";
+
+            CREATE TEMP TABLE "TempObjectiveTemplatesReductionMapLastUsed" AS
+            SELECT
+              "primaryTemplateId",
+              min("lastUsed") "lastUsed"
+            FROM "TempObjectiveTemplatesReductionMap"
+            GROUP BY "primaryTemplateId";
+
+            UPDATE ONLY "ObjectiveTemplates"
+            SET "lastUsed" = otrm."lastUsed"
+            FROM "TempObjectiveTemplatesReductionMapLastUsed" otrm
+            WHERE "ObjectiveTemplates".id = otrm."primaryTemplateId"
+            AND "ObjectiveTemplates"."lastUsed" < otrm."lastUsed";
+
             CREATE TEMP TABLE "TempGoalTemplatesReductionMap" AS
             SELECT
               gtA.id "primaryTemplateId",
-              gtB.id "secondaryTemplateId"
+              gtB.id "secondaryTemplateId",
+              gtA."regionId",
+              gtB."lastUsed"
             FROM "GoalTemplates" gtA
             JOIN "GoalTemplates" gtB
             ON gtA.id < gtB.id
-            AND gtA."templateName" = gtB."templateName";
+            AND gtA."templateName" = gtB."templateName"
+            AND COALESCE(gtA."regionId",-1) = COALESCE(gtB."regionId",-1);
 
             UPDATE ONLY "Goals"
             SET "goalTemplateId" = gtrm."primaryTemplateId"
@@ -571,9 +985,24 @@ module.exports = {
             USING  "TempGoalTemplatesReductionMap" gtrm
             WHERE gt.id = gtrm."secondaryTemplateId";
 
+            CREATE TEMP TABLE "TempGoalTemplatesReductionMapLastUsed" AS
+            SELECT
+              "primaryTemplateId",
+              min("lastUsed") "lastUsed"
+            FROM "TempGoalTemplatesReductionMap"
+            GROUP BY "primaryTemplateId";
+
+            UPDATE ONLY "GoalTemplates"
+            SET "lastUsed" = gtrm."lastUsed"
+            FROM "TempGoalTemplatesReductionMapLastUsed" gtrm
+            WHERE "GoalTemplates".id = gtrm."primaryTemplateId"
+            AND "GoalTemplates"."lastUsed" > gtrm."lastUsed";
+
             DROP TABLE
               "TempObjectiveTemplatesReductionMap",
-              "TempGoalTemplatesReductionMap";
+              "TempGoalTemplatesReductionMap",
+              "TempObjectiveTemplatesReductionMapLastUsed",
+              "TempGoalTemplatesReductionMapLastUsed";
           END$$;`,
           { transaction },
         );
