@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
-import { Fieldset } from '@trussworks/react-uswds';
+import { Fieldset, Label } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import FormItem from '../../../components/FormItem';
 import ReviewPage from './Review/ReviewPage';
@@ -34,25 +34,37 @@ const NextSteps = ({ activityRecipientType }) => {
       <Helmet>
         <title>Next steps</title>
       </Helmet>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Specialist's next steps">
+      <Fieldset id="specialist-field-set" key="specialist-field-set" className="smart-hub--report-legend margin-top-3">
+        <Label htmlFor="input-type-text" error>Specialist&apos;s next steps</Label>
         <FormItem
+          id="specialist-next-steps-form-item"
+          key="specialist-next-steps-form-item"
           label="What have you agreed to do next?"
           name="specialistNextSteps"
           fieldSetWrapper
         >
           <NextStepsRepeater
+            id="specialist-next-steps-repeater-id"
+            key="specialist-next-steps-repeater"
+            stepType="specialist"
             nextSteps={specialistNextSteps}
             setNextSteps={specialistNextStepsUpdated}
           />
         </FormItem>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend={`${labelDisplayName} next steps`}>
+      <Fieldset id="recipient-field-set" key="recipient-field-set" className="smart-hub--report-legend margin-top-3">
+        <Label htmlFor="input-type-text" error>{`${labelDisplayName} next steps`}</Label>
         <FormItem
-          label={`what has the ${tipDisplayName} agreed to do next?`}
+          id="recipient-next-steps-form-item"
+          key="recipient-next-steps-form-item"
+          label={`What has the ${tipDisplayName} agreed to do next?`}
           name="recipientNextSteps"
           fieldSetWrapper
         >
           <NextStepsRepeater
+            id="recipient-next-steps-repeater-id"
+            key="recipient-next-steps-repeater"
+            stepType="recipient"
             nextSteps={recipientNextSteps}
             setNextSteps={recipientNextStepsUpdated}
           />
