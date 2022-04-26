@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { useWatch, useFieldArray } from 'react-hook-form/dist/index.ie11';
+import { useWatch, useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
@@ -29,6 +29,8 @@ export default function Objectives({
     name: fieldArrayName,
     defaultValues,
   });
+
+  const { errors } = useFormContext();
 
   // we need to figure out our options based on author/collaborator roles
   const collaborators = useWatch({ name: 'collaborators' });
@@ -80,20 +82,28 @@ export default function Objectives({
             selectedObjectives={[]}
           />
         )
-        : fields.map((objective, index) => (
-          <Objective
-            index={index}
-            key={objective.value}
-            objective={objective}
-            topicOptions={topicOptions}
-            options={options}
-            errors={[]}
-            remove={remove}
-            fieldArrayName={fieldArrayName}
-            goalId={goal ? goal.id : 'new'}
-            roles={roles}
-          />
-        ))}
+        : fields.map((objective, index) => {
+          const objectiveErrors = errors[`goal-${goal ? goal.id : 'new'}`]
+          && errors[`goal-${goal ? goal.id : 'new'}`].objectives
+          && errors[`goal-${goal ? goal.id : 'new'}`].objectives[index]
+            ? errors[`goal-${goal ? goal.id : 'new'}`].objectives[index]
+            : {};
+
+          return (
+            <Objective
+              index={index}
+              key={objective.value}
+              objective={objective}
+              topicOptions={topicOptions}
+              options={options}
+              errors={objectiveErrors}
+              remove={remove}
+              fieldArrayName={fieldArrayName}
+              errorLabel={goal ? goal.id : 'new'}
+              roles={roles}
+            />
+          );
+        })}
       <PlusButton text="Add new objective" onClick={onAddNew} />
     </>
   );

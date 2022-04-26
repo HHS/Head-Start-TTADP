@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from './SpecialistRole';
@@ -28,17 +28,11 @@ export default function Objective({
   index,
   remove,
   fieldArrayName,
-  goalId,
+  errors,
   roles,
 }) {
   const [selectedObjectives, setSelectedObjectives] = useState(objective);
   // pull the errors out of the form context
-  const { errors } = useFormContext();
-  const objectiveErrors = errors[`goal-${goalId}`]
-    && errors[`goal-${goalId}`].objectives
-    && errors[`goal-${goalId}`].objectives[index]
-    ? errors[`goal-${goalId}`].objectives[index]
-    : {};
 
   /**
    * add controllers for all the controlled fields
@@ -204,8 +198,8 @@ export default function Objective({
         onRemove={onRemove}
       />
       <ObjectiveTitle
-        error={objectiveErrors.title
-          ? ERROR_FORMAT(objectiveErrors.title.message)
+        error={errors.title
+          ? ERROR_FORMAT(errors.title.message)
           : NO_ERROR}
         isOnApprovedReport={isOnApprovedReport || false}
         title={objectiveTitle}
@@ -216,8 +210,8 @@ export default function Objective({
       />
       <SpecialistRole
         isOnApprovedReport={isOnApprovedReport || false}
-        error={objectiveErrors.roles
-          ? ERROR_FORMAT(objectiveErrors.roles.message)
+        error={errors.roles
+          ? ERROR_FORMAT(errors.roles.message)
           : NO_ERROR}
         onChange={onChangeRoles}
         selectedRoles={objectiveRoles}
@@ -226,8 +220,8 @@ export default function Objective({
         options={roles}
       />
       <ObjectiveTopics
-        error={objectiveErrors.topics
-          ? ERROR_FORMAT(objectiveErrors.topics.message)
+        error={errors.topics
+          ? ERROR_FORMAT(errors.topics.message)
           : NO_ERROR}
         savedTopics={savedTopics}
         topicOptions={topicOptions}
@@ -240,8 +234,8 @@ export default function Objective({
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
         setResources={onChangeResources}
-        error={objectiveErrors.resources
-          ? ERROR_FORMAT(objectiveErrors.resources.message)
+        error={errors.resources
+          ? ERROR_FORMAT(errors.resources.message)
           : NO_ERROR}
         validateResources={onBlurResources}
         savedResources={savedResources}
@@ -254,8 +248,8 @@ export default function Objective({
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
         isOnApprovedReport={isOnApprovedReport || false}
-        error={objectiveErrors.ttaProvided
-          ? ERROR_FORMAT(objectiveErrors.ttaProvided.message)
+        error={errors.ttaProvided
+          ? ERROR_FORMAT(errors.ttaProvided.message)
           : NO_ERROR}
         validateTta={onBlurTta}
       />
@@ -272,10 +266,23 @@ export default function Objective({
 Objective.propTypes = {
   index: PropTypes.number.isRequired,
   objective: OBJECTIVE_PROP.isRequired,
-  goalId: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  errors: PropTypes.shape({
+    ttaProvided: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    title: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    resources: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    roles: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    topics: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+  }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
