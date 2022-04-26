@@ -36,11 +36,11 @@ export default function ReadOnly({
       { createdGoals.map((goal, index) => {
         const menuItems = [
           {
-            label: 'Edit',
+            label: `Edit goal ${goal.id}`,
             onClick: () => onEdit(goal, index),
           },
           {
-            label: 'Delete',
+            label: `Delete goal ${goal.id}`,
             onClick: () => modalRef.current.toggleModal(true),
           },
         ];

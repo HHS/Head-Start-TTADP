@@ -2,30 +2,31 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-
 import goalsObjectives from '../goalsObjectives';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType,
+  grantIds, activityRecipientType, goals = [], isGoalFormClosed = false,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
   const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
-      goals: [],
+      goals,
       objectivesWithoutGoals: [],
       author: {
         role: 'central office',
       },
+      isGoalFormClosed,
       collaborators: [],
       ...data,
     },
@@ -37,14 +38,15 @@ const RenderGoalsObjectives = ({
   );
 };
 
-const renderGoals = (grantIds, activityRecipientType, initialData, goals = []) => {
+const renderGoals = (grantIds, activityRecipientType, goals = [], isGoalFormClosed = false) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   fetchMock.get(join(goalUrl, `?${query}`), goals);
   render(
     <RenderGoalsObjectives
       grantIds={grantIds}
       activityRecipientType={activityRecipientType}
-      initialData={initialData}
+      goals={goals}
+      isGoalFormClosed={isGoalFormClosed}
     />,
   );
 };
@@ -78,6 +80,43 @@ describe('goals objectives', () => {
     it('the display goals section does not show if no grants are selected', async () => {
       renderGoals([], 'recipient');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+    });
+
+    it('you can click the little button', async () => {
+      renderGoals([1], 'recipient');
+      const button = await screen.findByRole('button', { name: /add new goal/i });
+      userEvent.click(button);
+      expect(await screen.findByText('Goal summary')).toBeVisible();
+    });
+
+    it('you can edit a goal', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const actions = await screen.findByRole('button', { name: /actions for goal 1234567/i });
+      userEvent.click(actions);
+      const button = await screen.findByRole('button', { name: /edit goal 1234567/i });
+      userEvent.click(button);
+      expect(await screen.findByText('Goal summary')).toBeVisible();
+    });
+
+    it('you can delete a goal', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const actions = await screen.findByRole('button', { name: /actions for goal 1234567/i });
+      userEvent.click(actions);
+      const button = await screen.findByRole('button', { name: /delete goal 1234567/i });
+      userEvent.click(button);
+      expect(await screen.findByText('Goal summary')).toBeVisible();
     });
   });
 

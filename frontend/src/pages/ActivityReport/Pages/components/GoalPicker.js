@@ -98,6 +98,7 @@ const GoalPicker = ({
     <div className="margin-top-4">
       <Label>
         Select recipient&apos;s goal
+        {' '}
         <Req />
         <Select
           name="goalForEditing"

@@ -41,10 +41,9 @@ ObjectiveStatus.propTypes = {
   onChangeStatus: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
-  onBlur: PropTypes.func,
+  onBlur: PropTypes.func.isRequired,
 };
 
 ObjectiveStatus.defaultProps = {
   inputName: 'objectiveStatus',
-  onBlur: () => {},
 };

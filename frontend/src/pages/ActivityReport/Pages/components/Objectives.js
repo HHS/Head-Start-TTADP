@@ -38,11 +38,16 @@ export default function Objectives({
 
   // create an exclusive set of roles
   // from the collaborators & author
-  const roles = useMemo(() => Array.from(
-    new Set(
-      [...collaborators, author].map(({ role }) => role).flat(),
-    ),
-  ), [author, collaborators]);
+  const roles = useMemo(() => {
+    const collabs = collaborators || [];
+    const auth = author || { role: '' };
+
+    return Array.from(
+      new Set(
+        [...collabs, auth].map(({ role }) => role).flat(),
+      ),
+    );
+  }, [author, collaborators]);
 
   const objectiveIds = fields ? fields.map(({ value }) => value) : [];
 

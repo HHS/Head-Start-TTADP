@@ -8,16 +8,16 @@ import { REPORT_STATUSES } from '../../../../../Constants';
 import Objectives from '../Objectives';
 
 // eslint-disable-next-line react/prop-types
-const RenderObjectives = ({ objectiveOptions }) => {
+const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] }) => {
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues: {
-      collaborators: [],
+      collaborators,
       author: {
         role: 'Central office',
       },
       goalForEditing: {
-        id: 12,
+        id: goalId,
       },
     },
   });
@@ -48,7 +48,8 @@ const RenderObjectives = ({ objectiveOptions }) => {
 describe('Objectives', () => {
   it('you can create a new objective', async () => {
     const objectiveOptions = [];
-    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    const collabs = [{ role: 'Snake charmer' }, { role: 'lion tamer' }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} collaborators={collabs} />);
     const select = await screen.findByLabelText(/Select TTA objective/i);
     expect(screen.queryByText(/objective status/i)).toBeNull();
     await selectEvent.select(select, ['Create a new objective']);
@@ -116,5 +117,24 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Test objective']);
     const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
     expect(role.tagName).toBe('P');
+  });
+
+  it('handles a "new" goal', async () => {
+    const objectiveOptions = [{
+      value: 3,
+      label: 'Test objective',
+      title: 'Test objective',
+      ttaProvided: '<p>hello</p>',
+      activityReports: [],
+      resources: [],
+      topics: [],
+      roles: ['CENTRAL OFFICE'],
+      status: 'Not Started',
+    }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
+    const button = await screen.findByRole('button', { name: /Add new objective/i });
+    expect(screen.queryByText(/objective status/i)).toBeNull();
+    userEvent.click(button);
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
 });
