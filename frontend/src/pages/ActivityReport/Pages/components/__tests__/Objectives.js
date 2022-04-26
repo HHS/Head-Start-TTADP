@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
+import { REPORT_STATUSES } from '../../../../../Constants';
 import Objectives from '../Objectives';
 
 // eslint-disable-next-line react/prop-types
@@ -39,6 +40,7 @@ const RenderObjectives = ({ objectiveOptions }) => {
         objectives={objectiveOptions}
         topicOptions={topicOptions}
       />
+      <button type="button">blur me</button>
     </FormProvider>
   );
 };
@@ -68,6 +70,11 @@ describe('Objectives', () => {
     const select = await screen.findByLabelText(/Select TTA objective/i);
     expect(screen.queryByText(/objective status/i)).toBeNull();
     await selectEvent.select(select, ['Test objective']);
+
+    const r = await screen.findByLabelText(/resource 1/i);
+    userEvent.type(r, 'GARG');
+    userEvent.click(await screen.findByText(/blur me/i));
+
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
   it('the button adds a new objective', async () => {
@@ -79,7 +86,7 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
+      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -87,5 +94,27 @@ describe('Objectives', () => {
     expect(screen.queryByText(/objective status/i)).toBeNull();
     userEvent.click(button);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+  });
+
+  it('is on approved reports hides options', async () => {
+    const objectiveOptions = [{
+      value: 3,
+      label: 'Test objective',
+      title: 'Test objective',
+      ttaProvided: '<p>hello</p>',
+      activityReports: [{
+        status: REPORT_STATUSES.APPROVED,
+      }],
+      resources: [],
+      topics: [],
+      roles: ['CENTRAL OFFICE'],
+      status: 'Not Started',
+    }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    expect(screen.queryByText(/objective status/i)).toBeNull();
+    await selectEvent.select(select, ['Test objective']);
+    const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
+    expect(role.tagName).toBe('P');
   });
 });

@@ -86,7 +86,6 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].resources`,
     rules: {
       validate: {
-        notEmpty: (value) => (value && value.length) || OBJECTIVE_RESOURCES,
         allResourcesAreValid: (value) => validateListOfResources(value) || OBJECTIVE_RESOURCES,
       },
     },
