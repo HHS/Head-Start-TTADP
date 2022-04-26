@@ -145,12 +145,16 @@ const GoalsObjectives = () => {
       */}
       {showGoals && !isGoalFormClosed
         ? (
-          <Fieldset className="smart-hub--report-legend" legend="Goal summary">
-            <div id="goals-and-objectives" />
-            <GoalPicker
-              availableGoals={availableGoals}
-            />
-          </Fieldset>
+          <>
+            <h3 className="margin-bottom-0">Goal summary</h3>
+            <Fieldset>
+              <div id="goals-and-objectives" />
+              <GoalPicker
+                availableGoals={availableGoals}
+              />
+            </Fieldset>
+
+          </>
         ) : (
           null
         ) }

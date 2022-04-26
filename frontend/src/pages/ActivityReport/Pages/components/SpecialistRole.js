@@ -37,7 +37,7 @@ export default function SpecialistRole({
   // build our selector
   return (
     <Label>
-      Specialist role
+      Specialist roles providing TTA
       {' '}
       <Req />
       {error}
