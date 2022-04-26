@@ -32,7 +32,6 @@ export default function Objective({
   roles,
 }) {
   const [selectedObjectives, setSelectedObjectives] = useState(objective);
-  // pull the errors out of the form context
 
   /**
    * add controllers for all the controlled fields
@@ -124,7 +123,7 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].ttaProvided`,
     rules: {
       validate: {
-        notEmptyTag: (value) => (value && value !== '<p></p>') || OBJECTIVE_TTA,
+        notEmptyTag: (value) => (value && value.trim() !== '<p></p>') || OBJECTIVE_TTA,
       },
     },
     defaultValue: objective.ttaProvided,

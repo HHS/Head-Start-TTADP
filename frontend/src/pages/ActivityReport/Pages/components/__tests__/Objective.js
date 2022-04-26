@@ -56,8 +56,8 @@ const RenderObjective = ({
         objectiveIndex={0}
         status="In progress"
         roles={['Central office']}
+        errors={{}}
       />
-      <button type="button">Blur me</button>
     </FormProvider>
   );
 };

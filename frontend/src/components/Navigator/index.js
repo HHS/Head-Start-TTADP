@@ -76,6 +76,7 @@ function Navigator({
   const isGoalFormClosed = watch('isGoalFormClosed');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
+  const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
 
   const { isDirty, errors, isValid } = formState;
@@ -185,6 +186,10 @@ function Navigator({
     };
   });
 
+  // we show the save goals button if the form isn't closed, if we're on the goals and
+  // objectives page and if we aren't just showing objectives
+  const showSaveGoalsButton = isGoalsObjectivesPage && !isGoalFormClosed && activityRecipientType !== 'other-entity';
+
   return (
     <Grid row gap>
       <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
@@ -234,7 +239,7 @@ function Navigator({
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
-                    { isGoalsObjectivesPage && !isGoalFormClosed
+                    { showSaveGoalsButton
                       ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
                       : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and Continue</Button> }
                     <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>

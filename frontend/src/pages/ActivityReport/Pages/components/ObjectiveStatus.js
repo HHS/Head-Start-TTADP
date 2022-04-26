@@ -16,7 +16,7 @@ export default function ObjectiveStatus({
 }) {
   return (
     <Label>
-      Status
+      Objective status
       <Dropdown
         name={inputName}
         onChange={onChangeStatus}
