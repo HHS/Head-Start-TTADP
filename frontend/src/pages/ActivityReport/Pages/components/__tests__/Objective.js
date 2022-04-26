@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -20,6 +19,7 @@ const RenderObjective = ({
   objective = defaultObjective, onRemove = () => {},
 }) => {
   const hookForm = useForm({
+    mode: 'onBlur',
     defaultValues: {
       objective,
       collaborators: [],
@@ -57,6 +57,7 @@ const RenderObjective = ({
         status="In progress"
         roles={['Central office']}
       />
+      <button type="button">Blur me</button>
     </FormProvider>
   );
 };

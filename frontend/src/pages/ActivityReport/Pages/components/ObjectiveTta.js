@@ -10,14 +10,13 @@ export default function ObjectiveTta(
   {
     ttaProvided,
     onChangeTTA,
-    status,
     isOnApprovedReport,
     error,
     validateTta,
     inputName,
   },
 ) {
-  if (status === 'Complete' || isOnApprovedReport) {
+  if (isOnApprovedReport) {
     const defaultEditorState = getEditorState(ttaProvided || '');
     return (
       <>
@@ -54,7 +53,6 @@ export default function ObjectiveTta(
 ObjectiveTta.propTypes = {
   ttaProvided: PropTypes.string.isRequired,
   onChangeTTA: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   error: PropTypes.node.isRequired,
   validateTta: PropTypes.func.isRequired,

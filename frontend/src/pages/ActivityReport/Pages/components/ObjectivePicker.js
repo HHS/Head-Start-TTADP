@@ -1,70 +1,97 @@
-import React from 'react';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { v4 as uuidv4 } from 'uuid';
-import { Button } from '@trussworks/react-uswds';
-
-import FormItem from '../../../../components/FormItem';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useFormContext, useWatch, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
-import { validateObjectives } from './objectiveValidator';
+import { getTopics } from '../../../../fetchers/topics';
+import ObjectiveSelect from './ObjectiveSelect';
+import PlusButton from '../../../../components/GoalForm/PlusButton';
+import { NEW_OBJECTIVE } from './constants';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
-const createObjective = () => ({
-  title: '', ttaProvided: '', status: 'Not Started', id: uuidv4(), new: true,
-});
-
 const ObjectivePicker = () => {
-  const {
-    watch, setValue, register,
-  } = useFormContext();
-  const objectives = watch(OBJECTIVE_LABEL);
+  const [topicOptions, setTopicOptions] = useState([]);
 
-  register(OBJECTIVE_LABEL, {
-    validate: (e) => validateObjectives(e),
+  const { errors } = useFormContext();
+
+  const {
+    fields: objectives,
+    remove,
+    append,
+  } = useFieldArray({
+    name: OBJECTIVE_LABEL,
+    defaultValues: [],
   });
 
-  const onRemoveObjective = (index) => {
-    const newObjectives = objectives.filter((o, objectiveIndex) => index !== objectiveIndex);
-    setValue(OBJECTIVE_LABEL, newObjectives);
+  // for fetching topic options from API
+  useEffect(() => {
+    async function fetchTopics() {
+      const topicsFromApi = await getTopics();
+
+      const topicsAsOptions = topicsFromApi.map((topic) => ({
+        label: topic.name,
+        value: topic.id,
+      }));
+      setTopicOptions(topicsAsOptions);
+    }
+
+    fetchTopics();
+  }, []);
+
+  // we need to figure out our options based on author/collaborator roles
+  const collaborators = useWatch({ name: 'collaborators' });
+  const author = useWatch({ name: 'author' });
+
+  // create an exclusive set of roles
+  // from the collaborators & author
+  const roles = useMemo(() => Array.from(
+    new Set(
+      [...collaborators, author].map(({ role }) => role).flat(),
+    ),
+  ), [author, collaborators]);
+
+  const onAddNew = () => {
+    const defaultRoles = roles.length === 1 ? roles : [];
+    append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
   };
 
-  const onUpdateObjective = (index, newObjective) => {
-    const newObjectives = [...objectives];
-    newObjectives[index] = newObjective;
-    setValue(OBJECTIVE_LABEL, newObjectives);
-  };
+  const options = [{ ...NEW_OBJECTIVE() }];
 
-  const singleObjective = objectives.length <= 1;
+  const onSelect = (objective) => {
+    const defaultRoles = roles.length === 1 ? roles : objective.roles;
+    append({ ...objective, roles: defaultRoles });
+  };
 
   return (
     <div>
-      <FormItem
-        label='Because goals are associated with recipients, there is no "goal" field in this section. You must create at least one objective for this activity.'
-        name={OBJECTIVE_LABEL}
-        fieldSetWrapper
-      >
-        {objectives.map((objective, objectiveIndex) => (
-          <div className="margin-top-1" key={objective.id}>
+      {objectives.length < 1
+        ? (
+          <ObjectiveSelect
+            onChange={onSelect}
+            options={options}
+            selectedObjectives={[]}
+          />
+        )
+        : objectives.map((objective, index) => {
+          const objectiveErrors = errors[OBJECTIVE_LABEL]
+          && errors[OBJECTIVE_LABEL][index]
+            ? errors[OBJECTIVE_LABEL][index]
+            : {};
+
+          return (
             <Objective
-              parentLabel={OBJECTIVE_LABEL}
-              objectiveAriaLabel={(objectiveIndex + 1).toString()}
+              index={index}
+              key={objective.id}
               objective={objective}
-              onRemove={() => { if (!singleObjective) { onRemoveObjective(objectiveIndex); } }}
-              onUpdate={(newObjective) => onUpdateObjective(objectiveIndex, newObjective)}
+              topicOptions={topicOptions}
+              options={options}
+              errors={objectiveErrors}
+              remove={remove}
+              fieldArrayName={OBJECTIVE_LABEL}
+              roles={roles}
             />
-          </div>
-        ))}
-      </FormItem>
-      <Button
-        type="button"
-        onClick={() => {
-          setValue(OBJECTIVE_LABEL, [...objectives, createObjective()]);
-        }}
-        outline
-        aria-label="add objective"
-      >
-        Add New Objective
-      </Button>
+          );
+        })}
+      <PlusButton text="Add new objective" onClick={onAddNew} />
     </div>
   );
 };
