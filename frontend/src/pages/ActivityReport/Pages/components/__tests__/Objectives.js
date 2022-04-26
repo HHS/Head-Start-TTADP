@@ -39,6 +39,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       <Objectives
         objectives={objectiveOptions}
         topicOptions={topicOptions}
+        roles={['Central office']}
       />
       <button type="button">blur me</button>
     </FormProvider>

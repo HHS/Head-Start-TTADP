@@ -36,6 +36,7 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
     <FormProvider {...hookForm}>
       <GoalPicker
         availableGoals={availableGoals}
+        roles={['central office']}
       />
     </FormProvider>
   );

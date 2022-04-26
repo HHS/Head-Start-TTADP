@@ -32,7 +32,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals,
+  availableGoals, roles,
 }) => {
   const {
     control, setError,
@@ -123,7 +123,7 @@ const GoalPicker = ({
       </Label>
       {goalForEditing ? (
         <div>
-          <GoalForm topicOptions={topicOptions} goal={goalForEditing} />
+          <GoalForm topicOptions={topicOptions} roles={roles} goal={goalForEditing} />
         </div>
       ) : null }
     </div>
@@ -137,6 +137,7 @@ GoalPicker.propTypes = {
       value: PropTypes.number,
     }),
   ).isRequired,
+  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default GoalPicker;

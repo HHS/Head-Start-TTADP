@@ -29,6 +29,7 @@ describe('GoalForm', () => {
       <FormProvider {...hookForm}>
         <GoalForm
           goal={goal}
+          roles={[]}
           topicOptions={[{ label: 'Coaching', value: 1 }]}
         />
       </FormProvider>

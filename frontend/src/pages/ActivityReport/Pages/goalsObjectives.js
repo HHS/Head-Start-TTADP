@@ -2,7 +2,7 @@
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -110,6 +110,23 @@ const GoalsObjectives = () => {
     };
   });
 
+  // we need to figure out our options based on author/collaborator roles
+  const collaborators = watch('collaborators');
+  const author = watch('author');
+
+  // create an exclusive set of roles
+  // from the collaborators & author
+  const roles = useMemo(() => {
+    const collabs = collaborators || [];
+    const auth = author || { role: '' };
+
+    return Array.from(
+      new Set(
+        [...collabs, auth].map(({ role }) => role).flat(),
+      ),
+    );
+  }, [author, collaborators]);
+
   return (
     <>
       <Helmet>
@@ -125,7 +142,7 @@ const GoalsObjectives = () => {
       */}
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend" legend="Objectives for other entity TTA">
-          <ObjectivePicker />
+          <ObjectivePicker roles={roles} />
         </Fieldset>
       )}
 
@@ -151,6 +168,7 @@ const GoalsObjectives = () => {
               <div id="goals-and-objectives" />
               <GoalPicker
                 availableGoals={availableGoals}
+                roles={roles}
               />
             </Fieldset>
 

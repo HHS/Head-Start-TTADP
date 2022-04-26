@@ -11,7 +11,7 @@ import {
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 
-export default function GoalForm({ goal, topicOptions }) {
+export default function GoalForm({ goal, topicOptions, roles }) {
   // pull the errors out of the form context
   const { errors } = useFormContext();
 
@@ -122,6 +122,7 @@ export default function GoalForm({ goal, topicOptions }) {
         objectives={objectives}
         topicOptions={topicOptions}
         objectiveErrors={[]}
+        roles={roles}
       />
 
     </>
@@ -147,4 +148,5 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
