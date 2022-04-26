@@ -120,12 +120,18 @@ const GoalsObjectives = () => {
         indicates required field
       </p>
 
+      {/**
+        * on non-recipient reports, only objectives are shown
+      */}
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend" legend="Objectives for other entity TTA">
           <ObjectivePicker />
         </Fieldset>
       )}
 
+      {/**
+        * all goals for review
+      */}
       { goalsForReview.length ? (
         <ReadOnly
           onEdit={onEdit}
@@ -134,6 +140,9 @@ const GoalsObjectives = () => {
         />
       ) : null }
 
+      {/**
+        * conditionally show the goal picker
+      */}
       {showGoals && !isGoalFormClosed
         ? (
           <Fieldset className="smart-hub--report-legend" legend="Goal summary">
@@ -143,7 +152,18 @@ const GoalsObjectives = () => {
             />
           </Fieldset>
         ) : (
+          null
+        ) }
+
+      {/**
+        * we show the add new goal button if we are reviewing existing goals
+        * and if the report HAS goals
+        */}
+      {showGoals && !isGoalFormClosed && isRecipientReport
+        ? (
           <PlusButton onClick={addNewGoal} text="Add new goal" />
+        ) : (
+          null
         ) }
     </>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label } from '@trussworks/react-uswds';
+import { FormGroup, Label } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
 import Req from '../../../../components/Req';
 import RichEditor from '../../../../components/RichEditor';
@@ -31,22 +31,24 @@ export default function ObjectiveTta(
   }
 
   return (
-    <Label>
-      TTA provided
-      {' '}
-      <Req />
-      {error}
-      <div className="smart-hub--text-area__resize-vertical margin-top-1">
-        <input type="hidden" name={inputName} value={ttaProvided} />
-        <RichEditor
-          value={ttaProvided}
-          ariaLabel="TTA provided for objective"
-          defaultValue={ttaProvided}
-          onChange={onChangeTTA}
-          onBlur={validateTta}
-        />
-      </div>
-    </Label>
+    <FormGroup error={error.props.children}>
+      <Label className="ttahub-objective-tta" error={error.props.children}>
+        TTA provided
+        {' '}
+        <Req />
+        {error}
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          <input type="hidden" name={inputName} value={ttaProvided} />
+          <RichEditor
+            value={ttaProvided}
+            ariaLabel="TTA provided for objective"
+            defaultValue={ttaProvided}
+            onChange={onChangeTTA}
+            onBlur={validateTta}
+          />
+        </div>
+      </Label>
+    </FormGroup>
   );
 }
 
