@@ -22,7 +22,7 @@ const Input = ({ name, required }) => {
   );
 };
 
-const pages = [
+const defaultPages = [
   {
     position: 1,
     path: 'first',
@@ -68,7 +68,14 @@ const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED } };
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}) => {
+  const renderNavigator = (
+    currentPage = 'first',
+    onSubmit = jest.fn(),
+    onSave = jest.fn(),
+    updatePage = jest.fn(),
+    updateForm = jest.fn(),
+    pages = defaultPages,
+  ) => {
     render(
       <Navigator
         editable
@@ -136,5 +143,23 @@ describe('Navigator', () => {
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
     await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+  });
+
+  it('shows the correct buttons on the bottom of the page', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <Input name="first" required />
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    expect(await screen.findByRole('button', { name: 'Save goal' })).toBeVisible();
   });
 });

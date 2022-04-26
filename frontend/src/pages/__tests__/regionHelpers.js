@@ -39,4 +39,25 @@ describe('showFilterWithMyRegions', () => {
     showFilterWithMyRegions(allRegionsFilters, filters, setFilters);
     expect(setFilters).toHaveBeenCalledWith([{ query: 1 }, { query: 2 }]);
   });
+
+  it('and another', async () => {
+    const allRegionsFilters = [
+      {
+        query: 2,
+      },
+      {
+        query: 2,
+      },
+    ];
+
+    const filters = [
+      {
+        topic: 'region',
+        query: [2],
+      },
+    ];
+    const setFilters = jest.fn();
+    showFilterWithMyRegions(allRegionsFilters, filters, setFilters);
+    expect(setFilters).toHaveBeenCalledWith([{ query: [2], topic: 'region' }]);
+  });
 });
