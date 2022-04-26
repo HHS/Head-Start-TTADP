@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useWatch, useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
@@ -9,11 +9,14 @@ import ObjectiveSelect from './ObjectiveSelect';
 export default function Objectives({
   objectives,
   topicOptions,
+  roles,
 }) {
   const goal = useWatch({ name: 'goalForEditing' });
   const fieldArrayName = `goal-${goal ? goal.id : 'new'}.objectives`;
   const objectivesForGoal = useWatch({ name: fieldArrayName });
   const defaultValues = objectivesForGoal || [];
+
+  const { errors } = useFormContext();
 
   /**
    * we can use the useFieldArray hook from react hook form to
@@ -29,25 +32,6 @@ export default function Objectives({
     name: fieldArrayName,
     defaultValues,
   });
-
-  const { errors } = useFormContext();
-
-  // we need to figure out our options based on author/collaborator roles
-  const collaborators = useWatch({ name: 'collaborators' });
-  const author = useWatch({ name: 'author' });
-
-  // create an exclusive set of roles
-  // from the collaborators & author
-  const roles = useMemo(() => {
-    const collabs = collaborators || [];
-    const auth = author || { role: '' };
-
-    return Array.from(
-      new Set(
-        [...collabs, auth].map(({ role }) => role).flat(),
-      ),
-    );
-  }, [author, collaborators]);
 
   const objectiveIds = fields ? fields.map(({ value }) => value) : [];
 
@@ -122,4 +106,5 @@ Objectives.propTypes = {
   objectives: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
+  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
