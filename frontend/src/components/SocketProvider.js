@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 export const SocketContext = createContext();
 
-const WS_URL = `ws://${process.env.REACT_APP_BACKEND_PROXY}`;
+const WS_URL = `wss://${process.env.REACT_APP_BACKEND_PROXY}`;
 export default function SocketProvider({ children }) {
   const [store, setStore] = useState(null);
 
