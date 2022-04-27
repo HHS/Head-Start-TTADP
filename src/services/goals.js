@@ -514,9 +514,9 @@ export async function copyGoalsToGrants(goals, grantIds) {
     });
   });
 
-  await GrantGoal.bulkCreate(grantGoals, {
-    ignoreDuplicates: true,
-  });
+  // await GrantGoal.bulkCreate(grantGoals, {
+  //   ignoreDuplicates: true,
+  // });
 }
 
 export async function updateGoalStatusById(

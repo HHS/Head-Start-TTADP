@@ -70,16 +70,14 @@ module.exports = (sequelize, DataTypes) => {
             },
             transaction: options.transaction,
           });
-          // eslint-disable-next-line no-param-reassign
-          instance.objectiveTemplateId = objectiveTemplate[0].id;
+          instance.set('objectiveTemplateId', objectiveTemplate[0].id);
         }
 
         // eslint-disable-next-line no-prototype-builtins
         if (!instance.hasOwnProperty('onApprovedAR')
         || instance.onApprovedAR === null
         || instance.onApprovedAR === undefined) {
-          // eslint-disable-next-line no-param-reassign
-          instance.onApprovedAR = false;
+          instance.set('onApprovedAR', false);
         }
       },
     },

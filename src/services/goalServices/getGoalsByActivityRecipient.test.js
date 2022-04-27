@@ -10,7 +10,7 @@ import {
   GoalTemplate,
   Goal,
   ActivityReportObjective,
-  ObjectiveTemplate,
+  // ObjectiveTemplate,
   Objective,
 } from '../../models';
 
@@ -136,7 +136,7 @@ describe('Goals by Recipient Test', () => {
     ttaType: ['type'],
   };
 
-  let objectiveTemplateIds = [];
+  // let objectiveTemplateIds = [];
   let goalTemplateIds = [];
 
   let objectiveIds = [];
@@ -311,35 +311,35 @@ describe('Goals by Recipient Test', () => {
     // );
 
     // Crete Objectives.
-    const objectiveTemplates = await Promise.all(
-      [
-        await ObjectiveTemplate.findOrCreate({
-          where: { templateTitle: 'objective 1' },
-          default: { templateTitle: 'objective 1' },
-        }),
-        await ObjectiveTemplate.findOrCreate({
-          where: { templateTitle: 'objective 2' },
-          default: { templateTitle: 'objective 2' },
-        }),
-        await ObjectiveTemplate.findOrCreate({
-          where: { templateTitle: 'objective 3' },
-          default: { templateTitle: 'objective 3' },
-        }),
-        await ObjectiveTemplate.findOrCreate({
-          where: { templateTitle: 'objective 4' },
-          default: { templateTitle: 'objective 4' },
-        }),
-        await ObjectiveTemplate.findOrCreate({
-          where: { templateTitle: 'objective 5' },
-          default: { templateTitle: 'objective 5' },
-        }),
-        await ObjectiveTemplate.findOrCreate({
-          where: { templateTitle: 'objective 6' },
-          default: { templateTitle: 'objective 6' },
-        }),
-      ],
-    );
-    objectiveTemplateIds = objectiveTemplates.map((o) => o.id);
+    // const objectiveTemplates = await Promise.all(
+    //   [
+    //     await ObjectiveTemplate.findOrCreate({
+    //       where: { templateTitle: 'objective 1' },
+    //       default: { templateTitle: 'objective 1' },
+    //     }),
+    //     await ObjectiveTemplate.findOrCreate({
+    //       where: { templateTitle: 'objective 2' },
+    //       default: { templateTitle: 'objective 2' },
+    //     }),
+    //     await ObjectiveTemplate.findOrCreate({
+    //       where: { templateTitle: 'objective 3' },
+    //       default: { templateTitle: 'objective 3' },
+    //     }),
+    //     await ObjectiveTemplate.findOrCreate({
+    //       where: { templateTitle: 'objective 4' },
+    //       default: { templateTitle: 'objective 4' },
+    //     }),
+    //     await ObjectiveTemplate.findOrCreate({
+    //       where: { templateTitle: 'objective 5' },
+    //       default: { templateTitle: 'objective 5' },
+    //     }),
+    //     await ObjectiveTemplate.findOrCreate({
+    //       where: { templateTitle: 'objective 6' },
+    //       default: { templateTitle: 'objective 6' },
+    //     }),
+    //   ],
+    // );
+    // objectiveTemplateIds = objectiveTemplates.map((o) => o.id);
     const objectives = await Promise.all(
       [
         // objective 1 (AR1)
@@ -348,7 +348,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 1',
           ttaProvided: 'Objective for Goal 1',
           status: 'Not Started',
-          objectiveTemplateId: objectiveTemplateIds[0],
+          // objectiveTemplateId: objectiveTemplateIds[0],
         }),
         // objective 2 (AR1)
         await Objective.create({
@@ -356,7 +356,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 2',
           ttaProvided: 'Objective for Goal 2',
           status: 'Not Started',
-          objectiveTemplateId: objectiveTemplateIds[1],
+          // objectiveTemplateId: objectiveTemplateIds[1],
         }),
         // objective 3 (AR1)
         await Objective.create({
@@ -364,7 +364,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 3',
           ttaProvided: 'Objective for Goal 3',
           status: 'In Progress',
-          objectiveTemplateId: objectiveTemplateIds[2],
+          // objectiveTemplateId: objectiveTemplateIds[2],
         }),
         // objective 4 (AR1)
         await Objective.create({
@@ -372,7 +372,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 4',
           ttaProvided: 'Objective for Goal 3 b',
           status: 'Completed',
-          objectiveTemplateId: objectiveTemplateIds[3],
+          // objectiveTemplateId: objectiveTemplateIds[3],
         }),
         // objective 5 (AR2)
         await Objective.create({
@@ -380,7 +380,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 5',
           ttaProvided: 'Objective for Goal 4',
           status: 'Not Started',
-          objectiveTemplateId: objectiveTemplateIds[4],
+          // objectiveTemplateId: objectiveTemplateIds[4],
         }),
         // objective 6 (AR3)
         await Objective.create({
@@ -388,7 +388,7 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 6',
           ttaProvided: 'Objective for Goal 5 Exclude',
           status: 'Not Started',
-          objectiveTemplateId: objectiveTemplateIds[5],
+          // objectiveTemplateId: objectiveTemplateIds[5],
         }),
       ],
     );
@@ -452,11 +452,11 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
-    await ObjectiveTemplate.destroy({
-      where: {
-        id: objectiveTemplateIds,
-      },
-    });
+    // await ObjectiveTemplate.destroy({
+    //   where: {
+    //     id: objectiveTemplateIds,
+    //   },
+    // });
 
     // Delete Grant Goals.
     // const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: [300, 301] } });
