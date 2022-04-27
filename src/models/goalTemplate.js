@@ -58,15 +58,13 @@ module.exports = (sequelize, DataTypes) => {
       beforeValidate: async (instance) => {
         const changed = instance.changed();
         if (Array.isArray(changed) && changed.includes('templateName')) {
-          // eslint-disable-next-line no-param-reassign
-          instance.templateNameModifiedAt = new Date();
+          instance.set('templateNameModifiedAt', new Date());
         }
         if (Array.isArray(changed)
         && (!changed.includes('creationMethod')
         || instance.creationMethod === null
         || instance.creationMethod === undefined)) {
-          // eslint-disable-next-line no-param-reassign
-          instance.creationMethod = 'Automatic';
+          instance.set('creationMethod', 'Automatic');
         }
       },
     },

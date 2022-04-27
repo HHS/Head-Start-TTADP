@@ -99,16 +99,31 @@ module.exports = (sequelize, DataTypes) => {
             },
             transaction: options.transaction,
           });
-          // eslint-disable-next-line no-param-reassign
-          instance.goalTemplateId = goalTemplate[0].id;
+          instance.set('goalTemplateId', goalTemplate[0].id);
         }
 
         // eslint-disable-next-line no-prototype-builtins
         if (!instance.hasOwnProperty('onApprovedAR')
         || instance.onApprovedAR === null
         || instance.onApprovedAR === undefined) {
-          // eslint-disable-next-line no-param-reassign
-          instance.onApprovedAR = false;
+          instance.set('onApprovedAR', false);
+        } else if (instance.onApprovedAR === true) {
+          const changed = instance.changed();
+          if (Array.isArray(changed) && changed.includes('name')) {
+            throw new Error('Goal name change now allowed for goals on approved activity reports.');
+          }
+        }
+      },
+      afterUpdate: async (instance, options) => {
+        const changed = instance.changed();
+        if (Array.isArray(changed) && changed.includes('name')) {
+          await sequelize.models.GoalTemplate.update(
+            { templateName: instance.name },
+            {
+              where: { id: instance.goalTemplateId },
+              transaction: options.transaction,
+            },
+          );
         }
       },
     },
