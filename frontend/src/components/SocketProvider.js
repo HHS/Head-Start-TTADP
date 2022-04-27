@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 
 export const SocketContext = createContext();
 
+const WS_URL = `ws://${process.env.REACT_APP_BACKEND_PROXY}`;
 export default function SocketProvider({ children }) {
   const [store, setStore] = useState(null);
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
-    const s = new WebSocket('ws://localhost:8080');
+    const s = new WebSocket(WS_URL);
 
     // we don't want to send bufferdata, but json
     s.binaryType = 'arraybuffer';

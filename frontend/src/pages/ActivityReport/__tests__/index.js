@@ -14,6 +14,7 @@ import { withText } from '../../../testHelpers';
 import ActivityReport, { unflattenResourcesUsed, findWhatsChanged, updateGoals } from '../index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../../Constants';
 import UserContext from '../../../UserContext';
+import SocketProvider from '../../../components/SocketProvider';
 
 const formData = () => ({
   regionId: 1,
@@ -58,15 +59,17 @@ const user = {
 const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <UserContext.Provider value={{ user }}>
-        <ActivityReport
-          match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-          location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-          }}
-          user={{ ...user, id: userId }}
-        />
-      </UserContext.Provider>
+      <SocketProvider>
+        <UserContext.Provider value={{ user }}>
+          <ActivityReport
+            match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+            location={{
+              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            }}
+            user={{ ...user, id: userId }}
+          />
+        </UserContext.Provider>
+      </SocketProvider>
     </Router>,
   );
 };
