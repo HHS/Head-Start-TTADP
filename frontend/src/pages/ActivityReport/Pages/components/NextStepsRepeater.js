@@ -61,14 +61,13 @@ export default function NextStepsRepeater({
             error={onBlurValidationStates[index]}
           >
             {
-               onBlurValidationStates[index] || (!item.note && errors[name])
-                 ? <ErrorMessage>Enter a next step</ErrorMessage>
-                 : null
+                onBlurValidationStates[index] || (errors[name] && errors[name][index])
+                  ? <ErrorMessage>Enter a next step</ErrorMessage>
+                  : null
                 }
             <div
               key={`next-step-flex-${index + 1}`}
-              className={`display-flex ${(!item.note && errors[name])
-                    || onBlurValidationStates[index] ? 'blank-next-step' : null}`}
+              className={`display-flex ${onBlurValidationStates[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
             >
               <Label htmlFor={`next-step-${index + 1}`} className="sr-only">
                 Next step
