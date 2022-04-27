@@ -81,6 +81,7 @@ export default function NextStepsRepeater({
                 defaultValue={item.note}
                 inputRef={register({ required: 'Enter a next step' })}
                 onBlur={({ target: { value } }) => validateOnBlur(value, index)}
+                data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
               />
               { canDelete ? (
                 <Button
@@ -104,7 +105,15 @@ export default function NextStepsRepeater({
       </div>
 
       <div className="margin-05 margin-bottom-4">
-        <Button type="button" unstyled onClick={onAddNewStep}>
+        <Button
+          type="button"
+          unstyled
+          onClick={onAddNewStep}
+          data-testid={
+                   `${name === 'specialistNextSteps'
+                     ? 'specialist' : 'recipient'}NextSteps-button`
+                   }
+        >
           <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
           Add next step
         </Button>
