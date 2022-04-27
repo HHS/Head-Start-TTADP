@@ -10,13 +10,13 @@ import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import GoalPicker, { newGoal } from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
-import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
+import OtherEntity from './components/OtherEntity';
 
 const GoalsObjectives = () => {
   const {
@@ -140,11 +140,7 @@ const GoalsObjectives = () => {
       {/**
         * on non-recipient reports, only objectives are shown
       */}
-      {!isRecipientReport && (
-        <Fieldset className="smart-hub--report-legend" legend="Objectives for other entity TTA">
-          <ObjectivePicker roles={roles} />
-        </Fieldset>
-      )}
+      {!isRecipientReport && (<OtherEntity roles={roles} />)}
 
       {/**
         * all goals for review
@@ -217,7 +213,7 @@ export default {
   titleOverride: (formData) => {
     const { activityRecipientType } = formData;
     if (activityRecipientType === 'other-entity') {
-      return 'Objectives';
+      return 'Objectives and topics';
     }
     return 'Goals and objectives';
   },
