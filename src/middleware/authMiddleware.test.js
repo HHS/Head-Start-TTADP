@@ -1,6 +1,6 @@
 import {} from 'dotenv/config';
 import { UNAUTHORIZED } from 'http-codes';
-import db, { User, Permission, sequelize } from '../models';
+import db, { User, Permission } from '../models';
 import authMiddleware, { login } from './authMiddleware';
 import SCOPES from './scopeConstants';
 
@@ -33,15 +33,12 @@ describe('authMiddleware', () => {
     }],
   };
 
-  const setupUser = async (user) => (
-    sequelize.transaction(async (transaction) => {
-      await User.destroy({ where: { id: user.id } }, { transaction });
-      await User.create(user, {
-        include: [{ model: Permission, as: 'permissions' }],
-        transaction,
-      });
-    })
-  );
+  const setupUser = async (user) => {
+    await User.destroy({ where: { id: user.id } });
+    await User.create(user, {
+      include: [{ model: Permission, as: 'permissions' }],
+    });
+  };
 
   const destroyUser = async (user) => (
     User.destroy({ where: { id: user.id } })

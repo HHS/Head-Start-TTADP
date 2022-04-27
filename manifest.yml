@@ -23,6 +23,8 @@ applications:
       SMTP_HOST: ((SMTP_HOST))
       SMTP_PORT: ((SMTP_PORT))
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
+      SMTP_SECURE: ((SMTP_SECURE))
+      FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))

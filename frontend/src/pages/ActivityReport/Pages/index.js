@@ -1,6 +1,6 @@
 import React from 'react';
 import activitySummary from './activitySummary';
-import topicsResources from './topicsResources';
+import supportingAttachments from './supportingAttachments';
 import nextSteps from './nextSteps';
 import goalsObjectives from './goalsObjectives';
 import ReviewSubmit from './Review';
@@ -11,8 +11,8 @@ import ReviewSubmit from './Review';
 */
 const pages = [
   activitySummary,
-  topicsResources,
   goalsObjectives,
+  supportingAttachments,
   nextSteps,
 ];
 

@@ -5,11 +5,12 @@ import {
   deleteGoal,
   retrieveGoal,
 } from './handlers';
+import transactionWrapper from '../transactionWrapper';
 
 const router = express.Router();
-router.post('/', createGoals);
-router.get('/:goalId/recipient/:recipientId', retrieveGoal);
-router.delete('/:goalId', deleteGoal);
-router.put('/:goalId/changeStatus', changeGoalStatus);
+router.post('/', transactionWrapper(createGoals));
+router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoal));
+router.delete('/:goalId', transactionWrapper(deleteGoal));
+router.put('/:goalId/changeStatus', transactionWrapper(changeGoalStatus));
 
 export default router;

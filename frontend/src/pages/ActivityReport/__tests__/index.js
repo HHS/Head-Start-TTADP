@@ -192,9 +192,9 @@ describe('ActivityReport', () => {
     it('navigates to the correct page', async () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
-      const button = await screen.findByRole('button', { name: 'Topics and resources Not Started' });
+      const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
     });
   });
 
@@ -294,7 +294,7 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', formData());
       fetchMock.put('/api/activity-reports/1', {});
       renderActivityReport(1);
-      const button = await screen.findByRole('button', { name: 'Topics and resources In Progress' });
+      const button = await screen.findByRole('button', { name: /supporting attachments in progress/i });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
