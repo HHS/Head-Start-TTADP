@@ -99,7 +99,7 @@ describe('Topics and frequency graph widget', () => {
       mockUser,
       mockUserTwo,
       mockUserThree,
-    ]);
+    ], { validate: true });
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -116,7 +116,7 @@ describe('Topics and frequency graph widget', () => {
       regionOneReportDistinctDate,
       regionTwoReport,
       regionOneReportWithDifferentTopics,
-    ]);
+    ], { validate: true });
 
     await ActivityReportCollaborator.create({
       id: 2000,

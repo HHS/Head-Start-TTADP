@@ -177,7 +177,7 @@ module.exports = {
           allowNull: true,
           type: Sequelize.DATE,
         },
-        templateNameModifiedAt: {
+        templateTitleModifiedAt: {
           allowNull: false,
           type: Sequelize.DATE,
         },
@@ -332,6 +332,88 @@ module.exports = {
         throw (err);
       }
 
+      await queryInterface.createTable('ObjectiveRoles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        objectiveId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Objectives',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        roleId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Roles',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      await queryInterface.createTable('ObjectiveTemplateRoles', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        objectiveTemplateId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'ObjectiveTemplates',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        roleId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'Roles',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
       // Disable logging while doing mass updates
       try {
         await queryInterface.sequelize.query(
@@ -389,7 +471,7 @@ module.exports = {
             "g"."isFromSmartsheetTtaPlan",
             "g"."createdAt",
             "g"."updatedAt",
-            "g"."closeSuspendReason",
+            ("g"."closeSuspendReason"::TEXT)::"enum_DisconnectedGoals_closeSuspendReason",
             "g"."closeSuspendContext",
             "g"."endDate",
             "g"."previousStatus"
@@ -404,8 +486,7 @@ module.exports = {
           ON g.id = gg."goalId"
           LEFT JOIN "Grants" gr
           ON gg."grantId" = gr."id"
-          WHERE COALESCE(gr."regionId",ar."regionId") IS NULL
-          ORDER BY g.id`,
+          WHERE COALESCE(gr."regionId",ar."regionId") IS NULL;`,
           { transaction },
         );
       } catch (err) {
@@ -416,7 +497,7 @@ module.exports = {
       // Populate ObjectiveTemplates from existing Objectives linking to GoalTemplates
       try {
         await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTemplates" ("templateTitle", "createdAt", "updatedAt", "lastUsed", "templateNameModifiedAt", "sourceObjective")
+          `INSERT INTO "ObjectiveTemplates" ("templateTitle", "regionId", "creationMethod", "createdAt", "updatedAt", "lastUsed", "templateTitleModifiedAt", "sourceObjective")
           SELECT DISTINCT
             o.title,
             COALESCE(ar."regionId") "regionId",
@@ -424,7 +505,7 @@ module.exports = {
             NOW() "createdAt",
             NOW() "updatedAt",
             o."createdAt" "lastUsed",
-            NOW() "templateNameModifiedAt",
+            NOW() "templateTitleModifiedAt",
             o.id "sourceObjective"
           FROM "Objectives" o
           LEFT JOIN "ActivityReportObjectives" aro
@@ -580,6 +661,97 @@ module.exports = {
             SET "onApprovedAR" = ooaa."onApprovedAR"
             FROM "TempObjectivesONApprovedARs" ooaa
             WHERE "Objectives"."id" = ooaa."objectiveId";
+          END$$;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Clean up Roles and add isSpecialist columns
+      try {
+        await queryInterface.addColumn('Roles', 'isSpecialist', {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          default: false,
+          onUpdate: 'CASCADE',
+        }, { transaction });
+
+        await queryInterface.addColumn('Roles', 'deletedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Roles', 'mapsTo', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+          CREATE TEMP TABLE "TempRoles" AS
+          SELECT
+            MIN(r."id") "id",
+            r.name,
+            r."fullName",
+            MIN(r."createdAt") "createdAt",
+            MAX(r."updatedAt") "updatedAt",
+            MAX(r."updatedAt") "deletedAt",
+            r."isSpecialist",
+            r."mapsTo"
+          FROM "Roles" r
+          GROUP BY  r.name, r."fullName", r."isSpecialist", r."mapsTo"
+          ORDER BY  r.name, r."fullName", r."isSpecialist", r."mapsTo";
+
+          TRUNCATE TABLE
+            "Roles",
+            "RoleTopics",
+            "ObjectiveRoles",
+            "ObjectiveTemplateRoles"
+          RESTART IDENTITY;
+
+          INSERT INTO "Roles" (
+            "id",
+            "name",
+            "fullName",
+            "createdAt",
+            "updatedAt",
+            "deletedAt",
+            "isSpecialist",
+            "mapsTo"
+          )
+          SELECT
+            "id",
+            "name",
+            "fullName",
+            "createdAt",
+            "updatedAt",
+            "deletedAt",
+            "isSpecialist",
+            "mapsTo"
+          FROM "TempRoles";
+
+          UPDATE ONLY "Roles"
+          SET "isSpecialist" = true
+          WHERE "fullName" in (
+            'Family Engagement Specialist',
+            'Health Specialist',
+            'Early Childhood Specialist',
+            'System Specialist',
+            'Grantee Specialist'
+          );
+
+          UPDATE ONLY "Roles" r1
+          SET
+            "deletedAt" = NOW(),
+            "mapsTo" = r2.id
+          FROM "Roles" r2
+          WHERE r1."fullName" = 'Grants Specialist'
+          AND r2."fullName" = 'Grantee Specialist';
+
+          DROP TABLE "TempRoles";
           END$$;`,
           { transaction },
         );
@@ -771,6 +943,8 @@ module.exports = {
 
             TRUNCATE TABLE
               "ActivityReportObjectives",
+              "ObjectiveRoles",
+              "ObjectiveTemplateRoles",
               "ObjectiveResources",
               "ObjectiveTopics",
               "Objectives",

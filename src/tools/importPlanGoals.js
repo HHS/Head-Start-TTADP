@@ -207,7 +207,7 @@ export default async function importGoals(fileKey, region) {
     );
     await TopicGoal.bulkCreate(cleanTopicGoals, {
       ignoreDuplicates: true,
-    });
+      validate: true,
     // await GrantGoal.bulkCreate(
     //   cleanGrantGoals,
     //   {

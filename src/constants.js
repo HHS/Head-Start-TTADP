@@ -133,3 +133,8 @@ export const CLOSE_SUSPEND_REASONS = [
   'Recipient is not responding',
   'Regional Office request',
 ];
+
+export const CREATION_METHOD = [
+  'Automatic',
+  'Manual',
+];

@@ -205,7 +205,7 @@ describe('activityReportApprovers services', () => {
         userId: secondMockManager.id,
         status: APPROVER_STATUSES.NEEDS_ACTION,
         note: 'do x, y, x',
-      }]);
+      }], { validate: true });
       // remove mockManager
       const afterRemove = await syncApprovers(report.id);
       // check removed

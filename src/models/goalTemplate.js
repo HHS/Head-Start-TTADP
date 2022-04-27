@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId' });
+      GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId', as: 'goals' });
       GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId' });
       GoalTemplate.hasMany(
         models.GoalTemplateObjectiveTemplate,
@@ -56,9 +56,17 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'GoalTemplate',
     hooks: {
       beforeValidate: async (instance) => {
-        if (instance.changed().includes('templateName')) {
+        const changed = instance.changed();
+        if (Array.isArray(changed) && changed.includes('templateName')) {
           // eslint-disable-next-line no-param-reassign
           instance.templateNameModifiedAt = new Date();
+        }
+        if (Array.isArray(changed)
+        && (!changed.includes('creationMethod')
+        || instance.creationMethod === null
+        || instance.creationMethod === undefined)) {
+          // eslint-disable-next-line no-param-reassign
+          instance.creationMethod = 'Automatic';
         }
       },
     },
