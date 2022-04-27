@@ -67,7 +67,7 @@ export default function NextStepsRepeater({
                 }
             <div
               key={`next-step-flex-${index + 1}`}
-              className={`display-flex ${!item.note
+              className={`display-flex ${(!item.note && errors[name])
                     || onBlurValidationStates[index] ? 'blank-next-step' : null}`}
             >
               <Label htmlFor={`next-step-${index + 1}`} className="sr-only">
