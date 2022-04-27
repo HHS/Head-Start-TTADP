@@ -17,7 +17,7 @@ import moment from 'moment';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
-import './index.css';
+import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';

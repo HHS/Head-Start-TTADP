@@ -244,3 +244,12 @@ export const GOAL_SUSPEND_REASONS = [
   'Recipient is not responding',
   'Regional Office request',
 ];
+
+export const colors = {
+  smartHubBgBlue: '#264a64', // ACF blue
+  smartHubBluePrimary: '#0166ab',
+  smartHubBgGrey: '#f9f9f9', // background color, also used for alternating table stripes
+  smartHubTextInk: '#1b1b1b',
+  smartHubOrange: '#e29f4d',
+  smartHubMedTeal: '#407972',
+};

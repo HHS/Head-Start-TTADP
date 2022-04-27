@@ -8,7 +8,7 @@
 import React from 'react';
 import AutosizeInput from 'react-input-autosize';
 
-import './GoalInput.css';
+import './GoalInput.scss';
 
 const inputStyle = (isHidden) => ({
   label: 'input',

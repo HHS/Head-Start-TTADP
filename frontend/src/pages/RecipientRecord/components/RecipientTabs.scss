@@ -1,9 +1,11 @@
+@use '../../../colors.scss' as *;
+
 .ttahub-recipient-record--tabs_nav {
     margin-left: -1rem;
 }
 
 .ttahub-recipient-record--tabs_link, .ttahub-recipient-record--tabs_link:visited {
-    color: #21272d;
+    color: $smart-hub-text-ink;
     text-decoration: none;
 }
 
@@ -13,10 +15,10 @@
 }
 
 .ttahub-recipient-record--tabs_link--active{
-    border-bottom: 4px solid #0166ab;
+    border-bottom: 4px solid $smart-hub-blue-primary;
     font-weight: bold;
 }
 
 .ttahub-recipient-record--tabs_back-to-search, .ttahub-recipient-record--tabs_back-to-search :visited {
-    color: #0166ab;
+    color: $smart-hub-blue-primary;
 }

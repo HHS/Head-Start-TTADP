@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ReactSelect from 'react-select';
 
 import { DropdownIndicator } from './MultiSelect';
+import { colors } from '../Constants';
 
 function Select({
   name,
@@ -26,7 +27,7 @@ function Select({
       fontFamily: 'SourceSansPro',
       textTransform: 'capitalize',
       fontSize: '14px',
-      color: '#21272d',
+      color: colors.smartHubTextInk,
       lineHeight: '22px',
     }),
     control: (provided, state) => ({

@@ -1,3 +1,4 @@
+@use '../../colors.scss' as *;
 
 .smart-hub--report-checkbox {
   margin-top: 1.25rem;
@@ -9,7 +10,7 @@
 }
 
 .smart-hub--virtual-delivery-group {
-  border-left-color: #0166ab;
+  border-left-color: $smart-hub-blue-primary;
   border-left-style: solid;
   border-left-width: 4px;
   padding-left: 10px;
@@ -18,7 +19,7 @@
 .smart-hub--report-legend .usa-legend {
   font-family: 'Source Sans Pro Web';
   font-size: 17px;
-  color: #21272d;
+  color: $smart-hub-text-ink;
   line-height: 22px;
   height: 16px;
   font-weight: 700;
@@ -66,14 +67,14 @@
 
 .icon {
   display:inline-block;
-    font-size: 40px;
-    line-height: 50px;
-    background-color:black;
-    color:white;
-    width: 50px;
-    height: 50px;
-    text-align: center;
-    vertical-align: bottom;
+  font-size: 40px;
+  line-height: 50px;
+  background-color:black;
+  color:white;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  vertical-align: bottom;
 }
 
 .smart-hub--tag-approved {
