@@ -94,4 +94,10 @@ describe('GoalPicker', () => {
     const input = document.querySelector('[name="goalForEditing"');
     expect(input.value).toBe(availableGoal.value.toString());
   });
+
+  it('properly renders when there is no goal for editing selected', async () => {
+    renderGoalPicker([], null, null);
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    expect(selector).toBeVisible();
+  });
 });

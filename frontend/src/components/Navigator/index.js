@@ -121,6 +121,9 @@ function Navigator({
     }
   };
   const onGoalFormNavigate = async () => {
+    // the goal form only allows for one goal to be open at a time
+    // but the objectives are stored in a subfield
+    // so we need to access the objectives and bundle them together in order to validate them
     const fieldArrayName = `goal-${goalForEditing ? goalForEditing.id : 'new'}.objectives`;
     const objectives = getValues(fieldArrayName);
 
