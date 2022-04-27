@@ -75,6 +75,7 @@ export default function NextStepsRepeater({
                 { index + 1 }
               </Label>
               <Textarea
+                id={`next-step-${index + 1}`}
                 className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                 name={`${name}[${index}].note`}
                 type="text"
