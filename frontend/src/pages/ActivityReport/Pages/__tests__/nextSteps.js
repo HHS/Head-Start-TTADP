@@ -6,7 +6,6 @@ import {
 } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
-// import { act } from 'react-dom/test-utils';
 
 import nextSteps from '../nextSteps';
 
