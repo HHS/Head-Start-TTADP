@@ -1,33 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
 import { Fieldset, Label } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import FormItem from '../../../components/FormItem';
 import ReviewPage from './Review/ReviewPage';
 
 const NextSteps = ({ activityRecipientType }) => {
-  // Get form context.
-  const { setValue } = useFormContext();
-
-  // Get form data values.
-  const specialistNextSteps = useWatch({ name: 'specialistNextSteps' });
-  const recipientNextSteps = useWatch({ name: 'recipientNextSteps' });
-
   // Create labels.
   const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
   const tipDisplayName = activityRecipientType === 'other-entity' ? 'other entity' : 'recipient';
-
-  // Update specialists next steps form data and state var.
-  const specialistNextStepsUpdated = (updatedSpecialistSteps) => {
-    setValue('specialistNextSteps', updatedSpecialistSteps);
-  };
-
-  // Update recipients next steps form data and state var.
-  const recipientNextStepsUpdated = (updatedRecipientSteps) => {
-    setValue('recipientNextSteps', updatedRecipientSteps);
-  };
 
   return (
     <>
@@ -46,9 +28,8 @@ const NextSteps = ({ activityRecipientType }) => {
           <NextStepsRepeater
             id="specialist-next-steps-repeater-id"
             key="specialist-next-steps-repeater"
-            stepType="specialist"
-            nextSteps={specialistNextSteps}
-            setNextSteps={specialistNextStepsUpdated}
+            name="specialistNextSteps"
+            ariaName="Specialist Next Steps"
           />
         </FormItem>
       </Fieldset>
@@ -64,9 +45,8 @@ const NextSteps = ({ activityRecipientType }) => {
           <NextStepsRepeater
             id="recipient-next-steps-repeater-id"
             key="recipient-next-steps-repeater"
-            stepType="recipient"
-            nextSteps={recipientNextSteps}
-            setNextSteps={recipientNextStepsUpdated}
+            name="recipientNextSteps"
+            ariaName="Recipient Next Steps"
           />
         </FormItem>
       </Fieldset>
@@ -76,6 +56,10 @@ const NextSteps = ({ activityRecipientType }) => {
 
 NextSteps.propTypes = {
   activityRecipientType: PropTypes.string.isRequired,
+};
+
+NextSteps.defautProps = {
+  activityRecipientType: '',
 };
 
 const sections = [

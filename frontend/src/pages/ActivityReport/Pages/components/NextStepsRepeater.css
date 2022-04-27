@@ -1,3 +1,10 @@
-.usa-form-group .usa-form-group--error .usa-textarea  {
-    border: 2px solid #b50909;
+
+/* Outline a blank step onBlur or form Validation */
+.ttahub-next-steps-repeater .usa-form-group--error .blank-next-step textarea,
+.usa-form-group--error .ttahub-next-steps-repeater .blank-next-step textarea {
+    border: 3px solid #b50909;
   }
+
+.ttahub-next-steps-repeater textarea {
+  min-width: 500px;
+}
