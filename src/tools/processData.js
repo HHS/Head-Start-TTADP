@@ -353,7 +353,7 @@ export const truncateAuditTables = async () => {
   }
 };
 
-const processData = async (mockReport) => {
+const processData = async (mockReport) => sequelize.transaction(async () => {
   const activityReportId = mockReport ? mockReport.id : null;
   const where = activityReportId ? { id: activityReportId } : {};
   const filesWhere = activityReportId ? { activityReportId } : {};
@@ -374,8 +374,6 @@ const processData = async (mockReport) => {
   await hideUsers(userIds);
   // Hide recipients and grants
   await hideRecipientsGrants(recipientsGrants);
-
-  await truncateAuditTables();
 
   // loop through the found reports
   for await (const report of reports) {
@@ -462,8 +460,8 @@ const processData = async (mockReport) => {
     where: {},
     truncate: true,
   });
-
-  return Promise.all(promises);
-};
+  await Promise.all(promises);
+  return truncateAuditTables();
+});
 
 export default processData;
