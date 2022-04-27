@@ -382,10 +382,11 @@ export async function goalsForGrants(grantIds) {
   });
 }
 
-async function removeActivityReportObjectivesFromReport(reportId) {
+async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
   return ActivityReportObjective.destroy({
     where: {
       activityReportId: reportId,
+      objectiveId: objectiveIdsToRemove,
     },
   });
 }
@@ -422,7 +423,7 @@ async function removeObjectives(currentObjectiveIds) {
   });
 }
 
-async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals) {
+export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
   const previousObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
@@ -430,38 +431,36 @@ async function removeUnusedObjectivesGoalsFromReport(reportId, currentGoals) {
     include: {
       model: Objective,
       as: 'objective',
+      include: {
+        model: Goal,
+        as: 'goal',
+        include: {
+          model: Objective,
+          as: 'objectives',
+        },
+      },
     },
   });
 
-  const currentGoalIds = currentGoals.map((g) => g.id);
-  const currentObjectiveIds = currentGoals.map((g) => g.objectives.map((o) => o.id)).flat();
+  const currentObjectiveIds = currentObjectives.map((o) => o.id);
 
-  const previousGoalIds = previousObjectives.map((ro) => ro.objective.goalId);
-  const previousObjectiveIds = previousObjectives.map((ro) => ro.objectiveId);
-
-  const goalIdsToRemove = previousGoalIds.filter((id) => !currentGoalIds.includes(id));
-  const objectiveIdsToRemove = [];
-  await Promise.all(
-    previousObjectiveIds.map(async (id) => {
-      const notCurrent = !currentObjectiveIds.includes(id);
-      const activityReportObjectives = await ActivityReportObjective
-        .findAll({ where: { objectiveId: id } });
-      const lastInstance = activityReportObjectives.length <= 1;
-      if (notCurrent && lastInstance) {
-        objectiveIdsToRemove.push(id);
-      }
-    }),
+  const activityReportObjectivesToRemove = previousObjectives.filter(
+    (aro) => !currentObjectiveIds.includes(aro.objectiveId),
   );
 
-  await removeActivityReportObjectivesFromReport(reportId);
+  const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
+  const goalIdsToRemove = activityReportObjectivesToRemove.filter((aro) => {
+    const objectives = (aro.objective.goal && aro.objective.goal.objectives) || [];
+    return objectives.length === 1 && objectives[0].id === aro.objectiveId;
+  }).map((aro) => aro.objective.goalId);
+
+  await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
   await removeObjectives(objectiveIdsToRemove);
-  await removeGoals(goalIdsToRemove);
+  return removeGoals(goalIdsToRemove);
 }
 
 export async function saveGoalsForReport(goals, report) {
-  await removeUnusedObjectivesGoalsFromReport(report.id, goals);
-
-  return Promise.all(goals.map(async (goal) => {
+  const currentGoals = await Promise.all(goals.map(async (goal) => {
     const goalId = goal.id;
     const fields = goal;
 
@@ -472,28 +471,35 @@ export async function saveGoalsForReport(goals, report) {
     // using upsert here and below
     // - add returning: true to options to get an array of [<Model>,<created>] (postgres only)
     // - https://sequelize.org/v5/class/lib/model.js~Model.html#static-method-upsert
-
-    const newGoal = await Goal.upsert(fields, { returning: true });
-
-    return Promise.all(goal.objectives.map(async (objective) => {
+    const [newGoal] = await Goal.upsert(fields, { returning: true });
+    const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
       const { id, ...updatedFields } = objective;
-      const updatedObjective = { ...updatedFields, goalId: newGoal[0].id };
+      const updatedObjective = { ...updatedFields, goalId: newGoal.id };
 
       if (Number.isInteger(id)) {
         updatedObjective.id = id;
       }
 
-      const savedObjective = await Objective.upsert(
+      const [savedObjective] = await Objective.upsert(
         updatedObjective,
         { returning: true },
       );
 
-      return ActivityReportObjective.create({
-        objectiveId: savedObjective[0].id,
-        activityReportId: report.id,
+      await ActivityReportObjective.findOrCreate({
+        where: {
+          objectiveId: savedObjective.id,
+          activityReportId: report.id,
+        },
       });
+      return savedObjective;
     }));
+
+    newGoal.objectives = newObjectives;
+    return newGoal;
   }));
+
+  const currentObjectives = currentGoals.map((g) => g.objectives).flat();
+  return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 
 export async function copyGoalsToGrants(goals, grantIds) {
