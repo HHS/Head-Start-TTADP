@@ -3,6 +3,7 @@ const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+// const { auditLogger } = require('../logger');
 
 /**
  * Helper function called by model hooks.
@@ -293,8 +294,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
   }, {
-    sequelize,
-    modelName: 'ActivityReport',
     hooks: {
       beforeCreate: (report) => {
         copyStatus(report);
@@ -302,7 +301,21 @@ module.exports = (sequelize, DataTypes) => {
       beforeUpdate: (report) => {
         copyStatus(report);
       },
+      beforeValidate: async (instance) => {
+        const changed = instance.changed();
+        if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
+          if(instance.previous('calculatedStatus') === REPORT_STATUSES.SUBMITTED && instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED) {
+            // TODO: Run extensive check and update where required all used goals and objectives as not onApprovedAR
+          }
+          else if(instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+            // TODO: Mark all used goals and objectives as onApprovedAR
+          }
+          // eslint-disable-next-line no-param-reassign
+        }
     },
+  },
+  sequelize,
+  modelName: 'ActivityReport',
   });
   return ActivityReport;
 };

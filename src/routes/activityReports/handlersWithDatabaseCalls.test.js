@@ -52,7 +52,7 @@ const mockResponse = {
 };
 
 beforeAll(async () => {
-  await User.bulkCreate([mockUser, mockManager, secondMockManager]);
+  await User.bulkCreate([mockUser, mockManager, secondMockManager], { validate: true });
   await Permission.bulkCreate([{
     userId: mockUser.id,
     regionId: 1,
@@ -70,7 +70,7 @@ beforeAll(async () => {
     userId: mockUser.id,
     regionId: 14,
     scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
-  }]);
+  }], { validate: true });
 });
 
 afterAll(async () => {

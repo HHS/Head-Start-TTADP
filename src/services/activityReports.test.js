@@ -19,6 +19,7 @@ import SCOPES from '../middleware/scopeConstants';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 import { createReport, destroyReport } from '../testUtils';
+import { auditLogger } from '../logger';
 
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
@@ -119,7 +120,7 @@ describe('Activity report service', () => {
         User.bulkCreate([
           mockUserFour,
           mockUserFive,
-        ]),
+        ], { validate: true }),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
         Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
         Region.create({ name: 'office 22', id: 22 }),
@@ -266,7 +267,7 @@ describe('Activity report service', () => {
           mockUserThree,
           alertsMockUserOne,
           alertsMockUserTwo,
-        ]),
+        ], { validate: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID } }),
         Region.create({ name: 'office 19', id: 19 }),
@@ -388,7 +389,13 @@ describe('Activity report service', () => {
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         // When that report is created
-        const report = await createOrUpdate(reportObjectWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportObjectWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.length).toBe(2);
@@ -406,7 +413,13 @@ describe('Activity report service', () => {
         };
 
         // When that report is created
-        const report = await createOrUpdate(reportWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
 
         // Then we see that it was saved correctly
         expect(report.recipientNextSteps.length).toBe(0);
@@ -424,7 +437,13 @@ describe('Activity report service', () => {
         };
 
         // When that report is created
-        const report = await createOrUpdate(reportWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
 
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(0);

@@ -112,7 +112,7 @@ describe('grant filtersToScopes', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-    ]);
+    ], { validate: true });
   });
 
   afterAll(async () => {

@@ -19,6 +19,7 @@ const goalTemplates = [
     createdAt: now,
     updatedAt: now,
     templateNameModifiedAt: now,
+    creationMethod: 'Automatic',
   },
   {
     id: 2,
@@ -26,6 +27,7 @@ const goalTemplates = [
     createdAt: now,
     updatedAt: now,
     templateNameModifiedAt: now,
+    creationMethod: 'Automatic',
   },
   {
     id: 3,
@@ -33,6 +35,7 @@ const goalTemplates = [
     createdAt: now,
     updatedAt: now,
     templateNameModifiedAt: now,
+    creationMethod: 'Automatic',
   },
   {
     id: 4,
@@ -40,6 +43,7 @@ const goalTemplates = [
     createdAt: now,
     updatedAt: now,
     templateNameModifiedAt: now,
+    creationMethod: 'Automatic',
   },
 ];
 
@@ -52,6 +56,7 @@ const goals = [
     updatedAt: now,
     goalTemplateId: 1,
     grantId: 1,
+    onApprovedAR: false,
   },
   {
     id: 2,
@@ -61,6 +66,7 @@ const goals = [
     updatedAt: now,
     goalTemplateId: 2,
     grantId: 1,
+    onApprovedAR: false,
   },
   {
     id: 3,
@@ -70,6 +76,7 @@ const goals = [
     updatedAt: now,
     goalTemplateId: 3,
     grantId: 1,
+    onApprovedAR: false,
   },
   {
     id: 4,
@@ -79,6 +86,7 @@ const goals = [
     updatedAt: now,
     goalTemplateId: 4,
     grantId: 2,
+    onApprovedAR: false,
   },
 ];
 
@@ -119,8 +127,9 @@ const goals = [
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('Goals', goals);
-    await queryInterface.bulkInsert('GrantGoals', grantGoals);
+    await queryInterface.bulkInsert('GoalTemplates', goalTemplates, { validate: true });
+    await queryInterface.bulkInsert('Goals', goals, { validate: true });
+    // await queryInterface.bulkInsert('GrantGoals', grantGoals);
     await queryInterface.sequelize.query('ALTER SEQUENCE "Goals_id_seq" RESTART WITH 10;');
     await queryInterface.sequelize.query('ALTER SEQUENCE "GrantGoals_id_seq" RESTART WITH 10;');
   },

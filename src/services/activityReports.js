@@ -75,7 +75,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
       newCollaborators,
-      { ignoreDuplicates: true },
+      { ignoreDuplicates: true, validate: true },
     );
     await ActivityReportCollaborator.destroy(
       {
@@ -143,7 +143,7 @@ async function saveReportRecipients(
     };
   }
 
-  await ActivityRecipient.bulkCreate(newRecipients, { ignoreDuplicates: true });
+  await ActivityRecipient.bulkCreate(newRecipients, { ignoreDuplicates: true, validate: true });
   await ActivityRecipient.destroy({ where });
 }
 
@@ -169,7 +169,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       activityReportId,
       noteType,
     }));
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'] });
+    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'], validate: true });
   }
 }
 

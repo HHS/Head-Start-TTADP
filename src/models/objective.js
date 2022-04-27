@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       // Objective.belongsToMany(models.Topic,
       // { through: models.ObjectiveTopic, foreignKey: 'topicId', as: 'topics' });
       Objective.belongsToMany(models.Topic, { through: models.ObjectiveTopic, foreignKey: 'objectiveId', as: 'topics' });
+      Objective.belongsToMany(models.Role, { through: models.ObjectiveRole, foreignKey: 'objectiveId', as: 'roles' });
       Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: +'objectiveTemplates', onDelete: 'cascade' });
       Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
       Objective.belongsToMany(models.File, {
@@ -49,6 +50,9 @@ module.exports = (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
     },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+    },
   }, {
     sequelize,
     modelName: 'Objective',
@@ -68,6 +72,14 @@ module.exports = (sequelize, DataTypes) => {
           });
           // eslint-disable-next-line no-param-reassign
           instance.objectiveTemplateId = objectiveTemplate[0].id;
+        }
+
+        // eslint-disable-next-line no-prototype-builtins
+        if (!instance.hasOwnProperty('onApprovedAR')
+        || instance.onApprovedAR === null
+        || instance.onApprovedAR === undefined) {
+          // eslint-disable-next-line no-param-reassign
+          instance.onApprovedAR = false;
         }
       },
     },

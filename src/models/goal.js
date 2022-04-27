@@ -14,11 +14,13 @@ const { formatDate } = require('../lib/modelHelpers');
 module.exports = (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
+      Goal.belongsToMany(models.ActivityReport, { through: models.ActivityReportGoal, foreignKey: 'goalId', as: 'activityReports' });
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
       Goal.belongsToMany(models.Recipient, { through: models.GrantGoal, foreignKey: 'goalId', as: 'recipients' });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grants' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', onDelete: 'cascade' });
+      // Goal.hasOne(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
     }
   }
   Goal.init({
@@ -73,6 +75,10 @@ module.exports = (sequelize, DataTypes) => {
     previousStatus: {
       type: DataTypes.STRING,
     },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
@@ -82,16 +88,27 @@ module.exports = (sequelize, DataTypes) => {
         if (!instance.hasOwnProperty('goalTemplateId')
         || instance.goalTemplateId === null
         || instance.goalTemplateId === undefined) {
+          const grant = await sequelize.models.Grant.findOne({ where: { id: instance.grantId } });
           const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-            where: { templateName: instance.name },
+            where: { templateName: instance.name, regionId: grant.regionId },
             default: {
               templateName: instance.name,
               lastUsed: instance.createdAt,
+              regionId: grant.regionId,
+              creationMethod: 'Automatic',
             },
             transaction: options.transaction,
           });
           // eslint-disable-next-line no-param-reassign
           instance.goalTemplateId = goalTemplate[0].id;
+        }
+
+        // eslint-disable-next-line no-prototype-builtins
+        if (!instance.hasOwnProperty('onApprovedAR')
+        || instance.onApprovedAR === null
+        || instance.onApprovedAR === undefined) {
+          // eslint-disable-next-line no-param-reassign
+          instance.onApprovedAR = false;
         }
       },
     },

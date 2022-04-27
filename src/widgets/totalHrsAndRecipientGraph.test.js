@@ -81,7 +81,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
       { name: 'office 177', id: 177 },
       { name: 'office 133', id: 133 },
       { name: 'office 188', id: 188 },
-    ]);
+    ], { validate: true });
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE,
@@ -99,7 +99,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
       status: 'Active',
       startDate: new Date('2021/01/01'),
       endDate: new Date('2021/01/02'),
-    }]);
+    }], { validate: true });
   });
 
   afterAll(async () => {

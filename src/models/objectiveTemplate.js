@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
       ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources' });
       ObjectiveTemplate.belongsToMany(models.Topic, { through: models.ObjectiveTemplateTopic, foreignKey: 'objectiveTemplateId', as: 'topics' });
+      ObjectiveTemplate.belongsToMany(models.Role, { through: models.ObjectiveTemplateRole, foreignKey: 'objectiveTemplateId', as: 'roles' });
       ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
       ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
         through: models.GoalTemplateObjectiveTemplate,
@@ -35,13 +36,29 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
-    templateNameModifiedAt: {
+    templateTitleModifiedAt: {
       allowNull: false,
       type: DataTypes.DATE,
     },
   }, {
     sequelize,
     modelName: 'ObjectiveTemplate',
+    hooks: {
+      beforeValidate: async (instance) => {
+        const changed = instance.changed();
+        if (Array.isArray(changed) && changed.includes('templateTitle')) {
+          // eslint-disable-next-line no-param-reassign
+          instance.templateTitleModifiedAt = new Date();
+        }
+        if (Array.isArray(changed)
+        && (!changed.includes('creationMethod')
+        || instance.creationMethod === null
+        || instance.creationMethod === undefined)) {
+          // eslint-disable-next-line no-param-reassign
+          instance.creationMethod = 'Automatic';
+        }
+      },
+    },
   });
   return ObjectiveTemplate;
 };

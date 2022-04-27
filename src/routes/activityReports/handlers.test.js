@@ -126,7 +126,7 @@ const report = {
 
 describe('Activity Report handlers', () => {
   beforeAll(async () => {
-    await UserModel.bulkCreate([mockUser, mockManager]);
+    await UserModel.bulkCreate([mockUser, mockManager], { validate: true });
     await Permission.create({
       userId: mockUser.id,
       regionId: 1,
