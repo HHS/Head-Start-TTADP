@@ -18,7 +18,7 @@ describe('Goals DB service', () => {
 
   afterAll(async () => {
     await sequelize.close();
-  })
+  });
 
   describe('copyGoalsToGrants', () => {
     it('creates a new grantGoal for every grant goal pair', async () => {
