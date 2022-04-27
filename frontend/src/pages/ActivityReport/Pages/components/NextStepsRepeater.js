@@ -69,13 +69,17 @@ export default function NextStepsRepeater({
               key={`next-step-flex-${index + 1}`}
               className={`display-flex ${onBlurValidationStates[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
             >
-              <Label htmlFor={`next-step-${index + 1}`} className="sr-only">
+              <Label
+                htmlFor={`${name === 'specialistNextSteps'
+                  ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
+                className="sr-only"
+              >
                 Next step
                 {' '}
                 { index + 1 }
               </Label>
               <Textarea
-                id={`next-step-${index + 1}`}
+                id={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
                 className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                 name={`${name}[${index}].note`}
                 type="text"
