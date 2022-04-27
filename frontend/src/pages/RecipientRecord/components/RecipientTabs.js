@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import { NavLink, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import './RecipientTabs.css';
 import FeatureFlag from '../../../components/FeatureFlag';
+import './RecipientTabs.scss';
 
 export default function RecipientTabs({ region, recipientId }) {
   const linkClass = 'display-block padding-2 ttahub-recipient-record--tabs_link';

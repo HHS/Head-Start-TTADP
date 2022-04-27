@@ -1,3 +1,5 @@
+@use '../colors.scss' as *;
+
 .smart-hub-tooltip .smart-hub--ellipsis{
     font-size: 15px;
     position: relative;
@@ -17,7 +19,7 @@
 }
 
 .smart-hub--ellipsis {
-    color: #21272D;
+    color: $smart-hub-text-ink;
     display: inline-block;
     overflow-x: hidden;
     overflow-y: visible;
