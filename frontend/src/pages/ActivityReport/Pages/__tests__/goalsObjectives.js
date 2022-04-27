@@ -123,14 +123,16 @@ describe('goals objectives', () => {
   describe('when activity recipient type is not "recipient"', () => {
     it('the objectives section is displayed', async () => {
       renderGoals([1], 'otherEntity');
-      expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
+      expect(await screen.findByText(
+        'You\'re creating an activity report for an entity that\'s not a grant recipient, so you only need to create objectives. The goal section is removed.',
+      )).toBeVisible();
     });
   });
 
   describe('title override', () => {
     it('returns objective if activityRecipientType is other-entity', async () => {
       const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entity' });
-      expect(res).toEqual('Objectives');
+      expect(res).toEqual('Objectives and topics');
     });
 
     it('returns goals if activityRecipientType is recipient', async () => {
