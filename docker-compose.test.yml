@@ -27,6 +27,7 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://test-backend:8080
+      - REACT_APP_BACKEND_PROXY=http://test-backend:8080
     networks:
       - ttadp-test
   test-db:
