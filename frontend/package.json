@@ -65,6 +65,7 @@
     "ansi-regex": "^5.0.1",
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
+    "ejs": "^3.1.7",
     "follow-redirects": "^1.14.8",
     "glob-parent": "^5.1.2",
     "minimist": "^1.2.6",
