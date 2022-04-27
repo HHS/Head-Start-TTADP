@@ -17,7 +17,7 @@ export default function ObjectiveTitle({
 
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>
-      <Label htmlFor="objectiveTitle" className={readOnly ? 'text-bold' : ''}>
+      <Label htmlFor={inputName} className={readOnly ? 'text-bold' : ''}>
         TTA objective
         {' '}
         { !readOnly ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
