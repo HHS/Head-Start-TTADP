@@ -18,7 +18,7 @@ export default function GoalDate({
 
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="goalEndDate">
+      <Label htmlFor={inputName}>
         Estimated close date (mm/dd/yyyy)
         {' '}
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
