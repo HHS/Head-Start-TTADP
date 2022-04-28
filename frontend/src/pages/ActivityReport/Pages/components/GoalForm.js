@@ -118,7 +118,7 @@ export default function GoalForm({ goal, topicOptions, roles }) {
         : null }
 
       <Objectives
-        goal={goal}
+        goalId={goal.id}
         objectives={objectives}
         topicOptions={topicOptions}
         objectiveErrors={[]}

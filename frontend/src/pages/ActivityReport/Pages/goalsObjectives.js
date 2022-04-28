@@ -177,7 +177,7 @@ const GoalsObjectives = () => {
         * we show the add new goal button if we are reviewing existing goals
         * and if the report HAS goals
         */}
-      {showGoals && !isGoalFormClosed && isRecipientReport
+      {showGoals && isGoalFormClosed && isRecipientReport
         ? (
           <PlusButton onClick={addNewGoal} text="Add new goal" />
         ) : (
