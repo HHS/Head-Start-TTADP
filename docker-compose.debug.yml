@@ -34,7 +34,6 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://backend:8080
-      - REACT_APP_BACKEND_PROXY=http://backend:8080
   worker:
     build:
       context: .
