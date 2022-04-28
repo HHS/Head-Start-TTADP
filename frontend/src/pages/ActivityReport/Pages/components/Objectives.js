@@ -14,7 +14,7 @@ export default function Objectives({
 }) {
   const { errors, getValues } = useFormContext();
 
-  const fieldArrayName = `goal-${goalId}.objectives`;
+  const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
   const defaultValues = objectivesForGoal || [];
 
@@ -74,10 +74,10 @@ export default function Objectives({
           />
         )
         : fields.map((objective, index) => {
-          const objectiveErrors = errors[`goal-${goalId}`]
-          && errors[`goal-${goalId}`].objectives
-          && errors[`goal-${goalId}`].objectives[index]
-            ? errors[`goal-${goalId}`].objectives[index]
+          const objectiveErrors = errors[fieldArrayName]
+          && errors[fieldArrayName].objectives
+          && errors[fieldArrayName].objectives[index]
+            ? errors[fieldArrayName].objectives[index]
             : {};
 
           return (
