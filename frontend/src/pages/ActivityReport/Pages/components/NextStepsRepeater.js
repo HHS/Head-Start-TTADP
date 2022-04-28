@@ -56,7 +56,6 @@ export default function NextStepsRepeater({
       <div className="ttahub-next-steps-repeater">
         { fields.map((item, index) => (
           <FormGroup
-            key={item.key}
             className="margin-top-1"
             error={onBlurValidationStates[index]}
           >
@@ -70,8 +69,7 @@ export default function NextStepsRepeater({
               className={`display-flex ${onBlurValidationStates[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
             >
               <Label
-                htmlFor={`${name === 'specialistNextSteps'
-                  ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
+                key={item.key}
                 className="sr-only"
               >
                 Next step
@@ -79,7 +77,7 @@ export default function NextStepsRepeater({
                 { index + 1 }
               </Label>
               <Textarea
-                id={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
+                key={item.key}
                 className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                 name={`${name}[${index}].note`}
                 type="text"
