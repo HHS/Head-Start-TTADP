@@ -95,12 +95,15 @@ const GoalsObjectives = () => {
     onUpdateGoals(copyOfSelectedGoals);
 
     setValue('goalForEditing', goal);
+    const fieldArrayName = `goal[${index}].objectives`;
+    const objectives = getValues(fieldArrayName) || [];
+    setValue('goalForEditing.objectives', objectives);
     toggleGoalForm(false);
   };
 
   // the read only component expects things a little differently
-  const goalsForReview = selectedGoals.map((goal) => {
-    const fieldArrayName = `goal-${goal.id}.objectives`;
+  const goalsForReview = selectedGoals.map((goal, index) => {
+    const fieldArrayName = `goal[${index}].objectives`;
     const objectives = getValues(fieldArrayName) || [];
     return {
       ...goal,

@@ -63,8 +63,6 @@ export default function Objectives({
         each objective
       */}
 
-      <h1>{goalId}</h1>
-
       {fields.length < 1
         ? (
           <ObjectiveSelect
