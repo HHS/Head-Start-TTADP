@@ -69,7 +69,8 @@ export default function NextStepsRepeater({
               className={`display-flex ${onBlurValidationStates[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
             >
               <Label
-                key={item.key}
+                htmlFor={`${name === 'specialistNextSteps'
+                  ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
                 className="sr-only"
               >
                 Next step
@@ -78,6 +79,7 @@ export default function NextStepsRepeater({
               </Label>
               <Textarea
                 key={item.key}
+                id={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
                 className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                 name={`${name}[${index}].note`}
                 type="text"
