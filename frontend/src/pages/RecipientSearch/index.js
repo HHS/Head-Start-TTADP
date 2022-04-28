@@ -29,11 +29,11 @@ const DEFAULT_CENTRAL_OFFICE_SORT = {
 function RecipientSearch({ user }) {
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
-  const [appliedRegion, setAppliedRegion] = useState(hasCentralOffice ? 14 : regions[0]);
   const [queryAndSort, setQueryAndSort] = useSession('rtr-search', {
     query: '',
     activePage: 1,
     sortConfig: hasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT,
+    appliedRegion: hasCentralOffice ? 14 : regions[0],
   });
 
   const [results, setResults] = useState({ count: 0, rows: [] });
@@ -54,6 +54,10 @@ function RecipientSearch({ user }) {
     updateQueryAndSort('activePage', ap);
   };
 
+  const setAppliedRegion = (ar) => {
+    updateQueryAndSort('appliedRegion', ar);
+  };
+
   const inputRef = useRef();
   const offset = (activePage - 1) * RECIPIENTS_PER_PAGE;
 
@@ -61,7 +65,7 @@ function RecipientSearch({ user }) {
     async function fetchRecipients() {
       const filters = [];
 
-      if (appliedRegion === 14) {
+      if (queryAndSort.appliedRegion === 14) {
         getUserRegions(user).forEach((region) => {
           filters.push({
             id: uuidv4(),
@@ -75,7 +79,7 @@ function RecipientSearch({ user }) {
           id: uuidv4(),
           topic: 'region',
           condition: 'is',
-          query: appliedRegion,
+          query: queryAndSort.appliedRegion,
         });
       }
 
@@ -107,7 +111,7 @@ function RecipientSearch({ user }) {
     }
 
     fetchRecipients();
-  }, [appliedRegion, offset, sortConfig, user, queryAndSort, query, setQueryAndSort]);
+  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort]);
 
   function onApplyRegion(region) {
     setAppliedRegion(region.value);
@@ -153,7 +157,7 @@ function RecipientSearch({ user }) {
                     regions={regions}
                     onApply={onApplyRegion}
                     hasCentralOffice={hasCentralOffice}
-                    appliedRegion={appliedRegion}
+                    appliedRegion={queryAndSort.appliedRegion}
                     disabled={loading}
                   />
                 </div>
