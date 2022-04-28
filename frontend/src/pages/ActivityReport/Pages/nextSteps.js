@@ -55,10 +55,10 @@ const NextSteps = ({ activityRecipientType }) => {
 };
 
 NextSteps.propTypes = {
-  activityRecipientType: PropTypes.string.isRequired,
+  activityRecipientType: PropTypes.string,
 };
 
-NextSteps.defautProps = {
+NextSteps.defaultProps = {
   activityRecipientType: '',
 };
 

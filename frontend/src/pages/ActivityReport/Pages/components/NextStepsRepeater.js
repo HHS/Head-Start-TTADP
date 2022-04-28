@@ -26,7 +26,12 @@ export default function NextStepsRepeater({
   const canDelete = fields.length > 1;
 
   const onAddNewStep = () => {
-    append({ id: null, note: '' });
+    const allValues = getValues();
+    const fieldArray = allValues[name] || [];
+    const canAdd = fieldArray.every((field) => field.note !== '');
+    if (canAdd) {
+      append({ id: null, note: '' });
+    }
   };
 
   const onRemoveStep = (index) => {
@@ -56,6 +61,7 @@ export default function NextStepsRepeater({
       <div className="ttahub-next-steps-repeater">
         { fields.map((item, index) => (
           <FormGroup
+            key={`next-step-form-group-${index + 1}`}
             className="margin-top-1"
             error={onBlurValidationStates[index]}
           >
