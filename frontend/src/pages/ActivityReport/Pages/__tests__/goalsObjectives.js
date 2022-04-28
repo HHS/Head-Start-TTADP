@@ -77,16 +77,26 @@ describe('goals objectives', () => {
       expect(await screen.findByText('Goal summary')).toBeVisible();
     });
 
-    it('the display goals section does not show if no grants are selected', async () => {
+    it('the display goals shows a warning if no grants are selected', async () => {
       renderGoals([], 'recipient');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+      expect(await screen.findByText(/To create goals, first select a recipient/i)).toBeVisible();
     });
 
     it('you can click the little button', async () => {
-      renderGoals([1], 'recipient');
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
       const button = await screen.findByRole('button', { name: /add new goal/i });
+      let summaries = await screen.findAllByText('Goal summary');
+      expect(summaries.length).toBe(1);
       userEvent.click(button);
-      expect(await screen.findByText('Goal summary')).toBeVisible();
+      summaries = await screen.findAllByText('Goal summary');
+      expect(summaries.length).toBe(2);
     });
 
     it('you can edit a goal', async () => {
