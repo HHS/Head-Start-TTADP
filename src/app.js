@@ -16,6 +16,8 @@ import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
+const cspDirective = ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'];
+const defaultSrc = process.env.WEBSOCKET_URL ? [...cspDirective, `${process.env.WEBSOCKET_URL}`] : cspDirective;
 
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
@@ -27,11 +29,7 @@ app.use(helmet({
       'form-action': ["'self'"],
       scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
       imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
-      defaultSrc: [
-        "'self'",
-        'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json',
-        process.env.WEBSOCKET_URL,
-      ],
+      defaultSrc,
     },
   },
 }));
