@@ -8,11 +8,15 @@ import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import './NextStepsRepeater.css';
 
+const DEFAULT_STEP_HEIGHT = 80;
+
 export default function NextStepsRepeater({
   name,
   ariaName,
 }) {
-  const [onBlurValidationStates, setOnBlurValidationStates] = useState({});
+  const [heights, setHeights] = useState([]);
+  const [blurValidations, setBlurValidations] = useState([]);
+
   const {
     register, control, getValues, errors,
   } = useFormContext();
@@ -35,25 +39,34 @@ export default function NextStepsRepeater({
   };
 
   const onRemoveStep = (index) => {
+    // Remove from Array.
     remove(index);
 
     // Rebuild Blur Validation States.
-    const rebuiltValidations = {};
-    let newIndex = 0;
-    const allValues = getValues();
-    const newSteps = allValues[name] || [];
-    newSteps.forEach((s) => {
-      rebuiltValidations[newIndex] = !s.note;
-      newIndex += 1;
-    });
-    setOnBlurValidationStates(rebuiltValidations);
+    const updatedBlurValidations = blurValidations ? [...blurValidations] : [];
+    updatedBlurValidations.splice(index, 1);
+    setBlurValidations(updatedBlurValidations);
+
+    // Remove Height.
+    const updatedHeights = [...heights];
+    updatedHeights.splice(index, 1);
+    setHeights(updatedHeights);
   };
 
   const validateOnBlur = (note, i) => {
-    const existingValidations = { ...onBlurValidationStates };
     // Set Blur Validation State.
+    const existingValidations = blurValidations ? [...blurValidations] : [];
     existingValidations[i] = !note;
-    setOnBlurValidationStates(existingValidations);
+    setBlurValidations(existingValidations);
+  };
+
+  const onStepTextChanged = (e, index) => {
+    // Adjust Text Area Height If Greater than Default Height.
+    const existingHeights = [...heights];
+    if (e.target && e.target.scrollHeight && e.target.scrollHeight > DEFAULT_STEP_HEIGHT) {
+      existingHeights[index] = `${e.target.scrollHeight}px`;
+      setHeights(existingHeights);
+    }
   };
 
   return (
@@ -63,16 +76,16 @@ export default function NextStepsRepeater({
           <FormGroup
             key={`next-step-form-group-${index + 1}`}
             className="margin-top-1"
-            error={onBlurValidationStates[index]}
+            error={blurValidations[index]}
           >
             {
-                onBlurValidationStates[index] || (errors[name] && errors[name][index])
+                blurValidations[index] || (errors[name] && errors[name][index])
                   ? <ErrorMessage>Enter a next step</ErrorMessage>
                   : null
                 }
             <div
               key={`next-step-flex-${index + 1}`}
-              className={`display-flex ${onBlurValidationStates[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
+              className={`display-flex ${blurValidations[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
             >
               <Label
                 htmlFor={`${name === 'specialistNextSteps'
@@ -93,6 +106,8 @@ export default function NextStepsRepeater({
                 inputRef={register({ required: 'Enter a next step' })}
                 onBlur={({ target: { value } }) => validateOnBlur(value, index)}
                 data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
+                style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
+                onChange={(e) => onStepTextChanged(e, index)}
               />
               { canDelete ? (
                 <Button
