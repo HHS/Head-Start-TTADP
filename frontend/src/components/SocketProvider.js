@@ -10,6 +10,9 @@ export default function SocketProvider({ children }) {
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
+    if (!WS_URL) {
+      return null;
+    }
     const s = new WebSocket(WS_URL);
 
     // we don't want to send bufferdata, but json
