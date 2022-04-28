@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useWatch, useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
@@ -10,13 +10,13 @@ export default function Objectives({
   objectives,
   topicOptions,
   roles,
+  goalId,
 }) {
-  const goal = useWatch({ name: 'goalForEditing' });
-  const fieldArrayName = `goal-${goal ? goal.id : 'new'}.objectives`;
-  const objectivesForGoal = useWatch({ name: fieldArrayName });
-  const defaultValues = objectivesForGoal || [];
+  const { errors, getValues } = useFormContext();
 
-  const { errors } = useFormContext();
+  const fieldArrayName = `goal-${goalId}.objectives`;
+  const objectivesForGoal = getValues(fieldArrayName);
+  const defaultValues = objectivesForGoal || [];
 
   /**
    * we can use the useFieldArray hook from react hook form to
@@ -63,6 +63,8 @@ export default function Objectives({
         each objective
       */}
 
+      <h1>{goalId}</h1>
+
       {fields.length < 1
         ? (
           <ObjectiveSelect
@@ -72,10 +74,10 @@ export default function Objectives({
           />
         )
         : fields.map((objective, index) => {
-          const objectiveErrors = errors[`goal-${goal ? goal.id : 'new'}`]
-          && errors[`goal-${goal ? goal.id : 'new'}`].objectives
-          && errors[`goal-${goal ? goal.id : 'new'}`].objectives[index]
-            ? errors[`goal-${goal ? goal.id : 'new'}`].objectives[index]
+          const objectiveErrors = errors[`goal-${goalId}`]
+          && errors[`goal-${goalId}`].objectives
+          && errors[`goal-${goalId}`].objectives[index]
+            ? errors[`goal-${goalId}`].objectives[index]
             : {};
 
           return (
@@ -88,7 +90,7 @@ export default function Objectives({
               errors={objectiveErrors}
               remove={remove}
               fieldArrayName={fieldArrayName}
-              errorLabel={goal ? goal.id : 'new'}
+              errorLabel={goalId}
               roles={roles}
             />
           );
@@ -107,4 +109,8 @@ Objectives.propTypes = {
     OBJECTIVE_PROP,
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  goalId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
 };
