@@ -4,7 +4,7 @@
 /* eslint-disable arrow-body-style */
 import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { Fieldset } from '@trussworks/react-uswds';
+import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import GoalPicker, { newGoal } from './components/GoalPicker';
@@ -144,6 +144,12 @@ const GoalsObjectives = () => {
         * on non-recipient reports, only objectives are shown
       */}
       {!isRecipientReport && (<OtherEntity roles={roles} />)}
+
+      {(isRecipientReport && !showGoals) && (
+      <Alert type="info" noIcon>
+        <p className="usa-prose">To create goals, first select a recipient.</p>
+      </Alert>
+      )}
 
       {/**
         * all goals for review

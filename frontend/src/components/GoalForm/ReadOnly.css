@@ -5,3 +5,7 @@
 .ttahub-goal-form-goal-summary .public-DraftStyleDefault-block {
     margin-top: 0;
 }
+
+.ttahub-goal-form-goal-summary .usa-button.smart-hub--button__no-margin {
+    margin: 0;
+}
