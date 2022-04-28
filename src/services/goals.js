@@ -449,10 +449,12 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   );
 
   const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
-  const goalIdsToRemove = activityReportObjectivesToRemove.filter((aro) => {
-    const objectives = (aro.objective.goal && aro.objective.goal.objectives) || [];
-    return objectives.length === 1 && objectives[0].id === aro.objectiveId;
-  }).map((aro) => aro.objective.goalId);
+  const goals = activityReportObjectivesToRemove.map((aro) => aro.objective.goal);
+
+  const goalIdsToRemove = goals.filter((g) => g).filter((goal) => {
+    const objectiveIds = goal.objectives.map((o) => o.id);
+    return objectiveIds.every((oId) => objectiveIdsToRemove.includes(oId));
+  }).map((g) => g.id);
 
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
   await removeObjectives(objectiveIdsToRemove);
