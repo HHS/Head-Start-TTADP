@@ -85,25 +85,22 @@ const GoalsObjectives = () => {
   };
 
   const onEdit = (goal, index) => {
-    // remove the goal from the "selected goals"
-    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
-
-    if (index !== -1) {
-      copyOfSelectedGoals.splice(index, 1);
-    }
-
-    onUpdateGoals(copyOfSelectedGoals);
-
+    // make this goal the editable goal
     setValue('goalForEditing', goal);
-    const fieldArrayName = `goal[${index}].objectives`;
-    const objectives = getValues(fieldArrayName) || [];
+    const objectives = getValues(`goals[${index}].objectives`) || [];
+
     setValue('goalForEditing.objectives', objectives);
     toggleGoalForm(false);
+
+    // remove the goal from the "selected goals"
+    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    copyOfSelectedGoals.splice(index, 1);
+    onUpdateGoals(copyOfSelectedGoals);
   };
 
   // the read only component expects things a little differently
   const goalsForReview = selectedGoals.map((goal, index) => {
-    const fieldArrayName = `goal[${index}].objectives`;
+    const fieldArrayName = `goals[${index}].objectives`;
     const objectives = getValues(fieldArrayName) || [];
     return {
       ...goal,
@@ -176,7 +173,6 @@ const GoalsObjectives = () => {
                 roles={roles}
               />
             </Fieldset>
-
           </>
         ) : (
           null

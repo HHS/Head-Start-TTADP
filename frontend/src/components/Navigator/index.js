@@ -18,7 +18,7 @@ import {
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
-
+import { v4 as uuidv4 } from 'uuid';
 import Container from '../Container';
 
 import {
@@ -126,18 +126,32 @@ function Navigator({
     // so we need to access the objectives and bundle them together in order to validate them
     const fieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(fieldArrayName);
+    const name = getValues('goalName');
+    const endDate = getValues('goalEndDate');
 
     const areGoalsValid = validateGoals(
-      [{ ...goalForEditing, objectives }],
+      [{
+        ...goalForEditing,
+        name,
+        endDate,
+        objectives,
+      }],
       setError,
     );
     if (areGoalsValid !== true) {
       return;
     }
+
+    // save goal to api, come back with new ids for goal and objectives
+
     setValue('isGoalFormClosed', true);
-    setValue('goals', [...selectedGoals, goalForEditing]);
+    // for now we'll just generate an id for a demo of in-memory stuff
+    const g = goalForEditing.isNew ? { ...goalForEditing, id: uuidv4() } : { ...goalForEditing };
+    setValue('goals', [...selectedGoals, g]);
     setValue('goalForEditing', null);
     setValue('goalForEditing.objectives', []);
+    setValue('goalName', '');
+    setValue('goalEndDate', '');
   };
 
   const onUpdatePage = async (index) => {
@@ -311,7 +325,10 @@ Navigator.propTypes = {
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
+    role: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string,
+    ]),
   }),
 };
 

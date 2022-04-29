@@ -128,7 +128,11 @@ const GoalPicker = ({
       </Label>
       {goalForEditing ? (
         <div>
-          <GoalForm topicOptions={topicOptions} roles={roles} goal={goalForEditing} />
+          <GoalForm
+            topicOptions={topicOptions}
+            roles={roles}
+            goal={goalForEditing}
+          />
         </div>
       ) : null }
     </div>
