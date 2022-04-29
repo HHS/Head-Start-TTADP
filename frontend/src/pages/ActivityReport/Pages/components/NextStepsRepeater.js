@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Label, Button, Textarea, ErrorMessage,
@@ -16,6 +16,7 @@ export default function NextStepsRepeater({
 }) {
   const [heights, setHeights] = useState([]);
   const [blurValidations, setBlurValidations] = useState([]);
+  const [showAddStepButton, setShowStepButton] = useState(false);
 
   const {
     register, control, getValues, errors,
@@ -26,6 +27,12 @@ export default function NextStepsRepeater({
     name,
     keyName: 'key', // because 'id' is the default key switch it to use 'key'.
   });
+
+  useEffect(() => {
+    const allValues = getValues();
+    const fieldArray = allValues[name] || [];
+    setShowStepButton(fieldArray.every((field) => field.note !== ''));
+  }, [fields, getValues, name]);
 
   const canDelete = fields.length > 1;
 
@@ -131,18 +138,25 @@ export default function NextStepsRepeater({
       </div>
 
       <div className="margin-05 margin-bottom-4">
-        <Button
-          type="button"
-          unstyled
-          onClick={onAddNewStep}
-          data-testid={
+        {
+          showAddStepButton
+            ? (
+              <Button
+                type="button"
+                unstyled
+                onClick={onAddNewStep}
+                data-testid={
                    `${name === 'specialistNextSteps'
                      ? 'specialist' : 'recipient'}NextSteps-button`
                    }
-        >
-          <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
-          Add next step
-        </Button>
+              >
+                <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
+                Add next step
+              </Button>
+            )
+            : null
+
+                  }
       </div>
     </>
   );
