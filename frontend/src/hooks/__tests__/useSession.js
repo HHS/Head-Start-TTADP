@@ -4,11 +4,11 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useSessionFilters from '../useSessionFilters';
+import useSession from '../useSession';
 import { mockWindowProperty } from '../../testHelpers';
 
 const SessionFilters = () => {
-  const [storage, setStorage] = useSessionFilters('test', 'this');
+  const [storage, setStorage] = useSession('test', 'this');
 
   return (
     <>
@@ -20,7 +20,7 @@ const SessionFilters = () => {
 
 const renderSessionFilters = () => render(<SessionFilters />);
 
-describe('useSessionFilters', () => {
+describe('useSession', () => {
   const setItem = jest.fn();
 
   mockWindowProperty('sessionStorage', {
