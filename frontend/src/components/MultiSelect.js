@@ -29,7 +29,7 @@ import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
 import useSpellCheck from '../hooks/useSpellCheck';
-import { colors } from '../Constants';
+import colors from '../colors';
 
 export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
