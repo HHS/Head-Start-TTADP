@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import DropdownMenu from './DropdownMenu';
-import './ButtonSelect.css';
+import './ButtonSelect.scss';
 
 /**
  *

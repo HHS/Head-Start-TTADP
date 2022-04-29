@@ -1,3 +1,5 @@
+@use '../colors.scss' as *;
+
 .smart-hub--button-select-menu-label:not(.sr-only) {
     display: block;
     margin-top: 1em;
@@ -17,43 +19,17 @@
 }
 
 .smart-hub--button-select-range-button:hover{
-    background: #F8F8F8; 
+    background: $gray-two; 
 }
 
 .smart-hub--button-select-range-button[aria-pressed="true"] {
-    color: #0166AB;
+    color: $blue-vivid-focus;
     font-weight: bold;
 }
 
 .smart-hub--button-select-checkmark {
     float: right;
 }
-
-/**
-** Date range picker styles
-*/
-
-.smart-hub--button-select-menu-date-picker {
-    border-top: 1px solid #eceef1;
-    padding: 0 1rem;    
-}
-
-.smart-hub--button-select-menu-date-picker-single {
-    display: flex;
-}
-
-.smart-hub--button-select-menu-date-picker-single .SingleDatePicker{
-    flex: 2;
-}
-.smart-hub--button-select-menu-date-picker-single .SingleDatePickerInput {
-    display: block;
-}
-
-.smart-hub--button-select-menu .DateInput {
-    width: 100%;
-}
-
-
 
 /**
 * The styles for the "style as select" prop
