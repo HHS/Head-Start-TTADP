@@ -114,7 +114,8 @@ describe('Objectives DB service', () => {
       });
       const objs = foundReport.objectivesWithoutGoals;
       expect(objs.length).toBe(3);
-      expect(objs.map((o) => o.title)).toEqual([objective, ...objectives].map((o) => o.title));
+      expect(objs.map((o) => o.title).sort())
+        .toEqual([objective, ...objectives].map((o) => o.title).sort());
     });
   });
 });
