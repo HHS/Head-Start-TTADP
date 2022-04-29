@@ -46,6 +46,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
         objectives={objectiveOptions}
         topicOptions={topicOptions}
         roles={['Central office']}
+        goalId={goalId}
       />
       <button type="button">blur me</button>
     </FormProvider>
@@ -139,25 +140,6 @@ describe('Objectives', () => {
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
-    const button = await screen.findByRole('button', { name: /Add new objective/i });
-    expect(screen.queryByText(/objective status/i)).toBeNull();
-    userEvent.click(button);
-    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
-  });
-
-  it('handles a "null" goal', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      activityReports: [],
-      resources: [],
-      topics: [],
-      roles: ['CENTRAL OFFICE', 'THIMBLE TESTER'],
-      status: 'Not Started',
-    }];
-    render(<RenderObjectives objectiveOptions={objectiveOptions} goalId={null} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
     expect(screen.queryByText(/objective status/i)).toBeNull();
     userEvent.click(button);

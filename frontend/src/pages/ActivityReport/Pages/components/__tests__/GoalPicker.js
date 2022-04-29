@@ -19,12 +19,11 @@ const defaultSelectedGoals = [
 ];
 
 // eslint-disable-next-line react/prop-types
-const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
+const GP = ({ availableGoals, selectedGoals }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
       goals: selectedGoals,
-      goalForEditing,
       author: {
         role: 'central office',
       },
@@ -96,8 +95,9 @@ describe('GoalPicker', () => {
   });
 
   it('properly renders when there is no goal for editing selected', async () => {
-    renderGoalPicker([], null, null);
+    renderGoalPicker([], null);
     const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+
     expect(selector).toBeVisible();
   });
 });
