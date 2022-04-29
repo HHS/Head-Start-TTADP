@@ -21,7 +21,7 @@
 }
 
 .smart-hub-bg-blue {
-  background-color: $smart-hub-bg-blue;
+  background-color: $ttahub-blue;
 }
 
 .smart-hub-title {
@@ -33,19 +33,19 @@
 }
 
 body {
-  background-color: $smart-hub-bg-grey;
+  background-color: $gray-two;
 }
 
 .text-ink {
-  color: $smart-hub-text-ink
+  color: $text-ink
 }
 
 .smart-hub-bg-blue-primary {
-  background-color: $smart-hub-blue-primary;
+  background-color: $ttahub-blue;
 }
 
 .smart-hub-border-blue-primary {
-  border-color: $smart-hub-blue-primary;
+  border-color: $ttahub-blue;
 }
 
 .smart-hub-maxw-placard {
@@ -67,7 +67,7 @@ body {
 }
 
 .DateInput_input {
-  color: #1b1b1b;
+  color: $text-ink;
   font-weight: 400;
 }
 
@@ -85,7 +85,7 @@ body {
 
 /* ========== Table stripe overrride ========== */
 .usa-table--striped tbody tr:nth-child(2n+1) td, .usa-table--striped tbody tr:nth-child(2n+1) th {
-  background-color: $smart-hub-bg-grey;
+  background-color: $gray-two;
 }
 
 

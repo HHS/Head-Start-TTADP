@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ReactSelect from 'react-select';
 
 import { DropdownIndicator } from './MultiSelect';
-import { colors } from '../Constants';
+import colors from '../colors';
 
 function Select({
   name,

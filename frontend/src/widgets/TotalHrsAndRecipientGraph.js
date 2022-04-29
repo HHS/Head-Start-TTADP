@@ -47,14 +47,14 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           dash: 'solid',
           width: 3,
           // color: '#2e4a62',
-          color: colors.smartHubBgBlue,
+          color: colors.ttahubBlue,
         },
         marker: {
           size: 12,
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.smartHubTextInk,
+          bgcolor: colors.textInk,
         },
       },
       {
@@ -67,7 +67,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         line: {
           dash: 'dash',
           width: 3,
-          color: colors.smartHubOrange,
+          color: colors.ttahubOrange,
         },
         marker: {
           size: 14,
@@ -75,7 +75,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.smartHubTextInk,
+          bgcolor: colors.textInk,
         },
       },
 
@@ -89,7 +89,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         line: {
           dash: 'longdash',
           width: 3,
-          color: colors.smartHubMedTeal,
+          color: colors.ttahubMediumDeepTeal,
         },
         marker: {
           symbol: 'square',

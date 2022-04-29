@@ -7,6 +7,7 @@ import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
+import colors from '../colors';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -100,6 +101,9 @@ export function TopicFrequencyGraphWidget({
       x: topics.map((topic) => topicsWithLineBreaks(topic)),
       y: counts,
       hoverinfo: 'y',
+      marker: {
+        color: colors.ttahubBlue,
+      },
     };
 
     const width = topics.length * 180;
@@ -116,7 +120,7 @@ export function TopicFrequencyGraphWidget({
         },
       },
       font: {
-        color: '#1b1b1b',
+        color: colors.textInk,
       },
       width,
       margin: {
@@ -129,7 +133,7 @@ export function TopicFrequencyGraphWidget({
         tickangle: 0,
         title: {
           font: {
-            color: '#1b1b1b',
+            color: colors.textInk,
           },
         },
       },
@@ -139,7 +143,7 @@ export function TopicFrequencyGraphWidget({
           standoff: 60,
           text: 'Number of Activity Reports',
           font: {
-            color: '#1b1b1b',
+            color: colors.textInk,
           },
         },
       },
