@@ -99,7 +99,7 @@ export default function GoalForm({
   return (
     <>
       <GoalText
-        error={errors.goalText ? ERROR_FORMAT(errors.goalText.message) : NO_ERROR}
+        error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         isOnReport={false}
         goalName={goalText}
         validateGoalName={onBlurGoalText}
