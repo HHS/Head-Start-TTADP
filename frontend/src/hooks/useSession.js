@@ -4,19 +4,19 @@ import useSessionStorage from './useSessionStorage';
 const { sessionStorage } = window;
 
 /**
- * useSessionFilters takes in an key and an array of default filters
+ * useSession takes in an key and an array of default filters
  * and returns a useState like array of a getter and a setter
  * while updating the filters in the session
  *
  * @param {Object[]} defaultFilters
  * @returns {[ Object[], Function ]}
  */
-export default function useSessionFilters(key, initialValue) {
+export default function useSession(key, initialValue) {
   const initial = useMemo(() => {
     try {
-      const filtersFromStorage = sessionStorage.getItem(key);
-      if (filtersFromStorage) {
-        return JSON.parse(filtersFromStorage);
+      const fromStorage = sessionStorage.getItem(key);
+      if (fromStorage) {
+        return JSON.parse(fromStorage);
       }
     } catch (error) {
       // eslint-disable-next-line no-console
