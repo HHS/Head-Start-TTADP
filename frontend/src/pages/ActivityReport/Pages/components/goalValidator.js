@@ -10,31 +10,31 @@ export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link';
 export const OBJECTIVE_TTA = 'Every objective should have TTA provided';
 export const OBJECTIVE_TOPICS = 'Each objective should have a topic selected';
 
-export const unfinishedObjectives = (objectives, goalId, setError = () => {}) => {
+export const unfinishedObjectives = (objectives, setError = () => {}) => {
   const unfinished = objectives.some(
     (objective, index) => {
       if (!objective.title) {
-        setError(`goal-${goalId}.objectives[${index}].title`, { message: OBJECTIVE_TITLE });
+        setError(`goalForEditing.objectives[${index}].title`, { message: OBJECTIVE_TITLE });
         return true;
       }
 
       if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
-        setError(`goal-${goalId}.objectives[${index}].ttaProvided`, { message: OBJECTIVE_TTA });
+        setError(`goalForEditing.objectives[${index}].ttaProvided`, { message: OBJECTIVE_TTA });
         return true;
       }
 
       if (!objective.topics || !objective.topics.length) {
-        setError(`goal-${goalId}.objectives[${index}].topics`, { message: OBJECTIVE_TOPICS });
+        setError(`goalForEditing.objectives[${index}].topics`, { message: OBJECTIVE_TOPICS });
         return true;
       }
 
       if (!objective.roles || !objective.roles.length) {
-        setError(`goal-${goalId}.objectives[${index}].roles`, { message: OBJECTIVE_ROLE });
+        setError(`goalForEditing.objectives[${index}].roles`, { message: OBJECTIVE_ROLE });
         return true;
       }
 
       if (!validateListOfResources(objective.resources)) {
-        setError(`goal-${goalId}.objectives[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+        setError(`goalForEditing.objectives[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         return true;
       }
 
@@ -51,7 +51,7 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
     // Every goal must have an objective or the `goals` field has unfinished goals
     if (goal.objectives && goal.objectives.length > 0) {
-      const objectivesUnfinished = unfinishedObjectives(goal.objectives, goal.id, setError);
+      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError);
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
