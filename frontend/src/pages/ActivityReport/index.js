@@ -135,7 +135,7 @@ export const updateGoals = (report) => (oldFormData) => {
       new: goalEditable,
     };
   });
-  return { ...oldFormData, goals };
+  return { ...oldFormData, goals, objectivesWithoutGoals: report.objectivesWithoutGoals };
 };
 
 function ActivityReport({
