@@ -6,7 +6,7 @@ import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
 
 import Container from '../components/Container';
-import { colors } from '../Constants';
+import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
 
 export function TotalHrsAndRecipientGraph({ data, loading }) {
@@ -224,7 +224,6 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
                 <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
                 <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />
               </fieldset>
-
               <div data-testid="lines" ref={lines} />
             </div>
           )}
