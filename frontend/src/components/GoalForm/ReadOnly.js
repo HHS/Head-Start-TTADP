@@ -28,13 +28,14 @@ export default function ReadOnly({
   onEdit,
   onDelete,
   createdGoals,
+  hideEdit,
 }) {
   const modalRef = useRef();
 
   return (
     <>
       { createdGoals.map((goal, index) => {
-        const menuItems = [
+        let menuItems = [
           {
             label: `Edit goal ${goal.id}`,
             onClick: () => onEdit(goal, index),
@@ -44,6 +45,15 @@ export default function ReadOnly({
             onClick: () => modalRef.current.toggleModal(true),
           },
         ];
+
+        if (hideEdit) {
+          menuItems = [
+            {
+              label: `Delete goal ${goal.id}`,
+              onClick: () => modalRef.current.toggleModal(true),
+            },
+          ];
+        }
 
         return (
           <div key={`goal${goal.id}`}>
@@ -66,6 +76,7 @@ export default function ReadOnly({
                 <ContextMenu
                   label={`Actions for Goal ${goal.id}`}
                   menuItems={menuItems}
+                  menuClassName="width-card"
                 />
               </div>
               <h3>Goal summary</h3>
@@ -143,4 +154,9 @@ ReadOnly.propTypes = {
   })).isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  hideEdit: PropTypes.bool,
+};
+
+ReadOnly.defaultProps = {
+  hideEdit: false,
 };

@@ -13,7 +13,11 @@ import GoalForm from '../GoalForm';
 
 describe('GoalForm', () => {
   const Form = ({ id }) => {
-    const goal = { ...newGoal(), id };
+    const goal = {
+      ...newGoal(),
+      id,
+      isNew: id === 'new',
+    };
 
     const hookForm = useForm({
       mode: 'onChange',

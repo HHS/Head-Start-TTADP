@@ -14,6 +14,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   if (goalId) {
     goalForEditing = {
       id: goalId,
+      objectives: [],
     };
   }
 

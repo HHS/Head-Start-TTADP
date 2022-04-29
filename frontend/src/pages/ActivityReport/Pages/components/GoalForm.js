@@ -11,7 +11,11 @@ import {
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 
-export default function GoalForm({ goal, topicOptions, roles }) {
+export default function GoalForm({
+  goal,
+  topicOptions,
+  roles,
+}) {
   // pull the errors out of the form context
   const { errors } = useFormContext();
 
@@ -45,7 +49,7 @@ export default function GoalForm({ goal, topicOptions, roles }) {
         message: GOAL_DATE_ERROR,
       },
     },
-    defaultValue: goal.endDate || '',
+    defaultValue: goal && goal.endDate ? goal.endDate : '',
   });
 
   const {
@@ -56,17 +60,15 @@ export default function GoalForm({ goal, topicOptions, roles }) {
       name: goalTextInputName,
     },
   } = useController({
-    name: 'goalText',
+    name: 'goalName',
     rules: {
       required: {
         value: true,
         message: GOAL_NAME_ERROR,
       },
     },
-    defaultValue: goal.name || '',
+    defaultValue: goal && goal.name ? goal.name : '',
   });
-
-  const [objectives, setObjectives] = useState([]);
 
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
@@ -74,6 +76,8 @@ export default function GoalForm({ goal, topicOptions, roles }) {
     onUpdateText(goal.name);
     onUpdateDate(goal.endDate);
   }, [goal.endDate, goal.name, onUpdateDate, onUpdateText]);
+
+  const [objectives, setObjectives] = useState([]);
 
   /*
    * this use effect fetches
@@ -85,16 +89,15 @@ export default function GoalForm({ goal, topicOptions, roles }) {
       setObjectives(data.objectives);
     }
 
-    if (goal.id !== 'new') {
+    if (!goal.isNew) {
       fetchData();
     } else {
       setObjectives([]);
     }
-  }, [goal.id]);
+  }, [goal.id, goal.isNew]);
 
   return (
     <>
-
       <GoalText
         error={errors.goalText ? ERROR_FORMAT(errors.goalText.message) : NO_ERROR}
         isOnReport={false}

@@ -72,10 +72,10 @@ export default function Objectives({
           />
         )
         : fields.map((objective, index) => {
-          const objectiveErrors = errors[fieldArrayName]
-          && errors[fieldArrayName].objectives
-          && errors[fieldArrayName].objectives[index]
-            ? errors[fieldArrayName].objectives[index]
+          const objectiveErrors = errors.goalForEditing
+          && errors.goalForEditing.objectives
+          && errors.goalForEditing.objectives[index]
+            ? errors.goalForEditing.objectives[index]
             : {};
 
           return (
