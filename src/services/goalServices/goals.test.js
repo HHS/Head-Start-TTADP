@@ -3,6 +3,7 @@ import {
   copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
 } from '../goals';
 import {
+  sequelize,
   Goal,
   Grant,
   Objective,
@@ -11,8 +12,12 @@ import {
 } from '../../models';
 
 describe('Goals DB service', () => {
-  afterEach(async () => {
+  afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
   });
 
   describe('copyGoalsToGrants', () => {
@@ -60,7 +65,7 @@ describe('Goals DB service', () => {
       Goal.findAll = jest.fn().mockResolvedValue([]);
       Goal.findOne = jest.fn().mockResolvedValue();
       Goal.destroy = jest.fn();
-      Goal.upsert = jest.fn();
+      Goal.upsert = jest.fn().mockResolvedValue([{ id: 1 }]);
       Objective.destroy = jest.fn();
       ActivityReportObjective.create = jest.fn();
       Goal.create = jest.fn().mockResolvedValue({ id: 1 });
@@ -95,6 +100,7 @@ describe('Goals DB service', () => {
         expect(ActivityReportObjective.destroy).toHaveBeenCalledWith({
           where: {
             activityReportId: 1,
+            objectiveId: [],
           },
         });
       });
@@ -105,12 +111,20 @@ describe('Goals DB service', () => {
             objectiveId: 1,
             objective: {
               goalId: 1,
+              goal: {
+                id: 1,
+                objectives: [{ id: 1 }],
+              },
             },
           },
           {
             objectiveId: 2,
             objective: {
               goalId: 2,
+              goal: {
+                id: 2,
+                objectives: [{ id: 2 }],
+              },
             },
           },
         ]);
