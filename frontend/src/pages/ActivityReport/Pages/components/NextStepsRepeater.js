@@ -42,7 +42,7 @@ export default function NextStepsRepeater({
     // Remove from Array.
     remove(index);
 
-    // Rebuild Blur Validation States.
+    // Remove Validation State.
     const updatedBlurValidations = blurValidations ? [...blurValidations] : [];
     updatedBlurValidations.splice(index, 1);
     setBlurValidations(updatedBlurValidations);
@@ -117,7 +117,7 @@ export default function NextStepsRepeater({
                   aria-label={`remove ${ariaName} ${index + 1}`}
                   onClick={() => onRemoveStep(index)}
                 >
-                  <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
+                  <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
                   <span className="sr-only">
                     remove step
                     {' '}
