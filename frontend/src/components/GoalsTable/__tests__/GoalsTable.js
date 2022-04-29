@@ -391,7 +391,6 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
-      screen.debug(undefined, 100000);
       expect(document.querySelector('.fa-circle-exclamation')).toHaveAttribute(
         'color',
         '#c5c5c5',
