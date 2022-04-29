@@ -14,6 +14,7 @@ import join from 'url-join';
 import { act } from 'react-dom/test-utils';
 import RecipientSearch from '../index';
 import { SCOPE_IDS } from '../../../Constants';
+import { mockWindowProperty } from '../../../testHelpers';
 
 const query = 'ground control';
 
@@ -123,10 +124,17 @@ const renderRecipientSearch = (user) => {
 };
 
 describe('the recipient search page', () => {
+  mockWindowProperty('sessionStorage', {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  });
+
   beforeEach(() => {
-    fetchMock.reset();
+    fetchMock.restore();
     const url = join(recipientUrl, 'search', '?s=&region.in[]=1&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, res);
+    fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0', res);
   });
 
   afterEach(() => {
@@ -230,6 +238,10 @@ describe('the recipient search page', () => {
   });
 
   it('the regional select works with all regions', async () => {
+    fetchMock.restore();
+    const beforeUrl = join(recipientUrl, 'search', '?s=&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(beforeUrl, res);
+
     const user = { ...userBluePrint, homeRegionId: 14 };
 
     fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0', res);
