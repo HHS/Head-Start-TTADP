@@ -5,7 +5,7 @@
 }
 
 .ttahub-recipient-record--tabs_link, .ttahub-recipient-record--tabs_link:visited {
-    color: $smart-hub-text-ink;
+    color: $text-ink;
     text-decoration: none;
 }
 
@@ -15,10 +15,10 @@
 }
 
 .ttahub-recipient-record--tabs_link--active{
-    border-bottom: 4px solid $smart-hub-blue-primary;
+    border-bottom: 4px solid $ttahub-blue;
     font-weight: bold;
 }
 
 .ttahub-recipient-record--tabs_back-to-search, .ttahub-recipient-record--tabs_back-to-search :visited {
-    color: $smart-hub-blue-primary;
+    color: $ttahub-blue;
 }

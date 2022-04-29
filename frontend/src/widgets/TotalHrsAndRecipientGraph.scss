@@ -27,17 +27,17 @@
 }
 
 .ttahub--total-hrs-recipient-graph-legend div:nth-child(2) label::after {
-  background-color: $smart-hub-bg-blue; /* Technical assistance */
+  background-color: $ttahub-blue; /* Technical assistance */
 }
 
 .ttahub--total-hrs-recipient-graph-legend div:nth-child(3) label::after {
-  border-top: 3px dashed $smart-hub-orange; /* training */
+  border-top: 3px dashed $ttahub-orange; /* training */
   height: 3px;
   background-color: #ffffff00;
 }
 
 .ttahub--total-hrs-recipient-graph-legend div:nth-child(4) label::after {
-  border-top: 3px dashed $smart-hub-med-teal; /* both */
+  border-top: 3px dashed $ttahub-medium-deep-teal; /* both */
   height: 3px;
   background-color: #ffffff00;
 }
@@ -53,12 +53,12 @@
 
 /* both */
 .ttahub--total-hrs-recipient-graph-legend .usa-checkbox.square::after {
-  background: $smart-hub-med-teal;
+  background: $ttahub-medium-deep-teal;
 }
 
 /* technical assistance */
 .ttahub--total-hrs-recipient-graph-legend .usa-checkbox.circle::after {
-  background: $smart-hub-bg-blue;
+  background: $ttahub-blue;
   border-radius: 50%;
   height: 12px;
   width: 12px;
@@ -68,7 +68,7 @@
 .ttahub--total-hrs-recipient-graph-legend .usa-checkbox.triangle::after {
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;  
-  border-bottom: 10px solid $smart-hub-orange;
+  border-bottom: 10px solid $ttahub-orange;
   height: 0;
   width: 0;
   right: 4rem;   
