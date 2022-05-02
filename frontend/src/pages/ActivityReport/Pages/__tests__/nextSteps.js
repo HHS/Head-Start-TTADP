@@ -1,25 +1,23 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
-import { render, screen } from '@testing-library/react';
+import {
+  render, screen, waitFor, fireEvent,
+} from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 
 import nextSteps from '../nextSteps';
 
-const SPECIALIST_NEXT_STEPS = 'Specialist Next Steps';
 const SPECIALIST_INPUT = 'specialistNextSteps-input';
 const SPECIALIST_BUTTON = 'specialistNextSteps-button';
-const SPECIALIST_CANCEL_BUTTON = 'specialistNextSteps-cancel-button';
 
-const RECIPIENT_NEXT_STEPS = "Recipient's Next Steps";
 const RECIPIENT_INPUT = 'recipientNextSteps-input';
 const RECIPIENT_BUTTON = 'recipientNextSteps-button';
-const RECIPIENT_CANCEL_BUTTON = 'recipientNextSteps-cancel-button';
 
 const RenderNextSteps = ({
   // eslint-disable-next-line react/prop-types
-  specialistNextSteps, recipientNextSteps,
+  specialistNextSteps, recipientNextSteps, activityRecipientType,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -28,130 +26,115 @@ const RenderNextSteps = ({
 
   return (
     <FormProvider {...hookForm}>
-      {nextSteps.render()}
+      {nextSteps.render(null, { activityRecipientType })}
     </FormProvider>
   );
 };
 
-const renderNextSteps = (specialist = [], recipient = []) => {
+const renderNextSteps = (specialist = [], recipient = [], activityRecipientType = 'recipient') => {
   render(
-    <RenderNextSteps specialistNextSteps={specialist} recipientNextSteps={recipient} />,
+    <RenderNextSteps
+      specialistNextSteps={specialist}
+      recipientNextSteps={recipient}
+      activityRecipientType={activityRecipientType}
+    />,
   );
 };
 
 describe('next steps', () => {
+  it('displays correct labels for other entity', async () => {
+    // When a user is on the next steps page
+    renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }], 'other-entity');
+    expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
+  });
+
   it('displays both specialists and recipient questions', async () => {
     // When a user is on the next steps page
-    renderNextSteps();
+    renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }]);
 
     // Then they can see prompts for both Specialist and Recipients
-    expect(await screen.findByText(SPECIALIST_NEXT_STEPS)).toBeVisible();
-    expect(await screen.findByTestId(SPECIALIST_BUTTON)).toBeVisible();
+    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
+    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByTestId(SPECIALIST_INPUT)).toBeVisible();
+    expect(screen.queryByText(SPECIALIST_BUTTON)).toBeNull();
 
-    expect(await screen.findByText(RECIPIENT_NEXT_STEPS)).toBeVisible();
-    expect(await screen.findByTestId(RECIPIENT_BUTTON)).toBeVisible();
+    expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
+    expect(await screen.findByText(/what has the recipient agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByTestId(RECIPIENT_INPUT)).toBeVisible();
+    expect(screen.queryByText(RECIPIENT_BUTTON)).toBeNull();
   });
 
-  it('allows input for both specialists and recipients', async () => {
-    renderNextSteps();
+  it('displays user can add new steps', async () => {
+    // When a user is on the next steps page
+    renderNextSteps([{ note: 'First Specialist Step', id: 1 }], [{ note: 'First Recipient Step', id: 2 }]);
 
-    // Given a user filling out the form
-    const specialistInput = await screen.findByTestId(SPECIALIST_INPUT);
-    userEvent.type(specialistInput, 'capture pikachu');
+    // Add new steps.
+    const newStepButtons = screen.queryAllByRole('button', { name: /add next step/i });
+    expect(newStepButtons.length).toBe(2);
+    userEvent.click(newStepButtons[0]);
+    userEvent.click(newStepButtons[1]);
 
-    const recipientInput = await screen.findByTestId(RECIPIENT_INPUT);
-    userEvent.type(recipientInput, 'help capture pikachu');
-
-    // When they press enter
-    userEvent.click(await screen.findByTestId(SPECIALIST_BUTTON));
-    userEvent.click(await screen.findByTestId(RECIPIENT_BUTTON));
-
-    // Then they see the list of their items
-    expect(await screen.findByText('capture pikachu')).toBeVisible();
-    expect(await screen.findByText('help capture pikachu')).toBeVisible();
-
-    // And menu's are seen
-    const menus = await screen.findAllByTestId('ellipsis-button');
-    expect(menus).toHaveLength(2);
-  });
-  it('Can delete items', async () => {
-    // Given some items already as notes
-    renderNextSteps(
-      [{ note: 'pikachu', id: 1 }],
-      [{ note: 'bulbasaur', id: 2 }],
-    );
-    // When the user deletes everything
-    const menus = await screen.findAllByTestId('ellipsis-button');
-
-    userEvent.click(menus[0]);
-    let deleteBtn = await screen.findByText('Delete');
-    userEvent.click(deleteBtn);
-
-    userEvent.click(menus[1]);
-    deleteBtn = await screen.findByText('Delete');
-    userEvent.click(deleteBtn);
-
-    // Then the user can see the prompts again
-    expect(await screen.findByTestId(SPECIALIST_INPUT)).toBeVisible();
-    expect(await screen.findByTestId(RECIPIENT_INPUT)).toBeVisible();
+    // Verify new steps are created.
+    const newSteps = screen.queryAllByRole('textbox', { name: /next step 2/i });
+    expect(newSteps.length).toBe(2);
   });
 
-  it('can edit item', async () => {
-    // Given some items already as notes
-    renderNextSteps(
-      [{ note: 'pikachu', id: 1 }],
-    );
-
-    // When the users edits an item
-    const menu = await screen.findByTestId('ellipsis-button');
-    userEvent.click(menu);
-    const editBtn = await screen.findByText('Edit');
-    userEvent.click(editBtn);
-
-    const input = await screen.findByTestId(SPECIALIST_INPUT);
-    userEvent.type(input, ' is a pokemon');
-    const submitBtn = await screen.findByTestId(SPECIALIST_BUTTON);
-    userEvent.click(submitBtn);
-
-    // The he sees the item updated
-    const item = await screen.findByText('pikachu is a pokemon');
-    expect(item).toBeTruthy();
-  });
-
-  it('can cancel an entry for specialist', async () => {
+  it('can add and delete an entry for specialist', async () => {
     // Given a user wants the add a new entry
     renderNextSteps(
       [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
     );
-    const newEntry = await screen.findByText('Add New Next Step');
-    userEvent.click(newEntry);
+
+    // Add new Specialist Step.
+    const newEntryButtons = screen.queryAllByRole('button', { name: /add next step/i });
+    expect(newEntryButtons.length).toBe(2);
+    userEvent.click(newEntryButtons[0]);
 
     // When the user presses cancel to change their mind
-    const cancelBtn = await screen.findByTestId(SPECIALIST_CANCEL_BUTTON);
+    const cancelBtn = await screen.findByRole('button', { name: /remove specialist next steps 3/i });
     userEvent.click(cancelBtn);
 
     // Then we see there is no more input box
-    const input = screen.queryByTestId(SPECIALIST_INPUT);
+    const input = screen.queryByText(/next step 3/i);
     expect(input).toBeNull();
   });
 
-  it('can cancel an entry for recipient', async () => {
+  it('can add and delete an entry for recipient', async () => {
     // Given a user wants the add a new entry
     renderNextSteps(
       [],
       [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
     );
-    const newEntry = await screen.findByText('Add New Next Step');
-    userEvent.click(newEntry);
+
+    // Add new Recipient Step.
+    const newEntryButtons = screen.queryAllByRole('button', { name: /add next step/i });
+    expect(newEntryButtons.length).toBe(2);
+    userEvent.click(newEntryButtons[1]);
 
     // When the user presses cancel to change their mind
-    const cancelBtn = await screen.findByTestId(RECIPIENT_CANCEL_BUTTON);
+    const cancelBtn = await screen.findByRole('button', { name: /remove recipient next steps 3/i });
     userEvent.click(cancelBtn);
 
     // Then we see there is no more input box
-    const input = screen.queryByTestId(RECIPIENT_INPUT);
+    const input = screen.queryByText(/next step 3/i);
     expect(input).toBeNull();
+  });
+
+  it('can change step for specialist', async () => {
+    renderNextSteps(
+      [{ note: 'Step 1', id: 1 }],
+    );
+    const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
+    fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
+    await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
+  });
+
+  it('can change step for recipient', async () => {
+    renderNextSteps(
+      [], [{ note: 'Step 1', id: 2 }],
+    );
+    const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
+    fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
+    await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
   });
 });
