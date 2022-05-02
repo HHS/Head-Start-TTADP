@@ -27,7 +27,7 @@ app.use(helmet({
       'form-action': ["'self'"],
       scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
       imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
-      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json', 'wss://localhost:8080'],
+      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json', 'wss://tta-smarthub-sandbox.app.cloud.gov'],
     },
   },
 }));
