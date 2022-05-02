@@ -16,6 +16,7 @@ const Approver = ({
   children,
   error,
   isPendingApprover,
+  pages,
 }) => {
   const {
     additionalNotes,
@@ -103,6 +104,7 @@ const Approver = ({
               additionalNotes={additionalNotes}
               onFormReview={onFormReview}
               approverStatusList={approvers}
+              pages={pages}
             />
           )}
         {approved
@@ -137,6 +139,11 @@ Approver.propTypes = {
     id: PropTypes.number,
     displayId: PropTypes.string,
   }).isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    state: PropTypes.string,
+    review: PropTypes.bool,
+    label: PropTypes.string,
+  })).isRequired,
 };
 
 Approver.defaultProps = {
