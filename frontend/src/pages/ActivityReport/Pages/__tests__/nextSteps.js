@@ -17,7 +17,7 @@ const RECIPIENT_BUTTON = 'recipientNextSteps-button';
 
 const RenderNextSteps = ({
   // eslint-disable-next-line react/prop-types
-  specialistNextSteps, recipientNextSteps,
+  specialistNextSteps, recipientNextSteps, activityRecipientType,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -26,18 +26,28 @@ const RenderNextSteps = ({
 
   return (
     <FormProvider {...hookForm}>
-      {nextSteps.render(null, { activityRecipientType: 'recipient' })}
+      {nextSteps.render(null, { activityRecipientType })}
     </FormProvider>
   );
 };
 
-const renderNextSteps = (specialist = [], recipient = []) => {
+const renderNextSteps = (specialist = [], recipient = [], activityRecipientType = 'recipient') => {
   render(
-    <RenderNextSteps specialistNextSteps={specialist} recipientNextSteps={recipient} />,
+    <RenderNextSteps
+      specialistNextSteps={specialist}
+      recipientNextSteps={recipient}
+      activityRecipientType={activityRecipientType}
+    />,
   );
 };
 
 describe('next steps', () => {
+  it('displays correct labels for other entity', async () => {
+    // When a user is on the next steps page
+    renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }], 'other-entity');
+    expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
+  });
+
   it('displays both specialists and recipient questions', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }]);
