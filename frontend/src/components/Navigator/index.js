@@ -132,7 +132,7 @@ function Navigator({
   }, [currentPage, reset, formData]);
 
   useEffect(() => {
-    if (showValidationErrors && !page.review) {
+    if (showValidationErrors) {
       setTimeout(() => {
         trigger();
       });
