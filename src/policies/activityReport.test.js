@@ -5,7 +5,7 @@ import { REPORT_STATUSES } from '../constants';
 function activityReport(
   author,
   collaborator,
-  approver,
+  approvers,
   submissionStatus = REPORT_STATUSES.DRAFT,
   calculatedStatus = null,
 ) {
@@ -22,10 +22,11 @@ function activityReport(
     report.collaborators.push(collaborator);
   }
 
-  if (approver) {
-    report.approvers.push({
+  if (approvers) {
+    report.approvers = [...report.approvers, ...approvers.map((approver) => ({
       id: 9, status: null, note: null, User: { id: approver },
-    });
+    })),
+    ];
   }
 
   return report;
@@ -77,19 +78,19 @@ const canNotApproveRegion = user(false, false, false, false, 9);
 describe('Activity Report policies', () => {
   describe('canReview', () => {
     it('is true if the user is the approving manager', () => {
-      const report = activityReport(author.id, null, approver.id);
+      const report = activityReport(author.id, null, [approver.id]);
       const policy = new ActivityReport(approver, report);
       expect(policy.canReview()).toBeTruthy();
     });
 
     it('is false if the user is not an approving manager even if regional approval', () => {
-      const report = activityReport(author.id, null, approver.id);
+      const report = activityReport(author.id, null, [approver.id]);
       const policy = new ActivityReport(canApproveRegion, report);
       expect(policy.canReview()).toBeFalsy();
     });
 
     it('is false if the user does not have regional approval', () => {
-      const report = activityReport(author.id, null, canNotApproveRegion.id);
+      const report = activityReport(author.id, null, [canNotApproveRegion.id]);
       const policy = new ActivityReport(canNotApproveRegion, report);
       expect(policy.canReview()).toBeFalsy();
     });
@@ -135,7 +136,61 @@ describe('Activity Report policies', () => {
         expect(policy.canUpdate()).toBeTruthy();
       });
 
-      it('is false for non-authors/collaborators', () => {
+      it('is true if the user is an approver', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          [approver.id],
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.SUBMITTED,
+        );
+        const policy = new ActivityReport(approver, report);
+        expect(policy.canUpdate()).toBeTruthy();
+      });
+
+      it('...unless the report is draft', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          [approver.id],
+          REPORT_STATUSES.DRAFT,
+          REPORT_STATUSES.DRAFT,
+        );
+        const policy = new ActivityReport(approver, report);
+        expect(policy.canUpdate()).toBe(false);
+      });
+
+      it('...unless the report is approved', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          [approver.id],
+          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.APPROVED,
+        );
+        const policy = new ActivityReport(approver, report);
+        expect(policy.canUpdate()).toBe(false);
+      });
+
+      it('...unless the report has already been approved by another', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          [approver.id, canApproveRegion.id],
+          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.APPROVED,
+        );
+
+        report.approvers[1] = {
+          ...report.approvers[1],
+          status: REPORT_STATUSES.APPROVED,
+        };
+
+        const policy = new ActivityReport(approver, report);
+        expect(policy.canUpdate()).toBe(false);
+      });
+
+      it('is false for non-authors/collaborators/approvers', () => {
         const report = activityReport(author.id);
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canUpdate()).toBeFalsy();
@@ -258,7 +313,7 @@ describe('Activity Report policies', () => {
       });
 
       it('is true for the approving manager', () => {
-        const report = activityReport(author.id, null, manager.id);
+        const report = activityReport(author.id, null, [manager.id]);
         const policy = new ActivityReport(manager, report);
         expect(policy.canGet()).toBeTruthy();
       });

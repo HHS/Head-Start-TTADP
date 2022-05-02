@@ -248,6 +248,7 @@ const ActivitySummary = ({
                 label="Start Date"
                 name="startDate"
                 id="startDate-label"
+                htmlFor="startDate"
               >
                 <div
                   className="usa-hint"
@@ -272,6 +273,7 @@ const ActivitySummary = ({
                 label="End Date"
                 name="endDate"
                 id="endDate-label"
+                htmlFor="endDate"
               >
                 <div
                   className="usa-hint"
