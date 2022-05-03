@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartBar, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
+import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import './SiteNav.css';
 
 const navLinkClasses = [
@@ -80,7 +80,7 @@ const SiteNav = ({
                       to="/activity-reports"
                     >
                       <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faChartBar} />
+                        <FontAwesomeIcon color="white" icon={faChartColumn} />
                       </span>
                       Activity Reports
                     </NavLink>
