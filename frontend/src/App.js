@@ -134,7 +134,7 @@ function App() {
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout}>
-              <ActivityReport location={location} match={match} user={user} />
+              <ActivityReport location={location} match={match} />
             </AppWrapper>
           )}
         />

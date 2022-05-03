@@ -182,7 +182,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-fix-staging-notifications"
+    default: "ttahub-799-upgrade-font-awesome-ver-6"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-add-ga"
