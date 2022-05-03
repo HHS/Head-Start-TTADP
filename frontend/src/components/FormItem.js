@@ -25,7 +25,25 @@ function FieldSetWrapper({ label, children, className }) {
 
 FieldSetWrapper.propTypes = labelPropTypes;
 
-function LabelWrapper({ label, children, className }) {
+function LabelWrapper({
+  label, children, className, htmlFor,
+}) {
+  /**
+   * The date picker component renders two inputs. This seemed to create
+   * inconstent behavior as far as which input was being referenced by the enclosing label
+   * especially in user testing library, so we're now adding the explicit
+   * "for" attribute
+   */
+
+  if (htmlFor) {
+    return (
+      <Label className={className} htmlFor={htmlFor}>
+        {label}
+        {children}
+      </Label>
+    );
+  }
+
   return (
     <Label className={className}>
       {label}
@@ -34,10 +52,17 @@ function LabelWrapper({ label, children, className }) {
   );
 }
 
-LabelWrapper.propTypes = labelPropTypes;
+LabelWrapper.propTypes = {
+  ...labelPropTypes,
+  htmlFor: PropTypes.string,
+};
+
+LabelWrapper.defaultProps = {
+  htmlFor: '',
+};
 
 function FormItem({
-  label, children, required, name, fieldSetWrapper, className,
+  label, children, required, name, fieldSetWrapper, className, htmlFor,
 }) {
   const { formState: { errors } } = useFormContext();
   const fieldErrors = errors[name];
@@ -52,7 +77,7 @@ function FormItem({
 
   return (
     <FormGroup error={fieldErrors}>
-      <LabelType label={labelWithRequiredTag} className={className}>
+      <LabelType htmlFor={htmlFor} label={labelWithRequiredTag} className={className}>
         <ReactHookFormError
           errors={errors}
           name={name}
@@ -71,12 +96,14 @@ FormItem.propTypes = {
   fieldSetWrapper: PropTypes.bool,
   required: PropTypes.bool,
   className: PropTypes.string,
+  htmlFor: PropTypes.string,
 };
 
 FormItem.defaultProps = {
   required: true,
   fieldSetWrapper: false,
   className: '',
+  htmlFor: '',
 };
 
 export default FormItem;

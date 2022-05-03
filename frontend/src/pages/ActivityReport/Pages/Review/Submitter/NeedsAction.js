@@ -7,7 +7,7 @@ import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../../utils';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
-import IncompletePages from './IncompletePages';
+import IncompletePages from '../IncompletePages';
 import UserContext from '../../../../../UserContext';
 
 const NeedsAction = ({
