@@ -136,5 +136,5 @@ export const CLOSE_SUSPEND_REASONS = [
 
 export const CREATION_METHOD = [
   'Automatic',
-  'Manual',
+  'Curated',
 ];

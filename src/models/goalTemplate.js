@@ -1,5 +1,6 @@
 const { Model } = require('sequelize');
 const { CREATION_METHOD } = require('../constants');
+const { beforeValidate, afterUpdate } = require('./hooks/goalTemplate');
 // const { auditLogger } = require('../logger');
 
 module.exports = (sequelize, DataTypes) => {
@@ -55,18 +56,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'GoalTemplate',
     hooks: {
-      beforeValidate: async (instance) => {
-        const changed = instance.changed();
-        if (Array.isArray(changed) && changed.includes('templateName')) {
-          instance.set('templateNameModifiedAt', new Date());
-        }
-        if (Array.isArray(changed)
-        && (!changed.includes('creationMethod')
-        || instance.creationMethod === null
-        || instance.creationMethod === undefined)) {
-          instance.set('creationMethod', 'Automatic');
-        }
-      },
+      beforeValidate: async (instance) => beforeValidate(sequelize, instance),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return GoalTemplate;

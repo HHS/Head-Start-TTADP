@@ -39,7 +39,7 @@ const altFileTypes = [
     mime: 'text/csv',
   },
 ];
-//TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
+// TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 
 export const deleteHandler = async (req, res) => {
   const { reportId, objectiveId, fileId } = req.params;
@@ -74,7 +74,7 @@ const parseFormPromise = (req) => new Promise((resolve, reject) => {
 
 export default async function uploadHandler(req, res) {
   const [fields, files] = await parseFormPromise(req);
-  const { reportId } = fields;
+  const { reportId, objectiveId } = fields;
   let buffer;
   let metadata;
   let fileName;

@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { beforeValidate, afterUpdate } = require('./hooks/goal');
 
 /**
  * Objective table. Stores objectives for goals.
@@ -53,33 +54,44 @@ module.exports = (sequelize, DataTypes) => {
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
     },
+    firstNotStartedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastNotStartedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstInProgressAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastInProgressAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstSuspendedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastSuspendedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstCompleteAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastCompleteAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Objective',
     hooks: {
-      beforeValidate: async (instance, options) => {
-        // eslint-disable-next-line no-prototype-builtins
-        if (!instance.hasOwnProperty('objectiveTemplateId')
-        || instance.objectiveTemplateId === null
-        || instance.objectiveTemplateId === undefined) {
-          const objectiveTemplate = await sequelize.models.objectiveTemplate.findOrCreate({
-            where: { templateName: instance.name },
-            default: {
-              templateTitle: instance.title,
-              lastUsed: instance.createdAt,
-            },
-            transaction: options.transaction,
-          });
-          instance.set('objectiveTemplateId', objectiveTemplate[0].id);
-        }
-
-        // eslint-disable-next-line no-prototype-builtins
-        if (!instance.hasOwnProperty('onApprovedAR')
-        || instance.onApprovedAR === null
-        || instance.onApprovedAR === undefined) {
-          instance.set('onApprovedAR', false);
-        }
-      },
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return Objective;

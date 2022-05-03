@@ -4,7 +4,12 @@ import {
 } from '../../testUtils';
 import filtersToScopes from '../index';
 import db, {
-  Goal, GoalTemplate, Objective, ActivityReportObjective, Recipient, Grant,
+  Goal,
+  // GoalTemplate,
+  Objective,
+  ActivityReportObjective,
+  Recipient,
+  Grant,
 } from '../../models';
 
 const REGION_ID = 10;

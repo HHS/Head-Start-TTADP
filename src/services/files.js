@@ -1,4 +1,4 @@
-import { File } from '../models';
+import { ActivityReportFile, File } from '../models';
 import { FILE_STATUSES } from '../constants';
 
 const { UPLOADING } = FILE_STATUSES;
