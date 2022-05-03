@@ -122,7 +122,7 @@ function App() {
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout}>
-              <SocketProvider userId={user.id}>
+              <SocketProvider>
                 <ActivityReport location={location} match={match} user={user} />
               </SocketProvider>
             </AppWrapper>
