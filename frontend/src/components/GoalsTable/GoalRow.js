@@ -259,31 +259,22 @@ function GoalRow({
       </tr>
       <tr className="tta-smarthub--objective-rows">
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
-          <table>
-            <caption className="usa-sr-only">
-              Objectives for goal
-              {' '}
-              {goalNumber}
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Objective</th>
-                <th scope="col">Activity report</th>
-                <th scope="col">End date</th>
-                <th scope="col">Reasons</th>
-                <th scope="col">Objectives status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {objectives.map((obj) => (
-                <ObjectiveRow
-                  key={`objective_${obj.id}`}
-                  objective={obj}
-                  onCollapseObjectives={closeOrOpenObjectives}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="tta-smarthub--goal-row-obj-table">
+            <ul className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-header">
+              <li>Objective</li>
+              <li>Activity report</li>
+              <li>End date</li>
+              <li>Reasons</li>
+              <li>Objectives status</li>
+            </ul>
+            {objectives.map((obj) => (
+              <ObjectiveRow
+                key={`objective_${obj.id}`}
+                objective={obj}
+                onCollapseObjectives={closeOrOpenObjectives}
+              />
+            ))}
+          </div>
         </td>
       </tr>
       <tr className="height-1" aria-hidden="true" />
