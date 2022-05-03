@@ -90,6 +90,9 @@ const GoalsObjectives = () => {
     const objectives = getValues(`goals[${index}].objectives`) || [];
 
     setValue('goalForEditing.objectives', objectives);
+    setValue('goalEndDate', goal.endDate);
+    setValue('goalName', goal.name);
+
     toggleGoalForm(false);
 
     // remove the goal from the "selected goals"
@@ -165,9 +168,8 @@ const GoalsObjectives = () => {
       {showGoals && !isGoalFormClosed
         ? (
           <>
-            <h3 className="margin-bottom-0">Goal summary</h3>
-            <Fieldset>
-              <div id="goals-and-objectives" />
+            <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>
+            <Fieldset className="margin-0">
               <GoalPicker
                 availableGoals={availableGoals}
                 roles={roles}

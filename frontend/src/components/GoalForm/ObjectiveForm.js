@@ -86,7 +86,7 @@ export default function ObjectiveForm({
   };
 
   return (
-    <div className="margin-top-2 ttahub-create-goals-objective-form">
+    <div className="margin-top-5 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
         <h3>Objective summary</h3>
         { !isOnReport

@@ -23,8 +23,8 @@ export default function ObjectiveSelect({
 
   return (
     <>
-      <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
-        <h3>Objective summary</h3>
+      <div className="display-flex flex-justify maxw-mobile-lg margin-top-5">
+        <h3 className="margin-0">Objective summary</h3>
         { onRemove
           && (<Button type="button" className="ttahub-objective-select-remove-objective" unstyled onClick={onRemove}>Remove this objective</Button>)}
       </div>
@@ -35,7 +35,7 @@ export default function ObjectiveSelect({
         <Select
           name="objectives"
           onChange={onChange}
-          className="usa-select"
+          className="usa-select margin-bottom-3"
           options={options}
           styles={selectOptionsReset}
           placeholder="- Select -"

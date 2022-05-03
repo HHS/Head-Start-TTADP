@@ -35,7 +35,7 @@ const GoalPicker = ({
   availableGoals, roles,
 }) => {
   const {
-    control, setError, setValue,
+    control, setValue,
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
 
@@ -52,7 +52,7 @@ const GoalPicker = ({
     name: 'goalForEditing',
     rules: {
       validate: {
-        validateGoal: (g) => validateGoals([g], setError) === true,
+        validateGoal: (g) => validateGoals([g]) === true,
       },
     },
     defaultValue: newGoal(),
@@ -100,7 +100,7 @@ const GoalPicker = ({
   };
 
   return (
-    <div className="margin-top-4">
+    <div className="margin-top-3">
       <Label>
         Select recipient&apos;s goal
         {' '}

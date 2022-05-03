@@ -11,6 +11,7 @@ export default function Objectives({
   topicOptions,
   roles,
   goalId,
+  noObjectiveError,
 }) {
   const { errors, getValues } = useFormContext();
 
@@ -69,6 +70,7 @@ export default function Objectives({
             onChange={onSelect}
             options={options}
             selectedObjectives={[]}
+            noObjectiveError={noObjectiveError}
           />
         )
         : fields.map((objective, index) => {
@@ -111,4 +113,5 @@ Objectives.propTypes = {
     PropTypes.string,
     PropTypes.number,
   ]).isRequired,
+  noObjectiveError: PropTypes.node.isRequired,
 };
