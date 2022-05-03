@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor, fireEvent, act,
+  render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -296,30 +297,26 @@ describe('Goals Table', () => {
     });
 
     it('Shows the correct objective data', async () => {
-      renderTable(defaultUser);
+      act(() => renderTable(defaultUser));
       await screen.findByText('TTA goals and objectives');
-      const inProgress = await screen.findAllByRole('cell', { name: 'In progress' });
-      expect(inProgress.length).toBe(2);
 
       // Objective 1.
-      await screen.findByRole('cell', { name: /objective 1 title/i });
-      await screen.findByRole('cell', { name: /ar-number-1/i });
-      await screen.findByRole('cell', { name: '06/14/2021' });
-      await screen.findByRole('cell', { name: /monitoring | deficiency/i });
+      await screen.findByText(/objective 1 title/i);
+      await screen.findByRole('link', { name: /ar-number-1/i });
+      await screen.findByText('06/14/2021');
+      await screen.findByText(/monitoring | deficiency/i);
 
       // Objective 2.
-      await screen.findByRole('cell', { name: /objective 2 title/i });
-      await screen.findByRole('cell', { name: /ar-number-2/i });
-      await screen.findByRole('cell', { name: '05/14/2021' });
-      await screen.findByRole('cell', { name: 'Below Competitive Threshold (CLASS)' });
-      await screen.findByRole('cell', { name: /not started/i });
+      await screen.findByText(/objective 2 title/i);
+      await screen.findByRole('link', { name: /ar-number-2/i });
+      await screen.findByText('05/14/2021');
+      await screen.findByText('Below Competitive Threshold (CLASS)');
 
       // Objective 3.
-      await screen.findByRole('cell', { name: /objective 3 title/i });
-      await screen.findByRole('cell', { name: /ar-number-3/i });
-      await screen.findByRole('cell', { name: '04/14/2021' });
-      await screen.findByRole('cell', { name: 'COVID-19 response' });
-      await screen.findByRole('cell', { name: /closed/i });
+      await screen.findByText(/objective 3 title/i);
+      await screen.findByRole('link', { name: /ar-number-3/i });
+      await screen.findByText('04/14/2021');
+      await screen.findByText(/covid-19 response/i);
 
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
