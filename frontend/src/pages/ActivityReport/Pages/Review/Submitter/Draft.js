@@ -8,7 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
 
-import IncompletePages from './IncompletePages';
+import IncompletePages from '../IncompletePages';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import MultiSelect from '../../../../../components/MultiSelect';

@@ -25,7 +25,7 @@ import {
   ActivityReportObjective,
 } from '../models';
 
-import { saveGoalsForReport } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
 
@@ -622,6 +622,7 @@ export async function createOrUpdate(newActivityReport, report) {
     ...allFields
   } = newActivityReport;
 
+  const previousActivityRecipientType = report && report.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
@@ -678,6 +679,11 @@ export async function createOrUpdate(newActivityReport, report) {
   };
 
   const activityRecipientType = recipientType();
+
+  if (previousActivityRecipientType
+    && previousActivityRecipientType !== report.activityRecipientType) {
+    await removeUnusedGoalsObjectivesFromReport(report.id, []);
+  }
 
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
