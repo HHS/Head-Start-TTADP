@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalById } from '../../../../fetchers/goals';
@@ -40,13 +41,10 @@ export default function GoalForm({
   } = useController({
     name: 'goalEndDate',
     rules: {
-      required: {
-        value: endDateRequired,
-        message: GOAL_DATE_ERROR,
-      },
-      valueAsDate: {
-        value: endDateRequired,
-        message: GOAL_DATE_ERROR,
+      validate: {
+        isValidDate: (value) => (
+          value && moment(value, 'MM/DD/YYYY').isValid()
+        ) || GOAL_DATE_ERROR,
       },
     },
     defaultValue: goal && goal.endDate ? goal.endDate : '',
@@ -117,6 +115,7 @@ export default function GoalForm({
             datePickerKey="end-date-key"
             inputName={goalEndDateInputName}
           />
+
         )
         : null }
 
@@ -124,8 +123,9 @@ export default function GoalForm({
         goalId={goal.id}
         objectives={objectives}
         topicOptions={topicOptions}
-        objectiveErrors={[]}
         roles={roles}
+        noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
+          ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
       />
 
     </>

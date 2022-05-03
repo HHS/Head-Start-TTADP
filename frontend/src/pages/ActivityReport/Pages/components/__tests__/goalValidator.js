@@ -15,6 +15,9 @@ import {
 const missingTitle = {
   title: '',
   ttaProvided: 'ttaProvided',
+  topics: ['Hello'],
+  resources: [],
+  roles: ['Chief Inspector'],
 };
 
 const missingTTAProvided = {

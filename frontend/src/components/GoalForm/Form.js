@@ -70,7 +70,7 @@ export default function Form({
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <h2>Recipient TTA goal</h2>
+      <h2 className="margin-bottom-1">Recipient TTA goal</h2>
       <div>
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         {' '}
@@ -87,7 +87,7 @@ export default function Form({
         )
         : null }
 
-      <h3>Goal summary</h3>
+      <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
       <GrantSelect
         selectedGrants={selectedGrants}

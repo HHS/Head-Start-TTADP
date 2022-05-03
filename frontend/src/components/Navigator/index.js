@@ -146,7 +146,9 @@ function Navigator({
 
     setValue('isGoalFormClosed', true);
     // for now we'll just generate an id for a demo of in-memory stuff
-    const g = goalForEditing.isNew ? { ...goalForEditing, id: uuidv4() } : { ...goalForEditing };
+    const g = goalForEditing.isNew ? {
+      ...goalForEditing, name, endDate, id: uuidv4(),
+    } : { ...goalForEditing };
     setValue('goals', [...selectedGoals, g]);
     setValue('goalForEditing', null);
     setValue('goalForEditing.objectives', []);
