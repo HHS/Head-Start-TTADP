@@ -134,7 +134,7 @@ export default async function overview(scopes) {
         model: ActivityRecipient,
         as: 'activityRecipients',
         attributes: [],
-        required: true,
+        required: false,
         include: [
           {
             model: Grant,
