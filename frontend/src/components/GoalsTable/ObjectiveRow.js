@@ -95,8 +95,8 @@ function ObjectiveRow({
 
   return (
     <>
-      <tr className="tta-smarthub--objective-row">
-        <td>
+      <ul className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-2">
+        <li>
           <button
             type="button"
             className="usa-button usa-button--outline tta-smarthub--objective-rows-collapse-button"
@@ -106,24 +106,24 @@ function ObjectiveRow({
             Collapse objective(s)
           </button>
           {title}
-        </td>
-        <td>
+        </li>
+        <li>
           {' '}
           <Link
             to={linkToAr}
           >
             {arNumber}
           </Link>
-        </td>
-        <td>{endDate}</td>
-        <td>
+        </li>
+        <li>{endDate}</li>
+        <li>
           {reasons && displayReasonsList(reasons.sort())}
-        </td>
-        <td>
+        </li>
+        <li>
           {getObjectiveStatusIcon()}
           {displayObjStatus}
-        </td>
-      </tr>
+        </li>
+      </ul>
     </>
   );
 }
