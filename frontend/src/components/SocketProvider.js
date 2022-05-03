@@ -19,8 +19,9 @@ export default function SocketProvider({ children }) {
     s.binaryType = 'arraybuffer';
 
     // Connection opened
-    s.addEventListener('open', () => {
+    s.addEventListener('open', (event) => {
       // you could add an alert here, or use this to debug connection
+      console.log(event.data);
     });
 
     // Listen for messages

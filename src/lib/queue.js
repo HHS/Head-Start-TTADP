@@ -33,6 +33,8 @@ const {
   redisOpts,
 } = generateRedisConfig();
 
+export { generateRedisConfig };
+
 export default function newQueue(queName) {
   return new Queue(queName, `redis://${host}:${port}`, redisOpts);
 }
