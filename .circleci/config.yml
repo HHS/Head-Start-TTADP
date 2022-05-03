@@ -365,9 +365,6 @@ jobs:
               name: Create production robot
               command: ./bin/robot-factory
       - run:
-          name: Build frontend assets
-          command: yarn --cwd frontend run build
-      - run:
           name: Install Cloud Foundry
           command: |
             curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
@@ -378,6 +375,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.sandbox_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: SANDBOX_GMT_ENABLED
+                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
+                  REACT_APP_GTM_AUTH: SANDBOX_GMT_AUTH
+                  REACT_APP_GTM_PREVIEW: SANDBOX_GMT_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -411,6 +416,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: DEV_GMT_ENABLED
+                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
+                  REACT_APP_GTM_AUTH: DEV_GMT_AUTH
+                  REACT_APP_GTM_PREVIEW: DEV_GMT_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -444,6 +457,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: STAGING_GMT_ENABLED
+                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
+                  REACT_APP_GTM_AUTH: STAGING_GMT_AUTH
+                  REACT_APP_GTM_PREVIEW: STAGING_GMT_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
@@ -475,6 +496,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: PROD_GMT_ENABLED
+                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
+                  REACT_APP_GTM_AUTH: PROD_GMT_AUTH
+                  REACT_APP_GTM_PREVIEW: PROD_GMT_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID

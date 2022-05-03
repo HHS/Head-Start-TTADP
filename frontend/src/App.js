@@ -41,11 +41,17 @@ function App() {
   const [timedOut, updateTimedOut] = useState(false);
   const [announcements, updateAnnouncements] = useState([]);
 
-  const tagManagerArgs = {
-    gtmId: 'GTM-MKSDS7M',
-  };
+  if (process.env.REACT_APP_GTM_ENABLED) {
+    const gtmId = process.env.REACT_APP_GTM_ID;
+    const auth = process.env.REACT_APP_GTM_AUTH;
+    const preview = process.env.REACT_APP_GTM_PREVIEW;
 
-  TagManager.initialize(tagManagerArgs);
+    const tagManagerArgs = {
+      gtmId, auth, preview,
+    };
+
+    TagManager.initialize(tagManagerArgs);
+  }
 
   useEffect(() => {
     const fetchData = async () => {
