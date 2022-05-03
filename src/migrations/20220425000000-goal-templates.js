@@ -116,7 +116,7 @@ module.exports = {
           allowNull: false,
           type: Sequelize.ENUM(
             'Automatic',
-            'Manual',
+            'Curated',
           ),
         },
         createdAt: {
@@ -162,7 +162,7 @@ module.exports = {
           allowNull: false,
           type: Sequelize.ENUM(
             'Automatic',
-            'Manual',
+            'Curated',
           ),
         },
         createdAt: {
@@ -1411,6 +1411,102 @@ module.exports = {
           END$$;`,
           { transaction },
         );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Add first and last timestamps for each of the statuses after "Not Started"
+      try {
+        await queryInterface.addColumn('Goals', 'firstNotStartedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'lastNotStartedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'firstInProgressAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'lastInProgressAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'firstCeasedSuspendedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'lastCeasedSuspendedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'firstClosedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'lastClosedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'firstCompletedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'lastCompletedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'firstNotStartedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'lastNotStartedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'firstInProgressAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'lastInProgressAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'firstCompleteAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'lastCompleteAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'firstSuspendedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'lastSuspendedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);

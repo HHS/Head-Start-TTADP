@@ -3,6 +3,7 @@ const {
 } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const { beforeValidate, afterUpdate } = require('./hooks/goal');
 // const { auditLogger } = require('../logger');
 
 /**
@@ -79,53 +80,52 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       default: false,
     },
+    firstNotStartedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastNotStartedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstInProgressAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastInProgressAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstCeasedSuspendedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastCeasedSuspendedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstClosedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastClosedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    firstCompletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    lastCompletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
     hooks: {
-      beforeValidate: async (instance, options) => {
-        // eslint-disable-next-line no-prototype-builtins
-        if (!instance.hasOwnProperty('goalTemplateId')
-        || instance.goalTemplateId === null
-        || instance.goalTemplateId === undefined) {
-          const grant = await sequelize.models.Grant.findOne({ where: { id: instance.grantId } });
-          const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-            where: { templateName: instance.name, regionId: grant.regionId },
-            default: {
-              templateName: instance.name,
-              lastUsed: instance.createdAt,
-              regionId: grant.regionId,
-              creationMethod: 'Automatic',
-            },
-            transaction: options.transaction,
-          });
-          instance.set('goalTemplateId', goalTemplate[0].id);
-        }
-
-        // eslint-disable-next-line no-prototype-builtins
-        if (!instance.hasOwnProperty('onApprovedAR')
-        || instance.onApprovedAR === null
-        || instance.onApprovedAR === undefined) {
-          instance.set('onApprovedAR', false);
-        } else if (instance.onApprovedAR === true) {
-          const changed = instance.changed();
-          if (Array.isArray(changed) && changed.includes('name')) {
-            throw new Error('Goal name change now allowed for goals on approved activity reports.');
-          }
-        }
-      },
-      afterUpdate: async (instance, options) => {
-        const changed = instance.changed();
-        if (Array.isArray(changed) && changed.includes('name')) {
-          await sequelize.models.GoalTemplate.update(
-            { templateName: instance.name },
-            {
-              where: { id: instance.goalTemplateId },
-              transaction: options.transaction,
-            },
-          );
-        }
-      },
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return Goal;

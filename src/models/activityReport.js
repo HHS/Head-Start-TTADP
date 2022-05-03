@@ -3,25 +3,8 @@ const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
 // const { auditLogger } = require('../logger');
-
-/**
- * Helper function called by model hooks.
- * Updates current model instance's calculatedStatus field.
- * Background: calculatedStatus is updated to 'submitted', 'needs_review', and 'approved'
- * based on hooks on the ActivityReportApprovers. Before submission though,
- * we want calculatedStatus to function like submissionStatus so developers
- * only have to check calculatedStatus to determine overall report status.
- * @param {*} report - current model instance
- */
-function copyStatus(report) {
-  const { submissionStatus } = report;
-  if (submissionStatus === REPORT_STATUSES.DRAFT
-    || submissionStatus === REPORT_STATUSES.DELETED) {
-    // eslint-disable-next-line no-param-reassign
-    report.calculatedStatus = submissionStatus;
-  }
-}
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';
@@ -295,24 +278,9 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
-      beforeCreate: (report) => {
-        copyStatus(report);
-      },
-      beforeUpdate: (report) => {
-        copyStatus(report);
-      },
-      beforeValidate: async (instance) => {
-        const changed = instance.changed();
-        if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
-          if(instance.previous('calculatedStatus') === REPORT_STATUSES.SUBMITTED && instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED) {
-            // TODO: Run extensive check and update where required all used goals and objectives as not onApprovedAR
-          }
-          else if(instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
-            // TODO: Mark all used goals and objectives as onApprovedAR
-          }
-          // eslint-disable-next-line no-param-reassign
-        }
-    },
+      beforeCreate: (instance) => beforeCreate(instance),
+      beforeUpdate: (report) => beforeCreate(instance),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
   },
   sequelize,
   modelName: 'ActivityReport',
