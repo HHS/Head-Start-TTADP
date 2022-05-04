@@ -105,9 +105,11 @@ function ObjectiveRow({
           >
             Collapse objective(s)
           </button>
+          <span className="sr-only">Objective:</span>
           {title}
         </li>
         <li>
+          <span className="sr-only">Activity report:</span>
           {' '}
           <Link
             to={linkToAr}
@@ -115,11 +117,16 @@ function ObjectiveRow({
             {arNumber}
           </Link>
         </li>
-        <li>{endDate}</li>
         <li>
+          <span className="sr-only">End date:</span>
+          {endDate}
+        </li>
+        <li>
+          <span className="sr-only">Reasons:</span>
           {reasons && displayReasonsList(reasons.sort())}
         </li>
         <li>
+          <span className="sr-only">Objective status:</span>
           {getObjectiveStatusIcon()}
           {displayObjStatus}
         </li>
