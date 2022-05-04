@@ -43,7 +43,7 @@ export default function GoalForm({
     rules: {
       validate: {
         isValidDate: (value) => (
-          value && moment(value, 'MM/DD/YYYY').isValid()
+          !endDateRequired || (value && moment(value, 'MM/DD/YYYY').isValid())
         ) || GOAL_DATE_ERROR,
       },
     },
@@ -127,7 +127,6 @@ export default function GoalForm({
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
       />
-
     </>
   );
 }
