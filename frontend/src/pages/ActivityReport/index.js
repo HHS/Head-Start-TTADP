@@ -34,7 +34,7 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
-import { SocketContext } from '../../components/SocketProvider';
+import { SocketContext, socketPath } from '../../components/SocketProvider';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -156,7 +156,6 @@ function ActivityReport({
   const [errorMessage, updateErrorMessage] = useState();
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const [otherEditingUser, updateOtherEditingUser] = useState(null);
-  // const [subscribedToSocket, setSubscribedToSocket] = useState(false);
   const reportId = useRef();
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
@@ -165,7 +164,7 @@ function ActivityReport({
 
   useEffect(() => {
     if (store) {
-      updateOtherEditingUser(JSON.parse(store));
+      updateOtherEditingUser(store);
     }
   }, [store]);
 
@@ -308,9 +307,7 @@ function ActivityReport({
       page,
       user: user.id,
       lastSaveTime,
-      activityReportId,
-      event: 'edit-activity-report',
-      subscribed: otherEditingUser && otherEditingUser.subscribed,
+      channel: socketPath(activityReportId),
     }));
   };
 
@@ -403,11 +400,9 @@ function ActivityReport({
     </>
   ) : null;
 
-  console.log(otherEditingUser);
-
   return (
     <div className="smart-hub-activity-report">
-      {/* { otherEditingUser ? (
+      { otherEditingUser ? (
         <Alert type="info">
           <span>
             User
@@ -422,11 +417,10 @@ function ActivityReport({
             {' '}
             {otherEditingUser.activityReportId}
             .
-            { otherEditingUser.lastSaveTime ?
-              `They last saved at this time ${otherEditingUser.lastSaveTime}` : ''}
+            { otherEditingUser.lastSaveTime ? `They last saved at this time ${otherEditingUser.lastSaveTime}` : ''}
           </span>
         </Alert>
-      ) : null} */}
+      ) : null}
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
