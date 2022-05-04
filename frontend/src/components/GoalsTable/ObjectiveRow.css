@@ -85,3 +85,8 @@
     opacity: 0;
     pointer-events: none;
   }
+
+  .tta-smarthub--goal-row-obj-table-header li {
+    padding-top: 8px;
+    padding-bottom: 16px;
+  }
