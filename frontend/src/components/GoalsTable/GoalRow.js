@@ -260,7 +260,12 @@ function GoalRow({
       <tr className="tta-smarthub--objective-rows">
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
           <div className="tta-smarthub--goal-row-obj-table">
-            <ul className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-header">
+            <caption className="usa-sr-only">
+              Objectives for goal
+              {' '}
+              {goalNumber}
+            </caption>
+            <ul aria-hidden className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-header">
               <li>Objective</li>
               <li>Activity report</li>
               <li>End date</li>
