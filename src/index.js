@@ -34,9 +34,10 @@ const {
   const subscriber = redisClient.duplicate();
   await subscriber.connect();
 
-  wss.on('connection', async (ws, req) => {
-    const channelName = req.url;
+  let channelName = '';
 
+  wss.on('connection', async (ws, req) => {
+    channelName = req.url;
     await subscriber.subscribe(channelName, (message) => {
       ws.send(message);
     });
@@ -47,7 +48,7 @@ const {
     });
   });
 
-  wss.on('close', async () => subscriber.unsubscribe());
+  wss.on('close', async () => subscriber.unsubscribe(channelName));
 })();
 
 export default server;
