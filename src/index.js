@@ -1,12 +1,12 @@
 require('newrelic');
 
 /* eslint-disable import/first */
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 import { createClient } from 'redis';
 import app from './app';
 import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
-import { socketPublisher, socketSubscriber } from './lib/socket';
+// import { socketPublisher, socketSubscriber } from './lib/socket';
 /* eslint-enable import/first */
 
 const port = process.env.PORT || 8080;
@@ -20,39 +20,34 @@ const {
   redisOpts,
 } = generateRedisConfig();
 
-// iife to get around top level awaits
+// IIFE to get around top level awaits
 (async () => {
-  const wss = new WebSocket.Server({ server });
+  const wss = new WebSocketServer({ server });
   const redisClient = createClient({
     url: `redis://default:${redisOpts.redis.password}@${redisHost}:${redisPort}`,
   });
   await redisClient.connect();
 
-  const publisher = redisClient.duplicate();
-  await publisher.connect();
-
+  // We need to set up duplicate connections for subscribing,
+  // as once a client is in "subscribe" mode, it can't send
+  // any other commands (like "publish")
   const subscriber = redisClient.duplicate();
   await subscriber.connect();
 
-  wss.on('connection', async (ws) => {
-    wss.clients.forEach(async (client) => {
-      socketSubscriber(client, subscriber);
+  wss.on('connection', async (ws, req) => {
+    const channelName = req.url;
+
+    await subscriber.subscribe(channelName, (message) => {
+      ws.send(message);
     });
 
     ws.on('message', async (message) => {
-      wss.clients.forEach(async (client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          try {
-            const parsedMessage = JSON.parse(message);
-            const { event } = parsedMessage;
-            socketPublisher(event, client, publisher, parsedMessage);
-          } catch (err) {
-            client.send(JSON.stringify({}));
-          }
-        }
-      });
+      const { channel, ...data } = JSON.parse(message);
+      await redisClient.publish(channel, JSON.stringify(data));
     });
   });
+
+  wss.on('close', async () => subscriber.unsubscribe());
 })();
 
 export default server;

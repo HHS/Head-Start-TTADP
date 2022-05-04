@@ -5,32 +5,35 @@ export const SocketContext = createContext();
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 
-export default function SocketProvider({ children }) {
+export const socketPath = (activityReportId) => {
+  if (activityReportId && activityReportId !== 'new') {
+    return `/activity-report/edit/${activityReportId}`;
+  }
+
+  return '';
+};
+
+export default function SocketProvider({ children, path }) {
   const [store, setStore] = useState(null);
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
-    if (!WS_URL) {
+    if (!WS_URL || !path) {
       return null;
     }
-    const s = new WebSocket(WS_URL);
+    const s = new WebSocket(`${WS_URL}${path}`);
 
     // we don't want to send bufferdata, but json
     s.binaryType = 'arraybuffer';
 
-    // Connection opened
-    s.addEventListener('open', (event) => {
-      // you could add an alert here, or use this to debug connection
-      console.log(event.data);
-    });
-
     // Listen for messages
     s.addEventListener('message', (event) => {
-      setStore(JSON.parse(event.data));
+      const data = JSON.parse(event.data);
+      setStore(data);
     });
 
     return s;
-  }, []);
+  }, [path]);
 
   return (
     <SocketContext.Provider value={{ socket, store }}>{children}</SocketContext.Provider>
@@ -39,4 +42,5 @@ export default function SocketProvider({ children }) {
 
 SocketProvider.propTypes = {
   children: PropTypes.node.isRequired,
+  path: PropTypes.string.isRequired,
 };
