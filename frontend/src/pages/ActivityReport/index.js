@@ -356,9 +356,18 @@ function ActivityReport({
         updateError();
       } catch (e) {
         setConnectionActiveWithError(error, setConnectionActive);
-        const networkErrorMessage = `There's an issue with your network connection. Your work is saved on this computer, but you can't submit an activity report right now.
-        Wait a few minutes, then try again. If you continue to have problems, contact HELP@PLACEHOLDER.GOV`;
-        const errorMsg = formData ? networkErrorMessage : 'Unable to load activity report';
+        const networkErrorMessage = (
+          <>
+            There&rsquo;s an issue with your connection.
+            <br />
+            Your work is saved on this computer. When this alert disappears, try to submit again.
+            <br />
+            If you continue to have problems,
+            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
+            .
+          </>
+        );
+        const errorMsg = formData ? networkErrorMessage : <>Unable to load activity report</>;
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data

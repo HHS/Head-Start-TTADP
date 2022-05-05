@@ -118,7 +118,7 @@ const Draft = ({
             manager(s) for approval.
           </p>
           { !connectionActive && (
-            <Alert>
+            <Alert type="warning" noIcon>
               We had trouble retrieving available approvers for you. You may not see all available
               right now. Your work is still saved.
             </Alert>
@@ -155,12 +155,16 @@ const Draft = ({
           Save Draft
         </Button>
         { !connectionActive && (
-        <Alert>
-          There&#39;s an issue with your network connection,
-          and you can&#39;t submit your report right now.
+        <Alert type="warning" noIcon>
+          There&#39;s an issue with your connection.
+          <br />
+          { localStorageAvailable ? 'Your work is saved on this computer.' : '' }
+          When this alert disappears, try to submit again.
+          <br />
+          If you continue to have problems,
           {' '}
-          { localStorageAvailable ? 'Your work is safe.' : ' ' }
-          Please try back later!
+          <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
+          .
         </Alert>
         )}
         <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
