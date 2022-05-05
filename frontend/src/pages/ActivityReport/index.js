@@ -298,9 +298,9 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        // this if statement compares the "saved to storage time" and the
+        // this if statemenrt compares the "saved to storage time" and the
         // time retrieved from the network (report.updatedAt)
-        // and whichever is newer "wins"
+        // and whichever is newe "wins"
 
         if (formData && savedToStorageTime) {
           const updatedAtFromNetwork = moment(report.updatedAt);

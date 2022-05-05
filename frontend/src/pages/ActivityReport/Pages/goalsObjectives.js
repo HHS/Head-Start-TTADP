@@ -69,7 +69,7 @@ const GoalsObjectives = () => {
             <GoalPicker
               availableGoals={availableGoals}
             />
-            { !fetchError && (
+            { fetchError && (
             <Alert noIcon type="warning">
               We&rsquo;re having trouble retrieving goals for you right now.
               Your work is still being saved.
