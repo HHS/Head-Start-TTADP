@@ -15,7 +15,6 @@ import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
-const cors = require('cors');
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
@@ -34,9 +33,10 @@ app.use(helmet({
   },
 }));
 
-app.use(cors({
-  origin: [/\tta-smarthub-\.com$/, 'https://touchpoints.app.cloud.gov'],
-}));
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+  next();
+});
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')));
