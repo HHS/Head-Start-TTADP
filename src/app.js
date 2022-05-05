@@ -71,7 +71,7 @@ if (process.env.NODE_ENV === 'production') {
   const html = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
 
   app.use('*', (req, res) => {
-    const noncedIndex = html.replace('__NONCE__', res.locals.nonce);
+    const noncedIndex = html.replaceAll('__NONCE__', res.locals.nonce);
     res.set('Content-Type', 'text/html');
     res.send(noncedIndex);
   });
