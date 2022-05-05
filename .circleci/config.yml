@@ -379,10 +379,10 @@ jobs:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
                 environment:
-                  REACT_APP_GTM_ENABLED: SANDBOX_GMT_ENABLED
-                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
-                  REACT_APP_GTM_AUTH: SANDBOX_GMT_AUTH
-                  REACT_APP_GTM_PREVIEW: SANDBOX_GMT_PREVIEW
+                  REACT_APP_GTM_ENABLED: $SANDBOX_GMT_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GMT_ID
+                  REACT_APP_GTM_AUTH: $SANDBOX_GMT_AUTH
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GMT_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
