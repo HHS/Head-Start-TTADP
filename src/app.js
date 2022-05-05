@@ -1,4 +1,5 @@
 import {} from 'dotenv/config';
+import fs from 'fs';
 import express from 'express';
 import helmet from 'helmet';
 import path from 'path';
@@ -7,6 +8,7 @@ import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
@@ -20,18 +22,21 @@ const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet({
-  contentSecurityPolicy: {
+
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('hex');
+  const cspMiddleware = helmet.contentSecurityPolicy({
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
       scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
-      scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', "'sha256-PVdLMy9DHabEqXvKtr5/zVtwnsEl/TweuaaniHQnwSk='"],
+      scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
       imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov', 'www.googletagmanager.com'],
       defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
     },
-  },
-}));
+  });
+  cspMiddleware(req, res, next);
+});
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')));
@@ -62,8 +67,12 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
+  const html = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+
   app.use('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'index.html'));
+    const noncedIndex = html.replace('__NONCE__', res.locals.nonce);
+    res.set('Content-Type', 'text/html');
+    res.send(noncedIndex);
   });
 }
 
