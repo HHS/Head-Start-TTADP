@@ -59,14 +59,11 @@ export const formData = () => ({
 export const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <UserContext.Provider value={{ user }}>
+      <UserContext.Provider value={{ user: { ...user, id: userId } }}>
         <ActivityReport
           match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
           location={{
             state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-          }}
-          user={{
-            id: userId, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
           }}
           region={1}
         />

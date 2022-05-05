@@ -86,7 +86,7 @@ describe('Local storage fallbacks', () => {
     await screen.findByRole('group', { name: 'Who was the activity for?' }, { timeout: 4000 });
 
     expect(getItem).toHaveBeenCalled();
-    const alert = await screen.findByText(/your work is saved on this computer, but you can't submit an activity report right now/i);
+    const alert = await screen.findByText(/your work is saved on this computer/i);
     expect(alert).toBeVisible();
   });
 
