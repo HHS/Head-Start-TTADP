@@ -10,6 +10,7 @@ export const IS_NOT = 'is not';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
+export const REGION_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',

@@ -3,48 +3,42 @@ import {
   Objective,
   ActivityReportObjective,
 } from '../models';
+import { removeUnusedGoalsObjectivesFromReport } from './goals';
 
-export async function saveObjectivesForReport(objectives, report, transaction) {
-  const reportObjectives = await ActivityReportObjective.findAll({
-    where: {
-      activityReportId: report.id,
-    },
+export async function saveObjectivesForReport(objectives, report) {
+  const objectivesToCreate = objectives.map(({
+    ttaProvided,
+    title,
+    status,
+    id,
+    new: isNew,
+  }) => {
+    const dbId = isNew ? undefined : id;
+    return {
+      id: dbId, ttaProvided, title, status,
+    };
   });
 
-  const objectiveIds = reportObjectives.map((reportObjective) => reportObjective.objectiveId);
-  await ActivityReportObjective.destroy(
-    {
-      where: {
-        activityReportId: report.id,
-      },
-    },
-    { transaction },
+  const currentObjectives = await Promise.all(
+    objectivesToCreate.map(async (o) => {
+      const [obj] = await Objective.upsert(
+        o,
+        { returning: true },
+      );
+      return obj;
+    }),
   );
 
-  await Objective.destroy(
-    {
+  const savedObjectiveIds = currentObjectives.map((o) => o.id);
+
+  await Promise.all(
+    savedObjectiveIds.map((objectiveId) => ActivityReportObjective.findOrCreate({
       where: {
-        id: objectiveIds,
-      },
-    },
-    { transaction },
-  );
-
-  return Promise.all(objectives.map(async (objective) => {
-    const { status, title, ttaProvided } = objective;
-
-    const createdObjective = await Objective.create({
-      title,
-      ttaProvided,
-      status,
-    }, { transaction });
-
-    return ActivityReportObjective.create(
-      {
-        objectiveId: createdObjective.id,
+        objectiveId,
         activityReportId: report.id,
       },
-      { transaction },
-    );
-  }));
+    })),
+  );
+
+  return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }

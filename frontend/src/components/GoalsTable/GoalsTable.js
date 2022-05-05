@@ -5,7 +5,7 @@ import {
   Table, Grid, Alert,
 } from '@trussworks/react-uswds';
 import { filtersToQueryString } from '../../utils';
-import TableHeader from '../TableHeader';
+import GoalsTableHeader from './GoalsTableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';
 import { GOALS_PER_PAGE } from '../../Constants';
@@ -16,7 +16,8 @@ function GoalsTable({
   recipientId,
   regionId,
   filters,
-  onUpdateFilters,
+  hasActiveGrants,
+  showNewGoals,
 }) {
   // Goal Data.
   const [goals, setGoals] = useState([]);
@@ -30,10 +31,15 @@ function GoalsTable({
   const [goalsCount, setGoalsCount] = useState(0);
   const [offset, setOffset] = useState(0);
   const [perPage] = useState(GOALS_PER_PAGE);
-  const [sortConfig, setSortConfig] = useState({
-    sortBy: 'goalStatus',
-    direction: 'asc',
-  });
+  const [sortConfig, setSortConfig] = useState(showNewGoals
+    ? {
+      sortBy: 'createdOn',
+      direction: 'desc',
+    }
+    : {
+      sortBy: 'goalStatus',
+      direction: 'asc',
+    });
 
   useEffect(() => {
     async function fetchGoals() {
@@ -60,7 +66,7 @@ function GoalsTable({
       setLoading(false);
     }
     fetchGoals();
-  }, [sortConfig, offset, perPage, filters, recipientId, regionId]);
+  }, [sortConfig, offset, perPage, filters, recipientId, regionId, showNewGoals]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -136,28 +142,27 @@ function GoalsTable({
 
   return (
     <>
+      {error && (
       <Grid row>
-        {error && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-        )}
+        <Alert type="error" role="alert">
+          {error}
+        </Alert>
       </Grid>
-
-      <Container className="goals-table inline-size maxw-full" padding={0} loading={loading} loadingLabel="Goals table loading">
-        <TableHeader
+      )}
+      <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
+        <GoalsTableHeader
           title="TTA goals and objectives"
-          onUpdateFilters={onUpdateFilters}
           count={goalsCount || 0}
           activePage={activePage}
           offset={offset}
           perPage={perPage}
           handlePageChange={handlePageChange}
-          hideMenu
-          paginationName="goals"
+          recipientId={recipientId}
+          regionId={regionId}
+          hasActiveGrants={hasActiveGrants}
         />
         <div className="usa-table-container">
-          <Table className="goals-table-content" fullWidth>
+          <Table fullWidth scrollable>
             <caption className="usa-sr-only">
               TTA goals and objective count with sorting and pagination
             </caption>
@@ -178,6 +183,8 @@ function GoalsTable({
                   goal={goal}
                   openMenuUp={index > displayGoals.length - 1}
                   updateGoal={updateGoal}
+                  recipientId={recipientId}
+                  regionId={regionId}
                 />
               ))}
             </tbody>
@@ -199,11 +206,8 @@ GoalsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
-  onUpdateFilters: PropTypes.func,
-};
-
-GoalsTable.defaultProps = {
-  onUpdateFilters: () => { },
+  hasActiveGrants: PropTypes.bool.isRequired,
+  showNewGoals: PropTypes.bool.isRequired,
 };
 
 export default GoalsTable;

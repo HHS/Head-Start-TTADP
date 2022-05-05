@@ -31,6 +31,14 @@ const Input = ({
   isDisabled,
   theme,
   selectProps,
+  clearValue,
+  getValue,
+  hasValue,
+  isMulti,
+  isRtl,
+  options,
+  selectOption,
+  setValue,
   ...props
 }) => {
   const selectedGoals = selectProps.value.length;

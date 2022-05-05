@@ -156,6 +156,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
 }
 
 ReportsRow.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
   message: PropTypes.shape({
@@ -310,6 +311,7 @@ function MyAlerts(props) {
 }
 
 MyAlerts.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object),
   newBtn: PropTypes.bool.isRequired,
   alertsSortConfig: PropTypes.shape({ sortBy: PropTypes.string, direction: PropTypes.string }),
@@ -325,7 +327,7 @@ MyAlerts.propTypes = {
   loading: PropTypes.bool.isRequired,
   message: PropTypes.shape({
     time: PropTypes.string,
-    reportId: PropTypes.string,
+    reportId: PropTypes.number,
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
@@ -351,7 +353,7 @@ MyAlerts.defaultProps = {
   alertsActivePage: 1,
   message: {
     time: '',
-    reportId: '',
+    reportId: null,
     displayId: '',
     status: '',
   },

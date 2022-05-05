@@ -23,7 +23,7 @@ import './index.css';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString, expandFilters, formatDateRange } from '../../utils';
+import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
@@ -33,11 +33,6 @@ import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from '
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-
-const defaultDate = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
 
 const FILTER_KEY = 'landing-filters';
 
@@ -73,19 +68,8 @@ function Landing() {
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
       }]
-      : [{
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      }],
+      : allRegionsFilters,
   );
 
   const history = useHistory();
@@ -103,7 +87,7 @@ function Landing() {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
-  const [downloadAlertsError, setDownloadAlertsError] = useState('');
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
   const downloadAllAlertsButtonRef = useRef();
 
   function getAppliedRegion() {
@@ -212,35 +196,36 @@ function Landing() {
   };
 
   // Apply filters.
-  const onApply = (newFilters) => {
-    setFilters([
-      ...newFilters,
-    ]);
+  const onApply = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters([
+        ...newFilters,
+      ]);
+    }
+
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
   };
 
   // Remove Filters.
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      setFilters(newFilters);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
     }
   };
-
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
 
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
@@ -295,9 +280,9 @@ function Landing() {
               applyButtonAria="apply filters for activity reports"
               filters={filters}
               onApplyFilters={onApply}
-              dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
               filterConfig={filterConfig}
+              allUserRegions={regions}
             />
           </Grid>
         </Grid>
