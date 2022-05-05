@@ -276,7 +276,6 @@ function GoalRow({
               <ObjectiveRow
                 key={`objective_${obj.id}`}
                 objective={obj}
-                onCollapseObjectives={closeOrOpenObjectives}
               />
             ))}
           </div>
