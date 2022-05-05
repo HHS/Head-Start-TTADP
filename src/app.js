@@ -29,9 +29,10 @@ app.use((req, res, next) => {
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
+      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js', '*.googletagmanager.com'],
       scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
-      imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov', 'www.googletagmanager.com'],
+      imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov', 'www.googletagmanager.com', '*.google-analytics.com'],
+      connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
       defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
     },
   });
