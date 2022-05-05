@@ -15,13 +15,14 @@ import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
+const cors = require('cors');
+
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
-  crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
@@ -31,6 +32,10 @@ app.use(helmet({
       defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
     },
   },
+}));
+
+app.use(cors({
+  origin: [/\tta-smarthub-\.com$/, 'https://touchpoints.app.cloud.gov'],
 }));
 
 if (process.env.NODE_ENV === 'production') {
