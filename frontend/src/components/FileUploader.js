@@ -193,6 +193,7 @@ DeleteFileModal.propTypes = {
   ]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
   index: PropTypes.number,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
@@ -274,6 +275,7 @@ const FileTable = ({ onFileRemoved, files }) => {
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
 };
 FileTable.defaultProps = {
@@ -304,6 +306,7 @@ const FileUploader = ({
 
 FileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
   reportId: PropTypes.node.isRequired,
   id: PropTypes.string.isRequired,
