@@ -3,7 +3,7 @@
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, {
-  useState, useEffect, useRef,
+  useState, useEffect, useRef, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -44,6 +44,7 @@ import {
 import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import { HTTPError } from '../../fetchers';
+import UserContext from '../../UserContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -180,11 +181,11 @@ export const updateGoals = (report) => (oldFormData) => {
       new: goalEditable,
     };
   });
-  return { ...oldFormData, goals };
+  return { ...oldFormData, goals, objectivesWithoutGoals: report.objectivesWithoutGoals };
 };
 
 function ActivityReport({
-  match, user, location, region,
+  match, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
 
@@ -219,6 +220,7 @@ function ActivityReport({
 
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
+  const { user } = useContext(UserContext);
 
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
@@ -282,9 +284,16 @@ function ActivityReport({
 
         // The report can be edited if its in draft OR needs_action state.
 
-        const canWriteReport = (isCollaborator || isAuthor)
-          && (report.calculatedStatus === REPORT_STATUSES.DRAFT
-            || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+        const isMatchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
+
+        const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
+        && (report.calculatedStatus === REPORT_STATUSES.DRAFT
+          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+
+        const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
+          report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+        );
+
         updateAdditionalData({ recipients, collaborators, availableApprovers });
 
         let shouldUpdateFromNetwork = true;
@@ -315,17 +324,28 @@ function ActivityReport({
 
         // Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
-        const matchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
 
-        if (matchingApprover && matchingApprover.length > 0 && !canWriteReport) {
+        if (isMatchingApprover && isMatchingApprover.length > 0) {
           // This user is an approver on the report.
           updateIsApprover(true);
 
           // This user is a approver on the report and has a pending approval.
-          if (matchingApprover[0].status === null || matchingApprover[0].status === 'pending') {
+          if (isMatchingApprover[0].status === null || isMatchingApprover[0].status === 'pending') {
             updateIsPendingApprover(true);
           }
         }
+
+        // if a report has been marked as need action or approved by any approver, it can no longer
+        // be edited even by an approver
+        const approverHasMarkedReport = report.approvers.some((approver) => (
+          approver.status === REPORT_STATUSES.APPROVED
+        ));
+
+        const canWriteReport = canWriteAsCollaboratorOrAuthor
+          || (
+            canWriteAsApprover
+             && !approverHasMarkedReport
+          );
 
         updateEditable(canWriteReport);
 
@@ -381,6 +401,12 @@ function ActivityReport({
     );
   }
 
+  if (!currentPage && editable && isPendingApprover) {
+    return (
+      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+    );
+  }
+
   if (!currentPage) {
     return (
       <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
@@ -391,6 +417,7 @@ function ActivityReport({
     if (!editable) {
       return;
     }
+
     const state = {};
     if (activityReportId === 'new' && reportId.current !== 'new') {
       state.showLastUpdatedTime = true;

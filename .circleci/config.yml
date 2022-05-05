@@ -106,6 +106,18 @@ commands:
       hses_data_password:
         description: "Password used to access the HSES grants and recipient data"
         type: env_var_name
+      smtp_host:
+        description: "SMTP server"
+        type: env_var_name
+      smtp_port:
+        description: "SMTP port"
+        type: env_var_name
+      smtp_secure:
+        description: "SMTP secure transport"
+        type: env_var_name
+      from_email_address:
+        description: "From email address"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -126,7 +138,11 @@ commands:
               --var SESSION_SECRET=${<< parameters.session_secret >>} \
               --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
               --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
-              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>}
+              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
+              --var SMTP_HOST=${<< parameters.smtp_host >>} \
+              --var SMTP_PORT=${<< parameters.smtp_port >>} \
+              --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
+              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
       - run:
           name: Push maintenance application
           command: |
@@ -166,10 +182,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "js-644-fix-copy-paste-into-wysiwyg-component"
+    default: "ttahub-799-upgrade-font-awesome-ver-6"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-fix-double-recipient"
+    default: "kw-add-mail"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -375,6 +391,10 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Migrate database
                 command: |
@@ -404,6 +424,10 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Migrate database
                 command: |
@@ -433,6 +457,10 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Run database migrations
                 command: |
@@ -460,6 +488,10 @@ jobs:
                 hses_data_file_url: PROD_HSES_DATA_FILE_URL
                 hses_data_username: PROD_HSES_DATA_USERNAME
                 hses_data_password: PROD_HSES_DATA_PASSWORD
+                smtp_host: SMTP_HOST
+                smtp_port: SMTP_PORT
+                smtp_secure: SMTP_SECURE
+                from_email_address: FROM_EMAIL_ADDRESS
             - run:
                 name: Run database migrations
                 command: |

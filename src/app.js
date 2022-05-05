@@ -6,6 +6,8 @@ import join from 'url-join';
 import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
+import { v4 as uuidv4 } from 'uuid';
+
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
@@ -13,7 +15,6 @@ import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
-
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
 app.use(requestLogger);
@@ -48,6 +49,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 
     const dbUser = await retrieveUserDetails(user);
     req.session.userId = dbUser.id;
+    req.session.uuid = uuidv4();
     auditLogger.info(`User ${dbUser.id} logged in`);
 
     logger.debug(`referrer path: ${req.session.referrerPath}`);

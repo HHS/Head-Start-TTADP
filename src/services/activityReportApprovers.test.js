@@ -95,14 +95,15 @@ describe('activityReportApprovers services', () => {
           userId: secondMockManager.id,
         });
         // Works with managed transaction
-        await sequelize.transaction(async (transaction) => {
+        await sequelize.transaction(async () => {
           // Pending updated to needs_action
           const approver = await upsertApprover({
             status: APPROVER_STATUSES.NEEDS_ACTION,
             activityReportId: report1.id,
             userId: secondMockManager.id,
-          }, transaction);
+          });
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+          expect(approver.User).toBeDefined();
         });
         const updatedReport = await activityReportById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();
@@ -216,7 +217,8 @@ describe('activityReportApprovers services', () => {
       const approverIds = afterRestore.map((a) => a.userId);
       expect(approverIds).toContain(secondMockManager.id);
       expect(approverIds).toContain(mockManager.id);
-      expect(afterRestore[0].status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+      const mgrWithStatus = afterRestore.find((manager) => manager.userId === secondMockManager.id);
+      expect(mgrWithStatus.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
     });
   });
 });

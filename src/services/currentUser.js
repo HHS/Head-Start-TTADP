@@ -1,5 +1,7 @@
 import axios from 'axios';
 import isEmail from 'validator/lib/isEmail';
+import { v4 as uuidv4 } from 'uuid';
+
 import { logger, auditLogger } from '../logger';
 import findOrCreateUser from './findOrCreateUser';
 
@@ -22,6 +24,7 @@ export function currentUserId(req, res) {
     auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`);
     if (req.session) {
       req.session.userId = userId;
+      req.session.uuid = uuidv4();
     }
     return userId;
   }

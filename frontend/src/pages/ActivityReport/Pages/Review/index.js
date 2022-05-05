@@ -43,6 +43,8 @@ const ReviewSubmit = ({
   };
 
   const onFormReview = async (data) => {
+    // we need to validate as we do on submit
+
     try {
       await onReview(data);
       updateReviewed(true);
@@ -78,7 +80,6 @@ const ReviewSubmit = ({
         <title>Review and submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-
       {!isApprover
         && (
           <Submitter
@@ -101,6 +102,7 @@ const ReviewSubmit = ({
         && (
           <Approver
             reviewed={reviewed}
+            pages={pages}
             additionalNotes={additionalNotes}
             onFormReview={onFormReview}
             error={error}
@@ -150,7 +152,11 @@ ReviewSubmit.propTypes = {
     state: PropTypes.string,
     label: PropTypes.string,
   })).isRequired,
-  lastSaveTime: PropTypes.instanceOf(moment).isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
+};
+
+ReviewSubmit.defaultProps = {
+  lastSaveTime: undefined,
 };
 
 export default ReviewSubmit;

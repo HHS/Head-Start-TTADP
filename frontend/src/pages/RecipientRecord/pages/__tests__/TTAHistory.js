@@ -10,6 +10,8 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import TTAHistory from '../TTAHistory';
 import { formatDateRange } from '../../../../utils';
+import { SCOPE_IDS } from '../../../../Constants';
+import UserContext from '../../../../UserContext';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -24,11 +26,25 @@ describe('Recipient Record - TTA History', () => {
     rows: [],
   };
 
+  const user = {
+    homeRegionId: 14,
+    permissions: [{
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }, {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }],
+  };
+
   const renderTTAHistory = () => {
     render(
-      <Router history={memoryHistory}>
-        <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
-      </Router>,
+      <UserContext.Provider value={{ user }}>
+        <Router history={memoryHistory}>
+          <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
+        </Router>
+
+      </UserContext.Provider>,
     );
   };
 

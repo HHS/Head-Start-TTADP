@@ -6,6 +6,7 @@ import {
   DATE_CONDITIONS,
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
+  REGION_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -210,7 +211,7 @@ export const reportIdFilter = {
 export const regionFilter = {
   id: 'region',
   display: 'Region',
-  conditions: FILTER_CONDITIONS,
+  conditions: REGION_CONDITIONS,
   defaultValues: EMPTY_SINGLE_SELECT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (

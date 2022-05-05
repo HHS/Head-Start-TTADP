@@ -16,6 +16,8 @@ import { auditLogger } from '../logger';
 import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
 import goalsRouter from './goals';
+import topicsRouter from './topics';
+import transactionWrapper from './transactionWrapper';
 
 export const loginPath = '/login';
 
@@ -28,29 +30,13 @@ router.use(cookieSession);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.use((req, res, next) => {
-  const getSessionSig = (cookie) => {
-    try {
-      if (cookie !== undefined && (typeof cookie === 'string' || cookie instanceof String)) {
-        const sessionSigs = cookie.split('; ').filter((s) => s.includes('session.sig='));
-        return sessionSigs.length > 0
-          ? sessionSigs[0].replace('session.sig=', '')
-          : '';
-      }
-    } catch (err) {
-      auditLogger.error(err);
-    }
-    return '';
-  };
-
   try {
-    const { userId } = req.session;
+    const { userId, uuid } = req.session;
     const transactionId = uuidv4();
-    const { cookie } = req.headers;
-    const sessionSig = getSessionSig(cookie);
 
     httpContext.set('loggedUser', userId);
     httpContext.set('transactionId', transactionId);
-    httpContext.set('sessionSig', sessionSig);
+    httpContext.set('sessionSig', uuid);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -64,8 +50,9 @@ router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
+router.use('/topic', topicsRouter);
 
-router.get('/user', async (req, res) => {
+const getUser = async (req, res) => {
   const { userId } = req.session;
   try {
     const user = await userById(userId);
@@ -73,8 +60,9 @@ router.get('/user', async (req, res) => {
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:SELF' });
   }
-});
+};
 
+router.get('/user', transactionWrapper(getUser));
 router.get('/logout', (req, res) => {
   const { userId } = req.session;
   auditLogger.info(`User ${userId} logged out`);

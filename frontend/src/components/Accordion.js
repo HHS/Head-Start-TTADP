@@ -42,7 +42,7 @@ export const AccordionItem = ({
 const AccordionItemProp = {
   title: PropTypes.string.isRequired,
   content: PropTypes.node.isRequired,
-  expanded: PropTypes.bool.isRequired,
+  expanded: PropTypes.bool,
   id: PropTypes.string.isRequired,
   className: PropTypes.string,
   handleToggle: PropTypes.func,
@@ -55,6 +55,7 @@ AccordionItem.defaultProps = {
   headingSize: 2,
   className: '',
   handleToggle: () => { },
+  expanded: false,
 };
 
 export const Accordion = ({
