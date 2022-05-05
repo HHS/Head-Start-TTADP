@@ -21,7 +21,6 @@ app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
-  //crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
