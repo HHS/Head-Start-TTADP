@@ -21,14 +21,14 @@ app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({
-  crossOriginEmbedderPolicy: false,
+  //crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
+      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov'],
       imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
-      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
+      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov'],
     },
   },
 }));
