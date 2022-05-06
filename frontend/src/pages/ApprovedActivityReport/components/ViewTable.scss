@@ -1,5 +1,7 @@
+@use '../../../colors.scss' as *;
+
 .ttahub-activity-report-view-table-container {
-  border: 1px solid #c5c5c5;
+  border: 1px solid $base-light;
   width: calc(100% - 4rem);
 }
 

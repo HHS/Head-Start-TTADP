@@ -1,3 +1,5 @@
+@use '../colors.scss' as *;
+
 .smart-hub--file-tag {
   text-transform: none;
   font-size: 14px;
@@ -27,7 +29,6 @@
 .files-table {
   width: 100%;
   border-collapse: collapse;
-  /* border: 1px solid #979797; */
 }
 
 .files-table--thead th, .files-table td {
@@ -36,7 +37,7 @@
   font-size: .9rem;
 }
 .files-table--container {
-  border: solid 1px #979797;
+  border: 1px solid $base-light;
   min-height: 8rem;
 }
 

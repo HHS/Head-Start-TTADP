@@ -1,6 +1,8 @@
+@use '../../../../colors.scss' as *;
+
 .smart-hub--creator-notes {
   padding: 1rem;
-  background-color: #f8f8f8;
+  background-color: $gray-two;
 }
 
 #status {

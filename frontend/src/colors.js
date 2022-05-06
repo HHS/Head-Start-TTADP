@@ -1,4 +1,5 @@
-// if adding to this, please run 'yarn makecolors' to rebuild the matching colors.scss file'
+// if adding to this, please run 'yarn makecolors' from the frontend dir
+// to rebuild the matching colors.scss file'
 const colors = {
   ttahubBlue: '#264a64',
   ttahubMediumBlue: '#336A90',
@@ -22,6 +23,7 @@ const colors = {
   infoLighter: '#e7f6f8',
   success: '#00a91c',
   successLighter: '#ecf3ec',
+  successDarker: '#00a91c',
   error: '#d54309',
   errorLighter: '#f4e3db',
 

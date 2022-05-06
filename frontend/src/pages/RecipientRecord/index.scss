@@ -1,5 +1,7 @@
+@use '../../colors.scss' as *;
+
 .ttahub-recipient-record--card-header {
-    border-bottom: 1px solid #eceef1;
+    border-bottom: 1px solid $base-lighter;
     font-size: 1.17em;
 }
 

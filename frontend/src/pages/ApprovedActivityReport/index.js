@@ -6,7 +6,7 @@ import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
-import './index.css';
+import './index.scss';
 import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
