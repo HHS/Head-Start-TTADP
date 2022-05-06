@@ -14,7 +14,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Button, Alert } from '@trussworks/react-uswds';
 import { uploadFile, deleteFile } from '../fetchers/File';
 import Modal from './Modal';
-
+import colors from '../colors';
 import './FileUploader.scss';
 
 export const upload = async (file, reportId, setErrorMessage) => {
@@ -257,7 +257,7 @@ const FileTable = ({ onFileRemoved, files }) => {
                   }}
                 >
                   <span className="fa-sm">
-                    <FontAwesomeIcon color="black" icon={faTrash} />
+                    <FontAwesomeIcon color={colors.textInk} icon={faTrash} />
                   </span>
                 </Button>
               </td>

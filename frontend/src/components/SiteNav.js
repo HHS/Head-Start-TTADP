@@ -35,7 +35,7 @@ const SiteNav = ({
   location,
 }) => {
   const navItems = [
-    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
+    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled usa-button--unstyled_logout width-full ${navLinkClasses}`}>
       Logout
     </button>,
   ];

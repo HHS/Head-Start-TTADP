@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
-
+import colors from '../colors';
 import './ContextMenu.scss';
 
 const ESCAPE_KEY_CODE = 27;
@@ -77,7 +77,7 @@ function ContextMenu({
         type="button"
         data-testid="ellipsis-button"
       >
-        <FontAwesomeIcon color="black" icon={faEllipsisH} />
+        <FontAwesomeIcon color={colors.textInk} icon={faEllipsisH} />
       </Button>
       {shown
     && (
