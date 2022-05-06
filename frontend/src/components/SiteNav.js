@@ -58,10 +58,21 @@ const SiteNav = ({
 
   const items = admin ? navItems.concat(adminNavItem) : navItems;
 
+  const openSurvey = () => {
+    window.open('https://touchpoints.app.cloud.gov/touchpoints/7d519b5e', '_blank');
+  };
+
   return (
     <div>
       <div className="position-relative z-top">
-        <button id="tp-ar-landing-survey" className={`usa-button position-fixed bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
+        <button
+          type="button"
+          className={`usa-button position-fixed bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`}
+          aria-label="Please leave feedback"
+          onClick={openSurvey}
+        >
+          Please leave feedback
+        </button>
       </div>
       <div className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (

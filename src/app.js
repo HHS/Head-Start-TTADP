@@ -14,13 +14,9 @@ import cookieSession from './middleware/sessionMiddleware';
 import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
-const cors = require('cors');
-
 const app = express();
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
-
-const allowlist = ['https://touchpoints.app.cloud.gov'];
 
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
@@ -36,13 +32,6 @@ app.use(helmet({
     },
   },
 }));
-
-app.use((req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  next();
-});
-
-app.use(cors({ origin: allowlist }));
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')));
