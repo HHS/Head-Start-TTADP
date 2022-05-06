@@ -1,5 +1,7 @@
+@use '../../../../colors.scss' as *;
+
 .smart-hub--goal {
-  border-left: 4px solid #0166ab;
+  border-left: 4px solid $ttahub-medium-blue;
   display: flex;
   flex-flow: row;
   margin-top: 1rem;

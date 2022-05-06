@@ -102,7 +102,7 @@ export function TopicFrequencyGraphWidget({
       y: counts,
       hoverinfo: 'y',
       marker: {
-        color: colors.ttahubBlue,
+        color: colors.ttahubMediumBlue,
       },
     };
 

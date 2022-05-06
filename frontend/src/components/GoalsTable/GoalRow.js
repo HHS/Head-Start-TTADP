@@ -17,7 +17,7 @@ import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import { updateGoalStatus } from '../../fetchers/goals';
 import ObjectiveRow from './ObjectiveRow';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import './GoalRow.css';
+import './GoalRow.scss';
 
 function GoalRow({
   goal,

@@ -2,7 +2,7 @@ import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import './FilterItem.css';
+import './FilterItem.scss';
 import FilterErrorContext from './FilterErrorContext';
 import { filterProp } from './props';
 

@@ -1,3 +1,6 @@
+@use '../../mixins.scss';
+@use '../../colors.scss' as *;
+
 .ttahub-filter-menu-item {
     gap: 1em;
 }
@@ -25,11 +28,15 @@
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-input,
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .usa-select:nth-last-child(2),
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .ttahub-filter-date-range-single-date {
-    border: 2px solid #b50909;
+    @include mixins.error;
 }
 
 .ttahub-filter-menu-item--error.ttahub-filter-menu-item--error--value .smart-hub--checkbox-select .usa-select {
-    border: 2px solid #b50909;
+    @include mixins.error;
+}
+
+.ttahub-filter-menu-item.ttahub-filter-menu-item--error :blank {
+    @include mixins.error;
 }
 
 .ttahub-filter-menu-item > :nth-last-child(2),
@@ -45,11 +52,8 @@
 
 @media(max-width: 768px) {
     .ttahub-filter-menu-item {
-        border: 1px solid #f0f0f0;
+        border: 1px solid $base-lightest;
         padding: 0.5em;
     }
 }
 
-.ttahub-filter-menu-item.ttahub-filter-menu-item--error :blank {
-    border: 2px solid red;
-}

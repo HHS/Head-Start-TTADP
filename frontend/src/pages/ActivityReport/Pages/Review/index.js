@@ -6,7 +6,7 @@ import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
 import { REPORT_STATUSES } from '../../../../Constants';
-import './index.css';
+import './index.scss';
 import { Accordion } from '../../../../components/Accordion';
 
 const ReviewSubmit = ({

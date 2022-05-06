@@ -1,3 +1,5 @@
+@use '../../colors.scss' as *;
+
 .pagination {
   white-space: nowrap;
   margin-bottom: 0px;
@@ -9,7 +11,7 @@
 }
 
 .pagination li a {
-  color: #3c4146;
+  color: $text-ink;
   text-align: center;
   text-decoration: none;
   margin: 9px;
@@ -33,20 +35,19 @@
 }
 
 div.smart-hub--total-count {
-  background-color: #ebe6e6;
   align-self: center;
   display: inline;
 }
 
-.smart-hub--link-next {
-  text-decoration-line: underline !important;
-  color: #0166ab !important;
+.pagination a.smart-hub--link-next {
+  text-decoration-line: underline;
+  color: $text-link;
   margin-left: 12px;
 }
 
-.smart-hub--link-prev {
-  text-decoration-line: underline !important;
-  color: #0166ab !important;
+.pagination a.smart-hub--link-prev {
+  text-decoration-line: underline;
+  color: $text-link;
   margin-right: 12px;
 }
 
@@ -56,7 +57,7 @@ div.smart-hub--total-count {
 }
 
 .smart-hub-bg-vivid {
-  background-color: #0166ab;
+  background-color: $ttahub-medium-blue;
 }
 
 .landing .smart-hub--table-nav {
@@ -82,7 +83,6 @@ h1.landing {
   font-size: 40px;
   font-family: "Merriweather", serif;
   font-weight: 700;
-  white-space: nowrap;
   margin-right: 0px;
 }
 
@@ -98,7 +98,7 @@ h1.landing {
   white-space: nowrap;
   background-color: white;
   border-top: solid 1.5px;
-  border-color: #eceef1;
+  border-color: $base-lighter;
   border-bottom: none;
   padding-right: 0px;
 }
@@ -129,12 +129,7 @@ h1.landing {
 }
 
 .smart-hub--blue a {
-  color: #3c72ae;
-}
-
-.landing .usa-alert .usa-alert--error {
-  margin-bottom: 20px;
-  background-color: #148439;
+  color: $text-link;
 }
 
 .landing .smart-hub--context-menu-button {
@@ -142,29 +137,27 @@ h1.landing {
 }
 
 .smart-hub--status-draft {
-  background: #e2eff7;
-  color: #0166ab;
+  color: $ttahub-medium-blue;
+  background: $info-lighter;
+
 }
 
 .smart-hub--status-submitted {
-  background: #eceef1;
-  color: #475260;
-}
-
-.smart-hub--status-approved {
-  background: #f0fcf4;
-  color: #148439;
+  background: $base-lighter;
+  color: $base-darkest;
 }
 
 .smart-hub--status-needs_action {
-  background: #f9e0e4;
-  color: #d42240;
+  background: $error-lighter;
+  color: $error-dark;
 }
 
-.smart-hub--status- {
-  display: none;
+.smart-hub--status-approved {
+  background: $info-lighter;
+  color: $success;
 }
 
+.smart-hub--status-,
 .smart-hub--status-null {
   display: none;
 }
@@ -174,8 +167,6 @@ h1.landing {
   font-weight: bold;
   text-transform: capitalize;
 }
-
-
 
 .usa-button.smart-hub--button__no-margin {
   margin-left: 0px;
@@ -194,7 +185,7 @@ h1.landing {
 .smart-hub--new-report-btn {
   line-height: 0.5;
   min-width: 220px;
-  background-color: #0166ab;
+  background-color: $ttahub-medium-blue;
   max-height: 44px;
   border-radius: 5px;
   padding: 0.7rem 1.25rem 0.75rem 1.25rem;
@@ -243,20 +234,16 @@ a.desc {
   inline-size: fit-content;
 }
 
-.simplebar-scrollbar:before {
-  background: #c5c5c5;
-}
-
 .smart-hub--reports-button {
   display: block;
   text-decoration: none;
   width: 100%;
   height: 100%;
-  color: black;
+  color: $text-ink;
 }
 
 .smart-hub--menu-button__open {
-  background-color: #eceef1;
+  background-color: $ttahub-blue-lighter;
 }
 
 .fba-modal .fba-modal-dialog {

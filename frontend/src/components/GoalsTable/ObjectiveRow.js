@@ -6,7 +6,7 @@ import {
   faClock, faCheckCircle, faExclamationCircle, faMinusCircle, faFlag,
 } from '@fortawesome/free-solid-svg-icons';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import './ObjectiveRow.css';
+import './ObjectiveRow.scss';
 
 function ObjectiveRow({
   objective,

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
-import './SiteNav.css';
+import './SiteNav.scss';
 
 const navLinkClasses = [
   'display-block',

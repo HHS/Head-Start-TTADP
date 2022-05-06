@@ -27,6 +27,9 @@ function makeColors() {
 // Instead, edit colors.js and run 'yarn makecolors'
 // from the frontend directory to generate this file'
 
+// figma reference here:
+// https://www.figma.com/file/5Fr0NKQf9MQ5WGd8BWxA6i/TTA_SmartHub-Library-09132021?node-id=0%3A14
+
 ${keys.map((key, index) => {
     const propName = getPropName(key);
 

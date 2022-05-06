@@ -19,7 +19,7 @@ import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
-import './index.css';
+import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
