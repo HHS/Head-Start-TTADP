@@ -33,6 +33,7 @@ import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from '
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import colors from '../../colors';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -256,7 +257,7 @@ function Landing() {
                 onClick={() => updateShowAlert(false)}
               >
                 <span className="fa-sm margin-right-2">
-                  <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
                 </span>
               </Button>
             )}
