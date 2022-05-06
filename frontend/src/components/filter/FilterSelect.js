@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import useSpellCheck from '../../hooks/useSpellCheck';
+import FilterSelectValueContainer from './FilterSelectValueContainer';
 
 export default function FilterSelect({
   onApply,
@@ -89,6 +90,7 @@ export default function FilterSelect({
       styles={styles}
       components={{
         DropdownIndicator: null,
+        MultiValue: FilterSelectValueContainer,
       }}
       className="usa-select"
       closeMenuOnSelect={false}
