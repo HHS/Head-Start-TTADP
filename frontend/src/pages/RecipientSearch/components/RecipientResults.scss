@@ -1,5 +1,7 @@
+@use '../../../colors.scss' as *;
+
 .ttahub-recipient-results .usa-table .usa-button--unstyled {
-    color: black;
+    color: $text-ink;
     font-size: 1em;
     font-weight: bold;
     text-decoration: none;

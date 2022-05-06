@@ -11,7 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
 
-import './ContextMenu.css';
+import './ContextMenu.scss';
 
 const ESCAPE_KEY_CODE = 27;
 

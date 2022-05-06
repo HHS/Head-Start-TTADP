@@ -6,7 +6,7 @@
 .ttahub--topic-frequency-graph-tooltip {
     background: black;
     border-radius: 5px;
-    color: white;
+    color: #fff;;
     min-width: 2rem;
     padding: .5em;
     position: fixed;

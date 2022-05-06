@@ -1,14 +1,16 @@
+@use '../colors.scss' as *;
+
 .smart-hub--context-menu-button {
   display: block;
   text-decoration: none;
   width: 100%;
   height: 100%;
-  color: black;
+  color: $text-ink;
 }
 
 .smart-hub--context-menu-button:hover {
   text-decoration: none;
-  color: black;
+  color: $text-ink;
 }
 
 .smart-hub--context-menu {
