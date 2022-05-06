@@ -379,10 +379,10 @@ jobs:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
                 environment:
-                  REACT_APP_GTM_ENABLED: $SANDBOX_GMT_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GMT_ID
-                  REACT_APP_GTM_AUTH: $SANDBOX_GMT_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GMT_PREVIEW
+                  REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -420,10 +420,10 @@ jobs:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
                 environment:
-                  REACT_APP_GTM_ENABLED: DEV_GMT_ENABLED
-                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
-                  REACT_APP_GTM_AUTH: DEV_GMT_AUTH
-                  REACT_APP_GTM_PREVIEW: DEV_GMT_PREVIEW
+                  REACT_APP_GTM_ENABLED: $DEV_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -461,10 +461,10 @@ jobs:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
                 environment:
-                  REACT_APP_GTM_ENABLED: STAGING_GMT_ENABLED
-                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
-                  REACT_APP_GTM_AUTH: STAGING_GMT_AUTH
-                  REACT_APP_GTM_PREVIEW: STAGING_GMT_PREVIEW
+                  REACT_APP_GTM_ENABLED: $STAGING_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
@@ -500,10 +500,10 @@ jobs:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
                 environment:
-                  REACT_APP_GTM_ENABLED: PROD_GMT_ENABLED
-                  REACT_APP_GTM_ID: GLOBAL_GMT_ID
-                  REACT_APP_GTM_AUTH: PROD_GMT_AUTH
-                  REACT_APP_GTM_PREVIEW: PROD_GMT_PREVIEW
+                  REACT_APP_GTM_ENABLED: $PROD_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
