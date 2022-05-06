@@ -1,3 +1,5 @@
+@use '../colors.scss' as *;
+
 .spinner {
   margin: 0 auto 0;
   width: 70px;
@@ -13,9 +15,8 @@
 .spinner > div {
   width: 18px;
   height: 18px;
-  background-color: black;
-  background: black;
-
+  background-color: $text-ink;
+  background: $text-ink;
   border-radius: 100%;
   display: inline-block;
   -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;

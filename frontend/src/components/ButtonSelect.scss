@@ -35,9 +35,9 @@
 * The styles for the "style as select" prop
 */
 .smart-hub--button-select-toggle-btn.usa-select {
-    border: 1px solid black;
+    border: 1px solid $text-ink;
     box-shadow: none;
-    color: black;
+    color: $text-ink;
     padding: 0.5em 1em 0.5em 0.5em;
     -webkit-appearance: none;
     appearance: none;
