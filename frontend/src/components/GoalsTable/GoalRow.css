@@ -1,6 +1,6 @@
 .goals-table .usa-table .tta-smarthub--goal-row td:first-child {
   border-left: 1px solid #c5c5c5;
-  /* min-width: 160px; */
+  min-width: 170px;
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row td:last-child {
@@ -12,8 +12,8 @@
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row td:nth-child(3) {
-  max-width: 500px;
-  min-width: 500px;
+  max-width: 480px;
+  min-width: 480px;
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row td:nth-child(4) {
@@ -80,4 +80,20 @@ vertical-align: top;
 .tta-smarthub--goal-row td:nth-child(4) .smart-hub-tooltip button {
   line-height: 1.7;
   vertical-align: baseline;
+}
+
+
+.tta-smarthub--goal-row-obj-table-header {
+  background-color: white;
+  border-top: solid 1.5px;
+  border-color: #eceef1;
+  border-bottom: none;
+  padding-right: 0px;
+  padding-top: 0px;
+  padding-left: 0px;
+  padding-bottom: 8px;
+  background-color: white;
+  border-style: none;
+  color: black;
+  font-weight: 700;
 }
