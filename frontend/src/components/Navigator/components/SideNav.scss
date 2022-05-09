@@ -33,27 +33,27 @@
 
 .smart-hub--tag-not-started {
   background-color: $base-lightest;
-  color: $text-ink;
+  // color: $text-ink;
 }
 
 .smart-hub--tag-in-progress {
   background-color: $info-lighter;
-  color: $ttahub-blue;
+  // color: $ttahub-blue;
 }
 
 .smart-hub--tag-complete {
   background-color: $success-lighter;
-  color: $success-darker;
+  // color: $success-darker;
 }
 
 .smart-hub--tag-submitted {
   background-color: $ttahub-medium-blue;
-  color: $gray-two;
+  // color: $gray-two;
 }
 
 .smart-hub--tag-needs-action {
   background-color: $error-lighter;
-  color: $error-dark;
+  // color: $error-dark;
 }
 
 .smart-hub--tag {
@@ -63,6 +63,7 @@
   display: inline-block;
   text-transform: none;
   font-size: 14px;
+  color: $text-ink;
 }
 
 .smart-hub--navigator-skip-link {
