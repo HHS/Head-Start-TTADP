@@ -1,0 +1,11 @@
+
+.usa-form .ttahub-next-steps-repeater .usa-textarea {
+  /* Keep within bounds of navigator form with or without delete icon */
+  max-width: 460px;
+}
+
+/* Outline a blank step onBlur or form Validation */
+.ttahub-next-steps-repeater .usa-form-group--error .blank-next-step textarea,
+.usa-form-group--error .ttahub-next-steps-repeater .blank-next-step textarea {
+    border: 3px solid #b50909;
+  }
