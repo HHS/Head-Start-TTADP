@@ -59,13 +59,12 @@ const user = {
 const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <UserContext.Provider value={{ user }}>
+      <UserContext.Provider value={{ user: { ...user, id: userId } }}>
         <ActivityReport
           match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
           location={{
             state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
           }}
-          user={{ ...user, id: userId }}
         />
       </UserContext.Provider>
     </Router>,
@@ -91,6 +90,57 @@ describe('ActivityReport', () => {
     renderActivityReport('1', 'activity-summary', true);
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
+  describe('allow approvers to edit', () => {
+    it('does not allow approvers to navigate and change the report if the report is not submitted', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        approvers: [{ User: { id: 3 } }],
+      });
+      renderActivityReport(1, 'activity-summary', null, 3);
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+    });
+
+    it('does not allow approvers to navigate and change the report if the report has been approvedby one approver', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        approvers: [
+          {
+            status: null,
+            User: {
+              id: 3,
+            },
+          },
+          {
+            status: REPORT_STATUSES.APPROVED,
+            User: {
+              id: 4,
+            },
+          },
+        ],
+      });
+      renderActivityReport(1, 'activity-summary', null, 3);
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+    });
+
+    it('allows approvers to navigate and change the report if the report is submitted', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        approvers: [{ User: { id: 3 } }],
+      });
+      renderActivityReport(1, 'activity-summary', null, 3);
+
+      const startDate = await screen.findByRole('textbox', { name: /start date/i });
+      expect(startDate).toBeVisible();
+    });
   });
 
   describe('updateGoals', () => {
