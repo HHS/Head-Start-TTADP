@@ -8,11 +8,17 @@ import { UNFINISHED_OBJECTIVES } from '../goalValidator';
 const missingTitle = {
   title: '',
   ttaProvided: 'ttaProvided',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 const validObjective = {
   title: 'title',
   ttaProvided: 'ttaProvided',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 describe('validateObjectives', () => {

@@ -2,25 +2,34 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-
 import goalsObjectives from '../goalsObjectives';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType,
+  grantIds, activityRecipientType, goals = [], isGoalFormClosed = false,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
   const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { goals: [], objectivesWithoutGoals: [], ...data },
+    defaultValues: {
+      goals,
+      objectivesWithoutGoals: [],
+      author: {
+        role: 'central office',
+      },
+      isGoalFormClosed,
+      collaborators: [],
+      ...data,
+    },
   });
   return (
     <FormProvider {...hookForm}>
@@ -29,14 +38,15 @@ const RenderGoalsObjectives = ({
   );
 };
 
-const renderGoals = (grantIds, activityRecipientType, initialData, goals = []) => {
+const renderGoals = (grantIds, activityRecipientType, goals = [], isGoalFormClosed = false) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   fetchMock.get(join(goalUrl, `?${query}`), goals);
   render(
     <RenderGoalsObjectives
       grantIds={grantIds}
       activityRecipientType={activityRecipientType}
-      initialData={initialData}
+      goals={goals}
+      isGoalFormClosed={isGoalFormClosed}
     />,
   );
 };
@@ -57,30 +67,82 @@ const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWi
 };
 
 describe('goals objectives', () => {
+  beforeEach(async () => {
+    fetchMock.get('/api/topic', []);
+  });
   afterEach(() => fetchMock.restore());
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
-      expect(await screen.findByText('Goals and objectives')).toBeVisible();
+      expect(await screen.findByText('Goal summary')).toBeVisible();
     });
 
-    it('the display goals section does not show if no grants are selected', async () => {
+    it('the display goals shows a warning if no grants are selected', async () => {
       renderGoals([], 'recipient');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+      expect(await screen.findByText(/To create goals, first select a recipient/i)).toBeVisible();
+    });
+
+    it('you can click the little button', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const button = await screen.findByRole('button', { name: /add new goal/i });
+      let summaries = await screen.findAllByText('Goal summary');
+      expect(summaries.length).toBe(1);
+      userEvent.click(button);
+      summaries = await screen.findAllByText('Goal summary');
+      expect(summaries.length).toBe(2);
+    });
+
+    it('you can edit a goal', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const actions = await screen.findByRole('button', { name: /actions for goal 1234567/i });
+      userEvent.click(actions);
+      const button = await screen.findByRole('button', { name: /edit goal 1234567/i });
+      userEvent.click(button);
+      expect(await screen.findByText('Goal summary')).toBeVisible();
+    });
+
+    it('you can delete a goal', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const actions = await screen.findByRole('button', { name: /actions for goal 1234567/i });
+      userEvent.click(actions);
+      const button = await screen.findByRole('button', { name: /delete goal 1234567/i });
+      userEvent.click(button);
+      expect(await screen.findByText('Goal summary')).toBeVisible();
     });
   });
 
   describe('when activity recipient type is not "recipient"', () => {
     it('the objectives section is displayed', async () => {
       renderGoals([1], 'otherEntity');
-      expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
+      expect(await screen.findByText(
+        'You\'re creating an activity report for an entity that\'s not a grant recipient, so you only need to create objectives. The goal section is removed.',
+      )).toBeVisible();
     });
   });
 
   describe('title override', () => {
     it('returns objective if activityRecipientType is other-entity', async () => {
       const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entity' });
-      expect(res).toEqual('Objectives');
+      expect(res).toEqual('Objectives and topics');
     });
 
     it('returns goals if activityRecipientType is recipient', async () => {
@@ -108,6 +170,9 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -128,6 +193,9 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -148,10 +216,22 @@ describe('goals objectives', () => {
         activityRecipientType="other-entity"
         objectivesWithoutGoals={[
           {
-            id: 1, title: 'title one', ttaProvided: 'ttaProvided one', status: 'Not Started',
+            id: 1,
+            title: 'title one',
+            ttaProvided: 'ttaProvided one',
+            status: 'Not Started',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
           {
-            id: 2, title: 'title two', ttaProvided: 'ttaProvided two', status: 'Not Started',
+            id: 2,
+            title: 'title two',
+            ttaProvided: 'ttaProvided two',
+            status: 'Not Started',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
         ]}
       />);
@@ -164,7 +244,13 @@ describe('goals objectives', () => {
         id: 1,
         name: 'goal',
         objectives: [{
-          id: 1, title: 'title', ttaProvided: 'ttaProvided', status: 'Not Started',
+          id: 1,
+          title: 'title',
+          ttaProvided: 'ttaProvided',
+          status: 'Not Started',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         }],
       }]}
       />);
@@ -179,12 +265,18 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         },
         {
           id: 2,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };

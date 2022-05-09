@@ -6,7 +6,13 @@ import {
 const goalsUrl = join('/', 'api', 'goals');
 const recipientUrl = join('/', 'api', 'recipient');
 
-export async function goalById(goalId, recipientId) {
+export async function goalById(goalId) {
+  const url = join(goalsUrl, goalId);
+  const response = await get(url);
+  return response.json();
+}
+
+export async function goalByIdAndRecipient(goalId, recipientId) {
   const url = join(goalsUrl, goalId, 'recipient', recipientId);
   const response = await get(url);
   return response.json();
