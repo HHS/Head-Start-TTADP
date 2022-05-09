@@ -75,13 +75,14 @@ describe('Navigator', () => {
     updatePage = jest.fn(),
     updateForm = jest.fn(),
     pages = defaultPages,
+    formData = initialData,
   ) => {
     render(
       <Navigator
         editable
         reportId={1}
         submitted={false}
-        formData={initialData}
+        formData={formData}
         updateFormData={updateForm}
         onReview={() => {}}
         isApprover={false}
@@ -156,10 +157,58 @@ describe('Navigator', () => {
       label: 'first page',
       review: false,
       render: () => (
-        <Input name="first" required />
+        <>
+          <h1>Goal test</h1>
+        </>
       ),
     }];
     renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
-    expect(await screen.findByRole('button', { name: 'Save goal' })).toBeVisible();
+    const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
+    userEvent.click(saveGoal);
+    expect(saveGoal).toBeVisible();
+  });
+
+  it('shows the save button when the data is valid', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>Goal test</h1>
+        </>
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'grant',
+      isGoalFormClosed: null,
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: '09/01/2020',
+      goalName: 'goal name',
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        roles: ['test'],
+        resources: [],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
+    expect(saveGoal.textContent).toBe('Save goal');
+    expect(saveGoal).toBeVisible();
+    userEvent.click(saveGoal);
+    expect(saveGoal.textContent).toBe('Save and Continue');
   });
 });
