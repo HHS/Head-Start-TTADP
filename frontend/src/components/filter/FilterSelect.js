@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import useSpellCheck from '../../hooks/useSpellCheck';
-import FilterSelectValueContainer from './FilterSelectValueContainer';
+import FilterSelectContainer from './FilterSelectContainer';
 
 export default function FilterSelect({
   onApply,
@@ -30,7 +30,7 @@ export default function FilterSelect({
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
-      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+      const outline = state.isFocused ? '0.25rem solid #2491ff' : '';
       return {
         ...provided,
         outline,
@@ -90,7 +90,7 @@ export default function FilterSelect({
       styles={styles}
       components={{
         DropdownIndicator: null,
-        MultiValue: FilterSelectValueContainer,
+        SelectContainer: FilterSelectContainer,
       }}
       className="usa-select"
       closeMenuOnSelect={false}
