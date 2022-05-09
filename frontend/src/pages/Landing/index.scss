@@ -137,24 +137,19 @@ h1.landing {
 }
 
 .smart-hub--status-draft {
-  color: $ttahub-medium-blue;
   background: $info-lighter;
-
 }
 
 .smart-hub--status-submitted {
   background: $base-lighter;
-  color: $base-darkest;
 }
 
 .smart-hub--status-needs_action {
   background: $error-lighter;
-  color: $error-dark;
 }
 
 .smart-hub--status-approved {
   background: $info-lighter;
-  color: $success;
 }
 
 .smart-hub--status-,
@@ -163,6 +158,7 @@ h1.landing {
 }
 
 .smart-hub--table-tag-status {
+  color: $text-ink;
   text-align: center;
   font-weight: bold;
   text-transform: capitalize;
