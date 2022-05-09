@@ -66,8 +66,7 @@
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
-    "lint:ci": "eslint -f eslint-formatter-multiple src",
-    "makecolors": "node ./src/makecolors.js"
+    "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",

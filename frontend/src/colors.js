@@ -1,4 +1,4 @@
-// if adding to this, please run 'yarn makecolors' from the frontend dir or if you are using docker,
+// if adding to this, please run 'yarn makecolors' from the root dir or if you are using docker,
 // yarn docker:makecolors from the root directory
 // to rebuild the matching colors.scss file
 // (the colors variables are used in two ways, inlined in javascript and directly in css
