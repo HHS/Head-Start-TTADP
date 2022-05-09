@@ -1,5 +1,10 @@
-// if adding to this, please run 'yarn makecolors' from the frontend dir
-// to rebuild the matching colors.scss file'
+// if adding to this, please run 'yarn makecolors' from the frontend dir or if you are using docker,
+// yarn docker:makecolors from the root directory
+// to rebuild the matching colors.scss file
+// (the colors variables are used in two ways, inlined in javascript and directly in css
+// to keep things consistent, we update only in one place - the colors.js file, and use
+// yarn makecolors to keep the files identical)
+
 const colors = {
   ttahubBlue: '#264a64',
   ttahubMediumBlue: '#336A90',
