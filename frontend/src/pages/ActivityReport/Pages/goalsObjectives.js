@@ -20,7 +20,7 @@ import OtherEntity from './components/OtherEntity';
 
 const GoalsObjectives = () => {
   const {
-    watch, setValue, getValues,
+    watch, setValue, getValues, setError,
   } = useFormContext();
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
@@ -85,6 +85,25 @@ const GoalsObjectives = () => {
   };
 
   const onEdit = (goal, index) => {
+    const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
+    if (currentlyEditing) {
+      const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
+      const name = getValues('goalName');
+      const endDate = getValues('goalEndDate');
+      const areGoalsValid = validateGoals(
+        [{
+          ...currentlyEditing,
+          name,
+          endDate,
+          objectives: goalForEditingObjectives,
+        }],
+        setError,
+      );
+      if (areGoalsValid !== true) {
+        return;
+      }
+    }
+
     // make this goal the editable goal
     setValue('goalForEditing', goal);
     const objectives = getValues(`goals[${index}].objectives`) || [];
@@ -98,6 +117,10 @@ const GoalsObjectives = () => {
     // remove the goal from the "selected goals"
     const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     copyOfSelectedGoals.splice(index, 1);
+    if (currentlyEditing) {
+      copyOfSelectedGoals.push(currentlyEditing);
+    }
+
     onUpdateGoals(copyOfSelectedGoals);
   };
 
