@@ -4,7 +4,7 @@ import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { SELECT_STYLES } from './constants';
+import selectOptionsReset from '../selectOptionsReset';
 
 export default function ObjectiveTopics({
   error,
@@ -14,9 +14,9 @@ export default function ObjectiveTopics({
   topics,
   onChangeTopics,
   status,
+  inputName,
 }) {
   const savedTopicIds = savedTopics ? savedTopics.map(({ value }) => value) : [];
-
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.value));
 
   return (
@@ -32,7 +32,7 @@ export default function ObjectiveTopics({
 
       { status !== 'Complete' ? (
         <FormGroup error={error.props.children}>
-          <Label htmlFor="topics">
+          <Label htmlFor={inputName}>
             { savedTopics && savedTopics.length
               ? <>Add more topics</>
               : (
@@ -45,8 +45,10 @@ export default function ObjectiveTopics({
           </Label>
           {error}
           <Select
-            inputId="topics"
-            styles={SELECT_STYLES}
+            objectiveTopicsInputName={inputName}
+            inputId={inputName}
+            name={inputName}
+            styles={selectOptionsReset}
             components={{
               DropdownIndicator: null,
             }}
@@ -81,8 +83,10 @@ ObjectiveTopics.propTypes = {
   })).isRequired,
   onChangeTopics: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
+  inputName: PropTypes.string,
 };
 
 ObjectiveTopics.defaultProps = {
   savedTopics: [],
+  inputName: 'topics',
 };

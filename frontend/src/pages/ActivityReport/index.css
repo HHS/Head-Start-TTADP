@@ -3,11 +3,6 @@
   margin-top: 1.25rem;
 }
 
-.smart-hub--remove-resource {
-  margin-top: 8px !important;
-  margin-left: 4px;
-}
-
 .smart-hub--virtual-delivery-group {
   border-left-color: #0166ab;
   border-left-style: solid;
@@ -66,14 +61,14 @@
 
 .icon {
   display:inline-block;
-    font-size: 40px;
-    line-height: 50px;
-    background-color:black;
-    color:white;
-    width: 50px;
-    height: 50px;
-    text-align: center;
-    vertical-align: bottom;
+  font-size: 40px;
+  line-height: 50px;
+  background-color:black;
+  color:white;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  vertical-align: bottom;
 }
 
 .smart-hub--tag-approved {
@@ -90,6 +85,7 @@
 }
 
 .usa-form-group--error .ttahub-multi-select [class$="-control"],
-.usa-form-group--error .usa-input {
+.usa-form-group--error .usa-input:not([type="url"]),
+.usa-form-group--error .ttahub-resource-repeater :invalid {
   border: 2px solid #b50909;
 }

@@ -5,9 +5,8 @@ import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 
-import {
-  SELECT_STYLES,
-} from './constants';
+import selectOptionsReset from '../selectOptionsReset';
+import Req from '../Req';
 
 export default function GrantSelect({
   error,
@@ -22,7 +21,7 @@ export default function GrantSelect({
       <Label htmlFor="recipientGrantNumbers" className={isOnReport ? 'text-bold' : ''}>
         Recipient grant numbers
         {' '}
-        {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
+        {!isOnReport ? <Req /> : null }
       </Label>
       {selectedGrants.length === 1 || isOnReport ? (
         <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
@@ -34,7 +33,7 @@ export default function GrantSelect({
             inputId="recipientGrantNumbers"
             onChange={setSelectedGrants}
             options={possibleGrants}
-            styles={SELECT_STYLES}
+            styles={selectOptionsReset}
             components={{
               DropdownIndicator: null,
             }}

@@ -32,14 +32,6 @@ const topicsFromApi = [
 ].map((name, id) => ({ name, id }));
 
 describe('create goal', () => {
-  const defaultMatch = {
-    path: '',
-    url: '',
-    params: {
-      goalId: 'new',
-    },
-  };
-
   const defaultRecipient = {
     id: 1,
     grants: [
@@ -90,12 +82,12 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient, match = defaultMatch) {
+  function renderForm(recipient = defaultRecipient, goalId = 'new') {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
         <CreateGoal
-          match={match}
+          id={goalId}
           recipient={recipient}
           regionId="1"
         />
@@ -578,13 +570,7 @@ describe('create goal', () => {
       ],
     });
 
-    renderForm(defaultRecipient, {
-      path: '',
-      url: '',
-      params: {
-        goalId: '12389',
-      },
-    });
+    renderForm(defaultRecipient, '12389');
 
     const goalName = await screen.findByText(/this is a goal name/i);
     const objectiveTitle = await screen.findByText(/This is an objective/i);
@@ -612,13 +598,7 @@ describe('create goal', () => {
       ],
     });
 
-    renderForm(defaultRecipient, {
-      path: '',
-      url: '',
-      params: {
-        goalId: '12389',
-      },
-    });
+    renderForm(defaultRecipient, '12389');
 
     const goalName = await screen.findByText(/this is a goal name/i);
     const objectiveTitle = await screen.findByText(/This is an objective/i);
@@ -651,13 +631,7 @@ describe('create goal', () => {
       ],
     });
 
-    renderForm(defaultRecipient, {
-      path: '',
-      url: '',
-      params: {
-        goalId: '12389',
-      },
-    });
+    renderForm(defaultRecipient, '12389');
 
     const goalName = await screen.findByText(/this is a goal name/i);
     const objectiveTitle = await screen.findByText(/This is an objective/i);
@@ -690,13 +664,7 @@ describe('create goal', () => {
       ],
     });
 
-    renderForm(defaultRecipient, {
-      path: '',
-      url: '',
-      params: {
-        goalId: '12389',
-      },
-    });
+    renderForm(defaultRecipient, '12389');
 
     const goalName = await screen.findByText(/this is a goal name/i);
     const objectiveTitle = await screen.findByText(/This is an objective/i);
