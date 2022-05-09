@@ -1,9 +1,8 @@
-/* eslint-disable no-console */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
 import React from 'react';
-// import PropTypes from 'prop-types';
 import { ClassNames } from '@emotion/react';
+// import PropTypes from 'prop-types';
 
 const Svg = ({ size, ...props }) => (
   <svg
@@ -70,14 +69,22 @@ export const multiValueRemoveCSS = ({
   },
 });
 
+export const MultiValueGeneric = ({
+  children,
+  innerProps,
+}) => <div {...innerProps}>{children}</div>;
+
+export const MultiValueContainer = MultiValueGeneric;
+export const MultiValueLabel = MultiValueGeneric;
+
 export function MultiValueRemove({
   children,
   innerProps,
 }) {
-  return <div {...innerProps}>{children}</div>;
+  return <div {...innerProps}>{children || <CrossIcon size={14} />}</div>;
 }
 
-const FilterSelectValueContainer = (props) => {
+const MultiValue = (props) => {
   const {
     children,
     className,
@@ -86,17 +93,12 @@ const FilterSelectValueContainer = (props) => {
     data,
     getStyles,
     innerProps,
-    isFocused,
     isDisabled,
     removeProps,
     selectProps,
   } = props;
 
   const { Container, Label, Remove } = components;
-
-  // start here
-  console.log(isFocused);
-  console.log(selectProps.value);
 
   return (
     <ClassNames>
@@ -153,13 +155,64 @@ const FilterSelectValueContainer = (props) => {
           />
         </Container>
       )}
-
     </ClassNames>
   );
 };
 
-FilterSelectValueContainer.defaultProps = {
-  cropWithEllipsis: false,
+MultiValue.defaultProps = {
+  cropWithEllipsis: true,
 };
 
-export default FilterSelectValueContainer;
+const FilterSelectContainer = (props) => {
+  const {
+    children,
+    className,
+    cx,
+    getStyles,
+    innerProps,
+    isDisabled,
+    getValue,
+    isRtl,
+  } = props;
+
+  const styles = getStyles('container', props);
+
+  const currentSelected = getValue();
+  const showTruncated = currentSelected.length > 1;
+
+  if (showTruncated) {
+    return (
+      <div
+        style={styles}
+        className={cx(
+          {
+            '--is-disabled': isDisabled,
+            '--is-rtl': isRtl,
+          },
+          className,
+        )}
+        {...innerProps}
+      >
+        {currentSelected.map(({ label }) => <span>{label}</span>)}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={styles}
+      className={cx(
+        {
+          '--is-disabled': isDisabled,
+          '--is-rtl': isRtl,
+        },
+        className,
+      )}
+      {...innerProps}
+    >
+      {children}
+    </div>
+  );
+};
+
+export default FilterSelectContainer;
