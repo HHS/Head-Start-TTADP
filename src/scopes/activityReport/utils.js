@@ -3,11 +3,11 @@ import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function expandArray(column, searchTerms, operator) {
-  return searchTerms.map((term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(`%${term}%`)}`));
+  return searchTerms.map((term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(`%${term.trim()}%`)}`));
 }
 
 function reportInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term)})`));
+  return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term.trim())})`));
 }
 
 export default function filterArray(column, searchTerms, exclude) {
