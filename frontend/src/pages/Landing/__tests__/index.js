@@ -457,8 +457,7 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Collaborator(s)', async () => {
-    const columnHeaders = await screen.findAllByText(/collaborator\(s\)/i);
-    expect(columnHeaders.length).toBe(2);
+    const columnHeaders = await screen.findAllByText(/collaborators/i);
     fetchMock.reset();
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1',
