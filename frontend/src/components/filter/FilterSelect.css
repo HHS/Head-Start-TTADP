@@ -1,0 +1,55 @@
+.ttahub-filter-select--label {
+  background-color: hsl(0, 0%, 90%);
+  border-radius: 2px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  font-size: 85%;
+  margin: 2px;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 2px;
+  color: hsl(0, 0%, 20%);
+  overflow: hidden;
+  padding: 3px 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.ttahub-filter-select--cover-all {
+    display: none;
+}
+
+/**
+ we are using focus within heavily here. focus within is not supported on IE
+ - the not(focus-within) stuff is instead of just giving a default selector value
+ - this is so that anyone who doesn't have a newer browser will get the experience
+   they've always had (all this stuff will simply do nothing in IE, and the 
+   cover all element will just be display none'd still
+**/
+
+.ttahub-filter-select:not(:focus-within) .ttahub-filter-select--cover-all {
+    background: white;
+    display: flex;
+    pointer-events: none;
+    bottom: 1px;
+    right: 1px;
+    top: 10px;
+    left: 1px;
+}
+
+.ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__clear-indicator {
+    display: none;
+}
+
+.ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__multi-value,
+.ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__multi-value__remove {
+    display: none;
+}
+
+.ttahub-filter-select__has-cover-all:focus-within .ttahub-filter-select__multi-value,
+.ttahub-filter-select__has-cover-all:focus-within .ttahub-filter-select__multi-value__remove {
+    display: flex;
+}
