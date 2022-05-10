@@ -6,7 +6,7 @@ import {
   Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
-
+import IncompletePages from '../IncompletePages';
 import { managerReportStatuses } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
 import FormItem from '../../../../../components/FormItem';
@@ -20,6 +20,7 @@ const Review = ({
   onFormReview,
   approverStatusList,
   pendingOtherApprovals,
+  pages,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('note');
@@ -37,6 +38,11 @@ const Review = ({
   const hasReviewNote = thisApprovingManager
     && thisApprovingManager.length > 0
     && thisApprovingManager[0].note;
+
+  const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
+  const incompletePages = filtered.map((f) => f.label);
+  const hasIncompletePages = incompletePages.length > 0;
+
   return (
     <>
       <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
@@ -56,6 +62,7 @@ const Review = ({
           </div>
         )
       }
+
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
 
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
@@ -89,7 +96,8 @@ const Review = ({
           </Dropdown>
         </FormItem>
         <ApproverStatusList approverStatus={approverStatusList} />
-        <Button type="submit">{hasBeenReviewed ? 'Re-submit' : 'Submit'}</Button>
+        {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Re-submit' : 'Submit'}</Button>
       </Form>
     </>
   );
@@ -102,6 +110,11 @@ Review.propTypes = {
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
+  })).isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    state: PropTypes.string,
+    review: PropTypes.bool,
+    label: PropTypes.string,
   })).isRequired,
 };
 

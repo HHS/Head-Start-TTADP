@@ -15,6 +15,7 @@ import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
+
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 
 app.use(requestLogger);
